@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dist/
+.build/
+.env
+.env.local
+.env.development
+.env.production
+npm-debug.log
+yarn-error.log
