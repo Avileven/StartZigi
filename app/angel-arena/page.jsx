@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Investor } from '@/src/api/entities';
 import { Venture } from '@/src/api/entities';
 import { User } from '@/src/api/entities';
-import PitchModal from '@/components/angels/PitchModal';
+import { PitchAnswer } from '@/src/api/entities';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
