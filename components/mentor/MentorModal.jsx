@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { InvokeLLM } from '@/api/integrations';
+import { InvokeLLM } from '@/src/api/integrations';
 import { Loader2 } from 'lucide-react';
 
 export default function MentorModal({ 

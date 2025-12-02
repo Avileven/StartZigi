@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Investor } from '@/api/entities';
-import { MasterQuestion } from '@/api/entities';
-import { PitchAnswer } from '@/api/entities/PitchAnswer';
-import { Venture } from '@/api/entities';
-import { VentureMessage } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { Investor } from '@/src/api/entities';
+import { MasterQuestion } from '@/src/api/entities';
+import { PitchAnswer } from '@/src/api/entities/PitchAnswer';
+import { Venture } from '@/src/api/entities';
+import { VentureMessage } from '@/src/api/entities';
+import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';

@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { VentureMessage } from '@/api/entities';
-import { Venture } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { VentureMessage } from '@/src/api/entities';
+import { Venture } from '@/src/api/entities';
+import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Loader2, X, Send, User as UserIcon, Bot } from 'lucide-react';
-import { MasterQuestion } from '@/api/entities';
+import { MasterQuestion } from '@/src/api/entities';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function VCMeetingModal({ isOpen, onClose, vcFirm, venture, messageId }) {

@@ -1,5 +1,5 @@
-import { BusinessPlan } from '@/api/entities';
-import { BetaTester } from '@/api/entities';
+import { BusinessPlan } from '@/src/api/entities';
+import { BetaTester } from '@/src/api/entities';
 
 // Centralized phase validation logic
 export const validatePhaseTransition = async (venture, targetPhase, additionalData = {}) => {

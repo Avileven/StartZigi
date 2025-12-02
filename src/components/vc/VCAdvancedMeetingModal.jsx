@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { VentureMessage } from '@/api/entities';
-import { Budget } from '@/api/entities';
-import { FundingEvent } from '@/api/entities';
-import { Venture } from '@/api/entities';
+import { VentureMessage } from '@/src/api/entities';
+import { Budget } from '@/src/api/entities';
+import { FundingEvent } from '@/src/api/entities';
+import { Venture } from '@/src/api/entities';
 import { Button } from '@/components/ui/button';
 import { Loader2, X, Send, User as UserIcon, Bot } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';

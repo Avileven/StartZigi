@@ -1,4 +1,4 @@
-﻿import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import "./globals.css";
 
