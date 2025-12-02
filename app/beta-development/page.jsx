@@ -1,4 +1,4 @@
-
+"use client"`n`n
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/src/api/entities';
 import { VentureMessage } from '@/src/api/entities'; // Keep for potential future use if phase transition is re-added

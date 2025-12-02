@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+"use client"`n`nimport React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Venture } from '@/src/api/entities';
 import { PromotionCampaign } from '@/src/api/entities';

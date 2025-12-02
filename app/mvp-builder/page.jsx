@@ -1,4 +1,4 @@
-
+"use client"`n`n
 import React, { useState, useCallback, useMemo } from 'react';
 
 const defaultFeatureTemplates = [

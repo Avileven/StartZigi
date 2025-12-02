@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+"use client"`n`nimport React, { useState, useEffect, useMemo } from 'react';
 import { VCFirm } from '@/src/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

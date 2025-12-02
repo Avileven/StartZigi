@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+"use client"`n`nimport React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/src/api/entities';
 import { User } from '@/src/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

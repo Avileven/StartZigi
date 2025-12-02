@@ -1,4 +1,4 @@
-
+"use client"`n`n
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/src/api/entities';

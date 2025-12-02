@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+"use client"`n`nimport React, { useState, useEffect } from 'react';
 import { VCFirm } from '@/src/api/entities';
 import { Venture } from '@/src/api/entities';
 import { VentureMessage } from '@/src/api/entities';

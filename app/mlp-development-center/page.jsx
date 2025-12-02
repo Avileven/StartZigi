@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+"use client"`n`nimport React, { useState, useEffect } from 'react';
 import { Venture } from '@/src/api/entities';
 import { MVPFeatureFeedback } from '@/src/api/entities';
 import { SuggestedFeature } from '@/src/api/entities';

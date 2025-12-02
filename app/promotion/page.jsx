@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+"use client"`n`nimport React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InAppPromotion from '@/components/promotions/InAppPromotion';
 import EmailPromotion from '@/components/promotions/EmailPromotion';
