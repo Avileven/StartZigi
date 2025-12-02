@@ -1,4 +1,4 @@
-"use client"`n`n
+"use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Venture } from '@/src/api/entities';
 import { User } from '@/src/api/entities';

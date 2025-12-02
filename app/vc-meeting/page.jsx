@@ -1,4 +1,4 @@
-"use client"`n`n
+"use client";
 import React, { useState, useEffect } from 'react';
 import { MasterQuestion } from '@/src/api/entities';
 import { VentureMessage } from '@/src/api/entities';

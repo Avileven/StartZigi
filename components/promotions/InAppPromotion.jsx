@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/src/api/entities';
 import { VentureMessage } from '@/src/api/entities';
