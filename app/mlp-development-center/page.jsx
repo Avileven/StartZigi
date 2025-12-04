@@ -6,7 +6,7 @@ import { SuggestedFeature } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { UploadFile } from '@/src/api/integrations';
-import { createPageUrl } from '@/utils';
+import { createPageUrl } from '@/utils/index.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

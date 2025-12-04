@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'; // New import for Tabs
 import { Rocket, Users, Lock, Lightbulb, Sparkles, Upload, Trash2, Loader2, CheckCircle, ArrowRight, ArrowLeft, Award, Gift, Zap, ThumbsUp, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils';
+import { createPageUrl } from '@/utils/index.js';
 import MentorButton from "@/components/mentor/MentorButton";
 import MentorModal from "@/components/mentor/MentorModal";
 import StaticGuidanceViewer from "@/components/mentor/StaticGuidanceViewer";

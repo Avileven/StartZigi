@@ -6,7 +6,7 @@ import { PromotionCampaign } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { createPageUrl } from '@/utils';
+import { createPageUrl } from '@/utils/index.js';
 import { ArrowLeft, Users, Mail, TrendingUp, DollarSign, BarChart3, Eye, MousePointerClick } from 'lucide-react';
 
 export default function PromotionCenter() {

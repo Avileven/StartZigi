@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Send, User as UserIcon, Bot, Target, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils';
+import { createPageUrl } from '@/utils/index.js';
 
 const CORE_QUESTION = `Look, I invest in a lot of companies and I see this pattern repeatedly - entrepreneurs come in thinking they have a unique idea, but there are always competitors they don't know about. Sometimes it's an established player expanding into their space, sometimes it's another startup pivoting, sometimes it's a big tech company building this internally. How confident are you that you really understand who you're up against? And more importantly - what happens to your business when you discover there's more competition than you thought?`;
 
