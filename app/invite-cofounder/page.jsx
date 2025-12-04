@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/src/api/entities';
 import { CoFounderInvitation } from '@/src/api/entities';

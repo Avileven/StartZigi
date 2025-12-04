@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor } from '@/src/api/entities';
 import { MasterQuestion } from '@/src/api/entities';
-import { PitchAnswer } from '@/src/api/entities/PitchAnswer';
+import { PitchAnswer } from '@/src/api/entities';
 import { Venture } from '@/src/api/entities';
 import { VentureMessage } from '@/src/api/entities';
 import { InvokeLLM } from '@/src/api/integrations';
@@ -564,3 +564,4 @@ ${proposal.decision === 'Invest' ? `
     </div>
   );
 }
+
