@@ -5,7 +5,7 @@ import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
-import { UploadFile } from '@/src/api/integrations';
+import { UploadFile } from '@/api/integrations';
 import { createPageUrl } from '@/utils/index.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';

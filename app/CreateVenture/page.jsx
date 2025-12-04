@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 // הסרת הייבוא השגוי של entities
 // import { Venture } from "@/api/entities";
-// import { VentureMessage } from "@/src/api/entities";
-// import { User } from "@/src/api/entities";
+// import { VentureMessage } from "@/api/entities";
+// import { User } from "@/api/entities";
 
 // ייבוא supabase ואתנטיקציה ישירות
 import { supabase, auth } from "@/lib/supabase"; // ייבוא גם את supabase עצמו

@@ -5,7 +5,7 @@ import { MasterQuestion } from '@/api/entities.js';
 import { PitchAnswer } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
-import { InvokeLLM } from '@/src/api/integrations';
+import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';

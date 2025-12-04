@@ -1,10 +1,10 @@
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
-import { BusinessPlan as BusinessPlanEntity } from "@/src/api/entities";
-import { Budget } from "@/src/api/entities";
+import { BusinessPlan as BusinessPlanEntity } from "@/api/entities";
+import { Budget } from "@/api/entities";
 import { Venture } from "@/api/entities";
-import { VentureMessage } from "@/src/api/entities";
-import { User } from "@/src/api/entities";
+import { VentureMessage } from "@/api/entities";
+import { User } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { InvokeLLM } from '@/src/api/integrations';
+import { InvokeLLM } from '@/api/integrations';
 import { 
   Clock, 
   Target,

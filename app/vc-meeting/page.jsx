@@ -5,7 +5,7 @@ import { VentureMessage } from '@/api/entities.js';
 import { VCFirm } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { InvokeLLM } from '@/src/api/integrations';
+import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Textarea } from '@/components/ui/textarea';

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js'; // Keep for potential future use if phase transition is re-added
 import { User } from '@/api/entities.js';
-import { UploadFile } from '@/src/api/integrations';
+import { UploadFile } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';

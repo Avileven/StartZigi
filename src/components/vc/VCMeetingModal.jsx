@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
-import { InvokeLLM } from '@/src/api/integrations';
+import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Loader2, X, Send, User as UserIcon, Bot } from 'lucide-react';
 import { MasterQuestion } from '@/api/entities.js';

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { DollarSign, Users, TrendingUp, Zap, MinusCircle, Globe, Briefcase, Lock, Monitor, Shuffle, Speaker, Target, Info, MessageSquare } from 'lucide-react';
-import { InvokeLLM } from '@/src/api/integrations';
+import { InvokeLLM } from '@/api/integrations';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 

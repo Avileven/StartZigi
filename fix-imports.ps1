@@ -9,11 +9,11 @@ foreach ($file in $files) {
     $content = Get-Content $file.FullName -Raw
     $originalContent = $content
     
-    # Replace @/api/entities with @/src/api/entities
+    # Replace @/api/entities with @/api/entities
     $content = $content -replace '@/api/entities', '@/api/entities.js'
     
-    # Replace @/api/integrations with @/src/api/integrations
-    $content = $content -replace '@/api/integrations', '@/src/api/integrations'
+    # Replace @/api/integrations with @/api/integrations
+    $content = $content -replace '@/api/integrations', '@/api/integrations'
     
     # Only write if content changed
     if ($content -ne $originalContent) {
