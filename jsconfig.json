@@ -2,17 +2,17 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      // חובה: מאפשר גישה ל-src/* ול-api/*
-      "@/*": ["src/*", "api/*"], 
-      "@/lib/*": ["src/lib/*"],
-      "@/api/*": ["api/*"],
-      "@/components/*": ["src/components/*"]
+      // הנתיב הנכון: @/ מפנה לשורש הפרויקט (.)
+      // כלומר, @/api יפנה ל- ./api
+      "@/*": ["./*"]
     }
   },
   "include": [
     "src",
     "app",
-    "api"
+    "api",
+    "lib",
+    "utils"
   ],
   "exclude": [
     "node_modules"
