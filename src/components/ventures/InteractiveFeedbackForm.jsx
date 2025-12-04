@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { MVPFeatureFeedback } from '@/src/api/entities';
-import { SuggestedFeature } from '@/src/api/entities';
-import { Venture } from '@/src/api/entities';
-import { User } from '@/src/api/entities';
+import { MVPFeatureFeedback } from '@/api/entities.js';
+import { SuggestedFeature } from '@/api/entities.js';
+import { Venture } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -1,12 +1,13 @@
+//admin/page
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { User } from '@/src/api/entities';
-import { Venture } from '@/src/api/entities';
-import { FundingEvent } from '@/src/api/entities';
-import { VentureMessage } from '@/src/api/entities';
-import { CoFounderInvitation } from '@/src/api/entities';
-import { VCFirm } from '@/src/api/entities';
+import { User } from '@/api/entities.js';
+import { Venture } from '@/api/entities.js';
+import { FundingEvent } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
+import { CoFounderInvitation } from '@/api/entities.js';
+import { VCFirm } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,

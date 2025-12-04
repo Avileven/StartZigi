@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Venture } from '@/src/api/entities';
-import { User } from '@/src/api/entities';
-import { PromotionCampaign } from '@/src/api/entities';
+import { Venture } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
+import { PromotionCampaign } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

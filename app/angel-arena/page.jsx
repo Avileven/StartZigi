@@ -3,10 +3,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Investor } from '@/src/api/entities';
-import { Venture } from '@/src/api/entities';
-import { User } from '@/src/api/entities';
-import PitchModal from '@/components/angels/PitchModal';
+import { Investor } from '@/api/entities.js';
+import { Venture } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
+import { PitchAnswer } from '@/api/entities.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {

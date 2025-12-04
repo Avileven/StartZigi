@@ -10,7 +10,7 @@ foreach ($file in $files) {
     $originalContent = $content
     
     # Replace @/api/entities with @/src/api/entities
-    $content = $content -replace '@/api/entities', '@/src/api/entities'
+    $content = $content -replace '@/api/entities', '@/api/entities.js'
     
     # Replace @/api/integrations with @/src/api/integrations
     $content = $content -replace '@/api/integrations', '@/src/api/integrations'

@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Investor } from '@/src/api/entities';
-import { MasterQuestion } from '@/src/api/entities';
-import { PitchAnswer } from '@/src/api/entities';
-import { Venture } from '@/src/api/entities';
-import { VentureMessage } from '@/src/api/entities';
+import { Investor } from '@/api/entities.js';
+import { MasterQuestion } from '@/api/entities.js';
+import { PitchAnswer } from '@/api/entities.js';
+import { Venture } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
 import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

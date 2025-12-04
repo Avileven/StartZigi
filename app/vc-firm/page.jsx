@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { VCFirm } from '@/src/api/entities';
-import { Venture } from '@/src/api/entities';
-import { VentureMessage } from '@/src/api/entities';
-import { User } from '@/src/api/entities';
+import { VCFirm } from '@/api/entities.js';
+import { Venture } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

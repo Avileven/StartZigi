@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Venture } from '@/src/api/entities';
-import { VentureMessage } from '@/src/api/entities';
-import { User } from '@/src/api/entities';
+import { Venture } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
 import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

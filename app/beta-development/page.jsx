@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { Venture } from '@/src/api/entities';
-import { VentureMessage } from '@/src/api/entities'; // Keep for potential future use if phase transition is re-added
-import { User } from '@/src/api/entities';
+import { Venture } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js'; // Keep for potential future use if phase transition is re-added
+import { User } from '@/api/entities.js';
 import { UploadFile } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
