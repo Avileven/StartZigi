@@ -1,14 +1,20 @@
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
+// תיקון: הוסרה src/ מכל הייבואות של entities.
 import { Venture } from "@/api/entities";
-import { VentureMessage } from "@/src/api/entities";
-import { User } from "@/src/api/entities";
-import { PromotionCampaign } from "@/src/api/entities";
-import { BetaTester } from "@/src/api/entities";
+import { VentureMessage } from "@/api/entities";
+import { User } from "@/api/entities";
+import { PromotionCampaign } from "@/api/entities";
+import { BetaTester } from "@/api/entities";
+// תיקון: הוסרה סיומת .js מיותרת
+import { VCFirm } from '@/api/entities';
+import { FundingEvent } from '@/api/entities';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+// ... שאר הייבואות ...
 import Link from "next/link";
 import {
   Calendar,
