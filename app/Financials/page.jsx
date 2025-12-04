@@ -1,9 +1,9 @@
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
-import { Venture } from "@/api/entities";
-import { User } from "@/src/api/entities";
-import { VentureMessage } from "@/src/api/entities";
-import { PromotionCampaign } from "@/src/api/entities";
+import { Venture } from "@/api/entities"; // תוקן (הוסרה src/)
+import { User } from "@/api/entities"; // תוקן (הוסרה src/)
+import { VentureMessage } from "@/api/entities"; // תוקן (הוסרה src/)
+import { PromotionCampaign } from "@/api/entities"; // תוקן (הוסרה src/)
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Wallet, 
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl } from "@/lib/utils"; // תוקן (הוספה lib/)
 
 export default function Financials() {
   const [venture, setVenture] = useState(null);
