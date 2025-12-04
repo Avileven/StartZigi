@@ -1,7 +1,7 @@
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
-import { Venture } from "@/src/api/entities";
+import { Venture } from "@/api/entities";
 import { VentureMessage } from "@/src/api/entities";
 import { User } from "@/src/api/entities";
 import { PromotionCampaign } from "@/src/api/entities";

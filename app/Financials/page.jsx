@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
-import { Venture } from "@/src/api/entities";
+import { Venture } from "@/api/entities";
 import { User } from "@/src/api/entities";
 import { VentureMessage } from "@/src/api/entities";
 import { PromotionCampaign } from "@/src/api/entities";
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/lib/utils";
 
 export default function Financials() {
   const [venture, setVenture] = useState(null);

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { BusinessPlan as BusinessPlanEntity } from "@/src/api/entities";
 import { Budget } from "@/src/api/entities";
-import { Venture } from "@/src/api/entities";
+import { Venture } from "@/api/entities";
 import { VentureMessage } from "@/src/api/entities";
 import { User } from "@/src/api/entities";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/lib/utils";
 import MentorButton from "@/components/mentor/MentorButton";
 import MentorModal from "@/components/mentor/MentorModal";
 import StaticGuidanceViewer from "@/components/mentor/StaticGuidanceViewer";

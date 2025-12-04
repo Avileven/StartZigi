@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 // הסרת הייבוא השגוי של entities
-// import { Venture } from "@/src/api/entities";
+// import { Venture } from "@/api/entities";
 // import { VentureMessage } from "@/src/api/entities";
 // import { User } from "@/src/api/entities";
 

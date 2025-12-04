@@ -2,9 +2,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      // חובה: מאפשר גישה ל-src/* ול-api/*
+      "@/*": ["src/*", "api/*"], 
+      "@/lib/*": ["src/lib/*"],
+      "@/api/*": ["api/*"],
+      "@/components/*": ["src/components/*"]
     }
   },
   "include": [
