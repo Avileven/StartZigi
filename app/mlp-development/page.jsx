@@ -5,14 +5,14 @@ import { VentureMessage } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { UploadFile } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils/index.js';
 import { Loader2, Upload, FileText, CheckCircle, Rocket, Heart, Repeat, Info } from 'lucide-react';
-import MentorButton from '@/components/mentor/MentorButton';
+import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 

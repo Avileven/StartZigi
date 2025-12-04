@@ -6,7 +6,7 @@ import { User } from '@/api/entities.js';
 import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Loader2, Send, User as UserIcon, Bot, Target, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils/index.js';

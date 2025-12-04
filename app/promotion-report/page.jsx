@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { PromotionCampaign } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, Mail, BarChart3, Eye, MousePointerClick } from 'lucide-react';
 import { format } from 'date-fns';

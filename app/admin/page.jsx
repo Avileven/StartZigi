@@ -8,7 +8,7 @@ import { FundingEvent } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { CoFounderInvitation } from '@/api/entities.js';
 import { VCFirm } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table.jsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from '@/components/ui/badge';

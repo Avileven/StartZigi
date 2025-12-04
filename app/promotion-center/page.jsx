@@ -5,7 +5,7 @@ import { Venture } from '@/api/entities.js';
 import { PromotionCampaign } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { createPageUrl } from '@/utils/index.js';
 import { ArrowLeft, Users, Mail, TrendingUp, DollarSign, BarChart3, Eye, MousePointerClick } from 'lucide-react';
 

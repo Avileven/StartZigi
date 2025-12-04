@@ -4,7 +4,7 @@ import { Venture } from '@/api/entities.js';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 

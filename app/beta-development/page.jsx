@@ -5,10 +5,10 @@ import { VentureMessage } from '@/api/entities.js'; // Keep for potential future
 import { User } from '@/api/entities.js';
 import { UploadFile } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'; // New import for Tabs
 import { Rocket, Users, Lock, Lightbulb, Sparkles, Upload, Trash2, Loader2, CheckCircle, ArrowRight, ArrowLeft, Award, Gift, Zap, ThumbsUp, Info } from 'lucide-react';

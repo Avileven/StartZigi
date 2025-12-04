@@ -4,10 +4,10 @@ import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card.jsx';
 import { Rocket, Lock, Users, Lightbulb, PartyPopper, Loader2, Sparkles } from 'lucide-react';
 
 const defaultBenefits = [

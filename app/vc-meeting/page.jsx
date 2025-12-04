@@ -7,7 +7,7 @@ import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { InvokeLLM } from '@/src/api/integrations';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

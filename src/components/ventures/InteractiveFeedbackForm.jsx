@@ -3,9 +3,9 @@ import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input.jsx';
 import { Slider } from '@/components/ui/slider';
 import { MessageSquare, Loader2, CheckCircle, Plus } from 'lucide-react';
 

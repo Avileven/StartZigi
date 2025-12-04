@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Save, ExternalLink, Lightbulb, Target } from 'lucide-react';

@@ -5,15 +5,15 @@ import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { BusinessPlan } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
+import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Lightbulb, Target, Users, TrendingUp, CheckCircle, Eye, HandCoins } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils/index.js';
-import MentorButton from '@/components/mentor/MentorButton';
+import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';
 
 export default function VenturePitchPage() {

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils/index.js';
