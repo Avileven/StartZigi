@@ -11,7 +11,7 @@ class Entity {
       .from(this.tableName)
       .insert([{
         ...data,
-        id: crypto.randomUUID(),
+        id: globalThis.crypto?.randomUUID() || `${Date.now()}-${Math.random().toString(36)}`,
         created_date: new Date().toISOString(),
         updated_date: new Date().toISOString(),
       }])
