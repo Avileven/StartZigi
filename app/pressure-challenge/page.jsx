@@ -98,7 +98,7 @@ export default function PressureChallenge() {
             vc_stage: 'stage_3_rejected'
           });
           await VentureMessage.update(followUpParams.messageId, { is_dismissed: true });
-          setTimeout(() => navigate(createPageUrl('Dashboard')), 3000);
+          setTimeout(() => router.push(createPageUrl('Dashboard')), 3000);
         }
       } catch (error) {
         console.error("Error handling VC follow-up timeout:", error);
@@ -294,7 +294,7 @@ export default function PressureChallenge() {
             }
             await VentureMessage.update(followUpParams.messageId, { is_dismissed: true });
             
-            setTimeout(() => navigate(createPageUrl('Dashboard')), 3000);
+            setTimeout(() => router.push(createPageUrl('Dashboard')), 3000);
 
           } else {
              await Venture.update(venture.id, {
