@@ -50,8 +50,6 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import VCMeetingModal from '@/components/vc/VCMeetingModal';
-import { VCFirm } from '@/api/entities.js';
-import { FundingEvent } from '@/api/entities.js';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 
 // Helper function to create page URLs
