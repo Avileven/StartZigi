@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import { 
   Rocket, 
   Lightbulb, 

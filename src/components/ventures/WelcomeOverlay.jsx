@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import { Trophy, ArrowRight, X } from 'lucide-react';
 
 export default function WelcomeOverlay({ ventureName, onClose }) {

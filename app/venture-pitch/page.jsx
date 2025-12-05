@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Lightbulb, Target, Users, TrendingUp, CheckCircle, Eye, HandCoins } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';
 

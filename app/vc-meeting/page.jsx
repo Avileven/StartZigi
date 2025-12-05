@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import { Users, MessageSquare, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function VCMeeting() {

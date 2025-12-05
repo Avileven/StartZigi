@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import { Loader2, Upload, FileText, CheckCircle, Rocket, Heart, Repeat, Info } from 'lucide-react';
 import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';

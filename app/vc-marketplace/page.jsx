@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 import { 
   Building2, 
   ChevronsRight, 

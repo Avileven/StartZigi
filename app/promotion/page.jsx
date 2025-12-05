@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InAppPromotion from '@/components/promotions/InAppPromotion';
 import EmailPromotion from '@/components/promotions/EmailPromotion';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 
 export default function Promotion() {
   const router = useRouter();

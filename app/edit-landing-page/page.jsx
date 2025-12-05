@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Save, ExternalLink, Lightbulb, Target } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-import { createPageUrl } from '@/utils/index.js';
+import { createPageUrl } from '@/utils';
 
 export default function EditLandingPage() {
   const [venture, setVenture] = useState(null);
