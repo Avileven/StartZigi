@@ -45,16 +45,20 @@ export const auth = {
 
   logout: async (redirectUrl) => {
     await supabase.auth.signOut();
-    if (redirectUrl) {
-      window.location.href = redirectUrl;
-    } else {
-      window.location.reload();
+    if (typeof window !== 'undefined') {
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        window.location.reload();
+      }
     }
   },
 
   redirectToLogin: async (nextUrl) => {
-    const url = nextUrl ? `/login?next=${encodeURIComponent(nextUrl)}` : '/login';
-    window.location.href = url;
+    if (typeof window !== 'undefined') {
+      const url = nextUrl ? `/login?next=${encodeURIComponent(nextUrl)}` : '/login';
+      window.location.href = url;
+    }
   },
 
   isAuthenticated: async () => {
