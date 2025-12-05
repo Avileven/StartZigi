@@ -10,7 +10,6 @@ import { BetaTester } from "@/api/entities";
 // תיקון: הוסרה סיומת .js מיותרת
 import { VCFirm } from '@/api/entities';
 import { FundingEvent } from '@/api/entities';
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
