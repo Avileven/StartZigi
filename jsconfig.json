@@ -2,7 +2,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      // הנתיב הנכון: @/ מחפש גם בשורש (עבור API) וגם ב-src (עבור Components).
+      // הנתיב המעודכן! עכשיו הוא מפנה ישירות לקובץ המאוחד utils/index.ts
+      // זה פותר את שגיאת "Module not found" שנוצרה לאחר מחיקת הקובץ utils.js.
+      "@/lib/utils": ["src/lib/utils/index.ts"], 
+      
+      // הנתיב הכללי שהיה לך
       "@/*": ["./*", "src/*"] 
     }
   },
