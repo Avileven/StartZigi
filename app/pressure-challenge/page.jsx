@@ -15,6 +15,7 @@ export default function PressureChallenge() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const urlParams = new URLSearchParams(window.location.search);
     const vcFollowUp = urlParams.get('vcFollowUp') === 'true';
     const messageId = urlParams.get('messageId');
