@@ -56,5 +56,20 @@ Final Score: [calculated score]/10
 Overall Assessment: [2-3 sentence summary of performance]`;
 
 export default function PressureChallenge() {
-  return <div>Test</div>
+  const [venture, setVenture] = useState(null);
+  const [conversation, setConversation] = useState([]);
+  const [userInput, setUserInput] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAnswering, setIsAnswering] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [evaluation, setEvaluation] = useState(null);
+  const [isVCFollowUp, setIsVCFollowUp] = useState(false);
+  const [followUpParams, setFollowUpParams] = useState(null);
+  const [challengeAlreadyCompleted, setChallengeAlreadyCompleted] = useState(false);
+  const chatEndRef = useRef(null);
+  const timerRefs = useRef([]);
+  const router = useRouter();
+
+  return <div>Test with state</div>
 }
