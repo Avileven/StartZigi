@@ -39,8 +39,10 @@ export default function BetaTesting() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        // ✅ הזזתי את זה לתוך useEffect
         const urlParams = new URLSearchParams(window.location.search);
         const ventureId = urlParams.get('id');
+        
         if (ventureId) {
           const [ventures, testers] = await Promise.all([
             Venture.filter({ id: ventureId }),

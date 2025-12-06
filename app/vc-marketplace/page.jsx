@@ -109,7 +109,7 @@ export default function VCMarketplace() {
                       <p className="text-gray-600 text-sm mb-3">
                         Announced <span className="font-medium text-indigo-700">{firm.funding_info}</span>.
                       </p>
-                      <Link to={createPageUrl(`VCFirmPage?slug=${firm.slug}`)}>
+                      <Link href={createPageUrl(`VCFirmPage?slug=${firm.slug}`)}>
                         <Button variant="outline" size="sm" className="w-full">
                           Visit Firm Profile <ChevronsRight className="w-4 h-4 ml-2"/>
                         </Button>
@@ -251,7 +251,7 @@ export default function VCMarketplace() {
                   )}
                 </div>
 
-                <Link to={createPageUrl(`VCFirmPage?slug=${firm.slug}`)} className="mt-4">
+                <Link href={createPageUrl(`VCFirmPage?slug=${firm.slug}`)} className="mt-4">
                   <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
                     View Firm Details
                   </Button>

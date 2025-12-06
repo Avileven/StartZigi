@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import InAppPromotion from '@/components/promotions/InAppPromotion';
 import EmailPromotion from '@/components/promotions/EmailPromotion';
@@ -7,17 +7,20 @@ import { createPageUrl } from '@/utils';
 
 export default function Promotion() {
   const router = useRouter();
-  const urlParams = new URLSearchParams(window.location.search);
-  const promotionType = urlParams.get('type');
+  const [promotionType, setPromotionType] = useState(null);
 
   useEffect(() => {
-    if (!promotionType) {
-      navigate(createPageUrl('PromotionCenter'));
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    setPromotionType(type);
+    
+    if (!type) {
+      router.push(createPageUrl('PromotionCenter'));
     }
-  }, [promotionType, navigate]);
+  }, [router]);
 
   const goBack = () => {
-    navigate(createPageUrl('PromotionCenter'));
+    router.push(createPageUrl('PromotionCenter'));
   };
 
   if (promotionType === 'in-app') {

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { createPageUrl } from "@/lib/utils";
 import { ArrowRight, MessageSquare, Rss, Users } from 'lucide-react';
 
@@ -40,15 +40,15 @@ export default function Community() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <div className="flex items-center">
-                <Link to={createPageUrl("Home")} className="flex-shrink-0">
+                <Link href={createPageUrl("Home")} className="flex-shrink-0">
                   <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">StartZig</span>
                 </Link>
               </div>
               <div className="hidden md:block">
                 <div className="ml-10 flex items-baseline space-x-4">
                   <a href={createPageUrl("Home") + "#benefits"} className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Benefits</a>
-                  <Link to={createPageUrl("Community")} className="bg-gray-800 text-white px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                  <Link to={createPageUrl("Pricing")} className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pricing</Link>
+                  <Link href={createPageUrl("Community")} className="bg-gray-800 text-white px-3 py-2 rounded-md text-sm font-medium">Community</Link>
+                  <Link href={createPageUrl("Pricing")} className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pricing</Link>
                 </div>
               </div>
             </div>

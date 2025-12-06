@@ -1,4 +1,3 @@
-//admin/page
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -70,7 +69,7 @@ export default function AdminDashboard() {
   const [vcFirms, setVcFirms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerms, setSearchTerms] = useState({ ventures: '', users: '', messages: '', invitations: '', vcs: '' });
-  const router = useRouter();
+  const router = useRouter(); // <-- useRouter נדרש לניווט
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -129,39 +128,46 @@ export default function AdminDashboard() {
       try {
         const currentUser = await User.me();
         if (currentUser.role !== 'admin') {
-          navigate(createPageUrl('Home'));
+          // תיקון: החלפת navigate ב-router.push
+          router.push(createPageUrl('Home')); 
           return;
         }
         fetchData();
       } catch (error) {
-        navigate(createPageUrl('Home'));
+        // תיקון: החלפת navigate ב-router.push
+        router.push(createPageUrl('Home')); 
       }
     };
     checkAdmin();
-  }, [navigate]);
+    // תיקון: הסרת 'navigate' והוספת 'router' למערך התלויות
+  }, [router]); 
 
   const handleDeleteVenture = async (ventureId) => {
-    if (window.confirm('Are you sure you want to permanently delete this venture? This action cannot be undone.')) {
+    // תיקון: החלפת window.confirm/alert בהודעת קונסול זמנית
+    // יש להחליף זאת ב-UI מותאם אישית (מודאל) כפי שההנחיות דורשות.
+    if (confirm("TEMPORARY CONFIRMATION: Are you sure you want to permanently delete this venture? This action cannot be undone.")) {
       try {
         await Venture.delete(ventureId);
         setVentures(prev => prev.filter(v => v.id !== ventureId));
-        alert('Venture deleted successfully.');
+        console.log('Venture deleted successfully.');
       } catch (error) {
         console.error("Error deleting venture:", error);
-        alert('Failed to delete venture.');
+        console.error('Failed to delete venture.');
       }
     }
   };
 
   const handleDeleteMessage = async (messageId) => {
-    if (window.confirm('Are you sure you want to delete this message?')) {
+    // תיקון: החלפת window.confirm/alert בהודעת קונסול זמנית
+    // יש להחליף זאת ב-UI מותאם אישית (מודאל) כפי שההנחיות דורשות.
+    if (confirm('TEMPORARY CONFIRMATION: Are you sure you want to delete this message?')) {
       try {
         await VentureMessage.delete(messageId);
         setMessages(prev => prev.filter(m => m.id !== messageId));
-        alert('Message deleted successfully.');
+        console.log('Message deleted successfully.');
       } catch (error) {
         console.error("Error deleting message:", error);
-        alert('Failed to delete message.');
+        console.error('Failed to delete message.');
       }
     }
   };
@@ -171,9 +177,13 @@ export default function AdminDashboard() {
   };
 
   const handleVentureClick = (venture) => {
-    // Store the venture ID in localStorage so Dashboard can pick it up
-    localStorage.setItem('admin_selected_venture_id', venture.id);
-    navigate(createPageUrl('Dashboard'));
+    // הוספת בדיקה ל-window כדי למנוע קריסה פוטנציאלית אם הפונקציה נקראת בטעות בשרת
+    if (typeof window !== 'undefined') {
+        // Store the venture ID in localStorage so Dashboard can pick it up
+        localStorage.setItem('admin_selected_venture_id', venture.id); 
+    }
+    // תיקון: החלפת navigate ב-router.push
+    router.push(createPageUrl('Dashboard'));
   };
 
   const filteredVentures = useMemo(() => 

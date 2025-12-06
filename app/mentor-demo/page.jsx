@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { createPageUrl } from "@/lib/utils";
 import MentorButton from "@/components/mentor/MentorButton";
 import MentorModal from "@/components/mentor/MentorModal";
