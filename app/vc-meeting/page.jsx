@@ -79,7 +79,7 @@ export default function VCMeeting() {
     };
 
     loadMeetingData();
-  }, [navigate]);
+  }, [router]);
 
   const handleAnswerSubmit = () => {
     if (!currentAnswer.trim()) {

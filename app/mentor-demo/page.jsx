@@ -63,7 +63,7 @@ export default function MentorDemo() {
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <Link 
-              to={createPageUrl("Dashboard")} 
+              href={createPageUrl("Dashboard")} 
               className="text-indigo-600 hover:text-indigo-800 text-sm"
             >
               ← Back to Dashboard
