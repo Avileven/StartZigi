@@ -179,7 +179,7 @@ export default function MLPDevelopmentCenter() {
       });
       
       alert('MLP Development Complete!\n\nExcellent! Your MLP is complete. You have now entered the Beta phase.');
-      navigate(createPageUrl('Dashboard'));
+      router.push(createPageUrl('Dashboard'));
 
     } catch (error) {
       console.error("Error completing MLP:", error);

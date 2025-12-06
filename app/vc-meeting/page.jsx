@@ -39,7 +39,7 @@ export default function VCMeeting() {
 
         if (!vcFirmId) {
           alert('Invalid meeting link');
-          navigate(createPageUrl('Dashboard'));
+          router.push(createPageUrl('Dashboard'));
           return;
         }
 
@@ -47,7 +47,7 @@ export default function VCMeeting() {
         const firms = await VCFirm.filter({ id: vcFirmId });
         if (firms.length === 0) {
           alert('VC firm not found');
-          navigate(createPageUrl('Dashboard'));
+          router.push(createPageUrl('Dashboard'));
           return;
         }
         setVcFirm(firms[0]);
@@ -57,7 +57,7 @@ export default function VCMeeting() {
         const ventures = await Venture.filter({ created_by: currentUser.email });
         if (ventures.length === 0) {
           alert('No venture found');
-          navigate(createPageUrl('Dashboard'));
+          router.push(createPageUrl('Dashboard'));
           return;
         }
         setVenture(ventures[0]);
@@ -73,7 +73,7 @@ export default function VCMeeting() {
       } catch (error) {
         console.error('Error loading meeting data:', error);
         alert('Error loading meeting data');
-        navigate(createPageUrl('Dashboard'));
+        router.push(createPageUrl('Dashboard'));
       }
       setIsLoading(false);
     };
@@ -268,7 +268,7 @@ export default function VCMeeting() {
               </div>
 
               <div className="text-center pt-4">
-                <Button onClick={() => navigate(createPageUrl('Dashboard'))} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button onClick={() => router.push(createPageUrl('Dashboard'))} className="bg-indigo-600 hover:bg-indigo-700">
                   Return to Dashboard
                 </Button>
               </div>

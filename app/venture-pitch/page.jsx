@@ -138,7 +138,7 @@ export default function VenturePitchPage() {
 
             setPitchData(updatedPitchData);
             alert('Pitch finalized successfully!');
-            navigate(createPageUrl('Dashboard'));
+            router.push(createPageUrl('Dashboard'));
         } catch (error) {
             console.error("Error finalizing pitch:", error);
             alert("Failed to finalize pitch.");

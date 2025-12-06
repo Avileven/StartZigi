@@ -570,7 +570,7 @@ export default function BetaDevelopment() {
                     <div className="flex justify-between items-center pt-6">
                         <Button
                             variant="outline"
-                            onClick={() => navigate(createPageUrl("Dashboard"))}
+                            onClick={() => router.push(createPageUrl("Dashboard"))}
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Dashboard

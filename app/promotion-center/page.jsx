@@ -50,7 +50,7 @@ export default function PromotionCenter() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">No Venture Found</h2>
           <p className="text-gray-600 mb-6">Please create a venture before accessing the promotion center.</p>
-          <Button onClick={() => navigate(createPageUrl('CreateVenture'))}>Create Venture</Button>
+          <Button onClick={() => router.push(createPageUrl('CreateVenture'))}>Create Venture</Button>
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function PromotionCenter() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(createPageUrl('Dashboard'))} className="mb-6">
+        <Button variant="ghost" onClick={() => router.push(createPageUrl('Dashboard'))} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>
@@ -146,7 +146,7 @@ export default function PromotionCenter() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('Promotion?type=in-app'))}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(createPageUrl('Promotion?type=in-app'))}>
             <CardHeader>
               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-indigo-600" />
@@ -177,7 +177,7 @@ export default function PromotionCenter() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('Promotion?type=email'))}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(createPageUrl('Promotion?type=email'))}>
             <CardHeader>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <Mail className="w-6 h-6 text-green-600" />

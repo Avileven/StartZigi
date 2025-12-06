@@ -160,7 +160,7 @@ export default function MLPDevelopment() {
         priority: 3
       });
 
-      navigate(createPageUrl('Dashboard'));
+      router.push(createPageUrl('Dashboard'));
     } catch (error) {
       console.error("Error submitting MLP:", error);
       alert("Error submitting MLP. Please try again.");

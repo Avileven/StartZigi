@@ -68,8 +68,8 @@ const VCFirmContactModal = ({ firm, venture, canApply }) => {
         });
       }
       
-      // Redirect to dashboard
-      navigate(createPageUrl('Dashboard'));
+      // ✅ תיקון: החלפתי navigate ל-router.push
+      router.push(createPageUrl('Dashboard'));
 
     } catch (error) {
       console.error("Failed to send application:", error);
@@ -132,6 +132,7 @@ export default function VCFirmPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // ✅ כבר בתוך useEffect - זה בסדר
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
 

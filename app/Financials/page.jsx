@@ -119,7 +119,7 @@ export default function Financials() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(dashboardPath)} className="mb-6">
+        <Button variant="ghost" onClick={() => router.push(dashboardPath)} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>

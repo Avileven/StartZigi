@@ -235,7 +235,7 @@ export default function MVPDevelopment() {
       });
 
       alert("MVP submitted successfully! You can now proceed to Revenue Modeling.");
-      navigate(createPageUrl('Dashboard'));
+      router.push(createPageUrl('Dashboard'));
 
     } catch (error) {
       console.error("Error submitting MVP:", error);

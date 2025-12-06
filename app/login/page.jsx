@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirectPath, setRedirectPath] = useState('/dashboard');
+
+  // ✅ הזזתי את window.location ל-useEffect
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const redirect = searchParams.get('redirect') || '/dashboard';
+    setRedirectPath(redirect);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,9 +33,6 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      // Check if there's a redirect parameter
-      const searchParams = new URLSearchParams(window.location.search);
-      const redirectPath = searchParams.get('redirect') || '/dashboard';
       router.push(redirectPath);
     }
   };
