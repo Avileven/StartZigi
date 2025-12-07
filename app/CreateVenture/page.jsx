@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-// הסרת הייבוא השגוי של entities
-// import { Venture } from "@/api/entities";
-// import { VentureMessage } from "@/api/entities";
-// import { User } from "@/api/entities";
-
-// ייבוא supabase ואתנטיקציה ישירות
-import { supabase, auth } from "@/lib/supabase"; // ייבוא גם את supabase עצמו
-
+import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { Lightbulb, Rocket, ArrowRight } from "lucide-react";
+import { Lightbulb, Rocket, ArrowRight, AlertCircle } from "lucide-react";
 
 const SECTORS = [
   { value: "ai_deep_tech", label: "AI / Deep Tech" },
@@ -38,14 +31,21 @@ export default function CreateVenture() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [errorMessage, setErrorMessage] = useState(""); // ✅ הוספתי state לשגיאה
   const router = useRouter();
 
   const handleChange = (field, value) => {
     setVentureData(prev => ({ ...prev, [field]: value }));
+    // ✅ נקה שגיאה כשהמשתמש משנה את השם
+    if (field === "name" && errorMessage.includes("name")) {
+      setErrorMessage("");
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // ✅ נקה שגיאות קודמות
+    
     if (step < 3) {
       setStep(step + 1);
       return;
@@ -53,11 +53,26 @@ export default function CreateVenture() {
 
     setIsLoading(true);
     try {
-      const user = await auth.me(); // שימוש ב-auth.me כפי שמוגדר בפרויקט שלך
+      const user = await auth.me();
 
-      // לוודא שהמשתמש מחובר ויש לו פרטים רלוונטיים
       if (!user || !user.email || !user.id) {
           throw new Error("User not authenticated or user data missing.");
+      }
+
+      // ✅ בדיקה אם השם כבר קיים לפני היצירה
+      const { data: existingVentures, error: checkError } = await supabase
+        .from('ventures')
+        .select('id')
+        .eq('name', ventureData.name.trim())
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (existingVentures && existingVentures.length > 0) {
+        setErrorMessage(`The venture name "${ventureData.name}" is already taken. Please choose a different name.`);
+        setIsLoading(false);
+        setStep(1); // ✅ חזור לשלב הראשון כדי שהמשתמש יוכל לשנות את השם
+        return;
       }
       
       const generateScore = () => Math.floor(Math.random() * 30) + 70;
@@ -91,24 +106,31 @@ export default function CreateVenture() {
         funding_plan_completed: false,
         mvp_feedback_count: 0,
         pressure_challenge_completed: false,
-        created_by: user.email, // השדה created_by יהיה email של המשתמש
-        created_by_id: user.id // השדה created_by_id יהיה ה-ID של המשתמש
+        created_by: user.email,
+        created_by_id: user.id
       };
 
-      // יצירת Venture חדש באמצעות Supabase
       const { data: newVentures, error: ventureCreateError } = await supabase
         .from('ventures')
         .insert([venturePayload])
         .select()
         .single();
 
-      if (ventureCreateError) throw ventureCreateError;
-      const newVenture = newVentures; // Supabase מחזיר מערך של אובייקטים
+      // ✅ טיפול בשגיאת unique constraint מ-Supabase
+      if (ventureCreateError) {
+        if (ventureCreateError.code === '23505') { // PostgreSQL unique violation code
+          setErrorMessage(`The venture name "${ventureData.name}" is already taken. Please choose a different name.`);
+          setStep(1);
+          setIsLoading(false);
+          return;
+        }
+        throw ventureCreateError;
+      }
 
+      const newVenture = newVentures;
 
       const landingPageUrl = `${window.location.origin}/venture-landing?id=${newVenture.id}`;
 
-      // עדכון Venture באמצעות Supabase
       const { error: ventureUpdateError } = await supabase
         .from('ventures')
         .update({ landing_page_url: landingPageUrl })
@@ -116,7 +138,6 @@ export default function CreateVenture() {
 
       if (ventureUpdateError) throw ventureUpdateError;
 
-      // יצירת VentureMessage ראשון באמצעות Supabase
       const { error: message1Error } = await supabase
         .from('venture_messages')
         .insert([{
@@ -132,7 +153,6 @@ export default function CreateVenture() {
 
       if (message1Error) throw message1Error;
 
-      // יצירת VentureMessage שני באמצעות Supabase
       const { error: message2Error } = await supabase
         .from('venture_messages')
         .insert([{
@@ -152,7 +172,7 @@ export default function CreateVenture() {
 
     } catch (error) {
       console.error("Error creating venture:", error);
-      alert("There was an error creating your venture. Please try again. Error: " + (error.message || JSON.stringify(error)));
+      setErrorMessage("There was an error creating your venture. Please try again.");
     }
     setIsLoading(false);
   };
@@ -331,6 +351,16 @@ export default function CreateVenture() {
           </p>
         </div>
 
+        {/* ✅ הצגת הודעת שגיאה */}
+        {errorMessage && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-center text-2xl">Create Your Venture</CardTitle>
@@ -372,5 +402,3 @@ export default function CreateVenture() {
     </div>
   );
 }
-
-
