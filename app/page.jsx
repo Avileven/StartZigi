@@ -140,7 +140,7 @@ export default function Home() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp" style={{ animationDelay: '0.4s' }}>
               {user ? (
-                 <Link href="/CreateVenture">
+                 <Link href="/href="/create-venture">
                   <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
                     Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
