@@ -172,7 +172,7 @@ export default function Home() {
                     </Button>
                   </Link>
                 ) : (
-                  <Link href="/href="/create-venture">
+                  <Link href="/CreateVenture">
                     <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
                       Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
