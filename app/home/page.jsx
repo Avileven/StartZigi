@@ -140,9 +140,11 @@ export default function Home() {
                       <Button variant="ghost" onClick={handleLogin} className="text-white hover:bg-gray-700">
                         Login
                       </Button>
-                      <Button onClick={handleLogin} className="bg-indigo-600 hover:bg-indigo-700">
-                        Sign Up
+                      <Link href="/register">
+                      <Button className="bg-indigo-600 hover:bg-indigo-700">
+                      Sign Up
                       </Button>
+                      </Link>
                     </>
                   )}
               </div>
