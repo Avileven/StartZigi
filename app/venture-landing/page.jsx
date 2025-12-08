@@ -51,7 +51,7 @@ export default function VentureLanding() {
   const [mvpHtmlContents, setMvpHtmlContents] = useState({});
   const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [mlpHtmlContents, setMlpHtmlContents] = useState({});
-  const [businessPlanHtmlContents, setBusinessPlanHtmlContents] = useState({});
+  const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [hasLiked, setHasLiked] = useState(false);
 
@@ -132,7 +132,7 @@ export default function VentureLanding() {
           }
 
           if (loadedVenture.business_plan_data?.uploaded_files) {
-            await loadHtmlFiles(loadedVenture.business_plan_data.uploaded_files, setBusinessPlanHtmlContents, 'Business Plan');
+            await loadHtmlFiles(loadedVenture.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, 'Business Plan');
           }
         }
       }

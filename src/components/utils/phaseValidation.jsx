@@ -1,4 +1,4 @@
-import { BusinessPlan } from '@/api/entities.js';
+import { businessPlan } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
 
 // Centralized phase validation logic
@@ -14,7 +14,7 @@ export const validatePhaseTransition = async (venture, targetPhase, additionalDa
           valid: false, 
           message: 'Business Plan must be 100% complete before proceeding to MVP phase.',
           requiredAction: 'Complete your Business Plan',
-          redirectTo: 'BusinessPlan'
+          redirectTo: 'businessPlan'
         };
       }
       return { valid: true };

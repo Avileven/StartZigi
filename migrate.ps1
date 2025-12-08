@@ -47,7 +47,7 @@ Write-Host "`nCopying pages..." -ForegroundColor Yellow
 $pageMappings = @(
     @{Source="Home.jsx"; Target="home"},
     @{Source="Dashboard.jsx"; Target="dashboard"},
-    @{Source="BusinessPlan.jsx"; Target="business-plan"},
+    @{Source="businessPlan.jsx"; Target="business-plan"},
     @{Source="AngelArena.jsx"; Target="angel-arena"},
     @{Source="VCMarketplace.jsx"; Target="vc-marketplace"},
     @{Source="InviteCoFounder.jsx"; Target="invite-cofounder"},

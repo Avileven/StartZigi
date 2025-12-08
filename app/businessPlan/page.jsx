@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
-import { BusinessPlan as BusinessPlanEntity } from "@/api/entities";
+import { businessPlan as businessPlanEntity } from "@/api/entities";
 import { Budget } from "@/api/entities";
 import { Venture } from "@/api/entities";
 import { VentureMessage } from "@/api/entities";
@@ -16,7 +16,7 @@ import MentorButton from "@/components/mentor/MentorButton";
 import MentorModal from "@/components/mentor/MentorModal";
 import StaticGuidanceViewer from "@/components/mentor/StaticGuidanceViewer";
 
-export default function BusinessPlan() {
+export default function businessPlan() {
   const [venture, setVenture] = useState(null);
   const [mission, setMission] = useState("");
   const [problem, setProblem] = useState("");
@@ -75,7 +75,7 @@ export default function BusinessPlan() {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
 
-        const existingPlans = await BusinessPlanEntity.filter({ venture_id: currentVenture.id });
+        const existingPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
 
         if (existingPlans.length > 0) {
           const plan = existingPlans[0];
@@ -236,11 +236,11 @@ export default function BusinessPlan() {
         completion_percentage: calculateCompletion()
       };
 
-      const existingPlans = await BusinessPlanEntity.filter({ venture_id: venture.id });
+      const existingPlans = await businessPlanEntity.filter({ venture_id: venture.id });
       if (existingPlans.length > 0) {
-        await BusinessPlanEntity.update(existingPlans[0].id, planData);
+        await businessPlanEntity.update(existingPlans[0].id, planData);
       } else {
-        await BusinessPlanEntity.create(planData);
+        await businessPlanEntity.create(planData);
       }
 
       const budgetData = {

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
-import { BusinessPlan } from '@/api/entities.js';
+import { businessPlan } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -47,7 +47,7 @@ export default function VenturePitchPage() {
                 const currentVenture = ventures[0];
                 setVenture(currentVenture);
                 
-                const businessPlans = await BusinessPlan.filter({ venture_id: currentVenture.id });
+                const businessPlans = await businessPlan.filter({ venture_id: currentVenture.id });
                 const businessPlan = businessPlans.length > 0 ? businessPlans[0] : null;
 
                 setPitchData(prev => ({

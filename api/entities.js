@@ -128,7 +128,7 @@ class UserEntity extends Entity {
 export const Venture = new Entity('ventures')
 export const User = new UserEntity()
 export const VentureMessage = new Entity('venture_messages')
-export const BusinessPlan = new Entity('business_plans')
+export const businessPlan = new Entity('business_plans')
 export const BetaTester = new Entity('beta_testers')
 export const Budget = new Entity('budgets')
 export const CoFounderInvitation = new Entity('co_founder_invitations')

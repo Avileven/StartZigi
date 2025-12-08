@@ -490,7 +490,7 @@ export default function Dashboard() {
         id: 'business_plan',
         title: 'Business Plan',
         icon: FileText,
-        page: 'BusinessPlan'
+        page: 'businessPlan'
       });
       
       assets.push({
