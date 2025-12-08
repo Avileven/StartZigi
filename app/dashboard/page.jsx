@@ -488,14 +488,14 @@ export default function Dashboard() {
       id: 'edit_landing_page',
       title: 'Edit Landing Page',
       icon: Lightbulb,
-      page: 'EditLandingPage' // createPageUrl will convert to /editlandingpage
+      page: 'editlandingpage' // createPageUrl will convert to /editlandingpage
     });
     
     assets.push({
       id: 'financials',
       title: 'Financials',
       icon: Wallet,
-      page: 'Financials' // createPageUrl will convert to /financials
+      page: 'financials' // createPageUrl will convert to /financials
     });
     
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
@@ -510,14 +510,14 @@ export default function Dashboard() {
         id: 'invite_cofounder',
         title: 'Invite Co-Founder',
         icon: UserPlus,
-        page: 'InviteCoFounder' // createPageUrl will convert to /invitecofounder
+        page: 'invitecofounder' // createPageUrl will convert to /invitecofounder
       });
       
       assets.push({
         id: 'promotion_center',
         title: 'Promotion Center',
         icon: Megaphone,
-        page: 'PromotionCenter' // createPageUrl will convert to /promotioncenter
+        page: 'promotioncenter' // createPageUrl will convert to /promotioncenter
       });
     }
 
@@ -526,7 +526,7 @@ export default function Dashboard() {
         id: 'mvp_development',
         title: 'MVP Development Center',
         icon: Rocket,
-        page: 'MVPDevelopment' // createPageUrl will convert to /mvpdevelopment
+        page: 'mvpdevelopment' // createPageUrl will convert to /mvpdevelopment
       });
     }
 
@@ -535,7 +535,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'RevenueModeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenuemodeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -545,7 +545,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'RevenueModeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenuemodeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -556,7 +556,7 @@ export default function Dashboard() {
           id: 'mlp_development_center',
           title: 'MLP Development Center',
           icon: Heart,
-          page: 'MLPDevelopmentCenter' // createPageUrl will convert to /mlpdevelopmentcenter
+          page: 'mlpdevelopmentCenter' // createPageUrl will convert to /mlpdevelopmentcenter
         });
       }
 
@@ -564,7 +564,7 @@ export default function Dashboard() {
         id: 'product_feedback',
         title: 'Product Feedback Center',
         icon: MessageSquare,
-        page: 'ProductFeedback' // createPageUrl will convert to /productfeedback
+        page: 'productfeedback' // createPageUrl will convert to /productfeedback
       });
     }
 
@@ -573,14 +573,14 @@ export default function Dashboard() {
         id: 'beta_development',
         title: 'Beta Testing Page',
         icon: FlaskConical,
-        page: 'BetaDevelopment' // createPageUrl will convert to /betadevelopment
+        page: 'betadevelopment' // createPageUrl will convert to /betadevelopment
       });
       
       assets.push({
         id: 'venture_pitch',
         title: 'Venture Pitch',
         icon: TrendingUp,
-        page: 'VenturePitch' // createPageUrl will convert to /venturepitch
+        page: 'venturepitch' // createPageUrl will convert to /venturepitch
       });
     }
 
