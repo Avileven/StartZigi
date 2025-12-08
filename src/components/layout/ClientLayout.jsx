@@ -37,11 +37,11 @@ const getNavigationItems = (venture) => {
   const currentPhase = venture ? venture.phase : "idea";
 
   const allItems = [
-    { title: "Home", url: createPageUrl("Home"), icon: Home, alwaysActive: true },
-    { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, alwaysActive: true },
+    { title: "Home", url: createPageUrl("home"), icon: Home, alwaysActive: true },
+    { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
     { title: "Beta Page", url: venture ? createPageUrl(`BetaTesting?id=${venture.id}`) : "#", icon: FlaskConical, phases: ["beta", "growth"] },
-    { title: "Angel Arena", url: createPageUrl("AngelArena"), icon: Users, phases: ["mvp", "mlp", "beta", "growth"] },
-    { title: "VC Marketplace", url: createPageUrl("VCMarketplace"), icon: DollarSign, feature: "vc_marketplace" },
+    { title: "Angel Arena", url: createPageUrl("angelArena"), icon: Users, phases: ["mvp", "mlp", "beta", "growth"] },
+    { title: "VC Marketplace", url: createPageUrl("vcmarketplace"), icon: DollarSign, feature: "vc_marketplace" },
   ];
 
   return allItems.filter((item) => {
@@ -124,7 +124,7 @@ export default function ClientLayout({ children }) {
                     <SidebarMenu>
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${pathname === createPageUrl("Home") ? "bg-indigo-50 text-indigo-700" : "hover:bg-indigo-50 hover:text-indigo-700"}`}>
-                          <Link href={createPageUrl("Home")} className="flex items-center gap-3 px-3 py-2">
+                          <Link href={createPageUrl("home")} className="flex items-center gap-3 px-3 py-2">
                             <Home className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Home</span>
                           </Link>
@@ -133,7 +133,7 @@ export default function ClientLayout({ children }) {
 
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${pathname === createPageUrl("Dashboard") ? "bg-indigo-50 text-indigo-700" : "hover:bg-indigo-50 hover:text-indigo-700"}`}>
-                          <Link href={createPageUrl("Dashboard")} className="flex items-center gap-3 px-3 py-2">
+                          <Link href={createPageUrl("dashboard")} className="flex items-center gap-3 px-3 py-2">
                             <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Dashboard</span>
                           </Link>

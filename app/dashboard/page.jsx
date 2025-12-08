@@ -488,7 +488,7 @@ export default function Dashboard() {
       id: 'edit_landing_page',
       title: 'Edit Landing Page',
       icon: Lightbulb,
-      page: 'editlandingpage' // createPageUrl will convert to /editlandingpage
+      page: 'edit-landing-page' // createPageUrl will convert to /editlandingpage
     });
     
     assets.push({
@@ -517,7 +517,7 @@ export default function Dashboard() {
         id: 'promotion_center',
         title: 'Promotion Center',
         icon: Megaphone,
-        page: 'promotioncenter' // createPageUrl will convert to /promotioncenter
+        page: 'promotion-center' // createPageUrl will convert to /promotioncenter
       });
     }
 
@@ -526,7 +526,7 @@ export default function Dashboard() {
         id: 'mvp_development',
         title: 'MVP Development Center',
         icon: Rocket,
-        page: 'mvpdevelopment' // createPageUrl will convert to /mvpdevelopment
+        page: 'mvp-development' // createPageUrl will convert to /mvpdevelopment
       });
     }
 
@@ -556,7 +556,7 @@ export default function Dashboard() {
           id: 'mlp_development_center',
           title: 'MLP Development Center',
           icon: Heart,
-          page: 'mlpdevelopmentCenter' // createPageUrl will convert to /mlpdevelopmentcenter
+          page: 'mlp-development-center' // createPageUrl will convert to /mlpdevelopmentcenter
         });
       }
 
@@ -564,7 +564,7 @@ export default function Dashboard() {
         id: 'product_feedback',
         title: 'Product Feedback Center',
         icon: MessageSquare,
-        page: 'productfeedback' // createPageUrl will convert to /productfeedback
+        page: 'product-feedback' // createPageUrl will convert to /productfeedback
       });
     }
 
@@ -573,14 +573,14 @@ export default function Dashboard() {
         id: 'beta_development',
         title: 'Beta Testing Page',
         icon: FlaskConical,
-        page: 'betadevelopment' // createPageUrl will convert to /betadevelopment
+        page: 'beta-development' // createPageUrl will convert to /betadevelopment
       });
       
       assets.push({
         id: 'venture_pitch',
         title: 'Venture Pitch',
         icon: TrendingUp,
-        page: 'venturepitch' // createPageUrl will convert to /venturepitch
+        page: 'venture-pitch' // createPageUrl will convert to /venturepitch
       });
     }
 
