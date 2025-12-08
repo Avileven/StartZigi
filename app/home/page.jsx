@@ -128,7 +128,7 @@ export default function Home() {
                     <>
                       <Link href="/dashboard">
                         <Button className="bg-indigo-600 hover:bg-indigo-700">
-                          Go to Dashboard
+                          Go to dashboard
                         </Button>
                       </Link>
                       <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-gray-700">
@@ -168,7 +168,7 @@ export default function Home() {
                 hasVenture ? (
                   <Link href="/dashboard">
                     <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
-                      Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                      Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
                 ) : (

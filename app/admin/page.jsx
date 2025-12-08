@@ -129,13 +129,13 @@ export default function AdminDashboard() {
         const currentUser = await User.me();
         if (currentUser.role !== 'admin') {
           // תיקון: החלפת navigate ב-router.push
-          router.push(createPageUrl('Home')); 
+          router.push(createPageUrl('home')); 
           return;
         }
         fetchData();
       } catch (error) {
         // תיקון: החלפת navigate ב-router.push
-        router.push(createPageUrl('Home')); 
+        router.push(createPageUrl('home')); 
       }
     };
     checkAdmin();

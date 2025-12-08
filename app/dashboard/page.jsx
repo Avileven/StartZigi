@@ -503,14 +503,14 @@ export default function Dashboard() {
         id: 'business_plan',
         title: 'Business Plan',
         icon: FileText,
-        page: 'BusinessPlan' // createPageUrl will convert to /businessplan
+        page: 'businessPlan' // createPageUrl will convert to /businessplan
       });
       
       assets.push({
         id: 'invite_cofounder',
         title: 'Invite Co-Founder',
         icon: UserPlus,
-        page: 'invitecofounder' // createPageUrl will convert to /invitecofounder
+        page: 'invite-cofounder' // createPageUrl will convert to /invitecofounder
       });
       
       assets.push({
