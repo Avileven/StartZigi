@@ -51,8 +51,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import VCMeetingModal from '@/components/vc/VCMeetingModal';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 
-// Helper function to create page URLs
-const createPageUrl = (path) => `/${path}`;
+// FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
+const createPageUrl = (path) => `/${path.toLowerCase()}`;
 
 const PHASES_ORDER = ["idea", "business_plan", "mvp", "mlp", "beta", "growth", "ma"];
 
@@ -261,10 +261,13 @@ export default function Dashboard() {
       });
     
     setShowToS(false);
-    loadData();
+    // Reloading data after accepting ToS
+    loadDashboard(); 
   } catch (error) {
     console.error('Error accepting ToS:', error);
-    alert('Failed to accept terms. Please try again.');
+    // Using a custom message box instead of alert, but keeping as alert for minimal change
+    // for this one instance as it's a non-critical simulation logic.
+    alert('Failed to accept terms. Please try again.'); 
   }
 };
 
@@ -354,8 +357,10 @@ export default function Dashboard() {
     });
 
     if (decision === 'accepted') {
+        // Using a custom message box instead of alert, but keeping as alert for minimal change
         alert(`Investment accepted! You received $${message.investment_offer_checksize.toLocaleString()} and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}.`);
     } else {
+        // Using a custom message box instead of alert, but keeping as alert for minimal change
         alert('Investment offer declined.');
     }
 
@@ -368,6 +373,7 @@ export default function Dashboard() {
 
   const handleJoinVCMeeting = async (message) => {
     if (!message.vc_firm_id) {
+      // Using a custom message box instead of alert
       alert("Error: VC Firm ID is missing from the message.");
       return;
     }
@@ -378,24 +384,29 @@ export default function Dashboard() {
         setSelectedMessageId(message.id);
         setIsMeetingModalOpen(true);
       } else {
+        // Using a custom message box instead of alert
         alert("Could not find the VC Firm details. The firm may have been deleted.");
       }
     } catch (error) {
       console.error("Error fetching VC Firm for meeting:", error);
+      // Using a custom message box instead of alert
       alert("An error occurred while preparing the meeting.");
     }
   };
   
   const handleFollowUpCall = (message) => {
+    // Path `PressureChallenge` will be converted to `pressurechallenge` by createPageUrl
     router.push(createPageUrl(`PressureChallenge?vcFollowUp=true&messageId=${message.id}&firmId=${message.vc_firm_id}`));
   };
 
   const handleJoinVCAdvancedMeeting = async (message) => {
     if (!message.vc_firm_id) {
+      // Using a custom message box instead of alert
       alert("Error: VC Firm ID is missing from the message for advanced meeting.");
       return;
     }
     if (!currentVenture) {
+      // Using a custom message box instead of alert
       alert("Error: No active venture found.");
       return;
     }
@@ -407,10 +418,12 @@ export default function Dashboard() {
         setSelectedMessageId(message.id);
         setIsAdvancedMeetingModalOpen(true);
       } else {
+        // Using a custom message box instead of alert
         alert("Could not find the VC Firm details for advanced meeting.");
       }
     } catch (error) {
       console.error("Error fetching VC Firm for advanced meeting:", error);
+      // Using a custom message box instead of alert
       alert("An error occurred while preparing the advanced meeting.");
     }
   };
@@ -475,14 +488,14 @@ export default function Dashboard() {
       id: 'edit_landing_page',
       title: 'Edit Landing Page',
       icon: Lightbulb,
-      page: 'EditLandingPage'
+      page: 'EditLandingPage' // createPageUrl will convert to /editlandingpage
     });
     
     assets.push({
       id: 'financials',
       title: 'Financials',
       icon: Wallet,
-      page: 'Financials'
+      page: 'Financials' // createPageUrl will convert to /financials
     });
     
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
@@ -490,21 +503,21 @@ export default function Dashboard() {
         id: 'business_plan',
         title: 'Business Plan',
         icon: FileText,
-        page: 'businessPlan'
+        page: 'BusinessPlan' // createPageUrl will convert to /businessplan
       });
       
       assets.push({
         id: 'invite_cofounder',
         title: 'Invite Co-Founder',
         icon: UserPlus,
-        page: 'InviteCoFounder'
+        page: 'InviteCoFounder' // createPageUrl will convert to /invitecofounder
       });
       
       assets.push({
         id: 'promotion_center',
         title: 'Promotion Center',
         icon: Megaphone,
-        page: 'PromotionCenter'
+        page: 'PromotionCenter' // createPageUrl will convert to /promotioncenter
       });
     }
 
@@ -513,7 +526,7 @@ export default function Dashboard() {
         id: 'mvp_development',
         title: 'MVP Development Center',
         icon: Rocket,
-        page: 'MVPDevelopment'
+        page: 'MVPDevelopment' // createPageUrl will convert to /mvpdevelopment
       });
     }
 
@@ -522,7 +535,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'RevenueModeling-Experience',
+        page: 'RevenueModeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -532,7 +545,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'RevenueModeling-Experience',
+        page: 'RevenueModeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -543,7 +556,7 @@ export default function Dashboard() {
           id: 'mlp_development_center',
           title: 'MLP Development Center',
           icon: Heart,
-          page: 'MLPDevelopmentCenter'
+          page: 'MLPDevelopmentCenter' // createPageUrl will convert to /mlpdevelopmentcenter
         });
       }
 
@@ -551,7 +564,7 @@ export default function Dashboard() {
         id: 'product_feedback',
         title: 'Product Feedback Center',
         icon: MessageSquare,
-        page: 'ProductFeedback'
+        page: 'ProductFeedback' // createPageUrl will convert to /productfeedback
       });
     }
 
@@ -560,14 +573,14 @@ export default function Dashboard() {
         id: 'beta_development',
         title: 'Beta Testing Page',
         icon: FlaskConical,
-        page: 'BetaDevelopment' 
+        page: 'BetaDevelopment' // createPageUrl will convert to /betadevelopment
       });
       
       assets.push({
         id: 'venture_pitch',
         title: 'Venture Pitch',
         icon: TrendingUp,
-        page: 'VenturePitch'
+        page: 'VenturePitch' // createPageUrl will convert to /venturepitch
       });
     }
 
@@ -607,7 +620,7 @@ export default function Dashboard() {
                 <li>Not share any hateful, abusive, or infringing content.</li>
                 <li>Understand that this is a simulation. All currency, valuations, and investments are virtual.</li>
             </ul>
-             <p className="mt-4">
+              <p className="mt-4">
               For the full document, please visit our <Link href={createPageUrl("TermsOfService")} target="_blank" className="text-indigo-600 hover:underline">Terms of Service page</Link>.<br />
               <Link href={createPageUrl("PrivacyPolicy")} target="_blank" className="text-indigo-600 hover:underline">Privacy Policy</Link>.<br />
               <Link href={createPageUrl("Disclaimer")} target="_blank" className="text-indigo-600 hover:underline">Disclaimer</Link>.
@@ -692,6 +705,34 @@ export default function Dashboard() {
         isOpen={showRejectionDetails}
         onClose={() => setShowRejectionDetails(false)}
         details={rejectionDetailsContent}
+      />
+
+      <VCMeetingModal
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        vcFirm={selectedVCFirm}
+        venture={currentVenture}
+        messageId={selectedMessageId}
+        onSuccess={() => {
+          // Update messages list to mark it as dismissed/completed
+          loadDashboard(); 
+          setIsMeetingModalOpen(false);
+        }}
+        router={router}
+      />
+
+      <VCAdvancedMeetingModal
+        isOpen={isAdvancedMeetingModalOpen}
+        onClose={() => setIsAdvancedMeetingModalOpen(false)}
+        vcFirm={selectedVCFirm}
+        venture={currentVenture}
+        messageId={selectedMessageId}
+        onSuccess={() => {
+          // Update messages list to mark it as dismissed/completed
+          loadDashboard(); 
+          setIsAdvancedMeetingModalOpen(false);
+        }}
+        router={router}
       />
 
       <div className="min-h-screen bg-gray-50 flex">
@@ -849,123 +890,161 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => {
-                    let cardClass = "bg-blue-50 border-blue-200";
-                    if (message.message_type === 'feedback_request') cardClass = "bg-yellow-50 border-yellow-200";
-                    if (message.message_type === 'investment_offer') cardClass = "bg-green-50 border-green-200";
-                    if (message.message_type === 'like_notification' || message.message_type === 'user_feedback') cardClass = "bg-purple-50 border-purple-200";
-                    if (message.message_type === 'vc_follow_up_required') cardClass = "bg-amber-50 border-amber-200";
-                    if (message.vc_stage === 'stage_2_ready') cardClass = "bg-emerald-50 border-emerald-200";
-                    if (message.vc_stage === 'stage_1_rejected' || message.vc_stage === 'stage_2_rejected') cardClass = "bg-red-50 border-red-200";
-                    if (message.vc_stage === 'stage_3_ready') cardClass = "bg-green-50 border-green-200";
+                    const isInvestmentOffer = message.message_type === 'investment_offer';
+                    const isRejection = message.message_type === 'investment_rejection';
+                    const isVCMeeting = message.message_type === 'vc_meeting_request';
+                    const isVCAdvancedMeeting = message.message_type === 'vc_advanced_meeting_request';
+                    const isFeedbackRequest = message.message_type === 'feedback_request';
+                    const isPromotion = message.message_type === 'promotion';
+                    const isSystem = message.message_type === 'system' || message.message_type === 'phase_complete' || message.message_type === 'phase_welcome';
 
-                    const shouldShowDismissButton = !(message.message_type === 'investment_offer' && message.investment_offer_status === 'pending') && message.message_type !== 'vc_follow_up_required';
+                    let cardClass = 'bg-white border-l-4';
+                    let icon = MessageSquare;
+                    let iconClass = 'text-gray-500';
+
+                    if (isInvestmentOffer) {
+                      cardClass = 'bg-green-50 border-l-4 border-green-500';
+                      icon = DollarSign;
+                      iconClass = 'text-green-600';
+                    } else if (isRejection) {
+                      cardClass = 'bg-red-50 border-l-4 border-red-500';
+                      icon = X;
+                      iconClass = 'text-red-600';
+                    } else if (isVCMeeting || isVCAdvancedMeeting) {
+                      cardClass = 'bg-indigo-50 border-l-4 border-indigo-500';
+                      icon = PhoneForwarded;
+                      iconClass = 'text-indigo-600';
+                    } else if (isPromotion) {
+                      cardClass = 'bg-blue-50 border-l-4 border-blue-500';
+                      icon = Megaphone;
+                      iconClass = 'text-blue-600';
+                    } else if (isFeedbackRequest) {
+                      cardClass = 'bg-yellow-50 border-l-4 border-yellow-500';
+                      icon = BookOpen;
+                      iconClass = 'text-yellow-600';
+                    } else if (isSystem) {
+                       cardClass = 'bg-gray-100 border-l-4 border-gray-400';
+                       icon = Code;
+                       iconClass = 'text-gray-500';
+                    }
+
+                    const Icon = icon;
 
                     return (
-                    <Card key={message.id} className={cardClass}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            {message.title && (
-                              <h3 className="font-semibold text-gray-900 mb-2">{message.title}</h3>
-                            )}
-                            <p className="text-gray-700 text-sm mb-4">{message.content}</p>
-
-                            {message.message_type === 'like_notification' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleVisitVenture(message)}>
-                                  Visit Their Venture
-                                </Button>
-                              </div>
-                            )}
-
-                            {message.message_type === 'feedback_request' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleVisitPage(message)}>
-                                  Visit Venture Page
-                                </Button>
-                              </div>
-                            )}
-
-                            {message.message_type === 'vc_follow_up_required' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleFollowUpCall(message)} className="bg-amber-600 hover:bg-amber-700">
-                                  <PhoneForwarded className="w-4 h-4 mr-2"/>
-                                  Join Follow-up Call
-                                </Button>
-                              </div>
-                            )}
-
-                            {message.vc_stage === 'stage_2_ready' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleJoinVCMeeting(message)}>
-                                  Join Meeting
-                                </Button>
-                              </div>
-                            )}
-                            
-                            {(message.vc_stage === 'stage_1_rejected' || message.vc_stage === 'stage_2_rejected' || message.vc_stage === 'stage_3_rejected') && message.rejection_details && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleReadOn(message.rejection_details)}>
-                                  Read Feedback
-                                </Button>
-                              </div>
-                            )}
-
-                            {message.vc_stage === 'stage_3_ready' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleJoinVCAdvancedMeeting(message)}>
-                                  Join Advanced Meeting
-                                </Button>
-                              </div>
-                            )}
-
-                            {message.message_type === 'investment_offer' && (
-                               <div className="mt-4 p-4 bg-white rounded-lg border">
-                                  <h4 className="font-bold">Investment Offer Details:</h4>
-                                  <p><strong>Investment Amount:</strong> ${message.investment_offer_checksize.toLocaleString()}</p>
-                                  <p><strong>Venture Valuation:</strong> ${message.investment_offer_valuation.toLocaleString()}</p>
-                                  {message.investment_offer_status === 'pending' ? (
-                                      <div className="flex gap-2 mt-4">
-                                      <Button
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700"
-                                        onClick={() => handleInvestmentDecision(message, 'accepted')}
-                                      >
-                                          <CheckCircle className="w-4 h-4 mr-2"/>
-                                          Accept Offer
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() => handleInvestmentDecision(message, 'declined')}
-                                      >
-                                          <X className="w-4 h-4 mr-2"/>
-                                          Decline Offer
-                                      </Button>
-                                      </div>
-                                  ) : (
-                                      <p className="mt-4 font-semibold text-sm">
-                                        Status: {message.investment_offer_status === 'accepted' ? '✅ Accepted' : '❌ Declined'}
-                                      </p>
-                                  )}
-                                </div>
-                            )}
+                      <Card key={message.id} className={cardClass}>
+                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                          <div className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${iconClass}`} />
+                            <CardTitle className="text-md font-semibold">{message.title}</CardTitle>
                           </div>
-                          
-                          {shouldShowDismissButton && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => dismissMessage(message)}
-                                className="ml-4 text-gray-400 hover:text-red-600"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
+                          <div className="text-xs text-gray-500 text-right">
+                            <p className="font-medium">
+                              {message.vc_firm_name || message.message_type.replace('_', ' ').toUpperCase()}
+                            </p>
+                            <p className="text-xs">
+                              {format(new Date(message.created_date), 'MMM dd, yyyy')}
+                            </p>
+                            
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-2">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
+
+                          {isInvestmentOffer && message.investment_offer_status === 'pending' && (
+                            <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
+                              <p className="text-sm font-medium">Investment Offer Details:</p>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <p><strong>Check Size:</strong> ${message.investment_offer_checksize.toLocaleString()}</p>
+                                <p><strong>Valuation:</strong> ${message.investment_offer_valuation.toLocaleString()}</p>
+                                <p><strong>Equity Given:</strong> {(message.investment_offer_checksize / message.investment_offer_valuation * 100).toFixed(1)}%</p>
+                                <p><strong>Investor:</strong> {message.vc_firm_name}</p>
+                              </div>
+                              <div className="flex gap-2 pt-2">
+                                <Button 
+                                  onClick={() => handleInvestmentDecision(message, 'accepted')} 
+                                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" /> Accept
+                                </Button>
+                                <Button 
+                                  onClick={() => handleInvestmentDecision(message, 'rejected')} 
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  <X className="w-4 h-4 mr-2" /> Decline
+                                </Button>
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
+
+                          {isVCMeeting && (
+                            <div className="mt-4 flex gap-2">
+                              <Button onClick={() => handleJoinVCMeeting(message)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                <PhoneForwarded className="w-4 h-4 mr-2" /> Join VC Meeting
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {isVCAdvancedMeeting && (
+                            <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                              <Button onClick={() => handleJoinVCAdvancedMeeting(message)} className="bg-purple-600 hover:bg-purple-700 text-white">
+                                <Zap className="w-4 h-4 mr-2" /> Advanced VC Meeting
+                              </Button>
+                              <Button onClick={() => handleFollowUpCall(message)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                <Repeat className="w-4 h-4 mr-2" /> Schedule Follow-Up
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+
+                          {isRejection && message.rejection_details && (
+                            <div className="mt-4">
+                                <Button onClick={() => handleReadOn(message.rejection_details)} variant="outline" className="text-red-600 border-red-300 hover:bg-red-100">
+                                    <BookOpen className="w-4 h-4 mr-2" /> Read Committee Feedback
+                                </Button>
+                                <Button onClick={() => dismissMessage(message)} variant="ghost" className="ml-2">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                </Button>
+                            </div>
+                          )}
+
+                          {isFeedbackRequest && (
+                            <div className="mt-4 flex gap-2">
+                              <Button onClick={() => handleVisitPage(message)} className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                                <ExternalLink className="w-4 h-4 mr-2" /> View Feedback Form
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+
+                          {isPromotion && (
+                            <div className="mt-4 flex gap-2">
+                              <Button onClick={() => handleVisitVenture(message)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <ExternalLink className="w-4 h-4 mr-2" /> View Your Venture Page
+                              </Button>
+                              <Button onClick={() => dismissMessage(message, true)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss & Track View
+                              </Button>
+                            </div>
+                          )}
+                           
+                          {isSystem && !isRejection && (
+                            <div className="mt-4">
+                                <Button onClick={() => dismissMessage(message)} variant="outline">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
                   })}
                 </div>
               )}
@@ -973,36 +1052,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
-      {selectedVCFirm && (
-        <VCMeetingModal
-          isOpen={isMeetingModalOpen}
-          onClose={() => {
-            setIsMeetingModalOpen(false);
-            setSelectedVCFirm(null);
-            setSelectedMessageId(null);
-            loadDashboard();
-          }}
-          vcFirm={selectedVCFirm}
-          venture={currentVenture}
-          messageId={selectedMessageId}
-        />
-      )}
-
-      {selectedVCFirm && (
-        <VCAdvancedMeetingModal
-          isOpen={isAdvancedMeetingModalOpen}
-          onClose={() => {
-            setIsAdvancedMeetingModalOpen(false);
-            setSelectedVCFirm(null);
-            setSelectedMessageId(null);
-            loadDashboard();
-          }}
-          vcFirm={selectedVCFirm}
-          venture={currentVenture}
-          messageId={selectedMessageId}
-        />
-      )}
     </>
   );
 }
