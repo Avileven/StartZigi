@@ -40,7 +40,7 @@ const getNavigationItems = (venture) => {
     { title: "Home", url: createPageUrl("home"), icon: Home, alwaysActive: true },
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
     { title: "Beta Page", url: venture ? createPageUrl(`BetaTesting?id=${venture.id}`) : "#", icon: FlaskConical, phases: ["beta", "growth"] },
-    { title: "Angel Arena", url: createPageUrl("angel-arena"), icon: Users, phases: ["mvp", "mlp", "beta", "growth"] },
+    { title: "Angel Arena", url: createPageUrl("angelArena"), icon: Users, phases: ["mvp", "mlp", "beta", "growth"] },
     { title: "VC Marketplace", url: createPageUrl("vcmarketplace"), icon: DollarSign, feature: "vc_marketplace" },
   ];
 
