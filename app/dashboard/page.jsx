@@ -535,7 +535,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'revenuemodeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -545,7 +545,7 @@ export default function Dashboard() {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'revenuemodeling-Experience', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -823,7 +823,7 @@ export default function Dashboard() {
                   <Link href={createPageUrl('InviteCoFounder')}>
                     <Button size="sm" variant="outline" className="w-full border-amber-300 hover:bg-amber-100 mt-2">
                       <UserPlus className="w-3 h-3 mr-2" />
-                      Invite Co-Founder
+                      invite-cofounder
                     </Button>
                   </Link>
                 </div>
