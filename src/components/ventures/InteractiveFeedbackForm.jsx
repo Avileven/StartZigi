@@ -38,36 +38,50 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
   const handleAddSuggestedFeature = async () => {
     if (!newFeatureName.trim()) return;
 
+    setIsSubmitting(true);
     try {
       let currentUser = null;
       try {
         currentUser = await User.me();
       } catch (error) { /* User not logged in */ }
 
+      // יצירת שדות מערכת חובה בהתאם לסכמה
+      const now = new Date().toISOString();
+      const newId = crypto.randomUUID(); 
+      const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
+      const createdById = currentUser ? currentUser.id : null; 
+
       await SuggestedFeature.create({
+        // שדות חובה חדשים
+        id: newId, 
+        created_date: now,
+        updated_date: now,
+        created_by: createdByEmail,
+        created_by_id: createdById,
+        // שדות קיימים
         venture_id: venture.id,
         feature_name: newFeatureName,
-        user_email: currentUser ? currentUser.email : null
+        user_email: createdByEmail
       });
 
       setNewFeatureName('');
-      alert('Feature suggestion added successfully!');
+      console.log('Feature suggestion added successfully!'); // הוחלף מ-alert
     } catch (error) {
       console.error('Error adding suggested feature:', error);
-      alert('Error adding feature suggestion. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     if (Object.keys(feedbackData).length === 0) {
-      alert("Please provide some feedback before submitting.");
+      console.log("Please provide some feedback before submitting."); // הוחלף מ-alert
       return;
     }
     setIsSubmitting(true);
 
     try {
-      const submissionId = `submission_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const submissionId = crypto.randomUUID();
       let currentUser = null;
       try {
         currentUser = await User.me();
@@ -77,15 +91,29 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
 
       const feedbackPromises = selectedFeatures.map(feature => {
         const rating = feedbackData[feature.id];
+        
+        // יצירת שדות מערכת חובה לכל רשומה
+        const now = new Date().toISOString();
+        const newId = crypto.randomUUID(); 
+        const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
+        const createdById = currentUser ? currentUser.id : null; 
+
         console.log(`Submitting feedback for feature ${feature.id} (${feature.featureName}): rating=${rating}`);
         if (rating !== undefined && rating !== null) {
           return MVPFeatureFeedback.create({
+            // שדות חובה חדשים
+            id: newId, 
+            created_date: now,
+            updated_date: now,
+            created_by: createdByEmail,
+            created_by_id: createdById,
+            // שדות קיימים
             venture_id: venture.id,
             feature_id: feature.id,
             feature_name: feature.featureName || "Unnamed Feature",
             rating: rating,
             submission_id: submissionId,
-            user_email: currentUser ? currentUser.email : null,
+            user_email: createdByEmail,
           });
         }
         return Promise.resolve();
@@ -102,8 +130,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
       }
 
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      alert("An error occurred while submitting your feedback. Please try again.");
+      console.error("Error submitting feedback:", error); // הוחלף מ-alert
     } finally {
       setIsSubmitting(false);
     }
