@@ -228,7 +228,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
                     max={10}
                     min={0}
                     step={1}
-                   className="w-full [&_span:first-child]:bg-indigo-200 [&_span:nth-child(2)]:bg-indigo-600 [&_span:nth-child(3)]:bg-indigo-600 data-[state=active]:ring-2 data-[state=active]:ring-indigo-500/50"
+                   className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-1 [&_span:nth-child(2)]:bg-indigo-600 [&_span:nth-child(3)]:bg-indigo-600 data-[state=active]:ring-2 data-[state=active]:ring-indigo-500/50"
                   />
                   <div className="flex justify-between text-sm text-gray-500 mt-3">
                     <span className="font-semibold">0</span>
