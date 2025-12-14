@@ -193,45 +193,22 @@ export default function MVPDevelopment() {
     setIsUploading(false);
   };
 
-  // --- מתחיל בערך בשורה 223 ---
-  const handleSaveDraft = async () => {
-    if (!venture || !venture.id) {
-      console.error("Cannot save draft: No active venture found.");
-      alert("Failed to save draft: No active venture found."); // Note: Consider replacing alert with a proper UI notification
-      return;
-    }
-    setIsSaving(true);
-    try {
-      // Ensure we save the complete state, including featureMatrix and uploadedFiles
-      const completeMvpData = {
-        product_definition: formData.productDefinition,
-        technical_specs: formData.technicalSpecs,
-        user_testing: formData.userTesting,
-        uploaded_files: uploadedFiles,
-        feature_matrix: featureMatrix
-      };
-      await Venture.update(venture.id, { mvp_data: completeMvpData });
-      alert('Draft saved successfully!');
-    } catch (error) {
-      console.error("Error saving draft:", error);
-      alert("Failed to save draft due to a system error.");
-    }
-    setIsSaving(false);
-  };
+  const handleSaveDraft = async () => {
+    if (!venture) return;
+    setIsSaving(true);
+    try {
+      await Venture.update(venture.id, { mvp_data: mvpData });
+      alert('Draft saved successfully!');
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      alert("Failed to save draft.");
+    }
+    setIsSaving(false);
+  };
 
-  // --- מתחיל בערך בשורה 236 ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // **CRITICAL CHECK**
-    if (!venture || !venture.id) {
-      console.error("CRITICAL: Cannot submit form, no active venture found.");
-      alert("Submission failed: No active venture found. Please start a venture.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const mvpPayload = {
@@ -275,29 +252,7 @@ export default function MVPDevelopment() {
       </div>
     );
   }
-// --- הוסף את הקוד הזה אחרי סוף בלוק 'if (isLoading)' (בסביבות שורה 306) ---
-  if (!venture) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-red-400 shadow-lg">
-          <CardHeader className="bg-red-50 border-b border-red-200">
-            <CardTitle className="text-xl text-red-700 flex items-center gap-2">
-              <Info className="w-6 h-6" />
-              No Active Venture Found
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 text-gray-700">
-            <p className="mb-4">
-              It looks like you don't have an active venture project.
-            </p>
-            <p className="font-semibold">
-              Please start a new venture from the dashboard to continue with MVP documentation.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
   // Define the criteria for submission based on the new handleSubmit logic
   const canSubmit = formData.productDefinition.trim() && formData.technicalSpecs.trim() && formData.userTesting.trim();
 
