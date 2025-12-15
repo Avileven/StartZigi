@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { DollarSign, Users, TrendingUp, Zap, Briefcase, Monitor, Shuffle, Speaker, Info, MessageSquare } from 'lucide-react';
-import { Venture } from '@/api/entities';
-import { User } from '@/api/entities';
-import { VentureMessage } from '@/api/entities';
+import { Venture } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
