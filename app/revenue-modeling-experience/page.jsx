@@ -9,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-
+import { useRouter } from "next/navigation";
 // --- Configuration Constants ---
 const MONTHS = 24;
 const TRANSACTION_RATE = 0.005;
