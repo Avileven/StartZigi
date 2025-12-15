@@ -536,7 +536,7 @@ export default function MVPDevelopment() {
 
                 <div className="mb-4">
                   <a 
-                    href="https://venture-launch-ai-copy-117d4499.base44.app/MVPBuilder" 
+                    href="https://startzig.vercel.app/mvp-builder" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
