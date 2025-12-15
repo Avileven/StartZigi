@@ -1062,7 +1062,7 @@ const getGrowthParameters = () => {
 
 // --- Main App Component ---
 export default function RevenueModelingExperience() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [venture, setVenture] = useState(null); // State to hold the current venture
   const [businessModel, setBusinessModel] = useState('subscription');
@@ -1220,7 +1220,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
       });
 
       alert('Revenue model finalized successfully! You\'ve progressed to the MLP phase. Redirecting to dashboard...');
-      navigate(createPageUrl('Dashboard')); // Navigate to Dashboard
+      router.push(createPageUrl('Dashboard')); // Navigate to Dashboard
     } catch (error) {
       console.error("Error finalizing revenue model:", error);
       alert("There was an error finalizing your revenue model. Please try again.");
