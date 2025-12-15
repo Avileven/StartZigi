@@ -1439,6 +1439,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
         <div className="space-y-10">
           <div className="bg-white p-6 rounded-xl shadow-lg">
             <h3 className="text-xl font-bold mb-6 text-gray-700 border-b pb-2">User Growth Forecast ({totalUsersLineName})</h3>
+            {typeof window !== "undefined" && (
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={modelData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
@@ -1451,6 +1452,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
                 )}
               </LineChart>
             </ResponsiveContainer>
+            )}
             <div className="mt-6 flex justify-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-1 bg-blue-500"></div>
