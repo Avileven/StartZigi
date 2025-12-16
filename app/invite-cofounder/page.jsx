@@ -83,8 +83,24 @@ export default function InviteCoFounder() {
         status: 'pending'
       });
 
-      // Simulate the email sending process due to platform restrictions
-      alert("Co-founder invitation created! Note: Due to platform restrictions, external emails are simulated. The invitation has been recorded in your dashboard.");
+      // Send actual email via Resend
+const emailResponse = await fetch('/api/send-invite', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: inviteForm.email,
+    ventureName: venture.name,
+    inviterName: user.name || user.email,
+  }),
+});
+
+if (emailResponse.ok) {
+  alert("Co-founder invitation sent successfully! An email has been sent to " + inviteForm.email);
+} else {
+  alert("Invitation created but email sending failed. The invitation is still recorded.");
+}
 
       // Update venture founders count
       await Venture.update(venture.id, {
