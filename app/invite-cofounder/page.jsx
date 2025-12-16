@@ -80,7 +80,8 @@ export default function InviteCoFounder() {
         invitee_name: inviteForm.name,
         custom_message: inviteForm.message,
         invitation_token: invitationToken,
-        status: 'pending'
+        status: 'pending',
+        created_by: user.id  // ← הוסף את זה!
       });
 
       // Send actual email via Resend
