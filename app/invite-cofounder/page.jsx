@@ -38,7 +38,7 @@ export default function InviteCoFounder() {
   const loadData = async () => {
     try {
       const user = await User.me();
-      const userVentures = await Venture.filter({ created_by_id: user.email }, "-created_date");
+     const userVentures = await Venture.list("-created_date");
       
       if (userVentures.length > 0) {
         const currentVenture = userVentures[0];
