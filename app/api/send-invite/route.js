@@ -6,7 +6,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request) {
   try {
     const { email, ventureName, inviterName } = await request.json();
-
+ // שורת בדיקה 1: לראות מה הגיע מהדפדפן
+    console.log("נתונים שהגיעו לשרת:", { email, ventureName, inviterName });
     const { data, error } = await resend.emails.send({
       from: 'VentureLaunch <onboarding@resend.dev>',
       to: [email],
@@ -25,6 +26,11 @@ export async function POST(request) {
         </div>
       `,
     });
+      if (error) {
+      // שורת בדיקה 2: לראות בדיוק מה הבעיה של Resend
+      console.error("שגיאת Resend מפורטת:", error);
+      return NextResponse.json({ error }, { status: 400 });
+    }
 
     if (error) {
       return NextResponse.json({ error }, { status: 400 });
