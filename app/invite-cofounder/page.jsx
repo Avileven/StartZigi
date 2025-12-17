@@ -38,7 +38,7 @@ export default function InviteCoFounder() {
   const loadData = async () => {
     try {
       const user = await User.me();
-      const userVentures = await Venture.filter({ created_by: user.email }, "-created_date");
+      const userVentures = await Venture.filter({ created_by_id: user.email }, "-created_date");
       
       if (userVentures.length > 0) {
         const currentVenture = userVentures[0];
@@ -103,10 +103,13 @@ if (emailResponse.ok) {
   alert("Invitation created but email sending failed. The invitation is still recorded.");
 }
 
-      // Update venture founders count
-      await Venture.update(venture.id, {
-        founders_count: (venture.founders_count || 1) + 1
-      });
+      /// ** שינוי זמני: ביטול ספירת המייסדים המיידית **
+// הקוד להלן בוטל, מכיוון שהספירה צריכה להתבצע רק לאחר אישור בדף הנחיתה (/join).
+/*
+await Venture.update(venture.id, {
+  founders_count: (venture.founders_count || 1) + 1
+});
+*/
 
       // Create board message
       await VentureMessage.create({
