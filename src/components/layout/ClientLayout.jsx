@@ -96,7 +96,9 @@ export default function ClientLayout({ children }) {
       landingPageItem.isExternal = venture.landing_page_url?.startsWith("http") || false;
     }
   }
-
+if (pathname && pathname.includes("venture-landing")) {
+    return <div className="min-h-screen bg-white">{children}</div>;
+  }
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
