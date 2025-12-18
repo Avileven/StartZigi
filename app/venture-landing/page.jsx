@@ -1,3 +1,4 @@
+// venture-landing
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase, auth } from "@/lib/supabase"; // שינוי 1: החלפת הייבוא לשימוש ישיר ב-Supabase
@@ -56,6 +57,13 @@ export default function VentureLanding() {
   const [hasLiked, setHasLiked] = useState(false);
 
   const loadVenture = useCallback(async (user) => {
+    // ----- בדיקה לדף הנחיתה -----
+    if (window.location.pathname.includes("venture-landing")) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+    }
+    
     setIsLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
