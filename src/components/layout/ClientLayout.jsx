@@ -64,7 +64,11 @@ export default function ClientLayout({ children }) {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const currentUser = await User.me();
+          if (pathname.includes("venture-landing")) {
+          setUser(null);
+          setIsLoading(false);
+          return; 
+          }
         setUser(currentUser);
         const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
         setVenture(ventures[0] || null);
