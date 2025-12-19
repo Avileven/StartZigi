@@ -10,7 +10,7 @@ export async function middleware(req) {
   } = await supabase.auth.getSession()
 
   // רשימת דפים ציבוריים (לא דורשים התחברות)
-  const publicPaths = ['/login', '/register', '/']
+  const publicPaths = ['/login', '/register', '/', '/venture-landing']
   const isPublicPath = publicPaths.some(path => req.nextUrl.pathname.startsWith(path))
 
   // אם אין session והדף לא ציבורי - הפנה ל-login
