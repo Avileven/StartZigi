@@ -58,11 +58,6 @@ export default function VentureLanding() {
 
   const loadVenture = useCallback(async (user) => {
     // ----- בדיקה לדף הנחיתה -----
-    if (window.location.pathname.includes("venture-landing")) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-    }
     
     setIsLoading(true);
     try {
