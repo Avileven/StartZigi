@@ -62,6 +62,51 @@ export default function VentureLanding() {
     setIsLoading(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
+      const invitationToken = urlParams.get('invitation_token');
+
+if (invitationToken) {
+  // 1) טען הזמנה לפי invitation_token (RLS דורש header invitation-token)
+  const inviteClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { global: { headers: { 'invitation-token': invitationToken } } }
+  );
+
+  const { data: invite, error: inviteErr } = await inviteClient
+    .from('co_founder_invitations')
+    .select('venture_id,status,invitee_email,invitation_token')
+    .eq('invitation_token', invitationToken)
+    .single();
+
+  if (inviteErr || !invite) {
+    setVenture(null);
+    setIsLoading(false);
+    return;
+  }
+
+  // אם ההזמנה לא pending – אפשר עדיין להציג venture או לעצור (שלב 1: הצגה בלבד)
+  // כאן נשאיר טעינה כדי שיראה את הדף, ואת הסטטוס תציג בהמשך לפי invite.status
+
+  // 2) venture_id בטבלה שלך הוא TEXT, בעוד ventures.id הוא UUID
+  const ventureUuid = String(invite.venture_id);
+
+  const { data: ventures, error: vErr } = await supabase
+    .from('ventures')
+    .select('*')
+    .eq('id', ventureUuid);
+
+  if (vErr) throw vErr;
+
+  if (ventures && ventures.length > 0) {
+    setVenture(ventures[0]);
+  } else {
+    setVenture(null);
+  }
+
+  setIsLoading(false);
+  return;
+}
+
       const ventureId = urlParams.get('id');
 
       if (ventureId) {
