@@ -92,7 +92,7 @@ if (invitationToken) {
   // 2) venture_id בטבלה שלך הוא TEXT, בעוד ventures.id הוא UUID
   const ventureUuid = String(invite.venture_id);
 
-  const { data: ventures, error: vErr } = await supabase
+  const { data: ventures, error: vErr } = await inviteClient
     .from('ventures')
     .select('*')
     .eq('id', ventureUuid);
