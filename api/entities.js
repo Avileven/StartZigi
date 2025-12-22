@@ -25,6 +25,13 @@ class Entity {
   async filter(conditions = {}, orderBy = null) {
     let query = supabase.from(this.tableName).select('*')
 
+    // ✅ CHANGE: support "founder_user_id" filter for ventures (JSONB array contains)
+    // Usage: Venture.filter({ founder_user_id: currentUser.id }, "-created_date")
+    if (this.tableName === 'ventures' && conditions?.founder_user_id) {
+      query = query.contains('founder_user_ids', [String(conditions.founder_user_id)])
+      delete conditions.founder_user_id
+    }
+
     Object.entries(conditions).forEach(([key, value]) => {
       query = query.eq(key, value)
     })
@@ -104,7 +111,7 @@ class UserEntity extends Entity {
 
   async me() {
     const { data: { user }, error } = await supabase.auth.getUser()
-    
+
     if (error) throw error
     if (!user) throw new Error('Not authenticated')
 
