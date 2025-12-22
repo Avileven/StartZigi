@@ -152,15 +152,15 @@ export default function Dashboard() {
             userVentures = specificVenture;
             localStorage.removeItem('admin_selected_venture_id');
           } else {
-            userVentures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
+            userVentures = await Venture.filter({ founder_user_id: currentUser.id }, "-created_date");
             localStorage.removeItem('admin_selected_venture_id');
           }
         } else {
-          userVentures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
+          userVentures = await Venture.filter( { founder_user_id: currentUser.id }, "-created_date"
+          );
         }
         
         setVentures(userVentures);
-
         if (userVentures.length > 0) {
           const activeVenture = userVentures[0];
           
