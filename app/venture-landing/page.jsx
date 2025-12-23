@@ -65,9 +65,68 @@ export default function VentureLanding() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [hasLiked, setHasLiked] = useState(false);
+  //add join func.
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
 
   const loadVenture = useCallback(async (user) => {
     setIsLoading(true);
+    const handleJoinAsCofounder = async () => {
+  setJoinError(null);
+
+  // 1) חייב להיות משתמש מחובר
+  if (!currentUser) {
+    const nextUrl = window.location.pathname + window.location.search;
+    window.location.href = `/login?next=${encodeURIComponent(nextUrl)}`;
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const invitationToken = urlParams.get("invitation_token");
+  if (!invitationToken) {
+    setJoinError("Missing invitation token in URL.");
+    return;
+  }
+
+  setIsJoining(true);
+  try {
+    // 2) RPC
+    const { data, error } = await supabase.rpc("accept_co_founder_invite", {
+      p_user_id: currentUser.id,
+      p_invitation_token: invitationToken,
+    });
+
+    if (error) throw error;
+
+    // 3) שגיאה שהפונקציה מחזירה בתוך JSON
+    if (data?.error) {
+      setJoinError(data.error);
+      setIsJoining(false);
+      return;
+    }
+
+    // 4) הצלחה
+    if (data?.status === "success") {
+      setJoinSuccess(true);
+
+      // אופציונלי: לרענן venture כדי להציג את המצב החדש (לא חובה)
+      await loadVenture(currentUser);
+
+      // שלב הבא: להעיף לדשבורד (שם תראה את המיזם ברשימה כי הוא כבר founder)
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    setJoinError("Unexpected response from server.");
+    } catch (e) {
+    console.error("JOIN failed:", e);
+    setJoinError(e?.message || "Failed to join venture.");
+    } finally {
+    setIsJoining(false);
+    }
+  };
+
 
     // ✅ FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים (id וגם invitation_token)
     const loadHtmlFiles = async (files, setContentState, context) => {
@@ -427,6 +486,31 @@ export default function VentureLanding() {
               </CardContent>
             </Card>
           </div>
+{new URLSearchParams(window.location.search).get("invitation_token") && (
+  <Card className="shadow-lg mb-8">
+    <CardHeader>
+      <CardTitle>Join this venture</CardTitle>
+      <CardDescription>
+        You were invited as a co-founder. Click to accept and join the team.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      {joinError && (
+        <p className="text-sm text-red-600">{joinError}</p>
+      )}
+      {joinSuccess && (
+        <p className="text-sm text-green-600">Joined successfully! Redirecting…</p>
+      )}
+      <Button
+        onClick={handleJoinAsCofounder}
+        disabled={isJoining}
+        className="w-full"
+      >
+        {isJoining ? "Joining..." : "Accept & Join Venture"}
+      </Button>
+    </CardContent>
+  </Card>
+)}
 
           {venture.mvp_uploaded && venture.mvp_data && (
             <div className="mb-12">

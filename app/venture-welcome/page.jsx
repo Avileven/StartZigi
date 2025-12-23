@@ -66,6 +66,7 @@ export default function VentureWelcome() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  
 
   useEffect(() => {
     const createWelcomeMessages = async (venture) => {
