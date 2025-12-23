@@ -76,6 +76,12 @@ export default function ClientLayout({ children }) {
 
         // FIX: define currentUser before using it
         const currentUser = await User.me();
+        // אם אין סשן → לך ל-login, לא קריסה
+      if (!currentUser) {
+        router.push("/login");
+        setIsLoading(false);
+        return;
+      }
 
         setUser(currentUser);
 
