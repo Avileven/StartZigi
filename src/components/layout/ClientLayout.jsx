@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Venture } from "@/src/api/entities";
-import { User } from "@/src/api/entities";
+
+// FIX: remove /src from imports (Vercel path + you already moved entities)
+// was: "@/src/api/entities"
+import { Venture, User } from "@/api/entities";
+
 import {
   LayoutDashboard,
   Home,
@@ -64,12 +67,20 @@ export default function ClientLayout({ children }) {
     const loadData = async () => {
       setIsLoading(true);
       try {
-          if (pathname.includes("venture-landing")) {
+        // keep your bypass for venture-landing
+        if (pathname.includes("venture-landing")) {
           setUser(null);
           setIsLoading(false);
-          return; 
-          }
+          return;
+        }
+
+        // FIX: define currentUser before using it
+        const currentUser = await User.me();
+
         setUser(currentUser);
+
+        // NOTE: leaving your original filter logic as-is.
+        // If later you want founders access too, we'll change it deliberately.
         const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
         setVenture(ventures[0] || null);
       } catch (error) {
@@ -79,6 +90,7 @@ export default function ClientLayout({ children }) {
       }
       setIsLoading(false);
     };
+
     loadData();
   }, [pathname]);
 
@@ -100,9 +112,11 @@ export default function ClientLayout({ children }) {
       landingPageItem.isExternal = venture.landing_page_url?.startsWith("http") || false;
     }
   }
-if (pathname && pathname.includes("venture-landing")) {
+
+  if (pathname && pathname.includes("venture-landing")) {
     return <div className="min-h-screen bg-white">{children}</div>;
   }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
@@ -129,7 +143,14 @@ if (pathname && pathname.includes("venture-landing")) {
                   <SidebarGroupContent>
                     <SidebarMenu>
                       <SidebarMenuItem>
-                        <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${pathname === createPageUrl("Home") ? "bg-indigo-50 text-indigo-700" : "hover:bg-indigo-50 hover:text-indigo-700"}`}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`mb-1 rounded-lg transition-colors duration-200 ${
+                            pathname === createPageUrl("Home")
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "hover:bg-indigo-50 hover:text-indigo-700"
+                          }`}
+                        >
                           <Link href={createPageUrl("home")} className="flex items-center gap-3 px-3 py-2">
                             <Home className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Home</span>
@@ -138,7 +159,14 @@ if (pathname && pathname.includes("venture-landing")) {
                       </SidebarMenuItem>
 
                       <SidebarMenuItem>
-                        <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${pathname === createPageUrl("Dashboard") ? "bg-indigo-50 text-indigo-700" : "hover:bg-indigo-50 hover:text-indigo-700"}`}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`mb-1 rounded-lg transition-colors duration-200 ${
+                            pathname === createPageUrl("Dashboard")
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "hover:bg-indigo-50 hover:text-indigo-700"
+                          }`}
+                        >
                           <Link href={createPageUrl("dashboard")} className="flex items-center gap-3 px-3 py-2">
                             <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Dashboard</span>
@@ -164,35 +192,38 @@ if (pathname && pathname.includes("venture-landing")) {
                         </SidebarMenuItem>
                       )}
 
-                      {navigationItems.filter(item => !item.alwaysActive).map((item) => {
-                        const Icon = item.icon;
-                        const activeStateClasses =
-                          (pathname === item.url && !item.external)
-                            ? 'bg-indigo-50 text-indigo-700'
-                            : 'hover:bg-indigo-50 hover:text-indigo-700';
-                        return (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${activeStateClasses}`}>
-                              {item.external ? (
-                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2">
-                                  <Icon className="w-4 h-4 flex-shrink-0" />
-                                  <span className="font-medium">{item.title}</span>
-                                </a>
-                              ) : (
-                                <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
-                                  <Icon className="w-4 h-4 flex-shrink-0" />
-                                  <span className="font-medium">{item.title}</span>
-                                </Link>
-                              )}
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
+                      {navigationItems
+                        .filter((item) => !item.alwaysActive)
+                        .map((item) => {
+                          const Icon = item.icon;
+                          const activeStateClasses =
+                            pathname === item.url && !item.external
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "hover:bg-indigo-50 hover:text-indigo-700";
+
+                          return (
+                            <SidebarMenuItem key={item.title}>
+                              <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${activeStateClasses}`}>
+                                {item.external ? (
+                                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2">
+                                    <Icon className="w-4 h-4 flex-shrink-0" />
+                                    <span className="font-medium">{item.title}</span>
+                                  </a>
+                                ) : (
+                                  <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
+                                    <Icon className="w-4 h-4 flex-shrink-0" />
+                                    <span className="font-medium">{item.title}</span>
+                                  </Link>
+                                )}
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
 
-                {user && user.role === 'admin' && (
+                {user && user.role === "admin" && (
                   <SidebarGroup>
                     <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                       Admin
@@ -203,10 +234,12 @@ if (pathname && pathname.includes("venture-landing")) {
                           <SidebarMenuButton
                             asChild
                             className={`mb-1 rounded-lg transition-colors duration-200 ${
-                              pathname === createPageUrl('AdminDashboard') ? 'bg-red-50 text-red-700' : 'hover:bg-red-50 hover:text-red-700'
+                              pathname === createPageUrl("AdminDashboard")
+                                ? "bg-red-50 text-red-700"
+                                : "hover:bg-red-50 hover:text-red-700"
                             }`}
                           >
-                            <Link href={createPageUrl('AdminDashboard')} className="flex items-center gap-3 px-3 py-2">
+                            <Link href={createPageUrl("AdminDashboard")} className="flex items-center gap-3 px-3 py-2">
                               <Shield className="w-4 h-4 flex-shrink-0" />
                               <span className="font-medium">Admin Dashboard</span>
                             </Link>
@@ -224,14 +257,14 @@ if (pathname && pathname.includes("venture-landing")) {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 font-medium text-sm">
-                  {user ? user.email.charAt(0).toUpperCase() : 'E'}
+                  {user ? user.email.charAt(0).toUpperCase() : "E"}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 text-sm truncate">
-                  {user ? user.email : 'Entrepreneur'}
+                  {user ? user.email : "Entrepreneur"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">Phase: {userPhase.replace('_', ' ')}</p>
+                <p className="text-xs text-gray-500 truncate">Phase: {userPhase.replace("_", " ")}</p>
               </div>
             </div>
           </SidebarFooter>
@@ -245,9 +278,7 @@ if (pathname && pathname.includes("venture-landing")) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
+          <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
     </SidebarProvider>
