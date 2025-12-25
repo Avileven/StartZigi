@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -13,44 +12,55 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ FIX: supports both ?next= and ?redirect= (so JOIN flow works)
+  // ✅ support both ?next= and ?redirect=
   const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   useEffect(() => {
-    // only runs on client
     const searchParams = new URLSearchParams(window.location.search);
+    const next = searchParams.get("next");
+    const redirect = searchParams.get("redirect");
 
-    // Prefer "next" because JOIN uses it:
-    const nextParam = searchParams.get("next");
-    const redirectParam = searchParams.get("redirect");
-
-    const target = nextParam || redirectParam || "/dashboard";
-
-    // Minimal safety: must start with "/" or "http"
-    const safeTarget =
-      target.startsWith("/") || target.startsWith("http") ? target : "/dashboard";
-
-    setRedirectPath(safeTarget);
+    const target = next || redirect || "/dashboard";
+    setRedirectPath(target);
   }, []);
+
+  // ✅ אם כבר מחובר, לא להציג לוגין בכלל — להעיף ישר ליעד
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        // replace כדי לא להשאיר את /login בהיסטוריה
+        router.replace(redirectPath);
+        router.refresh?.();
+      }
+    };
+    checkSession();
+  }, [redirectPath, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (signInError) {
+      setError(signInError.message);
       setLoading(false);
       return;
     }
 
-    // ✅ FIX: replace prevents "back to login" loops
-    router.replace(redirectPath);
+    // ✅ הכי יציב: קודם replace, ואז hard redirect כדי לוודא שלא נשאר overlay
+    try {
+      router.replace(redirectPath);
+      router.refresh?.();
+    } finally {
+      // hard navigation — מבטיח שהמסך הקודם נטען מחדש בלי "חלון" לוגין שנשאר
+      window.location.href = redirectPath;
+    }
   };
 
   return (
@@ -86,10 +96,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-right mt-1">
-            <Link
-              href="/reset-password"
-              className="text-indigo-600 text-sm hover:underline"
-            >
+            <Link href="/reset-password" className="text-indigo-600 text-sm hover:underline">
               Forgot your password?
             </Link>
           </p>
@@ -106,7 +113,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-sm text-center mt-4">
-          Don&apos;t have an account?{" "}
+          Don't have an account?{" "}
           <Link href="/register" className="text-indigo-600 hover:underline">
             Sign up
           </Link>
