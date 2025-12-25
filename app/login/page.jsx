@@ -12,12 +12,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState('/dashboard');
 
-  // ✅ הזזתי את window.location ל-useEffect
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const redirect = searchParams.get('redirect') || '/dashboard';
-    setRedirectPath(redirect);
-  }, []);
+ useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // תומכים גם ב-next וגם ב-redirect (וגם fallback)
+  const nextParam = searchParams.get('next');
+  const redirectParam = searchParams.get('redirect');
+
+  const redirect = nextParam || redirectParam || '/dashboard';
+  setRedirectPath(redirect);
+}, []);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
