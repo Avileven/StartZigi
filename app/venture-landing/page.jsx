@@ -1,12 +1,12 @@
-// venture-landing
+// venture-landing UPDATED 261225
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@supabase/supabase-js";
 
 import {
   Lightbulb,
@@ -48,6 +48,8 @@ const ReadMoreText = ({ text, maxLength = 300 }) => {
 };
 
 export default function VentureLanding() {
+  const router = useRouter();
+
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -65,10 +67,57 @@ export default function VentureLanding() {
   const [joinError, setJoinError] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
 
-  // FIX: שומרים invitation_token פעם אחת, ולא מחשבים בתוך JSX
+  // Keep invitation token once
   const [invitationToken, setInvitationToken] = useState(null);
 
-  // FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים (id וגם invitation_token)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  const restBase = useMemo(() => {
+    if (!supabaseUrl) return null;
+    return `${supabaseUrl.replace(/\/$/, "")}/rest/v1`;
+  }, [supabaseUrl]);
+
+  const restHeadersBase = useMemo(() => {
+    if (!supabaseAnonKey) return null;
+    return {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      "Content-Type": "application/json",
+    };
+  }, [supabaseAnonKey]);
+
+  const restGetSingle = useCallback(
+    async (table, queryString, extraHeaders = {}) => {
+      if (!restBase || !restHeadersBase) throw new Error("Missing Supabase REST env vars.");
+      const url = `${restBase}/${table}?${queryString}`;
+      const res = await fetch(url, { headers: { ...restHeadersBase, ...extraHeaders } });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`REST ${table} failed: ${res.status} ${text}`);
+      }
+      // Supabase REST returns JSON array (unless you use singular headers). We'll parse array and take [0].
+      const json = text ? JSON.parse(text) : null;
+      if (Array.isArray(json)) return json[0] ?? null;
+      return json;
+    },
+    [restBase, restHeadersBase]
+  );
+
+  const restGetList = useCallback(
+    async (table, queryString, extraHeaders = {}) => {
+      if (!restBase || !restHeadersBase) throw new Error("Missing Supabase REST env vars.");
+      const url = `${restBase}/${table}?${queryString}`;
+      const res = await fetch(url, { headers: { ...restHeadersBase, ...extraHeaders } });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`REST ${table} failed: ${res.status} ${text}`);
+      }
+      return text ? JSON.parse(text) : [];
+    },
+    [restBase, restHeadersBase]
+  );
+
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
 
@@ -112,39 +161,31 @@ export default function VentureLanding() {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get("invitation_token");
 
-        // FIX: מסלול הזמנה (אנונימי)
+        // INVITE PATH (anonymous read via REST + invitation-token header)
         if (token) {
-          const inviteClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            { global: { headers: { "invitation-token": token } } }
+          const invite = await restGetSingle(
+            "co_founder_invitations",
+            `select=venture_id,status,invitee_email,invitation_token&invitation_token=eq.${encodeURIComponent(token)}`,
+            { "invitation-token": token }
           );
 
-          const { data: invite, error: inviteErr } = await inviteClient
-            .from("co_founder_invitations")
-            .select("venture_id,status,invitee_email,invitation_token")
-            .eq("invitation_token", token)
-            .single();
-
-          if (inviteErr || !invite) {
+          if (!invite) {
             setVenture(null);
             setIsLoading(false);
             return;
           }
 
           const ventureUuid = String(invite.venture_id);
-          const { data: ventures, error: vErr } = await inviteClient
-            .from("ventures")
-            .select("*")
-            .eq("id", ventureUuid);
+          const ventures = await restGetList(
+            "ventures",
+            `select=*&id=eq.${encodeURIComponent(ventureUuid)}`,
+            { "invitation-token": token }
+          );
 
-          if (vErr) throw vErr;
+          const loadedVenture = ventures?.[0] ?? null;
+          setVenture(loadedVenture);
 
-          if (ventures && ventures.length > 0) {
-            const loadedVenture = ventures[0];
-            setVenture(loadedVenture);
-
-            // FIX: טען גם קבצי HTML במסלול invitation_token
+          if (loadedVenture) {
             if (loadedVenture.mvp_data?.uploaded_files) {
               await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
             }
@@ -165,15 +206,13 @@ export default function VentureLanding() {
                 "Business Plan"
               );
             }
-          } else {
-            setVenture(null);
           }
 
           setIsLoading(false);
           return;
         }
 
-        // מסלול רגיל לפי ?id=
+        // NORMAL PATH by ?id=
         const ventureId = urlParams.get("id");
         if (ventureId) {
           const { data: ventures, error } = await supabase
@@ -183,21 +222,20 @@ export default function VentureLanding() {
 
           if (error) throw error;
 
-          if (ventures && ventures.length > 0) {
-            const loadedVenture = ventures[0];
-            setVenture(loadedVenture);
+          const loadedVenture = ventures?.[0] ?? null;
+          setVenture(loadedVenture);
 
-            if (user) {
-              if (loadedVenture.liked_by_users && loadedVenture.liked_by_users.includes(user.id)) {
-                setHasLiked(true);
-              } else if (user.liked_venture_ids && user.liked_venture_ids.includes(loadedVenture.id)) {
-                setHasLiked(true);
-              } else {
-                setHasLiked(false);
-              }
+          if (loadedVenture && user) {
+            if (loadedVenture.liked_by_users && loadedVenture.liked_by_users.includes(user.id)) {
+              setHasLiked(true);
+            } else if (user.liked_venture_ids && user.liked_venture_ids.includes(loadedVenture.id)) {
+              setHasLiked(true);
+            } else {
+              setHasLiked(false);
             }
+          }
 
-            // טעינת HTML במסלול id
+          if (loadedVenture) {
             if (loadedVenture.mvp_data?.uploaded_files) {
               await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
             }
@@ -218,26 +256,27 @@ export default function VentureLanding() {
                 "Business Plan"
               );
             }
-          } else {
-            setVenture(null);
           }
-        } else {
-          setVenture(null);
+
+          setIsLoading(false);
+          return;
         }
+
+        setVenture(null);
       } catch (error) {
         console.error("Error loading venture:", error);
+        setVenture(null);
       }
 
       setIsLoading(false);
     },
-    [loadHtmlFiles]
+    [loadHtmlFiles, restGetList, restGetSingle, supabase]
   );
 
-  // FIX: handleJoinAsCofounder חייב להיות בסקופ של הקומפוננטה (לא בתוך loadVenture)
   const handleJoinAsCofounder = useCallback(async () => {
     setJoinError(null);
 
-    // 1) חייב להיות משתמש מחובר
+    // must be logged in
     if (!currentUser) {
       const nextUrl = window.location.pathname + window.location.search;
       window.location.href = `/login?next=${encodeURIComponent(nextUrl)}`;
@@ -265,12 +304,7 @@ export default function VentureLanding() {
 
       if (data?.status === "success") {
         setJoinSuccess(true);
-
-        // אופציונלי: לרענן venture כדי להציג את המצב החדש
-        await loadVenture(currentUser);
-
-        // שלב הבא: להעיף לדשבורד
-        window.location.href = "/dashboard";
+        router.replace("/dashboard");
         return;
       }
 
@@ -281,32 +315,24 @@ export default function VentureLanding() {
     } finally {
       setIsJoining(false);
     }
-  }, [currentUser, invitationToken, loadVenture]);
+  }, [currentUser, invitationToken, router]);
 
   useEffect(() => {
     const fetchUserAndVenture = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("invitation_token");
-
-      // FIX: שומרים token ב-state
       setInvitationToken(token);
 
-      // FIX: אם זה דף הזמנה – לא קוראים auth.me() בכלל
-      if (token) {
-        setCurrentUser(null);
-        await loadVenture(null);
-        return;
-      }
-
-      // במסלול רגיל: כן מנסים להביא משתמש, אבל לא מפילים את הכל אם אין session
+      // Try to load user ALWAYS (safe in your auth.me – returns null if no session)
       let user = null;
       try {
         user = await auth.me();
-      } catch (e) {
+      } catch {
         user = null;
       }
       setCurrentUser(user);
 
+      // Welcome overlay cleanup (only for normal path)
       if (urlParams.get("welcome") === "true") {
         setShowWelcome(true);
         const ventureId = urlParams.get("id");
@@ -320,13 +346,13 @@ export default function VentureLanding() {
     fetchUserAndVenture();
   }, [loadVenture]);
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (!currentUser) {
       alert("Please log in to like this venture.");
       return;
     }
 
-    if (venture.created_by === currentUser.email) {
+    if (venture?.created_by === currentUser.email) {
       alert("You cannot like your own venture!");
       return;
     }
@@ -371,7 +397,7 @@ export default function VentureLanding() {
       setVenture((prev) => ({ ...prev, likes_count: (prev.likes_count || 1) - 1 }));
       alert("There was an error recording your like. Please try again.");
     }
-  };
+  }, [currentUser, venture, hasLiked]);
 
   const handleInteractiveFeedbackSubmitted = async () => {
     await loadVenture(currentUser);
@@ -468,22 +494,38 @@ export default function VentureLanding() {
             <Card className="shadow-lg mb-8">
               <CardHeader>
                 <CardTitle>Join this venture</CardTitle>
-                <CardDescription>You were invited as a co-founder. Click to accept and join the team.</CardDescription>
+                <CardDescription>
+                  You were invited as a co-founder. Click to accept and join the team.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {joinError && <p className="text-sm text-red-600">{joinError}</p>}
                 {joinSuccess && <p className="text-sm text-green-600">Joined successfully! Redirecting…</p>}
 
-                <Button onClick={handleJoinAsCofounder} disabled={isJoining} className="w-full">
-                  {isJoining ? "Joining..." : "Accept & Join Venture"}
-                </Button>
+                {!currentUser ? (
+                  <Button
+                    onClick={() => {
+                      const nextUrl = window.location.pathname + window.location.search;
+                      window.location.href = `/login?next=${encodeURIComponent(nextUrl)}`;
+                    }}
+                    className="w-full"
+                  >
+                    Log in to join
+                  </Button>
+                ) : (
+                  <Button onClick={handleJoinAsCofounder} disabled={isJoining} className="w-full">
+                    {isJoining ? "Joining..." : "Accept & Join Venture"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
 
           {venture.mvp_uploaded && venture.mvp_data && (
             <div className="mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+                Our Minimum Viable Product (MVP)
+              </h2>
 
               <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
                 <div className="grid lg:grid-cols-2 gap-8">
@@ -540,7 +582,8 @@ export default function VentureLanding() {
                                       srcDoc={content}
                                       className="w-full h-[600px] border-0"
                                       title={fileName}
-                                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                                      // security: do NOT allow same-origin with scripts
+                                      sandbox="allow-scripts allow-forms allow-popups allow-modals"
                                       loading="lazy"
                                     />
                                   </div>
@@ -584,7 +627,6 @@ export default function VentureLanding() {
 
                             return (
                               <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
-                                {/* FIX: href__ -> href */}
                                 <a
                                   href={fileUrl}
                                   target="_blank"
@@ -644,3 +686,5 @@ export default function VentureLanding() {
     </>
   );
 }
+
+
