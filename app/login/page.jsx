@@ -16,13 +16,16 @@ export default function LoginPage() {
   const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const next = searchParams.get("next");
-    const redirect = searchParams.get("redirect");
+  const searchParams = new URLSearchParams(window.location.search);
 
-    const target = next || redirect || "/dashboard";
-    setRedirectPath(target);
-  }, []);
+  // תומך גם ב-next וגם ב-redirect
+  const redirect =
+    searchParams.get('next') ||
+    searchParams.get('redirect') ||
+    '/dashboard';
+
+  setRedirectPath(redirect.startsWith('/') ? redirect : '/dashboard');
+}, []);
 
   // ✅ אם כבר מחובר, לא להציג לוגין בכלל — להעיף ישר ליעד
   useEffect(() => {
