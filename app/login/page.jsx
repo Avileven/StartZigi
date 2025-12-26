@@ -33,7 +33,7 @@ export default function LoginPage() {
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
         // replace כדי לא להשאיר את /login בהיסטוריה
-        router.replace(redirectPath);
+        window.location.assign(redirectPath);
         router.refresh?.();
       }
     };
