@@ -9,19 +9,29 @@ export async function middleware(req) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // רשימת דפים ציבוריים (לא דורשים התחברות)
-  const publicPaths = ['/login', '/register', '/', '/venture-landing']
-  const isPublicPath = publicPaths.some(path => req.nextUrl.pathname.startsWith(path))
+  const pathname = req.nextUrl.pathname
+
+  // ✅ דפים ציבוריים אמיתיים (בלי '/' עם startsWith)
+  const isPublicPath =
+    pathname === '/' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/venture-landing')
 
   // אם אין session והדף לא ציבורי - הפנה ל-login
   if (!session && !isPublicPath) {
     const redirectUrl = new URL('/login', req.url)
-    redirectUrl.searchParams.set('redirect', req.nextUrl.pathname)
+
+    // ✅ משתמשים ב-next ושומרים גם querystring
+    const next = pathname + (req.nextUrl.search || '')
+    redirectUrl.searchParams.set('next', next)
+
     return NextResponse.redirect(redirectUrl)
   }
 
   // אם יש session והמשתמש ב-login/register - הפנה ל-dashboard
-  if (session && (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/register')) {
+  if (session && (pathname === '/login' || pathname === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
@@ -31,3 +41,4 @@ export async function middleware(req) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }
+
