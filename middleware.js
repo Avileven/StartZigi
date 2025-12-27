@@ -9,29 +9,38 @@ export async function middleware(req) {
     data: { session },
   } = await supabase.auth.getSession()
 
+  // ✅ FIX #1: להרחיב רשימת public routes
+  // חשוב במיוחד: auth callback אחרי אימות במייל, אחרת נוצרת לולאת redirect (ריצוד).
+  const publicPaths = [
+    '/',
+    '/login',
+    '/register',
+    '/reset-password',
+    '/venture-landing',
+
+    // ✅ חשוב: מסלולי callback של סופאבייס
+    '/auth',
+    '/auth/callback',
+  ]
+
   const pathname = req.nextUrl.pathname
+  const isPublicPath = publicPaths.some((path) => pathname === path || pathname.startsWith(path + '/'))
 
-  // ✅ דפים ציבוריים אמיתיים (בלי '/' עם startsWith)
-  const isPublicPath =
-    pathname === '/' ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/register') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/venture-landing')
-
-  // אם אין session והדף לא ציבורי - הפנה ל-login
+  // ✅ FIX #2: אם אין session והדף לא ציבורי -> הפניה ל-login
+  // כולל שמירה של כל ה-URL (path + query) כדי לחזור בדיוק לאותו מקום
   if (!session && !isPublicPath) {
     const redirectUrl = new URL('/login', req.url)
-
-    // ✅ משתמשים ב-next ושומרים גם querystring
-    const next = pathname + (req.nextUrl.search || '')
-    redirectUrl.searchParams.set('next', next)
-
+    const fullPathWithQuery = req.nextUrl.pathname + req.nextUrl.search
+    redirectUrl.searchParams.set('next', fullPathWithQuery) // ✅ FIX: next (לא רק pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // אם יש session והמשתמש ב-login/register - הפנה ל-dashboard
-  if (session && (pathname === '/login' || pathname === '/register')) {
+  // ✅ FIX #3: אם יש session והמשתמש ב-login/register -> הפניה ל-dashboard
+  // אבל לא להפריע ל-auth callback באמצע יצירת session.
+  if (
+    session &&
+    (pathname === '/login' || pathname === '/register')
+  ) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
@@ -39,6 +48,9 @@ export async function middleware(req) {
 }
 
 export const config = {
+  // ✅ FIX #4: לוודא שאנחנו לא תופסים static assets
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }
+
+
 
