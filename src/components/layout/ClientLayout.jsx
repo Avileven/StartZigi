@@ -18,6 +18,7 @@ import {
   ExternalLink,
   FlaskConical,
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +33,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+
 import { canAccessFeature } from "@/components/utils/phaseValidation";
 
 const createPageUrl = (path) => `/${path}`;
@@ -66,39 +68,63 @@ export default function ClientLayout({ children }) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+
       try {
-        // keep your bypass for venture-landing
-        if (pathname.includes("venture-landing")) {
+        // =========================
+        // ✅ FIX #1: PUBLIC ROUTES BYPASS
+        // למה? כי קודם עשינו bypass רק ל-venture-landing,
+        // ואז /register היה נטען לשניה ומיד נשלח ל-/login ע"י guard.
+        // =========================
+        const isPublicRoute =
+          pathname === "/" ||
+          pathname.startsWith("/login") ||
+          pathname.startsWith("/register") ||
+          pathname.startsWith("/reset-password") ||
+          pathname.startsWith("/venture-landing");
+
+        if (isPublicRoute) {
           setUser(null);
+          setVenture(null);
           setIsLoading(false);
           return;
         }
 
-        // FIX: define currentUser before using it
+        // =========================
+        // ✅ FIX #2: define currentUser before using it (כבר היה אצלך)
+        // =========================
         const currentUser = await User.me();
-        // אם אין סשן → לך ל-login, לא קריסה
-      if (!currentUser) {
-        router.push("/login");
-        setIsLoading(false);
-        return;
-      }
+
+        // =========================
+        // ✅ FIX #3: אם אין סשן → שלח ל-login עם next (ולא סתם /login)
+        // למה? כדי לחזור אח"כ לעמוד הנכון + פחות "קפיצות"
+        // =========================
+        if (!currentUser) {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          setIsLoading(false);
+          return;
+        }
 
         setUser(currentUser);
 
-        // NOTE: leaving your original filter logic as-is.
+        // NOTE: leaving your original filter logic as-is (created_by).
         // If later you want founders access too, we'll change it deliberately.
-        const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
+        const ventures = await Venture.filter(
+          { created_by: currentUser.email },
+          "-created_date"
+        );
         setVenture(ventures[0] || null);
       } catch (error) {
         console.error("Failed to load user or venture data:", error);
         setUser(null);
         setVenture(null);
       }
+
       setIsLoading(false);
     };
 
     loadData();
-  }, [pathname]);
+    // ✅ FIX #4: add router to deps to avoid React warnings and keep behavior stable
+  }, [pathname, router]);
 
   const navigationItems = getNavigationItems(venture);
   const userPhase = venture ? venture.phase : "idea";
@@ -119,6 +145,7 @@ export default function ClientLayout({ children }) {
     }
   }
 
+  // (נשאר) ה-bypass הויזואלי ל-venture-landing — אבל עכשיו הוא לא היחיד (יש גם publicRoutes)
   if (pathname && pathname.includes("venture-landing")) {
     return <div className="min-h-screen bg-white">{children}</div>;
   }
@@ -184,7 +211,12 @@ export default function ClientLayout({ children }) {
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild className="mb-1 rounded-lg transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-700">
                             {landingPageItem.isExternal ? (
-                              <a href={landingPageItem.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2">
+                              <a
+                                href={landingPageItem.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 px-3 py-2"
+                              >
                                 <ExternalLink className="w-4 h-4 flex-shrink-0" />
                                 <span className="font-medium">{landingPageItem.title}</span>
                               </a>
@@ -209,9 +241,17 @@ export default function ClientLayout({ children }) {
 
                           return (
                             <SidebarMenuItem key={item.title}>
-                              <SidebarMenuButton asChild className={`mb-1 rounded-lg transition-colors duration-200 ${activeStateClasses}`}>
+                              <SidebarMenuButton
+                                asChild
+                                className={`mb-1 rounded-lg transition-colors duration-200 ${activeStateClasses}`}
+                              >
                                 {item.external ? (
-                                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2">
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 px-3 py-2"
+                                  >
                                     <Icon className="w-4 h-4 flex-shrink-0" />
                                     <span className="font-medium">{item.title}</span>
                                   </a>
