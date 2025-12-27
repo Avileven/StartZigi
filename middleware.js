@@ -1,3 +1,4 @@
+
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
@@ -9,8 +10,9 @@ export async function middleware(req) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // ✅ FIX #1: להרחיב רשימת public routes
-  // חשוב במיוחד: auth callback אחרי אימות במייל, אחרת נוצרת לולאת redirect (ריצוד).
+  const pathname = req.nextUrl.pathname
+
+  // ✅ FIX: auth routes must be public, otherwise you get redirect loops
   const publicPaths = [
     '/',
     '/login',
@@ -18,29 +20,24 @@ export async function middleware(req) {
     '/reset-password',
     '/venture-landing',
 
-    // ✅ חשוב: מסלולי callback של סופאבייס
+    // ✅ Supabase auth callback paths
     '/auth',
     '/auth/callback',
   ]
 
-  const pathname = req.nextUrl.pathname
-  const isPublicPath = publicPaths.some((path) => pathname === path || pathname.startsWith(path + '/'))
+  const isPublicPath = publicPaths.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  )
 
-  // ✅ FIX #2: אם אין session והדף לא ציבורי -> הפניה ל-login
-  // כולל שמירה של כל ה-URL (path + query) כדי לחזור בדיוק לאותו מקום
+  // ✅ if not logged in and not public -> go login
   if (!session && !isPublicPath) {
     const redirectUrl = new URL('/login', req.url)
-    const fullPathWithQuery = req.nextUrl.pathname + req.nextUrl.search
-    redirectUrl.searchParams.set('next', fullPathWithQuery) // ✅ FIX: next (לא רק pathname)
+    redirectUrl.searchParams.set('next', pathname + req.nextUrl.search)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // ✅ FIX #3: אם יש session והמשתמש ב-login/register -> הפניה ל-dashboard
-  // אבל לא להפריע ל-auth callback באמצע יצירת session.
-  if (
-    session &&
-    (pathname === '/login' || pathname === '/register')
-  ) {
+  // ✅ if logged in and on login/register -> go dashboard
+  if (session && (pathname === '/login' || pathname === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
@@ -48,9 +45,6 @@ export async function middleware(req) {
 }
 
 export const config = {
-  // ✅ FIX #4: לוודא שאנחנו לא תופסים static assets
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }
-
-
 
