@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-// FIX: remove /src from imports (Vercel path + you already moved entities)
+// ✅ FIX: remove /src from imports (Vercel path + you already moved entities)
 // was: "@/src/api/entities"
 import { Venture, User } from "@/api/entities";
 
@@ -44,9 +44,24 @@ const getNavigationItems = (venture) => {
   const allItems = [
     { title: "Home", url: createPageUrl("home"), icon: Home, alwaysActive: true },
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
-    { title: "Beta Page", url: venture ? createPageUrl(`BetaTesting?id=${venture.id}`) : "#", icon: FlaskConical, phases: ["beta", "growth"] },
-    { title: "Angel Arena", url: createPageUrl("angel-arena"), icon: Users, phases: ["mvp", "mlp", "beta", "growth"] },
-    { title: "VC Marketplace", url: createPageUrl("vcmarketplace"), icon: DollarSign, feature: "vc_marketplace" },
+    {
+      title: "Beta Page",
+      url: venture ? createPageUrl(`BetaTesting?id=${venture.id}`) : "#",
+      icon: FlaskConical,
+      phases: ["beta", "growth"],
+    },
+    {
+      title: "Angel Arena",
+      url: createPageUrl("angel-arena"),
+      icon: Users,
+      phases: ["mvp", "mlp", "beta", "growth"],
+    },
+    {
+      title: "VC Marketplace",
+      url: createPageUrl("vcmarketplace"),
+      icon: DollarSign,
+      feature: "vc_marketplace",
+    },
   ];
 
   return allItems.filter((item) => {
@@ -70,44 +85,37 @@ export default function ClientLayout({ children }) {
       setIsLoading(true);
 
       try {
-        // =========================
-        // ✅ FIX #1: PUBLIC ROUTES BYPASS
-        // למה? כי קודם עשינו bypass רק ל-venture-landing,
-        // ואז /register היה נטען לשניה ומיד נשלח ל-/login ע"י guard.
-        // =========================
-        const isPublicRoute =
-          pathname === "/" ||
-          pathname.startsWith("/login") ||
-          pathname.startsWith("/register") ||
-          pathname.startsWith("/reset-password") ||
-          pathname.startsWith("/venture-landing");
+        // ✅ FIX 1: never run auth/user loading inside auth pages or auth callback (prevents flicker loops)
+        const isAuthPage =
+          pathname?.startsWith("/login") ||
+          pathname?.startsWith("/register") ||
+          pathname?.startsWith("/reset-password") ||
+          pathname?.startsWith("/auth"); // callback routes
 
-        if (isPublicRoute) {
+        // ✅ FIX 2: keep bypass for venture-landing (public / anonymous)
+        const isVentureLanding = pathname?.includes("venture-landing");
+
+        if (isAuthPage || isVentureLanding) {
           setUser(null);
           setVenture(null);
           setIsLoading(false);
           return;
         }
 
-        // =========================
-        // ✅ FIX #2: define currentUser before using it (כבר היה אצלך)
-        // =========================
+        // ✅ FIX 3: DO NOT redirect from layout (middleware handles protection)
+        // If no session → User.me() should return null; we just show as logged-out.
         const currentUser = await User.me();
+        setUser(currentUser || null);
 
-        // =========================
-        // ✅ FIX #3: אם אין סשן → שלח ל-login עם next (ולא סתם /login)
-        // למה? כדי לחזור אח"כ לעמוד הנכון + פחות "קפיצות"
-        // =========================
         if (!currentUser) {
-          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          // not logged in; let middleware handle redirects on protected pages
+          setVenture(null);
           setIsLoading(false);
           return;
         }
 
-        setUser(currentUser);
-
-        // NOTE: leaving your original filter logic as-is (created_by).
-        // If later you want founders access too, we'll change it deliberately.
+        // ✅ NOTE: keep original behavior (ventures owned by created_by)
+        // If you later want "co-founder ventures" too, we’ll change this intentionally.
         const ventures = await Venture.filter(
           { created_by: currentUser.email },
           "-created_date"
@@ -123,8 +131,7 @@ export default function ClientLayout({ children }) {
     };
 
     loadData();
-    // ✅ FIX #4: add router to deps to avoid React warnings and keep behavior stable
-  }, [pathname, router]);
+  }, [pathname]);
 
   const navigationItems = getNavigationItems(venture);
   const userPhase = venture ? venture.phase : "idea";
@@ -145,7 +152,7 @@ export default function ClientLayout({ children }) {
     }
   }
 
-  // (נשאר) ה-bypass הויזואלי ל-venture-landing — אבל עכשיו הוא לא היחיד (יש גם publicRoutes)
+  // ✅ keep bypass render for venture-landing (no sidebar)
   if (pathname && pathname.includes("venture-landing")) {
     return <div className="min-h-screen bg-white">{children}</div>;
   }
@@ -173,18 +180,22 @@ export default function ClientLayout({ children }) {
                   <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                     Navigation
                   </SidebarGroupLabel>
+
                   <SidebarGroupContent>
                     <SidebarMenu>
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
                           className={`mb-1 rounded-lg transition-colors duration-200 ${
-                            pathname === createPageUrl("Home")
+                            pathname === createPageUrl("home")
                               ? "bg-indigo-50 text-indigo-700"
                               : "hover:bg-indigo-50 hover:text-indigo-700"
                           }`}
                         >
-                          <Link href={createPageUrl("home")} className="flex items-center gap-3 px-3 py-2">
+                          <Link
+                            href={createPageUrl("home")}
+                            className="flex items-center gap-3 px-3 py-2"
+                          >
                             <Home className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Home</span>
                           </Link>
@@ -195,12 +206,15 @@ export default function ClientLayout({ children }) {
                         <SidebarMenuButton
                           asChild
                           className={`mb-1 rounded-lg transition-colors duration-200 ${
-                            pathname === createPageUrl("Dashboard")
+                            pathname === createPageUrl("dashboard")
                               ? "bg-indigo-50 text-indigo-700"
                               : "hover:bg-indigo-50 hover:text-indigo-700"
                           }`}
                         >
-                          <Link href={createPageUrl("dashboard")} className="flex items-center gap-3 px-3 py-2">
+                          <Link
+                            href={createPageUrl("dashboard")}
+                            className="flex items-center gap-3 px-3 py-2"
+                          >
                             <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                             <span className="font-medium">Dashboard</span>
                           </Link>
@@ -209,7 +223,10 @@ export default function ClientLayout({ children }) {
 
                       {landingPageItem && (
                         <SidebarMenuItem>
-                          <SidebarMenuButton asChild className="mb-1 rounded-lg transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-700">
+                          <SidebarMenuButton
+                            asChild
+                            className="mb-1 rounded-lg transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-700"
+                          >
                             {landingPageItem.isExternal ? (
                               <a
                                 href={landingPageItem.url}
@@ -221,7 +238,10 @@ export default function ClientLayout({ children }) {
                                 <span className="font-medium">{landingPageItem.title}</span>
                               </a>
                             ) : (
-                              <Link href={landingPageItem.url} className="flex items-center gap-3 px-3 py-2">
+                              <Link
+                                href={landingPageItem.url}
+                                className="flex items-center gap-3 px-3 py-2"
+                              >
                                 <ExternalLink className="w-4 h-4 flex-shrink-0" />
                                 <span className="font-medium">{landingPageItem.title}</span>
                               </Link>
@@ -256,7 +276,10 @@ export default function ClientLayout({ children }) {
                                     <span className="font-medium">{item.title}</span>
                                   </a>
                                 ) : (
-                                  <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
+                                  <Link
+                                    href={item.url}
+                                    className="flex items-center gap-3 px-3 py-2"
+                                  >
                                     <Icon className="w-4 h-4 flex-shrink-0" />
                                     <span className="font-medium">{item.title}</span>
                                   </Link>
@@ -285,7 +308,10 @@ export default function ClientLayout({ children }) {
                                 : "hover:bg-red-50 hover:text-red-700"
                             }`}
                           >
-                            <Link href={createPageUrl("AdminDashboard")} className="flex items-center gap-3 px-3 py-2">
+                            <Link
+                              href={createPageUrl("AdminDashboard")}
+                              className="flex items-center gap-3 px-3 py-2"
+                            >
                               <Shield className="w-4 h-4 flex-shrink-0" />
                               <span className="font-medium">Admin Dashboard</span>
                             </Link>
@@ -303,14 +329,16 @@ export default function ClientLayout({ children }) {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 font-medium text-sm">
-                  {user ? user.email.charAt(0).toUpperCase() : "E"}
+                  {user?.email ? user.email.charAt(0).toUpperCase() : "E"}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 text-sm truncate">
-                  {user ? user.email : "Entrepreneur"}
+                  {user?.email || "Entrepreneur"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">Phase: {userPhase.replace("_", " ")}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  Phase: {userPhase.replace("_", " ")}
+                </p>
               </div>
             </div>
           </SidebarFooter>
@@ -330,3 +358,5 @@ export default function ClientLayout({ children }) {
     </SidebarProvider>
   );
 }
+
+
