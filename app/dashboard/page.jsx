@@ -1,3 +1,4 @@
+//dashboard
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
