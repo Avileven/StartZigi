@@ -1,3 +1,4 @@
+//createVenture
 "use client";
 
 import React, { useState } from "react";
@@ -81,34 +82,45 @@ export default function CreateVenture() {
       const statusScore = 80;
       const totalScore = (teamScore + opportunityScore + statusScore) / 3;
 
-      const venturePayload = {
-        name: ventureData.name,
-        description: ventureData.description,
-        problem: ventureData.problem,
-        solution: ventureData.solution,
-        sector: ventureData.sector,
-        team_score: teamScore,
-        opportunity_score: opportunityScore,
-        status_score: statusScore,
-        total_score: totalScore,
-        phase: "business_plan",
-        virtual_capital: 15000,
-        monthly_burn_rate: 0,
-        founders_count: 1,
-        likes_count: 0,
-        messages_count: 0,
-        business_plan_completion: 0,
-        mvp_uploaded: false,
-        revenue_model_completed: false,
-        mlp_completed: false,
-        mlp_development_completed: false,
-        pitch_created: false,
-        funding_plan_completed: false,
-        mvp_feedback_count: 0,
-        pressure_challenge_completed: false,
-        created_by: user.email,
-        created_by_id: user.id
-      };
+     
+const venturePayload = {
+  name: ventureData.name,
+  description: ventureData.description,
+  problem: ventureData.problem,
+  solution: ventureData.solution,
+  sector: ventureData.sector,
+
+  team_score: teamScore,
+  opportunity_score: opportunityScore,
+  status_score: statusScore,
+  total_score: totalScore,
+
+  phase: "business_plan",
+  virtual_capital: 15000,
+  monthly_burn_rate: 0,
+
+  // ✅ קריטי ל-RLS: המשתמש חייב להיות בתוך founder_user_ids
+  founder_user_ids: [String(user.id)],
+  founders_count: 1,
+
+  likes_count: 0,
+  messages_count: 0,
+  business_plan_completion: 0,
+  mvp_uploaded: false,
+  revenue_model_completed: false,
+  mlp_completed: false,
+  mlp_development_completed: false,
+  pitch_created: false,
+  funding_plan_completed: false,
+  mvp_feedback_count: 0,
+  pressure_challenge_completed: false,
+
+  created_by: user.email,
+  created_by_id: String(user.id),
+};
+
+
+
 
       const { data: newVentures, error: ventureCreateError } = await supabase
         .from('ventures')
