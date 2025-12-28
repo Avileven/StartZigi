@@ -1,3 +1,4 @@
+//send-invite/route
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
@@ -9,7 +10,7 @@ export async function POST(request) {
  // שורת בדיקה 1: לראות מה הגיע מהדפדפן
     console.log("נתונים שהגיעו לשרת:", { email, ventureName, inviterName });
     const { data, error } = await resend.emails.send({
-      from: 'VentureLaunch <onboarding@resend.dev>',
+      from: 'StartZig <invite@startzig.com>',
       to: [email],
       subject: `${inviterName} invited you to join ${ventureName}`,
       html: `
