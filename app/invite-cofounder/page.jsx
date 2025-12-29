@@ -1,4 +1,4 @@
-// invite-cofounder
+// invite-cofounder 291225
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -11,10 +11,10 @@ import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  UserPlus, 
-  Mail, 
-  Users, 
+import {
+  UserPlus,
+  Mail,
+  Users,
   CheckCircle,
   Clock,
   X,
@@ -40,14 +40,14 @@ export default function InviteCoFounder() {
     try {
       const user = await User.me();
      const userVentures = await Venture.list("-created_date");
-      
+     
       if (userVentures.length > 0) {
         const currentVenture = userVentures[0];
         setVenture(currentVenture);
-        
+       
         // Load existing invitations
-        const existingInvitations = await CoFounderInvitation.filter({ 
-          venture_id: currentVenture.id 
+        const existingInvitations = await CoFounderInvitation.filter({
+          venture_id: currentVenture.id
         }, "-created_date");
         setInvitations(existingInvitations);
       }
@@ -72,9 +72,9 @@ export default function InviteCoFounder() {
     try {
       const user = await User.me();
       const invitationToken = Math.random().toString(36).substring(2, 15);
-      
+     
       // Create invitation record
-      await CoFounderInvitation.create({
+      const invitation = await CoFounderInvitation.create({ // ✅ FIX (29.12.2025): keep inserted row (id/token)
         venture_id: venture.id,
         inviter_email: user.email,
         invitee_email: inviteForm.email,
@@ -96,9 +96,9 @@ const emailResponse = await fetch('/api/send-invite', {
     email: inviteForm.email,
     ventureName: venture.name,
     inviterName: user.name || user.email,
-    
+   
 // ✅ FIX: לשלוח את הטוקן שנוצר ונשמר
-  invitationToken: invitationToken,
+  invitationToken: invitation.invitation_token, // ✅ FIX (29.12.2025): always send the DB token,
 
   }),
 });
@@ -239,9 +239,9 @@ await Venture.update(venture.id, {
                       />
                     </div>
 
-                    <Button 
-                      type="submit" 
-                      disabled={isSending} 
+                    <Button
+                      type="submit"
+                      disabled={isSending}
                       className="w-full bg-purple-600 hover:bg-purple-700"
                     >
                       {isSending ? (
@@ -327,3 +327,4 @@ await Venture.update(venture.id, {
     </div>
   );
 }
+

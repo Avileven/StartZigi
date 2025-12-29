@@ -1,4 +1,4 @@
-// venture-landing
+// venture-landing 29.12.25
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -312,17 +312,10 @@ export default function VentureLanding() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("invitation_token");
 
-      // FIX: שומרים token ב-state
+      // ✅ FIX (29.12.2025): keep token in state (used by Join button + auto-join)
       setInvitationToken(token);
 
-      // FIX: אם זה דף הזמנה – לא קוראים auth.me() בכלל
-      if (token) {
-        setCurrentUser(null);
-        await loadVenture(null);
-        return;
-      }
-
-      // במסלול רגיל: כן מנסים להביא משתמש, אבל לא מפילים את הכל אם אין session
+      // ✅ FIX (29.12.2025): ALWAYS try to read the current user (safe even if no session)
       let user = null;
       try {
         user = await auth.me();
@@ -331,6 +324,26 @@ export default function VentureLanding() {
       }
       setCurrentUser(user);
 
+      // ✅ FIX (29.12.2025): If this is an invite link, load venture via invite-token headers (public read),
+      // but still keep user (if logged in) so Join can work without a second click.
+      if (token) {
+        await loadVenture(user);
+        // ✅ FIX (29.12.2025): auto-join once right after signup/login redirect
+        const shouldAutoJoin = typeof window !== "undefined" && sessionStorage.getItem("pending_join_invite") === "1";
+        if (user && shouldAutoJoin) {
+          sessionStorage.removeItem("pending_join_invite");
+          // call join once automatically
+          // (wrap in try to avoid blocking the page if RPC fails)
+          try {
+            await handleJoinAsCofounder();
+          } catch (e) {
+            // handled inside handleJoinAsCofounder
+          }
+        }
+        return;
+      }
+
+      // non-invite normal flow
       if (urlParams.get("welcome") === "true") {
         setShowWelcome(true);
         const ventureId = urlParams.get("id");
@@ -342,7 +355,7 @@ export default function VentureLanding() {
     };
 
     fetchUserAndVenture();
-  }, [loadVenture]);
+  }, [loadVenture, handleJoinAsCofounder]);
 
   // FIX JOIN: אם חזרנו מה-Login עם אותו invitation_token, מריצים JOIN אוטומטית פעם אחת (בלי שהמשתמש ילחץ שוב)
   useEffect(() => {
@@ -510,7 +523,17 @@ export default function VentureLanding() {
             <Card className="shadow-lg mb-8">
               <CardHeader>
                 <CardTitle>Join this venture</CardTitle>
-                <CardDescription>You were invited as a co-founder. Click to accept and join the team.</CardDescription>
+                <CardDescription>You were invited as a co-founder. Create an account (or log in) and join the team. // ✅ UX FIX (29.12.2025)</CardDescription>
+                {/* ✅ UX FIX (29.12.2025): show login link for existing users */}
+                <p className="text-sm text-gray-600 mt-2">
+                  Already have an account?{" "}
+                  <a
+                    href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}
+                    className="text-indigo-600 hover:underline"
+                  >
+                    Log in
+                  </a>
+                </p>
               </CardHeader>
               <CardContent className="space-y-3">
                 {joinError && <p className="text-sm text-red-600">{joinError}</p>}
@@ -683,5 +706,6 @@ export default function VentureLanding() {
     </>
   );
 }
+
 
 
