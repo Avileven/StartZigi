@@ -96,6 +96,10 @@ const emailResponse = await fetch('/api/send-invite', {
     email: inviteForm.email,
     ventureName: venture.name,
     inviterName: user.name || user.email,
+    
+// ✅ FIX: לשלוח את הטוקן שנוצר ונשמר
+  invitationToken: invitationToken,
+
   }),
 });
 
