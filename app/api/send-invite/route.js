@@ -1,49 +1,43 @@
-
-// api/send-invite/route.js
+// app/api/send-invite/route.js310125
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ✅ FIX (2025-12-31): בונים baseUrl יציב גם ב-Vercel וגם בדומיין מותאם.
+// origin לפעמים לא מגיע. לכן משתמשים גם ב-x-forwarded-*.
 function getBaseUrl(request) {
-  // עדיף להגדיר ב-.env של Vercel:
-  // NEXT_PUBLIC_SITE_URL=https://startzig.vercel.app
-  // או הדומיין המותאם שלך
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
-  if (envUrl) return envUrl.replace(/\/$/, "");
+  const origin = request.headers.get("origin");
+  if (origin) return origin;
 
-  // fallback יציב בסביבת Vercel/Proxy
   const proto = request.headers.get("x-forwarded-proto") || "https";
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "startzig.vercel.app";
 
-  if (!host) return "https://startzig.vercel.app"; // fallback אחרון
   return `${proto}://${host}`;
 }
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { email, ventureName, inviterName, invitationToken } = body || {};
-
-    // לוג מינימלי (לא סיסמאות/מידע רגיש)
-    console.log("send-invite payload:", { email, ventureName, inviterName, hasToken: !!invitationToken });
+    // ✅ FIX (2025-12-31): חייבים invitationToken כדי לשלוח לינק נכון
+    const { email, ventureName, inviterName, invitationToken } = await request.json();
 
     if (!email || !ventureName || !inviterName || !invitationToken) {
-      return NextResponse.json(
-        { error: "Missing required fields", details: { email: !!email, ventureName: !!ventureName, inviterName: !!inviterName, invitationToken: !!invitationToken } },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const baseUrl = getBaseUrl(request);
 
-    // ✅ הלינק הנכון: venture-landing עם invitation_token
-    const joinUrl = `${baseUrl}/venture-landing?invitation_token=${encodeURIComponent(invitationToken)}`;
+    // ✅ FIX (2025-12-31): הלינק חייב ללכת ל-venture-landing עם invitation_token
+    // ולא ל-/join (שנתן 404).
+    const joinUrl = `${baseUrl}/venture-landing?invitation_token=${encodeURIComponent(
+      invitationToken
+    )}`;
 
     const { data, error } = await resend.emails.send({
-      // תשאיר כמו שעבד לך (הקובץ שלך משתמש ב-startzig.com)
-      // אם זה Verified ב-Resend, זה מצוין.
-      from: "StartZig <invite@startzig.com>",
+      from: "VentureLaunch <onboarding@resend.dev>",
       to: [email],
       subject: `${inviterName} invited you to join ${ventureName}`,
       html: `
@@ -57,8 +51,8 @@ export async function POST(request) {
                     text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 10px;">
             Join Venture
           </a>
-          <p style="margin-top: 16px; font-size: 12px; color: #666;">
-            If the button doesn't work, copy and paste this link:<br/>
+          <p style="margin-top: 14px; color:#6b7280; font-size: 12px;">
+            If the button doesn’t work, copy & paste this link:<br/>
             ${joinUrl}
           </p>
         </div>
@@ -72,8 +66,8 @@ export async function POST(request) {
 
     return NextResponse.json({ data });
   } catch (error) {
-    console.error("send-invite route failed:", error);
-    return NextResponse.json({ error: error?.message || "Unknown error" }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 

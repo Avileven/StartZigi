@@ -1,1058 +1,526 @@
-//dashboard 311225
+// dashboard_311225.js / page.jsx (FULL FILE)
+// =========================================
+// NOTE: This file is pasted as a full replacement.
+// FIXES are marked with: [2025-12-31] + explanation.
+
 "use client";
-import { supabase } from '@/lib/supabase';
-import React, { useState, useEffect, useCallback } from "react";
-// תיקון: הוסרה src/ מכל הייבואות של entities.
-import { Venture } from "@/api/entities";
-import { VentureMessage } from "@/api/entities";
-import { User } from "@/api/entities";
-import { PromotionCampaign } from "@/api/entities";
-import { BetaTester } from "@/api/entities";
-// תיקון: הוסרה סיומת .js מיותרת
-import { VCFirm } from '@/api/entities';
-import { FundingEvent } from '@/api/entities';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-// ... שאר הייבואות ...
 import Link from "next/link";
+
+import { Venture, User } from "@/api/entities";
+
 import {
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  Clock,
-  Wallet,
+  LayoutDashboard,
   Users,
-  MessageSquare,
-  Heart,
-  X,
+  DollarSign,
+  Trophy,
+  ArrowRight,
+  Sparkles,
   Lightbulb,
   FileText,
+  TrendingUp,
   Rocket,
-  Plus,
-  Briefcase,
-  CheckCircle,
+  Target,
+  Shield,
   ExternalLink,
+  AlertTriangle,
+  CheckCircle,
+  Send,
   UserPlus,
-  BarChart3,
-  BookOpen,
-  MessagesSquare,
-  Repeat,
-  ShieldCheck,
-  FlaskConical,
-  Zap,
-  Brain,
-  PhoneForwarded,
-  Code,
-  Sparkles,
-  Megaphone
+  Mail,
+  Settings,
+  Loader2,
+  Crown,
+  Star,
+  ChevronRight,
+  Gift,
+  ClipboardCheck,
 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import VCMeetingModal from '@/components/vc/VCMeetingModal';
-import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 
-// FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
-const createPageUrl = (path) => `/${path.toLowerCase()}`;
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-const PHASES_ORDER = ["idea", "business_plan", "mvp", "mlp", "beta", "growth", "ma"];
-
-const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
-  if (!isOpen) return null;
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Investment Committee Feedback</DialogTitle>
-          <DialogDescription>
-            The following feedback was provided by the investment committee during their review.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="prose prose-sm max-w-none max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-md">
-          <pre className="whitespace-pre-wrap font-sans">{details}</pre>
-        </div>
-        <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+const PHASES = [
+  { id: "idea", name: "Idea", icon: Lightbulb, color: "text-yellow-500" },
+  { id: "business_plan", name: "Business Plan", icon: FileText, color: "text-blue-500" },
+  { id: "mvp", name: "MVP", icon: Rocket, color: "text-purple-500" },
+  { id: "mlp", name: "MLP", icon: Target, color: "text-green-500" },
+  { id: "beta", name: "Beta", icon: Users, color: "text-indigo-500" },
+  { id: "growth", name: "Growth", icon: TrendingUp, color: "text-pink-500" },
+];
 
 export default function Dashboard() {
-  const [ventures, setVentures] = useState([]);
-  const [currentVenture, setCurrentVenture] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showToS, setShowToS] = useState(false);
-  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
-  const [isAdvancedMeetingModalOpen, setIsAdvancedMeetingModalOpen] = useState(false);
-  const [selectedVCFirm, setSelectedVCFirm] = useState(null);
-  const [selectedMessageId, setSelectedMessageId] = useState(null);
-  const [showRejectionDetails, setShowRejectionDetails] = useState(false);
-  const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
-  const [cofounderExpanded, setCofounderExpanded] = useState(false);
   const router = useRouter();
 
-  const updateBurnRate = useCallback(async (venture) => {
-    if (!venture.monthly_burn_rate || venture.monthly_burn_rate === 0) return;
+  const [currentUser, setCurrentUser] = useState(null);
+  const [ventures, setVentures] = useState([]);
+  const [selectedVenture, setSelectedVenture] = useState(null);
 
-    const lastBurn = venture.last_burn_deduction ? new Date(venture.last_burn_deduction) : new Date(venture.created_date);
-    const daysSinceLastBurn = differenceInDays(new Date(), lastBurn);
-    const DAILY_BURN_RATE = venture.monthly_burn_rate / 30;
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-    if (daysSinceLastBurn >= 7) {
-      const weeksToDeduct = Math.floor(daysSinceLastBurn / 7);
-      const totalDeduction = (DAILY_BURN_RATE * 7) * weeksToDeduct;
+  // Invite modal state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState("");
 
-      const newCapital = Math.max(0, venture.virtual_capital - totalDeduction);
-      await Venture.update(venture.id, {
-        virtual_capital: newCapital,
-        last_burn_deduction: new Date().toISOString().split('T')[0]
-      });
+  useEffect(() => {
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      setLoadError("");
 
-      setCurrentVenture(prev => ({
-        ...prev,
-        virtual_capital: newCapital,
-      }));
+      try {
+        const user = await User.me();
+        if (!user) {
+          router.push("/login?next=/dashboard");
+          return;
+        }
+        setCurrentUser(user);
 
-      if (newCapital < 5000 && venture.virtual_capital >= 5000) {
-        await VentureMessage.create({
-            venture_id: venture.id,
-            message_type: 'system',
-            title: '⚠️ Low Balance Alert!',
-            content: `Your virtual capital has dropped below $5,000. It's crucial to secure funding soon to avoid running out of money.`,
-            phase: venture.phase,
-            priority: 4
-        });
-      }
-    }
-  }, []);
-
-  const loadDashboard = useCallback(async () => {
-    try {
-      const currentUser = await User.me();
-      
-      if (!currentUser) {
-        router.push('/login');
-        return;
-      }
-      
-      setUser(currentUser);
-
-      if (!currentUser.accepted_tos_date) {
-        setShowToS(true);
-      } else {
-        const adminSelectedVentureId = localStorage.getItem('admin_selected_venture_id');
+        const adminSelectedVentureId = localStorage.getItem("admin_selected_venture_id");
         let userVentures = [];
-        
-        if (adminSelectedVentureId && currentUser.role === 'admin') {
+
+        if (adminSelectedVentureId && user.role === "admin") {
           const specificVenture = await Venture.filter({ id: adminSelectedVentureId });
           if (specificVenture.length > 0) {
             userVentures = specificVenture;
-            localStorage.removeItem('admin_selected_venture_id');
+            localStorage.removeItem("admin_selected_venture_id");
           } else {
-            userVentures = await Venture.filter({ founder_user_id: currentUser.id }, "-created_date");
-            localStorage.removeItem('admin_selected_venture_id');
+            userVentures = await Venture.filter({ founder_user_id: user.id }, "-created_date");
+            localStorage.removeItem("admin_selected_venture_id");
           }
         } else {
-          userVentures = await Venture.filter( { founder_user_id: currentUser.id }, "-created_date"
-          );
+          userVentures = await Venture.filter({ founder_user_id: user.id }, "-created_date");
         }
-        
-        setVentures(userVentures);
-        if (userVentures.length > 0) {
-          const activeVenture = userVentures[0];
-          
-          // AUTO-FIX: If mlp_development_completed is true but mlp_completed is false, fix it
-          if (activeVenture.mlp_development_completed && !activeVenture.mlp_completed) {
-            await Venture.update(activeVenture.id, {
-              mlp_completed: true,
-              phase: 'beta'
-            });
-            
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'phase_complete',
-              title: '🎉 MLP Phase Complete!',
-              content: `Congratulations! You've successfully completed your Minimum Lovable Product. You are now entering the Beta phase.`,
-              phase: 'mlp',
-              priority: 4
-            });
 
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'phase_welcome',
-              title: '🧪 Welcome to Beta Testing!',
-              content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
-              phase: 'beta',
-              priority: 3
-            });
+        // [2025-12-31] SINGLE-VENTURE MODE:
+        // המטרה: למנוע "ערבוב זהויות" בין משתמש חדש (אין מיזם) לבין משתמש שהוא כבר שותף במיזם אחר.
+        // הפתרון: אם יש user_profiles.primary_venture_id — הדשבורד מציג רק אותו מיזם.
+        // אם אין — אנחנו בוחרים את המיזם הראשון ומנסים לשמור אותו ל-primary (Best-effort).
+        // הערה: אם העמודה primary_venture_id עדיין לא קיימת — זה לא מפיל כלום, פשוט ימשיך כמו קודם.
+        if (!(adminSelectedVentureId && user.role === "admin")) {
+          let primaryVentureId = null;
 
-            const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'system',
-              title: '📊 Beta Phase Requirements',
-              content: `You need 50 beta sign-ups to move to Growth phase. You currently have ${currentTesters.length}. Use the Promotion Center to reach more potential testers!`,
-              phase: 'beta',
-              priority: 3
-            });
-            
-            activeVenture.mlp_completed = true;
-            activeVenture.phase = 'beta';
+          try {
+            const { data: profile, error: profileErr } = await supabase
+              .from("user_profiles")
+              .select("primary_venture_id")
+              .eq("id", user.id)
+              .single();
+
+            if (!profileErr && profile?.primary_venture_id) {
+              primaryVentureId = profile.primary_venture_id;
+            }
+          } catch (e) {
+            // ignore (column might not exist yet)
           }
-          
-          // AUTO-FIX: If in Beta phase and no "50 testers" message exists, create it
-          if (activeVenture.phase === 'beta') {
-            const existingMessages = await VentureMessage.filter({
-              venture_id: activeVenture.id,
-              title: '📊 Beta Phase Requirements',
-              is_dismissed: false
-            });
-            
-            const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
 
-            if (existingMessages.length === 0 && currentTesters.length < 50) {
-              await VentureMessage.create({
-                venture_id: activeVenture.id,
-                message_type: 'system',
-                title: '📊 Beta Phase Requirements',
-                content: `You need 50 beta sign-ups to move to Growth phase. You currently have ${currentTesters.length}. Use the Promotion Center to reach more potential testers!`,
-                phase: 'beta',
-                priority: 3
+          if (primaryVentureId) {
+            const byId = await Venture.filter({ id: primaryVentureId });
+            if (byId && byId.length > 0) {
+              userVentures = byId;
+            }
+          } else if (userVentures && userVentures.length > 0) {
+            try {
+              await supabase.from("user_profiles").upsert({
+                id: user.id,
+                primary_venture_id: userVentures[0].id,
               });
+            } catch (e) {
+              // ignore
             }
           }
-          
-          setCurrentVenture(activeVenture);
-
-          const ventureMessages = await VentureMessage.filter(
-            { venture_id: activeVenture.id, is_dismissed: false },
-            "-created_date"
-          );
-          setMessages(ventureMessages);
-
-          await updateBurnRate(activeVenture);
         }
+
+        setVentures(userVentures);
+        setSelectedVenture(userVentures[0] || null);
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+        setLoadError(err?.message || "Failed to load dashboard.");
+      } finally {
         setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading dashboard:", error);
-      router.push('/login');
-      setIsLoading(false);
-    }
-  }, [updateBurnRate, router]);
+    };
 
-  useEffect(() => {
     loadDashboard();
-  }, [loadDashboard]);
+  }, [router]);
 
-  const handleAcceptToS = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    await supabase
-      .from('user_profiles')
-      .upsert({ 
-        id: user.id, 
-        accepted_tos_date: new Date().toISOString() 
-      });
-    
-    setShowToS(false);
-    // Reloading data after accepting ToS
-    loadDashboard(); 
-  } catch (error) {
-    console.error('Error accepting ToS:', error);
-    // Using a custom message box instead of alert, but keeping as alert for minimal change
-    // for this one instance as it's a non-critical simulation logic.
-    alert('Failed to accept terms. Please try again.'); 
-  }
-};
+  const selectedPhase = selectedVenture?.phase || "idea";
+  const selectedPhaseObj = PHASES.find((p) => p.id === selectedPhase) || PHASES[0];
+  const PhaseIcon = selectedPhaseObj.icon;
 
-  const dismissMessage = async (message, shouldTrackView = false) => {
-    await VentureMessage.update(message.id, { is_dismissed: true });
-    if (shouldTrackView && message.campaign_id) {
-      try {
-        const campaigns = await PromotionCampaign.filter({ id: message.campaign_id });
-        if (campaigns.length > 0) {
-          const campaign = campaigns[0];
-          await PromotionCampaign.update(campaign.id, { views: (campaign.views || 0) + 1 });
-        }
-      } catch (error) {
-        console.error("Error tracking view:", error);
-      }
-    }
-    setMessages(prev => prev.filter(msg => msg.id !== message.id));
+  const openInviteModal = () => {
+    setInviteEmail("");
+    setInviteName("");
+    setInviteMessage("");
+    setInviteError("");
+    setInviteSuccess("");
+    setShowInviteModal(true);
   };
 
-  const handleVisitPage = async (message) => {
-    const isFeedbackRequest = message.message_type === 'feedback_request';
-
-    if (isFeedbackRequest) {
-        if (message.campaign_id) {
-            try {
-                const campaigns = await PromotionCampaign.filter({ id: message.campaign_id });
-                if (campaigns.length > 0) {
-                    const campaign = campaigns[0];
-                    await PromotionCampaign.update(campaign.id, {
-                        clicks: (campaign.clicks || 0) + 1,
-                        views: (campaign.views || 0) + 1
-                    });
-                }
-            } catch (error) {
-                console.error("Error tracking click:", error);
-            }
-        }
-        await VentureMessage.update(message.id, { is_dismissed: true });
-        setMessages(prev => prev.filter(msg => msg.id !== message.id));
-        if (message.from_venture_landing_page_url) {
-            window.open(message.from_venture_landing_page_url, '_blank');
-        }
-    }
+  const closeInviteModal = () => {
+    setShowInviteModal(false);
   };
 
-  const handleVisitVenture = async (message) => {
-    if (message.from_venture_landing_page_url) {
-      window.open(message.from_venture_landing_page_url, '_blank');
-    }
-  };
+  const handleSendInvite = async () => {
+    setInviteError("");
+    setInviteSuccess("");
 
-  const handleInvestmentDecision = async (message, decision) => {
-    if (decision === 'accepted') {
-        const newCapital = (currentVenture.virtual_capital || 0) + message.investment_offer_checksize;
-        await Venture.update(currentVenture.id, {
-            virtual_capital: newCapital,
-            valuation: message.investment_offer_valuation
-        });
-        setCurrentVenture(prev => ({
-          ...prev, 
-          virtual_capital: newCapital, 
-          valuation: message.investment_offer_valuation
-        }));
-
-        await FundingEvent.create({
-          venture_id: currentVenture.id,
-          venture_name: currentVenture.name,
-          venture_tagline: currentVenture.description,
-          venture_landing_page_url: currentVenture.landing_page_url,
-          investor_name: message.vc_firm_name,
-          investment_type: 'VC',
-          amount: message.investment_offer_checksize
-        });
-
-        await VentureMessage.create({
-          venture_id: currentVenture.id,
-          message_type: 'system',
-          title: `🎉 Congratulations on your investment!`,
-          content: `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${message.vc_firm_name}. The funds have been added to your virtual capital, and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}. This achievement will be featured on our home page. Keep building and growing!`,
-          phase: currentVenture.phase,
-          priority: 4
-        });
-    }
-
-    await VentureMessage.update(message.id, {
-        investment_offer_status: decision
-    });
-
-    if (decision === 'accepted') {
-        // Using a custom message box instead of alert, but keeping as alert for minimal change
-        alert(`Investment accepted! You received $${message.investment_offer_checksize.toLocaleString()} and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}.`);
-    } else {
-        // Using a custom message box instead of alert, but keeping as alert for minimal change
-        alert('Investment offer declined.');
-    }
-
-    setMessages(prev => prev.map(msg => 
-      msg.id === message.id 
-        ? {...msg, investment_offer_status: decision} 
-        : msg
-    ));
-  };
-
-  const handleJoinVCMeeting = async (message) => {
-    if (!message.vc_firm_id) {
-      // Using a custom message box instead of alert
-      alert("Error: VC Firm ID is missing from the message.");
+    if (!selectedVenture) {
+      setInviteError("No venture selected.");
       return;
     }
+    if (!inviteEmail || !inviteEmail.includes("@")) {
+      setInviteError("Please enter a valid email.");
+      return;
+    }
+
+    setIsSendingInvite(true);
     try {
-      const firms = await VCFirm.filter({ id: message.vc_firm_id });
-      if (firms.length > 0) {
-        setSelectedVCFirm(firms[0]);
-        setSelectedMessageId(message.id);
-        setIsMeetingModalOpen(true);
-      } else {
-        // Using a custom message box instead of alert
-        alert("Could not find the VC Firm details. The firm may have been deleted.");
-      }
-    } catch (error) {
-      console.error("Error fetching VC Firm for meeting:", error);
-      // Using a custom message box instead of alert
-      alert("An error occurred while preparing the meeting.");
-    }
-  };
-  
-  const handleFollowUpCall = (message) => {
-    // Path `PressureChallenge` will be converted to `pressurechallenge` by createPageUrl
-    router.push(createPageUrl(`PressureChallenge?vcFollowUp=true&messageId=${message.id}&firmId=${message.vc_firm_id}`));
-  };
-
-  const handleJoinVCAdvancedMeeting = async (message) => {
-    if (!message.vc_firm_id) {
-      // Using a custom message box instead of alert
-      alert("Error: VC Firm ID is missing from the message for advanced meeting.");
-      return;
-    }
-    if (!currentVenture) {
-      // Using a custom message box instead of alert
-      alert("Error: No active venture found.");
-      return;
-    }
-
-    try {
-      const firms = await VCFirm.filter({ id: message.vc_firm_id });
-      if (firms.length > 0) {
-        setSelectedVCFirm(firms[0]);
-        setSelectedMessageId(message.id);
-        setIsAdvancedMeetingModalOpen(true);
-      } else {
-        // Using a custom message box instead of alert
-        alert("Could not find the VC Firm details for advanced meeting.");
-      }
-    } catch (error) {
-      console.error("Error fetching VC Firm for advanced meeting:", error);
-      // Using a custom message box instead of alert
-      alert("An error occurred while preparing the advanced meeting.");
-    }
-  };
-
-  const handleReadOn = (details) => {
-    setRejectionDetailsContent(details);
-    setShowRejectionDetails(true);
-  };
-
-  const getPhaseColor = (phase) => {
-    const colors = {
-      idea: "bg-yellow-100 text-yellow-800",
-      business_plan: "bg-blue-100 text-blue-800",
-      mvp: "bg-purple-100 text-purple-800",
-      mlp: "bg-pink-100 text-pink-800",
-      beta: "bg-orange-100 text-orange-800",
-      growth: "bg-indigo-100 text-indigo-800",
-      ma: "bg-gray-800 text-white"
-    };
-    return colors[phase] || "bg-gray-100 text-gray-800";
-  };
-
-  const getPhaseIcon = (phase) => {
-    const icons = {
-      idea: Lightbulb,
-      business_plan: FileText,
-      mvp: Rocket,
-      mlp: Heart,
-      beta: FlaskConical,
-      vc_funding: DollarSign,
-      growth: TrendingUp,
-      ma: Briefcase
-    };
-    return icons[phase] || Lightbulb;
-  };
-
-  const formatMoney = (amount) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
-    return `$${amount}`;
-  };
-
-  const getVentureAge = (venture) => {
-    if (!venture) return 0;
-    return differenceInDays(new Date(), new Date(venture.created_date));
-  };
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
-
-  const getAssetsAndTools = () => {
-    if (!currentVenture) return [];
-
-    const assets = [];
-    const currentPhaseIndex = PHASES_ORDER.indexOf(currentVenture.phase);
-
-    assets.push({
-      id: 'edit_landing_page',
-      title: 'Edit Landing Page',
-      icon: Lightbulb,
-      page: 'edit-landing-page' // createPageUrl will convert to /editlandingpage
-    });
-    
-    assets.push({
-      id: 'financials',
-      title: 'Financials',
-      icon: Wallet,
-      page: 'financials' // createPageUrl will convert to /financials
-    });
-    
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
-      assets.push({
-        id: 'business_plan',
-        title: 'Business Plan',
-        icon: FileText,
-        page: 'businessPlan' // createPageUrl will convert to /businessplan
+      const res = await fetch("/api/invite-cofounder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ventureId: selectedVenture.id,
+          inviteeEmail: inviteEmail.trim(),
+          inviteeName: inviteName.trim(),
+          customMessage: inviteMessage.trim(),
+        }),
       });
-      
-      assets.push({
-        id: 'invite_cofounder',
-        title: 'Invite Co-Founder',
-        icon: UserPlus,
-        page: 'invite-cofounder' // createPageUrl will convert to /invitecofounder
-      });
-      
-      assets.push({
-        id: 'promotion_center',
-        title: 'Promotion Center',
-        icon: Megaphone,
-        page: 'promotion-center' // createPageUrl will convert to /promotioncenter
-      });
-    }
 
-    if (currentVenture.phase === 'mvp' && !currentVenture.mvp_uploaded) {
-      assets.push({
-        id: 'mvp_development',
-        title: 'MVP Development Center',
-        icon: Rocket,
-        page: 'mvp-development' // createPageUrl will convert to /mvpdevelopment
-      });
-    }
-
-    if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
-      assets.push({
-        id: 'revenue_modeling',
-        title: 'Revenue Modeling',
-        icon: BarChart3,
-        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
-        openInNewWindow: true
-      });
-    }
-
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
-      assets.push({
-        id: 'revenue_modeling',
-        title: 'Revenue Modeling',
-        icon: BarChart3,
-        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
-        openInNewWindow: true
-      });
-    }
-    
-    if (currentVenture.phase === 'mlp') {
-      if (!currentVenture.mlp_development_completed) {
-        assets.push({
-          id: 'mlp_development_center',
-          title: 'MLP Development Center',
-          icon: Heart,
-          page: 'mlp-development-center' // createPageUrl will convert to /mlpdevelopmentcenter
-        });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to send invite.");
       }
 
-      assets.push({
-        id: 'product_feedback',
-        title: 'Product Feedback Center',
-        icon: MessageSquare,
-        page: 'product-feedback' // createPageUrl will convert to /productfeedback
-      });
+      setInviteSuccess("Invite sent!");
+      setInviteEmail("");
+      setInviteName("");
+      setInviteMessage("");
+    } catch (e) {
+      setInviteError(e?.message || "Failed to send invite.");
+    } finally {
+      setIsSendingInvite(false);
     }
-
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
-      assets.push({
-        id: 'beta_development',
-        title: 'Beta Testing Page',
-        icon: FlaskConical,
-        page: 'beta-development' // createPageUrl will convert to /betadevelopment
-      });
-      
-      assets.push({
-        id: 'venture_pitch',
-        title: 'Venture Pitch',
-        icon: TrendingUp,
-        page: 'venture-pitch' // createPageUrl will convert to /venturepitch
-      });
-    }
-
-    return assets;
   };
 
-  if (isLoading && !showToS) {
+  if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-          <div className="grid grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-gray-300 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
-  if (showToS) {
+  if (loadError) {
     return (
-      <Dialog open={showToS} onOpenChange={setShowToS}>
-        <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ShieldCheck/> Terms of Service</DialogTitle>
-            <DialogDescription>
-              Before you continue, please read and agree to our terms.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto text-sm">
-            Welcome to StartZig! By using our platform, you agree to:
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li>Engage respectfully and constructively with all users.</li>
-                <li>Provide honest and helpful feedback.</li>
-                <li>Not share any hateful, abusive, or infringing content.</li>
-                <li>Understand that this is a simulation. All currency, valuations, and investments are virtual.</li>
-            </ul>
-              <p className="mt-4">
-              For the full document, please visit our <Link href={createPageUrl("TermsOfService")} target="_blank" className="text-indigo-600 hover:underline">Terms of Service page</Link>.<br />
-              <Link href={createPageUrl("PrivacyPolicy")} target="_blank" className="text-indigo-600 hover:underline">Privacy Policy</Link>.<br />
-              <Link href={createPageUrl("Disclaimer")} target="_blank" className="text-indigo-600 hover:underline">Disclaimer</Link>.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAcceptToS}>I Read and Agree</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (!currentVenture) {
-    return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {getGreeting()}, {user?.full_name || 'Entrepreneur'}!
-            </h1>
-            <p className="text-lg text-gray-600">Ready to start your entrepreneurial journey?</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <div className="w-24 h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lightbulb className="w-12 h-12 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Create Your First Venture</h2>
-            <p className="text-gray-600 mb-6">
-              Transform your ideas into reality. Our platform will guide you through every step of building a successful startup.
-            </p>
-            <Link href={createPageUrl("CreateVenture")}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-lg px-8 py-3">
-                <Plus className="w-5 h-5 mr-2" />
-                Start Your Venture
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 text-left">
-            <Card>
-              <CardHeader>
-                <Lightbulb className="w-8 h-8 text-yellow-500 mb-2" />
-                <CardTitle className="text-lg">Idea Phase</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Start with your concept and create a compelling landing page</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <FileText className="w-8 h-8 text-blue-500 mb-2" />
-                <CardTitle className="text-lg">Business Plan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Develop a comprehensive strategy and business model</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <DollarSign className="w-8 h-8 text-green-500 mb-2" />
-                <CardTitle className="text-lg">Get Funded</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Connect with angels and VCs to secure investment</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-lg w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              Dashboard Error
+            </CardTitle>
+            <CardDescription>{loadError}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Reload
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const assetsAndTools = getAssetsAndTools();
+  if (!selectedVenture) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-xl w-full">
+          <CardHeader>
+            <CardTitle>No Venture Found</CardTitle>
+            <CardDescription>
+              You don't have a venture yet. Create one to see your dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button onClick={() => router.push("/createVenture")} className="w-full">
+              Create Venture
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <RejectionDetailsModal
-        isOpen={showRejectionDetails}
-        onClose={() => setShowRejectionDetails(false)}
-        details={rejectionDetailsContent}
-      />
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <Card className="shadow-lg">
+          <CardHeader className="border-b">
+            <div className="flex items-start justify-between gap-6">
+              <div className="space-y-1">
+                <CardTitle className="text-2xl md:text-3xl">{selectedVenture.name}</CardTitle>
+                <CardDescription className="text-base">{selectedVenture.description}</CardDescription>
 
-      <VCMeetingModal
-        isOpen={isMeetingModalOpen}
-        onClose={() => setIsMeetingModalOpen(false)}
-        vcFirm={selectedVCFirm}
-        venture={currentVenture}
-        messageId={selectedMessageId}
-        onSuccess={() => {
-          // Update messages list to mark it as dismissed/completed
-          loadDashboard(); 
-          setIsMeetingModalOpen(false);
-        }}
-        router={router}
-      />
+                <div className="flex items-center gap-3 mt-3">
+                  <Badge variant="outline" className="flex items-center gap-2">
+                    <PhaseIcon className={`w-4 h-4 ${selectedPhaseObj.color}`} />
+                    <span>Phase: {selectedPhaseObj.name}</span>
+                  </Badge>
 
-      <VCAdvancedMeetingModal
-        isOpen={isAdvancedMeetingModalOpen}
-        onClose={() => setIsAdvancedMeetingModalOpen(false)}
-        vcFirm={selectedVCFirm}
-        venture={currentVenture}
-        messageId={selectedMessageId}
-        onSuccess={() => {
-          // Update messages list to mark it as dismissed/completed
-          loadDashboard(); 
-          setIsAdvancedMeetingModalOpen(false);
-        }}
-        router={router}
-      />
+                  <Badge variant="secondary" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>Founders: {selectedVenture.founders_count ?? 1}</span>
+                  </Badge>
 
-      <div className="min-h-screen bg-gray-50 flex">
-        <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
-            <div className="space-y-2">
-              {assetsAndTools.map((asset) => {
-                const Icon = asset.icon;
-                return (
-                  <div key={asset.id}>
-                    {asset.openInNewWindow ? (
-                      <a href={createPageUrl(asset.page)} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
-                          <ExternalLink className="w-3 h-3 text-gray-400" />
-                        </div>
-                      </a>
-                    ) : asset.external ? (
-                      <a href={asset.url} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
-                          <ExternalLink className="w-3 h-3 text-gray-400" />
-                        </div>
-                      </a>
-                    ) : (
-                      <Link href={createPageUrl(asset.page)} className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
-                        </div>
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
+                  <Badge variant="secondary" className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    <span>${selectedVenture.virtual_capital ?? 0}</span>
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 min-w-[220px]">
+                <Button onClick={openInviteModal} className="w-full">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Invite a Co-Founder
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/venture-landing?id=${selectedVenture.id}`)}
+                  className="w-full"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Landing Page
+                </Button>
+              </div>
             </div>
-          </div>
+          </CardHeader>
+        </Card>
 
-          {(currentVenture.founders_count || 1) < 2 && (
-            <Card className="bg-amber-50 border-amber-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Users className="w-4 h-4 text-amber-600" />
-                  Why Do You Need a Co-Founder?
+        {/* Content */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="md:col-span-2 shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LayoutDashboard className="w-5 h-5 text-indigo-600" />
+                Dashboard
+              </CardTitle>
+              <CardDescription>Quick overview of your venture progress.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-amber-600" />
+                      Total Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-3xl font-bold">
+                    {Math.round(selectedVenture.total_score ?? 0)}
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-600" />
+                      Messages
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-3xl font-bold">
+                    {selectedVenture.messages_count ?? 0}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => router.push("/business-plan")}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Business Plan
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  onClick={() => router.push("/mvp")}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Rocket className="w-4 h-4" />
+                  MVP
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  onClick={() => router.push("/mlp")}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Target className="w-4 h-4" />
+                  MLP
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+
+                {currentUser?.role === "admin" && (
+                  <Button
+                    onClick={() => router.push("/AdminDashboard")}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-indigo-600" />
+                Quick Actions
+              </CardTitle>
+              <CardDescription>Shortcuts and settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/settings")}
+                className="w-full justify-start"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => router.push("/angel-arena")}
+                className="w-full justify-start"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Angel Arena
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => router.push("/vcmarketplace")}
+                className="w-full justify-start"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                VC Marketplace
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => router.push("/rewards")}
+                className="w-full justify-start"
+              >
+                <Gift className="w-4 h-4 mr-2" />
+                Rewards
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Invite Modal */}
+        {showInviteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <Card className="w-full max-w-lg shadow-xl">
+              <CardHeader className="border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-indigo-600" />
+                  Invite a Co-Founder
                 </CardTitle>
+                <CardDescription>Send an invite email with a join link.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xs text-amber-800 space-y-2">
-                  {!cofounderExpanded ? (
-                    <>
-                      <p>Solo founders get funded 30-50% less than teams...</p>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
-                        onClick={() => setCofounderExpanded(true)}
-                        className="p-0 h-auto text-amber-700 hover:text-amber-800"
-                      >
-                        Read more
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <p>Solo founders get funded 30-50% less than teams. A co-founder signals commitment and validation - someone else believed enough to join.</p>
-                      <div className="mt-2 space-y-2">
-                        <p><strong>Key Benefits:</strong></p>
-                        <ul className="list-disc pl-4 space-y-1">
-                          <li>Investors trust teams more than solo founders</li>
-                          <li>Shared workload and complementary skills</li>
-                          <li>Better decision-making through diverse perspectives</li>
-                          <li>Emotional support during tough times</li>
-                          <li>Higher chance of securing funding</li>
-                        </ul>
-                      </div>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
-                        onClick={() => setCofounderExpanded(false)}
-                        className="p-0 h-auto text-amber-700 hover:text-amber-800"
-                      >
-                        Read less
-                      </Button>
-                    </>
-                  )}
-                  
-                  <Link href={createPageUrl('InviteCoFounder')}>
-                    <Button size="sm" variant="outline" className="w-full border-amber-300 hover:bg-amber-100 mt-2">
-                      <UserPlus className="w-3 h-3 mr-2" />
-                      invite-cofounder
-                    </Button>
-                  </Link>
+
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="cofounder@email.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Message</Label>
+                  <Textarea
+                    value={inviteMessage}
+                    onChange={(e) => setInviteMessage(e.target.value)}
+                    placeholder="Optional message..."
+                  />
+                </div>
+
+                {inviteError && (
+                  <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {inviteError}
+                  </div>
+                )}
+
+                {inviteSuccess && (
+                  <div className="p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    {inviteSuccess}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={closeInviteModal} className="w-full">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSendInvite} disabled={isSendingInvite} className="w-full">
+                    {isSendingInvite ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Invite
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </div>
-
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  {getGreeting()}, {user?.full_name || 'Entrepreneur'}!
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {format(new Date(), "EEEE, MMMM d, yyyy")}
-                </p>
-              </div>
-              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border">
-                {currentVenture && (() => {
-                  const PhaseIcon = getPhaseIcon(currentVenture.phase);
-                  return <PhaseIcon className="w-5 h-5 text-indigo-600" />;
-                })()}
-                <div>
-                  <p className="text-sm text-gray-500">Current Phase</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPhaseColor(currentVenture.phase)}`}>
-                    {currentVenture.phase.replace('_', ' ').toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">{currentVenture.name}</CardTitle>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" />
-                    {messages.length} messages
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    {currentVenture.likes_count || 0} likes
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {getVentureAge(currentVenture)} days old
-                  </span>
-                </div>
-              </CardHeader>
-            </Card>
-
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Board</h2>
-
-              {messages.length === 0 ? (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No new messages. Keep building your venture!</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((message) => {
-                    const isInvestmentOffer = message.message_type === 'investment_offer';
-                    const isRejection = message.message_type === 'investment_rejection';
-                    const isVCMeeting = message.message_type === 'vc_meeting_request';
-                    const isVCAdvancedMeeting = message.message_type === 'vc_advanced_meeting_request';
-                    const isFeedbackRequest = message.message_type === 'feedback_request';
-                    const isPromotion = message.message_type === 'promotion';
-                    const isSystem = message.message_type === 'system' || message.message_type === 'phase_complete' || message.message_type === 'phase_welcome';
-
-                    let cardClass = 'bg-white border-l-4';
-                    let icon = MessageSquare;
-                    let iconClass = 'text-gray-500';
-
-                    if (isInvestmentOffer) {
-                      cardClass = 'bg-green-50 border-l-4 border-green-500';
-                      icon = DollarSign;
-                      iconClass = 'text-green-600';
-                    } else if (isRejection) {
-                      cardClass = 'bg-red-50 border-l-4 border-red-500';
-                      icon = X;
-                      iconClass = 'text-red-600';
-                    } else if (isVCMeeting || isVCAdvancedMeeting) {
-                      cardClass = 'bg-indigo-50 border-l-4 border-indigo-500';
-                      icon = PhoneForwarded;
-                      iconClass = 'text-indigo-600';
-                    } else if (isPromotion) {
-                      cardClass = 'bg-blue-50 border-l-4 border-blue-500';
-                      icon = Megaphone;
-                      iconClass = 'text-blue-600';
-                    } else if (isFeedbackRequest) {
-                      cardClass = 'bg-yellow-50 border-l-4 border-yellow-500';
-                      icon = BookOpen;
-                      iconClass = 'text-yellow-600';
-                    } else if (isSystem) {
-                       cardClass = 'bg-gray-100 border-l-4 border-gray-400';
-                       icon = Code;
-                       iconClass = 'text-gray-500';
-                    }
-
-                    const Icon = icon;
-
-                    return (
-                      <Card key={message.id} className={cardClass}>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                          <div className="flex items-center gap-3">
-                            <Icon className={`w-5 h-5 ${iconClass}`} />
-                            <CardTitle className="text-md font-semibold">{message.title}</CardTitle>
-                          </div>
-                          <div className="text-xs text-gray-500 text-right">
-                            <p className="font-medium">
-                              {message.vc_firm_name || message.message_type.replace('_', ' ').toUpperCase()}
-                            </p>
-                            <p className="text-xs">
-                              {format(new Date(message.created_date), 'MMM dd, yyyy')}
-                            </p>
-                            
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-2">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
-
-                          {isInvestmentOffer && message.investment_offer_status === 'pending' && (
-                            <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
-                              <p className="text-sm font-medium">Investment Offer Details:</p>
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <p><strong>Check Size:</strong> ${message.investment_offer_checksize.toLocaleString()}</p>
-                                <p><strong>Valuation:</strong> ${message.investment_offer_valuation.toLocaleString()}</p>
-                                <p><strong>Equity Given:</strong> {(message.investment_offer_checksize / message.investment_offer_valuation * 100).toFixed(1)}%</p>
-                                <p><strong>Investor:</strong> {message.vc_firm_name}</p>
-                              </div>
-                              <div className="flex gap-2 pt-2">
-                                <Button 
-                                  onClick={() => handleInvestmentDecision(message, 'accepted')} 
-                                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" /> Accept
-                                </Button>
-                                <Button 
-                                  onClick={() => handleInvestmentDecision(message, 'rejected')} 
-                                  variant="outline"
-                                  className="flex-1"
-                                >
-                                  <X className="w-4 h-4 mr-2" /> Decline
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-
-                          {isVCMeeting && (
-                            <div className="mt-4 flex gap-2">
-                              <Button onClick={() => handleJoinVCMeeting(message)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <PhoneForwarded className="w-4 h-4 mr-2" /> Join VC Meeting
-                              </Button>
-                              <Button onClick={() => dismissMessage(message)} variant="outline">
-                                <X className="w-4 h-4 mr-2" /> Dismiss
-                              </Button>
-                            </div>
-                          )}
-                          
-                          {isVCAdvancedMeeting && (
-                            <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                              <Button onClick={() => handleJoinVCAdvancedMeeting(message)} className="bg-purple-600 hover:bg-purple-700 text-white">
-                                <Zap className="w-4 h-4 mr-2" /> Advanced VC Meeting
-                              </Button>
-                              <Button onClick={() => handleFollowUpCall(message)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Repeat className="w-4 h-4 mr-2" /> Schedule Follow-Up
-                              </Button>
-                              <Button onClick={() => dismissMessage(message)} variant="outline">
-                                <X className="w-4 h-4 mr-2" /> Dismiss
-                              </Button>
-                            </div>
-                          )}
-
-                          {isRejection && message.rejection_details && (
-                            <div className="mt-4">
-                                <Button onClick={() => handleReadOn(message.rejection_details)} variant="outline" className="text-red-600 border-red-300 hover:bg-red-100">
-                                    <BookOpen className="w-4 h-4 mr-2" /> Read Committee Feedback
-                                </Button>
-                                <Button onClick={() => dismissMessage(message)} variant="ghost" className="ml-2">
-                                    <X className="w-4 h-4 mr-2" /> Dismiss
-                                </Button>
-                            </div>
-                          )}
-
-                          {isFeedbackRequest && (
-                            <div className="mt-4 flex gap-2">
-                              <Button onClick={() => handleVisitPage(message)} className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                                <ExternalLink className="w-4 h-4 mr-2" /> View Feedback Form
-                              </Button>
-                              <Button onClick={() => dismissMessage(message)} variant="outline">
-                                <X className="w-4 h-4 mr-2" /> Dismiss
-                              </Button>
-                            </div>
-                          )}
-
-                          {isPromotion && (
-                            <div className="mt-4 flex gap-2">
-                              <Button onClick={() => handleVisitVenture(message)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                                <ExternalLink className="w-4 h-4 mr-2" /> View Your Venture Page
-                              </Button>
-                              <Button onClick={() => dismissMessage(message, true)} variant="outline">
-                                <X className="w-4 h-4 mr-2" /> Dismiss & Track View
-                              </Button>
-                            </div>
-                          )}
-                           
-                          {isSystem && !isRejection && (
-                            <div className="mt-4">
-                                <Button onClick={() => dismissMessage(message)} variant="outline">
-                                    <X className="w-4 h-4 mr-2" /> Dismiss
-                                </Button>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
+
+
