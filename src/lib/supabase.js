@@ -1,4 +1,4 @@
-//supabase
+// updated 1126
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,21 +25,53 @@ export const auth = {
       // No authenticated user
       if (!user) return null;
 
-      // Get additional user data from user_profiles table if needed
-      const { data: profile, error: profileError } = await supabase
+      // [2026-01-01] FIX: .single() causes 406 when 0 rows -> use maybeSingle()
+      let profile = null;
+
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // ✅ instead of .single()
 
-      if (profileError) throw profileError;
+      // [2026-01-01] FIX: if profile row doesn't exist, create it (common after DB reset)
+      // maybeSingle() returns { data: null, error: null } when no rows
+      if (profileError) {
+        // In practice, maybeSingle should not throw "0 rows" here, but keep safe:
+        throw profileError;
+      }
+
+      if (!profileData) {
+        const baseProfile = {
+          id: user.id,
+          // keep your existing columns safe; only set what exists
+          accepted_tos_date: null,
+          primary_venture_id: null,
+          username: null,
+        };
+
+        const { data: inserted, error: insertErr } = await supabase
+          .from('user_profiles')
+          .insert([baseProfile])
+          .select('*')
+          .single();
+
+        if (insertErr) throw insertErr;
+        profile = inserted;
+      } else {
+        profile = profileData;
+      }
 
       return {
         ...user,
         email: user.email,
+
+        // Keep backwards compat fields used around the app
         full_name: profile?.full_name || user.email,
         role: profile?.role || 'user',
-        ...profile
+
+        // [2026-01-01] IMPORTANT: spread profile last so primary_venture_id / username are available
+        ...profile,
       };
     } catch (err) {
       // Supabase can throw when session is missing
@@ -66,6 +98,7 @@ export const auth = {
 
     if (!user) throw new Error('Not authenticated');
 
+    // [2026-01-01] NOTE: upsert is fine; it will create the row if missing
     const { error: upsertError } = await supabase
       .from('user_profiles')
       .upsert({ id: user.id, ...data });
@@ -107,3 +140,5 @@ export const auth = {
     }
   }
 };
+
+
