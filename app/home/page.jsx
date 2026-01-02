@@ -76,14 +76,21 @@ export default function Home() {
     loadFeed();
   }, []);
 
-  const handleLogin = () => {
-    window.location.href = '/api/auth/login';
-  };
+  
+// [2026-01-02] FIX: אין לנו /api/auth/login (זה של NextAuth). אצלנו דף ההתחברות הוא /login
+const handleLogin = () => {
+  // אופציונלי: תחזיר את המשתמש לעמוד שהוא היה בו אחרי login
+  const next = window.location.pathname + window.location.search;
+  window.location.href = `/login?next=${encodeURIComponent(next)}`;
+};
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
-  };
+const handleLogout = async () => {
+  // [2026-01-02] FIX: Logout של Supabase ואז הפניה נקייה לדף הבית (לא reload שמחזיר ללופים)
+  await supabase.auth.signOut();
+  window.location.href = "/";
+};
+
+
 
   const formatMoney = (amount) => {
     if (!amount) return '$0';
