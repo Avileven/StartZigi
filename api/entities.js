@@ -1,4 +1,3 @@
-//C:\STRARTZIG\api\entities 1126
 import { supabase } from '@/lib/supabase'
 
 // Base Entity Class
@@ -111,57 +110,35 @@ class UserEntity extends Entity {
   }
 
   async me() {
-    const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-    // ✅ אם אין סשן – פשוט לא מחובר, לא קריסה
-    if (error) {
-      if (
-        String(error?.name || '').includes('AuthSessionMissing') ||
-        String(error?.message || '').includes('Auth session missing')
-      ) {
-        return null;
-      }
-      throw error;
+  // ✅ אם אין סשן – פשוט לא מחובר, לא קריסה
+  if (error) {
+    // Supabase לפעמים מחזיר AuthSessionMissingError כשאין cookie/session
+    if (String(error?.name || '').includes('AuthSessionMissing') || String(error?.message || '').includes('Auth session missing')) {
+      return null;
     }
-
-    if (!user) return null;
-
-    // ✅ [2026-01-01] FIX: לא להשתמש ב-.single() כדי לא לקבל 406 כשאין עדיין שורה ב-user_profiles.
-    // maybeSingle מחזיר { data: null, error: null } במקום 406.
-    let { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError) throw profileError;
-
-    // ✅ [2026-01-01] FIX: אם אין פרופיל עדיין — צור אותו פעם אחת (מינימלי), ואז קרא שוב.
-    // זה מונע מצב של "משתמש מחובר אבל אין לו user_profiles" שגורם לשגיאות/התנהגות מוזרה.
-    if (!profile) {
-      const { error: upsertErr } = await supabase
-        .from('user_profiles')
-        .upsert([{ id: user.id }]); // שים לב: בטבלה שלך אין email, אז לא מכניסים email כאן.
-
-      if (upsertErr) throw upsertErr;
-
-      const again = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (again.error) throw again.error;
-      profile = again.data || null;
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.user_metadata?.role || 'user',
-      ...(profile || {}),
-    };
+    throw error;
   }
+
+  if (!user) return null;
+
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError && profileError.code !== 'PGRST116') throw profileError;
+
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.user_metadata?.role || 'user',
+    ...profile,
+  };
+}
+
 }
 
 export const Venture = new Entity('ventures')
@@ -180,4 +157,3 @@ export const ProductFeedback = new Entity('product_feedback')
 export const PromotionCampaign = new Entity('promotion_campaigns')
 export const SuggestedFeature = new Entity('suggested_features')
 export const VCFirm = new Entity('vc_firms')
-

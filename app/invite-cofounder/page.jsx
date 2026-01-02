@@ -1,313 +1,345 @@
-// app/venture-landing/page.jsx 311225
+// invite-cofounder
+// ✅ FIX (2025-12-30): update status to "sent" ONLY after email is actually sent successfully
+// ✅ FIX (2025-12-30): created_by should be email (not user.id) to match DB constraint expectations
+// ✅ FIX (2025-12-30): keep DB invitation_token as the single source of truth
+
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import React, { useState, useEffect } from "react";
+
+import { Venture } from "@/api/entities.js";
+import { CoFounderInvitation } from "@/api/entities.js";
+import { VentureMessage } from "@/api/entities.js";
+import { User } from "@/api/entities.js";
+
+import { supabase } from "@/lib/supabase"; // ✅ FIX (2025-12-30): use supabase for reliable status update
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, LogIn, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input.jsx";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
-const JOIN_PENDING_KEY = "startzig_join_pending_token";
-const ACTIVE_VENTURE_ID_KEY = "startzig_active_venture_id";
+import { UserPlus, Mail, Users, CheckCircle, Clock, X, Loader2 } from "lucide-react";
 
-export default function VentureLandingPage() {
-  const router = useRouter();
-
-  const [isLoading, setIsLoading] = useState(true);
+export default function InviteCoFounder() {
   const [venture, setVenture] = useState(null);
-  const [invite, setInvite] = useState(null);
+  const [invitations, setInvitations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
 
-  const [joinError, setJoinError] = useState(null);
-  const [joinSuccess, setJoinSuccess] = useState(null);
-  const [isJoining, setIsJoining] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: "",
+    name: "",
+    message: "",
+  });
 
-  // ✅ FIX (2025-12-31): מונע auto-join כפול (שגרם “לחיצה פעמיים”)
-  const autoJoinRanRef = useRef(false);
-
-  const urlParams = useMemo(() => {
-    if (typeof window === "undefined") return new URLSearchParams();
-    return new URLSearchParams(window.location.search);
+  useEffect(() => {
+    loadData();
   }, []);
 
-  // ✅ FIX (2025-12-31): קוראים invitation_token מה-URL בצורה עקבית
-  const invitationToken = useMemo(() => {
-    return urlParams.get("invitation_token") || urlParams.get("token") || "";
-  }, [urlParams]);
-
-  const loadInviteAndVenture = useCallback(async () => {
-    setIsLoading(true);
-    setJoinError(null);
-
+  const loadData = async () => {
     try {
-      // אם יש invitation_token → טוענים דרך הטבלה co_founder_invitations
-      if (invitationToken) {
-        const { data: invRow, error: invErr } = await supabase
-          .from("co_founder_invitations")
-          .select("*")
-          .eq("invitation_token", invitationToken)
-          .single();
+      await User.me(); // ensure session exists (RLS)
+      const userVentures = await Venture.list("-created_date");
+      if (userVentures?.length > 0) {
+        const currentVenture = userVentures[0];
+        setVenture(currentVenture);
 
-        if (invErr || !invRow) {
-          setVenture(null);
-          setInvite(null);
-          setJoinError("Invitation not found (bad token).");
-          setIsLoading(false);
-          return;
-        }
-
-        setInvite(invRow);
-
-        const { data: ventures, error: vErr } = await supabase
-          .from("ventures")
-          .select("*")
-          .eq("id", invRow.venture_id);
-
-        if (vErr) throw vErr;
-
-        if (!ventures || ventures.length === 0) {
-          setVenture(null);
-          setJoinError("Venture Not Found");
-        } else {
-          setVenture(ventures[0]);
-        }
-
-        setIsLoading(false);
-        return;
-      }
-
-      // fallback רגיל: ?id=ventureId
-      const ventureId = urlParams.get("id");
-      if (!ventureId) {
+        const existingInvitations = await CoFounderInvitation.filter(
+          { venture_id: currentVenture.id },
+          "-created_date"
+        );
+        setInvitations(existingInvitations || []);
+      } else {
         setVenture(null);
-        setInvite(null);
-        setIsLoading(false);
-        return;
       }
-
-      const { data: ventures, error } = await supabase.from("ventures").select("*").eq("id", ventureId);
-      if (error) throw error;
-
-      setVenture(ventures && ventures.length > 0 ? ventures[0] : null);
-    } catch (e) {
-      console.error("Error loading venture/invite:", e);
+    } catch (error) {
+      console.error("Error loading data:", error);
       setVenture(null);
-      setInvite(null);
-      setJoinError("Failed to load venture.");
+      setInvitations([]);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setIsLoading(false);
-  }, [invitationToken, urlParams]);
+  const handleInputChange = (field, value) => {
+    setInviteForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  useEffect(() => {
-    loadInviteAndVenture();
-  }, [loadInviteAndVenture]);
+  const sendInvitation = async (e) => {
+    e.preventDefault();
 
-  // ✅ FIX (2025-12-31): אחרי login/register חוזרים לפה -> אם יש token שמור,
-  // מריצים accept פעם אחת אוטומטית.
-  useEffect(() => {
-    const run = async () => {
-      if (!invitationToken) return;
-      if (autoJoinRanRef.current) return;
-
-      let pending = null;
-      try {
-        pending = sessionStorage.getItem(JOIN_PENDING_KEY);
-      } catch (_) {}
-
-      if (pending && pending === invitationToken) {
-        autoJoinRanRef.current = true;
-        await handleJoinAsCofounder();
-      }
-    };
-
-    run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invitationToken]);
-
-  // ✅ FIX (2025-12-31): JOIN אמיתי:
-  // 1) אם אין auth → מעבירים ל-register (לא welcome)
-  // 2) אם יש auth → rpc accept_co_founder_invite
-  // 3) הצלחה → הודעה + redirect לדשבורד של המיזם שהזמין
-  const handleJoinAsCofounder = useCallback(async () => {
-    setJoinError(null);
-    setJoinSuccess(null);
-
-    if (!invitationToken) {
-      setJoinError("Missing invitation token in URL.");
+    if (!venture || !inviteForm.email || !inviteForm.name) {
+      alert("Please fill in all required fields.");
       return;
     }
 
-    // קרא session נוכחי
-    let authedUser = null;
-    try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      authedUser = data.user;
-    } catch (e) {
-      authedUser = null;
-    }
-
-    // ✅ אם לא מחובר → קודם Register (בדיוק מה שביקשת)
-    if (!authedUser) {
-      try {
-        sessionStorage.setItem(JOIN_PENDING_KEY, invitationToken); // כדי לבצע auto-join אחרי הרשמה/אימות
-      } catch (_) {}
-
-      const nextUrl = window.location.pathname + window.location.search;
-      router.push(`/register?next=${encodeURIComponent(nextUrl)}`); // ✅ FIX (2025-12-31)
-      return;
-    }
-
-    setIsJoining(true);
+    setIsSending(true);
 
     try {
-      const { data, error } = await supabase.rpc("accept_co_founder_invite", {
-        p_user_id: String(authedUser.id),
-        p_token: String(invitationToken),
+      const user = await User.me();
+
+      // ✅ FIX (2025-12-30): always create pending first (email may fail)
+      // ✅ FIX (2025-12-30): created_by MUST be email (DB constraint), created_by_id is UUID (RLS)
+      const invitationToken = Math.random().toString(36).substring(2, 15);
+
+      const invitation = await CoFounderInvitation.create({
+        venture_id: venture.id,
+        inviter_email: user.email,
+        invitee_email: inviteForm.email,
+        invitee_name: inviteForm.name,
+        custom_message: inviteForm.message,
+        invitation_token: invitationToken,
+        status: "pending",
+        created_by_id: user.id,
+        created_by: user.email, // ✅ FIX (2025-12-30)
       });
 
-      if (error) throw error;
+      // ✅ FIX (2025-12-30): send DB token (single source of truth)
+      const emailResponse = await fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteForm.email,
+          ventureName: venture.name,
+          inviterName: user.full_name || user.name || user.email,
+          invitationToken: invitation?.invitation_token || invitationToken,
+        }),
+      });
 
-      // ✅ ניקוי token שמור כדי שלא ירוץ שוב
-      try {
-        sessionStorage.removeItem(JOIN_PENDING_KEY);
-      } catch (_) {}
+      if (emailResponse.ok) {
+        // ✅ FIX (2025-12-30): update status => sent (critical: RLS + UX)
+        const tokenToUpdate = invitation?.invitation_token || invitationToken;
 
-      // ✅ FIX (2025-12-31): שומרים active venture כדי שהדשבורד יטען מיזם נכון
-      const joinedVentureId =
-        (data && (data.venture_id || data.joined_venture_id)) || (invite && invite.venture_id) || (venture && venture.id);
+        const { error: updateErr } = await supabase
+          .from("co_founder_invitations")
+          .update({ status: "sent" })
+          .eq("invitation_token", tokenToUpdate)
+          .eq("venture_id", venture.id);
 
-      if (joinedVentureId) {
-        try {
-          sessionStorage.setItem(ACTIVE_VENTURE_ID_KEY, String(joinedVentureId));
-        } catch (_) {}
+        if (updateErr) {
+          console.error("Failed to update invite status to sent:", updateErr);
+          alert(
+            "Email sent, but status update failed (still pending). The link may not work until status becomes 'sent'."
+          );
+        } else {
+          alert("Co-founder invitation sent successfully! Email sent to " + inviteForm.email);
+        }
+      } else {
+        const errText = await emailResponse.text().catch(() => "");
+        console.error("Email sending failed:", errText);
+        alert("Invitation created but email sending failed. The invitation is still recorded as pending.");
       }
 
-      setJoinSuccess("✅ You have been added as a Co-Founder to this venture. Redirecting to dashboard...");
+      // Board message (kept)
+      await VentureMessage.create({
+        venture_id: venture.id,
+        message_type: "co_founder_invite",
+        title: "👥 Co-Founder Invited!",
+        content: `You've sent a co-founder invitation to ${inviteForm.name} (${inviteForm.email}).`,
+        priority: 2,
+      });
 
-      // ✅ FIX (2025-12-31): redirect לדשבורד
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 900);
-    } catch (e) {
-      console.error("Join failed:", e);
-      setJoinError(e?.message || "Join failed.");
+      setInviteForm({ email: "", name: "", message: "" });
+      await loadData();
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      alert("Failed to send invitation. Please try again.");
+    } finally {
+      setIsSending(false);
     }
+  };
 
-    setIsJoining(false);
-  }, [invitationToken, invite, venture, router]);
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case "sent":
+        return <Mail className="w-4 h-4 text-blue-500" />; // ✅ FIX (2025-12-30): distinguish sent visually
+      case "accepted":
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case "declined":
+        return <X className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
 
-  const handleGoLogin = () => {
-    const nextUrl = window.location.pathname + window.location.search;
-    router.push(`/login?next=${encodeURIComponent(nextUrl)}`);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "sent":
+        return "bg-blue-100 text-blue-800";
+      case "accepted":
+        return "bg-green-100 text-green-800";
+      case "declined":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <div className="text-gray-700">Loading...</div>
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
 
-  // אם זה מצב הזמנה והוונצ'ר לא נטען
-  if (invitationToken && !venture) {
+  if (!venture) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <Card className="max-w-lg w-full">
-          <CardHeader>
-            <CardTitle>Venture Not Found</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-gray-700">The venture you're looking for doesn't exist or has been removed.</p>
-
-            {joinError && (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                <div className="text-sm text-red-800">{joinError}</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="p-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">No Venture Found</h1>
+        <p className="text-gray-600">You need to create a venture before inviting co-founders.</p>
       </div>
     );
   }
 
-  // --- UI ראשי ---
+  const hasAcceptedCoFounder = invitations.some((inv) => inv.status === "accepted");
+
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {venture && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">{venture.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700">{venture.description}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* הודעות */}
-        {joinError && (
-          <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-            <div className="text-sm text-red-800">{joinError}</div>
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-white" />
           </div>
-        )}
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Invite a Co-Founder</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Invite someone to join your venture and build something together.
+          </p>
+        </div>
 
-        {joinSuccess && (
-          <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
-            <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-            <div className="text-sm text-green-800">{joinSuccess}</div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {!hasAcceptedCoFounder ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-purple-600" />
+                    Send Co-Founder Invitation
+                  </CardTitle>
+                  <CardDescription>Invite someone to join {venture.name} as a co-founder</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={sendInvitation} className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Full Name *</Label>
+                        <Input
+                          id="name"
+                          value={inviteForm.name}
+                          onChange={(e) => handleInputChange("name", e.target.value)}
+                          placeholder="Enter their full name"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={inviteForm.email}
+                          onChange={(e) => handleInputChange("email", e.target.value)}
+                          placeholder="Enter their email"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Personal Message (Optional)</Label>
+                      <Textarea
+                        id="message"
+                        value={inviteForm.message}
+                        onChange={(e) => handleInputChange("message", e.target.value)}
+                        placeholder="Add a personal message..."
+                        className="h-24"
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={isSending} className="w-full bg-purple-600 hover:bg-purple-700">
+                      {isSending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending Invitation...
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Send Invitation
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="p-6 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="font-semibold text-green-900 mb-2">Co-Founder Added!</h3>
+                  <p className="text-green-700">You already have a co-founder on your team.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        )}
 
-        {/* מצב הזמנה */}
-        {invitationToken ? (
-          <Card className="border-indigo-200">
-            <CardHeader>
-              <CardTitle>Join as Co-Founder</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm text-gray-700">
-                You were invited to join <strong>{venture?.name}</strong> as a co-founder.
-              </div>
+          <div>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Team Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Current Founders</span>
+                    <Badge>{venture.founders_count || 1}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Invitations</span>
+                    <Badge variant="outline">{invitations.length}</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex flex-col md:flex-row gap-3">
-                <Button
-                  onClick={handleJoinAsCofounder}
-                  disabled={isJoining}
-                  className="bg-indigo-600 hover:bg-indigo-700"
-                >
-                  {isJoining ? "Joining..." : "JOIN AS CO-FOUNDER"}
-                  <UserPlus className="w-4 h-4 ml-2" />
-                </Button>
-
-                <Button type="button" variant="outline" onClick={handleGoLogin}>
-                  I already have an account
-                  <LogIn className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-
-              {/* ✅ NOTE (2025-12-31):
-                  אין כאן "WELCOME BACK" flow.
-                  אם לא מחובר → נשלח ל-REGISTER.
-                  אם מחובר → מצטרף ואז Redirect + הודעה.
-              */}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Public Landing</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">This is a public landing page view.</p>
-            </CardContent>
-          </Card>
-        )}
+            {invitations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Sent Invitations</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="space-y-1">
+                    {invitations.map((invitation) => (
+                      <div key={invitation.id} className="p-3 border-b last:border-b-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium">{invitation.invitee_name}</p>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(invitation.status)}
+                            <Badge className={getStatusColor(invitation.status)}>{invitation.status}</Badge>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600">{invitation.invitee_email}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {invitation.created_date ? new Date(invitation.created_date).toLocaleString() : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
