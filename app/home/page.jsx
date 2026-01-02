@@ -179,7 +179,7 @@ const handleLogout = async () => {
                     </Button>
                   </Link>
                 ) : (
-                  <Link href="/createVenture">
+                  <Link href="/createventure">
                     <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
                       Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
