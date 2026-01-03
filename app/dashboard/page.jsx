@@ -603,37 +603,99 @@ export default function Dashboard() {
     );
   }
 
-  if (showToS) {
-    return (
-      <Dialog open={showToS} onOpenChange={setShowToS}>
-        <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ShieldCheck/> Terms of Service</DialogTitle>
-            <DialogDescription>
-              Before you continue, please read and agree to our terms.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto text-sm">
+  
+// [2026-01-03] ToS Dialog UI fix: force solid background, readable text, proper spacing, z-index, and button styling
+if (showToS) {
+  return (
+    <Dialog open={showToS} onOpenChange={setShowToS}>
+      <DialogContent
+        // [2026-01-03] FIX: ensure dialog isn't "transparent" due to inherited styles
+        className="sm:max-w-[520px] bg-white text-gray-900 border border-gray-200 shadow-xl rounded-xl z-[60]"
+        // [2026-01-03] keep modal from closing by clicking outside
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="space-y-2">
+          <DialogTitle
+            // [2026-01-03] FIX: make title visible + align icon properly
+            className="flex items-center gap-2 text-lg font-semibold text-gray-900"
+          >
+            <ShieldCheck className="w-5 h-5 text-indigo-600" /> {/* [2026-01-03] FIX: visible icon color/size */}
+            Terms of Service
+          </DialogTitle>
+
+          <DialogDescription
+            // [2026-01-03] FIX: description readability
+            className="text-sm text-gray-600"
+          >
+            Before you continue, please read and agree to our terms.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div
+          // [2026-01-03] FIX: solid readable content box + consistent text color
+          className="p-4 bg-gray-50 border border-gray-200 rounded-lg max-h-72 overflow-y-auto text-sm text-gray-800 leading-relaxed"
+        >
+          <p className="font-medium text-gray-900">
             Welcome to StartZig! By using our platform, you agree to:
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li>Engage respectfully and constructively with all users.</li>
-                <li>Provide honest and helpful feedback.</li>
-                <li>Not share any hateful, abusive, or infringing content.</li>
-                <li>Understand that this is a simulation. All currency, valuations, and investments are virtual.</li>
-            </ul>
-              <p className="mt-4">
-              For the full document, please visit our <Link href={createPageUrl("TermsOfService")} target="_blank" className="text-indigo-600 hover:underline">Terms of Service page</Link>.<br />
-              <Link href={createPageUrl("PrivacyPolicy")} target="_blank" className="text-indigo-600 hover:underline">Privacy Policy</Link>.<br />
-              <Link href={createPageUrl("Disclaimer")} target="_blank" className="text-indigo-600 hover:underline">Disclaimer</Link>.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAcceptToS}>I Read and Agree</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+          </p>
+
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>Engage respectfully and constructively with all users.</li>
+            <li>Provide honest and helpful feedback.</li>
+            <li>Not share any hateful, abusive, or infringing content.</li>
+            <li>
+              Understand that this is a simulation. All currency, valuations, and investments are virtual.
+            </li>
+          </ul>
+
+          <p className="mt-4 text-gray-700">
+            For the full document, please visit our{" "}
+            <Link
+              href={createPageUrl("TermsOfService")}
+              target="_blank"
+              // [2026-01-03] FIX: ensure link is visible on gray background
+              className="text-indigo-700 font-medium hover:underline"
+            >
+              Terms of Service page
+            </Link>
+            .<br />
+            <Link
+              href={createPageUrl("PrivacyPolicy")}
+              target="_blank"
+              className="text-indigo-700 font-medium hover:underline"
+            >
+              Privacy Policy
+            </Link>
+            .<br />
+            <Link
+              href={createPageUrl("Disclaimer")}
+              target="_blank"
+              className="text-indigo-700 font-medium hover:underline"
+            >
+              Disclaimer
+            </Link>
+            .
+          </p>
+        </div>
+
+        <DialogFooter
+          // [2026-01-03] FIX: spacing so button isn't glued / hidden
+          className="mt-2 flex gap-2"
+        >
+          <Button
+            onClick={handleAcceptToS}
+            // [2026-01-03] FIX: force primary styling in case Button variants are overridden elsewhere
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            I Read and Agree
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
   if (!currentVenture) {
     return (
