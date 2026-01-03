@@ -70,7 +70,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg">
-       // <h2 className="text-2xl font-semibold text-center mb-6">Welcome Back</h2>
+  
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
