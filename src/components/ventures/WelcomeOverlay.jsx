@@ -33,24 +33,37 @@ export default function WelcomeOverlay({ ventureName, onClose }) {
         >
           <X className="w-5 h-5" />
         </Button>
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Trophy className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-3xl font-extrabold text-gray-900">
-            Congratulations!
-          </CardTitle>
-          <p className="text-lg text-gray-600">
-            You've successfully launched <span className="font-bold text-purple-600">{ventureName}</span>!
-          </p>
-        </CardHeader>
-        <CardContent className="text-center">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">What's Next?</h3>
-          <p className="text-gray-600 mb-6">
-            You're now ready to start building your business plan. This is where you'll define your strategy, 
-            analyze your market, and create a roadmap for success.
-          </p>
-          <Button 
+
+<CardHeader className="text-center bg-white border-b border-gray-200 px-6 py-8 rounded-t-lg">
+  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+    <Trophy className="w-8 h-8 text-white" />
+  </div>
+
+  <CardTitle className="text-3xl font-extrabold text-gray-900">
+    Congratulations!
+  </CardTitle>
+
+  <p className="mt-2 text-lg text-gray-800">
+    You've successfully launched{" "}
+    <span className="font-bold text-purple-700">
+      {ventureName}
+    </span>
+    !
+  </p>
+</CardHeader>
+
+<CardContent className="text-center bg-white px-6 py-8 rounded-b-lg">
+  <h3 className="text-xl font-bold text-gray-900 mb-2">
+    What's Next?
+  </h3>
+
+  <p className="text-gray-700 mb-6 leading-relaxed">
+    You're now ready to start building your business plan. This is where you'll define your strategy,
+    analyze your market, and create a roadmap for success.
+  </p>
+
+  <Button
+
             onClick={handleContinue}
             size="lg"
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8"
