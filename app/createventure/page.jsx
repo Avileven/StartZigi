@@ -312,21 +312,30 @@ const venturePayload = {
               <p className="text-gray-600">Select the sector that best describes your venture.</p>
             </div>
 
-            <div>
-              <Label htmlFor="sector">Industry Sector *</Label>
-              <Select value={ventureData.sector} onValueChange={(value) => handleChange("sector", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your industry sector" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTORS.map((sector) => (
-                    <SelectItem key={sector.value} value={sector.value}>
-                      {sector.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+           
+<div>
+  <Label htmlFor="sector">Industry Sector *</Label>
+
+  <Select
+    value={ventureData.sector}
+    onValueChange={(value) => handleChange("sector", value)}
+  >
+    <SelectTrigger className="bg-white border border-gray-300">
+      <SelectValue placeholder="Select your industry sector" />
+    </SelectTrigger>
+
+    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+      {SECTORS.map((sector) => (
+        <SelectItem key={sector.value} value={sector.value}>
+          {sector.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
+
+
 
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-semibold text-blue-900 mb-2">Ready to Launch!</h3>
