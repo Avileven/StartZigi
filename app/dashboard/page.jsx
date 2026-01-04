@@ -651,7 +651,7 @@ if (showToS) {
           <p className="mt-4 text-gray-700">
             For the full document, please visit our{" "}
             <Link
-              href={createPageUrl("TermsOfService")}
+              href={createPageUrl("terms")}
               target="_blank"
               // [2026-01-03] FIX: ensure link is visible on gray background
               className="text-indigo-700 font-medium hover:underline"
@@ -660,7 +660,7 @@ if (showToS) {
             </Link>
             .<br />
             <Link
-              href={createPageUrl("PrivacyPolicy")}
+              href={createPageUrl("privacypolicy")}
               target="_blank"
               className="text-indigo-700 font-medium hover:underline"
             >
@@ -668,7 +668,7 @@ if (showToS) {
             </Link>
             .<br />
             <Link
-              href={createPageUrl("Disclaimer")}
+              href={createPageUrl("disclaimer")}
               target="_blank"
               className="text-indigo-700 font-medium hover:underline"
             >
