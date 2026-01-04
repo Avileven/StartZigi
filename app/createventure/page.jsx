@@ -312,7 +312,8 @@ const venturePayload = {
               <p className="text-gray-600">Select the sector that best describes your venture.</p>
             </div>
 
-           
+ // ✅ change 4126 for mouse over
+        
 <div>
   <Label htmlFor="sector">Industry Sector *</Label>
 
@@ -326,13 +327,19 @@ const venturePayload = {
 
     <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
       {SECTORS.map((sector) => (
-        <SelectItem key={sector.value} value={sector.value}>
+        <SelectItem
+          key={sector.value}
+          value={sector.value}
+          className="cursor-pointer hover:bg-indigo-50 hover:text-indigo-900 focus:bg-indigo-50 focus:text-indigo-900"
+        >
           {sector.label}
         </SelectItem>
       ))}
     </SelectContent>
   </Select>
 </div>
+
+
 
 
 
