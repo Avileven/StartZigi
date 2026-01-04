@@ -312,8 +312,7 @@ const venturePayload = {
               <p className="text-gray-600">Select the sector that best describes your venture.</p>
             </div>
 
- // ✅ change 4126 for mouse over
-        
+         
 <div>
   <Label htmlFor="sector">Industry Sector *</Label>
 
