@@ -180,7 +180,7 @@ const venturePayload = {
 
       if (message2Error) throw message2Error;
 
-      router.push(`/venture-landing?id=${newVenture.id}&welcome=true`);
+      router.replace(`/dashboard`);
 
     } catch (error) {
       console.error("Error creating venture:", error);
