@@ -472,12 +472,22 @@ export default function Dashboard() {
     return differenceInDays(new Date(), new Date(venture.created_date));
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
+  
+
+// [2026-01-04] CHANGE: add username to greeting
+const getGreeting = (username) => {
+  const hour = new Date().getHours();
+
+  let greeting;
+  if (hour < 12) greeting = "Good morning";
+  else if (hour < 17) greeting = "Good afternoon";
+  else greeting = "Good evening";
+
+  return username
+    ? `${greeting}, ${username}!`
+    : `${greeting}!`;
+};
+
 
   const getAssetsAndTools = () => {
     if (!currentVenture) return [];
@@ -703,7 +713,7 @@ if (showToS) {
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {getGreeting()}, {user?.full_name || 'Entrepreneur'}!
+              {getGreeting(user?.username)}
             </h1>
             <p className="text-lg text-gray-600">Ready to start your entrepreneurial journey?</p>
           </div>
@@ -900,7 +910,8 @@ if (showToS) {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  {getGreeting()}, {user?.full_name || 'Entrepreneur'}!
+                  {getGreeting(user?.username)}
+                  
                 </h1>
                 <p className="text-sm text-gray-500">
                   {format(new Date(), "EEEE, MMMM d, yyyy")}

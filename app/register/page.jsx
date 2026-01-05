@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,30 +33,45 @@ export default function RegisterPage() {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      // If email confirmation is required, show a message
-      if (data?.user?.identities?.length === 0) {
-        setError("This email is already registered. Please sign in instead.");
-        setLoading(false);
-      } else {
-        // Successfully registered
-        alert("Registration successful! Please check your email to confirm your account.");
-        router.push("/login");
-      }
-    }
+const { data, error } = await supabase.auth.signUp({
+  email,
+  password,
+});
+
+if (error) {
+  setError(error.message);
+  setLoading(false);
+  return;
+}
+
+// אם המייל כבר קיים (Supabase מחזיר identities ריק)
+if (data?.user?.identities?.length === 0) {
+  setError("This email is already registered. Please sign in instead.");
+  setLoading(false);
+  return;
+}
+
+// ✅ [2026-01-04] SAVE NAME INTO user_profiles.username
+// חשוב: זה רק אחרי signUp הצלחה, ויש לנו data.user.id
+const { error: profileError } = await supabase
+  .from("user_profiles")
+  .upsert({
+    id: data.user.id,
+    username: username.trim(), // אם שינית ל-username, תחליף ל: username.trim()
+  });
+
+if (profileError) {
+  setError(profileError.message);
+  setLoading(false);
+  return;
+}
+
+alert("Registration successful! Please check your email to confirm your account.");
+router.push("/login");
+
+
   };
 
   return (
@@ -65,11 +80,11 @@ export default function RegisterPage() {
         <h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Full Name</label>
+            <label className="block text-sm font-medium mb-1">User Name</label>
             <input
               type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               disabled={loading}
               className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
