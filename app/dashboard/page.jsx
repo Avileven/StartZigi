@@ -893,7 +893,7 @@ if (showToS) {
                     </>
                   )}
                   
-                  <Link href={createPageUrl('InviteCoFounder')}>
+                  <Link href={createPageUrl('invite-cofounder')}>
                     <Button size="sm" variant="outline" className="w-full border-amber-300 hover:bg-amber-100 mt-2">
                       <UserPlus className="w-3 h-3 mr-2" />
                       invite-cofounder
