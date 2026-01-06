@@ -546,7 +546,7 @@ const getGreeting = (username) => {
         id: 'revenue_modeling',
         title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenue-modeling-experience', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
       });
     }
@@ -554,7 +554,7 @@ const getGreeting = (username) => {
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
       assets.push({
         id: 'revenue_modeling',
-        title: 'Revenue Modeling',
+        title: 'revenue-modeling-experience',
         icon: BarChart3,
         page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
         openInNewWindow: true
