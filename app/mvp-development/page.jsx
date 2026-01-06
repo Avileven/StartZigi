@@ -1,9 +1,13 @@
+
 "use client";
+
 import React, { useState, useEffect } from 'react';
+
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { UploadFile } from '@/api/integrations';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,15 +15,30 @@ import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
+
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
-import { Loader2, Upload, FileText, CheckCircle, Rocket, Wrench, Plus, Trash2, Info, ExternalLink } from 'lucide-react';
+
+import {
+  Loader2,
+  Upload,
+  FileText,
+  CheckCircle,
+  Rocket,
+  Wrench,
+  Plus,
+  Trash2,
+  Info,
+  ExternalLink
+} from 'lucide-react';
+
 import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 
 export default function MVPDevelopment() {
   const [venture, setVenture] = useState(null);
+
   const [mvpData, setMvpData] = useState({
     product_definition: '',
     technical_specs: '',
@@ -27,28 +46,41 @@ export default function MVPDevelopment() {
     feature_matrix: [],
     uploaded_files: []
   });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
   const [staticGuidanceModal, setStaticGuidanceModal] = useState({
     isOpen: false,
     sectionId: ''
   });
+
   const [mentorModal, setMentorModal] = useState({
     isOpen: false,
     sectionId: '',
     sectionTitle: '',
     fieldKey: ''
   });
+
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     productDefinition: '',
     technicalSpecs: '',
     userTesting: ''
   });
+
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [featureMatrix, setFeatureMatrix] = useState([]);
+
+  // [2026-01-06] FIX: force light theme tokens ONLY while this page is mounted
+  // This fixes "Tips" modal showing dark background + gray text in dashboard theme.
+  useEffect(() => {
+    document.body.classList.add('startzig-force-light');
+    return () => document.body.classList.remove('startzig-force-light');
+  }, []);
 
   useEffect(() => {
     const loadVenture = async () => {
@@ -58,6 +90,7 @@ export default function MVPDevelopment() {
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
           setVenture(currentVenture);
+
           if (currentVenture.mvp_data) {
             setFormData({
               productDefinition: currentVenture.mvp_data.product_definition || '',
@@ -73,6 +106,7 @@ export default function MVPDevelopment() {
       }
       setIsLoading(false);
     };
+
     loadVenture();
   }, []);
 
@@ -115,6 +149,7 @@ export default function MVPDevelopment() {
       priorityScore: 25,
       isSelected: false
     };
+
     setFeatureMatrix(prev => [...prev, newFeature]);
     setMvpData(prev => ({
       ...prev,
@@ -145,6 +180,7 @@ export default function MVPDevelopment() {
         return f;
       })
     );
+
     setMvpData(prev => ({
       ...prev,
       feature_matrix: prev.feature_matrix.map(f => {
@@ -178,7 +214,7 @@ export default function MVPDevelopment() {
       });
 
       const uploadedFilesResult = await Promise.all(uploadPromises);
-      
+
       setUploadedFiles(uploadedFilesResult);
       setMvpData(prev => ({
         ...prev,
@@ -236,7 +272,6 @@ export default function MVPDevelopment() {
 
       alert("MVP submitted successfully! You can now proceed to Revenue Modeling.");
       router.push(createPageUrl('Dashboard'));
-
     } catch (error) {
       console.error("Error submitting MVP:", error);
       alert("There was an error submitting your MVP. Please try again.");
@@ -253,11 +288,38 @@ export default function MVPDevelopment() {
     );
   }
 
-  // Define the criteria for submission based on the new handleSubmit logic
-  const canSubmit = formData.productDefinition.trim() && formData.technicalSpecs.trim() && formData.userTesting.trim();
+  const canSubmit =
+    formData.productDefinition.trim() &&
+    formData.technicalSpecs.trim() &&
+    formData.userTesting.trim();
 
   return (
     <>
+      {/* [2026-01-06] FIX: global CSS overrides for "Tips" modal + Slider track visibility */}
+      <style jsx global>{`
+        /* Force LIGHT tokens while on MVP page */
+        body.startzig-force-light {
+          --background: 0 0% 100%;
+          --foreground: 222.2 84% 4.9%;
+          --card: 0 0% 100%;
+          --card-foreground: 222.2 84% 4.9%;
+          --popover: 0 0% 100%;
+          --popover-foreground: 222.2 84% 4.9%;
+          --muted: 210 40% 96.1%;
+          --muted-foreground: 215.4 16.3% 46.9%;
+          --border: 214.3 31.8% 91.4%;
+          --input: 214.3 31.8% 91.4%;
+          --ring: 221.2 83.2% 53.3%;
+        }
+
+        /* Make Radix Dialog content readable even if some component uses dark styles */
+        body.startzig-force-light [data-radix-dialog-content] {
+          background: white !important;
+          color: rgb(17 24 39) !important; /* gray-900 */
+          border: 1px solid rgb(229 231 235) !important; /* gray-200 */
+        }
+      `}</style>
+
       <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -284,16 +346,18 @@ export default function MVPDevelopment() {
                     variant="outline"
                     size="sm"
                     onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mvp_definition' })}
-                    className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                    // [2026-01-06] FIX: make Tips button readable + consistent (no “washed out” green)
+                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                   >
                     <Info className="w-4 h-4" />
                     Tips
                   </Button>
-                  <MentorButton 
+                  <MentorButton
                     onClick={() => openMentorModal('mvp_definition', 'Product Definition', 'productDefinition')}
                   />
                 </div>
               </div>
+
               <Textarea
                 value={formData.productDefinition}
                 onChange={(e) => handleInputChange('productDefinition', e.target.value)}
@@ -319,16 +383,18 @@ export default function MVPDevelopment() {
                     variant="outline"
                     size="sm"
                     onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'technical_approach' })}
-                    className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                    // [2026-01-06] FIX
+                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                   >
                     <Info className="w-4 h-4" />
                     Tips
                   </Button>
-                  <MentorButton 
+                  <MentorButton
                     onClick={() => openMentorModal('technical_approach', 'Technical Approach', 'technicalSpecs')}
                   />
                 </div>
               </div>
+
               <Textarea
                 value={formData.technicalSpecs}
                 onChange={(e) => handleInputChange('technicalSpecs', e.target.value)}
@@ -354,16 +420,18 @@ export default function MVPDevelopment() {
                     variant="outline"
                     size="sm"
                     onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'user_testing' })}
-                    className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                    // [2026-01-06] FIX
+                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                   >
                     <Info className="w-4 h-4" />
                     Tips
                   </Button>
-                  <MentorButton 
+                  <MentorButton
                     onClick={() => openMentorModal('user_testing', 'User Testing Plan', 'userTesting')}
                   />
                 </div>
               </div>
+
               <Textarea
                 value={formData.userTesting}
                 onChange={(e) => handleInputChange('userTesting', e.target.value)}
@@ -380,6 +448,7 @@ export default function MVPDevelopment() {
                 4️⃣ Feature Evaluation Matrix
               </CardTitle>
             </CardHeader>
+
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
@@ -391,23 +460,26 @@ export default function MVPDevelopment() {
                       Priority Score Formula: User Criticality × Implementation Ease. A higher score indicates a higher priority feature.
                     </p>
                   </div>
+
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'feature_evaluation_matrix' })}
-                      className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                      // [2026-01-06] FIX
+                      className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                     >
                       <Info className="w-4 h-4" />
                       Tips
                     </Button>
-                    <MentorButton 
+
+                    <MentorButton
                       onClick={() => openMentorModal('feature_evaluation_matrix', 'Feature Evaluation Matrix', 'feature_matrix')}
                     />
                   </div>
                 </div>
-                
+
                 {featureMatrix.map((feature) => (
                   <Card key={feature.id} className="bg-gray-50">
                     <CardContent className="p-4">
@@ -418,6 +490,7 @@ export default function MVPDevelopment() {
                             onCheckedChange={(checked) => handleFeatureChange(feature.id, 'isSelected', checked)}
                             className="mt-1"
                           />
+
                           <div className="flex-1">
                             <Input
                               value={feature.featureName}
@@ -425,38 +498,54 @@ export default function MVPDevelopment() {
                               placeholder="Feature name..."
                               className="font-semibold mb-3"
                             />
-                            
+
                             <div className="grid grid-cols-3 gap-4">
                               <div>
                                 <Label className="text-xs mb-2 block">User Criticality (1-10)</Label>
+
                                 <Slider
                                   value={[feature.userCriticality || 5]}
                                   onValueChange={(value) => handleFeatureChange(feature.id, 'userCriticality', value[0])}
                                   max={10}
                                   min={1}
                                   step={1}
-                                  className="mb-2"
+                                  // [2026-01-06] FIX: make the slider TRACK + THUMB visible (not transparent)
+                                  className="mb-2
+                                    [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                    [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                    [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                    [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                    [&_[role=slider]]:shadow-md"
                                 />
+
                                 <div className="text-center text-sm font-semibold text-indigo-600">
                                   {feature.userCriticality || 5}
                                 </div>
                               </div>
-                              
+
                               <div>
                                 <Label className="text-xs mb-2 block">Implementation Ease (1-10)</Label>
+
                                 <Slider
                                   value={[feature.implementationEase || 5]}
                                   onValueChange={(value) => handleFeatureChange(feature.id, 'implementationEase', value[0])}
                                   max={10}
                                   min={1}
                                   step={1}
-                                  className="mb-2"
+                                  // [2026-01-06] FIX: same styling for the second slider
+                                  className="mb-2
+                                    [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                    [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                    [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                    [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                    [&_[role=slider]]:shadow-md"
                                 />
+
                                 <div className="text-center text-sm font-semibold text-indigo-600">
                                   {feature.implementationEase || 5}
                                 </div>
                               </div>
-                              
+
                               <div>
                                 <Label className="text-xs mb-2 block">Priority Score</Label>
                                 <div className="h-10 bg-gradient-to-r from-green-100 to-green-200 rounded-lg flex items-center justify-center">
@@ -467,7 +556,7 @@ export default function MVPDevelopment() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -481,7 +570,7 @@ export default function MVPDevelopment() {
                     </CardContent>
                   </Card>
                 ))}
-                
+
                 <Button
                   onClick={handleAddFeature}
                   variant="outline"
@@ -518,16 +607,19 @@ export default function MVPDevelopment() {
                 5️⃣ Upload MVP Files
               </CardTitle>
             </CardHeader>
+
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <Label htmlFor="file-upload">Upload mockups, prototypes, or demo files</Label>
+
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mvp_files_demos' })}
-                    className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                    // [2026-01-06] FIX
+                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                   >
                     <Info className="w-4 h-4" />
                     Tips
@@ -535,9 +627,9 @@ export default function MVPDevelopment() {
                 </div>
 
                 <div className="mb-4">
-                  <a 
-                    href="https://startzig.vercel.app/mvp-builder" 
-                    target="_blank" 
+                  <a
+                    href="https://startzig.vercel.app/mvp-builder"
+                    target="_blank"
                     rel="noopener noreferrer"
                   >
                     <Button
@@ -560,12 +652,14 @@ export default function MVPDevelopment() {
                   disabled={isUploading}
                   className="mt-2"
                 />
+
                 {isUploading && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Uploading files...
                   </div>
                 )}
+
                 {uploadedFiles.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-gray-700">Uploaded Files:</p>
@@ -573,7 +667,12 @@ export default function MVPDevelopment() {
                       <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
                         <FileText className="w-4 h-4 text-gray-500" />
                         {file.url ? (
-                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
                             {file.name}
                           </a>
                         ) : (
@@ -597,9 +696,10 @@ export default function MVPDevelopment() {
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Save Draft
             </Button>
+
             <Button
               onClick={handleSubmit}
-              disabled={!canSubmit || isSubmitting} // Button disabled if not 'canSubmit' or if 'isSaving'
+              disabled={!canSubmit || isSubmitting}
               className="flex-1 bg-indigo-600 hover:bg-indigo-700"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -607,7 +707,6 @@ export default function MVPDevelopment() {
             </Button>
           </div>
 
-          {/* Display warning if not all required fields for submission are filled */}
           {!canSubmit && (
             <p className="text-sm text-amber-600 text-center mt-4">
               Please complete at least the Product Definition, Technical Approach, and User Testing Plan sections to enable submission.
@@ -633,3 +732,4 @@ export default function MVPDevelopment() {
     </>
   );
 }
+
