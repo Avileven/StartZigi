@@ -1,6 +1,6 @@
 // venture-landing 261225
 
-
+"use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
