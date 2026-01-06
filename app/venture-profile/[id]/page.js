@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'; // זה ימנע את השגיאה ב-Vercel Build
 
-import { createClient } from '@supabase/supabase-js';
+i
 // ... שאר הקוד שלך
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
