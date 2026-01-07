@@ -1,65 +1,65 @@
-
-// api/send-invite/route.js
+// api/send-invite/route.js 7126
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getBaseUrl(request) {
-  // עדיף להגדיר ב-.env של Vercel:
-  // NEXT_PUBLIC_SITE_URL=https://startzig.vercel.app
-  // או הדומיין המותאם שלך
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
   if (envUrl) return envUrl.replace(/\/$/, "");
 
-  // fallback יציב בסביבת Vercel/Proxy
   const proto = request.headers.get("x-forwarded-proto") || "https";
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
 
-  if (!host) return "https://startzig.vercel.app"; // fallback אחרון
+  if (!host) return "https://www.startzig.com"; 
   return `${proto}://${host}`;
 }
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email, ventureName, inviterName, invitationToken } = body || {};
+    // ✅ הוספנו את ventureId לקליטה מה-Body (נשלח מה-Frontend שעדכנו קודם)
+    const { email, ventureName, inviterName, invitationToken, ventureId } = body || {};
 
-    // לוג מינימלי (לא סיסמאות/מידע רגיש)
-    console.log("send-invite payload:", { email, ventureName, inviterName, hasToken: !!invitationToken });
+    console.log("send-invite payload:", { email, ventureName, inviterName, hasToken: !!invitationToken, ventureId });
 
-    if (!email || !ventureName || !inviterName || !invitationToken) {
+    if (!email || !ventureName || !inviterName || !invitationToken || !ventureId) {
       return NextResponse.json(
-        { error: "Missing required fields", details: { email: !!email, ventureName: !!ventureName, inviterName: !!inviterName, invitationToken: !!invitationToken } },
+        { error: "Missing required fields", details: { email: !!email, ventureName: !!ventureName, inviterName: !!inviterName, invitationToken: !!invitationToken, ventureId: !!ventureId } },
         { status: 400 }
       );
     }
 
     const baseUrl = getBaseUrl(request);
 
-    // ✅ הלינק הנכון: venture-landing עם invitation_token
-    const joinUrl = `${baseUrl}/venture-landing?invitation_token=${encodeURIComponent(invitationToken)}`;
+    // ✅ תיקון הלינק: במקום /venture-landing, אנחנו שולחים ל- /venture-profile/[id]
+    // ומוסיפים את הטוקן כפרמטר לאימות
+    const profileUrl = `${baseUrl}/venture-profile/${ventureId}?token=${encodeURIComponent(invitationToken)}`;
 
     const { data, error } = await resend.emails.send({
-      // תשאיר כמו שעבד לך (הקובץ שלך משתמש ב-startzig.com)
-      // אם זה Verified ב-Resend, זה מצוין.
       from: "StartZig <invite@startzig.com>",
       to: [email],
-      subject: `${inviterName} invited you to join ${ventureName}`,
+      subject: `${inviterName} invited you to view the venture: ${ventureName}`,
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h1>Hello!</h1>
-          <p><strong>${inviterName}</strong> has invited you to join their venture:</p>
-          <h2 style="color: #6366f1;">${ventureName}</h2>
-          <p>Click the button below to join:</p>
-          <a href="${joinUrl}"
-             style="background-color: #6366f1; color: white; padding: 12px 24px;
-                    text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 10px;">
-            Join Venture
-          </a>
-          <p style="margin-top: 16px; font-size: 12px; color: #666;">
-            If the button doesn't work, copy and paste this link:<br/>
-            ${joinUrl}
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto;">
+          <h1 style="color: #1e293b; font-size: 24px;">Hello!</h1>
+          <p style="color: #475569; font-size: 16px;">
+            <strong>${inviterName}</strong> has invited you to explore their venture and discuss a potential co-founder partnership:
+          </p>
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <h2 style="color: #6366f1; margin: 0;">${ventureName}</h2>
+          </div>
+          <p style="color: #475569; font-size: 16px;">Click the button below to view the full Venture Profile:</p>
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${profileUrl}"
+               style="background-color: #6366f1; color: white; padding: 14px 32px;
+                      text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+              View Venture Profile
+            </a>
+          </div>
+          <p style="margin-top: 30px; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+            This is a private invitation. If the button doesn't work, copy and paste this link into your browser:<br/>
+            <span style="color: #6366f1;">${profileUrl}</span>
           </p>
         </div>
       `,
@@ -76,4 +76,3 @@ export async function POST(request) {
     return NextResponse.json({ error: error?.message || "Unknown error" }, { status: 500 });
   }
 }
-
