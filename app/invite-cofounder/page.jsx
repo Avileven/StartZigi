@@ -1,26 +1,15 @@
-// invite-cofounder
-// ✅ FIX (2025-12-30): update status to "sent" ONLY after email is actually sent successfully
-// ✅ FIX (2025-12-30): created_by should be email (not user.id) to match DB constraint expectations
-// ✅ FIX (2025-12-30): keep DB invitation_token as the single source of truth
-
+// invite-cofounder1726
 "use client";
 
 import React, { useState, useEffect } from "react";
-
-import { Venture } from "@/api/entities.js";
-import { CoFounderInvitation } from "@/api/entities.js";
-import { VentureMessage } from "@/api/entities.js";
-import { User } from "@/api/entities.js";
-
-import { supabase } from "@/lib/supabase"; // ✅ FIX (2025-12-30): use supabase for reliable status update
-
+import { Venture, CoFounderInvitation, VentureMessage, User } from "@/api/entities.js";
+import { supabase } from "@/lib/supabase"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-
 import { UserPlus, Mail, Users, CheckCircle, Clock, X, Loader2 } from "lucide-react";
 
 export default function InviteCoFounder() {
@@ -41,7 +30,7 @@ export default function InviteCoFounder() {
 
   const loadData = async () => {
     try {
-      await User.me(); // ensure session exists (RLS)
+      await User.me(); 
       const userVentures = await Venture.list("-created_date");
       if (userVentures?.length > 0) {
         const currentVenture = userVentures[0];
@@ -80,11 +69,9 @@ export default function InviteCoFounder() {
 
     try {
       const user = await User.me();
-
-      // ✅ FIX (2025-12-30): always create pending first (email may fail)
-      // ✅ FIX (2025-12-30): created_by MUST be email (DB constraint), created_by_id is UUID (RLS)
       const invitationToken = Math.random().toString(36).substring(2, 15);
 
+      // יצירת ההזמנה בבסיס הנתונים בסטטוס pending [cite: 70, 77]
       const invitation = await CoFounderInvitation.create({
         venture_id: venture.id,
         inviter_email: user.email,
@@ -94,10 +81,10 @@ export default function InviteCoFounder() {
         invitation_token: invitationToken,
         status: "pending",
         created_by_id: user.id,
-        created_by: user.email, // ✅ FIX (2025-12-30)
+        created_by: user.email, 
       });
 
-      // ✅ FIX (2025-12-30): send DB token (single source of truth)
+      // תיקון: שליחת ה-venture_id והטוקן ל-API כדי לבנות לינק לדף הפרופיל 
       const emailResponse = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,13 +93,15 @@ export default function InviteCoFounder() {
           ventureName: venture.name,
           inviterName: user.full_name || user.name || user.email,
           invitationToken: invitation?.invitation_token || invitationToken,
+          // הוספת ה-ventureId כדי שהמייל יפנה לדף ה-Venture Profile הנכון
+          ventureId: venture.id 
         }),
       });
 
       if (emailResponse.ok) {
-        // ✅ FIX (2025-12-30): update status => sent (critical: RLS + UX)
         const tokenToUpdate = invitation?.invitation_token || invitationToken;
 
+        // עדכון סטטוס ל-"sent" רק לאחר הצלחה בשליחת המייל [cite: 93, 97]
         const { error: updateErr } = await supabase
           .from("co_founder_invitations")
           .update({ status: "sent" })
@@ -120,25 +109,20 @@ export default function InviteCoFounder() {
           .eq("venture_id", venture.id);
 
         if (updateErr) {
-          console.error("Failed to update invite status to sent:", updateErr);
-          alert(
-            "Email sent, but status update failed (still pending). The link may not work until status becomes 'sent'."
-          );
+          console.error("Failed to update status:", updateErr);
         } else {
-          alert("Co-founder invitation sent successfully! Email sent to " + inviteForm.email);
+          alert("Invitation sent! The candidate can now view the venture profile.");
         }
       } else {
-        const errText = await emailResponse.text().catch(() => "");
-        console.error("Email sending failed:", errText);
-        alert("Invitation created but email sending failed. The invitation is still recorded as pending.");
+        alert("Invitation created but email sending failed.");
       }
 
-      // Board message (kept)
+      // הוספת הודעה ללוח המיזם על שליחת ההזמנה [cite: 114, 117]
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: "co_founder_invite",
         title: "👥 Co-Founder Invited!",
-        content: `You've sent a co-founder invitation to ${inviteForm.name} (${inviteForm.email}).`,
+        content: `Invitation sent to ${inviteForm.name}. Link points to Venture Profile.`,
         priority: 2,
       });
 
@@ -146,72 +130,48 @@ export default function InviteCoFounder() {
       await loadData();
     } catch (error) {
       console.error("Error sending invitation:", error);
-      alert("Failed to send invitation. Please try again.");
+      alert("Failed to send invitation.");
     } finally {
       setIsSending(false);
     }
   };
 
+  // פונקציות עזר לעיצוב הסטטוס [cite: 130, 144]
   const getStatusIcon = (status) => {
     switch (status) {
-      case "pending":
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case "sent":
-        return <Mail className="w-4 h-4 text-blue-500" />; // ✅ FIX (2025-12-30): distinguish sent visually
-      case "accepted":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "declined":
-        return <X className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+      case "pending": return <Clock className="w-4 h-4 text-yellow-500" />;
+      case "sent": return <Mail className="w-4 h-4 text-blue-500" />;
+      case "accepted": return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case "declined": return <X className="w-4 h-4 text-red-500" />;
+      default: return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "sent":
-        return "bg-blue-100 text-blue-800";
-      case "accepted":
-        return "bg-green-100 text-green-800";
-      case "declined":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "sent": return "bg-blue-100 text-blue-800";
+      case "accepted": return "bg-green-100 text-green-800";
+      case "declined": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="p-8 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
 
-  if (!venture) {
-    return (
-      <div className="p-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">No Venture Found</h1>
-        <p className="text-gray-600">You need to create a venture before inviting co-founders.</p>
-      </div>
-    );
-  }
+  if (!venture) return <div className="p-8 text-center"><h1>No Venture Found</h1></div>;
 
   const hasAcceptedCoFounder = invitations.some((inv) => inv.status === "accepted");
 
   return (
-    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen text-left" dir="ltr">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <UserPlus className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Invite a Co-Founder</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Invite someone to join your venture and build something together.
-          </p>
+          <p className="text-lg text-gray-600">Candidates will receive a link to view your Venture Profile.</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -219,62 +179,27 @@ export default function InviteCoFounder() {
             {!hasAcceptedCoFounder ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="w-5 h-5 text-purple-600" />
-                    Send Co-Founder Invitation
-                  </CardTitle>
-                  <CardDescription>Invite someone to join {venture.name} as a co-founder</CardDescription>
+                  <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5 text-purple-600" /> Send Invitation</CardTitle>
+                  <CardDescription>Invite someone to join {venture.name}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={sendInvitation} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          value={inviteForm.name}
-                          onChange={(e) => handleInputChange("name", e.target.value)}
-                          placeholder="Enter their full name"
-                          required
-                        />
+                        <Input id="name" value={inviteForm.name} onChange={(e) => handleInputChange("name", e.target.value)} required />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={inviteForm.email}
-                          onChange={(e) => handleInputChange("email", e.target.value)}
-                          placeholder="Enter their email"
-                          required
-                        />
+                        <Input id="email" type="email" value={inviteForm.email} onChange={(e) => handleInputChange("email", e.target.value)} required />
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="message">Personal Message (Optional)</Label>
-                      <Textarea
-                        id="message"
-                        value={inviteForm.message}
-                        onChange={(e) => handleInputChange("message", e.target.value)}
-                        placeholder="Add a personal message..."
-                        className="h-24"
-                      />
+                      <Textarea id="message" value={inviteForm.message} onChange={(e) => handleInputChange("message", e.target.value)} className="h-24" />
                     </div>
-
                     <Button type="submit" disabled={isSending} className="w-full bg-purple-600 hover:bg-purple-700">
-                      {isSending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Sending Invitation...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Send Invitation
-                        </>
-                      )}
+                      {isSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Send Invitation"}
                     </Button>
                   </form>
                 </CardContent>
@@ -283,8 +208,7 @@ export default function InviteCoFounder() {
               <Card className="bg-green-50 border-green-200">
                 <CardContent className="p-6 text-center">
                   <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <h3 className="font-semibold text-green-900 mb-2">Co-Founder Added!</h3>
-                  <p className="text-green-700">You already have a co-founder on your team.</p>
+                  <h3 className="font-semibold text-green-900">Co-Founder Added!</h3>
                 </CardContent>
               </Card>
             )}
@@ -292,49 +216,28 @@ export default function InviteCoFounder() {
 
           <div>
             <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Team Status
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Team Status</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Current Founders</span>
-                    <Badge>{venture.founders_count || 1}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Invitations</span>
-                    <Badge variant="outline">{invitations.length}</Badge>
-                  </div>
+                <div className="space-y-3 flex justify-between">
+                  <span className="text-gray-600">Current Founders</span>
+                  <Badge>{venture.founders_count || 1}</Badge>
                 </div>
               </CardContent>
             </Card>
 
             {invitations.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Sent Invitations</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Sent Invitations</CardTitle></CardHeader>
                 <CardContent className="p-0">
-                  <div className="space-y-1">
-                    {invitations.map((invitation) => (
-                      <div key={invitation.id} className="p-3 border-b last:border-b-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium">{invitation.invitee_name}</p>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(invitation.status)}
-                            <Badge className={getStatusColor(invitation.status)}>{invitation.status}</Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600">{invitation.invitee_email}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {invitation.created_date ? new Date(invitation.created_date).toLocaleString() : ""}
-                        </p>
+                  {invitations.map((invitation) => (
+                    <div key={invitation.id} className="p-3 border-b last:border-b-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium">{invitation.invitee_name}</p>
+                        <Badge className={getStatusColor(invitation.status)}>{invitation.status}</Badge>
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-xs text-gray-400">{new Date(invitation.created_date).toLocaleString()}</p>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             )}
@@ -344,5 +247,3 @@ export default function InviteCoFounder() {
     </div>
   );
 }
-
-

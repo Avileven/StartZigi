@@ -2,54 +2,65 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
-import { 
-  Target, 
-  Lightbulb, 
-  AlertCircle, 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  Award 
-} from 'lucide-react';
+import { Target, Lightbulb, AlertCircle, TrendingUp, Users, DollarSign, Award, Lock } from 'lucide-react';
 
-export default async function VentureProfilePoC({ params }) {
+export default async function VentureProfilePoC({ params, searchParams }) {
   const { id } = params;
+  // שליחת הטוקן הקיים מה-URL שנוצר במנגנון ההזמנה שלך
+  const token = searchParams?.token;
 
-  // יצירת הקליינט בתוך הפונקציה מונעת שגיאות בזמן ה-Build של Vercel
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   );
 
-  if (!id || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing ID or Service Key');
-    return notFound();
+  if (!id || !process.env.SUPABASE_SERVICE_ROLE_KEY) return notFound();
+
+  // --- שלב האימות באמצעות המנגנון הקיים שלך ---
+  // אנחנו בודקים האם קיים טוקן בטבלה שמתאים למיזם הזה ובסטטוס "sent"
+  const { data: invitation, error: authError } = await supabaseAdmin
+    .from('co_founder_invitations')
+    .select('status')
+    .eq('venture_id', id)
+    .eq('invitation_token', token)
+    .eq('status', 'sent')
+    .single();
+
+  // אם אין טוקן תקין ב-URL או שהוא לא תואם ל-DB, חוסמים את הדף
+  if (authError || !invitation) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans text-center">
+        <div className="max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+          <Lock className="mx-auto text-red-500 mb-4" size={48} />
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Private Profile</h1>
+          <p className="text-gray-600">This profile is only accessible via a valid co-founder invitation link.</p>
+        </div>
+      </div>
+    );
   }
 
-  const { data: plan, error } = await supabaseAdmin
+  // --- אם האימות עבר, מושכים את נתוני המיזם ---
+  const { data: plan, error: planError } = await supabaseAdmin
     .from('business_plans')
     .select('*')
     .eq('venture_id', id)
     .single();
 
-  if (error || !plan) {
-    console.error('Data Fetch Error:', error);
-    return notFound();
-  }
+  if (planError || !plan) return notFound();
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8" dir="ltr text-left">
+    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 text-left" dir="ltr">
       <div className="max-w-5xl mx-auto font-sans">
         
         {/* Header Section */}
-        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 mb-8 shadow-sm">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 pb-6 mb-6">
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6 mb-6">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900 mb-2 italic">Venture Profile</h1>
-              <p className="text-gray-500 text-lg">Detailed Business Overview</p>
+              <p className="text-gray-500 text-lg font-light">Confidential Partnership Overview</p>
             </div>
             <div className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold tracking-wide">
-              PROPOSAL ACTIVE
+              AUTHORIZED VIEW
             </div>
           </div>
 
@@ -65,28 +76,26 @@ export default async function VentureProfilePoC({ params }) {
               </p>
             </div>
             <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-purple-600 font-bold uppercase mb-1">Ref ID</p>
-              <p className="text-xs font-mono text-gray-400 truncate px-2">{id.substring(0, 8)}</p>
+              <p className="text-xs text-purple-600 font-bold uppercase mb-1">Verified Invitation</p>
+              <p className="text-xs font-mono text-gray-400 truncate px-2">{token?.substring(0, 10)}...</p>
             </div>
           </div>
         </div>
 
+        {/* Content Body */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 space-y-8 text-left">
-            {/* Mission */}
+          <div className="lg:col-span-2 space-y-8">
             <section className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
               <div className="flex items-center gap-3 mb-4 text-blue-600">
                 <Target size={28} />
-                <h2 className="text-2xl font-bold text-gray-900">Mission Statement</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Mission</h2>
               </div>
-              <p className="text-gray-700 leading-relaxed text-lg italic border-l-4 border-blue-100 pl-4">"{plan.mission}"</p>
+              <p className="text-gray-700 leading-relaxed text-lg italic border-l-4 border-blue-50 pl-4">"{plan.mission}"</p>
             </section>
 
-            {/* Problem & Solution */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-3 text-red-500 font-bold border-b border-red-50 pb-2">
+                <div className="flex items-center gap-2 mb-3 text-red-500 font-bold border-b pb-2">
                   <AlertCircle size={20} />
                   <h3>THE PROBLEM</h3>
                 </div>
@@ -94,56 +103,26 @@ export default async function VentureProfilePoC({ params }) {
               </section>
 
               <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-3 text-green-500 font-bold border-b border-green-50 pb-2">
+                <div className="flex items-center gap-2 mb-3 text-green-500 font-bold border-b pb-2">
                   <Lightbulb size={20} />
                   <h3>THE SOLUTION</h3>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed">{plan.solution}</p>
               </section>
             </div>
-
-            {/* Product Details */}
-            <section className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-4 text-orange-500">
-                <Award size={28} />
-                <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
-              </div>
-              <div className="text-gray-700 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg text-sm leading-relaxed border border-gray-100">
-                {plan.product_details}
-              </div>
-            </section>
           </div>
 
-          <div className="space-y-8 text-left">
-            {/* Market Side */}
+          <div className="space-y-8">
             <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-blue-600 uppercase text-sm tracking-widest border-b pb-2">
-                <TrendingUp size={18} /> Market & Competition
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-blue-600 uppercase text-sm border-b pb-2">
+                <TrendingUp size={18} /> Market Size
               </h3>
-              <div className="space-y-5">
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Market Size</p>
-                  <p className="text-gray-700 text-sm mt-1">{plan.market_size}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Target Customers</p>
-                  <p className="text-gray-700 text-sm mt-1">{plan.target_customers}</p>
-                </div>
-              </div>
+              <p className="text-gray-700 text-sm">{plan.market_size}</p>
             </section>
 
-            {/* Business Model */}
-            <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-green-600 uppercase text-sm tracking-widest border-b pb-2">
-                <DollarSign size={18} /> Business Strategy
-              </h3>
-              <p className="text-gray-700 text-sm leading-relaxed">{plan.revenue_model}</p>
-            </section>
-
-            {/* Founder Background */}
             <section className="bg-gray-900 p-6 rounded-2xl shadow-xl text-white">
               <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-blue-400 uppercase">
-                <Users size={18} /> Founder Background
+                <Users size={18} /> About the Founder
               </h3>
               <p className="text-gray-300 text-sm italic leading-relaxed">
                 "{plan.entrepreneur_background}"
@@ -151,22 +130,6 @@ export default async function VentureProfilePoC({ params }) {
             </section>
           </div>
         </div>
-
-        {/* Action Footer */}
-        <footer className="mt-12 bg-gray-50 border border-gray-200 p-10 rounded-3xl text-center shadow-inner">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Review this venture profile?</h2>
-          <p className="text-gray-500 mb-8 max-w-xl mx-auto text-sm">
-            This information is private and intended for potential partnership review only.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="px-10 py-4 bg-gray-900 text-white rounded-full font-bold text-lg hover:bg-black transition shadow-lg">
-              Contact Founder
-            </button>
-            <button className="px-10 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-bold text-lg hover:bg-gray-50 transition">
-              Provide Feedback
-            </button>
-          </div>
-        </footer>
       </div>
     </div>
   );
