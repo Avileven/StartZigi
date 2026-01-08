@@ -14,8 +14,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-// [2026-01-08] FIX: create admin client via helper so we can safely create it
-// both in the page render AND inside the Server Action (avoid 500 in Vercel).
 function createSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -26,28 +24,22 @@ export default async function VentureProfilePoC({ params, searchParams }) {
   const { id } = params;
   const token = searchParams?.token;
 
-  // [2026-01-08] FIX: validate required inputs early
-  if (!id) return notFound();
+  if (!id || !process.env.SUPABASE_SERVICE_ROLE_KEY) return notFound();
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans text-center">
         <div className="max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
           <Lock className="mx-auto text-red-500 mb-4" size={48} />
           <h1 className="text-xl font-bold text-gray-900 mb-2">Private Profile</h1>
-          <p className="text-gray-600">
-            This profile is only accessible via a valid invitation link.
-          </p>
+          <p className="text-gray-600">Access denied. Invalid link.</p>
         </div>
       </div>
     );
   }
 
-  // [2026-01-08] FIX: ensure server role key exists; otherwise do not proceed
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return notFound();
-
   const supabaseAdmin = createSupabaseAdmin();
 
-  // --- auth via invitation token ---
+  // 1. אימות ההזמנה (זה חייב לעבוד כדי לראות את הדף)
   const { data: invitation, error: authError } = await supabaseAdmin
     .from("co_founder_invitations")
     .select("status, invitation_token")
@@ -61,24 +53,18 @@ export default async function VentureProfilePoC({ params, searchParams }) {
         <div className="max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
           <Lock className="mx-auto text-red-500 mb-4" size={48} />
           <h1 className="text-xl font-bold text-gray-900 mb-2">Private Profile</h1>
-          <p className="text-gray-600">
-            This profile is only accessible via a valid co-founder invitation link.
-          </p>
+          <p className="text-gray-600">Invalid invitation link.</p>
         </div>
       </div>
     );
   }
 
-  // [2026-01-08] FIX: Server Action MUST create its own supabase client.
-  // Using the outer supabaseAdmin inside action can cause 500 in prod.
+  // 2. Server Action להצטרפות
   async function handleAccept() {
     "use server";
-
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return;
-
     const admin = createSupabaseAdmin();
 
-    // [2026-01-08] FIX: scope the update by BOTH token and venture_id (safety)
+    // עדכון סטטוס
     const { error: inviteUpdateErr } = await admin
       .from("co_founder_invitations")
       .update({ status: "accepted" })
@@ -87,33 +73,28 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
     if (inviteUpdateErr) return;
 
-    // 2) fetch current founders_count
-    const { data: venture, error: ventureErr } = await admin
+    // עדכון מונה מייסדים
+    const { data: venture } = await admin
       .from("ventures")
       .select("founders_count")
       .eq("id", id)
       .single();
 
-    if (ventureErr) return;
-
-    // 3) increment founders_count (basic increment)
     await admin
       .from("ventures")
       .update({ founders_count: (venture?.founders_count || 1) + 1 })
       .eq("id", id);
 
-    // [2026-01-08] FIX: revalidate correct path (keep as you had, but stable)
     revalidatePath(`/venture-profile/${id}`);
   }
 
-  // --- fetch venture plan ---
-  const { data: plan, error: planError } = await supabaseAdmin
+  // 3. משיכת נתוני התוכנית - כאן ביטלנו את הקריסה אם אין נתונים
+  const { data: plan } = await supabaseAdmin
     .from("business_plans")
     .select("*")
     .eq("venture_id", id)
     .single();
-
-  if (planError || !plan) return notFound();
+  // שים לב: אין כאן return notFound() יותר אם plan חסר
 
   return (
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 text-left" dir="ltr">
@@ -121,14 +102,9 @@ export default async function VentureProfilePoC({ params, searchParams }) {
         <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6 mb-6">
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2 italic">
-                Venture Profile
-              </h1>
-              <p className="text-gray-500 text-lg font-light">
-                Confidential Partnership Overview
-              </p>
+              <h1 className="text-3xl font-extrabold text-gray-900 mb-2 italic">Venture Profile</h1>
+              <p className="text-gray-500 text-lg font-light">Confidential Partnership Overview</p>
             </div>
-
             {invitation.status === "accepted" ? (
               <div className="bg-green-100 text-green-700 px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2">
                 <CheckCircle size={16} /> YOU ARE A PARTNER
@@ -140,23 +116,14 @@ export default async function VentureProfilePoC({ params, searchParams }) {
             )}
           </div>
 
-          {/* Join button - only when status is 'sent' */}
           {invitation.status === "sent" && (
             <div className="mb-8 p-6 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-blue-900 font-bold text-lg">
-                  Ready to join this venture?
-                </h3>
-                <p className="text-blue-700 text-sm">
-                  By clicking join, you confirm your interest as a co-founder.
-                </p>
+                <h3 className="text-blue-900 font-bold text-lg">Ready to join this venture?</h3>
+                <p className="text-blue-700 text-sm">Accept to become a co-founder.</p>
               </div>
-
               <form action={handleAccept}>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-200 active:scale-95"
-                >
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">
                   Join as Co-Founder
                 </button>
               </form>
@@ -166,28 +133,21 @@ export default async function VentureProfilePoC({ params, searchParams }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
               <p className="text-xs text-blue-600 font-bold uppercase mb-1">Completion</p>
-              <p className="text-2xl font-black text-gray-900">
-                {plan.completion_percentage}%
-              </p>
+              <p className="text-2xl font-black text-gray-900">{plan?.completion_percentage || 0}%</p>
             </div>
-
             <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
               <p className="text-xs text-green-600 font-bold uppercase mb-1">Last Updated</p>
               <p className="text-lg font-bold text-gray-900">
-                {plan.updated_date ? new Date(plan.updated_date).toLocaleDateString("en-US") : "N/A"}
+                {plan?.updated_date ? new Date(plan.updated_date).toLocaleDateString("en-US") : "N/A"}
               </p>
             </div>
-
             <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
               <p className="text-xs text-purple-600 font-bold uppercase mb-1">Verified Invitation</p>
-              <p className="text-xs font-mono text-gray-400 truncate px-2">
-                {String(token).substring(0, 10)}...
-              </p>
+              <p className="text-xs font-mono text-gray-400 truncate px-2">{String(token).substring(0, 10)}...</p>
             </div>
           </div>
         </div>
 
-        {/* Content Body */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <section className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
@@ -196,25 +156,18 @@ export default async function VentureProfilePoC({ params, searchParams }) {
                 <h2 className="text-2xl font-bold text-gray-900">Mission</h2>
               </div>
               <p className="text-gray-700 leading-relaxed text-lg italic border-l-4 border-blue-50 pl-4">
-                "{plan.mission}"
+                "{plan?.mission || "The founder hasn't shared a mission yet."}"
               </p>
             </section>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-3 text-red-500 font-bold border-b pb-2">
-                  <AlertCircle size={20} />
-                  <h3>THE PROBLEM</h3>
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed">{plan.problem}</p>
+                <h3 className="text-red-500 font-bold border-b pb-2 mb-3 text-xs flex items-center gap-2"><AlertCircle size={18}/> THE PROBLEM</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{plan?.problem || "TBD"}</p>
               </section>
-
               <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-3 text-green-500 font-bold border-b pb-2">
-                  <Lightbulb size={20} />
-                  <h3>THE SOLUTION</h3>
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed">{plan.solution}</p>
+                <h3 className="text-green-500 font-bold border-b pb-2 mb-3 text-xs flex items-center gap-2"><Lightbulb size={18}/> THE SOLUTION</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{plan?.solution || "TBD"}</p>
               </section>
             </div>
           </div>
@@ -224,7 +177,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-blue-600 uppercase text-sm border-b pb-2">
                 <TrendingUp size={18} /> Market Size
               </h3>
-              <p className="text-gray-700 text-sm">{plan.market_size}</p>
+              <p className="text-gray-700 text-sm">{plan?.market_size || "Information pending."}</p>
             </section>
 
             <section className="bg-gray-900 p-6 rounded-2xl shadow-xl text-white">
@@ -232,7 +185,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
                 <Users size={18} /> About the Founder
               </h3>
               <p className="text-gray-300 text-sm italic leading-relaxed">
-                "{plan.entrepreneur_background}"
+                "{plan?.entrepreneur_background || "Founder bio is not available yet."}"
               </p>
             </section>
           </div>
@@ -241,4 +194,3 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     </div>
   );
 }
-
