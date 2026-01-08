@@ -82,6 +82,18 @@ export default async function VentureProfilePoC({ params, searchParams }) {
       .update({ founders_count: (ventureData?.founders_count || 1) + 1 })
       .eq("id", id);
 
+      // --- כאן ה"דחיפה" של הקוד החדש ---
+  // 3. יצירת הודעה ליזם - בדיוק כמו ב-Invite, רק עם סוג הודעה של הצטרפות
+  await admin.from("venture_messages").insert({
+    venture_id: id,
+    message_type: "co_founder_joined", // סוג הודעה שתוכל לזהות בדשבורד
+    title: "🚀 New Co-Founder Joined!",
+    content: `A partner has officially joined ${ventureName}.`,
+    priority: 1
+  });
+
+  
+
     revalidatePath(`/venture-profile/${id}`);
   }
 
