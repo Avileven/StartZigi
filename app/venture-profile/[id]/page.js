@@ -1,4 +1,4 @@
-// venture-profile/[id]/page.js 08012602
+// venture-profile/[id]/page.js 812603
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
@@ -31,7 +31,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
   
   const supabaseAdmin = createSupabaseAdmin();
 
-  // 1. אימות ההזמנה - השאילתה המקורית והבטוחה
+  // 1. אימות ההזמנה
   const { data: invitation, error: authError } = await supabaseAdmin
     .from("co_founder_invitations")
     .select("status, invitation_token")
@@ -51,7 +51,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     );
   }
 
-  // 2. שליפת שם המיזם - בצורה בטוחה שלא מפילה את הדף
+  // 2. שליפת שם המיזם
   const { data: ventureData } = await supabaseAdmin
     .from("ventures")
     .select("name, founders_count")
@@ -87,12 +87,12 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
   // פונקציית עזר לעיצוב אחיד של כרטיסיות
   const InfoCard = ({ title, content, icon: Icon, colorClass, fullWidth = false }) => (
-    <section className={`bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 ${colorClass} ${fullWidth ? 'lg:col-span-2' : ''}`}>
+    <section className={`bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 ${colorClass} ${fullWidth ? 'md:col-span-2' : ''}`}>
       <div className="flex items-center gap-3 mb-4 opacity-80">
         <Icon size={22} />
         <h3 className="font-black text-xs uppercase tracking-widest text-slate-500">{title}</h3>
       </div>
-      <p className="text-slate-700 text-sm leading-relaxed font-medium">
+      <p className="text-slate-700 text-sm leading-relaxed font-medium whitespace-pre-wrap">
         {content || "Information pending..."}
       </p>
     </section>
@@ -106,7 +106,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-8 p-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
-              <span className="text-blue-600 font-bold text-xs tracking-[0.3em] uppercase mb-2 block">Co-Founder Invitation</span>
+              <span className="text-blue-600 font-bold text-xs tracking-[0.3em] uppercase mb-2 block">PROFILE</span>
               <h1 className="text-4xl font-black text-slate-900 italic leading-tight">
                 {ventureName}
               </h1>
@@ -126,13 +126,13 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
         {/* CTA Section */}
         {invitation.status === "sent" && (
-          <div className="mb-8 p-8 bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 text-white">
+          <div className="mb-8 p-8 bg-blue-600 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 text-white">
             <div className="text-left">
-              <h3 className="text-2xl font-black mb-1 italic text-blue-400">Join the founding team</h3>
-              <p className="text-slate-400 text-sm">Become a co-founder of {ventureName} today.</p>
+              <h3 className="text-2xl font-black mb-1 italic">Join the founding team</h3>
+              <p className="text-blue-100 text-sm opacity-90">Become a co-founder of {ventureName} today.</p>
             </div>
             <form action={handleAccept}>
-              <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg">
+              <button type="submit" className="bg-white text-blue-600 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg">
                 ACCEPT & JOIN
               </button>
             </form>
@@ -140,9 +140,8 @@ export default async function VentureProfilePoC({ params, searchParams }) {
         )}
 
         {/* --- GRID OF INFO CARDS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Order: Problem, Solution, Mission */}
           <InfoCard 
             title="The Problem" 
             content={plan?.problem} 
@@ -165,7 +164,6 @@ export default async function VentureProfilePoC({ params, searchParams }) {
             fullWidth={true}
           />
 
-          {/* Market Analysis Group */}
           <InfoCard 
             title="Market Size" 
             content={plan?.market_size} 
@@ -187,18 +185,16 @@ export default async function VentureProfilePoC({ params, searchParams }) {
             colorClass="border-t-purple-500 text-purple-500" 
             fullWidth={true}
           />
-        </div>
 
-        {/* Founder Bio - Sidebar/Bottom Style */}
-        <section className="bg-slate-900 p-8 rounded-3xl shadow-2xl text-white relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-4 text-blue-400">
-            <Users size={20} />
-            <h3 className="font-black text-xs uppercase tracking-widest">Founder DNA</h3>
-          </div>
-          <p className="text-slate-300 text-sm italic leading-relaxed relative z-10">
-            "{plan?.entrepreneur_background || "Founder bio is shared upon partnership."}"
-          </p>
-        </section>
+          {/* Founder DNA עכשיו באותו עיצוב בדיוק */}
+          <InfoCard 
+            title="Founder DNA" 
+            content={plan?.entrepreneur_background} 
+            icon={Users} 
+            colorClass="border-t-slate-800 text-slate-800" 
+            fullWidth={true}
+          />
+        </div>
 
       </div>
     </div>
