@@ -1,4 +1,4 @@
-// venture-profile/[id]/page.js
+// venture-profile/[id]/page.js 8125
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
@@ -43,7 +43,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
   const supabaseAdmin = createSupabaseAdmin();
 
-  // 1. אימות ההזמנה
+  // 1. אימות ההזמנה - שאילתה נקייה שעבדה לך
   const { data: invitation, error: authError } = await supabaseAdmin
     .from("co_founder_invitations")
     .select("status, invitation_token")
@@ -87,7 +87,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     revalidatePath(`/venture-profile/${id}`);
   }
 
-  // 3. משיכת נתוני התוכנית (עם הגנה מפני נתונים חסרים)
+  // 3. משיכת נתוני התוכנית + שם המיזם מתוך ה-plan (או כברירת מחדל)
   const { data: plan } = await supabaseAdmin
     .from("business_plans")
     .select("*")
@@ -98,14 +98,14 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 text-left" dir="ltr">
       <div className="max-w-5xl mx-auto font-sans">
         
-        {/* Header & Main Stats */}
+        {/* Header - שם המיזם */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-8">
           <div className="p-8 border-b border-slate-100">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
-                <span className="text-blue-600 font-bold text-sm tracking-widest uppercase mb-2 block">Venture Pitch Deck</span>
+                <span className="text-blue-600 font-bold text-sm tracking-widest uppercase mb-2 block italic">Venture Overview</span>
                 <h1 className="text-4xl font-black text-slate-900 italic leading-none">
-                  Venture Profile
+                  {plan?.venture_name || "The Venture"}
                 </h1>
               </div>
               
@@ -115,26 +115,19 @@ export default async function VentureProfilePoC({ params, searchParams }) {
                 </div>
               ) : (
                 <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide shadow-lg shadow-blue-200">
-                  VIEWER MODE
+                  AUTHORIZED VIEW
                 </div>
               )}
             </div>
           </div>
 
-          {/* New Stats Bar: Market, Customers, Revenue */}
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-slate-50/50">
+          {/* Top Stats Bar: Market Size & Revenue Model */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-slate-50/50">
             <div className="p-6 flex items-center gap-4">
               <div className="bg-blue-100 p-3 rounded-xl text-blue-600"><Globe size={24} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Size</p>
                 <p className="text-sm font-bold text-slate-700">{plan?.market_size || "Not specified"}</p>
-              </div>
-            </div>
-            <div className="p-6 flex items-center gap-4">
-              <div className="bg-purple-100 p-3 rounded-xl text-purple-600"><Users2 size={24} /></div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Audience</p>
-                <p className="text-sm font-bold text-slate-700 truncate max-w-[150px]">{plan?.target_customers || "Not specified"}</p>
               </div>
             </div>
             <div className="p-6 flex items-center gap-4">
@@ -149,38 +142,26 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
         {/* Join Call to Action */}
         {invitation.status === "sent" && (
-          <div className="mb-8 p-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 text-white transform hover:scale-[1.01] transition-transform">
+          <div className="mb-8 p-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 text-white transform transition-transform">
             <div className="text-left">
               <h3 className="text-2xl font-black mb-1 italic">Ready to join the founding team?</h3>
               <p className="text-blue-100 text-sm opacity-90">Accept this invitation to unlock full founder privileges.</p>
             </div>
             <form action={handleAccept}>
-              <button type="submit" className="bg-white text-blue-700 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg shadow-2xl active:scale-95 transition-all">
+              <button type="submit" className="bg-white text-blue-700 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg shadow-2xl active:scale-95 transition-all font-sans">
                 JOIN AS CO-FOUNDER
               </button>
             </form>
           </div>
         )}
 
-        {/* Main Content Grid */}
+        {/* --- Main Content Grid --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Mission Section */}
-            <section className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-              <div className="flex items-center gap-3 mb-6 text-blue-600">
-                <Target size={32} />
-                <h2 className="text-2xl font-black text-slate-900">The Mission</h2>
-              </div>
-              <p className="text-slate-600 leading-relaxed text-xl italic font-medium">
-                "{plan?.mission || "The mission statement is currently being refined by the founder."}"
-              </p>
-            </section>
-
-            {/* Problem & Solution */}
+            {/* 1. Problem & Solution (Now at the top) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-rose-500">
                 <div className="flex items-center gap-2 mb-4 text-rose-500">
                   <AlertCircle size={22} />
                   <h3 className="font-black text-sm uppercase tracking-widest">The Problem</h3>
@@ -188,7 +169,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
                 <p className="text-slate-600 text-sm leading-relaxed">{plan?.problem || "Details pending."}</p>
               </section>
 
-              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm border-t-4 border-t-emerald-500">
                 <div className="flex items-center gap-2 mb-4 text-emerald-500">
                   <Lightbulb size={22} />
                   <h3 className="font-black text-sm uppercase tracking-widest">The Solution</h3>
@@ -196,26 +177,52 @@ export default async function VentureProfilePoC({ params, searchParams }) {
                 <p className="text-slate-600 text-sm leading-relaxed">{plan?.solution || "Details pending."}</p>
               </section>
             </div>
-          </div>
 
-          {/* Sidebar Details */}
-          <div className="space-y-6">
-            <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-              <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-[0.2em] border-b border-slate-100 pb-4">
-                <TrendingUp size={18} className="text-blue-600" /> Market Dynamics
-              </h3>
-              <div className="space-y-6">
+            {/* 2. Mission Section */}
+            <section className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+              <div className="flex items-center gap-3 mb-6 text-blue-600">
+                <Target size={32} />
+                <h2 className="text-2xl font-black text-slate-900">The Mission</h2>
+              </div>
+              <p className="text-slate-600 leading-relaxed text-xl italic font-medium font-sans">
+                "{plan?.mission || "The mission statement is being refined."}"
+              </p>
+            </section>
+
+            {/* 3. Market Details (Target Customers full width at the end) */}
+            <section className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3 mb-8 text-indigo-600 border-b border-slate-50 pb-4">
+                <TrendingUp size={32} />
+                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Market & Audience</h2>
+              </div>
+              <div className="space-y-8">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Target Customers</p>
-                  <p className="text-slate-700 text-sm font-medium leading-relaxed">{plan?.target_customers || "TBD"}</p>
+                  <div className="flex items-center gap-2 mb-2 text-slate-400">
+                    <Users2 size={20} />
+                    <h4 className="text-xs font-black uppercase tracking-widest">Target Customers</h4>
+                  </div>
+                  <p className="text-slate-700 text-lg leading-relaxed font-medium">
+                    {plan?.target_customers || "Information pending."}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Revenue Strategy</p>
-                  <p className="text-slate-700 text-sm font-medium leading-relaxed">{plan?.revenue_model || "TBD"}</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-50">
+                   <div>
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Market Magnitude</h4>
+                    <p className="text-slate-700 font-bold">{plan?.market_size || "Not specified"}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Revenue Strategy</h4>
+                    <p className="text-slate-700 font-bold">{plan?.revenue_model || "Not specified"}</p>
+                  </div>
                 </div>
               </div>
             </section>
+          </div>
 
+          {/* Sidebar */}
+          <div className="space-y-6">
             <section className="bg-slate-900 p-8 rounded-3xl shadow-2xl text-white relative overflow-hidden">
               <div className="absolute -right-4 -top-4 text-white/5 rotate-12">
                 <Users size={120} />
@@ -223,7 +230,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
               <h3 className="text-xs font-black mb-4 flex items-center gap-2 text-blue-400 uppercase tracking-widest relative">
                 <Users size={18} /> Founder DNA
               </h3>
-              <p className="text-slate-300 text-sm italic leading-relaxed relative z-10">
+              <p className="text-slate-300 text-sm italic leading-relaxed relative z-10 font-sans">
                 "{plan?.entrepreneur_background || "Founder bio is private."}"
               </p>
             </section>
