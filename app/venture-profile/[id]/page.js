@@ -1,4 +1,3 @@
-
 // venture-profile/[id]/page.js
 export const dynamic = "force-dynamic";
 
@@ -242,3 +241,4 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     </div>
   );
 }
+
