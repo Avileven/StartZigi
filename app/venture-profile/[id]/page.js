@@ -12,6 +12,9 @@ import {
   Users,
   Lock,
   CheckCircle,
+  Users2,
+  DollarSign,
+  Globe
 } from "lucide-react";
 
 function createSupabaseAdmin() {
@@ -25,6 +28,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
   const token = searchParams?.token;
 
   if (!id || !process.env.SUPABASE_SERVICE_ROLE_KEY) return notFound();
+  
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans text-center">
@@ -39,7 +43,7 @@ export default async function VentureProfilePoC({ params, searchParams }) {
 
   const supabaseAdmin = createSupabaseAdmin();
 
-  // 1. אימות ההזמנה (זה חייב לעבוד כדי לראות את הדף)
+  // 1. אימות ההזמנה
   const { data: invitation, error: authError } = await supabaseAdmin
     .from("co_founder_invitations")
     .select("status, invitation_token")
@@ -63,17 +67,12 @@ export default async function VentureProfilePoC({ params, searchParams }) {
   async function handleAccept() {
     "use server";
     const admin = createSupabaseAdmin();
-
-    // עדכון סטטוס
-    const { error: inviteUpdateErr } = await admin
+    await admin
       .from("co_founder_invitations")
       .update({ status: "accepted" })
       .eq("venture_id", id)
       .eq("invitation_token", token);
 
-    if (inviteUpdateErr) return;
-
-    // עדכון מונה מייסדים
     const { data: venture } = await admin
       .from("ventures")
       .select("founders_count")
@@ -88,104 +87,144 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     revalidatePath(`/venture-profile/${id}`);
   }
 
-  // 3. משיכת נתוני התוכנית - כאן ביטלנו את הקריסה אם אין נתונים
+  // 3. משיכת נתוני התוכנית (עם הגנה מפני נתונים חסרים)
   const { data: plan } = await supabaseAdmin
     .from("business_plans")
     .select("*")
     .eq("venture_id", id)
     .single();
-  // שים לב: אין כאן return notFound() יותר אם plan חסר
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 text-left" dir="ltr">
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 text-left" dir="ltr">
       <div className="max-w-5xl mx-auto font-sans">
-        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6 mb-6">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2 italic">Venture Profile</h1>
-              <p className="text-gray-500 text-lg font-light">Confidential Partnership Overview</p>
+        
+        {/* Header & Main Stats */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+          <div className="p-8 border-b border-slate-100">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <span className="text-blue-600 font-bold text-sm tracking-widest uppercase mb-2 block">Venture Pitch Deck</span>
+                <h1 className="text-4xl font-black text-slate-900 italic leading-none">
+                  Venture Profile
+                </h1>
+              </div>
+              
+              {invitation.status === "accepted" ? (
+                <div className="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl text-sm font-black flex items-center gap-2 border border-emerald-100">
+                  <CheckCircle size={20} /> PARTNER ACCESS
+                </div>
+              ) : (
+                <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide shadow-lg shadow-blue-200">
+                  VIEWER MODE
+                </div>
+              )}
             </div>
-            {invitation.status === "accepted" ? (
-              <div className="bg-green-100 text-green-700 px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-                <CheckCircle size={16} /> YOU ARE A PARTNER
-              </div>
-            ) : (
-              <div className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold tracking-wide">
-                AUTHORIZED VIEW
-              </div>
-            )}
           </div>
 
-          {invitation.status === "sent" && (
-            <div className="mb-8 p-6 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* New Stats Bar: Market, Customers, Revenue */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-slate-50/50">
+            <div className="p-6 flex items-center gap-4">
+              <div className="bg-blue-100 p-3 rounded-xl text-blue-600"><Globe size={24} /></div>
               <div>
-                <h3 className="text-blue-900 font-bold text-lg">Ready to join this venture?</h3>
-                <p className="text-blue-700 text-sm">Accept to become a co-founder.</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Market Size</p>
+                <p className="text-sm font-bold text-slate-700">{plan?.market_size || "Not specified"}</p>
               </div>
-              <form action={handleAccept}>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">
-                  Join as Co-Founder
-                </button>
-              </form>
             </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-blue-600 font-bold uppercase mb-1">Completion</p>
-              <p className="text-2xl font-black text-gray-900">{plan?.completion_percentage || 0}%</p>
+            <div className="p-6 flex items-center gap-4">
+              <div className="bg-purple-100 p-3 rounded-xl text-purple-600"><Users2 size={24} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Audience</p>
+                <p className="text-sm font-bold text-slate-700 truncate max-w-[150px]">{plan?.target_customers || "Not specified"}</p>
+              </div>
             </div>
-            <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-green-600 font-bold uppercase mb-1">Last Updated</p>
-              <p className="text-lg font-bold text-gray-900">
-                {plan?.updated_date ? new Date(plan.updated_date).toLocaleDateString("en-US") : "N/A"}
-              </p>
-            </div>
-            <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-purple-600 font-bold uppercase mb-1">Verified Invitation</p>
-              <p className="text-xs font-mono text-gray-400 truncate px-2">{String(token).substring(0, 10)}...</p>
+            <div className="p-6 flex items-center gap-4">
+              <div className="bg-emerald-100 p-3 rounded-xl text-emerald-600"><DollarSign size={24} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Revenue Model</p>
+                <p className="text-sm font-bold text-slate-700">{plan?.revenue_model || "Not specified"}</p>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Join Call to Action */}
+        {invitation.status === "sent" && (
+          <div className="mb-8 p-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 text-white transform hover:scale-[1.01] transition-transform">
+            <div className="text-left">
+              <h3 className="text-2xl font-black mb-1 italic">Ready to join the founding team?</h3>
+              <p className="text-blue-100 text-sm opacity-90">Accept this invitation to unlock full founder privileges.</p>
+            </div>
+            <form action={handleAccept}>
+              <button type="submit" className="bg-white text-blue-700 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg shadow-2xl active:scale-95 transition-all">
+                JOIN AS CO-FOUNDER
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <section className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-4 text-blue-600">
-                <Target size={28} />
-                <h2 className="text-2xl font-bold text-gray-900">Mission</h2>
+            
+            {/* Mission Section */}
+            <section className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+              <div className="flex items-center gap-3 mb-6 text-blue-600">
+                <Target size={32} />
+                <h2 className="text-2xl font-black text-slate-900">The Mission</h2>
               </div>
-              <p className="text-gray-700 leading-relaxed text-lg italic border-l-4 border-blue-50 pl-4">
-                "{plan?.mission || "The founder hasn't shared a mission yet."}"
+              <p className="text-slate-600 leading-relaxed text-xl italic font-medium">
+                "{plan?.mission || "The mission statement is currently being refined by the founder."}"
               </p>
             </section>
 
+            {/* Problem & Solution */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <h3 className="text-red-500 font-bold border-b pb-2 mb-3 text-xs flex items-center gap-2"><AlertCircle size={18}/> THE PROBLEM</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{plan?.problem || "TBD"}</p>
+              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-rose-500">
+                  <AlertCircle size={22} />
+                  <h3 className="font-black text-sm uppercase tracking-widest">The Problem</h3>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed">{plan?.problem || "Details pending."}</p>
               </section>
-              <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <h3 className="text-green-500 font-bold border-b pb-2 mb-3 text-xs flex items-center gap-2"><Lightbulb size={18}/> THE SOLUTION</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{plan?.solution || "TBD"}</p>
+
+              <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-emerald-500">
+                  <Lightbulb size={22} />
+                  <h3 className="font-black text-sm uppercase tracking-widest">The Solution</h3>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed">{plan?.solution || "Details pending."}</p>
               </section>
             </div>
           </div>
 
-          <div className="space-y-8">
-            <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-blue-600 uppercase text-sm border-b pb-2">
-                <TrendingUp size={18} /> Market Size
+          {/* Sidebar Details */}
+          <div className="space-y-6">
+            <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-[0.2em] border-b border-slate-100 pb-4">
+                <TrendingUp size={18} className="text-blue-600" /> Market Dynamics
               </h3>
-              <p className="text-gray-700 text-sm">{plan?.market_size || "Information pending."}</p>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Target Customers</p>
+                  <p className="text-slate-700 text-sm font-medium leading-relaxed">{plan?.target_customers || "TBD"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Revenue Strategy</p>
+                  <p className="text-slate-700 text-sm font-medium leading-relaxed">{plan?.revenue_model || "TBD"}</p>
+                </div>
+              </div>
             </section>
 
-            <section className="bg-gray-900 p-6 rounded-2xl shadow-xl text-white">
-              <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-blue-400 uppercase">
-                <Users size={18} /> About the Founder
+            <section className="bg-slate-900 p-8 rounded-3xl shadow-2xl text-white relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 text-white/5 rotate-12">
+                <Users size={120} />
+              </div>
+              <h3 className="text-xs font-black mb-4 flex items-center gap-2 text-blue-400 uppercase tracking-widest relative">
+                <Users size={18} /> Founder DNA
               </h3>
-              <p className="text-gray-300 text-sm italic leading-relaxed">
-                "{plan?.entrepreneur_background || "Founder bio is not available yet."}"
+              <p className="text-slate-300 text-sm italic leading-relaxed relative z-10">
+                "{plan?.entrepreneur_background || "Founder bio is private."}"
               </p>
             </section>
           </div>
