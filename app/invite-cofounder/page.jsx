@@ -117,13 +117,16 @@ export default function InviteCoFounder() {
         alert("Invitation created but email sending failed.");
       }
 
-      // הוספת הודעה ללוח המיזם על שליחת ההזמנה [cite: 114, 117]
+      // הוספת הודעה ללוח המיזם על שליחת ההזמנה
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: "co_founder_invite",
         title: "👥 Co-Founder Invited!",
         content: `Invitation sent to ${inviteForm.name}. Link points to Venture Profile.`,
         priority: 2,
+        is_dismissed: false,      // מבטיח שההודעה תעלה כפעילה
+        created_by: user.email,   // מוסיף את האימייל לעמודה המתאימה
+        created_by_id: user.id    // משייך את ההודעה ל-ID שלך כדי שהדשבורד יאפשר לך למחוק אותה
       });
 
       setInviteForm({ email: "", name: "", message: "" });
