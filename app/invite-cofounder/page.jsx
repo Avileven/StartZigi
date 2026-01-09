@@ -124,9 +124,11 @@ export default function InviteCoFounder() {
         title: "👥 Co-Founder Invited!",
         content: `Invitation sent to ${inviteForm.name}. Link points to Venture Profile.`,
         priority: 2,
-        is_dismissed: false,      // מבטיח שההודעה תעלה כפעילה
-        created_by: user.email,   // מוסיף את האימייל לעמודה המתאימה
-        created_by_id: user.id    // משייך את ההודעה ל-ID שלך כדי שהדשבורד יאפשר לך למחוק אותה
+        is_dismissed: false,
+        created_by: user.email,
+        created_by_id: user.id,
+        // הוסף את השורה הזו כדי לוודא שאין טעות בשיוך המיזם
+        founder_user_id: user.id 
       });
 
       setInviteForm({ email: "", name: "", message: "" });
