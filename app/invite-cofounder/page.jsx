@@ -150,7 +150,7 @@ export default function InviteCoFounder() {
     }
   };
 
-  const getStatusColor = (status) => {
+ const getStatusColor = (status) => {
     switch (status) {
       case "pending": return "bg-yellow-100 text-yellow-800";
       case "sent": return "bg-blue-100 text-blue-800";
@@ -164,6 +164,7 @@ export default function InviteCoFounder() {
 
   if (!venture) return <div className="p-8 text-center"><h1>No Venture Found</h1></div>;
 
+  // הערה: השארנו את המשתנה הזה למקרה שתרצה להשתמש בו לחישובים אחרים, אבל הוא כבר לא חוסם את הטופס
   const hasAcceptedCoFounder = invitations.some((inv) => inv.status === "accepted");
 
   return (
@@ -179,42 +180,37 @@ export default function InviteCoFounder() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {!hasAcceptedCoFounder ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5 text-purple-600" /> Send Invitation</CardTitle>
-                  <CardDescription>Invite someone to join {venture.name}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={sendInvitation} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input id="name" value={inviteForm.name} onChange={(e) => handleInputChange("name", e.target.value)} required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input id="email" type="email" value={inviteForm.email} onChange={(e) => handleInputChange("email", e.target.value)} required />
-                      </div>
+            {/* תיקון: הסרנו את התנאי שבדק אם כבר יש שותף. הטופס מוצג כעת תמיד */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-purple-600" /> Send Invitation
+                </CardTitle>
+                <CardDescription>Invite someone to join {venture.name}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={sendInvitation} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input id="name" value={inviteForm.name} onChange={(e) => handleInputChange("name", e.target.value)} required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="message">Personal Message (Optional)</Label>
-                      <Textarea id="message" value={inviteForm.message} onChange={(e) => handleInputChange("message", e.target.value)} className="h-24" />
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input id="email" type="email" value={inviteForm.email} onChange={(e) => handleInputChange("email", e.target.value)} required />
                     </div>
-                    <Button type="submit" disabled={isSending} className="w-full bg-purple-600 hover:bg-purple-700">
-                      {isSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Send Invitation"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-green-50 border-green-200">
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <h3 className="font-semibold text-green-900">Co-Founder Added!</h3>
-                </CardContent>
-              </Card>
-            )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Personal Message (Optional)</Label>
+                    <Textarea id="message" value={inviteForm.message} onChange={(e) => handleInputChange("message", e.target.value)} className="h-24" />
+                  </div>
+                  <Button type="submit" disabled={isSending} className="w-full bg-purple-600 hover:bg-purple-700">
+                    {isSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Send Invitation"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            {/* סוף תיקון: הכרטיס הירוק הוסר כדי לפנות מקום להזמנות נוספות */}
           </div>
 
           <div>
