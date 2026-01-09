@@ -1023,7 +1023,17 @@ if (showToS) {
                         </CardHeader>
                         <CardContent className="pt-2">
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
-
+{/* כפתור מחיקה להזמנת שותף */}
+{message.message_type === 'co_founder_invite' && (
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="mt-2 text-red-500 hover:bg-red-50"
+    onClick={() => dismissMessage(message)}
+  >
+    Dismiss Invitation
+  </Button>
+)}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
                             <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
                               <p className="text-sm font-medium">Investment Offer Details:</p>
