@@ -1031,7 +1031,7 @@ if (showToS) {
     className="mt-2 text-red-500 hover:bg-red-50"
     onClick={() => dismissMessage(message)}
   >
-    Dismiss Invitation
+    X Dismiss 
   </Button>
 )}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
