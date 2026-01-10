@@ -8,7 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from "@/components/ui/input.jsx"; 
 import { Label } from "@/components/ui/label"; 
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Users, Mail, TrendingUp, DollarSign, BarChart3, Eye, MousePointerClick, Loader2, Send, X } from 'lucide-react';
+import { ArrowLeft, Users, Mail, BarChart3, Eye, MousePointerClick, Loader2, Send, X } from 'lucide-react';
+
+// קומפוננטת עזר פנימית כדי למנוע שגיאות ייבוא
+const Badge = ({ children, className = "" }) => (
+  <span className={`px-2 py-1 text-[10px] font-bold rounded-full border ${className}`}>
+    {children}
+  </span>
+);
 
 export default function PromotionCenter() {
   const [venture, setVenture] = useState(null);
@@ -24,14 +31,17 @@ export default function PromotionCenter() {
       setIsLoading(true);
       try {
         const user = await User.me();
-        if (!user) return; // הגנה אם אין משתמש מחובר
+        if (!user || !user.email) {
+            setIsLoading(false);
+            return;
+        }
 
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        if (ventures.length > 0) {
+        if (ventures && ventures.length > 0) {
           const currentVenture = ventures[0];
           setVenture(currentVenture);
           const ventureCampaigns = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date");
-          setCampaigns(ventureCampaigns);
+          setCampaigns(ventureCampaigns || []);
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -41,46 +51,43 @@ export default function PromotionCenter() {
     loadData();
   }, []);
 
-  // תיקון שגיאת ה-trim: הוספת הגנה על השדות
   const sendExternalFeedbackInvite = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
-    // בדיקה שכל הנתונים קיימים לפני שמתחילים
-    const targetEmail = emailForm.email?.trim(); // שימוש ב-? מונע שגיאת trim על undefined
-    const targetName = emailForm.name?.trim();
+    // הגנה מפני שגיאת trim על ערכים ריקים
+    const cleanEmail = (emailForm.email || "").trim();
+    const cleanName = (emailForm.name || "").trim();
 
-    if (!venture || !targetEmail) {
-      alert("Please fill in the email address.");
+    if (!venture || !cleanEmail) {
+      alert("Please enter a valid email address.");
       return;
     }
 
     setIsSending(true);
     try {
       const user = await User.me();
-      if (!user?.email) {
-        throw new Error("User session not found");
-      }
+      if (!user || !user.email) throw new Error("You must be logged in");
 
       const token = Math.random().toString(36).substring(2, 15);
 
-      // 1. יצירת ההזמנה
+      // 1. יצירת ההזמנה בטבלה הקיימת
       await CoFounderInvitation.create({
         venture_id: venture.id,
         inviter_email: user.email,
-        invitee_email: targetEmail,
-        invitee_name: targetName || "Guest",
+        invitee_email: cleanEmail,
+        invitee_name: cleanName || "Guest",
         invitation_token: token,
-        invitation_type: 'external_feedback',
+        invitation_type: 'external_feedback', // הסוג החדש
         status: "pending",
-        created_by: user.email // וידוא שהערך נשלח
+        created_by: user.email // חובה למניעת שגיאה 400
       });
 
-      // 2. קריאה ל-API
+      // 2. קריאה ל-API לשליחת המייל
       const emailResponse = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: targetEmail,
+          email: cleanEmail,
           ventureName: venture.name,
           inviterName: user.full_name || user.email,
           invitationToken: token,
@@ -93,23 +100,23 @@ export default function PromotionCenter() {
         // עדכון סטטוס ב-Supabase
         await supabase.from("co_founder_invitations").update({ status: "sent" }).eq("invitation_token", token);
 
-        // 3. תיקון שגיאה 400: יצירת רשומת קמפיין עם ה-created_by הנכון
+        // 3. יצירת רשומת קמפיין עם כל שדות החובה
         await PromotionCampaign.create({
           venture_id: venture.id,
           campaign_type: 'email',
           audience_size: 1,
           cost: 0,
-          sender_name: targetName,
+          sender_name: cleanName,
           status: 'PENDING',
-          created_by: user.email // השדה הקריטי שחסר ב-DB
+          created_by: user.email // השדה הקריטי
         });
 
-        // 4. יצירת הודעה לדשבורד
+        // 4. הודעה לדשבורד
         await VentureMessage.create({
           venture_id: venture.id,
           message_type: "external_feedback_sent",
           title: "📧 Feedback Invite Sent",
-          content: `Sent to ${targetName}.`,
+          content: `Sent to ${cleanName || cleanEmail}.`,
           created_by: user.email
         });
 
@@ -117,22 +124,18 @@ export default function PromotionCenter() {
         setEmailForm({ email: "", name: "" });
         setShowEmailForm(false);
         
-        // רענון הרשימה
+        // רענון רשימת הקמפיינים
         const updated = await PromotionCampaign.filter({ venture_id: venture.id }, "-created_date");
-        setCampaigns(updated);
+        setCampaigns(updated || []);
+      } else {
+          throw new Error("API failed to send email");
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error: " + error.message);
+      console.error("Full Error Object:", error);
+      alert("Error: " + (error.message || "Unknown error occurred"));
     } finally {
       setIsSending(false);
     }
-  };
-
-  // פונקציית הגנה לשגיאת ה-trim שמופיעה ב-Console (אם קיימת פונקציה כזו בקוד שלך)
-  const handleLaunch = () => {
-    if (!venture?.id) return;
-    // כאן הלוגיקה של ה-Launch...
   };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin h-8 w-8 text-indigo-600" /></div>;
@@ -148,7 +151,7 @@ export default function PromotionCenter() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Promotion Center</h1>
-          <p className="text-gray-600">Launch campaigns and track your feedback invites.</p>
+          <p className="text-gray-600">Track and manage your feedback invitations.</p>
         </div>
 
         <div className="mb-6 bg-white rounded-lg p-4 border">
@@ -166,8 +169,8 @@ export default function PromotionCenter() {
                 <Card key={campaign.id} className="bg-white border-l-4 border-l-green-500">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-md">📧 Email to: {campaign.sender_name || 'Guest'}</CardTitle>
-                      <Badge variant="outline" className="text-green-600">FREE</Badge>
+                      <CardTitle className="text-md">📧 Feedback Email: {campaign.sender_name || 'Contact'}</CardTitle>
+                      <Badge className="text-green-600 border-green-200 bg-green-50">FREE</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -184,7 +187,7 @@ export default function PromotionCenter() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="opacity-50 grayscale cursor-not-allowed shadow-none">
+          <Card className="opacity-50 grayscale shadow-none">
             <CardHeader>
               <Users className="w-8 h-8 text-gray-400 mb-2" />
               <CardTitle className="text-gray-400">In-App Promotion</CardTitle>
@@ -206,23 +209,23 @@ export default function PromotionCenter() {
               ) : (
                 <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>Contact Name</Label>
                     <Input 
                       value={emailForm.name} 
                       onChange={(e) => setEmailForm({...emailForm, name: e.target.value})} 
-                      placeholder="John Smith" 
+                      placeholder="e.g. John Doe" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <Label>Email Address</Label>
                     <Input 
                       type="email" 
                       value={emailForm.email} 
                       onChange={(e) => setEmailForm({...emailForm, email: e.target.value})} 
-                      placeholder="john@example.com" 
+                      placeholder="email@example.com" 
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 text-left">
                     <Button onClick={sendExternalFeedbackInvite} className="flex-1 bg-green-600" disabled={isSending}>
                       {isSending ? <Loader2 className="animate-spin" /> : "Send Invite"}
                     </Button>
@@ -236,9 +239,4 @@ export default function PromotionCenter() {
       </div>
     </div>
   );
-}
-
-// קומפוננטת Badge קטנה לשימוש בתוך הדף (אם אין לך כזו ב-UI)
-function Badge({ children, className }) {
-  return <span className={`px-2 py-1 text-[10px] font-bold rounded ${className}`}>{children}</span>;
 }
