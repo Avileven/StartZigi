@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-// שימוש בייבוא המדויק מהקובץ שעובד (Cofounder)
-import { Venture, PromotionCampaign, User, CoFounderInvitation, VentureMessage } from '@/api/entities.js'; 
+// ייבוא ישויות המערכת שלך
+import { Venture, PromotionCampaign, User, CoFounderInvitation } from '@/api/entities.js'; 
+// ייבוא ישיר של supabase למניעת בעיות אמינות בנתוני משתמש
 import { supabase } from "@/lib/supabase"; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
@@ -19,24 +20,29 @@ export default function PromotionCenter() {
   const [emailForm, setEmailForm] = useState({ email: "", name: "" }); 
   const router = useRouter();
 
+  // טעינת נתונים ראשונית
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      await User.me(); // הבטחת טעינת המשתמש [cite: 28]
-      const userVentures = await Venture.list("-created_date"); // [cite: 29]
-      if (userVentures?.length > 0) {
-        const currentVenture = userVentures[0];
-        setVenture(currentVenture);
-        // טעינת הקמפיינים הקיימים
-        const results = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date");
-        setCampaigns(results || []);
+    const init = async () => {
+      try {
+        // שימוש ב-User.me לטעינה ראשונית
+        const currentUser = await User.me();
+        if (!currentUser) return;
+        
+        // משיכת המיזם של המשתמש
+        const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
+        if (ventures && ventures.length > 0) {
+          setVenture(ventures[0]);
+          // משיכת רשימת הקמפיינים הקיימים
+          const results = await PromotionCampaign.filter({ venture_id: ventures[0].id }, "-created_date");
+          setCampaigns(results || []);
+        }
+      } catch (e) {
+        console.error("Init error:", e);
       }
-    } catch (e) { console.error("Error loading:", e); }
-    setIsLoading(false);
-  };
+      setIsLoading(false);
+    };
+    init();
+  }, []);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -44,74 +50,74 @@ export default function PromotionCenter() {
 
     setIsSending(true);
     try {
-      const user = await User.me(); // טעינת המשתמש השולח [cite: 60]
+      // תיקון: משיכת ה-Session ישירות מ-Supabase כדי לוודא שאין undefined בשם או במייל
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      
+      if (!user) {
+        alert("Session error - please refresh page");
+        return;
+      }
+
+      // פתרון ה-undefined: אם אין שם מלא ב-metadata, לוקח את הקידומת של המייל
+      const userEmail = user.email;
+      const inviterName = user.user_metadata?.full_name || userEmail.split('@')[0] || "A Founder";
+      
       const token = Math.random().toString(36).substring(2, 15);
 
-      // 1. יצירת ההזמנה (בדיוק לפי מבנה הקובץ שעובד - שורות 63-73)
-      const invitation = await CoFounderInvitation.create({
+      // 1. יצירת ההזמנה בטבלת co_founder_invitations
+      // שים לב: invitation_type מוגדר כ-external_feedback כדי להבדיל משותף
+      await CoFounderInvitation.create({
         venture_id: venture.id,
-        inviter_email: user.email,
+        inviter_email: userEmail,
         invitee_email: emailForm.email,
         invitee_name: emailForm.name,
         invitation_token: token,
-        invitation_type: 'external_feedback', // סוג ההזמנה לפידבק
-        status: "pending", // סטטוס ראשוני [cite: 70]
-        created_by_id: user.id, // חובה לפי הקובץ שעובד [cite: 71]
-        created_by: user.email // חובה לפי הקובץ שעובד [cite: 72]
+        invitation_type: 'external_feedback',
+        status: "sent",
+        created_by: userEmail
       });
 
-      // 2. שליחה ל-API - שימוש במבנה המדויק משורות 78-85 שמונע undefined
-      const emailResponse = await fetch("/api/send-invite", {
+      // 2. קריאה ל-API לשליחת המייל בפועל
+      await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: emailForm.email,
           ventureName: venture.name,
-          // התיקון הקריטי: אם full_name ריק, השרת ינסה name ואז email 
-          inviterName: user.full_name || user.name || user.email, 
-          invitationToken: invitation?.invitation_token || token,
+          inviterName: inviterName, // עכשיו זה לא יהיה undefined
+          invitationToken: token,
           ventureId: venture.id,
-          type: 'external_feedback'
+          type: 'external_feedback' // הדגל שמנתב לדף הנחיתה במייל
         }),
       });
 
-      if (emailResponse.ok) {
-        // 3. עדכון סטטוס ל-"sent" (בדיוק כמו בשורה 92)
-        await supabase
-          .from("co_founder_invitations")
-          .update({ status: "sent" })
-          .eq("invitation_token", token);
+      // 3. יצירת רשומת קמפיין בטבלה promotion_campaigns
+      // פתרון שגיאה 400: הוספת תאריכים מפורשים ושדות חובה
+      await PromotionCampaign.create({
+        venture_id: venture.id,
+        campaign_type: 'email',
+        campaign_name: `Feedback to ${emailForm.name}`,
+        sender_name: emailForm.name,
+        status: 'PENDING',
+        created_by: userEmail,
+        created_date: new Date().toISOString(), // תאריך יצירה (חובה)
+        updated_date: new Date().toISOString()  // תאריך עדכון (חובה)
+      });
 
-        // 4. יצירת רשומת קמפיין (פתרון ה-400 ע"י שליחת תאריכים מפורשים)
-        await PromotionCampaign.create({
-          venture_id: venture.id,
-          campaign_type: 'email',
-          campaign_name: `Feedback - ${emailForm.name}`,
-          sender_name: emailForm.name,
-          status: 'SENT',
-          created_by: user.email,
-          created_date: new Date().toISOString(), // תוספת חובה למניעת 400
-          updated_date: new Date().toISOString()  // תוספת חובה למניעת 400
-        });
+      alert("Success! Invite sent to " + emailForm.email);
+      
+      // איפוס טופס וסגירה
+      setShowEmailForm(false);
+      setEmailForm({ email: "", name: "" });
+      
+      // רענון רשימת הקמפיינים המוצגת למטה
+      const updated = await PromotionCampaign.filter({ venture_id: venture.id }, "-created_date");
+      setCampaigns(updated || []);
 
-        // 5. הוספת הודעה ללוח המיזם (כמו בשורה 104)
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: "external_feedback",
-          title: "📧 Feedback Invite Sent",
-          content: `Invitation sent to ${emailForm.name}`,
-          created_by: user.email,
-          created_by_id: user.id
-        });
-
-        alert("Success! Invite sent.");
-        setShowEmailForm(false);
-        setEmailForm({ email: "", name: "" });
-        loadData();
-      }
     } catch (err) {
       console.error("Submit error:", err);
-      alert("Failed to send.");
+      alert("Something went wrong. Please check console.");
     } finally {
       setIsSending(false);
     }
@@ -122,52 +128,79 @@ export default function PromotionCenter() {
   return (
     <div className="max-w-4xl mx-auto p-6 text-left" dir="ltr">
       <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
       </Button>
       
-      <h1 className="text-3xl font-bold mb-6">Promotion Center</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900">Promotion Center</h1>
 
+      {/* תצוגת קמפיינים קיימים */}
       <div className="mb-10 space-y-4">
-        {campaigns.map(c => (
-          <Card key={c.id} className="border-l-4 border-l-green-500">
+        <h2 className="text-lg font-semibold text-gray-700">Recent Activity</h2>
+        {campaigns.length > 0 ? campaigns.map(c => (
+          <Card key={c.id} className="border-l-4 border-l-green-500 shadow-sm">
             <CardContent className="p-4 flex justify-between items-center">
               <div>
-                <p className="font-bold">Feedback Sent: {c.sender_name}</p>
+                <p className="font-bold">Email Invite: {c.sender_name || 'Guest'}</p>
                 <p className="text-sm text-gray-500">{new Date(c.created_date).toLocaleDateString()}</p>
               </div>
-              <div className="text-center font-bold text-lg">{c.clicks || 0} <span className="text-xs block text-gray-400 uppercase">Clicks</span></div>
+              <div className="text-center bg-gray-50 p-2 rounded min-w-[80px]">
+                  <p className="font-bold text-lg text-green-700">{c.clicks || 0}</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-medium">Clicks</p>
+              </div>
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <p className="text-gray-400 italic">No feedback invites sent yet.</p>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="opacity-40 grayscale"><CardHeader><CardTitle>In-App Promotion</CardTitle></CardHeader><CardContent><Button disabled className="w-full">Soon</Button></CardContent></Card>
+        {/* קמפיין שאינו זמין כרגע */}
+        <Card className="opacity-40 grayscale bg-gray-50 shadow-none border-dashed">
+          <CardHeader><CardTitle>In-App Promotion</CardTitle></CardHeader>
+          <CardContent><Button disabled className="w-full">Coming Soon</Button></CardContent>
+        </Card>
 
-        <Card className={showEmailForm ? "ring-2 ring-green-500 shadow-md" : ""}>
+        {/* טופס שליחת ההזמנה */}
+        <Card className={showEmailForm ? "ring-2 ring-green-500 shadow-lg" : "shadow-sm"}>
           <CardHeader>
             <Mail className="w-8 h-8 text-green-600 mb-2" />
-            <CardTitle>Invite Friend</CardTitle>
-            <CardDescription>Get feedback on your landing page</CardDescription>
+            <CardTitle>Invite a Friend</CardTitle>
+            <CardDescription>Send a link to your landing page for feedback.</CardDescription>
           </CardHeader>
           <CardContent>
             {!showEmailForm ? (
-              <Button className="w-full bg-green-600" onClick={() => setShowEmailForm(true)}>Send Invite</Button>
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowEmailForm(true)}>
+                Create New Invite
+              </Button>
             ) : (
-              <form onSubmit={handleSend} className="space-y-4 text-left">
-                <div className="space-y-1">
-                    <Label>Name</Label>
-                    <Input placeholder="Recipient Name" value={emailForm.name} onChange={e => setEmailForm({...emailForm, name: e.target.value})} required />
+              <form onSubmit={handleSend} className="space-y-4">
+                <div className="space-y-2 text-left">
+                  <Label>Friend's Name</Label>
+                  <Input 
+                    placeholder="e.g. John Doe" 
+                    value={emailForm.name} 
+                    onChange={e => setEmailForm({...emailForm, name: e.target.value})} 
+                    required 
+                  />
                 </div>
-                <div className="space-y-1">
-                    <Label>Email</Label>
-                    <Input type="email" placeholder="email@example.com" value={emailForm.email} onChange={e => setEmailForm({...emailForm, email: e.target.value})} required />
+                <div className="space-y-2 text-left">
+                  <Label>Email Address</Label>
+                  <Input 
+                    type="email" 
+                    placeholder="email@example.com" 
+                    value={emailForm.email} 
+                    onChange={e => setEmailForm({...emailForm, email: e.target.value})} 
+                    required 
+                  />
                 </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1 bg-green-600" disabled={isSending}>
-                    {isSending ? <Loader2 className="animate-spin h-4 w-4" /> : "Send"}
+                <div className="flex gap-2 pt-2">
+                  <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700" disabled={isSending}>
+                    {isSending ? <Loader2 className="animate-spin h-4 w-4" /> : "Send Now"}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}><X className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               </form>
             )}
