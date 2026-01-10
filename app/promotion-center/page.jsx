@@ -10,13 +10,6 @@ import { Label } from "@/components/ui/label";
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Users, Mail, BarChart3, Eye, MousePointerClick, Loader2, Send, X } from 'lucide-react';
 
-// קומפוננטת עזר פנימית כדי למנוע שגיאות ייבוא
-const Badge = ({ children, className = "" }) => (
-  <span className={`px-2 py-1 text-[10px] font-bold rounded-full border ${className}`}>
-    {children}
-  </span>
-);
-
 export default function PromotionCenter() {
   const [venture, setVenture] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
@@ -31,21 +24,14 @@ export default function PromotionCenter() {
       setIsLoading(true);
       try {
         const user = await User.me();
-        if (!user || !user.email) {
-            setIsLoading(false);
-            return;
-        }
-
+        if (!user) return;
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        if (ventures && ventures.length > 0) {
-          const currentVenture = ventures[0];
-          setVenture(currentVenture);
-          const ventureCampaigns = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date");
+        if (ventures?.length > 0) {
+          setVenture(ventures[0]);
+          const ventureCampaigns = await PromotionCampaign.filter({ venture_id: ventures[0].id }, "-created_date");
           setCampaigns(ventureCampaigns || []);
         }
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
+      } catch (e) { console.error(e); }
       setIsLoading(false);
     };
     loadData();
@@ -54,35 +40,36 @@ export default function PromotionCenter() {
   const sendExternalFeedbackInvite = async (e) => {
     if (e) e.preventDefault();
     
-    // הגנה מפני שגיאת trim על ערכים ריקים
-    const cleanEmail = (emailForm.email || "").trim();
-    const cleanName = (emailForm.name || "").trim();
+    // הגנה על ה-Trim
+    const cleanEmail = (emailForm.email || "").toString().trim();
+    const cleanName = (emailForm.name || "").toString().trim();
 
     if (!venture || !cleanEmail) {
-      alert("Please enter a valid email address.");
+      alert("Please enter an email");
       return;
     }
 
     setIsSending(true);
     try {
       const user = await User.me();
-      if (!user || !user.email) throw new Error("You must be logged in");
+      if (!user?.email) throw new Error("No user session");
 
       const token = Math.random().toString(36).substring(2, 15);
 
-      // 1. יצירת ההזמנה בטבלה הקיימת
-      await CoFounderInvitation.create({
+      // 1. יצירת ההזמנה (כמו בשותף)
+      const { error: invError } = await supabase.from('co_founder_invitations').insert([{
         venture_id: venture.id,
         inviter_email: user.email,
         invitee_email: cleanEmail,
         invitee_name: cleanName || "Guest",
         invitation_token: token,
-        invitation_type: 'external_feedback', // הסוג החדש
-        status: "pending",
-        created_by: user.email // חובה למניעת שגיאה 400
-      });
+        invitation_type: 'external_feedback',
+        status: "sent",
+        created_by: user.email
+      }]);
+      if (invError) throw invError;
 
-      // 2. קריאה ל-API לשליחת המייל
+      // 2. שליחת המייל
       const emailResponse = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,146 +83,100 @@ export default function PromotionCenter() {
         }),
       });
 
-      if (emailResponse.ok) {
-        // עדכון סטטוס ב-Supabase
-        await supabase.from("co_founder_invitations").update({ status: "sent" }).eq("invitation_token", token);
+      // 3. יצירת רשומת קמפיין - שימוש ב-Supabase ישיר כדי למנוע שגיאות Entity
+      const { error: campError } = await supabase.from('promotion_campaigns').insert([{
+        venture_id: venture.id,
+        campaign_type: 'email',
+        audience_size: 1,
+        cost: 0,
+        sender_name: cleanName,
+        status: 'PENDING',
+        created_by: user.email // השדה שגרם ל-400
+      }]);
+      if (campError) throw campError;
 
-        // 3. יצירת רשומת קמפיין עם כל שדות החובה
-        await PromotionCampaign.create({
-          venture_id: venture.id,
-          campaign_type: 'email',
-          audience_size: 1,
-          cost: 0,
-          sender_name: cleanName,
-          status: 'PENDING',
-          created_by: user.email // השדה הקריטי
-        });
+      // 4. הודעה
+      await VentureMessage.create({
+        venture_id: venture.id,
+        message_type: "external_feedback_sent",
+        title: "📧 Feedback Sent",
+        content: `Invite sent to ${cleanName}`,
+        created_by: user.email
+      });
 
-        // 4. הודעה לדשבורד
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: "external_feedback_sent",
-          title: "📧 Feedback Invite Sent",
-          content: `Sent to ${cleanName || cleanEmail}.`,
-          created_by: user.email
-        });
+      alert("Success!");
+      setEmailForm({ email: "", name: "" });
+      setShowEmailForm(false);
+      
+      // רענון
+      const updated = await PromotionCampaign.filter({ venture_id: venture.id }, "-created_date");
+      setCampaigns(updated || []);
 
-        alert("Invitation sent successfully!");
-        setEmailForm({ email: "", name: "" });
-        setShowEmailForm(false);
-        
-        // רענון רשימת הקמפיינים
-        const updated = await PromotionCampaign.filter({ venture_id: venture.id }, "-created_date");
-        setCampaigns(updated || []);
-      } else {
-          throw new Error("API failed to send email");
-      }
     } catch (error) {
-      console.error("Full Error Object:", error);
-      alert("Error: " + (error.message || "Unknown error occurred"));
+      console.error("Error:", error);
+      alert("Error: " + (error.message || "Unknown error"));
     } finally {
       setIsSending(false);
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin h-8 w-8 text-indigo-600" /></div>;
-
-  if (!venture) return <div className="p-8 text-center"><h2 className="text-2xl font-bold mb-4">No Venture Found</h2><Button onClick={() => router.push(createPageUrl('CreateVenture'))}>Create Venture</Button></div>;
+  if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 text-left" dir="ltr">
-      <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => router.push(createPageUrl('Dashboard'))} className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
-        </Button>
+    <div className="max-w-5xl mx-auto p-6" dir="ltr">
+      <Button variant="ghost" onClick={() => router.push(createPageUrl('Dashboard'))} className="mb-4">
+        <ArrowLeft className="w-4 h-4 mr-2" /> Back
+      </Button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Promotion Center</h1>
-          <p className="text-gray-600">Track and manage your feedback invitations.</p>
-        </div>
+      <h1 className="text-3xl font-bold mb-6">Promotion Center</h1>
 
-        <div className="mb-6 bg-white rounded-lg p-4 border">
-          <div className="flex items-center justify-between">
-            <div><p className="text-sm text-gray-500">Your Venture</p><p className="text-lg font-semibold">{venture.name}</p></div>
-            <div><p className="text-sm text-gray-500">Virtual Capital</p><p className="text-2xl font-bold text-green-600">${(venture.virtual_capital || 0).toLocaleString()}</p></div>
+      {campaigns.length > 0 && (
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Results</h2>
+          <div className="grid gap-4">
+            {campaigns.map(c => (
+              <Card key={c.id} className="border-l-4 border-l-green-500">
+                <CardContent className="p-4 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold">Email to: {c.sender_name || 'Guest'}</p>
+                    <p className="text-sm text-gray-500">{new Date(c.created_at || Date.now()).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex gap-6">
+                    <div className="text-center"><p className="text-lg font-bold">{c.clicks || 0}</p><p className="text-xs">Clicks</p></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
+      )}
 
-        {campaigns.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Campaign Results</h2>
-            <div className="space-y-4">
-              {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="bg-white border-l-4 border-l-green-500">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-md">📧 Feedback Email: {campaign.sender_name || 'Contact'}</CardTitle>
-                      <Badge className="text-green-600 border-green-200 bg-green-50">FREE</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="text-center p-2 bg-gray-50 rounded"><p className="text-lg font-bold">{campaign.audience_size}</p><p className="text-[10px] uppercase text-gray-500">Sent</p></div>
-                      <div className="text-center p-2 bg-gray-50 rounded"><p className="text-lg font-bold">{campaign.views || 0}</p><p className="text-[10px] uppercase text-gray-500">Opened</p></div>
-                      <div className="text-center p-2 bg-gray-50 rounded"><p className="text-lg font-bold">{campaign.clicks || 0}</p><p className="text-[10px] uppercase text-gray-500">Clicks</p></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="grid md:grid-cols-2 gap-6">
+         <Card className="opacity-50"><CardHeader><CardTitle>In-App</CardTitle></CardHeader><CardContent><Button disabled className="w-full">Soon</Button></CardContent></Card>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="opacity-50 grayscale shadow-none">
-            <CardHeader>
-              <Users className="w-8 h-8 text-gray-400 mb-2" />
-              <CardTitle className="text-gray-400">In-App Promotion</CardTitle>
-            </CardHeader>
-            <CardContent><Button disabled variant="outline" className="w-full">Coming Soon</Button></CardContent>
-          </Card>
-
-          <Card className={`transition-all ${showEmailForm ? 'ring-2 ring-green-500' : ''}`}>
-            <CardHeader>
-              <Mail className="w-8 h-8 text-green-600 mb-2" />
-              <CardTitle>Invite a Friend (via Email)</CardTitle>
-              <CardDescription>Get feedback on your Landing Page.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!showEmailForm ? (
-                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => setShowEmailForm(true)}>
-                  Create Email Invite
-                </Button>
-              ) : (
-                <div className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label>Contact Name</Label>
-                    <Input 
-                      value={emailForm.name} 
-                      onChange={(e) => setEmailForm({...emailForm, name: e.target.value})} 
-                      placeholder="e.g. John Doe" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email Address</Label>
-                    <Input 
-                      type="email" 
-                      value={emailForm.email} 
-                      onChange={(e) => setEmailForm({...emailForm, email: e.target.value})} 
-                      placeholder="email@example.com" 
-                    />
-                  </div>
-                  <div className="flex gap-2 text-left">
-                    <Button onClick={sendExternalFeedbackInvite} className="flex-1 bg-green-600" disabled={isSending}>
-                      {isSending ? <Loader2 className="animate-spin" /> : "Send Invite"}
-                    </Button>
-                    <Button variant="ghost" onClick={() => setShowEmailForm(false)}>Cancel</Button>
-                  </div>
+         <Card className={showEmailForm ? "ring-2 ring-green-500" : ""}>
+          <CardHeader>
+            <Mail className="w-8 h-8 text-green-600 mb-2" />
+            <CardTitle>Email Invite</CardTitle>
+            <CardDescription>Invite for feedback</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showEmailForm ? (
+              <Button className="w-full bg-green-600" onClick={() => setShowEmailForm(true)}>Create Invite</Button>
+            ) : (
+              <div className="space-y-4">
+                <Input placeholder="Name" value={emailForm.name} onChange={e => setEmailForm({...emailForm, name: e.target.value})} />
+                <Input placeholder="Email" value={emailForm.email} onChange={e => setEmailForm({...emailForm, email: e.target.value})} />
+                <div className="flex gap-2">
+                  <Button onClick={sendExternalFeedbackInvite} className="flex-1 bg-green-600" disabled={isSending}>
+                    {isSending ? "Sending..." : "Send"}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowEmailForm(false)}>X</Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
