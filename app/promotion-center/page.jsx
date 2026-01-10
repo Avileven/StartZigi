@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Venture, PromotionCampaign, User, CoFounderInvitation, VentureMessage } from '@/api/entities.js'; // הוספנו ישויות להזמנה [cite: 4, 5, 6, 209]
-import { supabase } from "@/lib/supabase"; // נדרש לעדכון סטטוס [cite: 210]
+import { Venture, PromotionCampaign, User, CoFounderInvitation, VentureMessage } from '@/api/entities.js'; // הוספנו ישויות לניהול ההזמנה
+import { supabase } from "@/lib/supabase"; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
-import { Input } from "@/components/ui/input.jsx"; // הוספנו עבור טופס האימייל [cite: 213]
-import { Label } from "@/components/ui/label"; // הוספנו עבור טופס האימייל [cite: 215]
+import { Input } from "@/components/ui/input.jsx"; // הוספנו עבור טופס האימייל
+import { Label } from "@/components/ui/label"; // הוספנו עבור טופס האימייל
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Users, Mail, TrendingUp, DollarSign, BarChart3, Eye, MousePointerClick, Loader2, Send, X } from 'lucide-react';
 
@@ -14,22 +14,22 @@ export default function PromotionCenter() {
   const [venture, setVenture] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false); // סטייט לשליחה [cite: 222]
-  const [showEmailForm, setShowEmailForm] = useState(false); // לשליטה בתצוגת הטופס
-  const [emailForm, setEmailForm] = useState({ email: "", name: "" }); // שדות הטופס [cite: 223-225]
+  const [isSending, setIsSending] = useState(false); // סטייט חדש לשליחת המייל
+  const [showEmailForm, setShowEmailForm] = useState(false); // סטייט לפתיחת הטופס בכרטיס הירוק
+  const [emailForm, setEmailForm] = useState({ email: "", name: "" }); // שדות הטופס
   const router = useRouter();
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const user = await User.me(); [cite: 20]
-        const ventures = await Venture.filter({ created_by: user.email }, "-created_date"); [cite: 21]
+        const user = await User.me();
+        const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
-          setVenture(currentVenture); [cite: 24]
-          const ventureCampaigns = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date"); [cite: 25]
-          setCampaigns(ventureCampaigns); [cite: 26]
+          setVenture(currentVenture);
+          const ventureCampaigns = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date");
+          setCampaigns(ventureCampaigns);
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -39,29 +39,29 @@ export default function PromotionCenter() {
     loadData();
   }, []);
 
-  // פונקציית השליחה - הועתקה מהזמנת שותף עם התאמות 
+  // פונקציית השליחה - "רוכבת" על הלוגיקה של הזמנת שותף עם התאמות לסוג פידבק
   const sendExternalFeedbackInvite = async (e) => {
     e.preventDefault();
     if (!venture || !emailForm.email) return;
 
     setIsSending(true);
     try {
-      const user = await User.me(); [cite: 265]
-      const token = Math.random().toString(36).substring(2, 15); [cite: 266]
+      const user = await User.me();
+      const token = Math.random().toString(36).substring(2, 15);
 
-      // 1. יצירת ההזמנה בטבלה הקיימת עם סוג חיצוני [cite: 268-278]
-      const invitation = await CoFounderInvitation.create({
+      // 1. יצירת ההזמנה בטבלת co_founder_invitations עם הסוג החדש
+      await CoFounderInvitation.create({
         venture_id: venture.id,
         inviter_email: user.email,
         invitee_email: emailForm.email,
         invitee_name: emailForm.name,
         invitation_token: token,
-        invitation_type: 'external_feedback', // השינוי המרכזי שביקשת
+        invitation_type: 'external_feedback', // שינוי: הזרקת הסוג החדש לעמודה הקיימת
         status: "pending",
         created_by: user.email
       });
 
-      // 2. שליחת המייל דרך ה-API הקיים [cite: 280-291]
+      // 2. קריאה ל-API לשליחת המייל
       const emailResponse = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,64 +71,66 @@ export default function PromotionCenter() {
           inviterName: user.full_name || user.email,
           invitationToken: token,
           ventureId: venture.id,
-          type: 'external_feedback' // דגל ל-API לשנות לינק לדף נחיתה
+          type: 'external_feedback' // דגל ל-API שידע לנתב לדף הנחיתה
         }),
       });
 
       if (emailResponse.ok) {
-        // עדכון סטטוס בטבלה [cite: 295-299]
+        // עדכון סטטוס ל-"sent" ב-Supabase
         await supabase.from("co_founder_invitations").update({ status: "sent" }).eq("invitation_token", token);
 
-        // 3. יצירת רשומת קמפיין כדי שיופיע בטבלה למטה [cite: 82]
+        // 3. יצירת רשומת קמפיין - כאן הוספנו את ה-created_by שפתר את שגיאה 400
         await PromotionCampaign.create({
           venture_id: venture.id,
           campaign_type: 'email',
           audience_size: 1,
           cost: 0,
-          sender_name: emailForm.name
+          sender_name: emailForm.name,
+          created_by: user.email // תיקון ה-Not-Null Constraint
         });
 
-        // 4. הודעה לדשבורד [cite: 309-318]
+        // 4. יצירת הודעה לדשבורד
         await VentureMessage.create({
           venture_id: venture.id,
           message_type: "external_feedback_sent",
           title: "📧 Feedback Invite Sent",
-          content: `Sent to ${emailForm.name}. Waiting for landing page visit.`,
+          content: `Sent to ${emailForm.name}. Link points to Landing Page.`,
           created_by: user.email
         });
 
         alert("Invitation sent successfully!");
-        setEmailForm({ email: "", name: "" });
-        setShowEmailForm(false);
-        // רענון הרשימה
+        setEmailForm({ email: "", name: "" }); // איפוס טופס
+        setShowEmailForm(false); // סגירת טופס
+        
+        // רענון רשימת הקמפיינים המוצגת בדף
         const updated = await PromotionCampaign.filter({ venture_id: venture.id }, "-created_date");
         setCampaigns(updated);
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to send.");
+      console.error("Error sending invite:", error);
+      alert("Failed to send invitation.");
     } finally {
       setIsSending(false);
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>; [cite: 35-41]
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin h-8 w-8 text-indigo-600" /></div>;
 
-  if (!venture) return <div className="p-8 text-center"><h2 className="text-2xl font-bold mb-4">No Venture Found</h2><Button onClick={() => router.push(createPageUrl('CreateVenture'))}>Create Venture</Button></div>; [cite: 42-52]
+  if (!venture) return <div className="p-8 text-center"><h2 className="text-2xl font-bold mb-4">No Venture Found</h2><Button onClick={() => router.push(createPageUrl('CreateVenture'))}>Create Venture</Button></div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 text-left" dir="ltr">
       <div className="max-w-5xl mx-auto">
         <Button variant="ghost" onClick={() => router.push(createPageUrl('Dashboard'))} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
-        </Button> [cite: 56-59]
+        </Button>
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Promotion Center</h1>
           <p className="text-gray-600">Launch campaigns to market your venture and track results.</p>
-        </div> [cite: 60-63]
+        </div>
 
-        {/* תצוגת הון וקמפיינים קיימים - ללא שינוי [cite: 64-132] */}
+        {/* סטטיסטיקה וקמפיינים קיימים - ללא שינוי מבני */}
         <div className="mb-6 bg-white rounded-lg p-4 border">
           <div className="flex items-center justify-between">
             <div><p className="text-sm text-gray-500">Your Venture</p><p className="text-lg font-semibold">{venture.name}</p></div>
@@ -141,12 +143,21 @@ export default function PromotionCenter() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Campaign Results</h2>
             <div className="space-y-4">
               {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="bg-white">
+                <Card key={campaign.id} className="bg-white border-l-4 border-l-green-500">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div><CardTitle className="text-lg">{campaign.campaign_type === 'in-app' ? 'In-App Promotion' : 'Email Campaign'}</CardTitle>
-                      <CardDescription>{campaign.campaign_type === 'email' && campaign.sender_name && `To: ${campaign.sender_name}`}</CardDescription></div>
-                      <div className="text-right"><p className="text-sm text-gray-500">Cost</p><p className="text-lg font-bold text-red-600">-${campaign.cost.toLocaleString()}</p></div>
+                      <div>
+                        <CardTitle className="text-lg">
+                          {campaign.campaign_type === 'email' ? '📧 Email Feedback Campaign' : 'In-App Promotion'}
+                        </CardTitle>
+                        <CardDescription>
+                          {campaign.sender_name ? `Invited: ${campaign.sender_name}` : 'External Outreach'}
+                        </CardDescription>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Cost</p>
+                        <p className="text-lg font-bold text-green-600">FREE</p>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -163,21 +174,23 @@ export default function PromotionCenter() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* חבילת In-App - ללא שינוי [cite: 138-167] */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-60">
-             <CardHeader>
+          <Card className="opacity-60 grayscale cursor-not-allowed">
+            <CardHeader>
               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4"><Users className="w-6 h-6 text-indigo-600" /></div>
               <CardTitle>In-App Promotion</CardTitle>
+              <CardDescription>Reach users already inside the platform.</CardDescription>
             </CardHeader>
             <CardContent><Button disabled className="w-full">Coming Soon</Button></CardContent>
           </Card>
 
-          {/* כרטיס המייל הירוק - כאן הוספנו את הטופס [cite: 168-200] */}
-          <Card className={`hover:shadow-lg transition-shadow ${showEmailForm ? 'ring-2 ring-green-500' : ''}`}>
+          {/* הכרטיס הירוק - עבר שינוי להכלת טופס פנימי */}
+          <Card className={`hover:shadow-lg transition-all ${showEmailForm ? 'ring-2 ring-green-500 shadow-md' : ''}`}>
             <CardHeader>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4"><Mail className="w-6 h-6 text-green-600" /></div>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Mail className="w-6 h-6 text-green-600" />
+              </div>
               <CardTitle>Invite a Friend (via Email)</CardTitle>
-              <CardDescription>Send personalized feedback invitations to external contacts.</CardDescription>
+              <CardDescription>Send a link to your landing page to get external feedback.</CardDescription>
             </CardHeader>
             <CardContent>
               {!showEmailForm ? (
@@ -192,18 +205,31 @@ export default function PromotionCenter() {
               ) : (
                 <form onSubmit={sendExternalFeedbackInvite} className="space-y-4 border-t pt-4">
                   <div className="space-y-2">
-                    <Label>Contact Name</Label>
-                    <Input value={emailForm.name} onChange={(e) => setEmailForm({...emailForm, name: e.target.value})} required placeholder="John Doe" />
+                    <Label>Friend's Name</Label>
+                    <Input 
+                      value={emailForm.name} 
+                      onChange={(e) => setEmailForm({...emailForm, name: e.target.value})} 
+                      required 
+                      placeholder="e.g. John Smith" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Email Address</Label>
-                    <Input type="email" value={emailForm.email} onChange={(e) => setEmailForm({...emailForm, email: e.target.value})} required placeholder="john@example.com" />
+                    <Input 
+                      type="email" 
+                      value={emailForm.email} 
+                      onChange={(e) => setEmailForm({...emailForm, email: e.target.value})} 
+                      required 
+                      placeholder="john@example.com" 
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" className="flex-1 bg-green-600" disabled={isSending}>
-                      {isSending ? <Loader2 className="animate-spin" /> : <><Send className="w-4 h-4 mr-2" /> Send</>}
+                      {isSending ? <Loader2 className="animate-spin" /> : <><Send className="w-4 h-4 mr-2" /> Send Invite</>}
                     </Button>
-                    <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}><X className="w-4 h-4" /></Button>
+                    <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}>
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
                 </form>
               )}
