@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Venture, PromotionCampaign, User, CoFounderInvitation, VentureMessage } from '@/api/entities.js'; 
+import { Venture, PromotionCampaign, User, CoFounderInvitation } from '@/api/entities.js'; 
 import { supabase } from "@/lib/supabase"; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Input } from "@/components/ui/input.jsx"; 
 import { Label } from "@/components/ui/label"; 
-import { ArrowLeft, Mail, BarChart3, Loader2, Send, X } from 'lucide-react';
+import { ArrowLeft, Mail, Loader2, X } from 'lucide-react';
 
 export default function PromotionCenter() {
   const [venture, setVenture] = useState(null);
@@ -23,14 +23,13 @@ export default function PromotionCenter() {
       try {
         const currentUser = await User.me();
         if (!currentUser) return;
-        
         const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
         if (ventures && ventures.length > 0) {
           setVenture(ventures[0]);
           const results = await PromotionCampaign.filter({ venture_id: ventures[0].id }, "-created_date");
           setCampaigns(results || []);
         }
-      } catch (e) { console.error("Init error:", e); }
+      } catch (e) { console.error(e); }
       setIsLoading(false);
     };
     init();
@@ -42,17 +41,16 @@ export default function PromotionCenter() {
 
     setIsSending(true);
     try {
-      // 1. משיכת פרטי המשתמש המלאים כדי למנוע undefined במייל
       const currentUser = await User.me();
-      if (!currentUser || !currentUser.email) {
-        alert("Session error. Please login again.");
-        return;
-      }
+      if (!currentUser) throw new Error("No user");
+
+      // --- FIX 1: פתרון ה-undefined בשם השולח ---
+      // אם full_name ריק, לוקח את החלק שלפני ה-@ באימייל (avibmax)
+      const inviterDisplayName = currentUser.full_name || currentUser.email.split('@')[0] || "Someone";
 
       const token = Math.random().toString(36).substring(2, 15);
-      const inviterDisplayName = currentUser.full_name || currentUser.email;
 
-      // 2. יצירת ההזמנה בטבלת co_founder_invitations
+      // 1. יצירת הזמנה
       await CoFounderInvitation.create({
         venture_id: venture.id,
         inviter_email: currentUser.email,
@@ -64,42 +62,34 @@ export default function PromotionCenter() {
         created_by: currentUser.email 
       });
 
-      // 3. שליחה ל-API - כאן התיקון ל-undefined
+      // 2. שליחה ל-API
       await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: emailForm.email,
           ventureName: venture.name,
-          inviterName: inviterDisplayName, // עכשיו זה לא יהיה undefined
+          inviterName: inviterDisplayName, // התיקון שמונע undefined במייל
           invitationToken: token,
           ventureId: venture.id,
-          type: 'external_feedback' // הדגל שמנתב לדף הנחיתה
+          type: 'external_feedback'
         }),
       });
 
-      // 4. יצירת רשומת קמפיין - פתרון ה-400 ע"י שליחת אובייקט מלא
+      // 3. יצירת רשומת קמפיין
+      // --- FIX 2: הוספת שדות חובה למניעת שגיאה 400 ---
       await PromotionCampaign.create({
         venture_id: venture.id,
         campaign_type: 'email',
-        campaign_name: `Feedback Request - ${emailForm.name}`,
-        audience_size: 1,
-        cost: 0,
         sender_name: emailForm.name,
         status: 'PENDING',
-        created_by: currentUser.email 
+        created_by: currentUser.email,
+        // הוספת תאריכים ידנית למקרה שה-SQL default לא נתפס מיד
+        created_date: new Date().toISOString(), 
+        updated_date: new Date().toISOString()
       });
 
-      // 5. הודעה למערכת
-      await VentureMessage.create({
-        venture_id: venture.id,
-        message_type: "external_feedback_sent",
-        title: "📧 Feedback Invite Sent",
-        content: `Invitation sent to ${emailForm.name || emailForm.email}`,
-        created_by: currentUser.email
-      });
-
-      alert("Success! Invitation sent.");
+      alert("Invite sent to " + emailForm.email);
       setShowEmailForm(false);
       setEmailForm({ email: "", name: "" });
       
@@ -108,8 +98,8 @@ export default function PromotionCenter() {
       setCampaigns(updated || []);
 
     } catch (err) {
-      console.error("Submit error:", err);
-      alert("Database Error. Please try again.");
+      console.error(err);
+      alert("Error: " + err.message);
     } finally {
       setIsSending(false);
     }
@@ -120,36 +110,28 @@ export default function PromotionCenter() {
   return (
     <div className="max-w-4xl mx-auto p-6 text-left" dir="ltr">
       <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
       
       <h1 className="text-3xl font-bold mb-6">Promotion Center</h1>
 
-      {/* תצוגת הקמפיינים */}
       <div className="mb-10 space-y-4">
-        {campaigns.length > 0 ? campaigns.map(c => (
+        {campaigns.map(c => (
           <Card key={c.id} className="border-l-4 border-l-green-500">
             <CardContent className="p-4 flex justify-between items-center">
               <div>
-                <p className="font-bold">Feedback Link Sent to: {c.sender_name || 'Guest'}</p>
-                <p className="text-sm text-gray-500">{new Date(c.created_date || Date.now()).toLocaleDateString()}</p>
+                <p className="font-bold">Feedback invite to: {c.sender_name}</p>
+                <p className="text-sm text-gray-500">{new Date(c.created_date).toLocaleDateString()}</p>
               </div>
-              <div className="flex gap-4">
-                <div className="text-center">
-                    <p className="font-bold text-lg">{c.clicks || 0}</p>
-                    <p className="text-[10px] text-gray-400 uppercase">Clicks</p>
-                </div>
-              </div>
+              <div className="text-center font-bold">{c.clicks || 0} CLICKS</div>
             </CardContent>
           </Card>
-        )) : (
-          <p className="text-gray-500 italic">No feedback invites sent yet.</p>
-        )}
+        ))}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="opacity-40 grayscale shadow-none">
-          <CardHeader><CardTitle>In-App Promotion</CardTitle></CardHeader>
+          <CardHeader><CardTitle>In-App Ads</CardTitle></CardHeader>
           <CardContent><Button disabled className="w-full">Coming Soon</Button></CardContent>
         </Card>
 
@@ -157,26 +139,20 @@ export default function PromotionCenter() {
           <CardHeader>
             <Mail className="w-8 h-8 text-green-600 mb-2" />
             <CardTitle>Invite a Friend</CardTitle>
-            <CardDescription>Send a direct link to your Landing Page.</CardDescription>
+            <CardDescription>Get feedback on your Landing Page</CardDescription>
           </CardHeader>
           <CardContent>
             {!showEmailForm ? (
               <Button className="w-full bg-green-600" onClick={() => setShowEmailForm(true)}>Send Feedback Invite</Button>
             ) : (
               <form onSubmit={handleSend} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Friend's Name</Label>
-                  <Input placeholder="e.g. John Doe" value={emailForm.name} onChange={e => setEmailForm({...emailForm, name: e.target.value})} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input type="email" placeholder="email@example.com" value={emailForm.email} onChange={e => setEmailForm({...emailForm, email: e.target.value})} required />
-                </div>
-                <div className="flex gap-2 pt-2">
+                <Input placeholder="Recipient Name" value={emailForm.name} onChange={e => setEmailForm({...emailForm, name: e.target.value})} required />
+                <Input type="email" placeholder="email@example.com" value={emailForm.email} onChange={e => setEmailForm({...emailForm, email: e.target.value})} required />
+                <div className="flex gap-2">
                   <Button type="submit" className="flex-1 bg-green-600" disabled={isSending}>
-                    {isSending ? <Loader2 className="animate-spin h-4 w-4" /> : "Send Now"}
+                    {isSending ? "Sending..." : "Send Invite"}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}><X className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}><X /></Button>
                 </div>
               </form>
             )}
