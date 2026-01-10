@@ -1,129 +1,228 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Venture, PromotionCampaign, User, CoFounderInvitation, VentureMessage } from "@/api/entities.js";
-import { supabase } from "@/lib/supabase";
+import { useRouter } from 'next/navigation';
+import { Venture } from '@/api/entities.js';
+import { PromotionCampaign } from '@/api/entities.js';
+import { User } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
-import { Input } from "@/components/ui/input.jsx";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, Mail, Loader2, X } from 'lucide-react';
+import { createPageUrl } from '@/utils';
+import { ArrowLeft, Users, Mail, TrendingUp, DollarSign, BarChart3, Eye, MousePointerClick } from 'lucide-react';
+
 
 export default function PromotionCenter() {
   const [venture, setVenture] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  const [emailForm, setEmailForm] = useState({ email: "", name: "" });
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => { loadData(); }, []);
 
-  const loadData = async () => {
-    try {
-      const user = await User.me();
-      const userVentures = await Venture.list("-created_date");
-      if (userVentures?.length > 0) {
-        setVenture(userVentures[0]);
-        const results = await PromotionCampaign.filter({ venture_id: userVentures[0].id }, "-created_date");
-        setCampaigns(results || []);
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const user = await User.me();
+        const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
+        if (ventures.length > 0) {
+          const currentVenture = ventures[0];
+          setVenture(currentVenture);
+         
+          const ventureCampaigns = await PromotionCampaign.filter({ venture_id: currentVenture.id }, "-created_date");
+          setCampaigns(ventureCampaigns);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
       }
-    } catch (e) { console.error(e); }
-    setIsLoading(false);
-  };
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!venture || !emailForm.email) return;
-    setIsSending(true);
 
-    try {
-      const user = await User.me(); // טעינת המשתמש [cite: 60]
-      const token = Math.random().toString(36).substring(2, 15);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
-      // 1. יצירת הזמנה ב-DB (העתקה מדויקת משורה 63 בקוד ששלחת)
-      const invitation = await CoFounderInvitation.create({
-        venture_id: venture.id,
-        inviter_email: user.email,
-        invitee_email: emailForm.email,
-        invitee_name: emailForm.name,
-        invitation_token: token,
-        invitation_type: 'external_feedback',
-        status: "pending", // סטטוס ראשוני [cite: 70]
-        created_by_id: user.id, // חובה [cite: 71]
-        created_by: user.email // חובה [cite: 72]
-      });
 
-      // 2. שליחה ל-API (העתקה מדויקת משורה 75 שמונעת undefined)
-      const emailResponse = await fetch("/api/send-invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: emailForm.email,
-          ventureName: venture.name,
-          inviterName: user.full_name || user.name || user.email, // תיקון ה-undefined 
-          invitationToken: invitation?.invitation_token || token,
-          ventureId: venture.id
-        }),
-      });
-
-      if (emailResponse.ok) {
-        // 3. עדכון סטטוס ל-sent (כמו בשורה 92)
-        await supabase.from("co_founder_invitations").update({ status: "sent" }).eq("invitation_token", token);
-
-        // 4. יצירת קמפיין (פתרון ה-400 ע"י שליחת תאריכים מפורשים)
-        await PromotionCampaign.create({
-          venture_id: venture.id,
-          campaign_type: 'email',
-          campaign_name: `Feedback - ${emailForm.name}`,
-          sender_name: emailForm.name,
-          status: 'SENT',
-          created_by: user.email,
-          created_date: new Date().toISOString(), // פתרון ל-SQL NOT NULL
-          updated_date: new Date().toISOString()  // פתרון ל-SQL NOT NULL
-        });
-
-        alert("Invitation sent!");
-        setEmailForm({ email: "", name: "" });
-        setShowEmailForm(false);
-        loadData();
-      }
-    } catch (err) { alert("Failed to send."); }
-    finally { setIsSending(false); }
-  };
-
-  // ... (שאר ה-JSX נשאר זהה, רק הלוגיקה של ה-handleSend השתנתה)
-  if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
-  return (
-    <div className="max-w-4xl mx-auto p-6 text-left" dir="ltr">
-        <Button variant="ghost" onClick={() => window.history.back()} className="mb-4"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-        <h1 className="text-3xl font-bold mb-8">Promotion Center</h1>
-        
-        <div className="mb-10 space-y-4">
-            {campaigns.map(c => (
-                <Card key={c.id} className="border-l-4 border-l-green-500">
-                    <CardContent className="p-4 flex justify-between items-center">
-                        <div><p className="font-bold">Sent to: {c.sender_name}</p></div>
-                        <div className="font-bold">{c.clicks || 0} CLICKS</div>
-                    </CardContent>
-                </Card>
-            ))}
+  if (!venture) {
+    return (
+      <div className="p-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4">No Venture Found</h2>
+          <p className="text-gray-600 mb-6">Please create a venture before accessing the promotion center.</p>
+          <Button onClick={() => router.push(createPageUrl('CreateVenture'))}>Create Venture</Button>
         </div>
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        <Button variant="ghost" onClick={() => router.push(createPageUrl('Dashboard'))} className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+
+
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Promotion Center</h1>
+          <p className="text-gray-600">Launch campaigns to market your venture and track results.</p>
+        </div>
+
+
+        <div className="mb-6 bg-white rounded-lg p-4 border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Your Venture</p>
+              <p className="text-lg font-semibold">{venture.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Virtual Capital</p>
+              <p className="text-2xl font-bold text-green-600">
+                ${(venture.virtual_capital || 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+
+        {campaigns.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Campaign Results</h2>
+            <div className="space-y-4">
+              {campaigns.map((campaign) => (
+                <Card key={campaign.id} className="bg-white">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {campaign.campaign_type === 'in-app' ? 'In-App Promotion' : 'Email Campaign'}
+                        </CardTitle>
+                        <CardDescription>
+                          {campaign.campaign_type === 'in-app' && campaign.tagline && `"${campaign.tagline}"`}
+                          {campaign.campaign_type === 'email' && campaign.sender_name && `From: ${campaign.sender_name}`}
+                        </CardDescription>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Cost</p>
+                        <p className="text-lg font-bold text-red-600">-${campaign.cost.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <BarChart3 className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-blue-600">{campaign.audience_size}</p>
+                        <p className="text-xs text-gray-600">
+                          {campaign.campaign_type === 'in-app' ? 'Invites Sent' : 'Emails Sent'}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <Eye className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-purple-600">{campaign.views || 0}</p>
+                        <p className="text-xs text-gray-600">
+                          {campaign.campaign_type === 'in-app' ? 'Invites Viewed' : 'Emails Opened'}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <MousePointerClick className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-green-600">{campaign.clicks || 0}</p>
+                        <p className="text-xs text-gray-600">Landing Page Clicks</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-xs text-gray-500">
+                        Launched on {new Date(campaign.created_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Launch New Campaign</h2>
+        </div>
+
 
         <div className="grid md:grid-cols-2 gap-6">
-            <Card className="opacity-50 grayscale"><CardHeader><CardTitle>In-App</CardTitle></CardHeader></Card>
-            <Card>
-                <CardHeader><CardTitle>Email Invite</CardTitle></CardHeader>
-                <CardContent>
-                    {!showEmailForm ? <Button className="w-full" onClick={() => setShowEmailForm(true)}>Start</Button> : (
-                        <form onSubmit={handleSend} className="space-y-4">
-                            <Input placeholder="Name" value={emailForm.name} onChange={e => setEmailForm({...emailForm, name: e.target.value})} required />
-                            <Input type="email" placeholder="Email" value={emailForm.email} onChange={e => setEmailForm({...emailForm, email: e.target.value})} required />
-                            <Button type="submit" className="w-full bg-green-600" disabled={isSending}>Send</Button>
-                        </form>
-                    )}
-                </CardContent>
-            </Card>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(createPageUrl('Promotion?type=in-app'))}>
+            <CardHeader>
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-indigo-600" />
+              </div>
+              <CardTitle>In-App Promotion Package</CardTitle>
+              <CardDescription>
+                Reach registered platform users with targeted invitations to visit your landing page and provide feedback.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                <li className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  Target platform community
+                </li>
+                <li className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-500" />
+                  Choose audience size (50-500 users)
+                </li>
+                <li className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-yellow-500" />
+                  Costs virtual currency
+                </li>
+              </ul>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                Select In-App Package
+              </Button>
+            </CardContent>
+          </Card>
+
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(createPageUrl('Promotion?type=email'))}>
+            <CardHeader>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Mail className="w-6 h-6 text-green-600" />
+              </div>
+              <CardTitle>Invite a Friend (via Email)</CardTitle>
+              <CardDescription>
+                Send personalized email invitations to external contacts, providing temporary access to your landing page.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <p className="text-sm font-semibold text-green-800">This service is currently FREE!</p>
+              </div>
+              <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                <li className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-green-500" />
+                  Reach external audiences
+                </li>
+                <li className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-500" />
+                  Temporary page access
+                </li>
+                <li className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-green-500" />
+                  Completely free
+                </li>
+              </ul>
+              <Button className="w-full bg-green-600 hover:bg-green-700">
+                Create Email Invite
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+      </div>
     </div>
   );
 }
