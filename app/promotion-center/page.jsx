@@ -1,5 +1,5 @@
 
-// app/promotion-center/page.jsx
+// app/promotion-center/page.jsx 100126
 "use client";
 
 import React, { useEffect, useState } from "react";
