@@ -1,16 +1,16 @@
+
+// C:\STRARTZIG\src\components\promotions\InAppPromotion
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Venture } from '@/api/entities.js';
-import { VentureMessage } from '@/api/entities.js';
-import { PromotionCampaign } from '@/api/entities.js';
-import { User } from '@/api/entities.js';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Input } from '@/components/ui/input.jsx';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from 'lucide-react';
+
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase"; // ✅ [2026-01-11] FIX: need gte/count + fetch many ventures reliably
+
+import { Venture, VentureMessage, PromotionCampaign, User } from "@/api/entities.js";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from "lucide-react";
 
 const PACKAGES = [
   { size: 50, cost: 500 },
@@ -24,7 +24,7 @@ const MAX_MESSAGES_PER_VENTURE_PER_WEEK = 3;
 export default function InAppPromotion({ goBack }) {
   const [venture, setVenture] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [tagline, setTagline] = useState('');
+  const [tagline, setTagline] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,36 +33,60 @@ export default function InAppPromotion({ goBack }) {
       setIsLoading(true);
       try {
         const user = await User.me();
-        const ventures = await Venture.filter({ created_by: user.email }, '-created_date');
-        if (ventures.length > 0) {
-          setVenture(ventures[0]);
+        if (!user?.id) {
+          setVenture(null);
+          return;
         }
+
+        // ✅ [2026-01-11] FIX: load my venture by founder_user_ids (NOT created_by email)
+        // This matches your entities.js special filter for ventures.
+        const ventures = await Venture.filter({ founder_user_id: user.id }, "-created_date");
+
+        if (ventures?.length > 0) setVenture(ventures[0]);
+        else setVenture(null);
       } catch (error) {
-        console.error('Error loading venture:', error);
+        console.error("Error loading venture:", error);
+        setVenture(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
+
     loadVenture();
   }, []);
 
   const handleLaunchCampaign = async () => {
     if (!selectedPackage || !tagline.trim() || !venture) {
-      alert('Please select a package and provide a tagline.');
+      alert("Please select a package and provide a tagline.");
       return;
     }
 
-    if (venture.virtual_capital < selectedPackage.cost) {
-      alert('Insufficient virtual capital for this package.');
+    if ((venture.virtual_capital || 0) < selectedPackage.cost) {
+      alert("Insufficient virtual capital for this package.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
-      const allVentures = await Venture.list('-created_date', 1000);
-      const targetVentures = allVentures.filter(v => v.id !== venture.id);
+      const user = await User.me();
+
+      // ✅ [2026-01-11] FIX: Venture.list doesn't support limit param in your Entity.
+      // Use supabase directly to fetch many ventures.
+      const { data: allVentures, error: venturesErr } = await supabase
+        .from("ventures")
+        .select("id,name,phase,landing_page_url,is_sample,created_date")
+        .order("created_date", { ascending: false })
+        .limit(1000);
+
+      if (venturesErr) throw venturesErr;
+
+      const targetVentures = (allVentures || [])
+        .filter((v) => v?.id && v.id !== venture.id)
+        .filter((v) => v.is_sample !== true);
 
       if (targetVentures.length === 0) {
-        alert('No other ventures available to promote to at this time.');
+        alert("No other ventures available to promote to at this time.");
         setIsSubmitting(false);
         return;
       }
@@ -71,44 +95,51 @@ export default function InAppPromotion({ goBack }) {
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       const oneWeekAgoISO = oneWeekAgo.toISOString();
 
+      // ✅ [2026-01-11] FIX: Entity.filter DOES NOT support $gte.
+      // We compute weekly cap using PostgREST count + gte.
       const eligibleVentures = [];
       for (const targetVenture of targetVentures) {
-        const recentMessages = await VentureMessage.filter({
-          venture_id: targetVenture.id,
-          message_type: 'feedback_request',
-          created_date: { $gte: oneWeekAgoISO }
-        });
-        
-        if (recentMessages.length < MAX_MESSAGES_PER_VENTURE_PER_WEEK) {
+        const { count, error: countErr } = await supabase
+          .from("venture_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("venture_id", targetVenture.id)
+          .eq("message_type", "feedback_request")
+          .gte("created_date", oneWeekAgoISO);
+
+        if (countErr) throw countErr;
+
+        if ((count || 0) < MAX_MESSAGES_PER_VENTURE_PER_WEEK) {
           eligibleVentures.push(targetVenture);
         }
       }
 
       if (eligibleVentures.length === 0) {
-        alert('All ventures have reached their weekly message limit. Please try again later.');
+        alert("All ventures have reached their weekly message limit. Please try again later.");
         setIsSubmitting(false);
         return;
       }
 
       const actualAudienceSize = Math.min(selectedPackage.size, eligibleVentures.length);
-      const shuffled = eligibleVentures.sort(() => 0.5 - Math.random());
+      const shuffled = [...eligibleVentures].sort(() => 0.5 - Math.random());
       const selectedTargets = shuffled.slice(0, actualAudienceSize);
 
       const campaign = await PromotionCampaign.create({
         venture_id: venture.id,
-        campaign_type: 'in-app',
+        campaign_type: "in-app",
         audience_size: actualAudienceSize,
         cost: selectedPackage.cost,
         tagline: tagline,
       });
 
-      let messageTitle = '';
-      let messageContent = '';
-      
-      if (venture.phase === 'mvp' || venture.phase === 'mlp') {
+      let messageTitle = "";
+      let messageContent = "";
+
+      if (venture.phase === "mvp" || venture.phase === "mlp") {
         messageTitle = `💡 Check out ${venture.name}!`;
-        messageContent = `${tagline}\n\nThey're looking for feedback on their ${venture.phase === 'mvp' ? 'MVP' : 'MLP'}. Visit their page and share your thoughts!`;
-      } else if (venture.phase === 'beta' || venture.phase === 'growth') {
+        messageContent = `${tagline}\n\nThey're looking for feedback on their ${
+          venture.phase === "mvp" ? "MVP" : "MLP"
+        }. Visit their page and share your thoughts!`;
+      } else if (venture.phase === "beta" || venture.phase === "growth") {
         messageTitle = `🚀 Join ${venture.name}'s Beta Program!`;
         messageContent = `${tagline}\n\nThey're looking for beta testers! Sign up to be among the first to try their product.`;
       } else {
@@ -119,7 +150,7 @@ export default function InAppPromotion({ goBack }) {
       for (const target of selectedTargets) {
         await VentureMessage.create({
           venture_id: target.id,
-          message_type: 'feedback_request',
+          message_type: "feedback_request",
           title: messageTitle,
           content: messageContent,
           from_venture_id: venture.id,
@@ -128,29 +159,38 @@ export default function InAppPromotion({ goBack }) {
           campaign_id: campaign.id,
           phase: target.phase,
           priority: 1,
+
+          // ✅ [2026-01-11] FIX: set created_by fields so messages behave like others (dismiss etc.)
+          created_by: user?.email || null,
+          created_by_id: user?.id || null,
+          is_dismissed: false,
         });
       }
 
       await Venture.update(venture.id, {
-        virtual_capital: venture.virtual_capital - selectedPackage.cost,
+        virtual_capital: (venture.virtual_capital || 0) - selectedPackage.cost,
       });
 
       await VentureMessage.create({
         venture_id: venture.id,
-        message_type: 'system',
-        title: '📣 Campaign Launched!',
+        message_type: "system",
+        title: "📣 Campaign Launched!",
         content: `Your in-app promotion campaign has been launched to ${actualAudienceSize} ventures. Track results in your Promotion Reports.`,
         phase: venture.phase,
         priority: 2,
+        created_by: user?.email || null,
+        created_by_id: user?.id || null,
+        is_dismissed: false,
       });
 
       alert(`Campaign launched successfully to ${actualAudienceSize} ventures!`);
       goBack();
     } catch (error) {
-      console.error('Error launching campaign:', error);
-      alert('There was an error launching your campaign. Please try again.');
+      console.error("Error launching campaign:", error);
+      alert("There was an error launching your campaign. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   if (isLoading) {
@@ -191,6 +231,7 @@ export default function InAppPromotion({ goBack }) {
               In-App Promotion Package
             </CardTitle>
           </CardHeader>
+
           <CardContent className="p-8">
             <div className="space-y-6">
               <div>
@@ -201,8 +242,8 @@ export default function InAppPromotion({ goBack }) {
                       key={pkg.size}
                       className={`cursor-pointer transition-all ${
                         selectedPackage?.size === pkg.size
-                          ? 'border-2 border-indigo-600 shadow-lg'
-                          : 'hover:shadow-md'
+                          ? "border-2 border-indigo-600 shadow-lg"
+                          : "hover:shadow-md"
                       }`}
                       onClick={() => setSelectedPackage(pkg)}
                     >
@@ -222,7 +263,7 @@ export default function InAppPromotion({ goBack }) {
                   id="tagline"
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
-                  placeholder="Write a compelling tagline that will appear in the notification (e.g., 'Revolutionary AI tool that saves you 10 hours per week!')"
+                  placeholder="Write a compelling tagline that will appear in the notification..."
                   className="mt-2 min-h-[100px]"
                 />
               </div>
@@ -231,10 +272,9 @@ export default function InAppPromotion({ goBack }) {
                 <h4 className="font-semibold text-blue-900 mb-2">How It Works:</h4>
                 <ul className="text-sm text-blue-800 space-y-1 list-disc pl-5">
                   <li>Your message appears on other entrepreneurs' dashboards</li>
-                  <li>Message content is customized based on your venture's phase (feedback request for MVP/MLP, beta signup for Beta/Growth)</li>
                   <li>Users can click to visit your landing page</li>
                   <li>Track clicks and views in Promotion Reports</li>
-                  <li>Each venture receives max {MAX_MESSAGES_PER_VENTURE_PER_WEEK} promotional messages per week (to prevent spam)</li>
+                  <li>Each venture receives max {MAX_MESSAGES_PER_VENTURE_PER_WEEK} promos per week</li>
                 </ul>
               </div>
 
@@ -248,8 +288,10 @@ export default function InAppPromotion({ goBack }) {
                   </div>
                   <div className="flex justify-between items-center mt-2 text-sm">
                     <span>Your Virtual Capital:</span>
-                    <span className={venture.virtual_capital < selectedPackage.cost ? 'text-red-600 font-semibold' : 'text-gray-600'}>
-                      ${venture.virtual_capital.toLocaleString()}
+                    <span
+                      className={(venture.virtual_capital || 0) < selectedPackage.cost ? "text-red-600 font-semibold" : "text-gray-600"}
+                    >
+                      ${(venture.virtual_capital || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -257,7 +299,12 @@ export default function InAppPromotion({ goBack }) {
 
               <Button
                 onClick={handleLaunchCampaign}
-                disabled={!selectedPackage || !tagline.trim() || isSubmitting || (venture.virtual_capital < (selectedPackage?.cost || 0))}
+                disabled={
+                  !selectedPackage ||
+                  !tagline.trim() ||
+                  isSubmitting ||
+                  (venture.virtual_capital || 0) < (selectedPackage?.cost || 0)
+                }
                 className="w-full"
                 size="lg"
               >
@@ -280,3 +327,5 @@ export default function InAppPromotion({ goBack }) {
     </div>
   );
 }
+
+
