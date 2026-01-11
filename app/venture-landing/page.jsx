@@ -530,27 +530,7 @@ export default function VentureLanding() {
           </div>
 
 
-          {/* Join card only when invitation_token exists */}
-          {invitationToken && (
-            <Card className="shadow-lg mb-8">
-              <CardHeader>
-                <CardTitle>Join this venture</CardTitle>
-                <CardDescription>You were invited as a co-founder. Click to accept and join the team.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {joinError && <p className="text-sm text-red-600">{joinError}</p>}
-                {joinSuccess && <p className="text-sm text-green-600">Joined successfully! Redirecting…</p>}
-
-
-                <Button onClick={handleJoinAsCofounder} disabled={isJoining} className="w-full">
-                  {isJoining ? "Joining..." : "Accept & Join Venture"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-
-          {venture.mvp_uploaded && venture.mvp_data && (
+                    {venture.mvp_uploaded && venture.mvp_data && (
             <div className="mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
 
