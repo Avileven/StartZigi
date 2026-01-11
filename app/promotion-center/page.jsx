@@ -400,9 +400,7 @@ export default function PromotionCenter() {
             <Card className="bg-white">
               <CardHeader>
                 <CardTitle className="text-lg">Sent Invitations</CardTitle>
-                <CardDescription>
-                  These invites use <code>invitation_type = external_feedback</code>.
-                </CardDescription>
+                
               </CardHeader>
               <CardContent className="p-0">
                 {feedbackInvites.map((inv) => (
