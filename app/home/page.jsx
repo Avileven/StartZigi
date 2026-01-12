@@ -12,16 +12,12 @@ import {
   DollarSign, 
   ArrowRight,
   TrendingUp,
-  Check,
-  Zap,
-  ShieldCheck,
-  Layers,
-  BookOpen,
-  Users,
-  BarChart3,
-  Network,
   Gamepad2,
   GraduationCap,
+  Users,
+  BarChart3,
+  CheckCircle2,
+  FlaskConical,
   Briefcase
 } from "lucide-react";
 import AnimatedBg from "@/components/common/AnimatedBg";
@@ -37,40 +33,30 @@ export default function Home() {
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
-        
         if (currentUser) {
           const { data: ventures } = await supabase
             .from('ventures')
             .select('id')
             .eq('created_by', currentUser.email)
             .limit(1);
-          
           setHasVenture(ventures && ventures.length > 0);
         }
       } catch (error) {
         setUser(null);
-        setHasVenture(false);
       }
       setIsLoading(false);
     };
 
     const loadFeed = async () => {
       try {
-        const { data: events, error } = await supabase
+        const { data: events } = await supabase
           .from('funding_events')
           .select('*')
           .order('created_date', { ascending: false })
           .limit(5);
-        
-        if (error) {
-            console.error("Error fetching funding events:", error);
-            setFundingFeed([]);
-        } else {
-            setFundingFeed(events || []);
-        }
+        setFundingFeed(events || []);
       } catch (error) {
-          console.error("Error loading funding feed:", error);
-          setFundingFeed([]);
+        console.error("Error loading feed", error);
       }
     };
     
@@ -79,24 +65,11 @@ export default function Home() {
   }, []);
 
   const handleLogin = () => {
-    const next = window.location.pathname + window.location.search;
-    window.location.href = `/login?next=${encodeURIComponent(next)}`;
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
-  const formatMoney = (amount) => {
-    if (!amount) return '$0';
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${Math.round(amount / 1000)}K`;
-    return `$${amount}`;
+    window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
   };
 
   return (
-    <div className="bg-gray-900 text-white">
+    <div className="bg-gray-900 text-white font-sans">
       <style>{`
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -108,237 +81,193 @@ export default function Home() {
       `}</style>
       
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50">
-        <div className="max-w-77xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">StartZig</span>
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <a href="#journey" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">The Journey</a>
-                <Link href="/community" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                <Link href="/pricing" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pricing</Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                 {user ? (
-                    <>
-                      <Link href="/dashboard">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700">
-                          Go to dashboard
-                        </Button>
-                      </Link>
-                      <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-gray-700">
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="ghost" onClick={handleLogin} className="text-white hover:bg-gray-700">
-                        Login
-                      </Button>
-                      <Link href="/register">
-                      <Button className="bg-indigo-600 hover:bg-indigo-700">
-                      Sign Up
-                      </Button>
-                      </Link>
-                    </>
-                  )}
-              </div>
+            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              StartZig
+            </Link>
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#who-is-it-for" className="text-gray-300 hover:text-white text-sm">Target Audience</a>
+              <a href="#journey" className="text-gray-300 hover:text-white text-sm">The Journey</a>
+              <a href="#mentors" className="text-gray-300 hover:text-white text-sm">For Mentors</a>
+              {user ? (
+                <Link href="/dashboard"><Button className="bg-indigo-600">Dashboard</Button></Link>
+              ) : (
+                <Button onClick={handleLogin} variant="outline" className="text-white border-gray-700">Login</Button>
+              )}
             </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-950 via-gray-900 to-purple-950">
         <AnimatedBg />
-        <div className="relative text-center z-10 p-4 max-w-4xl">
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl animate-slideUp">
+        <div className="relative z-10 text-center px-4 max-w-5xl">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 animate-slideUp">
               Don't just start up. <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">StartZig</span>.
             </h1>
-            <p className="mt-6 text-xl leading-8 text-gray-200 animate-slideUp" style={{ animationDelay: '0.2s' }}>
-              Experience the startup journey. [cite_start]Build, test, and grow ventures in a structured, engaging environment—whether for real validation or simulation. [cite: 223, 224]
+            <p className="text-xl md:text-2xl text-gray-300 mb-10 animate-slideUp [animation-delay:200ms]">
+              Experience the Startup Journey. <br className="hidden md:block"/>
+              The interactive platform where ideas become ventures, and ventures become experiences.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp" style={{ animationDelay: '0.4s' }}>
-              {user ? (
-                hasVenture ? (
-                  <Link href="/dashboard">
-                    <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
-                      Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/createventure">
-                    <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
-                      Start Your Venture <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                )
-              ) : (
-                 <Button onClick={handleLogin} size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
-                    Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-              )}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp [animation-delay:400ms]">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-6 text-lg rounded-full">
+                {user ? "Continue Your Journey" : "Start Your Experience"} <ArrowRight className="ml-2" />
+              </Button>
             </div>
         </div>
       </div>
 
-      {/* Intro Section - Who is it for? */}
-      <div id="journey" className="py-24 bg-gray-900">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-y-12 lg:grid-cols-3 lg:gap-x-8">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="pt-6">
-                <Gamepad2 className="h-10 w-10 text-purple-400 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Simulation Enthusiasts</h3>
-                <p className="text-gray-400">Experience the thrill of building. [cite_start]Make strategic decisions, attract virtual investors, and reach a virtual exit—no risk, no money. [cite: 231, 232]</p>
+      {/* Who is it for Section (מבוסס על המסמך) */}
+      <div id="who-is-it-for" className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-indigo-400 font-semibold tracking-wide uppercase">Who is it for?</h2>
+            <p className="mt-2 text-3xl font-bold text-white">Three Ways to Experience StartZig</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="bg-gray-800/50 border-gray-700">
+              <CardContent className="pt-8">
+                <Gamepad2 className="h-12 w-12 text-purple-400 mb-6" />
+                <h3 className="text-xl font-bold mb-4">Simulation Enthusiasts</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  Experience the startup world as a simulation. Build ventures, make strategic decisions, and reach a virtual exit. No risk. No money. Just strategy and the thrill of building.
+                </p>
               </CardContent>
             </Card>
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="pt-6">
-                <Rocket className="h-10 w-10 text-indigo-400 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Entrepreneurs</h3>
-                <p className="text-gray-400">Pressure-test your concept before going all-in. [cite_start]Learn to think like an investor and improve your pitch in a safe environment. [cite: 238, 242]</p>
+
+            <Card className="bg-gray-800/50 border-gray-700">
+              <CardContent className="pt-8">
+                <Rocket className="h-12 w-12 text-indigo-400 mb-6" />
+                <h3 className="text-xl font-bold mb-4">Entrepreneurs</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  Validate and pressure-test your concept before you go all-in. Learn to think like an investor, improve your pitch, and prepare for real funding conversations.
+                </p>
               </CardContent>
             </Card>
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="pt-6">
-                <GraduationCap className="h-10 w-10 text-emerald-400 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Students & Mentors</h3>
-                <p className="text-gray-400">A startup laboratory for academic programs. [cite_start]Track decision-making and guide founders through structured stages. [cite: 255, 262]</p>
+
+            <Card className="bg-gray-800/50 border-gray-700">
+              <CardContent className="pt-8">
+                <FlaskConical className="h-12 w-12 text-emerald-400 mb-6" />
+                <h3 className="text-xl font-bold mb-4">Academic Laboratory</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  Not a textbook – a laboratory. Build ventures as part of courses, practice market analysis, and experience how startups evolve across real stages.
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* How It Works Section - The Journey */}
-      <div className="py-24 sm:py-32 bg-gray-800/30">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-400">The Journey</h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">From Idea to Exit</p>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
-              [cite_start]Every venture on StartZig progresses through structured stages, turning theory into hands-on practice. [cite: 251, 271]
+      {/* The Journey Section (מבוסס על המסמך) */}
+      <div id="journey" className="py-24 bg-gray-800/30">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="lg:text-center mb-16">
+            <h2 className="text-3xl font-bold text-white">The Structured Journey</h2>
+            <p className="mt-4 text-gray-400 max-w-2xl lg:mx-auto">
+              Each venture progresses through specific milestones, ensuring a realistic experience of growth and decision-making.
             </p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Lightbulb className="h-6 w-6 text-white" />
-                  </div>
-                  Idea & MVP
-                </dt>
-                [cite_start]<dd className="mt-2 text-base leading-7 text-gray-300">Evaluate your idea and receive meaningful feedback before spending time or money. [cite: 240, 272]</dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Zap className="h-6 w-6 text-white" />
-                  </div>
-                  Beta & Growth
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">Experiment, pivot, and improve. [cite_start]Attract early supporters and sharpen your startup skills. [cite: 224, 247]</dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
-                  Simulated Investment
-                </dt>
-                [cite_start]<dd className="mt-2 text-base leading-7 text-gray-300">Experience investor interactions and practice pitching to secure virtual capital. [cite: 231, 261]</dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Target className="h-6 w-6 text-white" />
-                  </div>
-                  Virtual Exit
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">The ultimate goal. [cite_start]See how your strategic decisions lead to a successful simulated acquisition. [cite: 231]</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </div>
-
-      {/* Example Ventures Section */}
-      <div className="bg-gray-800/50 py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-                <h2 className="text-3xl font-bold text-white mb-4">Example Virtual Ventures</h2>
-                [cite_start]<p className="text-gray-400 mb-8">See what others are building in the laboratory. [cite: 255, 265]</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                        <Zap className="w-5 h-5 text-indigo-400" />
-                        <span className="font-semibold">QuitFlow</span>
-                        </div>
-                        [cite_start]<p className="text-gray-400 text-sm">A behavioral AI app for smoking cessation. [cite: 266]</p>
-                    </CardContent>
-                    </Card>
-
-                    <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                        <BarChart3 className="w-5 h-5 text-indigo-400" />
-                        <span className="font-semibold">EcoWaste AI</span>
-                        </div>
-                        [cite_start]<p className="text-gray-400 text-sm">Smart waste management solutions for modern cities. [cite: 267]</p>
-                    </CardContent>
-                    </Card>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {[
+              { title: "Idea & MVP", desc: "Evaluate your idea and receive feedback before spending time or money.", icon: Lightbulb },
+              { title: "Beta & Growth", desc: "Experiment, pivot, and improve. Attract early supporters and sharpen skills.", icon: TrendingUp },
+              { title: "Investment", desc: "Experience investor interactions and practice pitching for virtual capital.", icon: DollarSign },
+              { title: "Scale", desc: "Expand your reach and refine your business model in a competitive market.", icon: BarChart3 },
+              { title: "Virtual Exit", desc: "The ultimate goal. See how your strategic decisions lead to a simulated acquisition.", icon: Target }
+            ].map((step, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="flex-shrink-0 h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <step.icon className="h-6 w-6 text-white" />
                 </div>
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-bold text-white mb-8">Funding Feed</h2>
-              <div className="flow-root">
-                <ul role="list" className="-mb-8">
-                  {fundingFeed.map((event, eventIdx) => (
-                    <li key={event.id}>
-                      <div className="relative pb-8">
-                        {eventIdx !== fundingFeed.length - 1 ? (
-                          <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-600" aria-hidden="true" />
-                        ) : null}
-                        <div className="relative flex space-x-3">
-                          <div>
-                            <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-gray-800/50">
-                              <DollarSign className="h-5 w-5 text-white" aria-hidden="true" />
-                            </span>
-                          </div>
-                          <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                            <div>
-                              <p className="text-sm text-gray-300">
-                                <span className="font-medium text-white">{event.venture_name}</span> secured <span className="font-medium">{formatMoney(event.amount)}</span> from {event.investor_name}.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div>
+                  <h4 className="text-white font-bold mb-1">{step.title}</h4>
+                  <p className="text-gray-400 text-sm">{step.desc}</p>
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800">
-        <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 lg:px-8">
-          <p className="text-center text-xs leading-5 text-gray-400">
-            &copy; 2024 StartZig. [cite_start]Experiment, learn, and compete in the startup world. [cite: 279]
+      {/* For Mentors Section (מבוסס על המסמך) */}
+      <div id="mentors" className="py-24 bg-indigo-900/20">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <GraduationCap className="h-16 w-16 text-indigo-400 mx-auto mb-6" />
+          <h2 className="text-3xl font-bold mb-6">For Mentors, Instructors & Programs</h2>
+          <p className="text-xl text-gray-300 mb-10">
+            StartZig is a training and evaluation platform for entrepreneurial development. 
+            Perfect for accelerators, incubators, and academic programs.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-6 text-right max-w-2xl mx-auto">
+            <div className="flex items-center gap-3 text-gray-200">
+              <CheckCircle2 className="text-indigo-500" /> Guide founders through structured stages
+            </div>
+            <div className="flex items-center gap-3 text-gray-200">
+              <CheckCircle2 className="text-indigo-500" /> Deliver targeted feedback
+            </div>
+            <div className="flex items-center gap-3 text-gray-200">
+              <CheckCircle2 className="text-indigo-500" /> Simulate investor interactions
+            </div>
+            <div className="flex items-center gap-3 text-gray-200">
+              <CheckCircle2 className="text-indigo-500" /> Track decision-making over time
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ventures & Feed */}
+      <div className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-16">
+          <div className="lg:col-span-2">
+            <h2 className="text-2xl font-bold mb-8">Example Virtual Ventures</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { name: "QuitFlow", desc: "A behavioral AI app for smoking cessation", icon: Rocket },
+                { name: "EcoWaste AI", desc: "Smart waste management for cities", icon: BarChart3 },
+                { name: "Gezunt", desc: "A digital wellness and healthy lifestyle brand", icon: Users },
+                { name: "PlantCare IoT", desc: "Sensors and apps for plant health monitoring", icon: Lightbulb }
+              ].map((v, i) => (
+                <div key={i} className="p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-indigo-500 transition-colors">
+                  <div className="flex items-center gap-3 mb-2">
+                    <v.icon className="h-5 w-5 text-indigo-400" />
+                    <span className="font-bold">{v.name}</span>
+                  </div>
+                  <p className="text-gray-400 text-sm">{v.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold mb-8">Live Funding Feed</h2>
+            <div className="space-y-6">
+              {fundingFeed.map((event) => (
+                <div key={event.id} className="flex gap-4 items-start">
+                  <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                    <DollarSign className="h-4 w-4 text-green-500" />
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    <span className="text-white font-medium">{event.venture_name}</span> raised a round from <span className="text-white">{event.investor_name}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer (מבוסס על המסמך) */}
+      <footer className="bg-gray-950 py-12 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-gray-400 text-sm mb-4">
+            StartZig gives you the startup experience. Experiment, learn, and compete.
+          </p>
+          <p className="text-gray-600 text-xs">
+            &copy; 2024 StartZig. All rights reserved.
           </p>
         </div>
       </footer>
