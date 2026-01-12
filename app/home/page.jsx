@@ -1,6 +1,6 @@
 // גרסה נסיונית
 "use client";
-
+export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
