@@ -1,124 +1,133 @@
-// ניסיון
+// ניסיון נוסף
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { 
-  Rocket, Lightbulb, Target, ArrowRight, 
-  Gamepad2, FlaskConical, CheckCircle2, Users, GraduationCap, Briefcase
-} from "lucide-react";
+import { Rocket, Lightbulb, Target, ArrowRight, Gamepad2, FlaskConical, CheckCircle2, Users, GraduationCap, Briefcase, Globe, MessageSquare } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+  }, []);
+
   return (
-    <div className="bg-[#020617] text-slate-50 min-h-screen font-sans">
-      {/* Navbar */}
+    <div className="bg-[#020617] text-slate-50 min-h-screen">
+      {/* Navigation - שמירה על המבנה המקורי */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="text-xl font-bold tracking-tighter text-indigo-500">STARTZIG</div>
-          <Button variant="ghost" className="text-slate-400 hover:text-white transition-colors">Login</Button>
+          <Link href="/" className="text-xl font-bold tracking-tighter text-indigo-500">STARTZIG</Link>
+          <div className="flex gap-4">
+            {user ? (
+              <Link href="/dashboard"><Button className="bg-indigo-600">Dashboard</Button></Link>
+            ) : (
+              <>
+                <Link href="/login"><Button variant="ghost">Login</Button></Link>
+                <Link href="/register"><Button className="bg-indigo-600">Join Beta</Button></Link>
+              </>
+            )}
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section - סלוגן בגודל מקורי */}
-      <section className="relative pt-32 pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
-            Don't just start up. <span className="text-indigo-400">StartZig.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 leading-relaxed">
-            The interactive platform where ideas become ventures, and ventures become experiences.
-          </p>
-          <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 h-12 rounded-lg font-bold">
-            Start Your Journey <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </div>
-      </section>
-
-      {/* קבוצות משתמשים - כל ה-5 מהמסמך */}
-      <section className="py-16 max-w-7xl mx-auto px-6">
-        <h2 className="text-2xl font-bold mb-10 text-center text-slate-300 uppercase tracking-widest">Who is StartZig for?</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          {/* 1. Simulation Enthusiasts */}
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10 flex flex-col h-full">
-            <Gamepad2 className="text-indigo-400 mb-4" size={28} />
-            <h3 className="text-xl font-bold mb-3 italic">Simulation Enthusiasts</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              "Could I do that too?" Experience the startup world with zero risk. Build ventures, make strategic decisions, and reach a virtual exit.
-            </p>
-          </div>
-
-          {/* 2. Entrepreneurs With an Idea */}
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10 flex flex-col h-full">
-            <Rocket className="text-emerald-400 mb-4" size={28} />
-            <h3 className="text-xl font-bold mb-3">Entrepreneurs</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Validate and pressure-test your concept before you go all-in. Test before you invest and gain smart exposure.
-            </p>
-          </div>
-
-          {/* 3. Mentors & Programs */}
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10 flex flex-col h-full">
-            <Users className="text-purple-400 mb-4" size={28} />
-            <h3 className="text-xl font-bold mb-3">Mentors & Programs</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              A training and evaluation platform for accelerators and incubators. Track decision-making and deliver targeted feedback.
-            </p>
-          </div>
-
-          {/* 4. Academic & Hackathons */}
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10 flex flex-col h-full">
-            <GraduationCap className="text-blue-400 mb-4" size={28} />
-            <h3 className="text-xl font-bold mb-3">Academic Institutions</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Perfect for business schools and hackathons. Experience how startups evolve across real stages through independent study.
-            </p>
-          </div>
-
-          {/* 5. Independent Learners */}
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10 flex flex-col h-full">
-            <Briefcase className="text-orange-400 mb-4" size={28} />
-            <h3 className="text-xl font-bold mb-3">Independent Study</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Practice pitching, market analysis, and business modeling in a structured, engaging environment.
-            </p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* What StartZig Gives You - תוכן מהמסמך */}
-      <section className="py-16 bg-white/[0.02] border-y border-white/5">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-10 text-center">What StartZig Gives You</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {[
-              "A structured entrepreneurial journey",
-              "Simulation of growth & investment",
-              "Exposure to a community of founders",
-              "Continuous feedback and evaluation",
-              "A space to experiment, learn, and compete"
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <CheckCircle2 className="text-indigo-500 shrink-0" size={20} />
-                <span className="text-slate-300 font-medium">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Laboratory Banner with Ventures */}
-      <section className="py-20 px-6 text-center">
-        <FlaskConical className="w-12 h-12 mx-auto mb-6 text-indigo-400 opacity-50" />
-        <h2 className="text-2xl font-bold mb-4 italic">Not a textbook – a startup laboratory.</h2>
-        <p className="text-slate-500 mb-10">Example Ventures: QuitFlow • EcoWaste AI • Gezunt • UrbanConnect</p>
-        <Button className="bg-white text-black hover:bg-slate-200 px-10 h-12 rounded-full font-bold">
-          Get Started
+      {/* Hero Section - גודל מקורי ותוכן מהמסמך */}
+      <section className="pt-32 pb-16 px-6 text-center">
+        <h1 className="text-5xl font-bold tracking-tight mb-6">
+          Don't just start up. <span className="text-indigo-400">StartZig.</span>
+        </h1>
+        <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
+          The interactive platform where ideas become ventures, and ventures become experiences.
+        </p>
+        <Button size="lg" className="bg-indigo-600 px-8 h-12 rounded-lg font-bold">
+          Start Your Journey <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </section>
 
+      {/* Target Audiences - כל 5 הקבוצות מהמסמך */}
+      <section className="py-16 max-w-7xl mx-auto px-6">
+        <h2 className="text-2xl font-bold mb-10 text-center uppercase tracking-widest text-slate-400">Target Audiences</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+            <Gamepad2 className="text-indigo-400 mb-4" />
+            <h3 className="text-lg font-bold mb-2 italic">Simulation Enthusiasts</h3>
+            <p className="text-slate-400 text-sm">"Could I do that too?" Experience the startup world with zero risk. Build ventures and reach a virtual exit.</p>
+          </div>
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+            <Rocket className="text-emerald-400 mb-4" />
+            <h3 className="text-lg font-bold mb-2">Entrepreneurs</h3>
+            <p className="text-slate-400 text-sm">Validate and pressure-test your concept before you go all-in. Test before you invest.</p>
+          </div>
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+            <Users className="text-purple-400 mb-4" />
+            <h3 className="text-lg font-bold mb-2">Mentors & Programs</h3>
+            <p className="text-slate-400 text-sm">A training platform for accelerators and incubators to track decision-making over time.</p>
+          </div>
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+            <GraduationCap className="text-blue-400 mb-4" />
+            <h3 className="text-lg font-bold mb-2">Academic Institutions</h3>
+            <p className="text-slate-400 text-sm">Perfect for business schools and hackathons to experience how startups evolve across real stages.</p>
+          </div>
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+            <Briefcase className="text-orange-400 mb-4" />
+            <h3 className="text-lg font-bold mb-2">Independent Study</h3>
+            <p className="text-slate-400 text-sm">Practice pitching, market analysis, and business modeling in a structured environment.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Community Section - החזרתי את המבנה המקורי שלך */}
+      <section className="py-16 bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4 text-indigo-400">Community & Networking</h2>
+          <p className="text-slate-400 mb-10 max-w-2xl mx-auto">Exposure to a community of founders and investors. Experiment, learn, and compete.</p>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="flex items-center gap-4 p-6 bg-slate-900/40 rounded-xl border border-white/5">
+              <Globe className="text-indigo-400" />
+              <div className="text-left"><h4 className="font-bold">Global Network</h4><p className="text-sm text-slate-500">Connect with founders worldwide.</p></div>
+            </div>
+            <div className="flex items-center gap-4 p-6 bg-slate-900/40 rounded-xl border border-white/5">
+              <MessageSquare className="text-indigo-400" />
+              <div className="text-left"><h4 className="font-bold">Real-time Feedback</h4><p className="text-sm text-slate-500">Get insights from industry experts.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - החזרתי את המבנה המקורי שלך */}
+      <section className="py-24 max-w-5xl mx-auto px-6">
+        <h2 className="text-3xl font-bold text-center mb-12">Pricing Plans</h2>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="p-8 rounded-3xl border border-white/10 bg-slate-900/50">
+            <h3 className="text-xl font-bold mb-2">Starter</h3>
+            <div className="text-3xl font-bold mb-6">$0 <span className="text-sm text-slate-500 font-normal">/ month</span></div>
+            <ul className="space-y-4 mb-8 text-slate-400">
+              <li className="flex gap-2"><CheckCircle2 size={18} className="text-indigo-500"/> 1 Virtual Venture</li>
+              <li className="flex gap-2"><CheckCircle2 size={18} className="text-indigo-500"/> Community Access</li>
+            </ul>
+            <Button className="w-full" variant="outline">Get Started</Button>
+          </div>
+          <div className="p-8 rounded-3xl border border-indigo-500 bg-indigo-500/5">
+            <h3 className="text-xl font-bold mb-2">Pro</h3>
+            <div className="text-3xl font-bold mb-6">$19 <span className="text-sm text-slate-500 font-normal">/ month</span></div>
+            <ul className="space-y-4 mb-8 text-slate-400">
+              <li className="flex gap-2"><CheckCircle2 size={18} className="text-indigo-500"/> Unlimited Ventures</li>
+              <li className="flex gap-2"><CheckCircle2 size={18} className="text-indigo-500"/> Advanced Analytics</li>
+              <li className="flex gap-2"><CheckCircle2 size={18} className="text-indigo-500"/> Investor Matching</li>
+            </ul>
+            <Button className="w-full bg-indigo-600">Go Pro</Button>
+          </div>
+        </div>
+      </section>
+
       <footer className="py-12 border-t border-white/5 text-center text-slate-600 text-sm">
+        <p className="mb-4 text-slate-400 font-medium italic underline">Example Ventures: QuitFlow • EcoWaste AI • Gezunt • UrbanConnect</p>
         StartZig gives you the startup experience.
       </footer>
     </div>
