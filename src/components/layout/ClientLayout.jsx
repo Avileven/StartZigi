@@ -43,11 +43,17 @@ const getNavigationItems = (venture) => {
   const currentPhase = venture ? venture.phase : "idea";
 
   const allItems = [
-    { title: "Home", url: createPageUrl("home"), icon: Home, alwaysActive: true },
+    
+// ✅ FIX: Home route is "/" (you deleted app/home)
+{ title: "Home", url: "/", icon: Home, alwaysActive: true },
+
+
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
     {
       title: "Beta Page",
-      url: venture ? createPageUrl(`BetaTesting?id=${venture.id}`) : "#",
+      // ✅ FIX: folder is /beta-testing
+url: venture ? `/beta-testing?id=${venture.id}` : "#",
+
       icon: FlaskConical,
       phases: ["beta", "growth"],
     },
@@ -59,7 +65,9 @@ const getNavigationItems = (venture) => {
     },
     {
       title: "VC Marketplace",
-      url: createPageUrl("vcmarketplace"),
+      // ✅ FIX: folder is /vc-marketplace
+url: createPageUrl("vc-marketplace"),
+
       icon: DollarSign,
       feature: "vc_marketplace",
     },
@@ -145,7 +153,8 @@ export default function ClientLayout({ children }) {
 
   if (venture) {
     if (venture.mlp_completed) {
-      landingPageItem.url = createPageUrl(`MLPLandingPage?id=${venture.id}`);
+      // ✅ FIX: folder is /mlp-landing-page
+landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
       landingPageItem.isExternal = false;
     } else {
       landingPageItem.url = venture.landing_page_url || "#";
@@ -188,7 +197,10 @@ export default function ClientLayout({ children }) {
                         <SidebarMenuButton
                           asChild
                           className={`mb-1 rounded-lg transition-colors duration-200 ${
-                            pathname === createPageUrl("home")
+                            
+// ✅ FIX: Home active state
+pathname === "/"
+
                               ? "bg-indigo-50 text-indigo-700"
                               : "hover:bg-indigo-50 hover:text-indigo-700"
                           }`}
@@ -304,13 +316,13 @@ export default function ClientLayout({ children }) {
                           <SidebarMenuButton
                             asChild
                             className={`mb-1 rounded-lg transition-colors duration-200 ${
-                              pathname === createPageUrl("AdminDashboard")
+                              pathname === createPageUrl("dmiAnDashboard")
                                 ? "bg-red-50 text-red-700"
                                 : "hover:bg-red-50 hover:text-red-700"
                             }`}
                           >
                             <Link
-                              href={createPageUrl("AdminDashboard")}
+                              href={createPageUrl("admin")}
                               className="flex items-center gap-3 px-3 py-2"
                             >
                               <Shield className="w-4 h-4 flex-shrink-0" />
