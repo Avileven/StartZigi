@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ShelfSense – Venture Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin:0; font-family: Arial, Helvetica, sans-serif; background:#0f172a; color:#e5e7eb; line-height:1.6; }
+    .container { max-width:1100px; margin:0 auto; padding:40px 20px; }
+    .hero {
+      background: linear-gradient(135deg, #22c55e, #14b8a6);
+      border-radius: 16px; padding: 50px 40px; text-align:center; color:#fff; margin-bottom:50px;
+    }
+    .hero h1 { font-size:3rem; margin:0 0 10px; }
+    .hero p { font-size:1.2rem; opacity:.95; margin:0; }
+    .section { margin-bottom:60px; }
+    .section h2 { font-size:2rem; margin:0 0 16px; color:#86efac; }
+    .card { background:#020617; border:1px solid #1e293b; border-radius:14px; padding:24px; margin-bottom:20px; }
+    .grid { display:grid; gap:20px; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .badge { display:inline-block; background:#16a34a; color:#fff; padding:6px 12px; border-radius:999px; font-size:.85rem; margin-bottom:12px; }
+    .timeline { border-left: 3px solid #16a34a; padding-left:24px; }
+    .timeline-item { margin-bottom:30px; position:relative; }
+    .timeline-item::before { content:""; position:absolute; left:-13px; top:4px; width:14px; height:14px; background:#22c55e; border-radius:50%; }
+    .mvp-box { background:#020617; border:2px dashed #22c55e; border-radius:16px; padding:30px; text-align:center; }
+    .mvp-box h3 { margin:0 0 10px; color:#bbf7d0; }
+    .mvp-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-top:20px; }
+    .widget { background:#020617; border:1px solid #1e293b; border-radius:12px; padding:16px; text-align:left; }
+    .widget h4 { margin:0 0 6px; color:#86efac; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#052e16; border:1px solid #14532d; color:#86efac; font-size:.8rem; }
+    .cta { text-align:center; margin-top:40px; }
+    .cta a {
+      display:inline-block; background: linear-gradient(135deg, #22c55e, #14b8a6);
+      color:#fff; padding:14px 28px; border-radius:10px; text-decoration:none; font-weight:bold;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .cta a:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,197,94,0.35); }
+    footer { text-align:center; font-size:.85rem; opacity:.6; margin-top:80px; }
+    ul { margin: 10px 0 0 20px; }
+    small { opacity:.7; }
+    .kpi { font-size:1.6rem; font-weight:700; margin: 6px 0; }
+    .divider { height:1px; background:#1e293b; margin:14px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HERO -->
+    <section class="hero">
+      <h1>ShelfSense</h1>
+      <p>AI inventory assistant that prevents stockouts & dead stock for small retail</p>
+    </section>
+
+    <!-- OVERVIEW -->
+    <section class="section">
+      <h2>Venture Overview</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <span class="badge">Problem</span>
+          <p>
+            Small retailers lose money to <strong>stockouts</strong> (missed sales) and <strong>dead stock</strong> (cash stuck on shelves).
+            They don’t have forecasting tools like big chains — spreadsheets aren’t enough.
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge">Solution</span>
+          <p>
+            ShelfSense predicts what to reorder and when, using sales patterns, seasonality,
+            and simple supplier data. It gives owners a clear “Do this today” action list.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOURNEY -->
+    <section class="section">
+      <h2>Startup Journey on StartZig</h2>
+      <div class="timeline">
+
+        <div class="timeline-item">
+          <div class="card">
+            <span class="badge">Idea Phase</span>
+            <p>
+              Founder built a StartZig landing page targeting local groceries and boutique stores.
+              Validation goal: “Will owners pay to avoid stockouts?”
+            </p>
+            <div class="divider"></div>
+            <p><span class="pill">Signal</span> 27 signups in 48 hours from one community group + 6 store owners asked for a demo.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="card">
+            <span class="badge">Business Plan</span>
+            <p>
+              Defined ICP: stores with 300–5,000 SKUs and no in-house analytics.
+              Revenue model: subscription ($49–$199/month) + optional onboarding.
+            </p>
+            <div class="divider"></div>
+            <p><span class="pill">Key Risk</span> messy data. Solution: start with “top 50 products” and expand gradually.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="card">
+            <span class="badge">MVP Stage</span>
+            <p>
+              Built a working prototype that simulates store sales uploads and generates
+              reorder recommendations with confidence scores.
+            </p>
+            <div class="divider"></div>
+            <p><span class="pill">MVP Outcome</span> owners preferred an “action list” over charts.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="card">
+            <span class="badge">Funding</span>
+            <p>
+              Pitched to StartZig’s virtual angels and raised <strong>$200,000</strong>
+              to expand product coverage and integrate POS exports.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- MVP DEMO -->
+    <section class="section">
+      <h2>MVP Preview</h2>
+      <div class="mvp-box">
+        <h3>ShelfSense Reorder Console (Simulated)</h3>
+        <p>
+          This MVP shows what a store owner sees after uploading basic sales data.
+        </p>
+
+        <div class="mvp-row">
+          <div class="widget">
+            <h4>Today’s Actions</h4>
+            <div class="kpi">7</div>
+            <small>items need reorder</small>
+            <div class="divider"></div>
+            <p class="pill">High confidence: 4</p>
+            <p class="pill" style="margin-left:6px;">Medium: 3</p>
+          </div>
+
+          <div class="widget">
+            <h4>Stockout Risk</h4>
+            <div class="kpi">12%</div>
+            <small>next 7 days</small>
+            <div class="divider"></div>
+            <p>Top risk: <strong>Milk 1L</strong> (ETA 2 days)</p>
+          </div>
+
+          <div class="widget">
+            <h4>Dead Stock Alert</h4>
+            <div class="kpi">$1.8K</div>
+            <small>estimated cash stuck</small>
+            <div class="divider"></div>
+            <p>Suggested promo: <strong>2-for-1 snacks</strong></p>
+          </div>
+
+          <div class="widget">
+            <h4>Reorder Suggestions</h4>
+            <ul>
+              <li><strong>Milk 1L</strong> — reorder 24 units <small>(92% confidence)</small></li>
+              <li><strong>Eggs 12-pack</strong> — reorder 18 units <small>(88% confidence)</small></li>
+              <li><strong>Olive Oil</strong> — reorder 6 units <small>(74% confidence)</small></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEEDBACK -->
+    <section class="section">
+      <h2>Early Feedback</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <p>
+            “If this saves me even one stockout weekend, it pays for itself. The action list is perfect.”
+          </p>
+          <strong>— Grocery Owner (Virtual Tester)</strong>
+        </div>
+        <div class="card">
+          <p>
+            “I like the confidence score. I’d want a simple POS export integration and supplier lead times.”
+          </p>
+          <strong>— Retail Ops Advisor (Virtual Mentor)</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNDING -->
+    <section class="section">
+      <h2>Funding Outcome</h2>
+      <div class="card">
+        <p>
+          ShelfSense raised <strong>$200,000</strong> from simulated angel investors on StartZig.
+          The capital allocation:
+        </p>
+        <ul>
+          <li>POS export integrations (CSV from common systems)</li>
+          <li>Supplier lead time logic + reorder scheduling</li>
+          <li>Mobile-first “Today’s Actions” view</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section cta">
+      <h2>What This Shows</h2>
+      <p>
+        ShelfSense demonstrates StartZig’s value: validate demand, build a plan, craft an MVP,
+        and learn investor expectations — in a risk-free simulation.
+      </p>
+      <a href="/">Back to StartZig</a>
+    </section>
+
+    <footer>
+      © 2026 StartZig — Simulation Example Venture
+    </footer>
+
+  </div>
+</body>
+</html>
+
+
