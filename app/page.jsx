@@ -1,5 +1,5 @@
 
-// home 13126
+// home 13126 - 1230 UPDATED FILE
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -21,7 +21,7 @@ import {
   BookOpen,
   Users,
   BarChart3,
-  Network
+  Network,
 } from "lucide-react";
 import AnimatedBg from "@/components/common/AnimatedBg";
 
@@ -30,10 +30,15 @@ export default function Home() {
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // [2026-01-13] FIX: removed fundingFeed state & loading logic (Live Funding Feed removed)
+  // const [fundingFeed, setFundingFeed] = useState([]);
+
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
         setUser(currentUser);
 
         // בדיקה אם למשתמש יש venture
@@ -53,12 +58,35 @@ export default function Home() {
       setIsLoading(false);
     };
 
+    // [2026-01-13] REMOVE: Live Funding Feed loader (feature removed)
+    /*
+    const loadFeed = async () => {
+      try {
+        const { data: events, error } = await supabase
+          .from('funding_events')
+          .select('*')
+          .order('created_date', { ascending: false })
+          .limit(5);
+
+        if (error) {
+          console.error("Error fetching funding events:", error);
+          setFundingFeed([]);
+        } else {
+          setFundingFeed(events || []);
+        }
+      } catch (error) {
+        console.error("Error loading funding feed:", error);
+        setFundingFeed([]);
+      }
+    };
+    */
+
     checkUser();
+    // loadFeed(); // [2026-01-13] REMOVE
   }, []);
 
   // [2026-01-02] FIX: אין לנו /api/auth/login (זה של NextAuth). אצלנו דף ההתחברות הוא /login
   const handleLogin = () => {
-    // אופציונלי: תחזיר את המשתמש לעמוד שהוא היה בו אחרי login
     const next = window.location.pathname + window.location.search;
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
   };
@@ -68,6 +96,16 @@ export default function Home() {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
+
+  // [2026-01-13] REMOVE: formatMoney helper (Live Funding Feed removed)
+  /*
+  const formatMoney = (amount) => {
+    if (!amount) return '$0';
+    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `$${Math.round(amount / 1000)}K`;
+    return `$${amount}`;
+  };
+  */
 
   return (
     <div className="bg-gray-900 text-white">
@@ -157,7 +195,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section (Slogan unchanged) */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
         <AnimatedBg />
         <div className="relative text-center z-10 p-4">
@@ -168,12 +206,12 @@ export default function Home() {
             </span>
             .
           </h1>
-
           <p
             className="mt-6 text-lg leading-8 text-gray-300 animate-slideUp"
             style={{ animationDelay: "0.2s" }}
           >
-            The ultimate simulator to test your ideas, build your plan, and secure funding—risk-free.
+            The ultimate simulator to test your ideas, build your plan, and
+            secure funding—risk-free.
           </p>
 
           <div
@@ -213,59 +251,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* [2026-01-13] ADD: Audience section right after the slogan */}
-      <div className="bg-gray-900 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-gray-800/60 border-gray-700">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  For Those Who Want to Experience the Startup World
-                </h3>
-                <p className="text-gray-300">
-                  Build ventures just like in the real world.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/60 border-gray-700">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  For Entrepreneurs With an Idea
-                </h3>
-                <p className="text-gray-300">
-                  StartZig helps you test, refine, and validate your concept before you invest time and money.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/60 border-gray-700">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  For Students & Learners
-                </h3>
-                <p className="text-gray-300">
-                  StartZig turns theory into real practice.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/60 border-gray-700">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  For Mentors, Instructors & Entrepreneurship Programs
-                </h3>
-                <p className="text-gray-300">
-                  The perfect platform for accelerators, incubators, and academic programs.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      {/* [2026-01-13] REMOVE: Stats Section (Total Ventures Launched / Value / Funding Raised) */}
+      {/*
+      <div className="bg-gray-800 py-12 sm:py-16">
+        ...
       </div>
+      */}
 
-      {/* [2026-01-13] CHANGE: Moved "Why StartZig?" section to appear FIRST after Hero */}
-      {/* Benefits Section */}
+      {/* [2026-01-13] MOVE: Benefits FIRST after slogan */}
       <div id="benefits" className="bg-gray-800/50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
@@ -276,7 +269,8 @@ export default function Home() {
               Your Entrepreneurial Flight Simulator
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-300">
-              Practice makes perfect. We provide the tools and environment to hone your skills before you take the real-world plunge.
+              Practice makes perfect. We provide the tools and environment to
+              hone your skills before you take the real-world plunge.
             </p>
           </div>
 
@@ -291,7 +285,9 @@ export default function Home() {
                     Test Without Risk
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
+                    Validate your ideas in a realistic market simulation without
+                    risking your own capital. Make mistakes, pivot, and learn in
+                    a safe environment.
                   </p>
                 </div>
               </div>
@@ -305,7 +301,9 @@ export default function Home() {
                     Learn from the Best
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
+                    Interact with AI-driven investors modeled after real-world
+                    personas. Understand what they look for and refine your pitch
+                    based on their feedback.
                   </p>
                 </div>
               </div>
@@ -319,7 +317,9 @@ export default function Home() {
                     Build Real Skills
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    From business planning and MVP development to fundraising, you'll go through the entire startup lifecycle, gaining practical, hands-on experience.
+                    From business planning and MVP development to fundraising,
+                    you’ll go through the startup lifecycle and gain practical,
+                    hands-on experience.
                   </p>
                 </div>
               </div>
@@ -333,7 +333,8 @@ export default function Home() {
                     Secure Simulated Funding
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel your growth.
+                    Prove your model, gain traction, and raise virtual capital
+                    from a network of angel and VC simulators to fuel growth.
                   </p>
                 </div>
               </div>
@@ -347,7 +348,8 @@ export default function Home() {
                     Join a Thriving Community
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    Connect with other ambitious founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
+                    Connect with other founders. Share strategies, give feedback,
+                    and build your network in a collaborative ecosystem.
                   </p>
                 </div>
               </div>
@@ -361,7 +363,8 @@ export default function Home() {
                     Grow Your Network
                   </h3>
                   <p className="mt-2 text-base leading-7 text-gray-400">
-                    Practice networking and build relationships in a simulated environment, preparing you for real-world investor and co-founder meetings.
+                    Practice networking and build relationships in a simulated
+                    environment, preparing you for real-world meetings.
                   </p>
                 </div>
               </div>
@@ -370,140 +373,158 @@ export default function Home() {
         </div>
       </div>
 
-      {/* How It Works Section */}
-      <div className="py-24 sm:py-32">
+      {/* [2026-01-13] ADD/UPDATE: "Who can benefit" section (no "For", light-blue background, extra lines requested) */}
+      <div className="bg-gradient-to-b from-indigo-900/40 to-gray-900 py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-400">
-              How It Works
+          <div className="mx-auto max-w-3xl text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              Who can benefit from StartZig?
             </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Everything you need to go from idea to IPO
-            </p>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
-              StartZig guides you through a proven framework, helping you make smart decisions at every stage of your startup journey.
+            <p className="mt-3 text-lg text-gray-200/90">
+              StartZig is built for learning, testing, and momentum—whether you’re exploring, building, or teaching.
             </p>
           </div>
 
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Lightbulb className="h-6 w-6 text-white" />
-                  </div>
-                  Develop Your Idea
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">
-                  Flesh out your concept, define your target market, and build a compelling landing page to validate your initial assumptions.
-                </dd>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Experience the Startup World
+                </h3>
+                <p className="text-gray-200/90">
+                  Build ventures just like in the real world.{" "}
+                  <span className="font-semibold text-white">Reach that sweet exit.</span>
+                </p>
+              </CardContent>
+            </Card>
 
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Layers className="h-6 w-6 text-white" />
-                  </div>
-                  Build Your Business Plan
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">
-                  Create a comprehensive business plan covering your mission, market analysis, revenue model, and team background.
-                </dd>
-              </div>
+            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Entrepreneurs with an Idea
+                </h3>
+                <p className="text-gray-200/90">
+                  StartZig helps you test, refine, and validate your concept before you invest time and money.
+                </p>
+              </CardContent>
+            </Card>
 
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <Zap className="h-6 w-6 text-white" />
-                  </div>
-                  Create Your MVP
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">
-                  Develop and upload a Minimum Viable Product to test your core functionality with users and gather critical feedback.
-                </dd>
-              </div>
+            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Students & Learners
+                </h3>
+                <p className="text-gray-200/90">
+                  StartZig turns theory into real practice.{" "}
+                  <span className="font-semibold text-white">
+                    Experience how startups evolve through real stages.
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
 
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
-                  Secure Funding
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-300">
-                  Pitch to a network of simulated angel investors and venture capitalists to raise the capital you need to grow.
-                </dd>
-              </div>
-            </dl>
+            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Mentors, Instructors & Programs
+                </h3>
+                <p className="text-gray-200/90">
+                  The perfect platform for accelerators, incubators, and academic programs.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
 
-      {/* [2026-01-13] CHANGE: Removed Live Funding Feed entirely. Featured ventures now full width and 3 in a row */}
-      <div className="bg-gray-800/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-3xl font-bold text-white mb-8">Featured Ventures</h2>
+      {/* [2026-01-13] REMOVE: How It Works Section (entire section deleted) */}
+      {/*
+      <div className="py-24 sm:py-32">
+        ...
+      </div>
+      */}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* [2026-01-13] UPDATE: Featured Ventures FULL WIDTH, 3 stacked, links to /public HTML demos with .html */}
+      <div className="bg-gray-800/50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-white mb-10 text-center lg:text-left">
+            Featured Venture Demos
+          </h2>
+
+          <div className="space-y-6">
+            {/* Demo 1 */}
             <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <BarChart3 className="w-5 h-5 text-indigo-400" />
-                  <span className="font-semibold">ShelfSense</span>
+              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Rocket className="w-5 h-5 text-indigo-400" />
+                    <span className="text-xl font-semibold">ShelfSense</span>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
+                    Smart retail shelf intelligence that helps stores prevent out-of-stocks and optimize product placement.
+                    Includes a sample MVP page with onboarding + value proposition + feedback section.
+                  </p>
                 </div>
-                <p className="text-gray-400 mb-4 text-sm">
-                  Retail analytics MVP that helps stores understand shelf availability and shopper behavior.
-                </p>
-                <a
-                  href="/ShelfSense-demo.html"
-                  className="inline-flex items-center text-indigo-300 hover:text-indigo-200 font-semibold"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View demo <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
+
+                <Link href="/ShelfSense-demo.html" target="_blank">
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
+                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
+            {/* Demo 2 */}
             <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <ShieldCheck className="w-5 h-5 text-indigo-400" />
-                  <span className="font-semibold">SmokeFree</span>
+              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-5 h-5 text-indigo-400" />
+                    <span className="text-xl font-semibold">Smokefree</span>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
+                    A structured quit-smoking journey built around micro-habits, daily wins, and social reinforcement.
+                    See the MVP demo page and example feedback loops.
+                  </p>
                 </div>
-                <p className="text-gray-400 mb-4 text-sm">
-                  Habit-change MVP designed to help users quit smoking with micro-challenges and progress loops.
-                </p>
-                <a
-                  href="/Smokefree-demo.html"
-                  className="inline-flex items-center text-indigo-300 hover:text-indigo-200 font-semibold"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View demo <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
+
+                <Link href="/Smokefree-demo.html" target="_blank">
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
+                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
+            {/* Demo 3 */}
             <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Network className="w-5 h-5 text-indigo-400" />
-                  <span className="font-semibold">UrbanPulse</span>
+              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-5 h-5 text-indigo-400" />
+                    <span className="text-xl font-semibold">UrbanPulse</span>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
+                    A city insights platform that turns local signals into actionable opportunities for communities and small businesses.
+                    Demo includes positioning + MVP preview + feedback CTA.
+                  </p>
                 </div>
-                <p className="text-gray-400 mb-4 text-sm">
-                  Smart-city MVP that aggregates local signals (events, safety, mobility) into a live neighborhood dashboard.
-                </p>
-                <a
-                  href="/urbanpulse-demo.html"
-                  className="inline-flex items-center text-indigo-300 hover:text-indigo-200 font-semibold"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View demo <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
+
+                <Link href="/urbanpulse-demo.html" target="_blank">
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
+                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link href="/register">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
+                Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -519,3 +540,4 @@ export default function Home() {
     </div>
   );
 }
+
