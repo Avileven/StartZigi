@@ -360,7 +360,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       
       // CHANGE 14126
       const competitorAnswer = answers.find(a => a.question_id === 'COMPETITOR_CHALLENGE');
-const currentCompetitorAnswerText = competitorAnswer?.answer_text || ''; 
+const currentCompetitorAnswerText = competitorAnswer?.answer_text || '';
+console.log("DEBUG answers array:", answers);
+console.log("DEBUG competitorAnswer found:", competitorAnswer);
+console.log("DEBUG currentCompetitorAnswerText:", currentCompetitorAnswerText); 
       
       if (currentCompetitorAnswerText && currentCompetitorAnswerText.trim()) {
         console.log("DEBUG: Processing competitor answer:", currentCompetitorAnswerText);
