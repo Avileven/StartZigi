@@ -343,14 +343,14 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           setIsFinished(true);
           
           setTimeout(async () => {
-            await evaluateAndMakeDecision();
-          }, 3000);
+  await evaluateAndMakeDecision(answers);
+}, 3000);
         }, 1500);
       }
     }, 1000);
   };
 
-  const evaluateAndMakeDecision = async () => {
+  const evaluateAndMakeDecision = async (finalAnswers) => {
     try {
       let competitorScore = 0;
       let competitorEvaluationText = "Competitor question was not asked in this session.";
