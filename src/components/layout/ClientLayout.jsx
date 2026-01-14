@@ -206,7 +206,7 @@ pathname === "/"
                           }`}
                         >
                           <Link
-                            href={createPageUrl("home")}
+                            href="/"
                             className="flex items-center gap-3 px-3 py-2"
                           >
                             <Home className="w-4 h-4 flex-shrink-0" />
