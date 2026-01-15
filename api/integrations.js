@@ -8,7 +8,8 @@ export async function InvokeLLM({ prompt }) {
   try {
     // שליחת בקשה ישירות לגוגל ג'מיני עם המפתח שהגדרת בורסל
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    
+    console.log("API Key exists:", !!apiKey);
+console.log("API Key length:", apiKey?.length);
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
