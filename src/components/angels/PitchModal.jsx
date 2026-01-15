@@ -362,6 +362,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       
       if (currentCompetitorAnswerText && currentCompetitorAnswerText.trim()) {
         console.log("DEBUG: Processing competitor answer:", currentCompetitorAnswerText);
+        console.log("DEBUG: About to call AI");
+        console.log("DEBUG: answersRef contains:", answersRef.current);
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${currentCompetitorAnswerText}"`;
           
