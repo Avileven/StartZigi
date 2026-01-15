@@ -187,6 +187,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setIsLoading(true);
     try {
       const fetchedQuestions = await MasterQuestion.filter({ 'question_id': { '$in': localInvestor.assigned_question_ids } });
+      console.log("Fetched questions from DB:", fetchedQuestions); // ← הוסף גם את זה
       const orderedQuestions = localInvestor.assigned_question_ids.map(id => fetchedQuestions.find(q => q.question_id === id)).filter(Boolean);
       
       const insertPosition = Math.floor(Math.random() * (orderedQuestions.length + 1));
