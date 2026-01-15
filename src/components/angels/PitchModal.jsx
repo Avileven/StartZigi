@@ -367,9 +367,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${currentCompetitorAnswerText}"`;
           
-          const competitorResponse = await InvokeLLM({ 
-            prompt: evaluationPrompt
-          });
+          const { response: competitorResponse } = await InvokeLLM({ 
+    prompt: evaluationPrompt
+    });
           
           competitorEvaluationText = competitorResponse;
           
