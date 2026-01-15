@@ -4,37 +4,17 @@ import { supabase } from '@/lib/supabase'
 // ============================================
 // InvokeLLM - AI Chat (שימוש ב-Google Gemini במקום OpenAI)
 // ============================================
-export async function InvokeLLM({ prompt }) {
-  try {
+
     // שליחת בקשה ישירות לגוגל ג'מיני עם המפתח שהגדרת בורסל
+    export async function InvokeLLM({ prompt }) {
+  try {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    console.log("API Key exists:", !!apiKey);
-console.log("API Key length:", apiKey?.length);
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
     
-    // שליפת התשובה מהמבנה הספציפי של גוגל
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI";
-
-    return {
-      response: aiText,
-      usage: {}, 
-    };
+    const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const models = await listResponse.json();
+    console.log("Available models:", models);
+    
+    throw new Error("Check console for available models");
   } catch (error) {
     console.error('InvokeLLM error:', error);
     throw error;
