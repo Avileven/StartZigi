@@ -1,3 +1,4 @@
+// TEST 15126
 import { supabase } from '@/lib/supabase'
 
 // Base Entity Class
@@ -26,7 +27,12 @@ class Entity {
     let query = supabase.from(this.tableName).select('*')
 
     Object.entries(conditions).forEach(([key, value]) => {
-      query = query.eq(key, value)
+      // אם הערך הוא אובייקט עם $in, השתמש בפונקציית .in של Supabase
+      if (value && typeof value === 'object' && value.$in) {
+        query = query.in(key, value.$in)
+      } else {
+        query = query.eq(key, value)
+      }
     })
 
     if (orderBy) {
@@ -39,7 +45,6 @@ class Entity {
     if (error) throw error
     return data || []
   }
-
   async get(id) {
     const { data, error } = await supabase
       .from(this.tableName)
