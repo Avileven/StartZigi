@@ -1,3 +1,4 @@
+// TEST15126
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor } from '@/api/entities.js';
@@ -186,18 +187,35 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     if (!localInvestor || !localInvestor.assigned_question_ids) return;
     setIsLoading(true);
     try {
-      const fetchedQuestions = await MasterQuestion.filter({ 'question_id': { '$in': localInvestor.assigned_question_ids } });
-      console.log("Fetched questions from DB:", fetchedQuestions); // ← הוסף גם את זה
-      const orderedQuestions = localInvestor.assigned_question_ids.map(id => fetchedQuestions.find(q => q.question_id === id)).filter(Boolean);
+      // 1. אנחנו לוקחים את רשימת ה-IDs של השאלות שהוקצו למשקיע
+      const ids = localInvestor.assigned_question_ids;
       
+      // 2. במקום להשתמש ב-'$in' (שנכשל כאן), אנחנו שולחים בקשה לכל שאלה בנפרד
+      // זה מבטיח שהשליפה תצליח כי היא משתמשת בהשוואה ישירה (equals)
+      const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
+      const results = await Promise.all(fetchPromises);
+      
+      // 3. מאחדים את כל השאלות שחזרו למערך אחד
+      const fetchedQuestions = results.flat().filter(Boolean);
+      
+      console.log("Fetched questions from DB:", fetchedQuestions);
+      
+      // 4. מסדרים אותן לפי הסדר שמופיע במערך המקורי של המשקיע
+      const orderedQuestions = ids
+        .map(id => fetchedQuestions.find(q => q.question_id === id))
+        .filter(Boolean);
+      
+      // 5. הזרקת שאלת המתחרים (COMPETITOR_QUESTION) במיקום אקראי
       const insertPosition = Math.floor(Math.random() * (orderedQuestions.length + 1));
       orderedQuestions.splice(insertPosition, 0, COMPETITOR_QUESTION);
       setCompetitorQuestionIndex(insertPosition);
       
       setQuestions(orderedQuestions);
       
+      // 6. תחילת השיחה עם הודעת פתיחה
       setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` }]);
       
+      // 7. הצגת השאלה הראשונה לאחר השהיה קלה
       setTimeout(() => {
         if (orderedQuestions[0]) {
           setConversation(prev => [...prev, { type: 'bot', text: orderedQuestions[0].question_text }]);
@@ -209,7 +227,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     }
     setIsLoading(false);
   }, [localInvestor]);
-
+  
   useEffect(() => {
     const fetchLatestInvestorData = async () => {
       if (investor && investor.id) {
