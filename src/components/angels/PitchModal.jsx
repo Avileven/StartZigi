@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, Bot } from 'lucide-react';
 
-// וריאציות לשאלת המתחרים
+// Competitor challenge variants for AI variety
 const COMPETITOR_VARIANTS = [
   {
     question_id: 'COMPETITOR_CHALLENGE',
@@ -43,58 +43,61 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const isInitialLoadDone = useRef(false);
   const timePressureTimeoutsRef = useRef([]);
 
-  // --- מנגנון לחץ זמן ---
-  const startTimePressure = (questionText) => {
+  // Clear all pending timeouts
+  const clearAllTimeouts = () => {
     timePressureTimeoutsRef.current.forEach(clearTimeout);
     timePressureTimeoutsRef.current = [];
+  };
+
+  // Time pressure mechanism
+  const startTimePressure = (questionText) => {
+    clearAllTimeouts();
     if (!questionText) return;
 
     timePressureTimeoutsRef.current.push(setTimeout(() => {
-      setConversation(prev => [...prev, { type: 'bot', text: "אני מחכה... זמן זה כסף בעולם הזה." }]);
+      setConversation(prev => [...prev, { type: 'bot', text: "I'm waiting... time is money here." }]);
     }, 15000));
 
     timePressureTimeoutsRef.current.push(setTimeout(() => {
-      setConversation(prev => [...prev, { type: 'bot', text: "אם אין לך תשובה ברורה, אולי אנחנו מבזבזים את הזמן." }]);
+      setConversation(prev => [...prev, { type: 'bot', text: "If you don't have an answer, we can stop right now." }]);
     }, 30000));
   };
 
-  // --- קריאת AI לניתוח התשובה ---
+  // AI Evaluation using the provided API structure
   const evaluateAndMakeDecision = async () => {
     setIsLoading(true);
     try {
       const compAns = answersRef.current.find(a => a.question_id === 'COMPETITOR_CHALLENGE');
       const compQ = questions.find(q => q.question_id === 'COMPETITOR_CHALLENGE');
 
-      const apiKey = ""; // מנוהל ע"י המערכת
-      const payload = {
-        contents: [{
-          parts: [{
-            text: `Question: ${compQ.question_text}\nAnswer: ${compAns?.answer_text || "No answer"}`
-          }]
-        }],
-        systemInstruction: { parts: [{ text: "Evaluate the entrepreneur's answer for market awareness and strategic depth. Give a score 1-10 and a reason. Output JSON: {score: number, analysis: string}" }] },
-        generationConfig: { responseMimeType: "application/json" }
-      };
+      const apiKey = ""; // Runtime managed
+      const systemPrompt = "Evaluate the entrepreneur's response to the competitor challenge. Assess market realism and strategy. Return JSON: { \"score\": number (1-10), \"analysis\": \"string\" }";
+      const userQuery = `Question: ${compQ?.question_text}\nAnswer: ${compAns?.answer_text}`;
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userQuery }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: { responseMimeType: "application/json" }
+        })
       });
 
-      const data = await response.json();
-      const result = JSON.parse(data.candidates[0].content.parts[0].text);
+      const resultData = await response.json();
+      const rawText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
+      const evaluation = JSON.parse(rawText);
 
       setConversation(prev => [
         ...prev,
-        { type: 'bot', text: `הבנתי. הניתוח שלי הושלם.` },
-        { type: 'bot', text: result.score > 6 
-            ? `התרשמתי מההבנה שלך. הציון שלך הוא ${result.score}/10. אני רוצה להשקיע.` 
-            : `אני מצטער, אבל אני לא מרגיש שאתה מכיר את השוק מספיק טוב (${result.score}/10). אני מוותר.` }
+        { type: 'bot', text: `I've finished my analysis. Your market strategy score is ${evaluation.score}/10.` },
+        { type: 'bot', text: evaluation.score >= 7 
+            ? "I like your depth of thinking. Let's talk numbers—I'm interested in investing." 
+            : "To be honest, I don't think you're ready for this market yet. I'll pass." }
       ]);
     } catch (error) {
-      console.error("AI Evaluation failed", error);
-      setConversation(prev => [...prev, { type: 'bot', text: "שמעתי מספיק. אני צריך לישון על זה ולהחזיר לך תשובה מחר." }]);
+      console.error("AI Evaluation failed:", error);
+      setConversation(prev => [...prev, { type: 'bot', text: "I've heard enough. I need some time to process this. I'll get back to you." }]);
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +118,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const finalQuestions = [...baseQuestions.slice(0, insertPos), randomCompQ, ...baseQuestions.slice(insertPos)];
       
       setQuestions(finalQuestions);
-      setConversation([{ type: 'bot', text: `שלום, אני ${investor.name}. בוא נדבר תכלס על המיזם שלך.` }]);
+      setConversation([{ type: 'bot', text: `Hi, I'm ${investor.name}. Let's get started.` }]);
       
       setTimeout(() => {
         if (finalQuestions[0]) {
@@ -140,31 +143,38 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       answersRef.current = [];
       loadQuestions();
     }
-    return () => timePressureTimeoutsRef.current.forEach(clearTimeout);
+    return () => clearAllTimeouts();
   }, [isOpen, loadQuestions]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!userInput.trim() || isAnswering) return;
 
-    timePressureTimeoutsRef.current.forEach(clearTimeout);
+    clearAllTimeouts();
     setIsAnswering(true);
     const userAnswer = userInput;
     setUserInput('');
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
     
-    answersRef.current.push({ question_id: questions[currentQuestionIndex].question_id, answer_text: userAnswer });
+    answersRef.current.push({ 
+      question_id: questions[currentQuestionIndex].question_id, 
+      answer_text: userAnswer 
+    });
 
     setTimeout(() => {
       const nextIndex = currentQuestionIndex + 1;
       if (nextIndex < questions.length) {
         const ack = BOT_ACKNOWLEDGMENTS[Math.floor(Math.random() * BOT_ACKNOWLEDGMENTS.length)];
-        setConversation(prev => [...prev, { type: 'bot', text: ack }, { type: 'bot', text: questions[nextIndex].question_text }]);
+        setConversation(prev => [
+          ...prev, 
+          { type: 'bot', text: ack }, 
+          { type: 'bot', text: questions[nextIndex].question_text }
+        ]);
         setCurrentQuestionIndex(nextIndex);
         setIsAnswering(false);
         startTimePressure(questions[nextIndex].question_text);
       } else {
-        setConversation(prev => [...prev, { type: 'bot', text: "אוקיי, יש לי את כל מה שאני צריך. תן לי רגע לחשוב..." }]);
+        setConversation(prev => [...prev, { type: 'bot', text: "Thank you. Let me think for a moment..." }]);
         setIsFinished(true);
         evaluateAndMakeDecision();
       }
@@ -181,8 +191,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col">
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-          <h2 className="font-bold">פגישה עם {investor.name}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>סגור</Button>
+          <h2 className="font-bold text-gray-800">Pitch to {investor.name}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {conversation.map((msg, idx) => (
@@ -201,7 +211,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               className="flex-1 min-h-[80px]"
-              placeholder="כתוב את תשובתך..."
+              placeholder="Enter your answer..."
             />
             <Button type="submit" disabled={isAnswering || !userInput.trim()}><Send size={20} /></Button>
           </form>
