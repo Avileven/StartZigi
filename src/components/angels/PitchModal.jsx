@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, Bot } from 'lucide-react';
 
-// וריאציות לשאלת ה-AI
+// וריאציות לשאלת המתחרים
 const COMPETITOR_VARIANTS = [
   {
     question_id: 'COMPETITOR_CHALLENGE',
@@ -43,22 +43,63 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const isInitialLoadDone = useRef(false);
   const timePressureTimeoutsRef = useRef([]);
 
-  // מנגנון הודעות הלחץ
+  // --- מנגנון לחץ זמן ---
   const startTimePressure = (questionText) => {
     timePressureTimeoutsRef.current.forEach(clearTimeout);
     timePressureTimeoutsRef.current = [];
     if (!questionText) return;
 
     timePressureTimeoutsRef.current.push(setTimeout(() => {
-      setConversation(prev => [...prev, { type: 'bot', text: "I'm waiting... time is money here." }]);
+      setConversation(prev => [...prev, { type: 'bot', text: "אני מחכה... זמן זה כסף בעולם הזה." }]);
     }, 15000));
 
     timePressureTimeoutsRef.current.push(setTimeout(() => {
-      setConversation(prev => [...prev, { type: 'bot', text: "If you don't have an answer, we can stop right now." }]);
+      setConversation(prev => [...prev, { type: 'bot', text: "אם אין לך תשובה ברורה, אולי אנחנו מבזבזים את הזמן." }]);
     }, 30000));
   };
 
-  // פונקציית הטעינה המתוקנת
+  // --- קריאת AI לניתוח התשובה ---
+  const evaluateAndMakeDecision = async () => {
+    setIsLoading(true);
+    try {
+      const compAns = answersRef.current.find(a => a.question_id === 'COMPETITOR_CHALLENGE');
+      const compQ = questions.find(q => q.question_id === 'COMPETITOR_CHALLENGE');
+
+      const apiKey = ""; // מנוהל ע"י המערכת
+      const payload = {
+        contents: [{
+          parts: [{
+            text: `Question: ${compQ.question_text}\nAnswer: ${compAns?.answer_text || "No answer"}`
+          }]
+        }],
+        systemInstruction: { parts: [{ text: "Evaluate the entrepreneur's answer for market awareness and strategic depth. Give a score 1-10 and a reason. Output JSON: {score: number, analysis: string}" }] },
+        generationConfig: { responseMimeType: "application/json" }
+      };
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      const result = JSON.parse(data.candidates[0].content.parts[0].text);
+
+      setConversation(prev => [
+        ...prev,
+        { type: 'bot', text: `הבנתי. הניתוח שלי הושלם.` },
+        { type: 'bot', text: result.score > 6 
+            ? `התרשמתי מההבנה שלך. הציון שלך הוא ${result.score}/10. אני רוצה להשקיע.` 
+            : `אני מצטער, אבל אני לא מרגיש שאתה מכיר את השוק מספיק טוב (${result.score}/10). אני מוותר.` }
+      ]);
+    } catch (error) {
+      console.error("AI Evaluation failed", error);
+      setConversation(prev => [...prev, { type: 'bot', text: "שמעתי מספיק. אני צריך לישון על זה ולהחזיר לך תשובה מחר." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loadQuestions = useCallback(async () => {
     if (!investor?.assigned_question_ids || isInitialLoadDone.current) return;
     isInitialLoadDone.current = true;
@@ -66,30 +107,16 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
 
     try {
       const ids = investor.assigned_question_ids;
-      // פניה ל-API המקורי שלך
       const results = await Promise.all(ids.map(id => MasterQuestion.filter({ 'question_id': id })));
       const baseQuestions = results.flat().filter(Boolean);
       
-      // בחירת שאלה אקראית מה-AI
       const randomCompQ = COMPETITOR_VARIANTS[Math.floor(Math.random() * COMPETITOR_VARIANTS.length)];
-      
-      // הזרקה למיקום אקראי
       const insertPos = Math.floor(Math.random() * (baseQuestions.length + 1));
-      const finalQuestions = [
-        ...baseQuestions.slice(0, insertPos),
-        randomCompQ,
-        ...baseQuestions.slice(insertPos)
-      ];
+      const finalQuestions = [...baseQuestions.slice(0, insertPos), randomCompQ, ...baseQuestions.slice(insertPos)];
       
       setQuestions(finalQuestions);
+      setConversation([{ type: 'bot', text: `שלום, אני ${investor.name}. בוא נדבר תכלס על המיזם שלך.` }]);
       
-      // הודעת פתיחה
-      setConversation([{ 
-        type: 'bot', 
-        text: `Hi, I'm ${investor.name}. Let's get right into it.` 
-      }]);
-      
-      // שליחת השאלה הראשונה
       setTimeout(() => {
         if (finalQuestions[0]) {
           setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
@@ -97,15 +124,12 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         }
         setIsLoading(false);
       }, 1500);
-
-    } catch (error) {
-      console.error("Error loading questions:", error);
+    } catch (e) {
       setIsLoading(false);
       isInitialLoadDone.current = false;
     }
   }, [investor]);
 
-  // ניהול פתיחת המודל
   useEffect(() => {
     if (isOpen) {
       isInitialLoadDone.current = false;
@@ -123,35 +147,26 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     e.preventDefault();
     if (!userInput.trim() || isAnswering) return;
 
-    timePressureTimeoutsRef.current.forEach(clearTimeout); // ביטול הלחץ
+    timePressureTimeoutsRef.current.forEach(clearTimeout);
     setIsAnswering(true);
     const userAnswer = userInput;
     setUserInput('');
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
     
-    // שמירת התשובה
-    answersRef.current.push({ 
-      question_id: questions[currentQuestionIndex].question_id, 
-      answer_text: userAnswer 
-    });
+    answersRef.current.push({ question_id: questions[currentQuestionIndex].question_id, answer_text: userAnswer });
 
     setTimeout(() => {
       const nextIndex = currentQuestionIndex + 1;
-      
       if (nextIndex < questions.length) {
         const ack = BOT_ACKNOWLEDGMENTS[Math.floor(Math.random() * BOT_ACKNOWLEDGMENTS.length)];
-        setConversation(prev => [
-          ...prev, 
-          { type: 'bot', text: ack }, 
-          { type: 'bot', text: questions[nextIndex].question_text }
-        ]);
+        setConversation(prev => [...prev, { type: 'bot', text: ack }, { type: 'bot', text: questions[nextIndex].question_text }]);
         setCurrentQuestionIndex(nextIndex);
         setIsAnswering(false);
-        startTimePressure(questions[nextIndex].question_text); // לחץ לשאלה הבאה
+        startTimePressure(questions[nextIndex].question_text);
       } else {
-        setConversation(prev => [...prev, { type: 'bot', text: "I've heard enough. Let me run the numbers..." }]);
+        setConversation(prev => [...prev, { type: 'bot', text: "אוקיי, יש לי את כל מה שאני צריך. תן לי רגע לחשוב..." }]);
         setIsFinished(true);
-        // כאן תקרא לפונקציה המקורית שלך לניתוח (evaluateAndMakeDecision)
+        evaluateAndMakeDecision();
       }
     }, 1000);
   };
@@ -166,10 +181,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col">
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-          <h2 className="font-bold text-gray-800">Meeting with {investor.name}</h2>
-          <Button variant="ghost" onClick={onClose}>Close</Button>
+          <h2 className="font-bold">פגישה עם {investor.name}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>סגור</Button>
         </div>
-
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {conversation.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -178,22 +192,18 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
               </div>
             </div>
           ))}
-          {isLoading && <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>}
+          {isLoading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-blue-500" /></div>}
           <div ref={chatEndRef} />
         </div>
-
         {!isFinished && !isLoading && (
           <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
             <Textarea 
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               className="flex-1 min-h-[80px]"
-              placeholder="Your answer..."
-              disabled={isAnswering}
+              placeholder="כתוב את תשובתך..."
             />
-            <Button type="submit" disabled={isAnswering || !userInput.trim()}>
-              <Send size={20} />
-            </Button>
+            <Button type="submit" disabled={isAnswering || !userInput.trim()}><Send size={20} /></Button>
           </form>
         )}
       </div>
