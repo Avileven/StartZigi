@@ -243,11 +243,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         }
       }
     };
-// change to show question only once
+
     if (isOpen) {
-      fetchLatestInvestorData().then(() => {
-  loadQuestions();
-});
+      fetchLatestInvestorData();
       setQuestions([]);
       setCurrentQuestionIndex(0);
       setConversation([]);
