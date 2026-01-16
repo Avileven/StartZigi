@@ -269,7 +269,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     if (isOpen && localInvestor) {
       loadQuestions();
     }
-  }, [isOpen, localInvestor, loadQuestions]);
+  }, [isOpen, localInvestor]);
 
   const startTimePressureMessages = useCallback(() => {
     timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
