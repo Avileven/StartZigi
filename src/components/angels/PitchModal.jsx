@@ -1,4 +1,4 @@
-// TEST151262
+// אקדא16126
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor } from '@/api/entities.js';
@@ -61,7 +61,6 @@ const calculateTeamScore = (venture) => {
 };
 
 const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, competitorScore) => {
-    // HARD REJECTION THRESHOLD - NO EXCEPTIONS
     if (competitorScore < 4.0) {
         return {
             decision: 'Reject',
@@ -167,13 +166,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [isFinished, setIsFinished] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [competitorQuestionIndex, setCompetitorQuestionIndex] = useState(-1);
-  const [competitorAnswerText, setCompetitorAnswerText] = useState('');
   const [localInvestor, setLocalInvestor] = useState(investor);
   const chatEndRef = useRef(null);
   const timePressureTimeoutsRef = useRef([]);
-  
-  // ✅ שינוי 1: הוספת useRef לשמירת התשובות
   const answersRef = useRef([]);
+  const hasLoadedQuestionsRef = useRef(false);
   
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -184,38 +181,28 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   }, [conversation]);
 
   const loadQuestions = useCallback(async () => {
-    if (!localInvestor || !localInvestor.assigned_question_ids) return;
+    if (!localInvestor || !localInvestor.assigned_question_ids || hasLoadedQuestionsRef.current) return;
+    
+    hasLoadedQuestionsRef.current = true;
     setIsLoading(true);
+    
     try {
-      // 1. אנחנו לוקחים את רשימת ה-IDs של השאלות שהוקצו למשקיע
       const ids = localInvestor.assigned_question_ids;
-      
-      // 2. במקום להשתמש ב-'$in' (שנכשל כאן), אנחנו שולחים בקשה לכל שאלה בנפרד
-      // זה מבטיח שהשליפה תצליח כי היא משתמשת בהשוואה ישירה (equals)
       const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
       const results = await Promise.all(fetchPromises);
-      
-      // 3. מאחדים את כל השאלות שחזרו למערך אחד
       const fetchedQuestions = results.flat().filter(Boolean);
       
-      console.log("Fetched questions from DB:", fetchedQuestions);
-      
-      // 4. מסדרים אותן לפי הסדר שמופיע במערך המקורי של המשקיע
       const orderedQuestions = ids
         .map(id => fetchedQuestions.find(q => q.question_id === id))
         .filter(Boolean);
       
-      // 5. הזרקת שאלת המתחרים (COMPETITOR_QUESTION) במיקום אקראי
       const insertPosition = Math.floor(Math.random() * (orderedQuestions.length + 1));
       orderedQuestions.splice(insertPosition, 0, COMPETITOR_QUESTION);
       setCompetitorQuestionIndex(insertPosition);
       
       setQuestions(orderedQuestions);
-      
-      // 6. תחילת השיחה עם הודעת פתיחה
       setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` }]);
       
-      // 7. הצגת השאלה הראשונה לאחר השהיה קלה
       setTimeout(() => {
         if (orderedQuestions[0]) {
           setConversation(prev => [...prev, { type: 'bot', text: orderedQuestions[0].question_text }]);
@@ -245,6 +232,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     };
 
     if (isOpen) {
+      hasLoadedQuestionsRef.current = false;
       fetchLatestInvestorData();
       setQuestions([]);
       setCurrentQuestionIndex(0);
@@ -255,21 +243,17 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       setIsFinished(false);
       setAnswers([]);
       setCompetitorQuestionIndex(-1);
-      setCompetitorAnswerText('');
-      
-      // ✅ שינוי 2: איפוס answersRef כשהמודל נפתח
       answersRef.current = [];
-
       timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
       timePressureTimeoutsRef.current = [];
     }
   }, [isOpen, investor]);
 
   useEffect(() => {
-    if (isOpen && localInvestor) {
+    if (isOpen && localInvestor && !hasLoadedQuestionsRef.current) {
       loadQuestions();
     }
-  }, [isOpen, localInvestor]);
+  }, [isOpen, localInvestor, loadQuestions]);
 
   const startTimePressureMessages = useCallback(() => {
     timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
@@ -288,7 +272,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     }, 180000);
 
     timePressureTimeoutsRef.current = [timeout1, timeout2, timeout3];
-  }, [setConversation]);
+  }, []);
 
   useEffect(() => {
     if (currentQuestionIndex === competitorQuestionIndex && competitorQuestionIndex !== -1 && !isFinished) {
@@ -319,12 +303,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       answer_text: userAnswer,
     };
     setAnswers(prev => [...prev, answerObj]);
-    
-    // ✅ שינוי 3: שמירה גם ב-answersRef
     answersRef.current.push(answerObj);
 
     if (currentQuestion.question_id === 'COMPETITOR_CHALLENGE') {
-        setCompetitorAnswerText(userAnswer);
         timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timePressureTimeoutsRef.current = [];
     }
@@ -375,20 +356,16 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       let credibilityScore = 0;
       let strategicThinkingScore = 0;
       
-      // ✅ שינוי 4: קריאה מ-answersRef במקום מ-state
       const competitorAnswer = answersRef.current.find(a => a.question_id === 'COMPETITOR_CHALLENGE');
       const currentCompetitorAnswerText = competitorAnswer?.answer_text || '';
       
       if (currentCompetitorAnswerText && currentCompetitorAnswerText.trim()) {
-        console.log("DEBUG: Processing competitor answer:", currentCompetitorAnswerText);
-        console.log("DEBUG: About to call AI");
-        console.log("DEBUG: answersRef contains:", answersRef.current);
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${currentCompetitorAnswerText}"`;
           
           const { response: competitorResponse } = await InvokeLLM({ 
-    prompt: evaluationPrompt
-    });
+            prompt: evaluationPrompt
+          });
           
           competitorEvaluationText = competitorResponse;
           
@@ -405,15 +382,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           } else {
             competitorScore = (specificityScore * 0.3) + (credibilityScore * 0.4) + (strategicThinkingScore * 0.3);
           }
-          
-          console.log("DEBUG: Competitor score calculated:", competitorScore);
         } catch (error) {
           console.error("Error evaluating competitor challenge:", error);
           competitorScore = 0;
           competitorEvaluationText = `Error occurred during evaluation: ${error.message}`;
         }
-      } else {
-        console.log("DEBUG: No competitor answer found or answer is empty");
       }
       
       const baseTeamScore = calculateTeamScore(venture);
