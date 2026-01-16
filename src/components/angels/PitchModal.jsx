@@ -1,4 +1,4 @@
-// TEST151262
+// TEST161262
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor } from '@/api/entities.js';
@@ -170,6 +170,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [competitorAnswerText, setCompetitorAnswerText] = useState('');
   const [localInvestor, setLocalInvestor] = useState(investor);
   const chatEndRef = useRef(null);
+  const isProcessingLoad = useRef(false);
   const timePressureTimeoutsRef = useRef([]);
   
   // ✅ שינוי 1: הוספת useRef לשמירת התשובות
@@ -184,8 +185,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   }, [conversation]);
 
   const loadQuestions = useCallback(async () => {
-    if (!localInvestor || !localInvestor.assigned_question_ids) return;
-    setIsLoading(true);
+  if (!localInvestor || !localInvestor.assigned_question_ids || isProcessingLoad.current) return;
+  
+  isProcessingLoad.current = true; // נועל את הפונקציה לריצות נוספות
+  setIsLoading(true);
     try {
       // 1. אנחנו לוקחים את רשימת ה-IDs של השאלות שהוקצו למשקיע
       const ids = localInvestor.assigned_question_ids;
@@ -270,6 +273,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       loadQuestions();
     }
   }, [isOpen, localInvestor, loadQuestions]);
+  // ... (מתחת לשאר ה-set-ים הקיימים שלך)
+      setCompetitorAnswerText('');
+      
+      isProcessingLoad.current = false; // מאפשר טעינה חדשה כשהמודל נפתח מחדש
 
   const startTimePressureMessages = useCallback(() => {
     timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
