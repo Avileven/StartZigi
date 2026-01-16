@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';
 
-// ✅ וריאציות לשאלת המתחרים כדי למנוע שיעמום
+// וריאציות לשאלת המתחרים
 const COMPETITOR_VARIANTS = [
   {
     question_id: 'COMPETITOR_CHALLENGE',
@@ -22,7 +22,6 @@ const COMPETITOR_VARIANTS = [
   }
 ];
 
-// ✅ מערך תגובות מגוון לבוט
 const BOT_ACKNOWLEDGMENTS = [
   "I see, thanks for explaining that.",
   "Interesting perspective. Let's move on.",
@@ -46,6 +45,43 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const answersRef = useRef([]);
   const isInitialLoadDone = useRef(false);
 
+  // פונקציית הניתוח (כאן ה-AI נכנס לפעולה)
+  const evaluateAndMakeDecision = async () => {
+    setIsLoading(true);
+    try {
+      // מוצאים את התשובה לשאלת המתחרים מתוך ה-Ref
+      const competitorAns = answersRef.current.find(a => a.question_id === 'COMPETITOR_CHALLENGE');
+      const competitorQuestionText = questions.find(q => q.question_id === 'COMPETITOR_CHALLENGE')?.question_text;
+
+      // קריאה ל-LLM לניתוח התשובה
+      const prompt = `
+        Investor: ${localInvestor.name}
+        Venture: ${venture.name}
+        Question Asked: ${competitorQuestionText}
+        Entrepreneur Answer: ${competitorAns?.answer_text}
+        
+        Evaluate this answer on a scale of 1-10 based on market awareness and strategic depth.
+        Return JSON: { "score": number, "analysis": "string" }
+      `;
+
+      const evaluation = await InvokeLLM(prompt);
+      const result = JSON.parse(evaluation);
+
+      // כאן אתה ממשיך ללוגיקת ההשקעה שלך (Investment Offer)
+      setConversation(prev => [...prev, { 
+        type: 'bot', 
+        text: `Based on our talk, I've made a decision. Your analysis of the competition scored ${result.score}/10.` 
+      }]);
+      
+      // המשך הקוד המקורי שלך להצגת ההצעה/דחייה...
+      
+    } catch (error) {
+      console.error("Evaluation failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loadQuestions = useCallback(async () => {
     if (!localInvestor?.assigned_question_ids || isInitialLoadDone.current) return;
     
@@ -57,11 +93,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const results = await Promise.all(ids.map(id => MasterQuestion.filter({ 'question_id': id })));
       const fetchedQuestions = results.flat().filter(Boolean);
       
-      const baseQuestions = ids
-        .map(id => fetchedQuestions.find(q => q.question_id === id))
-        .filter(Boolean);
+      const baseQuestions = ids.map(id => fetchedQuestions.find(q => q.question_id === id)).filter(Boolean);
       
-      // ✅ בחירת וריאציה אקראית לשאלת המתחרים
+      // בחירת וריאציה אקראית
       const randomCompetitorQ = COMPETITOR_VARIANTS[Math.floor(Math.random() * COMPETITOR_VARIANTS.length)];
       
       const insertPosition = Math.floor(Math.random() * (baseQuestions.length + 1));
@@ -72,11 +106,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       ];
       
       setQuestions(finalQuestions);
-      
-      setConversation([{ 
-        type: 'bot', 
-        text: `Hi, I'm ${localInvestor.name}. I've reviewed your materials and have a few specific questions for you.` 
-      }]);
+      setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. Let's get started.` }]);
       
       setTimeout(() => {
         setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
@@ -120,9 +150,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const nextIndex = currentQuestionIndex + 1;
       
       if (nextIndex < questions.length) {
-        // ✅ בחירת תגובה אקראית מהמערך
         const randomAck = BOT_ACKNOWLEDGMENTS[Math.floor(Math.random() * BOT_ACKNOWLEDGMENTS.length)];
-        
         setConversation(prev => [
           ...prev, 
           { type: 'bot', text: randomAck },
@@ -131,38 +159,32 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         setCurrentQuestionIndex(nextIndex);
         setIsAnswering(false);
       } else {
-        setConversation(prev => [
-          ...prev, 
-          { type: 'bot', text: "Thank you for the transparency. I've got what I need to make a decision now." }
-        ]);
+        setConversation(prev => [...prev, { type: 'bot', text: "Thank you. Let me think for a moment..." }]);
         setIsFinished(true);
-        // evaluateAndMakeDecision();
+        // ✅ הפעלת פונקציית הניתוח שהגדרנו למעלה
+        evaluateAndMakeDecision();
       }
     }, 1000);
   };
 
-  // ... (שאר ה-JSX נשאר אותו דבר)
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl h-[80vh] flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-bold">Meeting with {localInvestor.name}</h2>
+          <h2 className="text-xl font-bold">Pitch to {localInvestor.name}</h2>
           <Button variant="ghost" onClick={onClose}>Close</Button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {isLoading ? (
-            <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
-          ) : (
-            conversation.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-lg ${msg.type === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                  {msg.text}
-                </div>
+          {conversation.map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] p-3 rounded-lg ${msg.type === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                {msg.text}
               </div>
-            ))
-          )}
+            </div>
+          ))}
+          {isLoading && <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>}
           <div ref={chatEndRef} />
         </div>
         {!isFinished && !isLoading && (
@@ -171,11 +193,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               className="flex-1 min-h-[60px]"
-              placeholder="Type your answer..."
+              placeholder="Your answer..."
               disabled={isAnswering}
             />
             <Button type="submit" disabled={isAnswering || !userInput.trim()}>
-              {isAnswering ? <Loader2 className="animate-spin" /> : <Send size={18} />}
+              <Send size={18} />
             </Button>
           </form>
         )}
