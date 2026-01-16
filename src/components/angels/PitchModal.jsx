@@ -6,12 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';
 
-const COMPETITOR_QUESTION = {
-  question_id: 'COMPETITOR_CHALLENGE',
-  question_text: "Look, I invest in a lot of companies and I see this pattern repeatedly - entrepreneurs come in thinking they have a unique idea, but there are always competitors they don't know about. Sometimes it's an established player expanding into their space, sometimes it's another startup pivoting, sometimes it's a big tech company building this internally. How confident are you that you really understand who you're up against? And more importantly - what happens to your business when you discover there's more competition than you thought?"
-};
+// ✅ וריאציות לשאלת המתחרים כדי למנוע שיעמום
+const COMPETITOR_VARIANTS = [
+  {
+    question_id: 'COMPETITOR_CHALLENGE',
+    question_text: "Look, I see this pattern repeatedly - entrepreneurs think they have a unique idea, but there are always competitors they don't know about. How confident are you that you really understand who you're up against? And what happens when you discover there's more competition than you thought?"
+  },
+  {
+    question_id: 'COMPETITOR_CHALLENGE',
+    question_text: "The market is crowded, even if it doesn't look like it. If a big tech player or a well-funded startup decided to pivot into your exact niche tomorrow, what's your actual 'moat'? Do you really know your competition well enough to survive that?"
+  },
+  {
+    question_id: 'COMPETITOR_CHALLENGE',
+    question_text: "I've heard 'we have no direct competitors' too many times. Usually, it just means the founder hasn't looked hard enough. Talk to me about the indirect threats—the companies solving the same problem differently. How do you stay ahead of them?"
+  }
+];
 
-// ... (קבועי הפרומפטים והחישובים שלך נשארים ללא שינוי)
+// ✅ מערך תגובות מגוון לבוט
+const BOT_ACKNOWLEDGMENTS = [
+  "I see, thanks for explaining that.",
+  "Interesting perspective. Let's move on.",
+  "Got it. That makes sense.",
+  "I understand your point. Next question:",
+  "Clear enough. I'd like to ask about something else now.",
+  "Helpful context, thank you."
+];
 
 export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [questions, setQuestions] = useState([]);
@@ -25,20 +44,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   
   const chatEndRef = useRef(null);
   const answersRef = useRef([]);
-  const timePressureTimeoutsRef = useRef([]);
-  // ✅ מנעול קריטי למניעת ריצה כפולה של טעינת השאלות
   const isInitialLoadDone = useRef(false);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [conversation]);
-
   const loadQuestions = useCallback(async () => {
-    // ✅ בדיקה אם כבר טענו או שאין נתונים - מונע כפילות שאלות
     if (!localInvestor?.assigned_question_ids || isInitialLoadDone.current) return;
     
     isInitialLoadDone.current = true;
@@ -46,40 +54,36 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
 
     try {
       const ids = localInvestor.assigned_question_ids;
-      const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
-      const results = await Promise.all(fetchPromises);
+      const results = await Promise.all(ids.map(id => MasterQuestion.filter({ 'question_id': id })));
       const fetchedQuestions = results.flat().filter(Boolean);
       
       const baseQuestions = ids
         .map(id => fetchedQuestions.find(q => q.question_id === id))
         .filter(Boolean);
       
-      // ✅ יצירת המערך הסופי פעם אחת בלבד (Immutable)
+      // ✅ בחירת וריאציה אקראית לשאלת המתחרים
+      const randomCompetitorQ = COMPETITOR_VARIANTS[Math.floor(Math.random() * COMPETITOR_VARIANTS.length)];
+      
       const insertPosition = Math.floor(Math.random() * (baseQuestions.length + 1));
       const finalQuestions = [
         ...baseQuestions.slice(0, insertPosition),
-        COMPETITOR_QUESTION,
+        randomCompetitorQ,
         ...baseQuestions.slice(insertPosition)
       ];
       
       setQuestions(finalQuestions);
       
-      // ✅ הודעת פתיחה
       setConversation([{ 
         type: 'bot', 
-        text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` 
+        text: `Hi, I'm ${localInvestor.name}. I've reviewed your materials and have a few specific questions for you.` 
       }]);
       
-      // ✅ שליחת השאלה הראשונה בלבד
       setTimeout(() => {
-        setConversation(prev => [
-          ...prev, 
-          { type: 'bot', text: finalQuestions[0].question_text }
-        ]);
+        setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
       }, 1500);
 
     } catch (error) {
-      console.error("Error loading questions:", error);
+      console.error(error);
       isInitialLoadDone.current = false;
     } finally {
       setIsLoading(false);
@@ -88,18 +92,15 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      // ✅ איפוס מוחלט בכל פתיחה מחדש
       isInitialLoadDone.current = false;
       setQuestions([]);
       setCurrentQuestionIndex(0);
       setConversation([]);
       setIsFinished(false);
       answersRef.current = [];
-      
-      // טעינת נתונים
       if (localInvestor) loadQuestions();
     }
-  }, [isOpen]);
+  }, [isOpen, localInvestor, loadQuestions]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -108,25 +109,23 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setIsAnswering(true);
     const userAnswer = userInput;
     setUserInput('');
-    
-    // הצגת תשובת המשתמש בשיחה
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
     
-    // שמירה ב-Ref לצרכי החלטת ה-AI בסוף
-    const currentQuestion = questions[currentQuestionIndex];
     answersRef.current.push({
-      question_id: currentQuestion.question_id,
+      question_id: questions[currentQuestionIndex].question_id,
       answer_text: userAnswer
     });
 
-    // ✅ איחוד הודעות הבוט למניעת "קפיצות" ובלגן ב-State
     setTimeout(() => {
       const nextIndex = currentQuestionIndex + 1;
       
       if (nextIndex < questions.length) {
+        // ✅ בחירת תגובה אקראית מהמערך
+        const randomAck = BOT_ACKNOWLEDGMENTS[Math.floor(Math.random() * BOT_ACKNOWLEDGMENTS.length)];
+        
         setConversation(prev => [
           ...prev, 
-          { type: 'bot', text: "I see. Next question:" },
+          { type: 'bot', text: randomAck },
           { type: 'bot', text: questions[nextIndex].question_text }
         ]);
         setCurrentQuestionIndex(nextIndex);
@@ -134,14 +133,15 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       } else {
         setConversation(prev => [
           ...prev, 
-          { type: 'bot', text: "Thank you. I have enough information to make a decision." }
+          { type: 'bot', text: "Thank you for the transparency. I've got what I need to make a decision now." }
         ]);
         setIsFinished(true);
-        // כאן תקרא לפונקציה המקורית שלך evaluateAndMakeDecision();
+        // evaluateAndMakeDecision();
       }
     }, 1000);
   };
 
+  // ... (שאר ה-JSX נשאר אותו דבר)
   if (!isOpen) return null;
 
   return (
@@ -151,7 +151,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           <h2 className="text-xl font-bold">Meeting with {localInvestor.name}</h2>
           <Button variant="ghost" onClick={onClose}>Close</Button>
         </div>
-
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
@@ -166,7 +165,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           )}
           <div ref={chatEndRef} />
         </div>
-
         {!isFinished && !isLoading && (
           <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
             <Textarea 
