@@ -199,13 +199,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setIsLoading(true);
 
     try {
-      // ✅ בדיקה: הדפסת נתוני venture
-      console.log("Venture data for question building:", {
-        name: venture.name,
-        mission: venture.mission,
-        revenue_model: venture.revenue_model,
-        funding_requirements: venture.funding_requirements
-      });
+      // ✅ טעינת venture מלא מה-DB כדי לקבל את כל השדות
+      const fullVentures = await Venture.filter({ id: venture.id });
+      const fullVenture = fullVentures[0] || venture;
+      
+      console.log("Full venture data:", fullVenture);
 
       const ids = localInvestor.assigned_question_ids;
       const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
@@ -219,13 +217,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       // שאלת פתיחה
       const openingQuestion = {
         question_id: 'OPENING_PERSONAL',
-        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
+        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${fullVenture.name}' for your project? I'd love to hear the story behind it.`
       };
       
-      // ✅ תיקון: שאלה עסקית עם fallbacks למקרה שהשדות ריקים
+      // ✅ שאלה עסקית עם נתונים מלאים מה-DB
       const businessQuestion = {
         question_id: 'BUSINESS_DEEP_DIVE',
-        question_text: `I've reviewed your business plan for ${venture.name}${venture.mission ? `, and I'm intrigued by your mission to ${venture.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${venture.revenue_model ? `You mentioned your revenue model - ${venture.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${venture.funding_requirements ? `, and how did you arrive at your ${venture.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
+        question_text: `I've reviewed your business plan for ${fullVenture.name}${fullVenture.mission ? `, and I'm intrigued by your mission to ${fullVenture.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${fullVenture.revenue_model ? `You mentioned your revenue model - ${fullVenture.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${fullVenture.funding_requirements ? `, and how did you arrive at your ${fullVenture.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
       };
      
       // בחירת שאלת competitor אקראית
@@ -267,7 +265,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     } finally {
       setIsLoading(false);
     }
-  }, [localInvestor, venture.name, venture.mission, venture.revenue_model, venture.funding_requirements]);
+  }, [localInvestor, venture.id]);
 
   useEffect(() => {
     if (isOpen) {
