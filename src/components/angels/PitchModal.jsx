@@ -1,4 +1,4 @@
-// 16126 FIX MULTIQUES WORKING PLUS TEST ONE QU
+// 16126 FIX MULTIQUES WORKING + BUSINESS QUESTION
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage } from '@/api/entities.js';
@@ -208,18 +208,24 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         .map(id => fetchedQuestions.find(q => q.question_id === id))
         .filter(Boolean);
      
-      // ✅ שינוי 1: הוספת שאלת פתיחה קבועה עם שם המיזם
+      // שאלת פתיחה
       const openingQuestion = {
         question_id: 'OPENING_PERSONAL',
         question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
       };
+      
+      // ✅ שאלה עסקית חדשה
+      const businessQuestion = {
+        question_id: 'BUSINESS_DEEP_DIVE',
+        question_text: `I've reviewed your business plan for ${venture.name}, and I'm intrigued by your mission to ${venture.mission || 'transform the market'}. However, I want to dig deeper into the economics. You mentioned ${venture.revenue_model || 'your revenue model'} - can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value, and how did you arrive at your ${venture.funding_requirements || 'funding ask'}? I need to understand if the math really works here.`
+      };
      
-      // ✅ בחירת שאלת competitor אקראית מהבנק
+      // בחירת שאלת competitor אקראית
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[
         Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)
       ];
      
-      // ✅ הזרקת שאלת הcompetitor למיקום אקראי בשאלות הרגילות
+      // הזרקת competitor למיקום אקראי
       const insertPosition = Math.floor(Math.random() * (baseQuestions.length + 1));
       const questionsWithCompetitor = [
         ...baseQuestions.slice(0, insertPosition),
@@ -227,11 +233,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         ...baseQuestions.slice(insertPosition)
       ];
       
-      // ✅ שינוי 2: הוספת שאלת הפתיחה בתחילת המערך
-      const finalQuestions = [openingQuestion, ...questionsWithCompetitor];
+      // ✅ סידור סופי: פתיחה → עסקית → שאלות רגילות+competitor
+      const finalQuestions = [openingQuestion, businessQuestion, ...questionsWithCompetitor];
       
-      // ✅ שינוי 3: עדכון index של שאלת competitor (+1 בגלל שאלת הפתיחה)
-      competitorQuestionIndexRef.current = insertPosition + 1;
+      // ✅ עדכון index (+2 כי יש 2 שאלות קבועות לפני)
+      competitorQuestionIndexRef.current = insertPosition + 2;
      
       setQuestions(finalQuestions);
      
@@ -253,7 +259,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     } finally {
       setIsLoading(false);
     }
-  }, [localInvestor, venture.name]); // ✅ שינוי 4: הוספת venture.name ל-dependencies
+  }, [localInvestor, venture.name, venture.mission, venture.revenue_model, venture.funding_requirements]);
 
   useEffect(() => {
     if (isOpen) {
@@ -317,15 +323,15 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       answer_text: userAnswer
     });
 
-    // עצירת טיימרים אם זו שאלת competitor
     if (currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
         timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timePressureTimeoutsRef.current = [];
     }
 
-    // ✅ שינוי 5: אי-שמירה ב-DB גם לשאלת הפתיחה (רק שאלות רגילות נשמרות)
+    // ✅ אי-שמירה ב-DB לשאלות מיוחדות (פתיחה, עסקית, competitor)
     if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
-        currentQuestion.question_id !== 'OPENING_PERSONAL') {
+        currentQuestion.question_id !== 'OPENING_PERSONAL' &&
+        currentQuestion.question_id !== 'BUSINESS_DEEP_DIVE') {
         try {
           await PitchAnswer.create({
             venture_id: venture.id,
