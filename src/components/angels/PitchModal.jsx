@@ -1,4 +1,4 @@
-// 16126 FIX MULTIQUES WORKING
+// 16126 FIX MULTIQUES WORKING PLUS TEST ONE QU
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage } from '@/api/entities.js';
@@ -208,19 +208,30 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         .map(id => fetchedQuestions.find(q => q.question_id === id))
         .filter(Boolean);
      
+      // ✅ שינוי 1: הוספת שאלת פתיחה קבועה עם שם המיזם
+      const openingQuestion = {
+        question_id: 'OPENING_PERSONAL',
+        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
+      };
+     
       // ✅ בחירת שאלת competitor אקראית מהבנק
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[
         Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)
       ];
      
+      // ✅ הזרקת שאלת הcompetitor למיקום אקראי בשאלות הרגילות
       const insertPosition = Math.floor(Math.random() * (baseQuestions.length + 1));
-      const finalQuestions = [
+      const questionsWithCompetitor = [
         ...baseQuestions.slice(0, insertPosition),
         randomCompetitorQuestion,
         ...baseQuestions.slice(insertPosition)
       ];
       
-      competitorQuestionIndexRef.current = insertPosition;
+      // ✅ שינוי 2: הוספת שאלת הפתיחה בתחילת המערך
+      const finalQuestions = [openingQuestion, ...questionsWithCompetitor];
+      
+      // ✅ שינוי 3: עדכון index של שאלת competitor (+1 בגלל שאלת הפתיחה)
+      competitorQuestionIndexRef.current = insertPosition + 1;
      
       setQuestions(finalQuestions);
      
@@ -242,7 +253,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     } finally {
       setIsLoading(false);
     }
-  }, [localInvestor]);
+  }, [localInvestor, venture.name]); // ✅ שינוי 4: הוספת venture.name ל-dependencies
 
   useEffect(() => {
     if (isOpen) {
@@ -312,8 +323,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         timePressureTimeoutsRef.current = [];
     }
 
-    // שמירה ב-DB רק לשאלות רגילות
-    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
+    // ✅ שינוי 5: אי-שמירה ב-DB גם לשאלת הפתיחה (רק שאלות רגילות נשמרות)
+    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
+        currentQuestion.question_id !== 'OPENING_PERSONAL') {
         try {
           await PitchAnswer.create({
             venture_id: venture.id,
@@ -362,7 +374,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       let credibilityScore = 0;
       let strategicThinkingScore = 0;
       
-      // חיפוש תשובה לשאלת competitor (כל אחד מה-IDs האפשריים)
       const competitorAnswer = answersRef.current.find(a => 
         a.question_id?.startsWith('COMPETITOR_CHALLENGE')
       );
