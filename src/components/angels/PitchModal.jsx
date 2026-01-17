@@ -199,6 +199,14 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setIsLoading(true);
 
     try {
+      // ✅ בדיקה: הדפסת נתוני venture
+      console.log("Venture data for question building:", {
+        name: venture.name,
+        mission: venture.mission,
+        revenue_model: venture.revenue_model,
+        funding_requirements: venture.funding_requirements
+      });
+
       const ids = localInvestor.assigned_question_ids;
       const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
       const results = await Promise.all(fetchPromises);
@@ -214,10 +222,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
       };
       
-      // ✅ שאלה עסקית חדשה
+      // ✅ תיקון: שאלה עסקית עם fallbacks למקרה שהשדות ריקים
       const businessQuestion = {
         question_id: 'BUSINESS_DEEP_DIVE',
-        question_text: `I've reviewed your business plan for ${venture.name}, and I'm intrigued by your mission to ${venture.mission || 'transform the market'}. However, I want to dig deeper into the economics. You mentioned ${venture.revenue_model || 'your revenue model'} - can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value, and how did you arrive at your ${venture.funding_requirements || 'funding ask'}? I need to understand if the math really works here.`
+        question_text: `I've reviewed your business plan for ${venture.name}${venture.mission ? `, and I'm intrigued by your mission to ${venture.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${venture.revenue_model ? `You mentioned your revenue model - ${venture.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${venture.funding_requirements ? `, and how did you arrive at your ${venture.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
       };
      
       // בחירת שאלת competitor אקראית
@@ -333,11 +341,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         currentQuestion.question_id !== 'OPENING_PERSONAL' &&
         currentQuestion.question_id !== 'BUSINESS_DEEP_DIVE') {
         try {
+          // ✅ תיקון: הוספת created_by לשמירה
           await PitchAnswer.create({
             venture_id: venture.id,
             investor_id: localInvestor.id,
             question_id: currentQuestion.question_id,
-            answer_text: userAnswer
+            answer_text: userAnswer,
+            created_by: venture.created_by || 'system'
           });
         } catch(err) {
           console.error("Failed to save answer", err);
