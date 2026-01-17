@@ -1,4 +1,4 @@
-// 16126 FIX MULTIQUES
+// 16126 FIX MULTIQUES WORKING
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage } from '@/api/entities.js';

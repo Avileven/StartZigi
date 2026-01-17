@@ -1,13 +1,19 @@
-// venture-landing 261225
 
+// venture-landing 170126
 "use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  // CardDescription, // FIX: לא בשימוש כרגע (אפשר למחוק כדי לנקות warnings)
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@supabase/supabase-js";
-
 
 import {
   Lightbulb,
@@ -21,23 +27,18 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
-
 
 const ReadMoreText = ({ text, maxLength = 300 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!text) return null;
 
-
   if (text.length <= maxLength) {
     return <p className="text-gray-700 leading-relaxed">{text}</p>;
   }
 
-
   const displayedText = isExpanded ? text : `${text.substring(0, maxLength)}...`;
-
 
   return (
     <div>
@@ -53,63 +54,55 @@ const ReadMoreText = ({ text, maxLength = 300 }) => {
   );
 };
 
-
 export default function VentureLanding() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-
 
   const [mvpHtmlContents, setMvpHtmlContents] = useState({});
   const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [mlpHtmlContents, setMlpHtmlContents] = useState({});
   const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
 
-
   const [currentUser, setCurrentUser] = useState(null);
   const [hasLiked, setHasLiked] = useState(false);
-
 
   // Join state
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
 
-
-  // FIX: שומרים invitation_token פעם אחת, ולא מחשבים בתוך JSX
+  // FIX: שומרים invitation_token פעם אחת
   const [invitationToken, setInvitationToken] = useState(null);
 
-
-  // FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים (id וגם invitation_token)
+  // FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
 
-
     const htmlPromises = files.map(async (file) => {
-      const fileName = file.name || "";
+      const fileName = file?.name || "";
+      const fileUrl = file?.url || "";
       const fileExt = fileName.split(".").pop()?.toLowerCase();
       const isHTML = ["html", "htm"].includes(fileExt);
 
-
-      if (isHTML && file.url) {
+      if (isHTML && fileUrl) {
         try {
-          const response = await fetch(file.url);
+          const response = await fetch(fileUrl);
           if (!response.ok) {
             console.error(
-              `Failed to fetch HTML from ${file.url} (${context}): ${response.status} ${response.statusText}`
+              `Failed to fetch HTML from ${fileUrl} (${context}): ${response.status} ${response.statusText}`
             );
             return null;
           }
           const text = await response.text();
-          return { url: file.url, content: text };
+          return { url: fileUrl, content: text };
         } catch (err) {
-          console.error(`Failed to load ${context} HTML from ${file.url}:`, err);
+          console.error(`Failed to load ${context} HTML from ${fileUrl}:`, err);
           return null;
         }
       }
       return null;
     });
-
 
     const results = await Promise.all(htmlPromises);
     const contentMap = {};
@@ -119,18 +112,25 @@ export default function VentureLanding() {
     setContentState(contentMap);
   }, []);
 
-
   const loadVenture = useCallback(
     async (user) => {
       setIsLoading(true);
 
-
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get("invitation_token");
+        const ventureId = urlParams.get("id");
 
+        // ====== FIX: דיבאג קצר וברור (לא משפיע פונקציונלית) ======
+        console.log("[venture-landing] loadVenture", {
+          hasToken: !!token,
+          ventureId,
+          userEmail: user?.email || null,
+          userId: user?.id || null,
+        });
+        // ========================================================
 
-        // FIX: מסלול הזמנה (אנונימי)
+        // ====== מסלול הזמנה (אנונימי) ======
         if (token) {
           const inviteClient = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -138,39 +138,50 @@ export default function VentureLanding() {
             { global: { headers: { "invitation-token": token } } }
           );
 
-
           const { data: invite, error: inviteErr } = await inviteClient
             .from("co_founder_invitations")
-            .select("venture_id,status,invitee_email,invitation_token")
+            .select("venture_id,status,invitee_email,invitation_token,invitation_type")
             .eq("invitation_token", token)
-            .single();
+            .maybeSingle(); // FIX: במקום single() שמפיל ב-406 כשאין שורה
 
-
+          // FIX: אם אין הזמנה/שגיאה – תחזיר null בצורה נקייה
           if (inviteErr || !invite) {
+            console.error("[venture-landing] invite not found / error", inviteErr);
             setVenture(null);
-            setIsLoading(false);
             return;
           }
 
+          // FIX: לוודא שהזמנה במצב שמותר לקרוא לפיו (לפחות sent)
+          if (!["sent", "accepted"].includes(invite.status)) {
+            console.warn("[venture-landing] invite status not allowed:", invite.status);
+            setVenture(null);
+            return;
+          }
 
           const ventureUuid = String(invite.venture_id);
+
           const { data: ventures, error: vErr } = await inviteClient
             .from("ventures")
             .select("*")
             .eq("id", ventureUuid);
 
-
-          if (vErr) throw vErr;
-
+          if (vErr) {
+            console.error("[venture-landing] venture fetch error (token route):", vErr);
+            setVenture(null);
+            return;
+          }
 
           if (ventures && ventures.length > 0) {
             const loadedVenture = ventures[0];
             setVenture(loadedVenture);
 
-
             // FIX: טען גם קבצי HTML במסלול invitation_token
             if (loadedVenture.mvp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+              await loadHtmlFiles(
+                loadedVenture.mvp_data.uploaded_files,
+                setMvpHtmlContents,
+                "MVP"
+              );
             }
             if (loadedVenture.revenue_model_data?.uploaded_files) {
               await loadHtmlFiles(
@@ -180,7 +191,11 @@ export default function VentureLanding() {
               );
             }
             if (loadedVenture.mlp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+              await loadHtmlFiles(
+                loadedVenture.mlp_data.uploaded_files,
+                setMlpHtmlContents,
+                "MLP"
+              );
             }
             if (loadedVenture.business_plan_data?.uploaded_files) {
               await loadHtmlFiles(
@@ -193,43 +208,51 @@ export default function VentureLanding() {
             setVenture(null);
           }
 
-
-          setIsLoading(false);
-          return;
+          return; // FIX: מסלול token הסתיים
         }
 
-
-        // מסלול רגיל לפי ?id=
-        const ventureId = urlParams.get("id");
+        // ====== מסלול רגיל לפי ?id= ======
         if (ventureId) {
           const { data: ventures, error } = await supabase
             .from("ventures")
             .select("*")
             .eq("id", ventureId);
 
+          // FIX: דיבאג אם זה RLS/נתונים
+          console.log("[venture-landing] ventures result (id route)", {
+            count: ventures?.length || 0,
+            error: error || null,
+          });
 
           if (error) throw error;
-
 
           if (ventures && ventures.length > 0) {
             const loadedVenture = ventures[0];
             setVenture(loadedVenture);
 
-
             if (user) {
-              if (loadedVenture.liked_by_users && loadedVenture.liked_by_users.includes(user.id)) {
+              if (
+                loadedVenture.liked_by_users &&
+                loadedVenture.liked_by_users.includes(user.id)
+              ) {
                 setHasLiked(true);
-              } else if (user.liked_venture_ids && user.liked_venture_ids.includes(loadedVenture.id)) {
+              } else if (
+                user.liked_venture_ids &&
+                user.liked_venture_ids.includes(loadedVenture.id)
+              ) {
                 setHasLiked(true);
               } else {
                 setHasLiked(false);
               }
             }
 
-
             // טעינת HTML במסלול id
             if (loadedVenture.mvp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+              await loadHtmlFiles(
+                loadedVenture.mvp_data.uploaded_files,
+                setMvpHtmlContents,
+                "MVP"
+              );
             }
             if (loadedVenture.revenue_model_data?.uploaded_files) {
               await loadHtmlFiles(
@@ -239,7 +262,11 @@ export default function VentureLanding() {
               );
             }
             if (loadedVenture.mlp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+              await loadHtmlFiles(
+                loadedVenture.mlp_data.uploaded_files,
+                setMlpHtmlContents,
+                "MLP"
+              );
             }
             if (loadedVenture.business_plan_data?.uploaded_files) {
               await loadHtmlFiles(
@@ -256,19 +283,17 @@ export default function VentureLanding() {
         }
       } catch (error) {
         console.error("Error loading venture:", error);
+        setVenture(null); // FIX: אם יש חריגה – נקה state בצורה צפויה
+      } finally {
+        setIsLoading(false); // FIX: תמיד יוריד loading גם אם חזרנו מוקדם
       }
-
-
-      setIsLoading(false);
     },
     [loadHtmlFiles]
   );
 
-
-  // FIX: handleJoinAsCofounder חייב להיות בסקופ של הקומפוננטה (לא בתוך loadVenture)
+  // FIX: handleJoinAsCofounder בסקופ הקומפוננטה
   const handleJoinAsCofounder = useCallback(async () => {
     setJoinError(null);
-
 
     // 1) חייב להיות משתמש מחובר
     if (!currentUser) {
@@ -277,12 +302,10 @@ export default function VentureLanding() {
       return;
     }
 
-
     if (!invitationToken) {
       setJoinError("Missing invitation token in URL.");
       return;
     }
-
 
     setIsJoining(true);
     try {
@@ -291,29 +314,23 @@ export default function VentureLanding() {
         p_invitation_token: invitationToken,
       });
 
-
       if (error) throw error;
-
 
       if (data?.error) {
         setJoinError(data.error);
         return;
       }
 
-
       if (data?.status === "success") {
         setJoinSuccess(true);
 
-
-        // אופציונלי: לרענן venture כדי להציג את המצב החדש
+        // אופציונלי: לרענן venture
         await loadVenture(currentUser);
 
-
-        // שלב הבא: להעיף לדשבורד
+        // להעיף לדשבורד
         window.location.href = "/dashboard";
         return;
       }
-
 
       setJoinError("Unexpected response from server.");
     } catch (e) {
@@ -324,34 +341,34 @@ export default function VentureLanding() {
     }
   }, [currentUser, invitationToken, loadVenture]);
 
-
   useEffect(() => {
     const fetchUserAndVenture = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("invitation_token");
 
-
-      // FIX: שומרים token ב-state
       setInvitationToken(token);
 
-
-      // FIX: אם זה דף הזמנה – לא קוראים auth.me() בכלל
+      // אם זה דף הזמנה – לא קוראים auth.me() בכלל
       if (token) {
         setCurrentUser(null);
         await loadVenture(null);
         return;
       }
 
-
-      // במסלול רגיל: כן מנסים להביא משתמש, אבל לא מפילים את הכל אם אין session
+      // במסלול רגיל: מביאים משתמש (עם fallback אם auth.me לא קיים)
       let user = null;
       try {
-        user = await auth.me();
+        if (auth?.me) {
+          user = await auth.me();
+        } else {
+          // FIX: fallback נקי אם auth.me לא קיים
+          const { data } = await supabase.auth.getUser();
+          user = data?.user || null;
+        }
       } catch (e) {
         user = null;
       }
       setCurrentUser(user);
-
 
       if (urlParams.get("welcome") === "true") {
         setShowWelcome(true);
@@ -360,14 +377,11 @@ export default function VentureLanding() {
         window.history.replaceState({}, document.title, newUrl);
       }
 
-
       await loadVenture(user);
     };
 
-
     fetchUserAndVenture();
   }, [loadVenture]);
-
 
   const handleLike = async () => {
     if (!currentUser) {
@@ -375,33 +389,27 @@ export default function VentureLanding() {
       return;
     }
 
-
     if (venture.created_by === currentUser.email) {
       alert("You cannot like your own venture!");
       return;
     }
-
 
     if (hasLiked) {
       alert("You have already liked this venture!");
       return;
     }
 
-
     try {
       setHasLiked(true);
       const newLikesCount = (venture.likes_count || 0) + 1;
       setVenture((prev) => ({ ...prev, likes_count: newLikesCount }));
-
 
       const { error: updateError } = await supabase
         .from("ventures")
         .update({ likes_count: newLikesCount })
         .eq("id", venture.id);
 
-
       if (updateError) throw updateError;
-
 
       const { error: messageError } = await supabase.from("venture_messages").insert([
         {
@@ -417,9 +425,7 @@ export default function VentureLanding() {
         },
       ]);
 
-
       if (messageError) throw messageError;
-
 
       alert("Thank you for liking this venture!");
     } catch (error) {
@@ -430,11 +436,9 @@ export default function VentureLanding() {
     }
   };
 
-
   const handleInteractiveFeedbackSubmitted = async () => {
     await loadVenture(currentUser);
   };
-
 
   const getSectorLabel = (sector) => {
     const labels = {
@@ -449,7 +453,6 @@ export default function VentureLanding() {
     return labels[sector] || sector;
   };
 
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -458,18 +461,18 @@ export default function VentureLanding() {
     );
   }
 
-
   if (!venture) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Venture Not Found</h1>
-          <p className="text-gray-600">The venture you're looking for doesn't exist or has been removed.</p>
+          <p className="text-gray-600">
+            The venture you're looking for doesn't exist or has been removed.
+          </p>
         </div>
       </div>
     );
   }
-
 
   const hasSelectedFeaturesForMVPFeedback =
     venture.mvp_uploaded &&
@@ -477,11 +480,14 @@ export default function VentureLanding() {
     Array.isArray(venture.mvp_data.feature_matrix) &&
     venture.mvp_data.feature_matrix.some((f) => f.isSelected);
 
-
   return (
     <>
-      {showWelcome && <WelcomeOverlay ventureName={venture.name} onClose={() => setShowWelcome(false)} />}
-
+      {showWelcome && (
+        <WelcomeOverlay
+          ventureName={venture.name}
+          onClose={() => setShowWelcome(false)}
+        />
+      )}
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <main className="max-w-5xl mx-auto p-4 md:p-8">
@@ -489,7 +495,9 @@ export default function VentureLanding() {
             <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
+                  <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
+                    {venture.name}
+                  </CardTitle>
                   <p className="text-gray-600 text-lg">{venture.description}</p>
                   <div className="flex items-center gap-4 mt-4">
                     <Badge variant="outline" className="flex items-center gap-1">
@@ -500,7 +508,6 @@ export default function VentureLanding() {
               </div>
             </CardHeader>
           </Card>
-
 
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <Card className="shadow-lg">
@@ -515,7 +522,6 @@ export default function VentureLanding() {
               </CardContent>
             </Card>
 
-
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -529,11 +535,11 @@ export default function VentureLanding() {
             </Card>
           </div>
 
-
-                    {venture.mvp_uploaded && venture.mvp_data && (
+          {venture.mvp_uploaded && venture.mvp_data && (
             <div className="mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
-
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+                Our Minimum Viable Product (MVP)
+              </h2>
 
               <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
                 <div className="grid lg:grid-cols-2 gap-8">
@@ -546,7 +552,6 @@ export default function VentureLanding() {
                       <ReadMoreText text={venture.mvp_data.product_definition} />
                     </div>
 
-
                     <div>
                       <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
                         <Code className="w-5 h-5 text-blue-600" />
@@ -554,7 +559,6 @@ export default function VentureLanding() {
                       </h3>
                       <ReadMoreText text={venture.mvp_data.technical_specs} />
                     </div>
-
 
                     <div>
                       <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
@@ -565,120 +569,113 @@ export default function VentureLanding() {
                     </div>
                   </div>
 
-
                   <div className="space-y-6">
-                    {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
+                    {venture.mvp_data.uploaded_files &&
+                      venture.mvp_data.uploaded_files.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
 
+                          <div className="space-y-4">
+                            {venture.mvp_data.uploaded_files.map((file, index) => {
+                              const fileName = file?.name || "";
+                              const fileUrl = file?.url || "";
+                              const fileExt = fileName.split(".").pop()?.toLowerCase();
 
-                        <div className="space-y-4">
-                          {venture.mvp_data.uploaded_files.map((file, index) => {
-                            const fileName = file.name || "";
-                            const fileUrl = file.url || "";
-                            const fileExt = fileName.split(".").pop()?.toLowerCase();
+                              const isHTML = ["html", "htm"].includes(fileExt);
+                              const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+                              const isPDF = fileExt === "pdf";
 
+                              if (isHTML) {
+                                const content = mvpHtmlContents[fileUrl];
+                                if (content) {
+                                  return (
+                                    <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                      <div className="bg-gray-100 px-4 py-2 border-b">
+                                        <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                      </div>
+                                      <iframe
+                                        srcDoc={content}
+                                        className="w-full h-[600px] border-0"
+                                        title={fileName}
+                                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  );
+                                }
 
-                            const isHTML = ["html", "htm"].includes(fileExt);
-                            const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
-                            const isPDF = fileExt === "pdf";
+                                return (
+                                  <div
+                                    key={index}
+                                    className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]"
+                                  >
+                                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                                    <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+                                  </div>
+                                );
+                              }
 
-
-                            if (isHTML) {
-                              const content = mvpHtmlContents[fileUrl];
-                              if (content) {
+                              if (isImage) {
                                 return (
                                   <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
                                     <div className="bg-gray-100 px-4 py-2 border-b">
                                       <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
                                     </div>
-                                    <iframe
-                                      srcDoc={content}
-                                      className="w-full h-[600px] border-0"
-                                      title={fileName}
-                                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                                      loading="lazy"
-                                    />
+                                    <div className="p-4">
+                                      <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+                                    </div>
                                   </div>
                                 );
                               }
 
+                              if (isPDF) {
+                                return (
+                                  <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                    <div className="bg-gray-100 px-4 py-2 border-b">
+                                      <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                    </div>
+                                    <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+                                  </div>
+                                );
+                              }
 
                               return (
-                                <div
-                                  key={index}
-                                  className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]"
-                                >
-                                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                                  <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+                                <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
+                                  <a
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                                  >
+                                    <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
+                                    <div>
+                                      <span className="text-sm text-blue-600 hover:underline block font-medium">
+                                        {fileName}
+                                      </span>
+                                      <span className="text-xs text-gray-500">Click to view</span>
+                                    </div>
+                                    <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                                  </a>
                                 </div>
                               );
-                            }
-
-
-                            if (isImage) {
-                              return (
-                                <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                  <div className="bg-gray-100 px-4 py-2 border-b">
-                                    <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                  </div>
-                                  <div className="p-4">
-                                    <img src={fileUrl} alt={fileName} className="w-full h-auto" />
-                                  </div>
-                                </div>
-                              );
-                            }
-
-
-                            if (isPDF) {
-                              return (
-                                <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                  <div className="bg-gray-100 px-4 py-2 border-b">
-                                    <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                  </div>
-                                  <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
-                                </div>
-                              );
-                            }
-
-
-                            return (
-                              <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
-                                {/* FIX: href__ -> href */}
-                                <a
-                                  href={fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg"
-                                >
-                                  <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                                  <div>
-                                    <span className="text-sm text-blue-600 hover:underline block font-medium">
-                                      {fileName}
-                                    </span>
-                                    <span className="text-xs text-gray-500">Click to view</span>
-                                  </div>
-                                  <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
-                                </a>
-                              </div>
-                            );
-                          })}
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-
           {hasSelectedFeaturesForMVPFeedback && (
             <div className="mb-12">
-              <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
+              <InteractiveFeedbackForm
+                venture={venture}
+                onFeedbackSubmitted={handleInteractiveFeedbackSubmitted}
+              />
             </div>
           )}
-
 
           <Card className="shadow-lg mb-12">
             <CardHeader>
@@ -688,7 +685,9 @@ export default function VentureLanding() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">Show your support for {venture.name} by liking this venture!</p>
+              <p className="text-gray-600 mb-4">
+                Show your support for {venture.name} by liking this venture!
+              </p>
               <Button
                 onClick={handleLike}
                 disabled={hasLiked || (currentUser && venture.created_by === currentUser.email)}
@@ -698,7 +697,6 @@ export default function VentureLanding() {
                 {hasLiked ? "Liked!" : "Like This Venture"}
               </Button>
 
-
               {hasLiked && <p className="text-sm text-green-600 mt-2">Thank you for your support!</p>}
             </CardContent>
           </Card>
@@ -707,6 +705,4 @@ export default function VentureLanding() {
     </>
   );
 }
-
-
 
