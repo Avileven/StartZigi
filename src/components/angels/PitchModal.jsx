@@ -1,7 +1,14 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-// אני מייבא כאן את השמות הכי נפוצים, תבדוק אם masterQuestion אצלך באות גדולה ב-Entities
-import { investor as investorEntity, masterQuestion, pitchAnswer, venture as ventureEntity, ventureMessage, businessPlan } from '@/api/entities.js';
+// ✅ תיקון השמות לפי ה-Log שלך: MasterQuestion ו-PitchAnswer באות גדולה
+import { 
+  investor as investorEntity, 
+  MasterQuestion, 
+  PitchAnswer, 
+  venture as ventureEntity, 
+  ventureMessage, 
+  businessPlan 
+} from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,46 +30,47 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const loadQuestions = useCallback(async () => {
     if (!investor?.assigned_question_ids || !venture?.id || isInitialLoadDone.current) return;
    
-    // בדיקה מהירה: אם משהו כאן undefined, זה יופיע לך ישר ב-Console
-    console.log("Checking entities:", { masterQuestion, businessPlan, pitchAnswer });
-
     isInitialLoadDone.current = true;
     setIsLoading(true);
 
     try {
-      // 1. שליפת המודל העסקי
+      // 1. שליפת המודל העסקי מהטבלה business_plans
       const plans = await businessPlan.filter({ 'venture_id': venture.id });
       const revenueModelText = plans?.[0]?.revenue_model || "not specified";
 
-      // 2. שליפת השאלות - כאן קרתה השגיאה
+      // 2. שליפת השאלות המוקצות למשקיע
       const ids = investor.assigned_question_ids;
       
-      // ביצוע השאילתות
-      const results = await Promise.all(ids.map(id => masterQuestion.filter({ 'question_id': id })));
+      // ✅ שימוש ב-MasterQuestion (אות גדולה) כפי שמופיע ב-DB שלכם
+      const results = await Promise.all(ids.map(id => MasterQuestion.filter({ 'question_id': id })));
       const fetchedQuestions = results.flat().filter(Boolean);
      
       const baseQuestions = ids.map(id => {
         const q = fetchedQuestions.find(foundQ => foundQ.question_id === id);
         if (!q) return null;
 
+        // הזרקת השאלה הדינמית מה-revenue_model
         if (id === 'REVENUE_MODEL_CHALLENGE') {
           return {
             ...q,
-            question_text: `Regarding your business plan: I saw your revenue model is "${revenueModelText}". How do you plan to scale this?`
+            question_text: `I noticed your revenue model is: "${revenueModelText}". How do you plan to scale this effectively?`
           };
         }
         return q;
       }).filter(Boolean);
      
       const finalQuestions = [
-        { question_id: 'OPENING', question_text: `Hi, tell me about ${venture.name}.` },
+        { question_id: 'OPENING', question_text: `Hi, I'm ${investor.name}. Let's talk about ${venture.name}.` },
         ...baseQuestions
       ];
      
       setQuestions(finalQuestions);
-      setConversation([{ type: 'bot', text: `Hi, I'm ${investor.name}.` }, { type: 'bot', text: finalQuestions[0].question_text }]);
+      setConversation([
+        { type: 'bot', text: `Meeting started with ${investor.name}.` },
+        { type: 'bot', text: finalQuestions[0].question_text }
+      ]);
     } catch (error) {
-      console.error("The code failed here:", error);
+      console.error("Load error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -90,23 +98,28 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
    
     const currentQ = questions[currentQuestionIndex];
 
+    // ✅ שימוש ב-PitchAnswer (אות גדולה) לשמירה
     if (currentQ.question_id !== 'OPENING') {
-        await pitchAnswer.create({ 
-          venture_id: venture.id, 
-          investor_id: investor.id, 
-          question_id: currentQ.question_id, 
-          answer_text: userAnswer 
-        });
+        try {
+          await PitchAnswer.create({ 
+            venture_id: venture.id, 
+            investor_id: investor.id, 
+            question_id: currentQ.question_id, 
+            answer_text: userAnswer 
+          });
+        } catch(err) { console.error("Save error:", err); }
     }
 
     const nextIdx = currentQuestionIndex + 1;
     if (nextIdx < questions.length) {
-      setConversation(prev => [...prev, { type: 'bot', text: questions[nextIdx].question_text }]);
-      setCurrentQuestionIndex(nextIdx);
-      setIsAnswering(false);
+      setTimeout(() => {
+        setConversation(prev => [...prev, { type: 'bot', text: questions[nextIdx].question_text }]);
+        setCurrentQuestionIndex(nextIdx);
+        setIsAnswering(false);
+      }, 800);
     } else {
       setIsFinished(true);
-      onClose();
+      setTimeout(onClose, 1500);
     }
   };
 
@@ -114,24 +127,31 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl h-[80vh] flex flex-col p-4">
-        <div className="flex justify-between border-b pb-2 mb-4">
-          <h2 className="font-bold">Meeting with {investor?.name}</h2>
-          <button onClick={onClose}>Close</button>
+      <div className="bg-white rounded-lg w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+          <h2 className="font-bold">Pitch Session: {investor?.name}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {isLoading ? <Loader2 className="animate-spin mx-auto" /> : conversation.map((msg, i) => (
-            <div key={i} className={msg.type === 'user' ? 'text-right' : 'text-left'}>
-              <span className={`inline-block p-2 rounded ${msg.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
-                {msg.text}
-              </span>
-            </div>
-          ))}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin" /></div>
+          ) : (
+            conversation.map((msg, i) => (
+              <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-xl ${msg.type === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={chatEndRef} />
         </div>
-        <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-          <Textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} className="flex-1" />
-          <Button type="submit" disabled={isAnswering}><Send size={18} /></Button>
-        </form>
+        {!isFinished && !isLoading && (
+          <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2 bg-white">
+            <Textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="Your answer..." className="flex-1 min-h-[50px]" />
+            <Button type="submit" disabled={isAnswering} className="h-full"><Send size={18} /></Button>
+          </form>
+        )}
       </div>
     </div>
   );
