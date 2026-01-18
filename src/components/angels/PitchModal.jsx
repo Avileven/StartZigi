@@ -1,13 +1,12 @@
-// 16126 FIX MULTIQUES WORKING + BUSINESS QUESTION
+// 16126 FIX MULTIQUES WORKING + BUSINESS QUESTION FINAL
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage } from '@/api/entities.js';
+import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, BusinessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';
 
-// ✅ בנק של 5 שאלות competitor - תיבחר אחת אקראית
 const COMPETITOR_QUESTIONS_BANK = [
   {
     question_id: 'COMPETITOR_CHALLENGE_1',
@@ -199,11 +198,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setIsLoading(true);
 
     try {
-      // ✅ טעינת venture מלא מה-DB כדי לקבל את כל השדות
-      const fullVentures = await Venture.filter({ id: venture.id });
-      const fullVenture = fullVentures[0] || venture;
+      // טעינת business plan מה-DB
+      const businessPlans = await BusinessPlan.filter({ venture_id: venture.id });
+      const businessPlan = businessPlans[0];
       
-      console.log("Full venture data:", fullVenture);
+      console.log("Business plan data:", businessPlan);
 
       const ids = localInvestor.assigned_question_ids;
       const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
@@ -217,13 +216,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       // שאלת פתיחה
       const openingQuestion = {
         question_id: 'OPENING_PERSONAL',
-        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${fullVenture.name}' for your project? I'd love to hear the story behind it.`
+        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
       };
       
-      // ✅ שאלה עסקית עם נתונים מלאים מה-DB
+      // שאלה עסקית עם נתונים מה-business plan
       const businessQuestion = {
         question_id: 'BUSINESS_DEEP_DIVE',
-        question_text: `I've reviewed your business plan for ${fullVenture.name}${fullVenture.mission ? `, and I'm intrigued by your mission to ${fullVenture.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${fullVenture.revenue_model ? `You mentioned your revenue model - ${fullVenture.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${fullVenture.funding_requirements ? `, and how did you arrive at your ${fullVenture.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
+        question_text: `I've reviewed your business plan for ${venture.name}${businessPlan?.mission ? `, and I'm intrigued by your mission to ${businessPlan.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${businessPlan?.revenue_model ? `You mentioned your revenue model - ${businessPlan.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${businessPlan?.funding_requirements ? `, and how did you arrive at your ${businessPlan.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
       };
      
       // בחירת שאלת competitor אקראית
@@ -239,10 +238,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         ...baseQuestions.slice(insertPosition)
       ];
       
-      // ✅ סידור סופי: פתיחה → עסקית → שאלות רגילות+competitor
+      // סידור סופי: פתיחה → עסקית → שאלות רגילות+competitor
       const finalQuestions = [openingQuestion, businessQuestion, ...questionsWithCompetitor];
       
-      // ✅ עדכון index (+2 כי יש 2 שאלות קבועות לפני)
+      // עדכון index של competitor (+2 כי יש 2 שאלות קבועות לפני)
       competitorQuestionIndexRef.current = insertPosition + 2;
      
       setQuestions(finalQuestions);
@@ -265,7 +264,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     } finally {
       setIsLoading(false);
     }
-  }, [localInvestor, venture.id]);
+  }, [localInvestor, venture.id, venture.name]);
 
   useEffect(() => {
     if (isOpen) {
@@ -334,12 +333,11 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         timePressureTimeoutsRef.current = [];
     }
 
-    // ✅ אי-שמירה ב-DB לשאלות מיוחדות (פתיחה, עסקית, competitor)
+    // אי-שמירה ב-DB לשאלות מיוחדות
     if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
         currentQuestion.question_id !== 'OPENING_PERSONAL' &&
         currentQuestion.question_id !== 'BUSINESS_DEEP_DIVE') {
         try {
-          // ✅ תיקון: הוספת created_by לשמירה
           await PitchAnswer.create({
             venture_id: venture.id,
             investor_id: localInvestor.id,
