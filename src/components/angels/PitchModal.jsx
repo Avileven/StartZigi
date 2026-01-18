@@ -1,12 +1,14 @@
-// 16126 FIX MULTIQUES WORKING + BUSINESS QUESTION FINAL
+// 16126 FIX MULTIQUES WORKING PLUS TEST ONE QU
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, BusinessPlan } from '@/api/entities.js';
+import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';
 
+
+// ✅ בנק של 5 שאלות competitor - תיבחר אחת אקראית
 const COMPETITOR_QUESTIONS_BANK = [
   {
     question_id: 'COMPETITOR_CHALLENGE_1',
@@ -30,46 +32,58 @@ const COMPETITOR_QUESTIONS_BANK = [
   }
 ];
 
+
 const COMPETITOR_EVALUATION_PROMPT = `You are evaluating an entrepreneur's response to a competitor challenge question. Use this detailed scoring framework:
 
+
 SCORING DIMENSIONS (1-10 each):
+
 
 SPECIFICITY (30% weight):
 • 1-3: Vague generalizations ("we're different", "better quality")
 • 4-6: Some specifics but mostly general claims  
 • 7-10: Concrete details, numbers, examples, specific use cases
 
+
 CREDIBILITY (40% weight):
 • 1-3: Obviously fabricating, contradicts original pitch, unrealistic claims
 • 4-6: Plausible but unverifiable claims, some hedge words
 • 7-10: Honest admissions, verifiable claims, or realistic differentiation
+
 
 STRATEGIC THINKING (30% weight):
 • 1-3: No clear strategy, scattered thoughts, missing the point
 • 4-6: Basic understanding, surface-level differences
 • 7-10: Deep strategic insight, clear competitive positioning, market awareness
 
+
 CALCULATION: final_score = (specificity * 0.3) + (credibility * 0.4) + (strategic_thinking * 0.3)
+
 
 Please evaluate the response and provide EXACTLY this format:
 
+
 COMPETITOR CHALLENGE EVALUATION:
 Specificity: [score]/10 - [brief rationale]
-Credibility: [score]/10 - [brief rationale] 
+Credibility: [score]/10 - [brief rationale]
 Strategic Thinking: [score]/10 - [brief rationale]
 Final Score: [calculated score]/10
 
+
 INVESTOR FEEDBACK: [2-3 sentences of feedback based on score]`;
+
 
 const calculateTeamScore = (venture) => {
     const founderPoints = (venture.founders_count || 1) >= 2 ? 100 : 70;
-    
+   
     let commitmentPoints = 30;
     if (venture.weekly_commitment === 'medium') commitmentPoints = 50;
     if (venture.weekly_commitment === 'high') commitmentPoints = 100;
 
+
     return (founderPoints * 0.60) + (commitmentPoints * 0.40);
 };
+
 
 const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, competitorScore) => {
     if (competitorScore < 4.0) {
@@ -82,40 +96,45 @@ const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, competi
         };
     }
 
+
     if (investor.investor_type === 'no_go') {
-        return { 
-            decision: 'Reject', 
+        return {
+            decision: 'Reject',
             reason: 'Thank you for your time, but we have decided not to move forward as we are currently only advising our existing portfolio companies.',
             competitorScore,
             effectiveTeamScore
         };
     }
 
+
     if (investor.investor_type === 'team_focused' && (venture.founders_count || 1) < 2) {
-        return { 
-            decision: 'Reject', 
+        return {
+            decision: 'Reject',
             reason: 'We have a strong focus on ventures with multiple co-founders and have decided to pass at this time.',
             competitorScore,
             effectiveTeamScore
         };
     }
 
+
     let finalCheckSize;
     let finalValuation;
     const effectiveTeamScoreMultiplier = effectiveTeamScore / 100;
 
+
     if (investor.investor_type === 'flexible') {
-        const isFocusSector = investor.focus_sectors?.some(sector => 
-            venture.sector === sector || 
+        const isFocusSector = investor.focus_sectors?.some(sector =>
+            venture.sector === sector ||
             (sector === 'food_and_beverage' && venture.sector === 'consumer_apps') ||
             (sector === 'sustainable_fashion' && venture.sector === 'climatetech_energy')
         );
-        
+       
         const checkMultiplier = isFocusSector ? 1.0 : 0.5;
         const valuationMultiplier = isFocusSector ? 1.0 : 0.4;
-        
+       
         finalCheckSize = Math.round((50000 + (150000 - 50000) * effectiveTeamScoreMultiplier * checkMultiplier) / 1000) * 1000;
         finalValuation = Math.round((1000000 + (2500000 - 1000000) * effectiveTeamScoreMultiplier * valuationMultiplier) / 100000) * 100000;
+
 
         return {
             decision: 'Invest',
@@ -138,6 +157,7 @@ const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, competi
         };
     }
 
+
     if (investor.investor_type === 'team_focused') {
          finalCheckSize = Math.round((60000 + (130000 - 60000) * effectiveTeamScoreMultiplier) / 1000) * 1000;
          finalValuation = Math.round((1000000 + (4000000 - 1000000) * effectiveTeamScoreMultiplier) / 100000) * 100000;
@@ -158,14 +178,15 @@ const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, competi
             }
          };
     }
-    
-    return { 
-        decision: 'Reject', 
+   
+    return {
+        decision: 'Reject',
         reason: 'After careful consideration, we have decided not to proceed at this time. We wish you the best of luck.',
         competitorScore,
         effectiveTeamScore
     };
 };
+
 
 export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [questions, setQuestions] = useState([]);
@@ -183,13 +204,16 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const isInitialLoadDone = useRef(false);
   const competitorQuestionIndexRef = useRef(-1);
 
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
+
 
   const loadQuestions = useCallback(async () => {
     if (!localInvestor?.assigned_question_ids || isInitialLoadDone.current) return;
@@ -197,13 +221,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     isInitialLoadDone.current = true;
     setIsLoading(true);
 
-    try {
-      // טעינת business plan מה-DB
-      const businessPlans = await BusinessPlan.filter({ venture_id: venture.id });
-      const businessPlan = businessPlans[0];
-      
-      console.log("Business plan data:", businessPlan);
 
+    try {
       const ids = localInvestor.assigned_question_ids;
       const fetchPromises = ids.map(id => MasterQuestion.filter({ 'question_id': id }));
       const results = await Promise.all(fetchPromises);
@@ -213,36 +232,30 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         .map(id => fetchedQuestions.find(q => q.question_id === id))
         .filter(Boolean);
      
-      // שאלת פתיחה
+      // ✅ שינוי 1: הוספת שאלת פתיחה קבועה עם שם המיזם
       const openingQuestion = {
         question_id: 'OPENING_PERSONAL',
         question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
       };
-      
-      // שאלה עסקית עם נתונים מה-business plan
-      const businessQuestion = {
-        question_id: 'BUSINESS_DEEP_DIVE',
-        question_text: `I've reviewed your business plan for ${venture.name}${businessPlan?.mission ? `, and I'm intrigued by your mission to ${businessPlan.mission.substring(0, 150)}...` : ''}. However, I want to dig deeper into the economics. ${businessPlan?.revenue_model ? `You mentioned your revenue model - ${businessPlan.revenue_model.substring(0, 100)}... ` : ''}Can you walk me through the unit economics? Specifically, what's your customer acquisition cost, expected lifetime value${businessPlan?.funding_requirements ? `, and how did you arrive at your ${businessPlan.funding_requirements.split('.')[0]} funding ask` : ''}? I need to understand if the math really works here.`
-      };
      
-      // בחירת שאלת competitor אקראית
+      // ✅ בחירת שאלת competitor אקראית מהבנק
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[
         Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)
       ];
      
-      // הזרקת competitor למיקום אקראי
+      // ✅ הזרקת שאלת הcompetitor למיקום אקראי בשאלות הרגילות
       const insertPosition = Math.floor(Math.random() * (baseQuestions.length + 1));
       const questionsWithCompetitor = [
         ...baseQuestions.slice(0, insertPosition),
         randomCompetitorQuestion,
         ...baseQuestions.slice(insertPosition)
       ];
-      
-      // סידור סופי: פתיחה → עסקית → שאלות רגילות+competitor
-      const finalQuestions = [openingQuestion, businessQuestion, ...questionsWithCompetitor];
-      
-      // עדכון index של competitor (+2 כי יש 2 שאלות קבועות לפני)
-      competitorQuestionIndexRef.current = insertPosition + 2;
+     
+      // ✅ שינוי 2: הוספת שאלת הפתיחה בתחילת המערך
+      const finalQuestions = [openingQuestion, ...questionsWithCompetitor];
+     
+      // ✅ שינוי 3: עדכון index של שאלת competitor (+1 בגלל שאלת הפתיחה)
+      competitorQuestionIndexRef.current = insertPosition + 1;
      
       setQuestions(finalQuestions);
      
@@ -258,13 +271,15 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         ]);
       }, 1500);
 
+
     } catch (error) {
       console.error("Error loading questions:", error);
       isInitialLoadDone.current = false;
     } finally {
       setIsLoading(false);
     }
-  }, [localInvestor, venture.id, venture.name]);
+  }, [localInvestor, venture.name]); // ✅ שינוי 4: הוספת venture.name ל-dependencies
+
 
   useEffect(() => {
     if (isOpen) {
@@ -280,24 +295,28 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     }
   }, [isOpen, loadQuestions, localInvestor]);
 
+
   const startTimePressureMessages = useCallback(() => {
     timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     timePressureTimeoutsRef.current = [];
 
+
     const timeout1 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "Take your time, but I need a concise answer." }]);
     }, 30000);
-    
+   
     const timeout2 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "I have another meeting in 10 minutes..." }]);
     }, 60000);
-    
+   
     const timeout3 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "How are you thinking about this?" }]);
     }, 180000);
 
+
     timePressureTimeoutsRef.current = [timeout1, timeout2, timeout3];
   }, []);
+
 
   useEffect(() => {
     if (currentQuestionIndex === competitorQuestionIndexRef.current && competitorQuestionIndexRef.current !== -1 && !isFinished) {
@@ -307,14 +326,17 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       timePressureTimeoutsRef.current = [];
     }
 
+
     return () => {
       timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     };
   }, [currentQuestionIndex, isFinished, startTimePressureMessages]);
 
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!userInput.trim() || isAnswering) return;
+
 
     setIsAnswering(true);
     const userAnswer = userInput;
@@ -328,32 +350,34 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       answer_text: userAnswer
     });
 
+
+    // עצירת טיימרים אם זו שאלת competitor
     if (currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
         timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timePressureTimeoutsRef.current = [];
     }
 
-    // אי-שמירה ב-DB לשאלות מיוחדות
-    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
-        currentQuestion.question_id !== 'OPENING_PERSONAL' &&
-        currentQuestion.question_id !== 'BUSINESS_DEEP_DIVE') {
+
+    // ✅ שינוי 5: אי-שמירה ב-DB גם לשאלת הפתיחה (רק שאלות רגילות נשמרות)
+    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') &&
+        currentQuestion.question_id !== 'OPENING_PERSONAL') {
         try {
           await PitchAnswer.create({
             venture_id: venture.id,
             investor_id: localInvestor.id,
             question_id: currentQuestion.question_id,
-            answer_text: userAnswer,
-            created_by: venture.created_by || 'system'
+            answer_text: userAnswer
           });
         } catch(err) {
           console.error("Failed to save answer", err);
         }
     }
 
+
     setTimeout(() => {
       const ack = ["I see.", "That's an interesting point.", "Got it.", "Makes sense.", "Thank you for that insight."];
       const randomAck = ack[Math.floor(Math.random() * ack.length)];
-      
+     
       const nextIndex = currentQuestionIndex + 1;
      
       if (nextIndex < questions.length) {
@@ -370,13 +394,14 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           { type: 'bot', text: "Thank you for your time and for answering my questions. I will consider everything we discussed and let you know shortly about our decision." }
         ]);
         setIsFinished(true);
-        
+       
         setTimeout(async () => {
           await evaluateAndMakeDecision();
         }, 3000);
       }
     }, 1000);
   };
+
 
   const evaluateAndMakeDecision = async () => {
     try {
@@ -385,27 +410,27 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       let specificityScore = 0;
       let credibilityScore = 0;
       let strategicThinkingScore = 0;
-      
-      const competitorAnswer = answersRef.current.find(a => 
+     
+      const competitorAnswer = answersRef.current.find(a =>
         a.question_id?.startsWith('COMPETITOR_CHALLENGE')
       );
       const currentCompetitorAnswerText = competitorAnswer?.answer_text || '';
-      
+     
       if (currentCompetitorAnswerText && currentCompetitorAnswerText.trim()) {
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${currentCompetitorAnswerText}"`;
-          
-          const { response: competitorResponse } = await InvokeLLM({ 
+         
+          const { response: competitorResponse } = await InvokeLLM({
             prompt: evaluationPrompt
           });
-          
+         
           competitorEvaluationText = competitorResponse;
-          
+         
           const specificityMatch = competitorResponse.match(/Specificity:\s*(\d+(?:\.\d+)?)/i);
           const credibilityMatch = competitorResponse.match(/Credibility:\s*(\d+(?:\.\d+)?)/i);
           const strategicMatch = competitorResponse.match(/Strategic Thinking:\s*(\d+(?:\.\d+)?)/i);
           const finalScoreMatch = competitorResponse.match(/Final Score:\s*(\d+(?:\.\d+)?)/i);
-          
+         
           if (specificityMatch) specificityScore = parseFloat(specificityMatch[1]);
           if (credibilityMatch) credibilityScore = parseFloat(credibilityMatch[1]);
           if (strategicMatch) strategicThinkingScore = parseFloat(strategicMatch[1]);
@@ -420,23 +445,25 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           competitorEvaluationText = `Error occurred during evaluation: ${error.message}`;
         }
       }
-      
+     
       const baseTeamScore = calculateTeamScore(venture);
-      const effectiveTeamScore = (baseTeamScore * 0.7) + (competitorScore * 10 * 0.3); 
-      
+      const effectiveTeamScore = (baseTeamScore * 0.7) + (competitorScore * 10 * 0.3);
+     
       await Venture.update(venture.id, { team_score: effectiveTeamScore });
-      
+     
       const proposal = calculateInvestmentOffer(localInvestor, venture, effectiveTeamScore, competitorScore);
+
 
       const calculationBreakdown = `
 ---
 **DECISION CALCULATION BREAKDOWN**
 
+
 **Team Evaluation:**
-• Base Team Score: ${baseTeamScore.toFixed(1)}/100 
+• Base Team Score: ${baseTeamScore.toFixed(1)}/100
   - Founders: ${venture.founders_count || 1} (${(venture.founders_count || 1) >= 2 ? '100 points' : '70 points'})
   - Weekly Commitment: ${venture.weekly_commitment || 'low'} (${venture.weekly_commitment === 'high' ? '100' : venture.weekly_commitment === 'medium' ? '50' : '30'} points)
-  
+ 
 **Competitor Challenge Performance:**
 • Competitor Score: ${competitorScore.toFixed(1)}/10
 ${currentCompetitorAnswerText && currentCompetitorAnswerText.trim() ? `• Individual Dimension Scores:
@@ -446,14 +473,17 @@ ${currentCompetitorAnswerText && currentCompetitorAnswerText.trim() ? `• Indiv
 • AI Evaluation Details:
 ${competitorEvaluationText}` : '• AI Evaluation Details:\nCompetitor question was not asked in this session.'}
 
+
 **Final Effective Team Score:**
 • Formula: (Base Team Score × 0.7) + (Competitor Score × 10 × 0.3)
 • Calculation: (${baseTeamScore.toFixed(1)} × 0.7) + (${competitorScore.toFixed(1)} × 10 × 0.3) = ${effectiveTeamScore.toFixed(1)}/100
+
 
 **Investment Decision Logic:**
 • Competitor Score Threshold: 4.0/10 (${competitorScore >= 4.0 ? 'PASSED ✓' : 'FAILED ✗'})
 • Investor Type: ${localInvestor.investor_type}
 • Decision: ${proposal.decision}
+
 
 ${proposal.decision === 'Invest' ? `
 **Investment Terms Calculation:**
@@ -462,12 +492,14 @@ ${proposal.decision === 'Invest' ? `
 • Effective Team Score Multiplier: ${(effectiveTeamScore / 100).toFixed(2)}
 • Sector Alignment: ${proposal.isFocusSector ? 'Yes' : 'No'} (${proposal.isFocusSector ? '1.0x' : '0.5x'} multiplier)
 
+
 **Final Offer:**
 • Investment Amount: $${proposal.checkSize?.toLocaleString()}
 • Pre-Money Valuation: $${proposal.valuation?.toLocaleString()}
 ` : ''}
 ---
         `;
+
 
       if (proposal.decision === 'Invest') {
         await VentureMessage.create({
@@ -491,10 +523,11 @@ ${proposal.decision === 'Invest' ? `
           priority: 2
         });
       }
-      
+     
       setTimeout(() => {
         onClose();
       }, 2000);
+
 
     } catch (error) {
       console.error("Error in evaluation:", error);
@@ -506,14 +539,16 @@ ${proposal.decision === 'Invest' ? `
           phase: venture.phase,
           priority: 2
       });
-      
+     
       setTimeout(() => {
         onClose();
       }, 2000);
     }
   };
 
+
   if (!isOpen) return null;
+
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -524,6 +559,7 @@ ${proposal.decision === 'Invest' ? `
             Close
           </Button>
         </div>
+
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
@@ -553,7 +589,7 @@ ${proposal.decision === 'Invest' ? `
               </div>
             ))
           )}
-          
+         
           {isFinished && (
             <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-green-600" />
@@ -561,9 +597,10 @@ ${proposal.decision === 'Invest' ? `
               <p className="text-green-600 text-sm mt-1">You'll receive the decision on your dashboard shortly.</p>
             </div>
           )}
-          
+         
           <div ref={chatEndRef} />
         </div>
+
 
         {!isFinished && !isLoading && (
           <div className="p-4 border-t">
@@ -591,3 +628,4 @@ ${proposal.decision === 'Invest' ? `
     </div>
   );
 }
+
