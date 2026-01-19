@@ -1,4 +1,4 @@
-// 16126 FIX MULTIQUES WORKING
+// 18126 FIX MULTIQUES WORKING PLUS BP
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -491,7 +491,8 @@ ${proposal.decision === 'Invest' ? `
           priority: 4,
           investment_offer_checksize: proposal.checkSize,
           investment_offer_valuation: proposal.valuation,
-          investment_offer_status: 'pending'
+          investment_offer_status: 'pending',
+          created_by_id: venture.created_by_id  // ← הוסף שורה זו
         });
       } else {
         await VentureMessage.create({
@@ -500,7 +501,8 @@ ${proposal.decision === 'Invest' ? `
           title: `📋 Response from ${localInvestor.name}`,
           content: `${localInvestor.name} has decided not to invest at this time.\n\n"${proposal.reason}"\n${calculationBreakdown}`,
           phase: venture.phase,
-          priority: 2
+          priority: 2,
+          created_by_id: venture.created_by_id  // ← הוסף שורה זו
         });
       }
       
@@ -516,7 +518,8 @@ ${proposal.decision === 'Invest' ? `
           title: `📋 Response from ${localInvestor.name}`,
           content: `There was an issue processing the meeting results. Error: ${error.message}. Please try again later.`,
           phase: venture.phase,
-          priority: 2
+          priority: 2,
+          created_by_id: venture.created_by_id  // ← הוסף שורה זו
       });
       
       setTimeout(() => {
