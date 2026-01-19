@@ -216,8 +216,47 @@ export default function Financials() {
             </p>
           </CardContent>
         </Card>
+   <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-indigo-600" />
+              Investment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {messages.filter(msg => msg.message_type === 'investment_offer' && msg.investment_offer_status === 'accepted').length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No investments received yet. Continue building and pitching!</p>
+            ) : (
+              <div className="space-y-3">
+                {messages
+                  .filter(msg => msg.message_type === 'investment_offer' && msg.investment_offer_status === 'accepted')
+                  .map((msg, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div>
+                        <p className="font-medium text-gray-900">{msg.vc_firm_name || 'Angel Investor'}</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(msg.created_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">
+                          +${(msg.investment_offer_checksize || 0).toLocaleString()}
+                        </p>
+                        {msg.investment_offer_valuation && (
+                          <p className="text-xs text-gray-500">
+                            @ ${(msg.investment_offer_valuation || 0).toLocaleString()} valuation
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
       </div>
     </div>
   );
 }
+f
