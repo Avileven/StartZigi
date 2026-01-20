@@ -377,38 +377,53 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   };
 
   const evaluateAndMakeDecision = async () => {
-    try {
-      let competitorScore = 0;
-      let solutionScore = 0;
-      let competitorEvaluationText = "Not evaluated.";
-      let solutionEvaluationText = "Not evaluated.";
-      let competitorDimensions = { specificity: 0, credibility: 0, strategicThinking: 0 };
-      let solutionDimensions = { technicalDepth: 0, feasibility: 0, clarity: 0 };
-      const competitorAnswer = answersRef.current.find(a => a.question_id?.startsWith('COMPETITOR_CHALLENGE'));
-      const solutionAnswer = answersRef.current.find(a => a.question_id === 'SOLUTION_DEPTH');
-      if (competitorAnswer?.answer_text?.trim()) {
-        try {
-          const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${competitorAnswer.answer_text}"`;
-          const { response: competitorResponse } = await InvokeLLM({ prompt: evaluationPrompt });
-          competitorEvaluationText = competitorResponse;
-          const specificityMatch = competitorResponse.match(/Specificity:\s*(\d+(?:\.\d+)?)/i);
-          const credibilityMatch = competitorResponse.match(/Credibility:\s*(\d+(?:\.\d+)?)/i);
-          const strategicMatch = competitorResponse.match(/Strategic Thinking:\s*(\d+(?:\.\d+)?)/i);
-          const finalScoreMatch = competitorResponse.match(/Final Score:\s*(\d+(?:\.\d+)?)/i);
-          if (specificityMatch) competitorDimensions.specificity = parseFloat(specificityMatch[1]);
-          if (credibilityMatch) competitorDimensions.credibility = parseFloat(credibilityMatch[1]);
-          if (strategicMatch) competitorDimensions.strategicThinking = parseFloat(strategicMatch[1]);
-          if (finalScoreMatch) {
-            competitorScore = parseFloat(finalScoreMatch[1]);
-          } else {
-            competitorScore = (competitorDimensions.specificity * 0.3) + (competitorDimensions.credibility * 0.4) + (competitorDimensions.strategicThinking * 0.3);
-          }
-        } catch (error) {
-          console.error("Error evaluating competitor:", error);
-          competitorScore = 0;
-          competitorEvaluationText = `Error: ${error.message}`;
+  try {
+    let competitorScore = 0;
+    let solutionScore = 0;
+    let competitorEvaluationText = "Not evaluated.";
+    let solutionEvaluationText = "Not evaluated.";
+    let competitorDimensions = { specificity: 0, credibility: 0, strategicThinking: 0 };
+    let solutionDimensions = { technicalDepth: 0, feasibility: 0, clarity: 0 };
+
+    const competitorAnswer = answersRef.current.find(a => a.question_id?.startsWith('COMPETITOR_CHALLENGE'));
+    const solutionAnswer = answersRef.current.find(a => a.question_id === 'SOLUTION_DEPTH');
+
+    if (competitorAnswer?.answer_text?.trim()) {
+      try {
+        const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${competitorAnswer.answer_text}"`;
+        
+        // שימוש בפונקציה המגינה במקום InvokeLLM ישירות
+        const { response: competitorResponse } = await safeInvoke(evaluationPrompt);
+        
+        competitorEvaluationText = competitorResponse;
+        const specificityMatch = competitorResponse.match(/Specificity:\s*(\d+(?:\.\d+)?)/i);
+        const credibilityMatch = competitorResponse.match(/Credibility:\s*(\d+(?:\.\d+)?)/i);
+        const strategicMatch = competitorResponse.match(/Strategic Thinking:\s*(\d+(?:\.\d+)?)/i);
+        const finalScoreMatch = competitorResponse.match(/Final Score:\s*(\d+(?:\.\d+)?)/i);
+
+        if (specificityMatch) competitorDimensions.specificity = parseFloat(specificityMatch[1]);
+        if (credibilityMatch) competitorDimensions.credibility = parseFloat(credibilityMatch[1]);
+        if (strategicMatch) competitorDimensions.strategicThinking = parseFloat(strategicMatch[1]);
+
+        if (finalScoreMatch) {
+          competitorScore = parseFloat(finalScoreMatch[1]);
+        } else {
+          competitorScore = (competitorDimensions.specificity * 0.3) + (competitorDimensions.credibility * 0.4) + (competitorDimensions.strategicThinking * 0.3);
         }
+      } catch (error) {
+        // כאן קורה השינוי הקריטי: אם יש שגיאת עומס אחרי ניסיונות, אנחנו עוצרים!
+        console.error("AI Evaluation failed definitively:", error);
+        setConversation(prev => [...prev, { 
+          type: 'bot', 
+          text: "I'm having technical difficulties reviewing your pitch. Please try finishing the session again in a minute so your score isn't affected." 
+        }]);
+        setIsAnswering(false);
+        setIsFinished(false); // מאפשר ליזם לנסות ללחוץ שוב
+        return; // עוצר הכל ולא נותן ציון 0
       }
+    }
+    
+    // ... כאן יבוא המשך החישוב של ה-Solution Score וההחלטה הסופית
       if (solutionAnswer?.answer_text?.trim()) {
         try {
           const evaluationPrompt = `${SOLUTION_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${solutionAnswer.answer_text}"`;
