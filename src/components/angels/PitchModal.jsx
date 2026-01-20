@@ -284,8 +284,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const fetchedQuestions = results.flat().filter(Boolean);
       const dbQuestions = ids.map(id => fetchedQuestions.find(q => q.question_id === id)).filter(Boolean);
       const openingQuestion = {
-        question_id: 'OPENING_PERSONAL',
-        question_text: `Nice to meet you. Before we dive into the business details, I'm curious about the person behind the idea. How did you personally come up with this concept, and what made you choose the name '${venture.name}' for your project? I'd love to hear the story behind it.`
+        question_id: 'OPENING_GREETING',
+        question_text: `Hi, I'm ${localInvestor.name}. How are you today?`
       };
       const solutionQuestion = {
         question_id: 'SOLUTION_DEPTH',
@@ -345,7 +345,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     }
     
     if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
-        currentQuestion.question_id !== 'OPENING_PERSONAL' &&
+        currentQuestion.question_id !== 'OPENING_GREETING' &&
         currentQuestion.question_id !== 'SOLUTION_DEPTH' &&
         currentQuestion.question_id !== 'SCALABILITY_TARGETING') {
         try {
