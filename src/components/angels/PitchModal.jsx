@@ -1,5 +1,4 @@
-
-// PITCH MODAL - AI SCORE MODEL v2.0 200126
+// PITCH MODAL - AI SCORE MODEL v2.0
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -7,7 +6,6 @@ import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, User, Bot } from 'lucide-react';
-
 
 const COMPETITOR_QUESTIONS_BANK = [
   {
@@ -32,36 +30,28 @@ const COMPETITOR_QUESTIONS_BANK = [
   }
 ];
 
-
 const SOLUTION_EVALUATION_PROMPT = `You are evaluating an entrepreneur's response to a solution/technical challenge question. Use this detailed scoring framework:
 
-
 SCORING DIMENSIONS (1-10 each):
-
 
 TECHNICAL DEPTH (40% weight):
 • 1-3: Vague, no real technical understanding
 • 4-6: Surface-level technical knowledge
 • 7-10: Deep technical insight, specific technologies, realistic constraints
 
-
 FEASIBILITY (30% weight):
 • 1-3: Unrealistic, ignores major challenges
 • 4-6: Somewhat realistic but hand-waves difficulties
 • 7-10: Honest about challenges, concrete mitigation plans
-
 
 CLARITY (30% weight):
 • 1-3: Confusing, scattered, doesn't answer the question
 • 4-6: Partially clear, some relevant points
 • 7-10: Crystal clear, well-structured, directly addresses the question
 
-
 CALCULATION: solution_score = (technical_depth × 0.4) + (feasibility × 0.3) + (clarity × 0.3)
 
-
 Please evaluate the response and provide EXACTLY this format:
-
 
 SOLUTION EVALUATION:
 Technical Depth: [score]/10 - [brief rationale]
@@ -69,49 +59,38 @@ Feasibility: [score]/10 - [brief rationale]
 Clarity: [score]/10 - [brief rationale]
 Final Score: [calculated score]/10
 
-
 INVESTOR FEEDBACK: [2-3 sentences of feedback based on score]`;
-
 
 const COMPETITOR_EVALUATION_PROMPT = `You are evaluating an entrepreneur's response to a competitor challenge question. Use this detailed scoring framework:
 
-
 SCORING DIMENSIONS (1-10 each):
-
 
 SPECIFICITY (30% weight):
 • 1-3: Vague generalizations ("we're different", "better quality")
 • 4-6: Some specifics but mostly general claims  
 • 7-10: Concrete details, numbers, examples, specific use cases
 
-
 CREDIBILITY (40% weight):
 • 1-3: Obviously fabricating, contradicts original pitch, unrealistic claims
 • 4-6: Plausible but unverifiable claims, some hedge words
 • 7-10: Honest admissions, verifiable claims, or realistic differentiation
-
 
 STRATEGIC THINKING (30% weight):
 • 1-3: No clear strategy, scattered thoughts, missing the point
 • 4-6: Basic understanding, surface-level differences
 • 7-10: Deep strategic insight, clear competitive positioning, market awareness
 
-
 CALCULATION: competitor_score = (specificity × 0.3) + (credibility × 0.4) + (strategic_thinking × 0.3)
-
 
 Please evaluate the response and provide EXACTLY this format:
 
-
 COMPETITOR CHALLENGE EVALUATION:
 Specificity: [score]/10 - [brief rationale]
-Credibility: [score]/10 - [brief rationale]
+Credibility: [score]/10 - [brief rationale] 
 Strategic Thinking: [score]/10 - [brief rationale]
 Final Score: [calculated score]/10
 
-
 INVESTOR FEEDBACK: [2-3 sentences of feedback based on score]`;
-
 
 const calculateTeamScore = (venture) => {
     const founderPoints = (venture.founders_count || 1) >= 2 ? 100 : 70;
@@ -120,7 +99,6 @@ const calculateTeamScore = (venture) => {
     if (venture.weekly_commitment === 'high') commitmentPoints = 100;
     return (founderPoints * 0.60) + (commitmentPoints * 0.40);
 };
-
 
 const getInvestorMessage = (aiScore) => {
   if (aiScore >= 6.5) {
@@ -147,7 +125,6 @@ const getInvestorMessage = (aiScore) => {
   };
 };
 
-
 const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, aiScore) => {
     if (aiScore < 2.5) {
         return {
@@ -159,31 +136,29 @@ const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, aiScore
         };
     }
     if (investor.investor_type === 'no_go') {
-        return {
-            decision: 'Reject',
+        return { 
+            decision: 'Reject', 
             reason: 'Thank you for your time, but we have decided not to move forward as we are currently only advising our existing portfolio companies.',
             aiScore,
             effectiveTeamScore
         };
     }
     if (investor.investor_type === 'team_focused' && (venture.founders_count || 1) < 2) {
-        return {
-            decision: 'Reject',
+        return { 
+            decision: 'Reject', 
             reason: 'We have a strong focus on ventures with multiple co-founders and have decided to pass at this time.',
             aiScore,
             effectiveTeamScore
         };
     }
 
-
     let finalCheckSize;
     let finalValuation;
     const effectiveTeamScoreMultiplier = effectiveTeamScore / 100;
 
-
     if (investor.investor_type === 'flexible') {
-        const isFocusSector = investor.focus_sectors?.some(sector =>
-            venture.sector === sector ||
+        const isFocusSector = investor.focus_sectors?.some(sector => 
+            venture.sector === sector || 
             (sector === 'food_and_beverage' && venture.sector === 'consumer_apps') ||
             (sector === 'sustainable_fashion' && venture.sector === 'climatetech_energy')
         );
@@ -233,14 +208,13 @@ const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, aiScore
             }
          };
     }
-    return {
-        decision: 'Reject',
+    return { 
+        decision: 'Reject', 
         reason: 'After careful consideration, we have decided not to proceed at this time. We wish you the best of luck.',
         aiScore,
         effectiveTeamScore
     };
 };
-
 
 export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [questions, setQuestions] = useState([]);
@@ -256,38 +230,32 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const timePressureTimeoutsRef = useRef([]);
   const isInitialLoadDone = useRef(false);
 
-
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
 
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
 
-
   const startTimePressureMessages = useCallback(() => {
     timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     timePressureTimeoutsRef.current = [];
 
-
     const timeout1 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "Take your time, but I need a concise answer." }]);
     }, 30000);
-   
+    
     const timeout2 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "I have another meeting in 10 minutes..." }]);
     }, 60000);
-   
+    
     const timeout3 = setTimeout(() => {
       setConversation(prev => [...prev, { type: 'bot', text: "How are you thinking about this?" }]);
     }, 180000);
 
-
     timePressureTimeoutsRef.current = [timeout1, timeout2, timeout3];
   }, []);
-
 
   useEffect(() => {
     // Activate time pressure only on question 5 (COMPETITOR_CHALLENGE - index 4)
@@ -298,12 +266,10 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       timePressureTimeoutsRef.current = [];
     }
 
-
     return () => {
       timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     };
   }, [currentQuestionIndex, isFinished, startTimePressureMessages]);
-
 
   const loadQuestions = useCallback(async () => {
     if (!localInvestor?.assigned_question_ids || isInitialLoadDone.current) return;
@@ -323,7 +289,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       };
       const solutionQuestion = {
         question_id: 'SOLUTION_DEPTH',
-        question_text: plan?.solution
+        question_text: plan?.solution 
           ? `Regarding your solution: ${plan.solution.substring(0, 200)}... What is the biggest technical challenge you anticipate in building this specifically, and how will you overcome it?`
           : `What is the biggest technical challenge you anticipate in building your solution, and how will you overcome it?`
       };
@@ -333,31 +299,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           ? `You specified your target customers as ${plan.target_customers.substring(0, 150)}... How do you plan to scale your acquisition of these specific users during the first 12 months?`
           : `How do you plan to scale your customer acquisition during the first 12 months?`
       };
-      // הגדרת שאלת הברכה החדשה
-      const greetingQuestion = {
-        question_id: 'GREETING_WARMUP',
-        question_text: `Hi, I'm ${localInvestor.name}. How are you today?`
-      };
-
-
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)];
-     
-      // הוספת הברכה בתור השאלה הראשונה (אינדקס 0) במערך
-      const finalQuestions = [
-        greetingQuestion,
-        openingQuestion,
-        solutionQuestion,
-        scalabilityQuestion,
-        dbQuestions[0],
-        randomCompetitorQuestion,
-        dbQuestions[1]
-      ].filter(Boolean);
-
-
+      const finalQuestions = [openingQuestion, solutionQuestion, scalabilityQuestion, dbQuestions[0], randomCompetitorQuestion, dbQuestions[1]].filter(Boolean);
       setQuestions(finalQuestions);
-     
-      // הצגת הברכה בלבד - הבוט יחכה לתשובה לפני שימשיך לשאלה הבאה
-      setConversation([{ type: 'bot', text: greetingQuestion.question_text }]);
+      setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` }]);
+      setTimeout(() => {
+        setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
+      }, 1500);
     } catch (error) {
       console.error("Error loading questions:", error);
       isInitialLoadDone.current = false;
@@ -365,7 +313,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       setIsLoading(false);
     }
   }, [localInvestor, venture.id, venture.name]);
-
 
   useEffect(() => {
     if (isOpen) {
@@ -381,7 +328,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     }
   }, [isOpen, loadQuestions, localInvestor]);
 
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!userInput.trim() || isAnswering) return;
@@ -391,14 +337,14 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
     const currentQuestion = questions[currentQuestionIndex];
     answersRef.current.push({ question_id: currentQuestion.question_id, answer_text: userAnswer });
-   
+    
     // Clear time pressure if answering competitor question
     if (currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
         timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timePressureTimeoutsRef.current = [];
     }
-   
-    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') &&
+    
+    if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
         currentQuestion.question_id !== 'OPENING_PERSONAL' &&
         currentQuestion.question_id !== 'SOLUTION_DEPTH' &&
         currentQuestion.question_id !== 'SCALABILITY_TARGETING') {
@@ -429,7 +375,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       }
     }, 1000);
   };
-
 
   const evaluateAndMakeDecision = async () => {
     try {
@@ -496,46 +441,39 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
 ---
 **DECISION CALCULATION BREAKDOWN**
 
-
 **Team Evaluation:**
-• Base Team Score: ${baseTeamScore.toFixed(1)}/100
+• Base Team Score: ${baseTeamScore.toFixed(1)}/100 
   - Founders: ${venture.founders_count || 1} (${(venture.founders_count || 1) >= 2 ? '100 points' : '70 points'})
   - Weekly Commitment: ${venture.weekly_commitment || 'low'} (${venture.weekly_commitment === 'high' ? '100' : venture.weekly_commitment === 'medium' ? '50' : '30'} points)
- 
+  
 **AI Performance Analysis:**
-
 
 • Competitor Challenge Score: ${competitorScore.toFixed(1)}/10
 ${competitorAnswer?.answer_text?.trim() ? `  - Specificity: ${competitorDimensions.specificity.toFixed(1)}/10
   - Credibility: ${competitorDimensions.credibility.toFixed(1)}/10
   - Strategic Thinking: ${competitorDimensions.strategicThinking.toFixed(1)}/10
- 
+  
 ${competitorEvaluationText}` : '  - Not answered'}
-
 
 • Solution Depth Score: ${solutionScore.toFixed(1)}/10
 ${solutionAnswer?.answer_text?.trim() ? `  - Technical Depth: ${solutionDimensions.technicalDepth.toFixed(1)}/10
   - Feasibility: ${solutionDimensions.feasibility.toFixed(1)}/10
   - Clarity: ${solutionDimensions.clarity.toFixed(1)}/10
- 
+  
 ${solutionEvaluationText}` : '  - Not answered'}
-
 
 • **AI Score: ${aiScore.toFixed(1)}/10**
   Formula: (Competitor × 0.6) + (Solution × 0.4)
   Calculation: (${competitorScore.toFixed(1)} × 0.6) + (${solutionScore.toFixed(1)} × 0.4) = ${aiScore.toFixed(1)}
 
-
 **Final Effective Team Score:**
 • Formula: (Base Team Score × 0.3) + (AI Score × 10 × 0.7)
 • Calculation: (${baseTeamScore.toFixed(1)} × 0.3) + (${aiScore.toFixed(1)} × 10 × 0.7) = ${effectiveTeamScore.toFixed(1)}/100
-
 
 **Investment Decision Logic:**
 • AI Score Threshold: 2.5/10 (${aiScore >= 2.5 ? 'PASSED ✓' : 'FAILED ✗'})
 • Investor Type: ${localInvestor.investor_type}
 • Decision: ${proposal.decision}
-
 
 ${proposal.decision === 'Invest' ? `
 **Investment Terms Calculation:**
@@ -544,7 +482,6 @@ ${proposal.decision === 'Invest' ? `
 • Effective Team Score Multiplier: ${(effectiveTeamScore / 100).toFixed(2)}
 • Sector Alignment: ${proposal.isFocusSector ? 'Yes' : 'No'} (${proposal.isFocusSector ? '1.0x' : '0.5x'} multiplier)
 • Message Tier: ${proposal.tier}
-
 
 **Final Offer:**
 • Investment Amount: $${proposal.checkSize?.toLocaleString()}
@@ -598,9 +535,7 @@ ${proposal.decision === 'Invest' ? `
     }
   };
 
-
   if (!isOpen) return null;
-
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -672,4 +607,3 @@ ${proposal.decision === 'Invest' ? `
     </div>
   );
 }
-
