@@ -1,4 +1,4 @@
-// PITCH MODAL - AI SCORE MODEL v2.0 FINAL SHORT INV MESSAGE
+// PITCH MODAL - AI SCORE MODEL v2.0
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -396,10 +396,29 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const competitorAnswer = answersRef.current.find(a => a.question_id?.startsWith('COMPETITOR_CHALLENGE'));
       const solutionAnswer = answersRef.current.find(a => a.question_id === 'SOLUTION_DEPTH');
       
+      // Helper function for retry logic
+      const evaluateWithRetry = async (prompt, maxRetries = 3) => {
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            const { response } = await InvokeLLM({ prompt });
+            return response;
+          } catch (error) {
+            console.error(`AI evaluation attempt ${i + 1}/${maxRetries} failed:`, error);
+            if (error.message?.includes('overloaded') && i < maxRetries - 1) {
+              const delay = 2000 * (i + 1);
+              console.log(`Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            throw error;
+          }
+        }
+      };
+      
       if (competitorAnswer?.answer_text?.trim()) {
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${competitorAnswer.answer_text}"`;
-          const { response: competitorResponse } = await InvokeLLM({ prompt: evaluationPrompt });
+          const competitorResponse = await evaluateWithRetry(evaluationPrompt);
           competitorEvaluationText = competitorResponse;
           const specificityMatch = competitorResponse.match(/Specificity:\s*(\d+(?:\.\d+)?)/i);
           const credibilityMatch = competitorResponse.match(/Credibility:\s*(\d+(?:\.\d+)?)/i);
@@ -414,16 +433,18 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
             competitorScore = (competitorDimensions.specificity * 0.3) + (competitorDimensions.credibility * 0.4) + (competitorDimensions.strategicThinking * 0.3);
           }
         } catch (error) {
-          console.error("Error evaluating competitor:", error);
-          competitorScore = 0;
-          competitorEvaluationText = `Error: ${error.message}`;
+          console.error("Error evaluating competitor (after retries):", error);
+          competitorScore = 5.0;
+          competitorEvaluationText = "AI evaluation temporarily unavailable. Using baseline score.";
         }
       }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (solutionAnswer?.answer_text?.trim()) {
         try {
           const evaluationPrompt = `${SOLUTION_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${solutionAnswer.answer_text}"`;
-          const { response: solutionResponse } = await InvokeLLM({ prompt: evaluationPrompt });
+          const solutionResponse = await evaluateWithRetry(evaluationPrompt);
           solutionEvaluationText = solutionResponse;
           const technicalMatch = solutionResponse.match(/Technical Depth:\s*(\d+(?:\.\d+)?)/i);
           const feasibilityMatch = solutionResponse.match(/Feasibility:\s*(\d+(?:\.\d+)?)/i);
@@ -438,9 +459,9 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
             solutionScore = (solutionDimensions.technicalDepth * 0.4) + (solutionDimensions.feasibility * 0.3) + (solutionDimensions.clarity * 0.3);
           }
         } catch (error) {
-          console.error("Error evaluating solution:", error);
-          solutionScore = 0;
-          solutionEvaluationText = `Error: ${error.message}`;
+          console.error("Error evaluating solution (after retries):", error);
+          solutionScore = 5.0;
+          solutionEvaluationText = "AI evaluation temporarily unavailable. Using baseline score.";
         }
       }
       
