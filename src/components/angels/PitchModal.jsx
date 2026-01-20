@@ -1,4 +1,4 @@
-// PITCH MODAL - AI SCORE MODEL v2.0
+// PITCH MODAL - AI SCORE MODEL v2.0 200126
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -299,13 +299,29 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           ? `You specified your target customers as ${plan.target_customers.substring(0, 150)}... How do you plan to scale your acquisition of these specific users during the first 12 months?`
           : `How do you plan to scale your customer acquisition during the first 12 months?`
       };
+      // הגדרת שאלת הברכה החדשה
+      const greetingQuestion = {
+        question_id: 'GREETING_WARMUP',
+        question_text: `Hi, I'm ${localInvestor.name}. How are you today?`
+      };
+
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)];
-      const finalQuestions = [openingQuestion, solutionQuestion, scalabilityQuestion, dbQuestions[0], randomCompetitorQuestion, dbQuestions[1]].filter(Boolean);
+      
+      // הוספת הברכה בתור השאלה הראשונה (אינדקס 0) במערך
+      const finalQuestions = [
+        greetingQuestion, 
+        openingQuestion, 
+        solutionQuestion, 
+        scalabilityQuestion, 
+        dbQuestions[0], 
+        randomCompetitorQuestion, 
+        dbQuestions[1]
+      ].filter(Boolean);
+
       setQuestions(finalQuestions);
-      setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` }]);
-      setTimeout(() => {
-        setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
-      }, 1500);
+      
+      // הצגת הברכה בלבד - הבוט יחכה לתשובה לפני שימשיך לשאלה הבאה
+      setConversation([{ type: 'bot', text: greetingQuestion.question_text }]);
     } catch (error) {
       console.error("Error loading questions:", error);
       isInitialLoadDone.current = false;
