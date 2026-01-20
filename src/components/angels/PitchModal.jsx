@@ -258,14 +258,12 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   }, []);
 
   useEffect(() => {
-    // Activate time pressure only on question 5 (COMPETITOR_CHALLENGE - index 4)
     if (currentQuestionIndex === 4 && !isFinished) {
       startTimePressureMessages();
     } else {
       timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
       timePressureTimeoutsRef.current = [];
     }
-
     return () => {
       timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
     };
@@ -283,29 +281,31 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const results = await Promise.all(fetchPromises);
       const fetchedQuestions = results.flat().filter(Boolean);
       const dbQuestions = ids.map(id => fetchedQuestions.find(q => q.question_id === id)).filter(Boolean);
+      
       const openingQuestion = {
         question_id: 'OPENING_GREETING',
         question_text: `Hi, I'm ${localInvestor.name}. How are you today?`
       };
+      
       const solutionQuestion = {
         question_id: 'SOLUTION_DEPTH',
         question_text: plan?.solution 
           ? `Regarding your solution: ${plan.solution.substring(0, 200)}... What is the biggest technical challenge you anticipate in building this specifically, and how will you overcome it?`
           : `What is the biggest technical challenge you anticipate in building your solution, and how will you overcome it?`
       };
+      
       const scalabilityQuestion = {
         question_id: 'SCALABILITY_TARGETING',
         question_text: plan?.target_customers
           ? `You specified your target customers as ${plan.target_customers.substring(0, 150)}... How do you plan to scale your acquisition of these specific users during the first 12 months?`
           : `How do you plan to scale your customer acquisition during the first 12 months?`
       };
+      
       const randomCompetitorQuestion = COMPETITOR_QUESTIONS_BANK[Math.floor(Math.random() * COMPETITOR_QUESTIONS_BANK.length)];
+      
       const finalQuestions = [openingQuestion, solutionQuestion, scalabilityQuestion, dbQuestions[0], randomCompetitorQuestion, dbQuestions[1]].filter(Boolean);
       setQuestions(finalQuestions);
-      setConversation([{ type: 'bot', text: `Hi, I'm ${localInvestor.name}. I've gone over your business plan and have a few questions for you.` }]);
-      setTimeout(() => {
-        setConversation(prev => [...prev, { type: 'bot', text: finalQuestions[0].question_text }]);
-      }, 1500);
+      setConversation([{ type: 'bot', text: finalQuestions[0].question_text }]);
     } catch (error) {
       console.error("Error loading questions:", error);
       isInitialLoadDone.current = false;
@@ -338,7 +338,6 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     const currentQuestion = questions[currentQuestionIndex];
     answersRef.current.push({ question_id: currentQuestion.question_id, answer_text: userAnswer });
     
-    // Clear time pressure if answering competitor question
     if (currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
         timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timePressureTimeoutsRef.current = [];
@@ -360,11 +359,21 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           console.error("Failed to save answer", err);
         }
     }
+
     setTimeout(() => {
-      const ack = ["I see.", "That's an interesting point.", "Got it.", "Makes sense.", "Thank you for that insight."];
-      const randomAck = ack[Math.floor(Math.random() * ack.length)];
       const nextIndex = currentQuestionIndex + 1;
-      if (nextIndex < questions.length) {
+      
+      if (currentQuestion.question_id === 'OPENING_GREETING') {
+        setConversation(prev => [
+          ...prev,
+          { type: 'bot', text: "I've gone over your business plan and have a few questions for you." },
+          { type: 'bot', text: questions[nextIndex].question_text }
+        ]);
+        setCurrentQuestionIndex(nextIndex);
+        setIsAnswering(false);
+      } else if (nextIndex < questions.length) {
+        const ack = ["I see.", "That's an interesting point.", "Got it.", "Makes sense.", "Thank you for that insight."];
+        const randomAck = ack[Math.floor(Math.random() * ack.length)];
         setConversation(prev => [...prev, { type: 'bot', text: randomAck }, { type: 'bot', text: questions[nextIndex].question_text }]);
         setCurrentQuestionIndex(nextIndex);
         setIsAnswering(false);
@@ -386,6 +395,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       let solutionDimensions = { technicalDepth: 0, feasibility: 0, clarity: 0 };
       const competitorAnswer = answersRef.current.find(a => a.question_id?.startsWith('COMPETITOR_CHALLENGE'));
       const solutionAnswer = answersRef.current.find(a => a.question_id === 'SOLUTION_DEPTH');
+      
       if (competitorAnswer?.answer_text?.trim()) {
         try {
           const evaluationPrompt = `${COMPETITOR_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${competitorAnswer.answer_text}"`;
@@ -409,6 +419,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           competitorEvaluationText = `Error: ${error.message}`;
         }
       }
+      
       if (solutionAnswer?.answer_text?.trim()) {
         try {
           const evaluationPrompt = `${SOLUTION_EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${solutionAnswer.answer_text}"`;
@@ -432,6 +443,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           solutionEvaluationText = `Error: ${error.message}`;
         }
       }
+      
       const aiScore = (competitorScore * 0.6) + (solutionScore * 0.4);
       const baseTeamScore = calculateTeamScore(venture);
       const effectiveTeamScore = (baseTeamScore * 0.3) + (aiScore * 10 * 0.7);
