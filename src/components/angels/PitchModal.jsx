@@ -227,6 +227,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   const [localInvestor, setLocalInvestor] = useState(investor);
   const chatEndRef = useRef(null);
   const answersRef = useRef([]);
+  const timePressureTimeoutsRef = useRef([]);
   const isInitialLoadDone = useRef(false);
 
   const scrollToBottom = () => {
@@ -236,6 +237,39 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
+
+  const startTimePressureMessages = useCallback(() => {
+    timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+    timePressureTimeoutsRef.current = [];
+
+    const timeout1 = setTimeout(() => {
+      setConversation(prev => [...prev, { type: 'bot', text: "Take your time, but I need a concise answer." }]);
+    }, 30000);
+    
+    const timeout2 = setTimeout(() => {
+      setConversation(prev => [...prev, { type: 'bot', text: "I have another meeting in 10 minutes..." }]);
+    }, 60000);
+    
+    const timeout3 = setTimeout(() => {
+      setConversation(prev => [...prev, { type: 'bot', text: "How are you thinking about this?" }]);
+    }, 180000);
+
+    timePressureTimeoutsRef.current = [timeout1, timeout2, timeout3];
+  }, []);
+
+  useEffect(() => {
+    // Activate time pressure only on question 5 (COMPETITOR_CHALLENGE - index 4)
+    if (currentQuestionIndex === 4 && !isFinished) {
+      startTimePressureMessages();
+    } else {
+      timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+      timePressureTimeoutsRef.current = [];
+    }
+
+    return () => {
+      timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+    };
+  }, [currentQuestionIndex, isFinished, startTimePressureMessages]);
 
   const loadQuestions = useCallback(async () => {
     if (!localInvestor?.assigned_question_ids || isInitialLoadDone.current) return;
@@ -288,6 +322,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       setConversation([]);
       setIsFinished(false);
       answersRef.current = [];
+      timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+      timePressureTimeoutsRef.current = [];
       if (localInvestor) loadQuestions();
     }
   }, [isOpen, loadQuestions, localInvestor]);
@@ -301,6 +337,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
     const currentQuestion = questions[currentQuestionIndex];
     answersRef.current.push({ question_id: currentQuestion.question_id, answer_text: userAnswer });
+    
+    // Clear time pressure if answering competitor question
+    if (currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE')) {
+        timePressureTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+        timePressureTimeoutsRef.current = [];
+    }
+    
     if (!currentQuestion.question_id?.startsWith('COMPETITOR_CHALLENGE') && 
         currentQuestion.question_id !== 'OPENING_PERSONAL' &&
         currentQuestion.question_id !== 'SOLUTION_DEPTH' &&
