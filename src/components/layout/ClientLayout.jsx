@@ -316,7 +316,7 @@ pathname === "/"
                           <SidebarMenuButton
                             asChild
                             className={`mb-1 rounded-lg transition-colors duration-200 ${
-                              pathname === createPageUrl("dmiAnDashboard")
+                              pathname === createPageUrl("admin")
                                 ? "bg-red-50 text-red-700"
                                 : "hover:bg-red-50 hover:text-red-700"
                             }`}
