@@ -1,4 +1,4 @@
-// PITCH MODAL - AI SCORE MODEL v2.0
+// PITCH MODAL - AI SCORE MODEL v2.0 FINAL SHORT INV MESSAGE
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -449,64 +449,53 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       const effectiveTeamScore = (baseTeamScore * 0.3) + (aiScore * 10 * 0.7);
       await Venture.update(venture.id, { team_score: effectiveTeamScore });
       const proposal = calculateInvestmentOffer(localInvestor, venture, effectiveTeamScore, aiScore);
-      const calculationBreakdown = `
----
-**DECISION CALCULATION BREAKDOWN**
-
-**Team Evaluation:**
-• Base Team Score: ${baseTeamScore.toFixed(1)}/100 
-  - Founders: ${venture.founders_count || 1} (${(venture.founders_count || 1) >= 2 ? '100 points' : '70 points'})
-  - Weekly Commitment: ${venture.weekly_commitment || 'low'} (${venture.weekly_commitment === 'high' ? '100' : venture.weekly_commitment === 'medium' ? '50' : '30'} points)
-  
-**AI Performance Analysis:**
-
-• Competitor Challenge Score: ${competitorScore.toFixed(1)}/10
-${competitorAnswer?.answer_text?.trim() ? `  - Specificity: ${competitorDimensions.specificity.toFixed(1)}/10
-  - Credibility: ${competitorDimensions.credibility.toFixed(1)}/10
-  - Strategic Thinking: ${competitorDimensions.strategicThinking.toFixed(1)}/10
-  
-${competitorEvaluationText}` : '  - Not answered'}
-
-• Solution Depth Score: ${solutionScore.toFixed(1)}/10
-${solutionAnswer?.answer_text?.trim() ? `  - Technical Depth: ${solutionDimensions.technicalDepth.toFixed(1)}/10
-  - Feasibility: ${solutionDimensions.feasibility.toFixed(1)}/10
-  - Clarity: ${solutionDimensions.clarity.toFixed(1)}/10
-  
-${solutionEvaluationText}` : '  - Not answered'}
-
-• **AI Score: ${aiScore.toFixed(1)}/10**
-  Formula: (Competitor × 0.6) + (Solution × 0.4)
-  Calculation: (${competitorScore.toFixed(1)} × 0.6) + (${solutionScore.toFixed(1)} × 0.4) = ${aiScore.toFixed(1)}
-
-**Final Effective Team Score:**
-• Formula: (Base Team Score × 0.3) + (AI Score × 10 × 0.7)
-• Calculation: (${baseTeamScore.toFixed(1)} × 0.3) + (${aiScore.toFixed(1)} × 10 × 0.7) = ${effectiveTeamScore.toFixed(1)}/100
-
-**Investment Decision Logic:**
-• AI Score Threshold: 2.5/10 (${aiScore >= 2.5 ? 'PASSED ✓' : 'FAILED ✗'})
-• Investor Type: ${localInvestor.investor_type}
-• Decision: ${proposal.decision}
-
-${proposal.decision === 'Invest' ? `
-**Investment Terms Calculation:**
-• Investment Range: $${proposal.calculationDetails?.baseCheckRange?.[0]?.toLocaleString() || 'N/A'} - $${proposal.calculationDetails?.baseCheckRange?.[1]?.toLocaleString() || 'N/A'}
-• Valuation Range: $${proposal.calculationDetails?.baseValuationRange?.[0]?.toLocaleString() || 'N/A'} - $${proposal.calculationDetails?.baseValuationRange?.[1]?.toLocaleString() || 'N/A'}
-• Effective Team Score Multiplier: ${(effectiveTeamScore / 100).toFixed(2)}
-• Sector Alignment: ${proposal.isFocusSector ? 'Yes' : 'No'} (${proposal.isFocusSector ? '1.0x' : '0.5x'} multiplier)
-• Message Tier: ${proposal.tier}
-
-**Final Offer:**
-• Investment Amount: $${proposal.checkSize?.toLocaleString()}
-• Pre-Money Valuation: $${proposal.valuation?.toLocaleString()}
-• Equity: ${((proposal.checkSize / proposal.valuation) * 100).toFixed(2)}%
-` : ''}
----`;
+      
+      // Full calculation breakdown for developer console
+      const calculationBreakdown = {
+        teamEvaluation: {
+          baseTeamScore: baseTeamScore.toFixed(1),
+          foundersCount: venture.founders_count || 1,
+          foundersPoints: (venture.founders_count || 1) >= 2 ? 100 : 70,
+          weeklyCommitment: venture.weekly_commitment || 'low',
+          commitmentPoints: venture.weekly_commitment === 'high' ? 100 : venture.weekly_commitment === 'medium' ? 50 : 30
+        },
+        aiPerformance: {
+          competitorScore: competitorScore.toFixed(1),
+          competitorDimensions,
+          competitorEvaluation: competitorEvaluationText,
+          solutionScore: solutionScore.toFixed(1),
+          solutionDimensions,
+          solutionEvaluation: solutionEvaluationText,
+          aiScore: aiScore.toFixed(1),
+          formula: "(Competitor × 0.6) + (Solution × 0.4)",
+          calculation: `(${competitorScore.toFixed(1)} × 0.6) + (${solutionScore.toFixed(1)} × 0.4) = ${aiScore.toFixed(1)}`
+        },
+        finalScore: {
+          formula: "(Base Team Score × 0.3) + (AI Score × 10 × 0.7)",
+          calculation: `(${baseTeamScore.toFixed(1)} × 0.3) + (${aiScore.toFixed(1)} × 10 × 0.7) = ${effectiveTeamScore.toFixed(1)}`,
+          effectiveTeamScore: effectiveTeamScore.toFixed(1)
+        },
+        decision: {
+          aiScoreThreshold: 2.5,
+          passed: aiScore >= 2.5,
+          investorType: localInvestor.investor_type,
+          decision: proposal.decision,
+          tier: proposal.tier,
+          checkSize: proposal.checkSize,
+          valuation: proposal.valuation,
+          equity: proposal.checkSize && proposal.valuation ? ((proposal.checkSize / proposal.valuation) * 100).toFixed(2) : null
+        }
+      };
+      
+      console.log("🔍 PITCH EVALUATION - FULL BREAKDOWN:");
+      console.log(calculationBreakdown);
+      console.log("📊 Raw Proposal Object:", proposal);
       if (proposal.decision === 'Invest') {
         await VentureMessage.create({
           venture_id: venture.id,
           message_type: 'investment_offer',
           title: `💰 Investment Offer from ${localInvestor.name}!`,
-          content: `Great news! ${localInvestor.name} has decided to invest.\n\n"${proposal.reason}"\n${calculationBreakdown}`,
+          content: `${proposal.reason}`,
           phase: venture.phase,
           priority: 4,
           investment_offer_checksize: proposal.checkSize,
@@ -521,7 +510,7 @@ ${proposal.decision === 'Invest' ? `
           venture_id: venture.id,
           message_type: 'system',
           title: `📋 Response from ${localInvestor.name}`,
-          content: `${localInvestor.name} has decided not to invest at this time.\n\n"${proposal.reason}"\n${calculationBreakdown}`,
+          content: `${proposal.reason}`,
           phase: venture.phase,
           priority: 2,
           is_dismissed: false,
