@@ -137,6 +137,13 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
     
     setTimeout(() => {
       const nextIndex = currentQuestionIndex + 1;
+      // אם אנחנו עוברים מהברכה לשאלה הבאה, אל תגיד "Got it"
+if (questions[currentQuestionIndex].question_id === 'GREETING_WARMUP') {
+    setConversation(prev => [...prev, { type: 'bot', text: questions[nextIndex].question_text }]);
+    setCurrentQuestionIndex(nextIndex);
+    setIsAnswering(false);
+    return; // עוצר כאן כדי שלא יגיע ל-Got it למטה
+}
       if (nextIndex < questions.length) {
         const wasGreeting = questions[currentQuestionIndex].question_id === 'GREETING_WARMUP';
         if (wasGreeting) {
