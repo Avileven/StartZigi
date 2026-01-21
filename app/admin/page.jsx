@@ -1,7 +1,8 @@
-//ADMIN
+//ADMIN - FIXED FOR NEXT.JS
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';  // ✅ Next.js Link
 import { User } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { FundingEvent } from '@/api/entities.js';
@@ -22,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, Briefcase, DollarSign, Trash2, MessageSquare, UserCheck, Search, Mail, ExternalLink, Building2 } from 'lucide-react';
-import Link from 'next/link';
 import { format } from "date-fns";
 
 const formatMoney = (amount) => {
@@ -69,21 +69,20 @@ export default function AdminDashboard() {
   const [vcFirms, setVcFirms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerms, setSearchTerms] = useState({ ventures: '', users: '', messages: '', invitations: '', vcs: '' });
-  const router = useRouter(); // <-- useRouter נדרש לניווט
+  const router = useRouter();
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const [allVentures, allUsers, allMessages, allEvents, allInvitations, allVCFirms] = await Promise.all([
-        Venture.list("-created_date", 1000),
-        User.list("-created_date", 1000),
-        VentureMessage.list("-created_date", 1000),
-        FundingEvent.list("-created_date", 1000),
-        CoFounderInvitation.list("-created_date", 1000),
-        VCFirm.list("-created_date", 1000)
+        Venture.list("-created_date"),
+        User.list("-created_date"),
+        VentureMessage.list("-created_date"),
+        FundingEvent.list("-created_date"),
+        CoFounderInvitation.list("-created_date"),
+        VCFirm.list("-created_date")
       ]);
 
-      // Filter out fake funding events with real VC names - REMOVED PER NEW LOGIC
       const validFundingEvents = allEvents;
       
       const venturesByUser = allVentures.reduce((acc, venture) => {
@@ -127,47 +126,39 @@ export default function AdminDashboard() {
     const checkAdmin = async () => {
       try {
         const currentUser = await User.me();
-        if (currentUser.role !== 'admin') {
-          // תיקון: החלפת navigate ב-router.push
-          router.push('/'); 
+        if (!currentUser || currentUser.role !== 'admin') {
+          router.push('/');
           return;
         }
         fetchData();
       } catch (error) {
-        // תיקון: החלפת navigate ב-router.push
+        console.error("Admin check error:", error);
         router.push('/');
       }
     };
     checkAdmin();
-    // תיקון: הסרת 'navigate' והוספת 'router' למערך התלויות
-  }, [router]); 
+  }, [router]);
 
   const handleDeleteVenture = async (ventureId) => {
-    // תיקון: החלפת window.confirm/alert בהודעת קונסול זמנית
-    // יש להחליף זאת ב-UI מותאם אישית (מודאל) כפי שההנחיות דורשות.
-    if (confirm("TEMPORARY CONFIRMATION: Are you sure you want to permanently delete this venture? This action cannot be undone.")) {
+    if (confirm("Are you sure you want to permanently delete this venture? This action cannot be undone.")) {
       try {
         await Venture.delete(ventureId);
         setVentures(prev => prev.filter(v => v.id !== ventureId));
         console.log('Venture deleted successfully.');
       } catch (error) {
         console.error("Error deleting venture:", error);
-        console.error('Failed to delete venture.');
       }
     }
   };
 
   const handleDeleteMessage = async (messageId) => {
-    // תיקון: החלפת window.confirm/alert בהודעת קונסול זמנית
-    // יש להחליף זאת ב-UI מותאם אישית (מודאל) כפי שההנחיות דורשות.
-    if (confirm('TEMPORARY CONFIRMATION: Are you sure you want to delete this message?')) {
+    if (confirm('Are you sure you want to delete this message?')) {
       try {
         await VentureMessage.delete(messageId);
         setMessages(prev => prev.filter(m => m.id !== messageId));
         console.log('Message deleted successfully.');
       } catch (error) {
         console.error("Error deleting message:", error);
-        console.error('Failed to delete message.');
       }
     }
   };
@@ -177,13 +168,10 @@ export default function AdminDashboard() {
   };
 
   const handleVentureClick = (venture) => {
-    // הוספת בדיקה ל-window כדי למנוע קריסה פוטנציאלית אם הפונקציה נקראת בטעות בשרת
     if (typeof window !== 'undefined') {
-        // Store the venture ID in localStorage so Dashboard can pick it up
         localStorage.setItem('admin_selected_venture_id', venture.id); 
     }
-    // תיקון: החלפת navigate ב-router.push
-    router.push(createPageUrl('Dashboard'));
+    router.push('/dashboard');  // ✅ Fixed
   };
 
   const filteredVentures = useMemo(() => 
@@ -229,7 +217,6 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Admin Dashboard</h1>
         <p className="text-gray-500 mb-6">Platform-wide analytics and management tools.</p>
 
-        {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -317,9 +304,11 @@ export default function AdminDashboard() {
                             >
                               {venture.name}
                             </button>
-                            <a href={venture.landing_page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:underline flex items-center gap-1">
-                              View Landing Page <ExternalLink className="w-3 h-3" />
-                            </a>
+                            {venture.landing_page_url && (
+                              <a href={venture.landing_page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:underline flex items-center gap-1">
+                                View Landing Page <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="truncate max-w-[150px]">{venture.created_by}</TableCell>
@@ -410,7 +399,7 @@ export default function AdminDashboard() {
                             {filteredInvitations.map((invite) => (
                             <TableRow key={invite.id}>
                                 <TableCell className="truncate max-w-[200px]">{invite.inviter_email}</TableCell>
-                                <TableCell className="truncate max_w-[200px]">{invite.invitee_email}</TableCell>
+                                <TableCell className="truncate max-w-[200px]">{invite.invitee_email}</TableCell>
                                 <TableCell>
                                     <Badge variant={invite.status === 'accepted' ? 'default' : invite.status === 'declined' ? 'destructive' : 'secondary'}>
                                         {invite.status}
