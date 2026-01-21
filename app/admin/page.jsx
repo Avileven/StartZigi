@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';  // ✅ Next.js Link
-import { User } from '@/api/entities.js';
-import { Venture } from '@/api/entities.js';
-import { FundingEvent } from '@/api/entities.js';
-import { VentureMessage } from '@/api/entities.js';
-import { CoFounderInvitation } from '@/api/entities.js';
-import { VCFirm } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
+import { User } from '@/api/entities';
+import { Venture } from '@/api/entities';
+import { FundingEvent } from '@/api/entities';
+import { VentureMessage } from '@/api/entities';
+import { CoFounderInvitation } from '@/api/entities';
+import { VCFirm } from '@/api/entities';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,
   TableBody,
