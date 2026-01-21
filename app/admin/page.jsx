@@ -22,8 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, Briefcase, DollarSign, Trash2, MessageSquare, UserCheck, Search, Mail, ExternalLink, Building2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import Link from 'next/link';
 import { format } from "date-fns";
 
 const formatMoney = (amount) => {
