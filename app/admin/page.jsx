@@ -127,21 +127,25 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const currentUser = await User.me();
-        if (!currentUser || currentUser.role !== 'admin') {
-          router.push('/');
-          return;
-        }
-        fetchData();
-      } catch (error) {
-        console.error("Admin check error:", error);
-        router.push('/');
-      }
-    };
-    checkAdmin();
-  }, [router]);
+  const checkAdmin = async () => {
+    try {
+      const currentUser = await User.me();
+      console.log("🔵 Current user in admin:", currentUser);  // ✅ הוסף את זה
+      
+      // ✅ זמנית - תן גישה לכולם
+      // if (!currentUser || currentUser.role !== 'admin') {
+      //   router.push('/');
+      //   return;
+      // }
+      
+      fetchData();
+    } catch (error) {
+      console.error("❌ Admin check error:", error);
+      // router.push('/');  // ✅ השבת זמנית
+    }
+  };
+  checkAdmin();
+}, [router]);
 
   const handleDeleteVenture = async (ventureId) => {
     if (confirm("Are you sure you want to permanently delete this venture? This action cannot be undone.")) {
