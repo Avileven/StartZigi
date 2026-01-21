@@ -1,5 +1,8 @@
 //ADMIN - FIXED FOR NEXT.JS
 "use client";
+if (typeof window !== 'undefined') {
+  console.log("🟢 Admin page module loaded");
+}
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';  // ✅ Next.js Link
@@ -60,6 +63,7 @@ const ScreeningParameterBadges = ({ params }) => {
 };
 
 export default function AdminDashboard() {
+   console.log("🔵 AdminDashboard component rendering");
   const [stats, setStats] = useState({ ventures: 0, funding: 0, users: 0, messages: 0 });
   const [ventures, setVentures] = useState([]);
   const [users, setUsers] = useState([]);
