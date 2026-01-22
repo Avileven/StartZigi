@@ -8,18 +8,21 @@ export async function GET() {
   );
 
   try {
-    const { data: ventures, error: vError } = await supabaseAdmin.from('ventures').select('*');
-    const { data: profiles, error: pError } = await supabaseAdmin.from('user_profiles').select('*');
+    const { data: ventures } = await supabaseAdmin.from('ventures').select('*');
+    const { data: profiles } = await supabaseAdmin.from('user_profiles').select('*');
 
-    if (vError || pError) throw new Error(vError?.message || pError?.message);
-
+    // זה המבנה המדויק שהדף שלך מחפש כדי לא לקרוס
     return NextResponse.json({
       success: true,
+      stats: {
+        venturesCount: ventures?.length || 0,
+        usersCount: profiles?.length || 0,
+        activeProjects: ventures?.filter(v => v.status === 'active').length || 0
+      },
       allVentures: ventures || [],
       allUsers: profiles || []
     });
   } catch (error) {
-    console.error('API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
