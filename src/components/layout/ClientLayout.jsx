@@ -1,12 +1,10 @@
-// ClientLayout
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-// ✅ FIX: remove /src from imports (Vercel path + you already moved entities)
-// was: "@/src/api/entities"
+// ✅ ייבוא נקי - וודא שהקובץ אכן נמצא בנתיב הזה
 import { Venture, User } from "@/api/entities";
 
 import {
@@ -43,17 +41,11 @@ const getNavigationItems = (venture) => {
   const currentPhase = venture ? venture.phase : "idea";
 
   const allItems = [
-    
-// ✅ FIX: Home route is "/" (you deleted app/home)
-{ title: "Home", url: "/", icon: Home, alwaysActive: true },
-
-
+    { title: "Home", url: "/", icon: Home, alwaysActive: true },
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
     {
       title: "Beta Page",
-      // ✅ FIX: folder is /beta-testing
-url: venture ? `/beta-testing?id=${venture.id}` : "#",
-
+      url: venture ? `/beta-testing?id=${venture.id}` : "#",
       icon: FlaskConical,
       phases: ["beta", "growth"],
     },
@@ -65,9 +57,7 @@ url: venture ? `/beta-testing?id=${venture.id}` : "#",
     },
     {
       title: "VC Marketplace",
-      // ✅ FIX: folder is /vc-marketplace
-url: createPageUrl("vc-marketplace"),
-
+      url: createPageUrl("vc-marketplace"),
       icon: DollarSign,
       feature: "vc_marketplace",
     },
@@ -89,72 +79,77 @@ export default function ClientLayout({ children }) {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ✅ תיקון לולאת הרינדור: שימוש ב-isMounted ובדיקה חכמה של נתיבים
   useEffect(() => {
+    let isMounted = true; // מונע עדכון סטייט על קומפוננטה שפורקה
+
     const loadData = async () => {
-      setIsLoading(true);
+      // אם אנחנו בדפי התחברות, אין טעם לבדוק יוזר/מיזם
+      const isAuthPage =
+        pathname?.startsWith("/login") ||
+        pathname?.startsWith("/register") ||
+        pathname?.startsWith("/reset-password") ||
+        pathname?.startsWith("/auth");
 
-      try {
-        // ✅ FIX 1: never run auth/user loading inside auth pages or auth callback (prevents flicker loops)
-        const isAuthPage =
-          pathname?.startsWith("/login") ||
-          pathname?.startsWith("/register") ||
-          pathname?.startsWith("/reset-password") ||
-          pathname?.startsWith("/auth"); // callback routes
+      const isVentureLanding = pathname?.includes("venture-landing");
 
-        // ✅ FIX 2: keep bypass for venture-landing (public / anonymous)
-        const isVentureLanding = pathname?.includes("venture-landing");
-
-        if (isAuthPage || isVentureLanding) {
+      if (isAuthPage || isVentureLanding) {
+        if (isMounted) {
           setUser(null);
           setVenture(null);
           setIsLoading(false);
-          return;
         }
-
-        // ✅ FIX 3: DO NOT redirect from layout (middleware handles protection)
-        // If no session → User.me() should return null; we just show as logged-out.
-        const currentUser = await User.me();
-        setUser(currentUser || null);
-
-        if (!currentUser) {
-          // not logged in; let middleware handle redirects on protected pages
-          setVenture(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // ✅ NOTE: keep original behavior (ventures owned by created_by)
-        // If you later want "co-founder ventures" too, we’ll change this intentionally.
-        const ventures = await Venture.filter(
-          { created_by: currentUser.email },
-          "-created_date"
-        );
-        setVenture(ventures[0] || null);
-      } catch (error) {
-        console.error("Failed to load user or venture data:", error);
-        setUser(null);
-        setVenture(null);
+        return;
       }
 
-      setIsLoading(false);
+      try {
+        if (isMounted) setIsLoading(true);
+
+        // קבלת פרטי המשתמש מה-API
+        const currentUser = await User.me();
+        
+        if (!isMounted) return;
+
+        if (!currentUser) {
+          setUser(null);
+          setVenture(null);
+          // ⚠️ הערה: המידלוור (middleware.js) יטפל בניתוב החוצה אם הדף חסום
+        } else {
+          setUser(currentUser);
+          
+          // טעינת המיזם של המשתמש
+          const ventures = await Venture.filter(
+            { created_by: currentUser.email },
+            "-created_date"
+          );
+          
+          if (isMounted) {
+            setVenture(ventures[0] || null);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load layout data:", error);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     };
 
     loadData();
-  }, [pathname]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname]); // ירוץ מחדש רק כשהנתיב משתנה
 
   const navigationItems = getNavigationItems(venture);
   const userPhase = venture ? venture.phase : "idea";
 
-  let landingPageItem = {
-    url: "#",
-    isExternal: false,
-    title: "Landing Page",
-  };
-
+  // לוגיקת דף נחיתה
+  let landingPageItem = { url: "#", isExternal: false, title: "Landing Page" };
   if (venture) {
     if (venture.mlp_completed) {
-      // ✅ FIX: folder is /mlp-landing-page
-landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
+      landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
       landingPageItem.isExternal = false;
     } else {
       landingPageItem.url = venture.landing_page_url || "#";
@@ -162,7 +157,7 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
     }
   }
 
-  // ✅ keep bypass render for venture-landing (no sidebar)
+  // ✅ מעקף לדפי נחיתה (ללא סרגל צד)
   if (pathname && pathname.includes("venture-landing")) {
     return <div className="min-h-screen bg-white">{children}</div>;
   }
@@ -178,7 +173,7 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900">StartZig</h2>
-                <p className="text-xs text-gray-500">Build your startup</p>
+                <p className="text-xs text-gray-500">Admin/Founder OS</p>
               </div>
             </div>
           </SidebarHeader>
@@ -187,146 +182,52 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
             {!isLoading && (
               <>
                 <SidebarGroup>
-                  <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
-                    Navigation
+                  <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase px-2 py-2">
+                    Main Menu
                   </SidebarGroupLabel>
-
                   <SidebarGroupContent>
                     <SidebarMenu>
+                      {/* כפתור דף הבית */}
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          className={`mb-1 rounded-lg transition-colors duration-200 ${
-                            
-// ✅ FIX: Home active state
-pathname === "/"
-
-                              ? "bg-indigo-50 text-indigo-700"
-                              : "hover:bg-indigo-50 hover:text-indigo-700"
-                          }`}
-                        >
-                          <Link
-                            href="/"
-                            className="flex items-center gap-3 px-3 py-2"
-                          >
-                            <Home className="w-4 h-4 flex-shrink-0" />
+                        <SidebarMenuButton asChild className={pathname === "/" ? "bg-indigo-50 text-indigo-700" : ""}>
+                          <Link href="/" className="flex items-center gap-3 px-3 py-2">
+                            <Home className="w-4 h-4" />
                             <span className="font-medium">Home</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
 
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          className={`mb-1 rounded-lg transition-colors duration-200 ${
-                            pathname === createPageUrl("dashboard")
-                              ? "bg-indigo-50 text-indigo-700"
-                              : "hover:bg-indigo-50 hover:text-indigo-700"
-                          }`}
-                        >
-                          <Link
-                            href={createPageUrl("dashboard")}
-                            className="flex items-center gap-3 px-3 py-2"
-                          >
-                            <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-                            <span className="font-medium">Dashboard</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-
-                      {landingPageItem && (
-                        <SidebarMenuItem>
-                          <SidebarMenuButton
-                            asChild
-                            className="mb-1 rounded-lg transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-700"
-                          >
-                            {landingPageItem.isExternal ? (
-                              <a
-                                href={landingPageItem.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 px-3 py-2"
-                              >
-                                <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                <span className="font-medium">{landingPageItem.title}</span>
-                              </a>
-                            ) : (
-                              <Link
-                                href={landingPageItem.url}
-                                className="flex items-center gap-3 px-3 py-2"
-                              >
-                                <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                <span className="font-medium">{landingPageItem.title}</span>
+                      {/* תפריט דינמי לפי שלב המיזם */}
+                      {navigationItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild className={pathname === item.url ? "bg-indigo-50 text-indigo-700" : ""}>
+                              <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
+                                <Icon className="w-4 h-4" />
+                                <span className="font-medium">{item.title}</span>
                               </Link>
-                            )}
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )}
-
-                      {navigationItems
-                        .filter((item) => !item.alwaysActive)
-                        .map((item) => {
-                          const Icon = item.icon;
-                          const activeStateClasses =
-                            pathname === item.url && !item.external
-                              ? "bg-indigo-50 text-indigo-700"
-                              : "hover:bg-indigo-50 hover:text-indigo-700";
-
-                          return (
-                            <SidebarMenuItem key={item.title}>
-                              <SidebarMenuButton
-                                asChild
-                                className={`mb-1 rounded-lg transition-colors duration-200 ${activeStateClasses}`}
-                              >
-                                {item.external ? (
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-3 px-3 py-2"
-                                  >
-                                    <Icon className="w-4 h-4 flex-shrink-0" />
-                                    <span className="font-medium">{item.title}</span>
-                                  </a>
-                                ) : (
-                                  <Link
-                                    href={item.url}
-                                    className="flex items-center gap-3 px-3 py-2"
-                                  >
-                                    <Icon className="w-4 h-4 flex-shrink-0" />
-                                    <span className="font-medium">{item.title}</span>
-                                  </Link>
-                                )}
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
 
+                {/* ✅ חלק המנהל - מופיע רק אם המשתמש אדמין */}
                 {user && user.role === "admin" && (
                   <SidebarGroup>
-                    <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
-                      Admin
+                    <SidebarGroupLabel className="text-xs font-medium text-red-500 uppercase px-2 py-2">
+                      System Admin
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                       <SidebarMenu>
                         <SidebarMenuItem>
-                          <SidebarMenuButton
-                            asChild
-                            className={`mb-1 rounded-lg transition-colors duration-200 ${
-                              pathname === createPageUrl("admin")
-                                ? "bg-red-50 text-red-700"
-                                : "hover:bg-red-50 hover:text-red-700"
-                            }`}
-                          >
-                            <Link
-                              href={createPageUrl("admin")}
-                              className="flex items-center gap-3 px-3 py-2"
-                            >
-                              <Shield className="w-4 h-4 flex-shrink-0" />
-                              <span className="font-medium">Admin Dashboard</span>
+                          <SidebarMenuButton asChild className={pathname === "/admin" ? "bg-red-50 text-red-700" : ""}>
+                            <Link href="/admin" className="flex items-center gap-3 px-3 py-2">
+                              <Shield className="w-4 h-4" />
+                              <span className="font-medium">Global Dashboard</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -340,36 +241,27 @@ pathname === "/"
 
           <SidebarFooter className="border-t border-gray-200 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-medium text-sm">
-                  {user?.email ? user.email.charAt(0).toUpperCase() : "E"}
-                </span>
+              <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                {user?.email?.charAt(0).toUpperCase() || "U"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm truncate">
-                  {user?.email || "Entrepreneur"}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  Phase: {userPhase.replace("_", " ")}
-                </p>
+                <p className="font-medium text-gray-900 text-sm truncate">{user?.email || "Guest"}</p>
+                <p className="text-xs text-gray-500 capitalize">{venture?.phase || "No Active Venture"}</p>
               </div>
             </div>
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white border-b border-gray-200 px-6 py-4 md:hidden">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-semibold">StartZig</h1>
-            </div>
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white border-b border-gray-200 px-6 py-4 md:hidden flex items-center gap-4">
+            <SidebarTrigger />
+            <h1 className="text-xl font-bold italic">StartZig</h1>
           </header>
-
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex-1 overflow-auto bg-white p-4">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
   );
 }
-
-
