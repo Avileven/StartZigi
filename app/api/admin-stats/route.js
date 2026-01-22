@@ -43,22 +43,29 @@ export async function GET() {
 export async function POST(req) {
   try {
     const body = await req.json();
-    
-    // Logic for adding a manual investor
+    const now = new Date().toISOString();
+
+    const payload = {
+      id: crypto.randomUUID(), // Requirement: NO NULL id
+      name: body.name,
+      investor_type: body.investor_type,
+      created_by: 'Admin_Manual', // Requirement: NO NULL created_by
+      created_date: now, // Requirement: NO NULL date
+      updated_date: now, // Requirement: NO NULL date
+      focus_sectors: body.focus_sectors || [],
+      typical_check_min: body.typical_check_min ? Number(body.typical_check_min) : null,
+      typical_check_max: body.typical_check_max ? Number(body.typical_check_max) : null,
+      preferred_valuation_min: body.preferred_valuation_min ? Number(body.preferred_valuation_min) : null,
+      preferred_valuation_max: body.preferred_valuation_max ? Number(body.preferred_valuation_max) : null,
+      background: body.background || null,
+      avatar_url: body.avatar_url || null,
+      is_sample: false,
+      assigned_question_ids: []
+    };
+
     const { data, error } = await supabaseAdmin
       .from('investors')
-      .insert([
-        {
-          name: body.name,
-          investor_type: body.investor_type,
-          focus_sectors: body.focus_sectors,
-          typical_check_min: Number(body.typical_check_min),
-          typical_check_max: Number(body.typical_check_max),
-          background: body.background,
-          created_by: 'Admin-Manual',
-          is_sample: false
-        }
-      ])
+      .insert([payload])
       .select();
 
     if (error) throw error;
