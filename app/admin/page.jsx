@@ -74,15 +74,16 @@ export default function AdminDashboard() {
   const [searchTerms, setSearchTerms] = useState({ ventures: '', users: '', messages: '', invitations: '', vcs: '' });
   const router = useRouter();
 
+  // מחיקת קאץ
   const fetchData = async () => {
     try {
       const [allVentures, allUsers, allMessages, allEvents, allInvitations, allVCFirms] = await Promise.all([
-        Venture.list("-created_date").catch(() => []),
-        User.list("-created_date").catch(() => []),
-        VentureMessage.list("-created_date").catch(() => []),
-        FundingEvent.list("-created_date").catch(() => []),
-        CoFounderInvitation.list("-created_date").catch(() => []),
-        VCFirm.list("-created_date").catch(() => [])
+        Venture.list("-created_date"),
+        User.list("-created_date"),
+        VentureMessage.list("-created_date"),
+        FundingEvent.list("-created_date"),
+        CoFounderInvitation.list("-created_date"),
+        VCFirm.list("-created_date")
       ]);
 
       const venturesByUser = allVentures.reduce((acc, venture) => {
