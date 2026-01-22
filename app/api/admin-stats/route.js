@@ -8,19 +8,40 @@ export async function GET() {
   );
 
   try {
-    const { data: ventures } = await supabaseAdmin.from('ventures').select('*');
-    const { data: profiles } = await supabaseAdmin.from('user_profiles').select('*');
+    // Fetch all data in parallel for efficiency
+    const [
+      { data: ventures },
+      { data: profiles },
+      { data: investors },
+      { data: vcFirms },
+      { data: funding }
+    ] = await Promise.all([
+      supabaseAdmin.from('ventures').select('*'),
+      supabaseAdmin.from('user_profiles').select('*'),
+      supabaseAdmin.from('investors').select('*'),
+      supabaseAdmin.from('vc_firms').select('*'),
+      supabaseAdmin.from('funding_events').select('*')
+    ]);
 
-    // זה המבנה המדויק שהדף שלך מחפש כדי לא לקרוס
+    // Calculate aggregated stats
+    const totalInvestment = funding?.reduce((sum, e) => sum + (Number(e.amount) || 0), 0) || 0;
+
     return NextResponse.json({
       success: true,
       stats: {
         venturesCount: ventures?.length || 0,
         usersCount: profiles?.length || 0,
-        activeProjects: ventures?.filter(v => v.status === 'active').length || 0
+        investorsCount: investors?.length || 0,
+        vcCount: vcFirms?.length || 0,
+        totalInvestment
       },
-      allVentures: ventures || [],
-      allUsers: profiles || []
+      data: {
+        ventures: ventures || [],
+        users: profiles || [],
+        investors: investors || [],
+        vcFirms: vcFirms || [],
+        funding: funding || []
+      }
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
