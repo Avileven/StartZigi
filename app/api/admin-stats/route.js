@@ -46,12 +46,12 @@ export async function POST(req) {
     const now = new Date().toISOString();
 
     const payload = {
-      id: crypto.randomUUID(), // Requirement: NO NULL id
+      id: crypto.randomUUID(),
       name: body.name,
       investor_type: body.investor_type,
-      created_by: 'Admin_Manual', // Requirement: NO NULL created_by
-      created_date: now, // Requirement: NO NULL date
-      updated_date: now, // Requirement: NO NULL date
+      created_by: 'Admin_Manual',
+      created_date: now,
+      updated_date: now,
       focus_sectors: body.focus_sectors || [],
       typical_check_min: body.typical_check_min ? Number(body.typical_check_min) : null,
       typical_check_max: body.typical_check_max ? Number(body.typical_check_max) : null,
@@ -63,11 +63,7 @@ export async function POST(req) {
       assigned_question_ids: []
     };
 
-    const { data, error } = await supabaseAdmin
-      .from('investors')
-      .insert([payload])
-      .select();
-
+    const { data, error } = await supabaseAdmin.from('investors').insert([payload]).select();
     if (error) throw error;
     return NextResponse.json({ success: true, data });
   } catch (error) {

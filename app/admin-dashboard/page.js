@@ -14,8 +14,6 @@ export default function AdminDashboard() {
     background: '', avatar_url: ''
   });
 
-  const sectorOptions = ['Fintech', 'SaaS', 'AI', 'Health', 'Cyber', 'Consumer'];
-
   const fetchData = () => {
     setLoading(true);
     fetch('/api/admin-stats').then(res => res.json()).then(d => { setReport(d); setLoading(false); });
@@ -34,95 +32,168 @@ export default function AdminDashboard() {
     else { const err = await res.json(); alert(`Error: ${err.error}`); }
   };
 
-  if (loading) return <div className="p-10 font-mono text-gray-400">CONNECTING TO DATABASE...</div>;
+  if (loading) return <div className="p-10 text-gray-400 font-mono">LOADING SYSTEM DATA...</div>;
+  const { stats, data } = report;
+
+  const Card = ({ title, count, type, color }) => (
+    <button 
+      onClick={() => setActiveTab(activeTab === type ? null : type)}
+      className={`p-6 rounded-xl border-2 transition-all text-left shadow-sm ${activeTab === type ? 'border-blue-500 bg-blue-50' : 'bg-white border-transparent hover:border-gray-200'}`}
+    >
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{title}</p>
+      <p className={`text-2xl font-black mt-1 ${color || 'text-gray-900'}`}>{count}</p>
+      <p className="text-[10px] text-blue-500 mt-2 font-bold uppercase">{activeTab === type ? 'Hide ▲' : 'Details ▼'}</p>
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-white p-8 font-sans text-slate-900" dir="ltr">
-      <header className="mb-10 flex justify-between items-end">
-        <div>
-            <h1 className="text-4xl font-black tracking-tighter">STARTZIG <span className="text-blue-600">OPS</span></h1>
-            <p className="text-slate-400 font-medium">Control Tower</p>
-        </div>
+    <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-900" dir="ltr">
+      <header className="mb-10">
+        <h1 className="text-4xl font-black tracking-tight">STARTZIG ADMIN</h1>
+        <p className="text-gray-500 uppercase text-xs font-bold tracking-widest">Database Control Center</p>
       </header>
 
-      {/* Summary Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
-        {Object.entries(report.stats).map(([key, val]) => (
-          <button key={key} onClick={() => setActiveTab(key.replace('Count','').toLowerCase())} className={`p-5 rounded-2xl border-2 text-left transition-all ${activeTab === key.replace('Count','').toLowerCase() ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{key.replace('Count','')}</p>
-            <p className="text-2xl font-black">{typeof val === 'number' && key === 'totalInvestment' ? `$${val.toLocaleString()}` : val}</p>
-          </button>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
+        <Card title="Ventures" count={stats.venturesCount} type="ventures" />
+        <Card title="Users" count={stats.usersCount} type="users" />
+        <Card title="Investors" count={stats.investorsCount} type="investors" />
+        <Card title="VC Firms" count={stats.vcCount} type="vc" />
+        <Card title="Total Funded" count={`$${stats.totalInvestment.toLocaleString()}`} type="funding" color="text-green-600" />
       </div>
 
-      {activeTab === 'investors' && (
-        <div className="animate-in fade-in duration-500">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Investor Management</h2>
-            <button onClick={() => setShowAddForm(!showAddForm)} className="bg-slate-900 text-white px-5 py-2 rounded-full font-bold text-sm">
-                {showAddForm ? 'Close Form' : '+ Add New Investor'}
-            </button>
-          </div>
+      <div className="space-y-6">
+        {/* INVESTORS TAB */}
+        {activeTab === 'investors' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Investor Database</h2>
+              <button onClick={() => setShowAddForm(!showAddForm)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
+                {showAddForm ? 'Cancel' : '+ Add Manual Entry'}
+              </button>
+            </div>
 
-          {showAddForm && (
-            <form onSubmit={handleSubmit} className="bg-slate-50 p-8 rounded-3xl mb-10 grid grid-cols-1 md:grid-cols-3 gap-6 border border-slate-200">
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400">CORE IDENTITY</label>
-                <input required placeholder="Investor Name" className="w-full p-3 rounded-xl border-0 shadow-sm" onChange={e => setNewInvestor({...newInvestor, name: e.target.value})} />
-                <select className="w-full p-3 rounded-xl border-0 shadow-sm bg-white" onChange={e => setNewInvestor({...newInvestor, investor_type: e.target.value})}>
-                  <option>Angel</option><option>VC</option><option>Family Office</option>
+            {showAddForm && (
+              <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg border grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input required placeholder="Investor Name" className="p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, name: e.target.value})} />
+                <select className="p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, investor_type: e.target.value})}>
+                  <option>Angel</option><option>VC Partner</option><option>Family Office</option>
                 </select>
-              </div>
-
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400">FINANCIALS (USD)</label>
                 <div className="flex gap-2">
-                    <input type="number" placeholder="Min Check" className="w-1/2 p-3 rounded-xl border-0 shadow-sm" onChange={e => setNewInvestor({...newInvestor, typical_check_min: e.target.value})} />
-                    <input type="number" placeholder="Max Check" className="w-1/2 p-3 rounded-xl border-0 shadow-sm" onChange={e => setNewInvestor({...newInvestor, typical_check_max: e.target.value})} />
+                  <input type="number" placeholder="Min Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_min: e.target.value})} />
+                  <input type="number" placeholder="Max Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_max: e.target.value})} />
                 </div>
                 <div className="flex gap-2">
-                    <input type="number" placeholder="Min Val Pref" className="w-1/2 p-3 rounded-xl border-0 shadow-sm" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_min: e.target.value})} />
-                    <input type="number" placeholder="Max Val Pref" className="w-1/2 p-3 rounded-xl border-0 shadow-sm" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_max: e.target.value})} />
+                  <input type="number" placeholder="Min Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_min: e.target.value})} />
+                  <input type="number" placeholder="Max Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_max: e.target.value})} />
                 </div>
-              </div>
+                <input placeholder="Avatar URL" className="md:col-span-2 p-3 border rounded-lg text-sm" onChange={e => setNewInvestor({...newInvestor, avatar_url: e.target.value})} />
+                <textarea placeholder="Background / Bio Description" className="md:col-span-2 p-3 border rounded-lg h-24" onChange={e => setNewInvestor({...newInvestor, background: e.target.value})} />
+                <div className="md:col-span-2 flex justify-end">
+                  <button type="submit" className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold">SAVE TO DATABASE</button>
+                </div>
+              </form>
+            )}
 
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400">SECTOR FOCUS</label>
-                <div className="flex flex-wrap gap-2">
-                  {sectorOptions.map(s => (
-                    <button key={s} type="button" onClick={() => setNewInvestor(prev => ({...prev, focus_sectors: prev.focus_sectors.includes(s) ? prev.focus_sectors.filter(x => x !== s) : [...prev.focus_sectors, s]}))} 
-                    className={`px-3 py-1 rounded-full text-xs font-bold border transition ${newInvestor.focus_sectors.includes(s) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white text-slate-400'}`}>{s}</button>
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr className="text-gray-400 text-xs uppercase"><th className="p-4">Name</th><th className="p-4">Type</th><th className="p-4">Checks</th><th className="p-4">Background</th></tr>
+                </thead>
+                <tbody className="divide-y">
+                  {data.investors.map(i => (
+                    <tr key={i.id} className="hover:bg-gray-50">
+                      <td className="p-4 font-bold">{i.name}</td>
+                      <td className="p-4 font-medium uppercase text-xs">{i.investor_type}</td>
+                      <td className="p-4">${i.typical_check_min?.toLocaleString()} - ${i.typical_check_max?.toLocaleString()}</td>
+                      <td className="p-4 text-gray-500 max-w-xs truncate">{i.background}</td>
+                    </tr>
                   ))}
-                </div>
-              </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-              <div className="md:col-span-3 flex justify-end">
-                <button type="submit" className="bg-blue-600 text-white px-10 py-3 rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">SAVE TO CLOUD</button>
-              </div>
-            </form>
-          )}
-
-          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <th className="p-5">Name</th><th className="p-5">Type</th><th className="p-5">Focus</th><th className="p-5">Typical Check</th>
-                </tr>
+        {/* VENTURES TAB */}
+        {activeTab === 'ventures' && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
+                <tr><th className="p-4">Name</th><th className="p-4">Balance</th><th className="p-4">Phase</th><th className="p-4">Founder</th></tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 text-sm font-medium text-slate-600">
-                {report.data.investors.map(i => (
-                  <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-5 text-slate-900 font-bold">{i.name}</td>
-                    <td className="p-5 text-xs uppercase tracking-tighter">{i.investor_type}</td>
-                    <td className="p-5">{i.focus_sectors?.join(', ')}</td>
-                    <td className="p-5 font-mono text-blue-600">${i.typical_check_min?.toLocaleString()} - ${i.typical_check_max?.toLocaleString()}</td>
+              <tbody className="divide-y">
+                {data.ventures.map(v => (
+                  <tr key={v.id} className="hover:bg-gray-50">
+                    <td className="p-4 font-bold">{v.name}</td>
+                    <td className="p-4 font-mono text-blue-600 font-bold">${v.virtual_capital?.toLocaleString()}</td>
+                    <td className="p-4"><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">{v.phase}</span></td>
+                    <td className="p-4">{v.created_by}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* USERS TAB */}
+        {activeTab === 'users' && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden max-w-2xl">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
+                <tr><th className="p-4">Username</th><th className="p-4">Joined</th></tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.users.map(u => (
+                  <tr key={u.id}>
+                    <td className="p-4 font-bold">{u.username}</td>
+                    <td className="p-4 text-gray-500">{new Date(u.accepted_tos_date).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* VC TAB */}
+        {activeTab === 'vc' && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
+                <tr><th className="p-4">Firm Name</th><th className="p-4">Founded</th><th className="p-4">Focus</th></tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.vcFirms.map(vc => (
+                  <tr key={vc.id}>
+                    <td className="p-4 font-bold">{vc.name}</td>
+                    <td className="p-4">{vc.founded}</td>
+                    <td className="p-4">{vc.focus_areas?.join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* FUNDING TAB */}
+        {activeTab === 'funding' && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
+                <tr><th className="p-4">Venture</th><th className="p-4">Investor</th><th className="p-4">Amount</th></tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.funding.map(f => (
+                  <tr key={f.id}>
+                    <td className="p-4 font-bold">{f.venture_name}</td>
+                    <td className="p-4">{f.investor_name}</td>
+                    <td className="p-4 text-green-600 font-bold">${f.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
