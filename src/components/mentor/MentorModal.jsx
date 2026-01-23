@@ -69,14 +69,19 @@ export default function MentorModal({
     setFeedback(null);
     try {
       const prompt = `
-        You are a startup mentor. 
-        Venture Description: "${ventureDesc}"
-        Section: "${sectionTitle}"
-        Draft: "${currentText}"
+  You are an expert startup mentor.
+  Venture Context: "${ventureDesc}"
+  Section: "${sectionTitle}"
+  User's Draft: "${currentText}"
 
-        Instruction: Give specific feedback based ONLY on the venture description above. 
-        Structure: 1. Critique 2. Real-world example 3. Guiding question.
-      `;
+  Instruction: 
+  1. Start with a clear rating: [Weak / Average / Good / Excellent].
+  2. Briefly explain why this rating was given based on the Venture Context.
+  3. Provide one concrete example for improvement.
+  4. End with a guiding question.
+  
+  Language: English.
+`;
 
       const data = await InvokeLLM({ prompt });
       setFeedback(data?.response || "No response from AI.");
@@ -102,7 +107,6 @@ export default function MentorModal({
                 
                 {/* כאן התוספת הקריטית - מציגים מה המודאל "רואה" */}
                 <div className={`mt-2 p-2 rounded border ${!ventureDesc.includes('ERROR') ? 'bg-indigo-100 border-indigo-200' : 'bg-red-100 border-red-200'}`}>
-                  <p className="text-xs font-semibold uppercase text-indigo-700 mb-1">Venture Context (from Database):</p>
                   <p className="text-sm font-medium text-gray-800 italic">
                     {isLoadingContext ? "Fetching description..." : (ventureDesc || "No description found for this ID.")}
                   </p>
