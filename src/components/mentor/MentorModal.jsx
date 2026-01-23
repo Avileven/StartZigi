@@ -18,7 +18,8 @@ export default function MentorModal({
   sectionId, 
   sectionTitle, 
   fieldValue, 
-  onUpdateField 
+  onUpdateField,
+  ventureDescription // שינוי: הוספת ה-Prop לקבלת תיאור המיזם מהטבלה
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
@@ -40,20 +41,27 @@ export default function MentorModal({
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
-      const prompt = `As an expert startup mentor, provide focused feedback on my draft for "${sectionTitle}". My draft is: "${currentText}". Keep your feedback concise and actionable. Structure your response with these two sections ONLY:
-- **Areas to strengthen:** [1-2 brief, specific points on what needs improvement]
-- **Dig deeper:** [One single, focused question to help me expand my thinking]
+      // שינוי: פרומפט משודרג - הדרכה, דוגמה מהעולם האמיתי ושאלה מנחה
+      const prompt = `
+        You are an elite startup mentor. 
+        Context: The startup is about: "${ventureDescription || 'a new venture'}".
+        Section to analyze: "${sectionTitle}".
+        Entrepreneur's draft: "${currentText}"
 
-Do not include praise, examples, or comparisons.`;
+        Your task:
+        1. CRITIQUE: Briefly analyze the draft. What's missing to make it investor-ready?
+        2. EXAMPLE: Provide a short example of how a famous company (e.g. Airbnb, Uber, Slack) addressed this specific section ("${sectionTitle}").
+        3. GUIDANCE: Do NOT rewrite the text. Instead, ask ONE powerful question that will help the entrepreneur improve it themselves.
 
-      // קריאה לפונקציה ושמירת התוצאה במשתנה בשם data
+        Keep it concise, professional, and insightful.
+      `;
+
       const data = await InvokeLLM({ prompt });
       
-      // חילוץ הטקסט מתוך האובייקט (data.response)
       if (data && data.response) {
         setFeedback(data.response);
       } else {
-        setFeedback("I couldn't generate feedback. Please check your content.");
+        setFeedback("I couldn't generate feedback. Please check your connection.");
       }
       
     } catch (error) {
