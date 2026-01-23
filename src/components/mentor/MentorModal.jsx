@@ -68,18 +68,23 @@ export default function MentorModal({
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
-      const prompt = `
-  You are an expert startup mentor.
+     const prompt = `
+  You are an expert startup mentor. 
   Venture Context: "${ventureDesc}"
   Section: "${sectionTitle}"
   User's Draft: "${currentText}"
 
-  Instruction: 
-  1. Start with a clear rating: [Weak / Average / Good / Excellent].
-  2. Briefly explain why this rating was given based on the Venture Context.
-  3. Provide one concrete example for improvement.
-  4. End with a guiding question.
-  
+  Instruction:
+  1. Header: Start with "Mentor Feedback: " followed by 1-10 stars (⭐).
+  2. Scoring Criteria: Calculate the stars based on:
+     - Depth of information (How detailed is the draft?).
+     - Context alignment (Does it actually fit the venture description?).
+     - Actionability (Is it clear how this will be executed?).
+  3. Analysis: Briefly explain what you liked and what is missing.
+  4. Strategic Hints: Provide 2-3 bullet points of what the user should think about next. DO NOT rewrite the text for them.
+  5. Challenge Question: One final question to push their strategy further.
+
+  Tone: Professional and insightful.
   Language: English.
 `;
 
