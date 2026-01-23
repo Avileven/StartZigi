@@ -17,6 +17,7 @@ import MentorButton from "@/components/mentor/MentorButton";
 import MentorModal from "@/components/mentor/MentorModal";
 import StaticGuidanceViewer from "@/components/mentor/StaticGuidanceViewer";
 
+
 export default function businessPlan() {
   const [venture, setVenture] = useState(null);
   const [mission, setMission] = useState("");
@@ -30,22 +31,27 @@ export default function businessPlan() {
   const [revenueModel, setRevenueModel] = useState("");
   const [fundingRequirements, setFundingRequirements] = useState("");
 
+
   const [salaries, setSalaries] = useState([{ id: '1', role: 'Founder', count: 1, avg_salary: 5000 }]);
   const [marketingCosts, setMarketingCosts] = useState([{ id: '1', channel: 'Social Media Ads', cost: 1000 }]);
   const [operationalCosts, setOperationalCosts] = useState([{ id: '1', item: 'Office Rent', cost: 2000 }]);
+
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [staticGuidanceModal, setStaticGuidanceModal] = useState({ isOpen: false, sectionId: '' });
   const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
-  
+ 
   const router = useRouter();
+
 
   const debugSupabaseError = async (context, error, payload = null) => {
   console.groupCollapsed(`❌ [Supabase ${context}]`);
   console.error("Message:", error?.message || error);
 
+
   if (payload) console.log("Payload:", payload);
+
 
   // Supabase v2 returns richer error objects
   if (error && typeof error === "object") {
@@ -53,6 +59,7 @@ export default function businessPlan() {
       console.log(`${key}:`, error[key]);
     }
   }
+
 
   // In case it's a fetch response:
   if (error?.response) {
@@ -62,8 +69,11 @@ export default function businessPlan() {
     } catch (_) {}
   }
 
+
   console.groupEnd();
 };
+
+
 
 
   const loadData = useCallback(async () => {
@@ -72,11 +82,14 @@ export default function businessPlan() {
       const user = await User.me();
       const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
 
+
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
 
+
         const existingPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
+
 
         if (existingPlans.length > 0) {
           const plan = existingPlans[0];
@@ -91,6 +104,7 @@ export default function businessPlan() {
           setRevenueModel(plan.revenue_model || "");
           setFundingRequirements(plan.funding_requirements || "");
         }
+
 
         const existingBudgets = await Budget.filter({ venture_id: currentVenture.id });
         if (existingBudgets.length > 0) {
@@ -107,45 +121,56 @@ export default function businessPlan() {
     setIsLoading(false);
   }, []);
 
+
   useEffect(() => {
     loadData();
   }, [loadData]);
+
 
   const addSalaryRow = () => {
     setSalaries([...salaries, { id: Date.now().toString(), role: '', count: 1, avg_salary: 0 }]);
   };
 
+
   const removeSalaryRow = (id) => {
     setSalaries(salaries.filter(s => s.id !== id));
   };
+
 
   const updateSalary = (id, field, value) => {
     setSalaries(salaries.map(s => s.id === id ? { ...s, [field]: value } : s));
   };
 
+
   const addMarketingRow = () => {
     setMarketingCosts([...marketingCosts, { id: Date.now().toString(), channel: '', cost: 0 }]);
   };
+
 
   const removeMarketingRow = (id) => {
     setMarketingCosts(marketingCosts.filter(m => m.id !== id));
   };
 
+
   const updateMarketing = (id, field, value) => {
     setMarketingCosts(marketingCosts.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
+
 
   const addOperationalRow = () => {
     setOperationalCosts([...operationalCosts, { id: Date.now().toString(), item: '', cost: 0 }]);
   };
 
+
   const removeOperationalRow = (id) => {
     setOperationalCosts(operationalCosts.filter(o => o.id !== id));
   };
 
+
   const updateOperational = (id, field, value) => {
     setOperationalCosts(operationalCosts.map(o => o.id === id ? { ...o, [field]: value } : o));
   };
+
 
   const calculateTotalBudget = () => {
     const totalSalaries = salaries.reduce((sum, s) => sum + (s.count * s.avg_salary * 12), 0);
@@ -160,6 +185,7 @@ export default function businessPlan() {
     };
   };
 
+
   const calculateCompletion = () => {
     const sections = [
       mission, problem, solution, productDetails, marketSize,
@@ -169,13 +195,16 @@ export default function businessPlan() {
     return Math.round((completed / sections.length) * 100);
   };
 
+
   const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
     setMentorModal({ isOpen: true, sectionId, sectionTitle, fieldKey });
   };
 
+
   const closeMentorModal = () => {
     setMentorModal({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
   };
+
 
   const handleMentorUpdate = (newValue) => {
     if (mentorModal.fieldKey) {
@@ -197,6 +226,7 @@ export default function businessPlan() {
     }
   };
 
+
   // Safe getter instead of eval()
   const getFieldValue = (fieldKey) => {
     switch (fieldKey) {
@@ -214,8 +244,10 @@ export default function businessPlan() {
     }
   };
 
+
   const handleSave = async () => {
     if (!venture) return;
+
 
     setIsSaving(true);
     try {
@@ -237,12 +269,14 @@ export default function businessPlan() {
         completion_percentage: calculateCompletion()
       };
 
+
       const existingPlans = await businessPlanEntity.filter({ venture_id: venture.id });
       if (existingPlans.length > 0) {
         await businessPlanEntity.update(existingPlans[0].id, planData);
       } else {
         await businessPlanEntity.create(planData);
       }
+
 
       const budgetData = {
         venture_id: venture.id,
@@ -254,6 +288,7 @@ export default function businessPlan() {
         created_by_id: user.id || null,
       };
 
+
       const existingBudgets = await Budget.filter({ venture_id: venture.id });
       if (existingBudgets.length > 0) {
         await Budget.update(existingBudgets[0].id, budgetData);
@@ -261,11 +296,13 @@ export default function businessPlan() {
         await Budget.create(budgetData);
       }
 
+
       const completion = calculateCompletion();
       await Venture.update(venture.id, {
         business_plan_completion: completion,
         funding_plan_completed: true
       });
+
 
       if (completion === 100 && venture.phase === 'business_plan') {
         await Venture.update(venture.id, { phase: 'mvp' });
@@ -279,6 +316,7 @@ export default function businessPlan() {
           created_by: user.email,
           created_by_id: user.id || null,
 
+
         });
         await VentureMessage.create({
           venture_id: venture.id,
@@ -290,8 +328,10 @@ export default function businessPlan() {
           created_by: user.email,
           created_by_id: user.id || null,
 
+
         });
       }
+
 
       alert("Business plan and funding plan saved successfully!");
       router.push(createPageUrl("Dashboard"));
@@ -303,6 +343,7 @@ export default function businessPlan() {
     setIsSaving(false);
   };
 
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -311,7 +352,9 @@ export default function businessPlan() {
     );
   }
 
+
   const budget = calculateTotalBudget();
+
 
   return (
     <>
@@ -328,6 +371,7 @@ export default function businessPlan() {
             </Button>
           </div>
 
+
           <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center mb-2">
@@ -343,6 +387,7 @@ export default function businessPlan() {
               <p className="text-xs text-gray-500 mt-2">Each section requires at least 50 characters</p>
             </CardContent>
           </Card>
+
 
           <div className="space-y-6">
             {/* Mission */}
@@ -378,6 +423,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
 
+
             {/* Problem */}
             <Card>
               <CardHeader>
@@ -410,6 +456,7 @@ export default function businessPlan() {
                 <p className="text-xs text-gray-500 mt-1">{problem.trim().length}/50 characters minimum</p>
               </CardContent>
             </Card>
+
 
             {/* Solution */}
             <Card>
@@ -444,6 +491,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
 
+
             {/* Product details */}
             <Card>
               <CardHeader>
@@ -476,6 +524,7 @@ export default function businessPlan() {
                 <p className="text-xs text-gray-500 mt-1">{productDetails.trim().length}/50 characters minimum</p>
               </CardContent>
             </Card>
+
 
             {/* Market size */}
             <Card>
@@ -510,6 +559,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
 
+
             {/* Target customers */}
             <Card>
               <CardHeader>
@@ -542,6 +592,7 @@ export default function businessPlan() {
                 <p className="text-xs text-gray-500 mt-1">{targetCustomers.trim().length}/50 characters minimum</p>
               </CardContent>
             </Card>
+
 
             {/* Competition */}
             <Card>
@@ -576,6 +627,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
 
+
             {/* Founder background */}
             <Card>
               <CardHeader>
@@ -608,6 +660,7 @@ export default function businessPlan() {
                 <p className="text-xs text-gray-500 mt-1">{entrepreneurBackground.trim().length}/50 characters minimum</p>
               </CardContent>
             </Card>
+
 
             {/* Revenue model */}
             <Card>
@@ -642,6 +695,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
 
+
             {/* Funding requirements */}
             <Card>
               <CardHeader>
@@ -674,6 +728,7 @@ export default function businessPlan() {
                 <p className="text-xs text-gray-500 mt-1">{fundingRequirements.trim().length}/50 characters minimum</p>
               </CardContent>
             </Card>
+
 
             {/* Funding plan & budgets (kept intact) */}
             <Card>
@@ -754,6 +809,7 @@ export default function businessPlan() {
                   </div>
                 </div>
 
+
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Marketing Costs (Monthly)</h3>
@@ -798,6 +854,7 @@ export default function businessPlan() {
                     <p className="text-sm font-medium">Total Annual Marketing: ${budget.marketing.toLocaleString()}</p>
                   </div>
                 </div>
+
 
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -844,6 +901,7 @@ export default function businessPlan() {
                   </div>
                 </div>
 
+
                 <div className="p-6 bg-indigo-50 rounded-lg border-2 border-indigo-200">
                   <h3 className="text-xl font-bold text-indigo-900 mb-4">Total Annual Budget</h3>
                   <p className="text-3xl font-bold text-indigo-600 mb-2">${budget.total.toLocaleString()}</p>
@@ -855,6 +913,7 @@ export default function businessPlan() {
               </CardContent>
             </Card>
           </div>
+
 
           <div className="sticky bottom-0 bg-white border-t p-4 mt-8">
             <Button
@@ -879,39 +938,55 @@ export default function businessPlan() {
         </div>
       </div>
 
+
       <StaticGuidanceViewer
         isOpen={staticGuidanceModal.isOpen}
         onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
         sectionId={staticGuidanceModal.sectionId}
       />
 
+
       {/* Mentor Modal */}
-      <MentorModal
-        isOpen={mentorModal.isOpen}
-        onClose={closeMentorModal}
-        sectionId={mentorModal.sectionId}
-        sectionTitle={mentorModal.sectionTitle}
-        fieldValue={getFieldValue(mentorModal.fieldKey)}
-        onUpdateField={handleMentorUpdate}
-      />
+      <div className="relative z-[9999] business-plan-mentor-wrapper">
+        <style jsx global>{`
+          .business-plan-mentor-wrapper [role="dialog"] {
+            background-color: white !important;
+            color: black !important;
+          }
+          .business-plan-mentor-wrapper [data-radix-portal] {
+            z-index: 10000 !important;
+          }
+        `}</style>
+        <MentorModal
+          isOpen={mentorModal.isOpen}
+          onClose={closeMentorModal}
+          sectionId={mentorModal.sectionId}
+          sectionTitle={mentorModal.sectionTitle}
+          fieldValue={getFieldValue(mentorModal.fieldKey)}
+          onUpdateField={handleMentorUpdate}
+        />
+      </div>
 
       {/* Static Guidance */}
       {staticGuidanceModal.isOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white text-gray-900 rounded-xl shadow-2xl w-full max-w-md p-6 relative">
-            <button 
-              onClick={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
-              className="absolute top-4 right-4 text-gray-400 hover:text-black text-xl"
-            >
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-md p-6 relative">
+             <button 
+                onClick={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+                className="absolute top-4 right-4 text-gray-400 hover:text-black"
+             >
               ✕
-            </button>
-            <StaticGuidanceViewer
-              sectionId={staticGuidanceModal.sectionId}
-              onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
-            />
+             </button>
+             <StaticGuidanceViewer
+                sectionId={staticGuidanceModal.sectionId}
+                onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+              />
           </div>
         </div>
       )}
     </>
   );
 }
+
+
+
