@@ -32,6 +32,7 @@ export default function MentorModal({
   useEffect(() => {
     const fetchVentureContext = async () => {
       if (!ventureId || !isOpen) return;
+      console.log("DEBUG - Venture ID received:", ventureId);
       
       setIsLoadingContext(true);
       try {
