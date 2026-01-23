@@ -11,8 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
-import { supabase } from '@/lib/supabase'; // חיבור לדאטאבייס
-import { Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 export default function MentorModal({ 
   isOpen, 
@@ -21,18 +21,19 @@ export default function MentorModal({
   sectionTitle, 
   fieldValue, 
   onUpdateField,
-  ventureId // אנחנו חייבים את ה-ID כדי למשוך את התיאור
+  ventureId 
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [ventureDesc, setVentureDesc] = useState(''); // אחסון התיאור מהדאטאבייס
+  const [ventureDesc, setVentureDesc] = useState('');
+  const [isLoadingContext, setIsLoadingContext] = useState(false);
 
-  // שליפת נתוני המיזם ברגע שהמודאל נפתח
   useEffect(() => {
     const fetchVentureContext = async () => {
-      if (!ventureId) return;
+      if (!ventureId || !isOpen) return;
       
+      setIsLoadingContext(true);
       try {
         const { data, error } = await supabase
           .from('ventures')
@@ -42,9 +43,14 @@ export default function MentorModal({
 
         if (data) {
           setVentureDesc(data.description);
+        } else if (error) {
+          console.error('Supabase error:', error);
+          setVentureDesc('ERROR: Could not find venture description in database.');
         }
       } catch (err) {
-        console.error('Error fetching venture context:', err);
+        setVentureDesc('ERROR: Connection failed.');
+      } finally {
+        setIsLoadingContext(false);
       }
     };
 
@@ -56,91 +62,79 @@ export default function MentorModal({
   }, [isOpen, fieldValue, ventureId]);
 
   const handleGetFeedback = async () => {
-    if (!currentText.trim()) {
-      alert('Please write some content first.');
-      return;
-    }
+    if (!currentText.trim()) return;
 
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
-      // הפרומפט שמשתמש בנתון שמשכנו מהדאטאבייס
       const prompt = `
-        You are an elite startup mentor. 
-        CONTEXT: The startup you are mentoring is: "${ventureDesc || 'A new venture'}".
-        TASK: Provide feedback on the "${sectionTitle}" section.
-        USER DRAFT: "${currentText}"
+        You are a startup mentor. 
+        Venture Description: "${ventureDesc}"
+        Section: "${sectionTitle}"
+        Draft: "${currentText}"
 
-        STRUCTURE YOUR RESPONSE:
-        1. **Critique:** How does this draft align with a ${ventureDesc || 'startup'} model? What's missing?
-        2. **Industry Example:** Mention how a successful company (like Noom or Airbnb) approached this.
-        3. **Guiding Question:** Ask one question to help the user think deeper.
-        
-        Keep it concise and do NOT rewrite the text for them.
+        Instruction: Give specific feedback based ONLY on the venture description above. 
+        Structure: 1. Critique 2. Real-world example 3. Guiding question.
       `;
 
       const data = await InvokeLLM({ prompt });
-      
-      if (data && data.response) {
-        setFeedback(data.response);
-      } else {
-        setFeedback("I couldn't get a response. Please try again.");
-      }
-      
+      setFeedback(data?.response || "No response from AI.");
     } catch (error) {
-      console.error('Mentor Error:', error);
-      setFeedback('Error connecting to AI mentor.');
+      setFeedback("Error generating feedback.");
     }
     setIsGettingFeedback(false);
   };
 
-  const handleUpdateAndClose = () => {
-    onUpdateField(currentText);
-    onClose();
-  };
-  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
-        <DialogOverlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-        <DialogContent 
-          className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-white p-0 shadow-2xl h-[90vh] flex flex-col text-gray-900"
-        >
-          <DialogHeader className="p-6 pb-4 border-b bg-gray-50">
-            <div className="flex justify-between items-center w-full">
-              <div>
-                <DialogTitle className="text-xl font-bold">
-                  AI Mentor: {sectionTitle}
+        <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" />
+        <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
+          
+          {/* Header עם הצגת התיאור מהדאטאבייס */}
+          <DialogHeader className="p-6 border-b bg-slate-50">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1 text-left">
+                <DialogTitle className="text-2xl font-bold text-indigo-900">
+                  Mentor: {sectionTitle}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-gray-500 italic">
-                  Context: {ventureDesc || "Loading startup details..."}
-                </DialogDescription>
+                
+                {/* כאן התוספת הקריטית - מציגים מה המודאל "רואה" */}
+                <div className={`mt-2 p-2 rounded border ${!ventureDesc.includes('ERROR') ? 'bg-indigo-100 border-indigo-200' : 'bg-red-100 border-red-200'}`}>
+                  <p className="text-xs font-semibold uppercase text-indigo-700 mb-1">Venture Context (from Database):</p>
+                  <p className="text-sm font-medium text-gray-800 italic">
+                    {isLoadingContext ? "Fetching description..." : (ventureDesc || "No description found for this ID.")}
+                  </p>
+                </div>
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl">✕</button>
             </div>
           </DialogHeader>
-          
-          <div className="flex-1 overflow-y-auto p-6 bg-white">
-            <div className="max-w-2xl mx-auto space-y-4">
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="max-w-3xl mx-auto space-y-4">
+              <label className="text-sm font-semibold text-gray-700 text-left block">Your Draft:</label>
               <Textarea
                 value={currentText}
                 onChange={(e) => setCurrentText(e.target.value)}
-                placeholder="Write here..."
-                className="min-h-[200px] border-gray-300"
+                className="min-h-[180px] text-base border-gray-300 focus:border-indigo-500"
+                placeholder="Start writing..."
               />
 
               <Button
                 onClick={handleGetFeedback}
-                disabled={isGettingFeedback || !currentText.trim()}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12"
+                disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
+                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold"
               >
                 {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Get Mentor Feedback'}
               </Button>
-              
+
               {feedback && (
-                <div className="p-5 bg-indigo-50 rounded-xl border border-indigo-100 mt-4">
-                  <h4 className="font-bold text-indigo-900 mb-2">💡 Mentor Insight:</h4>
-                  <div className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="p-6 bg-white border-2 border-indigo-100 rounded-xl shadow-inner animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-indigo-900 font-bold mb-3 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-2" /> Mentor Feedback
+                  </h4>
+                  <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
                     {feedback}
                   </div>
                 </div>
@@ -148,11 +142,11 @@ export default function MentorModal({
             </div>
           </div>
 
-          <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-xl">
-             <Button variant="outline" onClick={onClose}>Cancel</Button>
-             <Button onClick={handleUpdateAndClose} className="bg-green-600 hover:bg-green-700 text-white px-8">
-               Save & Close
-             </Button>
+          <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button onClick={() => { onUpdateField(currentText); onClose(); }} className="bg-green-600 hover:bg-green-700 text-white px-10">
+              Save & Close
+            </Button>
           </div>
         </DialogContent>
       </DialogPortal>
