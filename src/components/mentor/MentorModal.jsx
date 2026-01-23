@@ -19,7 +19,7 @@ export default function MentorModal({
   sectionTitle, 
   fieldValue, 
   onUpdateField,
-  ventureDescription // שינוי: הוספת ה-Prop לקבלת תיאור המיזם מהטבלה
+  ventureDescription // מוודא שזה כאן
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
@@ -34,26 +34,27 @@ export default function MentorModal({
 
   const handleGetFeedback = async () => {
     if (!currentText.trim()) {
-      alert('Please write some content first to get feedback.');
+      alert('Please write some content first.');
       return;
     }
 
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
-      // שינוי: פרומפט משודרג - הדרכה, דוגמה מהעולם האמיתי ושאלה מנחה
+      // הפרומפט המדויק שחייב להתייחס לתיאור המיזם
       const prompt = `
-        You are an elite startup mentor. 
-        Context: The startup is about: "${ventureDescription || 'a new venture'}".
-        Section to analyze: "${sectionTitle}".
-        Entrepreneur's draft: "${currentText}"
+        You are a strategic startup mentor. 
+        CORE CONTEXT: The startup's business is: "${ventureDescription}".
+        CURRENT TASK: Provide guidance on the section: "${sectionTitle}".
+        USER'S DRAFT: "${currentText}"
 
-        Your task:
-        1. CRITIQUE: Briefly analyze the draft. What's missing to make it investor-ready?
-        2. EXAMPLE: Provide a short example of how a famous company (e.g. Airbnb, Uber, Slack) addressed this specific section ("${sectionTitle}").
-        3. GUIDANCE: Do NOT rewrite the text. Instead, ask ONE powerful question that will help the entrepreneur improve it themselves.
+        STRICT INSTRUCTIONS:
+        1. RELEVANCE: Your feedback MUST be specific to the business described above (${ventureDescription}). 
+        2. NO SOLUTIONS: Do not rewrite the text. Tell the user what is missing or weak.
+        3. CASE STUDY: Mention how a successful company in a similar field (e.g., Noom for habits, Headspace for wellness) approached their "${sectionTitle}".
+        4. THE "SO WHAT" TEST: Challenge the user to explain why an investor would care about this draft.
 
-        Keep it concise, professional, and insightful.
+        Keep it brief, sharp, and mentor-like.
       `;
 
       const data = await InvokeLLM({ prompt });
@@ -65,8 +66,8 @@ export default function MentorModal({
       }
       
     } catch (error) {
-      console.error('Error getting feedback:', error);
-      setFeedback('Sorry, there was an error getting feedback. Please try again.');
+      console.error('Error:', error);
+      setFeedback('Error getting feedback. Please try again.');
     }
     setIsGettingFeedback(false);
   };
@@ -96,7 +97,7 @@ export default function MentorModal({
           <div className="flex-1 overflow-y-auto p-6 bg-white">
             <div className="max-w-2xl mx-auto space-y-4">
               <p className="text-sm text-gray-600 bg-blue-50/50 p-4 rounded-lg border border-blue-100">
-                Take your time to think through and write your '{sectionTitle}' in your own words. When you're ready for feedback, click the button below.
+                Think deeply about your '{sectionTitle}'. Your startup's core: <strong>{ventureDescription || "Loading context..."}</strong>
               </p>
               
               <Textarea
@@ -123,7 +124,7 @@ export default function MentorModal({
               </Button>
               
               {feedback && (
-                <div className="p-5 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                <div className="p-5 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm">
                   <h4 className="font-bold text-indigo-900 mb-3 flex items-center">
                     <span className="mr-2">💡</span> Mentor Feedback:
                   </h4>
@@ -137,7 +138,7 @@ export default function MentorModal({
 
           <div className="p-4 border-t bg-gray-50 rounded-b-xl">
             <div className="flex justify-end gap-3">
-               <Button variant="outline" onClick={onClose} className="text-gray-700">Cancel</Button>
+               <Button variant="outline" onClick={onClose}>Cancel</Button>
                <Button
                  type="button"
                  onClick={handleUpdateAndClose}
