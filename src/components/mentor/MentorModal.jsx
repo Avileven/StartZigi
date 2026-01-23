@@ -75,19 +75,19 @@ export default function MentorModal({
   User's Draft: "${currentText}"
 
   Instruction:
-  1. Header: Start with "Mentor Feedback: " followed by 1-10 stars (⭐).
-  2. Scoring Criteria: Calculate the stars based on:
-     - Depth of information (How detailed is the draft?).
-     - Context alignment (Does it actually fit the venture description?).
-     - Actionability (Is it clear how this will be executed?).
-  3. Analysis: Briefly explain what you liked and what is missing.
-  4. Strategic Hints: Provide 2-3 bullet points of what the user should think about next. DO NOT rewrite the text for them.
-  5. Challenge Question: One final question to push their strategy further.
+  1. Start with "Mentor Feedback: " followed by a 10-star scale.
+     - Use "★" for active stars and "☆" for empty stars.
+     - Example for a 4/10 score: ★★★★☆☆☆☆☆☆
+  2. Scoring Criteria: Base the score on:
+     - Depth of information.
+     - Alignment with the Venture Context.
+     - Specificity and Clarity.
+  3. Analysis: Briefly explain the score.
+  4. Strategic Hints: Provide 2-3 bullet points on WHAT is missing (Do not rewrite the text).
+  5. Challenge Question: One final question to push their thinking.
 
-  Tone: Professional and insightful.
   Language: English.
 `;
-
       const data = await InvokeLLM({ prompt });
       setFeedback(data?.response || "No response from AI.");
     } catch (error) {
