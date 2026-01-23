@@ -946,41 +946,40 @@ export default function businessPlan() {
       />
 
 
-      {/* Mentor Modal */}
-      <div className="relative z-[9999] business-plan-mentor-wrapper">
-        <style jsx global>{`
-          .business-plan-mentor-wrapper [role="dialog"] {
-            background-color: white !important;
-            color: black !important;
-          }
-          .business-plan-mentor-wrapper [data-radix-portal] {
-            z-index: 10000 !important;
-          }
-        `}</style>
-        <MentorModal
-          isOpen={mentorModal.isOpen}
-          onClose={closeMentorModal}
-          sectionId={mentorModal.sectionId}
-          sectionTitle={mentorModal.sectionTitle}
-          fieldValue={getFieldValue(mentorModal.fieldKey)}
-          onUpdateField={handleMentorUpdate}
-        />
-      </div>
-
-      {/* Static Guidance */}
-      {staticGuidanceModal.isOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-md p-6 relative">
-             <button 
-                onClick={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
-                className="absolute top-4 right-4 text-gray-400 hover:text-black"
-             >
-              ✕
-             </button>
-             <StaticGuidanceViewer
-                sectionId={staticGuidanceModal.sectionId}
-                onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+      {/* Mentor Modal Section - Forced Fix */}
+      {mentorModal.isOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          {/* ה-div הזה מכריח את כל מה שבתוכו להיות לבן עם טקסט שחור */}
+          <div className="bg-white text-black rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden relative" style={{ color: 'black', backgroundColor: 'white' }}>
+            <div className="p-4 border-b bg-gray-100 flex justify-between items-center">
+              <h3 className="font-bold text-black">AI Mentor Support</h3>
+              <button onClick={closeMentorModal} className="text-gray-500 hover:text-black font-bold p-2">✕</button>
+            </div>
+            
+            <div className="p-2 mentor-content-safe-zone">
+              {/* אנחנו קוראים למנטור בתוך ה"איזור הבטוח" הלבן שיצרנו */}
+              <MentorModal
+                isOpen={mentorModal.isOpen}
+                onClose={closeMentorModal}
+                sectionId={mentorModal.sectionId}
+                sectionTitle={mentorModal.sectionTitle}
+                fieldValue={getFieldValue(mentorModal.fieldKey)}
+                onUpdateField={handleMentorUpdate}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Static Guidance Section */}
+      {staticGuidanceModal.isOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-md p-6 relative">
+            <button onClick={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })} className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold">✕</button>
+            <StaticGuidanceViewer
+              sectionId={staticGuidanceModal.sectionId}
+              onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+            />
           </div>
         </div>
       )}
