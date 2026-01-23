@@ -46,8 +46,16 @@ export default function MentorModal({
 
 Do not include praise, examples, or comparisons.`;
 
-      const response = await InvokeLLM({ prompt });
-      setFeedback(result.response);
+      // קריאה לפונקציה ושמירת התוצאה במשתנה בשם data
+      const data = await InvokeLLM({ prompt });
+      
+      // חילוץ הטקסט מתוך האובייקט (data.response)
+      if (data && data.response) {
+        setFeedback(data.response);
+      } else {
+        setFeedback("I couldn't generate feedback. Please check your content.");
+      }
+      
     } catch (error) {
       console.error('Error getting feedback:', error);
       setFeedback('Sorry, there was an error getting feedback. Please try again.');
