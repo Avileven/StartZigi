@@ -952,6 +952,7 @@ export default function businessPlan() {
         sectionTitle={mentorModal.sectionTitle}
         fieldValue={getFieldValue(mentorModal.fieldKey)}
         onUpdateField={handleMentorUpdate}
+        ventureId={venture?.id}
       />
     </>
   );
