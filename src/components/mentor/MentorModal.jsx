@@ -47,7 +47,7 @@ export default function MentorModal({
 Do not include praise, examples, or comparisons.`;
 
       const response = await InvokeLLM({ prompt });
-      setFeedback(response);
+      setFeedback(result.response);
     } catch (error) {
       console.error('Error getting feedback:', error);
       setFeedback('Sorry, there was an error getting feedback. Please try again.');
