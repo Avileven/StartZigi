@@ -1,3 +1,4 @@
+//business plan
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -884,14 +885,39 @@ export default function businessPlan() {
         sectionId={staticGuidanceModal.sectionId}
       />
 
-      <MentorModal
-        isOpen={mentorModal.isOpen}
-        onClose={closeMentorModal}
-        sectionId={mentorModal.sectionId}
-        sectionTitle={mentorModal.sectionTitle}
-        fieldValue={getFieldValue(mentorModal.fieldKey)}
-        onUpdateField={handleMentorUpdate}
-      />
+      {/* Mentor Modal Section */}
+      {mentorModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-2xl p-4 overflow-auto max-h-[90vh]">
+            <div className="flex justify-end border-b pb-2 mb-4">
+              <button onClick={closeMentorModal} className="text-gray-500 font-bold px-2 hover:text-black">CLOSE ✕</button>
+            </div>
+            <MentorModal
+              isOpen={mentorModal.isOpen}
+              onClose={closeMentorModal}
+              sectionId={mentorModal.sectionId}
+              sectionTitle={mentorModal.sectionTitle}
+              fieldValue={getFieldValue(mentorModal.fieldKey)}
+              onUpdateField={handleMentorUpdate}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Static Guidance Section */}
+      {staticGuidanceModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-md p-6">
+            <div className="flex justify-end mb-2">
+              <button onClick={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })} className="text-gray-500 font-bold">CLOSE ✕</button>
+            </div>
+            <StaticGuidanceViewer
+              sectionId={staticGuidanceModal.sectionId}
+              onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
