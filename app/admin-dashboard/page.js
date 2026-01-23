@@ -14,12 +14,24 @@ export default function AdminDashboard() {
     background: '', avatar_url: ''
   });
 
+  // רשימת תחומים לבחירה מהירה
+  const sectorOptions = ['Fintech', 'SaaS', 'AI', 'HealthTech', 'Cyber', 'Consumer', 'DeepTech', 'AgriTech'];
+
   const fetchData = () => {
     setLoading(true);
     fetch('/api/admin-stats').then(res => res.json()).then(d => { setReport(d); setLoading(false); });
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const toggleSector = (sector) => {
+    setNewInvestor(prev => ({
+      ...prev,
+      focus_sectors: prev.focus_sectors.includes(sector)
+        ? prev.focus_sectors.filter(s => s !== sector)
+        : [...prev.focus_sectors, sector]
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +40,11 @@ export default function AdminDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newInvestor)
     });
-    if (res.ok) { setShowAddForm(false); fetchData(); } 
+    if (res.ok) { 
+      setShowAddForm(false); 
+      setNewInvestor({ name: '', investor_type: 'Angel', focus_sectors: [], typical_check_min: '', typical_check_max: '', preferred_valuation_min: '', preferred_valuation_max: '', background: '', avatar_url: '' });
+      fetchData(); 
+    } 
     else { const err = await res.json(); alert(`Error: ${err.error}`); }
   };
 
@@ -62,7 +78,6 @@ export default function AdminDashboard() {
       </div>
 
       <div className="space-y-6">
-        {/* INVESTORS TAB */}
         {activeTab === 'investors' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -73,23 +88,48 @@ export default function AdminDashboard() {
             </div>
 
             {showAddForm && (
-              <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg border grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input required placeholder="Investor Name" className="p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, name: e.target.value})} />
-                <select className="p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, investor_type: e.target.value})}>
-                  <option>Angel</option><option>VC Partner</option><option>Family Office</option>
-                </select>
-                <div className="flex gap-2">
-                  <input type="number" placeholder="Min Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_min: e.target.value})} />
-                  <input type="number" placeholder="Max Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_max: e.target.value})} />
+              <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg border grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4">
+                <div className="space-y-4">
+                  <label className="block text-xs font-bold text-gray-400">GENERAL INFO</label>
+                  <input required placeholder="Investor Name" className="w-full p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, name: e.target.value})} />
+                  <select className="w-full p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, investor_type: e.target.value})}>
+                    <option>Angel</option><option>VC Partner</option><option>Family Office</option>
+                  </select>
+                  <input placeholder="Avatar URL" className="w-full p-3 border rounded-lg text-sm" onChange={e => setNewInvestor({...newInvestor, avatar_url: e.target.value})} />
                 </div>
-                <div className="flex gap-2">
-                  <input type="number" placeholder="Min Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_min: e.target.value})} />
-                  <input type="number" placeholder="Max Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_max: e.target.value})} />
+
+                <div className="space-y-4">
+                  <label className="block text-xs font-bold text-gray-400">INVESTMENT PREFERENCES</label>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Min Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_min: e.target.value})} />
+                    <input type="number" placeholder="Max Check $" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, typical_check_max: e.target.value})} />
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Min Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_min: e.target.value})} />
+                    <input type="number" placeholder="Max Val Pref" className="w-1/2 p-3 border rounded-lg" onChange={e => setNewInvestor({...newInvestor, preferred_valuation_max: e.target.value})} />
+                  </div>
                 </div>
-                <input placeholder="Avatar URL" className="md:col-span-2 p-3 border rounded-lg text-sm" onChange={e => setNewInvestor({...newInvestor, avatar_url: e.target.value})} />
+
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-xs font-bold text-gray-400">FOCUS SECTORS (Click to select)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {sectorOptions.map(s => (
+                      <button 
+                        key={s} 
+                        type="button" 
+                        onClick={() => toggleSector(s)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold border transition ${newInvestor.focus_sectors.includes(s) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <textarea placeholder="Background / Bio Description" className="md:col-span-2 p-3 border rounded-lg h-24" onChange={e => setNewInvestor({...newInvestor, background: e.target.value})} />
+                
                 <div className="md:col-span-2 flex justify-end">
-                  <button type="submit" className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold">SAVE TO DATABASE</button>
+                  <button type="submit" className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold shadow-md hover:bg-green-700 transition">SAVE TO DATABASE</button>
                 </div>
               </form>
             )}
@@ -97,15 +137,19 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 border-b">
-                  <tr className="text-gray-400 text-xs uppercase"><th className="p-4">Name</th><th className="p-4">Type</th><th className="p-4">Checks</th><th className="p-4">Background</th></tr>
+                  <tr className="text-gray-400 text-xs uppercase"><th className="p-4">Name</th><th className="p-4">Type</th><th className="p-4">Sectors</th><th className="p-4">Checks</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {data.investors.map(i => (
                     <tr key={i.id} className="hover:bg-gray-50">
                       <td className="p-4 font-bold">{i.name}</td>
                       <td className="p-4 font-medium uppercase text-xs">{i.investor_type}</td>
+                      <td className="p-4 text-xs">
+                        <div className="flex flex-wrap gap-1">
+                          {i.focus_sectors?.map(s => <span key={s} className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">{s}</span>)}
+                        </div>
+                      </td>
                       <td className="p-4">${i.typical_check_min?.toLocaleString()} - ${i.typical_check_max?.toLocaleString()}</td>
-                      <td className="p-4 text-gray-500 max-w-xs truncate">{i.background}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -146,7 +190,7 @@ export default function AdminDashboard() {
                 {data.users.map(u => (
                   <tr key={u.id}>
                     <td className="p-4 font-bold">{u.username}</td>
-                    <td className="p-4 text-gray-500">{new Date(u.accepted_tos_date).toLocaleDateString()}</td>
+                    <td className="p-4 text-gray-500">{u.accepted_tos_date ? new Date(u.accepted_tos_date).toLocaleDateString() : 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -166,7 +210,7 @@ export default function AdminDashboard() {
                   <tr key={vc.id}>
                     <td className="p-4 font-bold">{vc.name}</td>
                     <td className="p-4">{vc.founded}</td>
-                    <td className="p-4">{vc.focus_areas?.join(', ')}</td>
+                    <td className="p-4">{vc.investment_stages?.join(', ')}</td>
                   </tr>
                 ))}
               </tbody>
