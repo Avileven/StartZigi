@@ -85,29 +85,39 @@ export default function MentorModal({
         <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
           
           <DialogHeader className="p-6 border-b bg-white">
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                {/* הלוגו הממותג עם ה-i הארוכה (AI Hint) */}
-                <div className="flex items-baseline italic select-none">
-                  <span className="text-2xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    z
-                  </span>
-                  <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent inline-block transform -translate-y-[2px] scale-y-110">
-                    i
-                  </span>
-                  <span className="text-2xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    gMentor
-                  </span>
-                </div>
+  <div className="flex justify-between items-center w-full">
+    <DialogTitle className="flex items-center m-0 p-0">
+      {/* לוגו ZiG עם ה-i הארוכה */}
+      <div className="flex items-baseline italic select-none leading-none">
+        <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          Z
+        </span>
+        <span className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent inline-block transform scale-y-125 mx-0.5">
+          i
+        </span>
+        <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          G
+        </span>
+        <span className="text-2xl font-bold text-indigo-900 ml-1 not-italic">
+          Mentor
+        </span>
+      </div>
 
-                <div className="mx-4 h-5 w-[1px] bg-slate-200"></div>
-                <DialogTitle className="text-lg font-medium text-slate-500">
-                  {sectionTitle}
-                </DialogTitle>
-              </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl font-light">✕</button>
-            </div>
-          </DialogHeader>
+      {/* קו מפריד וכותרת הסקשן */}
+      <div className="mx-4 h-6 w-[1px] bg-slate-200" />
+      <span className="text-lg font-medium text-slate-500 not-italic">
+        {sectionTitle}
+      </span>
+    </DialogTitle>
+
+    <button 
+      onClick={onClose} 
+      className="text-gray-400 hover:text-black text-2xl font-light transition-colors p-2"
+    >
+      ✕
+    </button>
+  </div>
+</DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             <div className="max-w-3xl mx-auto space-y-4 text-left">
@@ -116,6 +126,9 @@ export default function MentorModal({
                 value={currentText}
                 onChange={(e) => setCurrentText(e.target.value)}
                 className="min-h-[180px] text-base border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                
+                
+                
                 placeholder="Start writing..."
               />
 
