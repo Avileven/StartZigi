@@ -457,81 +457,68 @@ const BUSINESS_MODEL_GUIDANCE = {
 
 // --- Guidance Modal (Fix for transparency/readability) ---
 const GuidanceModal = ({ content, onClose }) => {
-  if (!content || typeof document === 'undefined') return null;
+  if (!content) return null;
 
-  const modalContent = (
+  return (
     <div 
-      style={{
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ 
+        zIndex: 9999, 
         position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-        padding: '20px'
+        top: 0, left: 0, right: 0, bottom: 0,
+        isolation: 'isolate' // יוצר שכבת רינדור חדשה
       }}
-      onClick={onClose}
     >
+      {/* Background Overlay - רקע כהה אטום */}
       <div 
-        style={{
-          backgroundColor: '#ffffff', // לבן אטום מוחלט
-          borderRadius: '16px',
-          padding: '32px',
-          width: '100%',
-          maxWidth: '500px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-          color: '#111827',
-          border: '1px solid #e5e7eb'
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+        onClick={onClose}
+        style={{ opacity: 1 }}
+      />
+
+      {/* Modal Content - התיבה הלבנה */}
+      <div 
+        className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
+        style={{ 
+          opacity: 1, 
+          backgroundColor: '#FFFFFF', // לבן מוחלט
+          visibility: 'visible'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '2px solid #f3f4f6', paddingBottom: '10px' }}>
-          <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#4f46e5' }}>{content.title}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#9ca3af' }}>&times;</button>
-        </div>
-        
-        <div style={{ spaceY: '20px' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <p style={{ fontSize: '16px', fontWeight: '500' }}>{content.body}</p>
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4 border-b pb-4">
+            <h3 className="text-2xl font-bold text-indigo-700">{content.title}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
           </div>
           
-          <div style={{ backgroundColor: '#fef3c7', padding: '15px', borderRadius: '8px', borderRight: '4px solid #f59e0b', marginBottom: '20px' }}>
-            <p style={{ fontSize: '14px', color: '#92400e', fontWeight: 'bold', marginBottom: '4px' }}>Why it matters:</p>
-            <p style={{ fontSize: '14px', color: '#b45309' }}>{content.why}</p>
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Overview</h4>
+              <p className="text-gray-900 text-lg leading-relaxed">{content.body}</p>
+            </div>
+
+            <div className="bg-amber-50 p-4 rounded-xl border-r-4 border-amber-500">
+              <h4 className="text-xs font-bold text-amber-700 uppercase mb-1">Why it matters</h4>
+              <p className="text-amber-900">{content.why}</p>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-500 uppercase mb-1 font-mono">Example</h4>
+              <p className="text-slate-700 italic">"{content.example}"</p>
+            </div>
           </div>
 
-          <div style={{ backgroundColor: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #f3f4f6' }}>
-            <p style={{ fontSize: '14px', color: '#4b5563', fontWeight: 'bold' }}>Example:</p>
-            <p style={{ fontSize: '14px', color: '#6b7280', fontStyle: 'italic' }}>{content.example}</p>
-          </div>
+          <button 
+            onClick={onClose} 
+            className="mt-8 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+          >
+            Got It
+          </button>
         </div>
-
-        <button 
-          onClick={onClose} 
-          style={{
-            marginTop: '24px',
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#4f46e5',
-            color: 'white',
-            fontWeight: '600',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          Got It
-        </button>
       </div>
     </div>
   );
-
-  // כאן הקסם - אנחנו "משדרים" את המודאל ישירות ל-body
-  return createPortal(modalContent, document.body);
 };
 // --- Helper functions for dynamic slider labels and examples ---
 const getParameterLabel = (paramKey, value) => {
