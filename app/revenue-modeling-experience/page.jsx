@@ -460,53 +460,82 @@ const GuidanceModal = ({ content, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
+      style={{
+        fixed: 'inset-0',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)', // שכבה כהה אטומה
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999, // הכי גבוה שאפשר
+        padding: '20px',
+        backdropFilter: 'blur(4px)' // טשטוש של הדף שמתחת
+      }}
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all max-h-[90vh] overflow-y-auto border border-gray-200" 
+        style={{
+          backgroundColor: '#ffffff', // לבן אטום לחלוטין
+          borderRadius: '16px',
+          padding: '32px',
+          width: '100%',
+          maxWidth: '550px',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          color: '#1f2937', // טקסט אפור כהה מאוד
+          position: 'relative',
+          border: '1px solid #e5e7eb'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-start mb-4 border-b pb-3">
-          <h3 className="text-2xl font-bold text-indigo-700">{content.title}</h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+          <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#3730a3', margin: 0 }}>{content.title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '20px' }}>✕</button>
         </div>
-        
-        <div className="text-gray-800 leading-relaxed space-y-6 overflow-y-auto">
-          <section>
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Overview</h4>
-            <p className="text-lg text-gray-700">{content.body}</p>
-          </section>
 
-          <section className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-amber-700 mb-1">Why it matters</h4>
-            <p className="text-gray-700">{content.why}</p>
-          </section>
+        <div style={{ fontSize: '16px', lineHeight: '1.6' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <strong style={{ color: '#4f46e5', display: 'block', marginBottom: '5px' }}>Overview:</strong>
+            <p style={{ margin: 0 }}>{content.body}</p>
+          </div>
+          
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
+            <strong style={{ color: '#b45309', display: 'block', marginBottom: '5px' }}>Why it matters:</strong>
+            <p style={{ margin: 0 }}>{content.why}</p>
+          </div>
 
-          <section className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2 font-mono">Example context</h4>
-            <p className="font-medium text-gray-600 italic">"{content.example}"</p>
-          </section>
+          <div style={{ padding: '15px', backgroundColor: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <strong style={{ color: '#4b5563', display: 'block', marginBottom: '5px' }}>Example:</strong>
+            <p style={{ margin: 0, fontStyle: 'italic' }}>{content.example}</p>
+          </div>
         </div>
 
         <button 
           onClick={onClose} 
-          className="mt-8 w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+          style={{
+            marginTop: '25px',
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#4f46e5',
+            color: 'white',
+            fontWeight: 'bold',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
         >
-          Got It
+          I Understand
         </button>
       </div>
     </div>
   );
 };
-
 // --- Helper functions for dynamic slider labels and examples ---
 const getParameterLabel = (paramKey, value) => {
   const labels = {
