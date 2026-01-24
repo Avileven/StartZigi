@@ -459,29 +459,92 @@ const GuidanceModal = ({ content, onClose }) => {
   if (!content) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all scale-100 opacity-100 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-start mb-4 border-b pb-2">
-          <h3 className="text-2xl font-bold text-blue-700">{content.title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100" aria-label="Close modal">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        padding: '20px'
+      }}
+    >
+      {/* שכבת הרקע הכהה */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.9)', // כחול-כהה מאוד כמעט אטום
+          backdropFilter: 'blur(8px)', // טשטוש חזק של הרקע
+        }}
+        onClick={onClose}
+      />
+
+      {/* הקופסה הלבנה */}
+      <div 
+        style={{
+          position: 'relative',
+          backgroundColor: '#FFFFFF', // לבן מוחלט
+          color: '#1e293b', // טקסט כהה לקריאות
+          width: '100%',
+          maxWidth: '550px',
+          maxHeight: '85vh',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          overflowY: 'auto',
+          border: '1px solid #e2e8f0',
+          padding: '32px',
+          display: 'block', // מוודא שזה לא יירש שום Flex מוזר
+          opacity: 1, // אטימות מלאה
+          visibility: 'visible'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
+          <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4338ca', margin: 0 }}>{content.title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '28px', color: '#94a3b8', lineHeight: 1 }}>&times;</button>
         </div>
-        <div className="text-gray-700 leading-relaxed space-y-4">
-          <p className="mb-4">
-            <strong className="text-blue-600">Overview:</strong> {content.body}
-          </p>
-          <p>
-            <strong className="text-red-600">Why it matters:</strong> {content.why}
-          </p>
-          <div className="p-3 bg-gray-100 border-l-4 border-gray-300 rounded-md">
-            <p className="font-mono text-sm">
-              <strong className="text-gray-600">Example:</strong> {content.example}
-            </p>
+        
+        <div style={{ fontSize: '17px', lineHeight: '1.6' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <p style={{ margin: 0 }}>{content.body}</p>
+          </div>
+          
+          <div style={{ backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '16px', borderRadius: '4px', marginBottom: '24px' }}>
+            <strong style={{ color: '#b45309', display: 'block', marginBottom: '4px' }}>Why it matters:</strong>
+            <p style={{ margin: 0, fontSize: '15px' }}>{content.why}</p>
+          </div>
+
+          <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '8px' }}>
+            <strong style={{ color: '#64748b', display: 'block', marginBottom: '4px', fontSize: '13px', textTransform: 'uppercase' }}>Example Context:</strong>
+            <p style={{ margin: 0, fontStyle: 'italic', color: '#475569', fontSize: '15px' }}>{content.example}</p>
           </div>
         </div>
-        <button onClick={onClose} className="mt-6 w-full py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-          Got It
+
+        <button 
+          onClick={onClose} 
+          style={{
+            marginTop: '32px',
+            width: '100%',
+            padding: '14px',
+            backgroundColor: '#4f46e5',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            borderRadius: '10px',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '16px',
+            boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.2)'
+          }}
+        >
+          I Got It
         </button>
       </div>
     </div>
@@ -1310,7 +1373,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-blue-800 tracking-tight sm:text-4xl">
-            Dynamic Business Model Simulator- קשקוששששששששששששש
+            Dynamic Business Model Simulator-
           </h1>
           <p className="mt-3 text-xl text-gray-500">
             Adjust the levers below and view the 24-month forecast instantly.
