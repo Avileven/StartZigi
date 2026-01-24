@@ -1,4 +1,5 @@
 
+// mvp-development 240126
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -115,12 +116,26 @@ export default function MVPDevelopment() {
     setMvpData(prev => ({ ...prev, [field]: value }));
   };
 
-  const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
+ const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
+    // 1. נמשוך רק את תיאור המיזם מהדאטהבייס (הקונטקסט שחסר לו)
+    const projectDescription = venture?.description || "";
+
+    // 2. נבנה "מעטפת" שמשלבת את התיאור עם מה שכתבת
+    const enrichedValue = `
+      Project Context: ${projectDescription}
+      Section: ${sectionTitle}
+      User Input: ${formData[fieldKey] || ""}
+      
+      Instruction: Based on the project context above, please analyze if this input is aligned and provide feedback.
+    `;
+
     setMentorModal({
       isOpen: true,
       sectionId,
       sectionTitle,
-      fieldKey
+      fieldKey,
+      // אנחנו שולחים את הכל ארוז יחד כ-overrideValue
+      overrideValue: enrichedValue 
     });
   };
 
