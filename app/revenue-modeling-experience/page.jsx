@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
+import { createPortal } from 'react-dom';
 // --- Configuration Constants ---
 const MONTHS = 24;
 const TRANSACTION_RATE = 0.005;
@@ -456,85 +457,81 @@ const BUSINESS_MODEL_GUIDANCE = {
 
 // --- Guidance Modal (Fix for transparency/readability) ---
 const GuidanceModal = ({ content, onClose }) => {
-  if (!content) return null;
+  if (!content || typeof document === 'undefined') return null;
 
-  return (
+  const modalContent = (
     <div 
       style={{
-        fixed: 'inset-0',
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)', // שכבה כהה אטומה
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999, // הכי גבוה שאפשר
-        padding: '20px',
-        backdropFilter: 'blur(4px)' // טשטוש של הדף שמתחת
+        zIndex: 99999,
+        padding: '20px'
       }}
       onClick={onClose}
     >
       <div 
         style={{
-          backgroundColor: '#ffffff', // לבן אטום לחלוטין
+          backgroundColor: '#ffffff', // לבן אטום מוחלט
           borderRadius: '16px',
           padding: '32px',
           width: '100%',
-          maxWidth: '550px',
-          maxHeight: '85vh',
+          maxWidth: '500px',
+          maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          color: '#1f2937', // טקסט אפור כהה מאוד
-          position: 'relative',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+          color: '#111827',
           border: '1px solid #e5e7eb'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-          <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#3730a3', margin: 0 }}>{content.title}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '20px' }}>✕</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '2px solid #f3f4f6', paddingBottom: '10px' }}>
+          <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#4f46e5' }}>{content.title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#9ca3af' }}>&times;</button>
         </div>
-
-        <div style={{ fontSize: '16px', lineHeight: '1.6' }}>
+        
+        <div style={{ spaceY: '20px' }}>
           <div style={{ marginBottom: '20px' }}>
-            <strong style={{ color: '#4f46e5', display: 'block', marginBottom: '5px' }}>Overview:</strong>
-            <p style={{ margin: 0 }}>{content.body}</p>
+            <p style={{ fontSize: '16px', fontWeight: '500' }}>{content.body}</p>
           </div>
           
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
-            <strong style={{ color: '#b45309', display: 'block', marginBottom: '5px' }}>Why it matters:</strong>
-            <p style={{ margin: 0 }}>{content.why}</p>
+          <div style={{ backgroundColor: '#fef3c7', padding: '15px', borderRadius: '8px', borderRight: '4px solid #f59e0b', marginBottom: '20px' }}>
+            <p style={{ fontSize: '14px', color: '#92400e', fontWeight: 'bold', marginBottom: '4px' }}>Why it matters:</p>
+            <p style={{ fontSize: '14px', color: '#b45309' }}>{content.why}</p>
           </div>
 
-          <div style={{ padding: '15px', backgroundColor: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-            <strong style={{ color: '#4b5563', display: 'block', marginBottom: '5px' }}>Example:</strong>
-            <p style={{ margin: 0, fontStyle: 'italic' }}>{content.example}</p>
+          <div style={{ backgroundColor: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #f3f4f6' }}>
+            <p style={{ fontSize: '14px', color: '#4b5563', fontWeight: 'bold' }}>Example:</p>
+            <p style={{ fontSize: '14px', color: '#6b7280', fontStyle: 'italic' }}>{content.example}</p>
           </div>
         </div>
 
         <button 
           onClick={onClose} 
           style={{
-            marginTop: '25px',
+            marginTop: '24px',
             width: '100%',
             padding: '12px',
             backgroundColor: '#4f46e5',
             color: 'white',
-            fontWeight: 'bold',
+            fontWeight: '600',
             borderRadius: '8px',
             border: 'none',
-            cursor: 'pointer',
-            fontSize: '16px'
+            cursor: 'pointer'
           }}
         >
-          I Understand
+          Got It
         </button>
       </div>
     </div>
   );
+
+  // כאן הקסם - אנחנו "משדרים" את המודאל ישירות ל-body
+  return createPortal(modalContent, document.body);
 };
 // --- Helper functions for dynamic slider labels and examples ---
 const getParameterLabel = (paramKey, value) => {
