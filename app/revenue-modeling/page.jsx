@@ -173,6 +173,39 @@ const GuidanceModal = ({ content, onClose }) => {
       </div>
     </div>
   );
+};const GuidanceModal = ({ content, onClose }) => {
+  if (!content) return null;
+
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'red', // רקע אדום בוהק - אי אפשר לפספס
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={onClose}
+    >
+      <div 
+        style={{
+          backgroundColor: 'white',
+          padding: '50px',
+          color: 'black',
+          fontSize: '30px',
+          fontWeight: 'bold',
+          border: '10px solid blue'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h1>זה הקובץ הנכון!</h1>
+        <p>{content.title}</p>
+        <button onClick={onClose} style={{ padding: '20px', background: 'black', color: 'white' }}>סגור אותי</button>
+      </div>
+    </div>
+  );
 };
 
 // --- Custom Slider Component ---
