@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
-import { createPortal } from 'react-dom';
 // --- Configuration Constants ---
 const MONTHS = 24;
 const TRANSACTION_RATE = 0.005;
@@ -455,41 +454,40 @@ const BUSINESS_MODEL_GUIDANCE = {
   }
 };
 
-// --- Guidance Modal (Fix for transparency/readability) ---
+// --- Guidance Modal (kept for business model guidance) ---
 const GuidanceModal = ({ content, onClose }) => {
   if (!content) return null;
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'red', // רקע אדום בוהק - אי אפשר לפספס
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      onClick={onClose}
-    >
-      <div 
-        style={{
-          backgroundColor: 'white',
-          padding: '50px',
-          color: 'black',
-          fontSize: '30px',
-          fontWeight: 'bold',
-          border: '10px solid blue'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h1>זה הקובץ הנכון!</h1>
-        <p>{content.title}</p>
-        <button onClick={onClose} style={{ padding: '20px', background: 'black', color: 'white' }}>סגור אותי</button>
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all scale-100 opacity-100 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start mb-4 border-b pb-2">
+          <h3 className="text-2xl font-bold text-blue-700">{content.title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100" aria-label="Close modal">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div className="text-gray-700 leading-relaxed space-y-4">
+          <p className="mb-4">
+            <strong className="text-blue-600">Overview:</strong> {content.body}
+          </p>
+          <p>
+            <strong className="text-red-600">Why it matters:</strong> {content.why}
+          </p>
+          <div className="p-3 bg-gray-100 border-l-4 border-gray-300 rounded-md">
+            <p className="font-mono text-sm">
+              <strong className="text-gray-600">Example:</strong> {content.example}
+            </p>
+          </div>
+        </div>
+        <button onClick={onClose} className="mt-6 w-full py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+          Got It
+        </button>
       </div>
     </div>
   );
 };
+
 // --- Helper functions for dynamic slider labels and examples ---
 const getParameterLabel = (paramKey, value) => {
   const labels = {
@@ -1312,7 +1310,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-blue-800 tracking-tight sm:text-4xl">
-            Dynamic Business Model Simulator
+            Dynamic Business Model Simulator- קשקוששששששששששששש
           </h1>
           <p className="mt-3 text-xl text-gray-500">
             Adjust the levers below and view the 24-month forecast instantly.
