@@ -461,61 +461,31 @@ const GuidanceModal = ({ content, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ 
-        zIndex: 9999, 
+      style={{
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        isolation: 'isolate' // יוצר שכבת רינדור חדשה
+        backgroundColor: 'red', // רקע אדום בוהק - אי אפשר לפספס
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
+      onClick={onClose}
     >
-      {/* Background Overlay - רקע כהה אטום */}
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
-        onClick={onClose}
-        style={{ opacity: 1 }}
-      />
-
-      {/* Modal Content - התיבה הלבנה */}
-      <div 
-        className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
-        style={{ 
-          opacity: 1, 
-          backgroundColor: '#FFFFFF', // לבן מוחלט
-          visibility: 'visible'
+        style={{
+          backgroundColor: 'white',
+          padding: '50px',
+          color: 'black',
+          fontSize: '30px',
+          fontWeight: 'bold',
+          border: '10px solid blue'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-4 border-b pb-4">
-            <h3 className="text-2xl font-bold text-indigo-700">{content.title}</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-          </div>
-          
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Overview</h4>
-              <p className="text-gray-900 text-lg leading-relaxed">{content.body}</p>
-            </div>
-
-            <div className="bg-amber-50 p-4 rounded-xl border-r-4 border-amber-500">
-              <h4 className="text-xs font-bold text-amber-700 uppercase mb-1">Why it matters</h4>
-              <p className="text-amber-900">{content.why}</p>
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h4 className="text-xs font-bold text-slate-500 uppercase mb-1 font-mono">Example</h4>
-              <p className="text-slate-700 italic">"{content.example}"</p>
-            </div>
-          </div>
-
-          <button 
-            onClick={onClose} 
-            className="mt-8 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
-          >
-            Got It
-          </button>
-        </div>
+        <h1>זה הקובץ הנכון!</h1>
+        <p>{content.title}</p>
+        <button onClick={onClose} style={{ padding: '20px', background: 'black', color: 'white' }}>סגור אותי</button>
       </div>
     </div>
   );
