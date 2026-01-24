@@ -476,7 +476,19 @@ export default function MVPDevelopment() {
                     </p>
                   </div>
 
-                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'feature_evaluation_matrix' })}
+                      // [2026-01-06] FIX
+                      className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                    >
+                      <Info className="w-4 h-4" />
+                      Tips
+                    </Button>
+                 </div>
                 </div>
 
                 {featureMatrix.map((feature) => (
