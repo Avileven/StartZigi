@@ -1,8 +1,9 @@
+// MentorModal 240126
 import React, { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogPortal,
   DialogOverlay
@@ -13,14 +14,15 @@ import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
 import { Loader2, MessageSquare } from 'lucide-react';
 
-export default function MentorModal({ 
-  isOpen, 
-  onClose, 
-  sectionId, 
-  sectionTitle, 
-  fieldValue, 
+
+export default function MentorModal({
+  isOpen,
+  onClose,
+  sectionId,
+  sectionTitle,
+  fieldValue,
   onUpdateField,
-  ventureId 
+  ventureId
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
@@ -28,9 +30,12 @@ export default function MentorModal({
   const [ventureDesc, setVentureDesc] = useState('');
   const [isLoadingContext, setIsLoadingContext] = useState(false);
 
+
+  // טעינת תיאור המיזם מהדאטאבייס ברקע (ללא הצגה למשתמש)
   useEffect(() => {
     const fetchVentureContext = async () => {
       if (!ventureId || !isOpen) return;
+     
       setIsLoadingContext(true);
       try {
         const { data } = await supabase
@@ -38,13 +43,18 @@ export default function MentorModal({
           .select('description')
           .eq('id', ventureId)
           .single();
-        if (data) setVentureDesc(data.description);
+
+
+        if (data) {
+          setVentureDesc(data.description);
+        }
       } catch (err) {
         console.error('Context fetch failed:', err);
       } finally {
         setIsLoadingContext(false);
       }
     };
+
 
     if (isOpen) {
       setCurrentText(fieldValue || '');
@@ -53,114 +63,133 @@ export default function MentorModal({
     }
   }, [isOpen, fieldValue, ventureId]);
 
+
   const handleGetFeedback = async () => {
     if (!currentText.trim()) return;
+
+
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
       const prompt = `
-        You are an expert startup mentor. 
+        You are an expert startup mentor.
         Venture Context: "${ventureDesc}"
         Section: "${sectionTitle}"
         User's Draft: "${currentText}"
+
+
         Instruction:
-        1. Start with "Mentor Feedback" exactly.
-        2. Next line: 10-star scale using "★" and "☆".
-        3. Sections: "Analysis:", "Strategic Hints:", "Challenge Question:".
-        4. No markdown like ** or *. Plain text only.
+        1. Start with the text "Mentor Feedback" exactly.
+        2. On the very next line, provide a 10-star scale using "★" for active and "☆" for empty (e.g., ★★★★☆☆☆☆☆☆).
+        3. Provide sections: "Analysis:", "Strategic Hints:", and "Challenge Question:".
+        4. CRITICAL: Do NOT use any markdown formatting like bolding (**), bullet points (*), or hashtags (#). Use plain text only.
+        5. DO NOT provide the rewritten text for the user. Focus on hints.
+
+
         Language: English.
       `;
+
+
       const data = await InvokeLLM({ prompt });
-      setFeedback(data?.response || "No response.");
+      setFeedback(data?.response || "No response from AI.");
     } catch (error) {
       setFeedback("Error generating feedback.");
     }
     setIsGettingFeedback(false);
   };
 
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
         <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" />
         <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
-          
-          <DialogHeader className="p-6 border-b bg-white">
-  <div className="flex justify-between items-center w-full">
-    <DialogTitle className="flex items-center m-0 p-0">
-      {/* לוגו ZiG עם ה-i הארוכה */}
-      <div className="flex items-baseline italic select-none leading-none">
-        <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-          Z
-        </span>
-        <span className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent inline-block transform scale-y-125 mx-0.5">
-          i
-        </span>
-        <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-          G
-        </span>
-        <span className="text-2xl font-bold text-indigo-900 ml-1 not-italic">
-          Mentor
-        </span>
-      </div>
+         
+          {/* Header נקי ללא Context Box */}
+          <DialogHeader className="p-6 border-b bg-slate-50">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1 text-left">
+                <DialogTitle className="text-2xl font-bold text-indigo-900">
+                  Mentor: {sectionTitle}
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  AI-driven strategic guidance for your venture.
+                </p>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl font-light">✕</button>
+            </div>
+          </DialogHeader>
 
-      {/* קו מפריד וכותרת הסקשן */}
-      <div className="mx-4 h-6 w-[1px] bg-slate-200" />
-      <span className="text-lg font-medium text-slate-500 not-italic">
-        {sectionTitle}
-      </span>
-    </DialogTitle>
-
-    <button 
-      onClick={onClose} 
-      className="text-gray-400 hover:text-black text-2xl font-light transition-colors p-2"
-    >
-      ✕
-    </button>
-  </div>
-</DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div className="max-w-3xl mx-auto space-y-4 text-left">
-              <label className="text-sm font-semibold text-gray-700 block">Your Draft:</label>
+            <div className="max-w-3xl mx-auto space-y-4">
+              <label className="text-sm font-semibold text-gray-700 block text-left">Your Draft:</label>
               <Textarea
                 value={currentText}
                 onChange={(e) => setCurrentText(e.target.value)}
-                className="min-h-[180px] text-base border-gray-300 focus:ring-2 focus:ring-indigo-500"
-                
-                
-                
-                placeholder="Start writing..."
+                className="min-h-[180px] text-base border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Describe your strategy..."
               />
+
 
               <Button
                 onClick={handleGetFeedback}
                 disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold shadow-md"
+                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold transition-all shadow-md"
               >
-                {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Get zigMentor Insight'}
+                {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Get Mentor Feedback'}
               </Button>
 
+
+              {/* אזור הפידבק המעוצב */}
               {feedback && (
-                <div className="p-8 bg-slate-50/50 border border-slate-100 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                  <div className="space-y-4">
+                <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  <div className="space-y-4 text-left">
                     {feedback.split('\n').map((line, index) => {
-                      const trimmed = line.trim();
-                      if (!trimmed) return null;
+                      const trimmedLine = line.trim();
+                      if (!trimmedLine) return null;
 
-                      if (trimmed.includes('★') || trimmed.includes('☆')) {
-                        return <div key={index} className="text-2xl tracking-[0.3em] text-blue-600 font-mono my-4">{trimmed}</div>;
+
+                      // 1. צביעת הכוכבים בכחול
+                      if (trimmedLine.includes('★') || trimmedLine.includes('☆')) {
+                        return (
+                          <div key={index} className="text-2xl tracking-[0.3em] text-blue-600 font-mono my-2">
+                            {trimmedLine}
+                          </div>
+                        );
                       }
 
-                      if (trimmed === "Mentor Feedback") {
-                        return <h3 key={index} className="text-xl font-bold text-indigo-900">Mentor Feedback</h3>;
+
+                      // 2. עיצוב הכותרת הראשית בתוך הפידבק
+                      if (trimmedLine === "Mentor Feedback") {
+                        return (
+                          <h3 key={index} className="text-xl font-bold text-indigo-900">
+                            {trimmedLine}
+                          </h3>
+                        );
                       }
 
+
+                      // 3. עיצוב כותרות משניות (Analysis, Hints, etc)
                       const subHeaders = ['Analysis:', 'Strategic Hints:', 'Challenge Question:'];
-                      if (subHeaders.some(h => trimmed.startsWith(h))) {
-                        return <h4 key={index} className="text-lg font-bold text-indigo-900 mt-6">{trimmed.replace(':', '')}</h4>;
+                      const isSubHeader = subHeaders.some(h => trimmedLine.startsWith(h));
+
+
+                      if (isSubHeader) {
+                        return (
+                          <h4 key={index} className="text-lg font-bold text-indigo-900 mt-6 mb-1">
+                            {trimmedLine.replace(':', '')}
+                          </h4>
+                        );
                       }
 
-                      return <p key={index} className="text-gray-700 leading-relaxed text-base">{trimmed}</p>;
+
+                      // 4. טקסט רגיל (נקי מכוכביות)
+                      return (
+                        <p key={index} className="text-gray-700 leading-relaxed text-base">
+                          {trimmedLine}
+                        </p>
+                      );
                     })}
                   </div>
                 </div>
@@ -168,9 +197,13 @@ export default function MentorModal({
             </div>
           </div>
 
+
           <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
             <Button variant="outline" onClick={onClose} className="px-6">Cancel</Button>
-            <Button onClick={() => { onUpdateField(currentText); onClose(); }} className="bg-green-600 hover:bg-green-700 text-white px-10">
+            <Button
+              onClick={() => { onUpdateField(currentText); onClose(); }}
+              className="bg-green-600 hover:bg-green-700 text-white px-10 shadow-sm"
+            >
               Save & Close
             </Button>
           </div>
@@ -179,3 +212,4 @@ export default function MentorModal({
     </Dialog>
   );
 }
+
