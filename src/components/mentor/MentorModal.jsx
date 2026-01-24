@@ -4,7 +4,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle,
-  DialogDescription,
   DialogPortal,
   DialogOverlay
 } from '@/components/ui/dialog';
@@ -12,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, MessageSquare } from 'lucide-react';
 
 export default function MentorModal({ 
   isOpen, 
@@ -29,14 +28,14 @@ export default function MentorModal({
   const [ventureDesc, setVentureDesc] = useState('');
   const [isLoadingContext, setIsLoadingContext] = useState(false);
 
+  // טעינת תיאור המיזם מהדאטאבייס ברקע (ללא הצגה למשתמש)
   useEffect(() => {
     const fetchVentureContext = async () => {
       if (!ventureId || !isOpen) return;
-      console.log("DEBUG - Venture ID received:", ventureId);
       
       setIsLoadingContext(true);
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('ventures')
           .select('description')
           .eq('id', ventureId)
@@ -44,12 +43,9 @@ export default function MentorModal({
 
         if (data) {
           setVentureDesc(data.description);
-        } else if (error) {
-          console.error('Supabase error:', error);
-          setVentureDesc('ERROR: Could not find venture description in database.');
         }
       } catch (err) {
-        setVentureDesc('ERROR: Connection failed.');
+        console.error('Context fetch failed:', err);
       } finally {
         setIsLoadingContext(false);
       }
@@ -68,26 +64,22 @@ export default function MentorModal({
     setIsGettingFeedback(true);
     setFeedback(null);
     try {
-     const prompt = `
-  You are an expert startup mentor. 
-  Venture Context: "${ventureDesc}"
-  Section: "${sectionTitle}"
-  User's Draft: "${currentText}"
+      const prompt = `
+        You are an expert startup mentor. 
+        Venture Context: "${ventureDesc}"
+        Section: "${sectionTitle}"
+        User's Draft: "${currentText}"
 
-  Instruction:
-  1. Start with "Mentor Feedback: " followed by a 10-star scale.
-     - Use "★" for active stars and "☆" for empty stars.
-     - Example for a 4/10 score: ★★★★☆☆☆☆☆☆
-  2. Scoring Criteria: Base the score on:
-     - Depth of information.
-     - Alignment with the Venture Context.
-     - Specificity and Clarity.
-  3. Analysis: Briefly explain the score.
-  4. Strategic Hints: Provide 2-3 bullet points on WHAT is missing (Do not rewrite the text).
-  5. Challenge Question: One final question to push their thinking.
+        Instruction:
+        1. Start with the text "Mentor Feedback" exactly.
+        2. On the very next line, provide a 10-star scale using "★" for active and "☆" for empty (e.g., ★★★★☆☆☆☆☆☆).
+        3. Provide sections: "Analysis:", "Strategic Hints:", and "Challenge Question:".
+        4. CRITICAL: Do NOT use any markdown formatting like bolding (**), bullet points (*), or hashtags (#). Use plain text only.
+        5. DO NOT provide the rewritten text for the user. Focus on hints.
 
-  Language: English.
-`;
+        Language: English.
+      `;
+
       const data = await InvokeLLM({ prompt });
       setFeedback(data?.response || "No response from AI.");
     } catch (error) {
@@ -102,50 +94,84 @@ export default function MentorModal({
         <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" />
         <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
           
-          {/* Header עם הצגת התיאור מהדאטאבייס */}
+          {/* Header נקי ללא Context Box */}
           <DialogHeader className="p-6 border-b bg-slate-50">
             <div className="flex justify-between items-start">
               <div className="space-y-1 text-left">
                 <DialogTitle className="text-2xl font-bold text-indigo-900">
                   Mentor: {sectionTitle}
                 </DialogTitle>
-                
-                {/* כאן התוספת הקריטית - מציגים מה המודאל "רואה" */}
-                <div className={`mt-2 p-2 rounded border ${!ventureDesc.includes('ERROR') ? 'bg-indigo-100 border-indigo-200' : 'bg-red-100 border-red-200'}`}>
-                  <p className="text-sm font-medium text-gray-800 italic">
-                    {isLoadingContext ? "Fetching description..." : (ventureDesc || "No description found for this ID.")}
-                  </p>
-                </div>
+                <p className="text-sm text-gray-500">
+                  AI-driven strategic guidance for your venture.
+                </p>
               </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl">✕</button>
+              <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl font-light">✕</button>
             </div>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             <div className="max-w-3xl mx-auto space-y-4">
-              <label className="text-sm font-semibold text-gray-700 text-left block">Your Draft:</label>
+              <label className="text-sm font-semibold text-gray-700 block text-left">Your Draft:</label>
               <Textarea
                 value={currentText}
                 onChange={(e) => setCurrentText(e.target.value)}
-                className="min-h-[180px] text-base border-gray-300 focus:border-indigo-500"
-                placeholder="Start writing..."
+                className="min-h-[180px] text-base border-gray-300 focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Describe your strategy..."
               />
 
               <Button
                 onClick={handleGetFeedback}
                 disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold"
+                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold transition-all shadow-md"
               >
                 {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Get Mentor Feedback'}
               </Button>
 
+              {/* אזור הפידבק המעוצב */}
               {feedback && (
-                <div className="p-6 bg-white border-2 border-indigo-100 rounded-xl shadow-inner animate-in fade-in slide-in-from-top-2">
-                  <h4 className="text-indigo-900 font-bold mb-3 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-2" /> Mentor Feedback
-                  </h4>
-                  <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                    {feedback}
+                <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  <div className="space-y-4 text-left">
+                    {feedback.split('\n').map((line, index) => {
+                      const trimmedLine = line.trim();
+                      if (!trimmedLine) return null;
+
+                      // 1. צביעת הכוכבים בכחול
+                      if (trimmedLine.includes('★') || trimmedLine.includes('☆')) {
+                        return (
+                          <div key={index} className="text-2xl tracking-[0.3em] text-blue-600 font-mono my-2">
+                            {trimmedLine}
+                          </div>
+                        );
+                      }
+
+                      // 2. עיצוב הכותרת הראשית בתוך הפידבק
+                      if (trimmedLine === "Mentor Feedback") {
+                        return (
+                          <h3 key={index} className="text-xl font-bold text-indigo-900">
+                            {trimmedLine}
+                          </h3>
+                        );
+                      }
+
+                      // 3. עיצוב כותרות משניות (Analysis, Hints, etc)
+                      const subHeaders = ['Analysis:', 'Strategic Hints:', 'Challenge Question:'];
+                      const isSubHeader = subHeaders.some(h => trimmedLine.startsWith(h));
+
+                      if (isSubHeader) {
+                        return (
+                          <h4 key={index} className="text-lg font-bold text-indigo-900 mt-6 mb-1">
+                            {trimmedLine.replace(':', '')}
+                          </h4>
+                        );
+                      }
+
+                      // 4. טקסט רגיל (נקי מכוכביות)
+                      return (
+                        <p key={index} className="text-gray-700 leading-relaxed text-base">
+                          {trimmedLine}
+                        </p>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -153,8 +179,11 @@ export default function MentorModal({
           </div>
 
           <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={() => { onUpdateField(currentText); onClose(); }} className="bg-green-600 hover:bg-green-700 text-white px-10">
+            <Button variant="outline" onClick={onClose} className="px-6">Cancel</Button>
+            <Button 
+              onClick={() => { onUpdateField(currentText); onClose(); }} 
+              className="bg-green-600 hover:bg-green-700 text-white px-10 shadow-sm"
+            >
               Save & Close
             </Button>
           </div>
