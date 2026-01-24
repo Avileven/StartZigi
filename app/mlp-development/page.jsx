@@ -393,6 +393,7 @@ export default function MLPDevelopment() {
         sectionTitle={mentorModal.sectionTitle}
         fieldValue={mlpData[mentorModal.fieldKey]}
         onUpdateField={handleMentorUpdate}
+        ventureId={venture?.id} // השורה שהחזירה לנו את הפוקוס
       />
     </>
   );
