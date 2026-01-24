@@ -454,33 +454,52 @@ const BUSINESS_MODEL_GUIDANCE = {
   }
 };
 
-// --- Guidance Modal (kept for business model guidance) ---
+// --- Guidance Modal (Fix for transparency/readability) ---
 const GuidanceModal = ({ content, onClose }) => {
   if (!content) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all scale-100 opacity-100 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-start mb-4 border-b pb-2">
-          <h3 className="text-2xl font-bold text-blue-700">{content.title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100" aria-label="Close modal">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm" 
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all max-h-[90vh] overflow-y-auto border border-gray-200" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start mb-4 border-b pb-3">
+          <h3 className="text-2xl font-bold text-indigo-700">{content.title}</h3>
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
           </button>
         </div>
-        <div className="text-gray-700 leading-relaxed space-y-4">
-          <p className="mb-4">
-            <strong className="text-blue-600">Overview:</strong> {content.body}
-          </p>
-          <p>
-            <strong className="text-red-600">Why it matters:</strong> {content.why}
-          </p>
-          <div className="p-3 bg-gray-100 border-l-4 border-gray-300 rounded-md">
-            <p className="font-mono text-sm">
-              <strong className="text-gray-600">Example:</strong> {content.example}
-            </p>
-          </div>
+        
+        <div className="text-gray-800 leading-relaxed space-y-6 overflow-y-auto">
+          <section>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Overview</h4>
+            <p className="text-lg text-gray-700">{content.body}</p>
+          </section>
+
+          <section className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-amber-700 mb-1">Why it matters</h4>
+            <p className="text-gray-700">{content.why}</p>
+          </section>
+
+          <section className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2 font-mono">Example context</h4>
+            <p className="font-medium text-gray-600 italic">"{content.example}"</p>
+          </section>
         </div>
-        <button onClick={onClose} className="mt-6 w-full py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+
+        <button 
+          onClick={onClose} 
+          className="mt-8 w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+        >
           Got It
         </button>
       </div>
