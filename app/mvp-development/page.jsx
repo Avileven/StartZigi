@@ -743,6 +743,7 @@ export default function MVPDevelopment() {
         sectionTitle={mentorModal.sectionTitle}
         fieldValue={formData[mentorModal.fieldKey]}
         onUpdateField={handleMentorUpdate}
+        ventureId={venture?.id}
       />
     </>
   );
