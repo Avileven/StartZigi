@@ -455,99 +455,71 @@ const BUSINESS_MODEL_GUIDANCE = {
 };
 
 // --- Guidance Modal (kept for business model guidance) ---
-const GuidanceModal = ({ content, onClose }) => {
-  if (!content) return null;
+import { createPortal } from 'react-dom';
 
-  return (
+const GuidanceModal = ({ content, onClose }) => {
+  // בדיקה למניעת שגיאת SSR ב-Next.js
+  if (!content || typeof document === 'undefined') return null;
+
+  return createPortal(
     <div 
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
+        zIndex: 999999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
-        padding: '20px'
+        backgroundColor: 'rgba(0, 0, 0, 0.85)', // רקע שחור כמעט אטום
+        backdropFilter: 'blur(5px)'
       }}
+      onClick={onClose}
     >
-      {/* שכבת הרקע הכהה */}
       <div 
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.9)', // כחול-כהה מאוד כמעט אטום
-          backdropFilter: 'blur(8px)', // טשטוש חזק של הרקע
-        }}
-        onClick={onClose}
-      />
-
-      {/* הקופסה הלבנה */}
-      <div 
-        style={{
-          position: 'relative',
           backgroundColor: '#FFFFFF', // לבן מוחלט
-          color: '#1e293b', // טקסט כהה לקריאות
-          width: '100%',
-          maxWidth: '550px',
-          maxHeight: '85vh',
-          borderRadius: '16px',
+          color: '#000000',
+          width: '90%',
+          maxWidth: '500px',
+          padding: '30px',
+          borderRadius: '20px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          overflowY: 'auto',
-          border: '1px solid #e2e8f0',
-          padding: '32px',
-          display: 'block', // מוודא שזה לא יירש שום Flex מוזר
-          opacity: 1, // אטימות מלאה
-          visibility: 'visible'
+          position: 'relative'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
-          <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4338ca', margin: 0 }}>{content.title}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '28px', color: '#94a3b8', lineHeight: 1 }}>&times;</button>
+        <div style={{ borderBottom: '1px solid #eee', marginBottom: '20px', paddingBottom: '10px', display: 'flex', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1a56db' }}>{content.title}</h3>
+          <button onClick={onClose} style={{ fontSize: '24px', cursor: 'pointer', background: 'none', border: 'none' }}>&times;</button>
         </div>
         
-        <div style={{ fontSize: '17px', lineHeight: '1.6' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <p style={{ margin: 0 }}>{content.body}</p>
-          </div>
-          
-          <div style={{ backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '16px', borderRadius: '4px', marginBottom: '24px' }}>
-            <strong style={{ color: '#b45309', display: 'block', marginBottom: '4px' }}>Why it matters:</strong>
-            <p style={{ margin: 0, fontSize: '15px' }}>{content.why}</p>
-          </div>
-
-          <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '8px' }}>
-            <strong style={{ color: '#64748b', display: 'block', marginBottom: '4px', fontSize: '13px', textTransform: 'uppercase' }}>Example Context:</strong>
-            <p style={{ margin: 0, fontStyle: 'italic', color: '#475569', fontSize: '15px' }}>{content.example}</p>
+        <div style={{ fontSize: '16px', lineHeight: '1.6' }}>
+          <p>{content.body}</p>
+          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fef3c7', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
+            <p style={{ fontWeight: 'bold', color: '#92400e' }}>Why it matters:</p>
+            <p>{content.why}</p>
           </div>
         </div>
 
         <button 
-          onClick={onClose} 
+          onClick={onClose}
           style={{
-            marginTop: '32px',
+            marginTop: '25px',
             width: '100%',
-            padding: '14px',
-            backgroundColor: '#4f46e5',
-            color: '#ffffff',
-            fontWeight: 'bold',
+            padding: '12px',
+            backgroundColor: '#1a56db',
+            color: 'white',
             borderRadius: '10px',
             border: 'none',
-            cursor: 'pointer',
-            fontSize: '16px',
-            boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.2)'
+            fontWeight: 'bold',
+            cursor: 'pointer'
           }}
         >
-          I Got It
+          הבנתי
         </button>
       </div>
-    </div>
+    </div>,
+    document.body // זה שולח את המודאל מחוץ לכל הבלגן השקוף
   );
 };
 
