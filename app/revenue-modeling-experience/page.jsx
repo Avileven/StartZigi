@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
+import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
+
 // --- Configuration Constants ---
 const MONTHS = 24;
 const TRANSACTION_RATE = 0.005;
