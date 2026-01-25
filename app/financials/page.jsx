@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Venture, User, VentureMessage } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, TrendingUp, DollarSign, ArrowLeft, History, PieChart } from "lucide-react";
+import { Wallet, TrendingUp, DollarSign, ArrowLeft, Zap, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { createPageUrl } from "@/lib/utils";
@@ -18,15 +18,18 @@ export default function Financials() {
     setIsLoading(true);
     try {
       const currentUser = await User.me();
-      const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
+      const ventures = await Venture.filter(
+        { created_by: currentUser.email },
+        "-created_date"
+      );
 
       if (ventures.length > 0) {
-        const currentVenture = ventures[0];
-        setVenture(currentVenture);
+        const v = ventures[0];
+        setVenture(v);
         
-        // טעינת הודעות לטובת היסטוריית גיוסים
-        const ventureMessages = await VentureMessage.filter({ venture_id: currentVenture.id });
-        setMessages(ventureMessages);
+        // משיכת הודעות אמיתיות מהטבלה עבור ה-Promotion
+        const m = await VentureMessage.filter({ venture_id: v.id });
+        setMessages(m);
       }
     } catch (e) {
       console.error("Error loading financials:", e);
@@ -39,90 +42,94 @@ export default function Financials() {
     loadData();
   }, [loadData]);
 
-  if (isLoading) return <div className="p-8 text-center font-medium">Loading Financials...</div>;
+  if (isLoading) return <div className="p-8 text-center">Loading Financials...</div>;
   if (!venture) return <div className="p-8 text-center">No venture found.</div>;
 
-  // הנתונים הדינמיים מה-Database
+  // נתונים דינמיים מהטבלה
   const currentBalance = venture.virtual_capital || 0;
   const monthlyBurn = venture.monthly_burn_rate || 0;
 
+  // קוד ה-Promotion המקורי שבודק הודעות בטבלה
+  const promotionMessage = messages.find(m => m.message_type === 'promotion');
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-2">
-        <Button variant="outline" size="icon" onClick={() => router.push(createPageUrl("Dashboard"))}>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => router.push(createPageUrl("Dashboard"))}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Financials</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Financial Overview</h1>
       </div>
 
-      {/* מדדים מרכזיים */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* יתרה נוכחית - הכרטיס הכי בולט */}
-        <Card className="bg-indigo-600 text-white shadow-xl border-none">
+        <Card className="bg-indigo-600 text-white shadow-lg border-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 opacity-90">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Wallet className="w-5 h-5" />
-              Current Venture Balance
+              Current Balance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-5xl font-bold">${currentBalance.toLocaleString()}</div>
-            <p className="text-xs mt-3 opacity-80 italic">Remaining capital after operational burn</p>
+            <div className="text-4xl font-bold">${currentBalance.toLocaleString()}</div>
           </CardContent>
         </Card>
 
-        {/* קצב שריפה - באדום */}
-        <Card className="border-t-4 border-t-red-500 shadow-md bg-white">
+        <Card className="border-red-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-red-600" />
+              <TrendingUp className="w-5 h-5 text-red-500" />
               Monthly Burn Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600">${monthlyBurn.toLocaleString()}</div>
-            <p className="text-xs text-red-400 mt-1 font-medium italic">Fixed monthly deduction</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* פירוט נוסף */}
+      {/* קוד ה-PROMOTION האמיתי שביקשת להחזיר */}
+      {promotionMessage && (
+        <Card className="bg-amber-50 border-amber-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-amber-800 flex items-center gap-2">
+              <Zap className="w-5 h-5 fill-amber-500" />
+              {promotionMessage.subject || "Growth Opportunity"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-amber-900 text-sm leading-relaxed">
+              {promotionMessage.content}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* כרטיס אקוויטי */}
-        <Card className="shadow-sm border-gray-200">
-          <CardHeader className="bg-gray-50 border-b px-4 py-3">
-            <CardTitle className="text-md font-bold text-gray-700 flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-blue-600" />
-              Equity & Ownership
+        <Card className="shadow-sm border-gray-100">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-green-600" />
+              Equity & Funding
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 space-y-4">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600 font-medium">Founder Ownership</span>
-              <span className="font-bold text-indigo-600">100%</span>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-gray-500">Ownership</span>
+              <span className="font-bold">100%</span>
             </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 font-medium">Total Funding Received</span>
-              <span className="font-bold text-gray-900">$0</span>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Total Funding</span>
+              <span className="font-bold">$0</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* היסטוריית גיוסים */}
-        <Card className="shadow-sm border-gray-200">
-          <CardHeader className="bg-gray-50 border-b px-4 py-3">
-            <CardTitle className="text-md font-bold text-gray-700 flex items-center gap-2">
-              <History className="w-5 h-5 text-green-600" />
-              Investment History
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="py-10 text-center text-gray-400 italic text-sm">
-            No funding rounds yet. Complete your MVP to attract investors.
-          </CardContent>
+        <Card className="bg-gray-50 flex items-center justify-center p-8 border-dashed border-2">
+          <div className="text-center">
+            <Target className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500 italic">No investment history yet</p>
+          </div>
         </Card>
-
       </div>
     </div>
   );
