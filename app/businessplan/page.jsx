@@ -1,4 +1,4 @@
-//business plan 23126
+//business plan 25126
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";

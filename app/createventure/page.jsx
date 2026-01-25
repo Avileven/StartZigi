@@ -96,7 +96,7 @@ const venturePayload = {
   total_score: totalScore,
 
   phase: "business_plan",
-  virtual_capital: 15000,
+  virtual_capital: 0,
   monthly_burn_rate: 0,
 
   // ✅ קריטי ל-RLS: המשתמש חייב להיות בתוך founder_user_ids

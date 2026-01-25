@@ -69,7 +69,7 @@ export default function Financials() {
      FINANCIAL CALCULATIONS
   -------------------------------------------------- */
 
-  const STARTING_CAPITAL = 15000;
+  const STARTING_CAPITAL = venture?.virtual_capital || 0;
 
   // ✅ Total funding actually accepted
   const totalFunding = messages
