@@ -310,7 +310,7 @@ export default function businessPlan() {
     phase: 'mvp',
     virtual_capital: 15000,          // הזרקת התקציב
     monthly_burn_rate: 5000,        // הגדרת קצב השריפה
-    last_burn_deduction: new Date().toISOString().split('T')[0] // איפוס התאריך להיום
+   burn_rate_start: new Date().toISOString() // כאן השעון מתחיל לתקתק
   });
 
   // 2. יצירת ההודעה באנגלית כפי שביקשת
