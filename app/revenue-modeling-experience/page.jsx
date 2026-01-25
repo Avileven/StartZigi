@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
-import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
+
 
 // --- Configuration Constants ---
 const MONTHS = 24;
@@ -763,7 +763,7 @@ const SliderModal = ({ isOpen, onClose, parameter, onSave }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="!bg-white !opacity-100 !text-black !visible shadow-2xl border-none" style={{ background: 'white', opacity: 1 }}>
         <DialogHeader>
           <DialogTitle className="text-xl">{parameter.label}</DialogTitle>
         </DialogHeader>
