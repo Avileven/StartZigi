@@ -1,4 +1,4 @@
-//business plan 25126
+//business plan 25126 updated
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -314,14 +314,29 @@ export default function businessPlan() {
   });
 
   // 2. יצירת ההודעה באנגלית כפי שביקשת
-  await VentureMessage.create({
-    venture_id: venture.id,
-    message_type: 'phase_complete',
-    title: '💰 Capital Injection: $15,000',
-    content: `Congratulations! Your business plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
-    phase: 'business_plan',
-    created_by: user.email
-  });
+  // 1. קודם כל - הודעה על סיום התוכנית העסקית וקבלת הכסף
+await VentureMessage.create({
+  venture_id: venture.id,
+  message_type: 'phase_complete',
+  title: '💰 Capital Injection: $15,000',
+  content: `Congratulations! Your business plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
+  phase: 'business_plan',
+  priority: 1,
+  created_by: user.email,
+  created_by_id: user.id || null
+});
+
+// 2. ורק אז - הודעת ברוכים הבאים לשלב הבא (MVP)
+await VentureMessage.create({
+  venture_id: venture.id,
+  message_type: 'phase_welcome',
+  title: '🚀 Welcome to MVP Phase!',
+  content: 'Time to build your Minimum Viable Product.',
+  phase: 'mvp',
+  priority: 2, // עדיפות גבוהה יותר כדי שזה יהיה הדבר הראשון שרואים מעל הודעת הכסף
+  created_by: user.email,
+  created_by_id: user.id || null
+});
 }
 
 
