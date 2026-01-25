@@ -305,32 +305,24 @@ export default function businessPlan() {
 
 
       if (completion === 100 && venture.phase === 'business_plan') {
-        await Venture.update(venture.id, { phase: 'mvp' });
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: 'phase_complete',
-          title: '🎉 Business Plan Complete!',
-          content: 'Congratulations! Your business plan is 100% complete. You can now move to the MVP phase.',
-          phase: 'business_plan',
-          priority: 3,
-          created_by: user.email,
-          created_by_id: user.id || null,
+  // 1. עדכון הנתונים הפיננסיים ב-Database
+  await Venture.update(venture.id, { 
+    phase: 'mvp',
+    virtual_capital: 15000,          // הזרקת התקציב
+    monthly_burn_rate: 5000,        // הגדרת קצב השריפה
+    last_burn_deduction: new Date().toISOString().split('T')[0] // איפוס התאריך להיום
+  });
 
-
-        });
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: 'phase_welcome',
-          title: '🚀 Welcome to MVP Phase!',
-          content: 'Time to build your Minimum Viable Product.',
-          phase: 'mvp',
-          priority: 2,
-          created_by: user.email,
-          created_by_id: user.id || null,
-
-
-        });
-      }
+  // 2. יצירת ההודעה באנגלית כפי שביקשת
+  await VentureMessage.create({
+    venture_id: venture.id,
+    message_type: 'phase_complete',
+    title: '💰 Capital Injection: $15,000',
+    content: `Congratulations! Your business plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
+    phase: 'business_plan',
+    created_by: user.email
+  });
+}
 
 
       alert("Business plan and funding plan saved successfully!");
