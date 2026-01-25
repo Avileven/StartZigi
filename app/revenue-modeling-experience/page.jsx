@@ -1345,7 +1345,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-blue-800 tracking-tight sm:text-4xl">
-            Dynamic Business Model Simulator- big fuck
+            Dynamic Business Model Simulator.
           </h1>
           <p className="mt-3 text-xl text-gray-500">
             Adjust the levers below and view the 24-month forecast instantly.
