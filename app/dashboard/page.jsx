@@ -939,9 +939,9 @@ if (showToS) {
                     {getVentureAge(currentVenture)} days old
                   </span>
                   <span className="flex items-center gap-1">
-                   <Wallet className="w-4 h-4 text-green-600" />
-                     <span className="text-muted-foreground uppercase text-[10px] font-bold">Balance:</span>
-                     <span className="font-mono font-bold text-green-700">
+                   <Wallet className="w-4 h-4 " />
+                     <span className="uppercase text-[10px] font-bold">Balance:</span>
+                     <span className="font-mono">
                       ${currentVenture?.virtual_capital?.toLocaleString()}
                      </span>
                   </span>
