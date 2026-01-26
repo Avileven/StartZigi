@@ -940,7 +940,7 @@ if (showToS) {
                   </span>
                   <span className="flex items-center gap-1">
                    <Wallet className="w-4 h-4 " />
-                     <span className="uppercase text-[10px] font-bold">Balance:</span>
+                     <span className="text-[10px]">Balance:</span>
                      <span className="font-mono">
                       ${currentVenture?.virtual_capital?.toLocaleString()}
                      </span>
