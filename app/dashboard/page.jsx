@@ -111,7 +111,8 @@ export default function Dashboard() {
   const totalBurned = secondsElapsed * burnPerSecond;
   
   // היתרה המחושבת (לא יורד מתחת ל-0)
-  const currentBalance = Math.floor(Math.max(0, 15000 - totalBurned));
+  // מחקנו את currentVenture.virtual_capital שהביא את המיליון, ושמנו 15000 במקום.
+const currentBalance = Math.floor(Math.max(0, (15000 + totalFunding) - (secondsElapsed * (5000 / (30 * 24 * 60 * 60)))));
 
   // עדכון ה-State המקומי כדי שהתצוגה תתעדכן מיד
   setCurrentVenture(prev => ({
