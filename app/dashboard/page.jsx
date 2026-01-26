@@ -942,7 +942,7 @@ if (showToS) {
                    <Wallet className="w-4 h-4 " />
                      <span className="text-[10px]">Balance:</span>
                      <span className="font-mono">
-                      ${currentVenture?.virtual_capital?.toLocaleString()}
+                     ${Math.min(currentVenture?.virtual_capital || 0, 15000 + (messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0))).toLocaleString()}
                      </span>
                   </span>
                 </div>
