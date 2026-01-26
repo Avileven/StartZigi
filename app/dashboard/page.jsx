@@ -97,27 +97,35 @@ export default function Dashboard() {
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
-  const [liveBalance, setLiveBalance] = useState(15000);
   const router = useRouter();
 
 
   const updateBurnRate = useCallback(async (venture) => {
+  // אם אין תאריך התחלה או שקצב השריפה הוא 0, אין מה לחשב
   if (!venture.burn_rate_start || !venture.monthly_burn_rate) return;
 
-  // חישוב השקעות מתוך ההודעות שאושרו
-  const totalFunding = messages
-    .filter(m => m.message_type === 'investment_offer' && m.investment_offer_status === 'accepted')
-    .reduce((sum, m) => sum + (m.investment_offer_checksize || 0), 0);
 
   const startTime = new Date(venture.burn_rate_start).getTime();
-  const secondsElapsed = (new Date().getTime() - startTime) / 1000;
-  const burnPerSecond = (venture.monthly_burn_rate || 5000) / (30 * 24 * 60 * 60);
-  
-  // חישוב סופי: 15,000 התחלתי + השקעות - מה שנשרף
-  const currentBalance = Math.floor(Math.max(0, (15000 + totalFunding) - (secondsElapsed * burnPerSecond)));
-  
-  setLiveBalance(currentBalance);
-}, [messages]);
+  const now = new Date().getTime();
+ 
+  // חישוב הזמן שעבר בשניות
+  const secondsElapsed = (now - startTime) / 1000;
+ 
+  // עלות שריפה לשנייה (מבוסס על 5,000 לחודש של 30 יום)
+  const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
+ 
+  const totalBurned = secondsElapsed * burnPerSecond;
+ 
+  // היתרה המחושבת (לא יורד מתחת ל-0)
+  const currentBalance = Math.floor(Math.max(0, 15000 - totalBurned));
+
+
+  // עדכון ה-State המקומי כדי שהתצוגה תתעדכן מיד
+  setCurrentVenture(prev => ({
+    ...prev,
+    virtual_capital: currentBalance
+  }));
+}, []);
 
 
   const loadDashboard = useCallback(async () => {
@@ -230,7 +238,7 @@ export default function Dashboard() {
           setMessages(ventureMessages);
 
 
-          await updateBurnRate(activeVenture, ventureMessages);
+          await updateBurnRate(activeVenture);
         }
         setIsLoading(false);
       }
@@ -1004,8 +1012,8 @@ if (showToS) {
                    <Wallet className="w-4 h-4 " />
                      <span className="text-[10px]">Balance:</span>
                      <span className="font-mono">
-  ${liveBalance.toLocaleString()}
-</span>
+                      ${currentVenture?.virtual_capital?.toLocaleString()}
+                     </span>
                   </span>
                 </div>
               </CardHeader>
