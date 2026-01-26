@@ -111,7 +111,7 @@ export default function Dashboard() {
   const totalBurned = secondsElapsed * burnPerSecond;
   
   // היתרה המחושבת (לא יורד מתחת ל-0)
-  const currentBalance = Math.max(0, 15000 - totalBurned);
+  const currentBalance = Math.floor(Math.max(0, 15000 - totalBurned));
 
   // עדכון ה-State המקומי כדי שהתצוגה תתעדכן מיד
   setCurrentVenture(prev => ({
@@ -919,21 +919,7 @@ if (showToS) {
                   </span>
                 </div>
               </div>
-              {/* מלבן היתרה החדש - להוסיף מתחת למלבן של ה-Current Phase */}
-<div className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border">
-  <div className="p-2 bg-green-50 rounded-lg">
-    <Wallet className="w-5 h-5 text-green-600" />
-  </div>
-  <div>
-    <p className="text-xs text-muted-foreground uppercase font-semibold">Balance</p>
-    <p className="text-sm font-bold text-green-900 font-mono">
-      ${currentVenture?.virtual_capital?.toLocaleString(undefined, { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      })}
-    </p>
-  </div>
-</div>
+             
             </div>
 
             <Card className="mb-6">
@@ -951,6 +937,13 @@ if (showToS) {
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     {getVentureAge(currentVenture)} days old
+                  </span>
+                  <span className="flex items-center gap-1">
+                   <Wallet className="w-4 h-4 text-green-600" />
+                     <span className="text-muted-foreground uppercase text-[10px] font-bold">Balance:</span>
+                     <span className="font-mono font-bold text-green-700">
+                      ${currentVenture?.virtual_capital?.toLocaleString()}
+                     </span>
                   </span>
                 </div>
               </CardHeader>
