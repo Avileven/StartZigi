@@ -38,21 +38,31 @@ export default function Financials() {
 
   // מנגנון עדכון היתרה בכל שנייה
   const updateBalance = useCallback(() => {
-    if (!venture?.burn_rate_start) {
-      setLiveBalance(venture?.virtual_capital || 15000);
+    if (!venture) return;
+
+    // 1. חישוב ההשקעות בתוך הפונקציה כדי למנוע שגיאת Reference
+    const fundingSum = messages
+      .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
+      .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
+
+    const initialCapital = 15000;
+    const totalStartingCapital = initialCapital + fundingSum;
+
+    if (!venture.burn_rate_start) {
+      setLiveBalance(totalStartingCapital);
       return;
     }
 
+    // 2. חישוב זמן ושריפה
     const startTime = new Date(venture.burn_rate_start).getTime();
     const now = new Date().getTime();
     const secondsElapsed = (now - startTime) / 1000;
     
     const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
     const totalBurned = secondsElapsed * burnPerSecond;
-    const currentCalculated = Math.floor(Math.max(0, (15000 + totalFunding) - (secondsElapsed * (5000 / (30 * 24 * 60 * 60)))));
     
-    setLiveBalance(currentCalculated);
-  }, [venture]);
+    setLiveBalance(Math.floor(Math.max(0, totalStartingCapital - totalBurned)));
+  }, [venture, messages]); // הפונקציה תלויה במיזם ובהודעות
 
   useEffect(() => { loadData(); }, [loadData]);
 
