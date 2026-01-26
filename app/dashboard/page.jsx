@@ -96,39 +96,29 @@ export default function Dashboard() {
   const router = useRouter();
 
   const updateBurnRate = useCallback(async (venture) => {
-    if (!venture.monthly_burn_rate || venture.monthly_burn_rate === 0) return;
+  // אם אין תאריך התחלה או שקצב השריפה הוא 0, אין מה לחשב
+  if (!venture.burn_rate_start || !venture.monthly_burn_rate) return;
 
-    const lastBurn = venture.last_burn_deduction ? new Date(venture.last_burn_deduction) : new Date(venture.created_date);
-    const daysSinceLastBurn = differenceInDays(new Date(), lastBurn);
-    const DAILY_BURN_RATE = venture.monthly_burn_rate / 30;
+  const startTime = new Date(venture.burn_rate_start).getTime();
+  const now = new Date().getTime();
+  
+  // חישוב הזמן שעבר בשניות
+  const secondsElapsed = (now - startTime) / 1000;
+  
+  // עלות שריפה לשנייה (מבוסס על 5,000 לחודש של 30 יום)
+  const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
+  
+  const totalBurned = secondsElapsed * burnPerSecond;
+  
+  // היתרה המחושבת (לא יורד מתחת ל-0)
+  const currentBalance = Math.max(0, 15000 - totalBurned);
 
-    if (daysSinceLastBurn >= 7) {
-      const weeksToDeduct = Math.floor(daysSinceLastBurn / 7);
-      const totalDeduction = (DAILY_BURN_RATE * 7) * weeksToDeduct;
-
-      const newCapital = Math.max(0, venture.virtual_capital - totalDeduction);
-      await Venture.update(venture.id, {
-        virtual_capital: newCapital,
-        last_burn_deduction: new Date().toISOString().split('T')[0]
-      });
-
-      setCurrentVenture(prev => ({
-        ...prev,
-        virtual_capital: newCapital,
-      }));
-
-      if (newCapital < 5000 && venture.virtual_capital >= 5000) {
-        await VentureMessage.create({
-            venture_id: venture.id,
-            message_type: 'system',
-            title: '⚠️ Low Balance Alert!',
-            content: `Your virtual capital has dropped below $5,000. It's crucial to secure funding soon to avoid running out of money.`,
-            phase: venture.phase,
-            priority: 4
-        });
-      }
-    }
-  }, []);
+  // עדכון ה-State המקומי כדי שהתצוגה תתעדכן מיד
+  setCurrentVenture(prev => ({
+    ...prev,
+    virtual_capital: currentBalance
+  }));
+}, []);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -929,6 +919,21 @@ if (showToS) {
                   </span>
                 </div>
               </div>
+              {/* מלבן היתרה החדש - להוסיף מתחת למלבן של ה-Current Phase */}
+<div className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border">
+  <div className="p-2 bg-green-50 rounded-lg">
+    <Wallet className="w-5 h-5 text-green-600" />
+  </div>
+  <div>
+    <p className="text-xs text-muted-foreground uppercase font-semibold">Balance</p>
+    <p className="text-sm font-bold text-green-900 font-mono">
+      ${currentVenture?.virtual_capital?.toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}
+    </p>
+  </div>
+</div>
             </div>
 
             <Card className="mb-6">
