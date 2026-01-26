@@ -121,6 +121,24 @@ export default function Dashboard() {
   }));
 }, []);
 
+  const updateBalance = useCallback(() => {
+    if (!currentVenture) return;
+    const totalFunding = messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
+    const initialCapital = 15000;
+    const totalStartingCapital = initialCapital + totalFunding;
+    const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
+    if (!currentVenture.burn_rate_start) {
+      setLiveBalance(totalStartingCapital);
+      return;
+    }
+    const startTime = new Date(currentVenture.burn_rate_start).getTime();
+    const now = new Date().getTime();
+    const secondsElapsed = (now - startTime) / 1000;
+    const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
+    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
+    setLiveBalance(calculated);
+  }, [currentVenture, messages]);
+
   const loadDashboard = useCallback(async () => {
     try {
       const currentUser = await User.me();
@@ -239,6 +257,13 @@ export default function Dashboard() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    if (!currentVenture || !messages) return;
+    updateBalance();
+    const balanceInterval = setInterval(updateBalance, 1000);
+    return () => clearInterval(balanceInterval);
+  }, [currentVenture, messages, updateBalance]);
 
   const handleAcceptToS = async () => {
   try {
