@@ -97,7 +97,7 @@ export default function Dashboard() {
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
-  const [liveBalance, setLiveBalance] = useState(0);
+  const [liveBalance, setLiveBalance] = useState(15000);
   const router = useRouter();
 
 
@@ -230,7 +230,7 @@ export default function Dashboard() {
           setMessages(ventureMessages);
 
 
-          await updateBurnRate(activeVenture);
+          await updateBurnRate(activeVenture, ventureMessages);
         }
         setIsLoading(false);
       }
