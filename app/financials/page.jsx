@@ -1,4 +1,4 @@
-// financials 250126
+// financials 250126 - UPDATED WITH LIVE BALANCE
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -14,6 +14,7 @@ export default function Financials() {
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
+  const [liveBalance, setLiveBalance] = useState(0); // סטייט חדש ליתרה החיה
   const router = useRouter();
 
   const loadData = useCallback(async () => {
@@ -35,14 +36,38 @@ export default function Financials() {
     }
   }, []);
 
+  // מנגנון עדכון היתרה בכל שנייה
+  const updateBalance = useCallback(() => {
+    if (!venture?.burn_rate_start) {
+      setLiveBalance(venture?.virtual_capital || 15000);
+      return;
+    }
+
+    const startTime = new Date(venture.burn_rate_start).getTime();
+    const now = new Date().getTime();
+    const secondsElapsed = (now - startTime) / 1000;
+    
+    const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
+    const totalBurned = secondsElapsed * burnPerSecond;
+    const currentCalculated = Math.floor(Math.max(0, 15000 - totalBurned));
+    
+    setLiveBalance(currentCalculated);
+  }, [venture]);
+
   useEffect(() => { loadData(); }, [loadData]);
+
+  // מפעיל את השעון של היתרה
+  useEffect(() => {
+    updateBalance();
+    const interval = setInterval(updateBalance, 1000);
+    return () => clearInterval(interval);
+  }, [updateBalance]);
 
   if (isLoading) return <div className="p-8 text-center font-bold">Loading...</div>;
   if (!venture) return <div className="p-8 text-center">No Venture Found</div>;
 
-  // חישובים מהקובץ המקורי
-  const currentBalance = venture.virtual_capital || 0;
   const monthlyBurn = venture.monthly_burn_rate || 0;
+  
   const totalFunding = messages
     .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
     .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
@@ -69,8 +94,8 @@ export default function Financials() {
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Financials</h1>
       </div>
 
-      {/* Row A: Current Balance, Burn Rate */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* כרטיס היתרה - עכשיו משתמש ב-liveBalance */}
         <Card className="bg-indigo-600 text-white shadow-xl border-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 opacity-90 text-white">
@@ -78,7 +103,7 @@ export default function Financials() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">${currentBalance.toLocaleString()}</div>
+            <div className="text-4xl font-bold font-mono">${liveBalance.toLocaleString()}</div>
           </CardContent>
         </Card>
 
@@ -94,7 +119,7 @@ export default function Financials() {
         </Card>
       </div>
 
-      {/* Row B: Total Funding Received, Founder Equity Value */}
+      {/* שאר הקוד נשאר ללא שינוי... */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-t-4 border-t-green-500 shadow-md">
           <CardHeader className="pb-2">
@@ -119,7 +144,6 @@ export default function Financials() {
         </Card>
       </div>
 
-      {/* Row C: Promotion Spending, Investment History */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-l-4 border-l-amber-500 bg-amber-50/30 shadow-sm">
           <CardHeader>
