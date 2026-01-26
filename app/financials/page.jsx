@@ -49,7 +49,7 @@ export default function Financials() {
     
     const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
     const totalBurned = secondsElapsed * burnPerSecond;
-    const currentCalculated = Math.floor(Math.max(0, 15000 - totalBurned));
+    const currentCalculated = Math.floor(Math.max(0, (15000 + totalFunding) - (secondsElapsed * (5000 / (30 * 24 * 60 * 60)))));
     
     setLiveBalance(currentCalculated);
   }, [venture]);
