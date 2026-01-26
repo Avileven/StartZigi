@@ -1,4 +1,3 @@
-// financials 250126 - UPDATED WITH LIVE BALANCE
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -14,7 +13,7 @@ export default function Financials() {
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  const [liveBalance, setLiveBalance] = useState(0); // סטייט חדש ליתרה החיה
+  const [liveBalance, setLiveBalance] = useState(0);
   const router = useRouter();
 
   const loadData = useCallback(async () => {
@@ -26,8 +25,10 @@ export default function Financials() {
       if (ventures.length > 0) {
         const v = ventures[0];
         setVenture(v);
-        setMessages(await VentureMessage.filter({ venture_id: v.id }, "-created_date"));
-        setCampaigns(await PromotionCampaign.filter({ venture_id: v.id }, "-created_date"));
+        const msgs = await VentureMessage.filter({ venture_id: v.id }, "-created_date");
+        const cmps = await PromotionCampaign.filter({ venture_id: v.id }, "-created_date");
+        setMessages(msgs);
+        setCampaigns(cmps);
       }
     } catch (e) {
       console.error("Load error:", e);
@@ -36,49 +37,48 @@ export default function Financials() {
     }
   }, []);
 
-  // מנגנון עדכון היתרה בכל שנייה
-  const updateBalance = useCallback(() => {
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // פונקציית החישוב המאוחדת - מונעת שגיאות Reference
+  const updateTick = useCallback(() => {
     if (!venture) return;
 
-    // 1. חישוב ההשקעות בתוך הפונקציה כדי למנוע שגיאת Reference
-    const fundingSum = messages
+    // 1. חישוב השקעות (סכום ההודעות שאושרו)
+    const totalFunding = messages
       .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
       .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
 
     const initialCapital = 15000;
-    const totalStartingCapital = initialCapital + fundingSum;
+    const totalStartingCapital = initialCapital + totalFunding;
+    const monthlyBurn = venture.monthly_burn_rate || 5000;
 
+    // 2. חישוב שריפה בזמן אמת
     if (!venture.burn_rate_start) {
       setLiveBalance(totalStartingCapital);
       return;
     }
 
-    // 2. חישוב זמן ושריפה
     const startTime = new Date(venture.burn_rate_start).getTime();
     const now = new Date().getTime();
     const secondsElapsed = (now - startTime) / 1000;
+    const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
     
-    const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
-    const totalBurned = secondsElapsed * burnPerSecond;
-    
-    setLiveBalance(Math.floor(Math.max(0, totalStartingCapital - totalBurned)));
-  }, [venture, messages]); // הפונקציה תלויה במיזם ובהודעות
+    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
+    setLiveBalance(calculated);
+  }, [venture, messages]);
 
-  useEffect(() => { loadData(); }, [loadData]);
-
-  // מפעיל את השעון של היתרה
   useEffect(() => {
-    updateBalance();
-    const interval = setInterval(updateBalance, 1000);
+    updateTick();
+    const interval = setInterval(updateTick, 1000);
     return () => clearInterval(interval);
-  }, [updateBalance]);
+  }, [updateTick]);
 
   if (isLoading) return <div className="p-8 text-center font-bold">Loading...</div>;
   if (!venture) return <div className="p-8 text-center">No Venture Found</div>;
 
-  const monthlyBurn = venture.monthly_burn_rate || 0;
-  
-  const totalFunding = messages
+  // משתני עזר לתצוגה
+  const displayBurnRate = venture.monthly_burn_rate || 5000;
+  const displayTotalFunding = messages
     .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
     .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
 
@@ -105,7 +105,6 @@ export default function Financials() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* כרטיס היתרה - עכשיו משתמש ב-liveBalance */}
         <Card className="bg-indigo-600 text-white shadow-xl border-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 opacity-90 text-white">
@@ -124,12 +123,11 @@ export default function Financials() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-red-600">${monthlyBurn.toLocaleString()}</div>
+            <div className="text-4xl font-bold text-red-600 font-mono">${displayBurnRate.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* שאר הקוד נשאר ללא שינוי... */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-t-4 border-t-green-500 shadow-md">
           <CardHeader className="pb-2">
@@ -138,7 +136,7 @@ export default function Financials() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">${totalFunding.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-gray-900">${displayTotalFunding.toLocaleString()}</div>
           </CardContent>
         </Card>
 
