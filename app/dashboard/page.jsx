@@ -52,10 +52,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import VCMeetingModal from '@/components/vc/VCMeetingModal';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 
+
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
 
+
 const PHASES_ORDER = ["idea", "business_plan", "mvp", "mlp", "beta", "growth", "ma"];
+
 
 const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
   if (!isOpen) return null;
@@ -79,6 +82,7 @@ const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
   );
 };
 
+
 export default function Dashboard() {
   const [ventures, setVentures] = useState([]);
   const [currentVenture, setCurrentVenture] = useState(null);
@@ -95,57 +99,53 @@ export default function Dashboard() {
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
   const router = useRouter();
 
- const updateBurnRate = useCallback(() => {
-    if (!currentVenture) return;
 
-    // חישוב השקעות מהודעות (בדיוק כמו בפיננסים)
-    const totalFunding = messages
-      .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
-      .reduce((sum, m) => sum + (m.investment_offer_checksize || 0), 0);
+  const updateBurnRate = useCallback(async (venture) => {
+  // אם אין תאריך התחלה או שקצב השריפה הוא 0, אין מה לחשב
+  if (!venture.burn_rate_start || !venture.monthly_burn_rate) return;
 
-    // הגדרת הון התחלתי קשיח של 15,000 + השקעות
-    const totalStartingCapital = 15000 + totalFunding;
 
-    if (!currentVenture.burn_rate_start) {
-      if (currentVenture.virtual_capital !== totalStartingCapital) {
-        setCurrentVenture(prev => prev ? { ...prev, virtual_capital: totalStartingCapital } : null);
-      }
-      return;
-    }
+  const startTime = new Date(venture.burn_rate_start).getTime();
+  const now = new Date().getTime();
+ 
+  // חישוב הזמן שעבר בשניות
+  const secondsElapsed = (now - startTime) / 1000;
+ 
+  // עלות שריפה לשנייה (מבוסס על 5,000 לחודש של 30 יום)
+  const burnPerSecond = 5000 / (30 * 24 * 60 * 60);
+ 
+  const totalBurned = secondsElapsed * burnPerSecond;
+ 
+  // היתרה המחושבת (לא יורד מתחת ל-0)
+  const currentBalance = Math.floor(Math.max(0, 15000 - totalBurned));
 
-    const startTime = new Date(currentVenture.burn_rate_start).getTime();
-    const now = new Date().getTime();
-    const secondsElapsed = (now - startTime) / 1000;
-    const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
-    const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
-    const totalBurned = secondsElapsed * burnPerSecond;
 
-    // החישוב הסופי שלא מסתכל על הנתון הישן מהדאטאבייס
-    const currentBalance = Math.floor(Math.max(0, totalStartingCapital - totalBurned));
+  // עדכון ה-State המקומי כדי שהתצוגה תתעדכן מיד
+  setCurrentVenture(prev => ({
+    ...prev,
+    virtual_capital: currentBalance
+  }));
+}, []);
 
-    // עדכון ה-State המקומי כדי שהתצוגה תשתנה
-    if (Math.abs((currentVenture.virtual_capital || 0) - currentBalance) > 0.1) {
-      setCurrentVenture(prev => prev ? { ...prev, virtual_capital: currentBalance } : null);
-    }
-  }, [currentVenture, messages]);
 
   const loadDashboard = useCallback(async () => {
     try {
       const currentUser = await User.me();
-      
+     
       if (!currentUser) {
         router.push('/login');
         return;
       }
-      
+     
       setUser(currentUser);
+
 
       if (!currentUser.accepted_tos_date) {
         setShowToS(true);
       } else {
         const adminSelectedVentureId = localStorage.getItem('admin_selected_venture_id');
         let userVentures = [];
-        
+       
         if (adminSelectedVentureId && currentUser.role === 'admin') {
           const specificVenture = await Venture.filter({ id: adminSelectedVentureId });
           if (specificVenture.length > 0) {
@@ -159,18 +159,18 @@ export default function Dashboard() {
           userVentures = await Venture.filter( { founder_user_id: currentUser.id }, "-created_date"
           );
         }
-        
+       
         setVentures(userVentures);
         if (userVentures.length > 0) {
           const activeVenture = userVentures[0];
-          
+         
           // AUTO-FIX: If mlp_development_completed is true but mlp_completed is false, fix it
           if (activeVenture.mlp_development_completed && !activeVenture.mlp_completed) {
             await Venture.update(activeVenture.id, {
               mlp_completed: true,
               phase: 'beta'
             });
-            
+           
             await VentureMessage.create({
               venture_id: activeVenture.id,
               message_type: 'phase_complete',
@@ -179,6 +179,7 @@ export default function Dashboard() {
               phase: 'mlp',
               priority: 4
             });
+
 
             await VentureMessage.create({
               venture_id: activeVenture.id,
@@ -189,6 +190,7 @@ export default function Dashboard() {
               priority: 3
             });
 
+
             const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
             await VentureMessage.create({
               venture_id: activeVenture.id,
@@ -198,11 +200,11 @@ export default function Dashboard() {
               phase: 'beta',
               priority: 3
             });
-            
+           
             activeVenture.mlp_completed = true;
             activeVenture.phase = 'beta';
           }
-          
+         
           // AUTO-FIX: If in Beta phase and no "50 testers" message exists, create it
           if (activeVenture.phase === 'beta') {
             const existingMessages = await VentureMessage.filter({
@@ -210,8 +212,9 @@ export default function Dashboard() {
               title: '📊 Beta Phase Requirements',
               is_dismissed: false
             });
-            
+           
             const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
+
 
             if (existingMessages.length === 0 && currentTesters.length < 50) {
               await VentureMessage.create({
@@ -224,14 +227,16 @@ export default function Dashboard() {
               });
             }
           }
-          
+         
           setCurrentVenture(activeVenture);
+
 
           const ventureMessages = await VentureMessage.filter(
             { venture_id: activeVenture.id, is_dismissed: false },
             "-created_date"
           );
           setMessages(ventureMessages);
+
 
           await updateBurnRate(activeVenture);
         }
@@ -244,32 +249,35 @@ export default function Dashboard() {
     }
   }, [updateBurnRate, router]);
 
+
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
 
   const handleAcceptToS = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    
+   
     await supabase
       .from('user_profiles')
-      .upsert({ 
-        id: user.id, 
-        accepted_tos_date: new Date().toISOString() 
+      .upsert({
+        id: user.id,
+        accepted_tos_date: new Date().toISOString()
       });
-    
+   
     setShowToS(false);
     // Reloading data after accepting ToS
-    loadDashboard(); 
+    loadDashboard();
   } catch (error) {
     console.error('Error accepting ToS:', error);
     // Using a custom message box instead of alert, but keeping as alert for minimal change
     // for this one instance as it's a non-critical simulation logic.
-    alert('Failed to accept terms. Please try again.'); 
+    alert('Failed to accept terms. Please try again.');
   }
 };
+
 
   const dismissMessage = async (message, shouldTrackView = false) => {
     await VentureMessage.update(message.id, { is_dismissed: true });
@@ -287,8 +295,10 @@ export default function Dashboard() {
     setMessages(prev => prev.filter(msg => msg.id !== message.id));
   };
 
+
   const handleVisitPage = async (message) => {
     const isFeedbackRequest = message.message_type === 'feedback_request';
+
 
     if (isFeedbackRequest) {
         if (message.campaign_id) {
@@ -313,11 +323,13 @@ export default function Dashboard() {
     }
   };
 
+
   const handleVisitVenture = async (message) => {
     if (message.from_venture_landing_page_url) {
       window.open(message.from_venture_landing_page_url, '_blank');
     }
   };
+
 
   const handleInvestmentDecision = async (message, decision) => {
     if (decision === 'accepted') {
@@ -327,10 +339,11 @@ export default function Dashboard() {
             valuation: message.investment_offer_valuation
         });
         setCurrentVenture(prev => ({
-          ...prev, 
-          virtual_capital: newCapital, 
+          ...prev,
+          virtual_capital: newCapital,
           valuation: message.investment_offer_valuation
         }));
+
 
         await FundingEvent.create({
           venture_id: currentVenture.id,
@@ -342,6 +355,7 @@ export default function Dashboard() {
           amount: message.investment_offer_checksize
         });
 
+
         await VentureMessage.create({
           venture_id: currentVenture.id,
           message_type: 'system',
@@ -352,9 +366,11 @@ export default function Dashboard() {
         });
     }
 
+
     await VentureMessage.update(message.id, {
         investment_offer_status: decision
     });
+
 
     if (decision === 'accepted') {
         // Using a custom message box instead of alert, but keeping as alert for minimal change
@@ -364,12 +380,14 @@ export default function Dashboard() {
         alert('Investment offer declined.');
     }
 
-    setMessages(prev => prev.map(msg => 
-      msg.id === message.id 
-        ? {...msg, investment_offer_status: decision} 
+
+    setMessages(prev => prev.map(msg =>
+      msg.id === message.id
+        ? {...msg, investment_offer_status: decision}
         : msg
     ));
   };
+
 
   const handleJoinVCMeeting = async (message) => {
     if (!message.vc_firm_id) {
@@ -393,11 +411,12 @@ export default function Dashboard() {
       alert("An error occurred while preparing the meeting.");
     }
   };
-  
+ 
   const handleFollowUpCall = (message) => {
     // Path `PressureChallenge` will be converted to `pressurechallenge` by createPageUrl
     router.push(createPageUrl(`PressureChallenge?vcFollowUp=true&messageId=${message.id}&firmId=${message.vc_firm_id}`));
   };
+
 
   const handleJoinVCAdvancedMeeting = async (message) => {
     if (!message.vc_firm_id) {
@@ -410,6 +429,7 @@ export default function Dashboard() {
       alert("Error: No active venture found.");
       return;
     }
+
 
     try {
       const firms = await VCFirm.filter({ id: message.vc_firm_id });
@@ -428,10 +448,12 @@ export default function Dashboard() {
     }
   };
 
+
   const handleReadOn = (details) => {
     setRejectionDetailsContent(details);
     setShowRejectionDetails(true);
   };
+
 
   const getPhaseColor = (phase) => {
     const colors = {
@@ -445,6 +467,7 @@ export default function Dashboard() {
     };
     return colors[phase] || "bg-gray-100 text-gray-800";
   };
+
 
   const getPhaseIcon = (phase) => {
     const icons = {
@@ -460,27 +483,33 @@ export default function Dashboard() {
     return icons[phase] || Lightbulb;
   };
 
+
   const formatMoney = (amount) => {
     if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
     if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
     return `$${amount}`;
   };
 
+
   const getVentureAge = (venture) => {
     if (!venture) return 0;
     return differenceInDays(new Date(), new Date(venture.created_date));
   };
 
-  
+
+ 
+
 
 // [2026-01-04] CHANGE: add username to greeting
 const getGreeting = (username) => {
   const hour = new Date().getHours();
 
+
   let greeting;
   if (hour < 12) greeting = "Good morning";
   else if (hour < 17) greeting = "Good afternoon";
   else greeting = "Good evening";
+
 
   return username
     ? `${greeting}, ${username}!`
@@ -488,11 +517,15 @@ const getGreeting = (username) => {
 };
 
 
+
+
   const getAssetsAndTools = () => {
     if (!currentVenture) return [];
 
+
     const assets = [];
     const currentPhaseIndex = PHASES_ORDER.indexOf(currentVenture.phase);
+
 
     assets.push({
       id: 'edit_landing_page',
@@ -500,14 +533,14 @@ const getGreeting = (username) => {
       icon: Lightbulb,
       page: 'edit-landing-page' // createPageUrl will convert to /editlandingpage
     });
-    
+   
     assets.push({
       id: 'financials',
       title: 'Financials',
       icon: Wallet,
       page: 'financials' // createPageUrl will convert to /financials
     });
-    
+   
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
       assets.push({
         id: 'business_plan',
@@ -515,14 +548,14 @@ const getGreeting = (username) => {
         icon: FileText,
         page: 'businessPlan' // createPageUrl will convert to /businessplan
       });
-      
+     
       assets.push({
         id: 'invite_cofounder',
         title: 'Invite Co-Founder',
         icon: UserPlus,
         page: 'invite-cofounder' // createPageUrl will convert to /invitecofounder
       });
-      
+     
       assets.push({
         id: 'promotion_center',
         title: 'Promotion Center',
@@ -530,6 +563,7 @@ const getGreeting = (username) => {
         page: 'promotion-center' // createPageUrl will convert to /promotioncenter
       });
     }
+
 
     if (currentVenture.phase === 'mvp' && !currentVenture.mvp_uploaded) {
       assets.push({
@@ -539,6 +573,7 @@ const getGreeting = (username) => {
         page: 'mvp-development' // createPageUrl will convert to /mvpdevelopment
       });
     }
+
 
     if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
       assets.push({
@@ -550,6 +585,7 @@ const getGreeting = (username) => {
       });
     }
 
+
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
       assets.push({
         id: 'revenue_modeling',
@@ -559,7 +595,7 @@ const getGreeting = (username) => {
         openInNewWindow: true
       });
     }
-    
+   
     if (currentVenture.phase === 'mlp') {
       if (!currentVenture.mlp_development_completed) {
         assets.push({
@@ -570,6 +606,7 @@ const getGreeting = (username) => {
         });
       }
 
+
       assets.push({
         id: 'product_feedback',
         title: 'Product Feedback Center',
@@ -578,6 +615,7 @@ const getGreeting = (username) => {
       });
     }
 
+
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
       assets.push({
         id: 'beta_development',
@@ -585,7 +623,7 @@ const getGreeting = (username) => {
         icon: FlaskConical,
         page: 'beta-development' // createPageUrl will convert to /betadevelopment
       });
-      
+     
       assets.push({
         id: 'venture_pitch',
         title: 'Venture Pitch',
@@ -594,8 +632,10 @@ const getGreeting = (username) => {
       });
     }
 
+
     return assets;
   };
+
 
   if (isLoading && !showToS) {
     return (
@@ -612,7 +652,8 @@ const getGreeting = (username) => {
     );
   }
 
-  
+
+ 
 // [2026-01-03] ToS Dialog UI fix: force solid background, readable text, proper spacing, z-index, and button styling
 if (showToS) {
   return (
@@ -632,6 +673,7 @@ if (showToS) {
             Terms of Service
           </DialogTitle>
 
+
           <DialogDescription
             // [2026-01-03] FIX: description readability
             className="text-sm text-gray-600"
@@ -639,6 +681,7 @@ if (showToS) {
             Before you continue, please read and agree to our terms.
           </DialogDescription>
         </DialogHeader>
+
 
         <div
           // [2026-01-03] FIX: solid readable content box + consistent text color
@@ -648,6 +691,7 @@ if (showToS) {
             Welcome to StartZig! By using our platform, you agree to:
           </p>
 
+
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Engage respectfully and constructively with all users.</li>
             <li>Provide honest and helpful feedback.</li>
@@ -656,6 +700,7 @@ if (showToS) {
               Understand that this is a simulation. All currency, valuations, and investments are virtual.
             </li>
           </ul>
+
 
           <p className="mt-4 text-gray-700">
             For the full document, please visit our{" "}
@@ -687,6 +732,7 @@ if (showToS) {
           </p>
         </div>
 
+
         <DialogFooter
           // [2026-01-03] FIX: spacing so button isn't glued / hidden
           className="mt-2 flex gap-2"
@@ -706,6 +752,9 @@ if (showToS) {
 
 
 
+
+
+
   if (!currentVenture) {
     return (
       <div className="p-8">
@@ -716,6 +765,7 @@ if (showToS) {
             </h1>
             <p className="text-lg text-gray-600">Ready to start your entrepreneurial journey?</p>
           </div>
+
 
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
             <div className="w-24 h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -733,6 +783,7 @@ if (showToS) {
             </Link>
           </div>
 
+
           <div className="grid md:grid-cols-3 gap-6 text-left">
             <Card>
               <CardHeader>
@@ -744,6 +795,7 @@ if (showToS) {
               </CardContent>
             </Card>
 
+
             <Card>
               <CardHeader>
                 <FileText className="w-8 h-8 text-blue-500 mb-2" />
@@ -753,6 +805,7 @@ if (showToS) {
                 <p className="text-gray-600">Develop a comprehensive strategy and business model</p>
               </CardContent>
             </Card>
+
 
             <Card>
               <CardHeader>
@@ -769,7 +822,9 @@ if (showToS) {
     );
   }
 
+
   const assetsAndTools = getAssetsAndTools();
+
 
   return (
     <>
@@ -779,6 +834,7 @@ if (showToS) {
         details={rejectionDetailsContent}
       />
 
+
       <VCMeetingModal
         isOpen={isMeetingModalOpen}
         onClose={() => setIsMeetingModalOpen(false)}
@@ -787,11 +843,12 @@ if (showToS) {
         messageId={selectedMessageId}
         onSuccess={() => {
           // Update messages list to mark it as dismissed/completed
-          loadDashboard(); 
+          loadDashboard();
           setIsMeetingModalOpen(false);
         }}
         router={router}
       />
+
 
       <VCAdvancedMeetingModal
         isOpen={isAdvancedMeetingModalOpen}
@@ -801,11 +858,12 @@ if (showToS) {
         messageId={selectedMessageId}
         onSuccess={() => {
           // Update messages list to mark it as dismissed/completed
-          loadDashboard(); 
+          loadDashboard();
           setIsAdvancedMeetingModalOpen(false);
         }}
         router={router}
       />
+
 
       <div className="min-h-screen bg-gray-50 flex">
         <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
@@ -846,6 +904,7 @@ if (showToS) {
             </div>
           </div>
 
+
           {(currentVenture.founders_count || 1) < 2 && (
             <Card className="bg-amber-50 border-amber-200">
               <CardHeader className="pb-3">
@@ -859,9 +918,9 @@ if (showToS) {
                   {!cofounderExpanded ? (
                     <>
                       <p>Solo founders get funded 30-50% less than teams...</p>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
+                      <Button
+                        variant="link"
+                        size="sm"
                         onClick={() => setCofounderExpanded(true)}
                         className="p-0 h-auto text-amber-700 hover:text-amber-800"
                       >
@@ -881,9 +940,9 @@ if (showToS) {
                           <li>Higher chance of securing funding</li>
                         </ul>
                       </div>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
+                      <Button
+                        variant="link"
+                        size="sm"
                         onClick={() => setCofounderExpanded(false)}
                         className="p-0 h-auto text-amber-700 hover:text-amber-800"
                       >
@@ -891,7 +950,7 @@ if (showToS) {
                       </Button>
                     </>
                   )}
-                  
+                 
                   <Link href={createPageUrl('invite-cofounder')}>
                     <Button size="sm" variant="outline" className="w-full border-amber-300 hover:bg-amber-100 mt-2">
                       <UserPlus className="w-3 h-3 mr-2" />
@@ -904,13 +963,14 @@ if (showToS) {
           )}
         </div>
 
+
         <div className="flex-1 p-4 md:p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
                   {getGreeting(user?.username)}
-                  
+                 
                 </h1>
                 <p className="text-sm text-gray-500">
                   {format(new Date(), "EEEE, MMMM d, yyyy")}
@@ -930,6 +990,7 @@ if (showToS) {
               </div>
              
             </div>
+
 
             <Card className="mb-6">
               <CardHeader>
@@ -951,15 +1012,17 @@ if (showToS) {
                    <Wallet className="w-4 h-4 " />
                      <span className="text-[10px]">Balance:</span>
                      <span className="font-mono">
-                     ${Math.min(currentVenture?.virtual_capital || 0, 15000 + (messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0))).toLocaleString()}
+                      ${currentVenture?.virtual_capital?.toLocaleString()}
                      </span>
                   </span>
                 </div>
               </CardHeader>
             </Card>
 
+
             <div>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Board</h2>
+
 
               {messages.length === 0 ? (
                 <Card>
@@ -979,9 +1042,11 @@ if (showToS) {
                     const isPromotion = message.message_type === 'promotion';
                     const isSystem = message.message_type === 'system' || message.message_type === 'phase_complete' || message.message_type === 'phase_welcome';
 
+
                     let cardClass = 'bg-white border-l-4';
                     let icon = MessageSquare;
                     let iconClass = 'text-gray-500';
+
 
                     if (isInvestmentOffer) {
                       cardClass = 'bg-green-50 border-l-4 border-green-500';
@@ -1009,7 +1074,9 @@ if (showToS) {
                        iconClass = 'text-gray-500';
                     }
 
+
                     const Icon = icon;
+
 
                     return (
                       <Card key={message.id} className={cardClass}>
@@ -1025,20 +1092,20 @@ if (showToS) {
                             <p className="text-xs">
                               {format(new Date(message.created_date), 'MMM dd, yyyy')}
                             </p>
-                            
+                           
                           </div>
                         </CardHeader>
                         <CardContent className="pt-2">
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
 {/* כפתור מחיקה להזמנת שותף */}
 {message.message_type === 'co_founder_invite' && (
-  <Button 
-    variant="outline" 
-    size="sm" 
+  <Button
+    variant="outline"
+    size="sm"
     className="mt-2 text-red-500 hover:bg-red-50"
     onClick={() => dismissMessage(message)}
   >
-    X Dismiss 
+    X Dismiss
   </Button>
 )}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
@@ -1051,14 +1118,14 @@ if (showToS) {
                                 <p><strong>Investor:</strong> {message.vc_firm_name}</p>
                               </div>
                               <div className="flex gap-2 pt-2">
-                                <Button 
-                                  onClick={() => handleInvestmentDecision(message, 'accepted')} 
+                                <Button
+                                  onClick={() => handleInvestmentDecision(message, 'accepted')}
                                   className="bg-green-600 hover:bg-green-700 text-white flex-1"
                                 >
                                   <CheckCircle className="w-4 h-4 mr-2" /> Accept
                                 </Button>
-                                <Button 
-                                  onClick={() => handleInvestmentDecision(message, 'rejected')} 
+                                <Button
+                                  onClick={() => handleInvestmentDecision(message, 'rejected')}
                                   variant="outline"
                                   className="flex-1"
                                 >
@@ -1067,6 +1134,7 @@ if (showToS) {
                               </div>
                             </div>
                           )}
+
 
                           {isVCMeeting && (
                             <div className="mt-4 flex gap-2">
@@ -1078,7 +1146,7 @@ if (showToS) {
                               </Button>
                             </div>
                           )}
-                          
+                         
                           {isVCAdvancedMeeting && (
                             <div className="mt-4 flex flex-col sm:flex-row gap-2">
                               <Button onClick={() => handleJoinVCAdvancedMeeting(message)} className="bg-purple-600 hover:bg-purple-700 text-white">
@@ -1093,6 +1161,7 @@ if (showToS) {
                             </div>
                           )}
 
+
                           {isRejection && message.rejection_details && (
                             <div className="mt-4">
                                 <Button onClick={() => handleReadOn(message.rejection_details)} variant="outline" className="text-red-600 border-red-300 hover:bg-red-100">
@@ -1104,6 +1173,7 @@ if (showToS) {
                             </div>
                           )}
 
+
                           {isFeedbackRequest && (
                             <div className="mt-4 flex gap-2">
                               <Button onClick={() => handleVisitPage(message)} className="bg-yellow-600 hover:bg-yellow-700 text-white">
@@ -1114,6 +1184,7 @@ if (showToS) {
                               </Button>
                             </div>
                           )}
+
 
                           {isPromotion && (
                             <div className="mt-4 flex gap-2">
@@ -1146,3 +1217,4 @@ if (showToS) {
     </>
   );
 }
+
