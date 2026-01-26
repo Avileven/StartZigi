@@ -942,7 +942,7 @@ if (showToS) {
                   </span>
                   <span className="flex items-center gap-1">
                    <Wallet className="w-4 h-4 " />
-                     <span className="text-[10px]">Balance:</span>
+                     <span> Balance:</span>
                      <span className="font-mono">
                       ${liveBalance?.toLocaleString()}
                      </span>
