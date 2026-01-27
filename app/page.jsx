@@ -422,7 +422,7 @@ export default function Home() {
                 <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded">Health</span>
                 <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$1.5M Raised</span>
               </div>
-              <Link href="/Smokefree-demo.html" target="_blank">
+              <Link href="/smokefree-demo.html" target="_blank">
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
