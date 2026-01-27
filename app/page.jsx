@@ -1,7 +1,5 @@
-
 // home 13126 - 1230 UPDATED FILE
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -24,15 +22,12 @@ import {
   Network,
 } from "lucide-react";
 import AnimatedBg from "@/components/common/AnimatedBg";
-
 export default function Home() {
   const [user, setUser] = useState(null);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
   // [2026-01-13] FIX: removed fundingFeed state & loading logic (Live Funding Feed removed)
   // const [fundingFeed, setFundingFeed] = useState([]);
-
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -40,7 +35,6 @@ export default function Home() {
           data: { user: currentUser },
         } = await supabase.auth.getUser();
         setUser(currentUser);
-
         // בדיקה אם למשתמש יש venture
         if (currentUser) {
           const { data: ventures } = await supabase
@@ -48,7 +42,6 @@ export default function Home() {
             .select("id")
             .eq("created_by", currentUser.email)
             .limit(1);
-
           setHasVenture(ventures && ventures.length > 0);
         }
       } catch (error) {
@@ -57,7 +50,6 @@ export default function Home() {
       }
       setIsLoading(false);
     };
-
     // [2026-01-13] REMOVE: Live Funding Feed loader (feature removed)
     /*
     const loadFeed = async () => {
@@ -67,7 +59,6 @@ export default function Home() {
           .select('*')
           .order('created_date', { ascending: false })
           .limit(5);
-
         if (error) {
           console.error("Error fetching funding events:", error);
           setFundingFeed([]);
@@ -80,23 +71,19 @@ export default function Home() {
       }
     };
     */
-
     checkUser();
     // loadFeed(); // [2026-01-13] REMOVE
   }, []);
-
   // [2026-01-02] FIX: אין לנו /api/auth/login (זה של NextAuth). אצלנו דף ההתחברות הוא /login
   const handleLogin = () => {
     const next = window.location.pathname + window.location.search;
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
   };
-
   const handleLogout = async () => {
     // [2026-01-02] FIX: Logout של Supabase ואז הפניה נקייה לדף הבית (לא reload שמחזיר ללופים)
     await supabase.auth.signOut();
     window.location.href = "/";
   };
-
   // [2026-01-13] REMOVE: formatMoney helper (Live Funding Feed removed)
   /*
   const formatMoney = (amount) => {
@@ -106,7 +93,6 @@ export default function Home() {
     return `$${amount}`;
   };
   */
-
   return (
     <div className="bg-gray-900 text-white">
       <style>{`
@@ -118,7 +104,6 @@ export default function Home() {
             animation: slideUp 0.8s ease-out forwards;
         }
       `}</style>
-
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -132,7 +117,6 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <a
@@ -155,7 +139,6 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-
             <div className="hidden md:block">
               <div className="ml-4 flex items-center md:ml-6 space-x-4">
                 {user ? (
@@ -194,7 +177,6 @@ export default function Home() {
           </div>
         </div>
       </nav>
-
       {/* Hero Section (Slogan unchanged) */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
         <AnimatedBg />
@@ -213,7 +195,6 @@ export default function Home() {
             The ultimate simulator to test your ideas, build your plan, and
             secure funding—risk-free.
           </p>
-
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
             style={{ animationDelay: "0.4s" }}
@@ -250,14 +231,12 @@ export default function Home() {
           </div>
         </div>
       </div>
-
       {/* [2026-01-13] REMOVE: Stats Section (Total Ventures Launched / Value / Funding Raised) */}
       {/*
       <div className="bg-gray-800 py-12 sm:py-16">
         ...
       </div>
       */}
-
       {/* [2026-01-13] MOVE: Benefits FIRST after slogan */}
       <div id="benefits" className="bg-gray-800/50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -273,106 +252,102 @@ export default function Home() {
               hone your skills before you take the real-world plunge.
             </p>
           </div>
-
           <div className="mx-auto mt-16 max-w-none">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <ShieldCheck className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Test Without Risk
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    Validate your ideas in a realistic market simulation without
-                    risking your own capital. Make mistakes, pivot, and learn in
-                    a safe environment.
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Card 1 */}
+              <div className="group relative bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">01</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <ShieldCheck className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Test Without Risk</h3>
+                  <p className="text-white/90 mb-4">
+                    Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">90% Success Rate</div>
                 </div>
               </div>
 
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <BookOpen className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Learn from the Best
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    Interact with AI-driven investors modeled after real-world
-                    personas. Understand what they look for and refine your pitch
-                    based on their feedback.
+              {/* Card 2 */}
+              <div className="group relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">02</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <BookOpen className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Learn from the Best</h3>
+                  <p className="text-white/90 mb-4">
+                    Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">500+ Founders Trained</div>
                 </div>
               </div>
 
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <BarChart3 className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Build Real Skills
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    From business planning and MVP development to fundraising,
-                    you’ll go through the startup lifecycle and gain practical,
-                    hands-on experience.
+              {/* Card 3 */}
+              <div className="group relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">03</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <BarChart3 className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Build Real Skills</h3>
+                  <p className="text-white/90 mb-4">
+                    From business planning and MVP development to fundraising, you'll go through the startup lifecycle and gain practical, hands-on experience.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">6 Core Skills</div>
                 </div>
               </div>
 
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Secure Simulated Funding
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    Prove your model, gain traction, and raise virtual capital
-                    from a network of angel and VC simulators to fuel growth.
+              {/* Card 4 */}
+              <div className="group relative bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">04</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Secure Simulated Funding</h3>
+                  <p className="text-white/90 mb-4">
+                    Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel growth.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">Virtual Investment</div>
                 </div>
               </div>
 
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Join a Thriving Community
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    Connect with other founders. Share strategies, give feedback,
-                    and build your network in a collaborative ecosystem.
+              {/* Card 5 */}
+              <div className="group relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">05</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Join a Thriving Community</h3>
+                  <p className="text-white/90 mb-4">
+                    Connect with other founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">Active Community</div>
                 </div>
               </div>
 
-              <div className="flex gap-x-6">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500">
-                  <Network className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-7 text-white">
-                    Grow Your Network
-                  </h3>
-                  <p className="mt-2 text-base leading-7 text-gray-400">
-                    Practice networking and build relationships in a simulated
-                    environment, preparing you for real-world meetings.
+              {/* Card 6 */}
+              <div className="group relative bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
+                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">06</div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <Network className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Grow Your Network</h3>
+                  <p className="text-white/90 mb-4">
+                    Practice networking and build relationships in a simulated environment, preparing you for real-world meetings.
                   </p>
+                  <div className="text-sm font-semibold text-white/70">Network Building</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
+      </div>
       {/* [2026-01-13] ADD/UPDATE: "Who can benefit" section (no "For", light-blue background, extra lines requested) */}
       <div className="bg-gradient-to-b from-indigo-900/40 to-gray-900 py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -381,144 +356,163 @@ export default function Home() {
               Who can benefit from StartZig?
             </h2>
             <p className="mt-3 text-lg text-gray-200/90">
-              StartZig is built for learning, testing, and momentum—whether you’re exploring, building, or teaching.
+              StartZig is built for learning, testing, and momentum—whether you're exploring, building, or teaching.
             </p>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 border border-emerald-500/30 rounded-2xl p-8 hover:border-emerald-400 transition-all group">
+              <div className="flex items-start gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  🎯
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-3">Experience the Startup World</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    Build ventures just like in the real world. <span className="text-emerald-300 font-semibold">Reach that sweet exit.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Experience the Startup World
-                </h3>
-                <p className="text-gray-200/90">
-                  Build ventures just like in the real world.{" "}
-                  <span className="font-semibold text-white">Reach that sweet exit.</span>
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 border border-purple-500/30 rounded-2xl p-8 hover:border-purple-400 transition-all group">
+              <div className="flex items-start gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  💡
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-3">Entrepreneurs with an Idea</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    StartZig helps you test, refine, and validate your concept before you invest time and money.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Entrepreneurs with an Idea
-                </h3>
-                <p className="text-gray-200/90">
-                  StartZig helps you test, refine, and validate your concept before you invest time and money.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-500/30 rounded-2xl p-8 hover:border-blue-400 transition-all group">
+              <div className="flex items-start gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  🎓
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-3">Students & Learners</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    StartZig turns theory into real practice. <span className="text-blue-300 font-semibold">Experience how startups evolve through real stages.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Students & Learners
-                </h3>
-                <p className="text-gray-200/90">
-                  StartZig turns theory into real practice.{" "}
-                  <span className="font-semibold text-white">
-                    Experience how startups evolve through real stages.
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/10 border-white/10 backdrop-blur-md hover:bg-white/15 transition">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Mentors, Instructors & Programs
-                </h3>
-                <p className="text-gray-200/90">
-                  The perfect platform for accelerators, incubators, and academic programs.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-500/30 rounded-2xl p-8 hover:border-amber-400 transition-all group">
+              <div className="flex items-start gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  👨‍🏫
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-3">Mentors, Instructors & Programs</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    The perfect platform for accelerators, incubators, and academic programs.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
+      </div>
       {/* [2026-01-13] REMOVE: How It Works Section (entire section deleted) */}
       {/*
       <div className="py-24 sm:py-32">
         ...
       </div>
       */}
-
       {/* [2026-01-13] UPDATE: Featured Ventures FULL WIDTH, 3 stacked, links to /public HTML demos with .html */}
       <div className="bg-gray-800/50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-10 text-center lg:text-left">
             Featured Venture Demos
           </h2>
-
           <div className="space-y-6">
             {/* Demo 1 */}
-            <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Rocket className="w-5 h-5 text-indigo-400" />
-                    <span className="text-xl font-semibold">ShelfSense</span>
-                  </div>
-                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
-                    Smart retail shelf intelligence that helps stores prevent out-of-stocks and optimize product placement.
-                    Includes a sample MVP page with onboarding + value proposition + feedback section.
-                  </p>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-purple-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
+              <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+                <Rocket className="w-16 h-16 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl font-bold">ShelfSense</span>
+                  <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-semibold rounded">Retail Tech</span>
                 </div>
-
-                <Link href="/ShelfSense-demo.html" target="_blank">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
-                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                <p className="text-gray-400 mb-3">
+                  Smart retail shelf intelligence that helps stores prevent out-of-stocks and optimize product placement.
+                  Includes a sample MVP page with onboarding + value proposition + feedback section.
+                </p>
+                <div className="flex items-center gap-6 text-sm text-gray-400">
+                  <span>👥 50 Testers</span>
+                  <span>💰 $2M Raised</span>
+                  <span>📈 Growing Fast</span>
+                </div>
+              </div>
+              <Link href="/ShelfSense-demo.html" target="_blank">
+                <Button className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto shrink-0">
+                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
 
             {/* Demo 2 */}
-            <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-5 h-5 text-indigo-400" />
-                    <span className="text-xl font-semibold">Smokefree</span>
-                  </div>
-                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
-                    A structured quit-smoking journey built around micro-habits, daily wins, and social reinforcement.
-                    See the MVP demo page and example feedback loops.
-                  </p>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-emerald-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
+              <div className="w-32 h-32 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+                <Lightbulb className="w-16 h-16 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl font-bold">Smokefree</span>
+                  <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded">Health</span>
                 </div>
-
-                <Link href="/Smokefree-demo.html" target="_blank">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
-                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                <p className="text-gray-400 mb-3">
+                  A structured quit-smoking journey built around micro-habits, daily wins, and social reinforcement.
+                  See the MVP demo page and example feedback loops.
+                </p>
+                <div className="flex items-center gap-6 text-sm text-gray-400">
+                  <span>👥 120 Users</span>
+                  <span>💰 $1.5M Raised</span>
+                  <span>🎯 Proven Model</span>
+                </div>
+              </div>
+              <Link href="/Smokefree-demo.html" target="_blank">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto shrink-0">
+                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
 
             {/* Demo 3 */}
-            <Card className="bg-gray-800 text-white border-gray-700 shadow-lg">
-              <CardContent className="p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Target className="w-5 h-5 text-indigo-400" />
-                    <span className="text-xl font-semibold">UrbanPulse</span>
-                  </div>
-                  <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
-                    A city insights platform that turns local signals into actionable opportunities for communities and small businesses.
-                    Demo includes positioning + MVP preview + feedback CTA.
-                  </p>
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-blue-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+                <Target className="w-16 h-16 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl font-bold">UrbanPulse</span>
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded">Smart City</span>
                 </div>
-
-                <Link href="/urbanpulse-demo.html" target="_blank">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full md:w-auto">
-                    Open Demo <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                <p className="text-gray-400 mb-3">
+                  A city insights platform that turns local signals into actionable opportunities for communities and small businesses.
+                  Demo includes positioning + MVP preview + feedback CTA.
+                </p>
+                <div className="flex items-center gap-6 text-sm text-gray-400">
+                  <span>👥 300+ Businesses</span>
+                  <span>💰 $5M Raised</span>
+                  <span>🚀 Scaling</span>
+                </div>
+              </div>
+              <Link href="/urbanpulse-demo.html" target="_blank">
+                <Button className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto shrink-0">
+                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
-
           <div className="mt-12 text-center">
             <Link href="/register">
               <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
@@ -528,7 +522,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-
+      </div>
       {/* Footer */}
       <footer className="bg-gray-900">
         <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 lg:px-8">
@@ -540,4 +534,3 @@ export default function Home() {
     </div>
   );
 }
-
