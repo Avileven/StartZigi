@@ -341,36 +341,44 @@ export default function Home() {
                 <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <Target className="w-5 h-5 text-emerald-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white pt-1">Experience Seekers</h3>
+                <h3 className="text-lg font-bold text-white pt-1">Experience the Startup World</h3>
               </div>
-              <p className="text-sm text-gray-400">Build ventures and reach that exit</p>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Build ventures just like in the real world. Experience the full startup lifecycle from ideation to exit. Learn what it takes to grow a company, manage burn rate, and reach that sweet exit moment.
+              </p>
             </div>
             <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-purple-500 transition-colors">
               <div className="flex items-start gap-4 mb-3">
                 <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <Lightbulb className="w-5 h-5 text-purple-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white pt-1">Entrepreneurs</h3>
+                <h3 className="text-lg font-bold text-white pt-1">Entrepreneurs with an Idea</h3>
               </div>
-              <p className="text-sm text-gray-400">Test and validate ideas</p>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Test, refine, and validate your concept before investing time and money. Experiment with different business models, pitch to AI investors, and pivot without real-world consequences. Expose your venture to the community, get feedback, and find potential early users.
+              </p>
             </div>
             <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors">
               <div className="flex items-start gap-4 mb-3">
                 <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <BookOpen className="w-5 h-5 text-blue-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white pt-1">Students</h3>
+                <h3 className="text-lg font-bold text-white pt-1">Students & Learners</h3>
               </div>
-              <p className="text-sm text-gray-400">Learn by doing</p>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Turn theory into practice. Experience how startups evolve through real stages—from MVP to scaling. Build your resume with hands-on entrepreneurial experience before graduation.
+              </p>
             </div>
             <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-amber-500 transition-colors">
               <div className="flex items-start gap-4 mb-3">
                 <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <Users className="w-5 h-5 text-amber-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white pt-1">Mentors</h3>
+                <h3 className="text-lg font-bold text-white pt-1">Mentors, Instructors & Programs</h3>
               </div>
-              <p className="text-sm text-gray-400">Teach effectively</p>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                The perfect platform for accelerators, incubators, and academic programs. Give your students a safe environment to practice entrepreneurship with real feedback loops.
+              </p>
             </div>
           </div>
         </div>
