@@ -254,82 +254,85 @@ export default function Home() {
           </div>
           <div className="mx-auto mt-16 max-w-none">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <div className="group relative bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">01</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <ShieldCheck className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
+                    <ShieldCheck className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Test Without Risk</h3>
-                  <p className="text-white/90 mb-4">
-                    Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
+                  <h3 className="text-xl font-bold mb-3">Test Without Risk</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Validate your ideas in a realistic market simulation without
+                    risking your own capital. Make mistakes, pivot, and learn in
+                    a safe environment.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">90% Success Rate</div>
                 </div>
               </div>
-              <div className="group relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">02</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6">
+                    <BookOpen className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Learn from the Best</h3>
-                  <p className="text-white/90 mb-4">
-                    Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
+                  <h3 className="text-xl font-bold mb-3">Learn from the Best</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Interact with AI-driven investors modeled after real-world
+                    personas. Understand what they look for and refine your pitch
+                    based on their feedback.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">500+ Founders Trained</div>
                 </div>
               </div>
-              <div className="group relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">03</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <BarChart3 className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-6">
+                    <BarChart3 className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Build Real Skills</h3>
-                  <p className="text-white/90 mb-4">
-                    From business planning and MVP development to fundraising, you'll go through the startup lifecycle and gain practical, hands-on experience.
+                  <h3 className="text-xl font-bold mb-3">Build Real Skills</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    From business planning and MVP development to fundraising,
+                    you'll go through the startup lifecycle and gain practical,
+                    hands-on experience.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">6 Core Skills</div>
                 </div>
               </div>
-              <div className="group relative bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">04</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <DollarSign className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6">
+                    <DollarSign className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Secure Simulated Funding</h3>
-                  <p className="text-white/90 mb-4">
-                    Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel growth.
+                  <h3 className="text-xl font-bold mb-3">Secure Simulated Funding</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Prove your model, gain traction, and raise virtual capital
+                    from a network of angel and VC simulators to fuel growth.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">Virtual Investment</div>
                 </div>
               </div>
-              <div className="group relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">05</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <Users className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6">
+                    <Users className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Join a Thriving Community</h3>
-                  <p className="text-white/90 mb-4">
-                    Connect with other founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
+                  <h3 className="text-xl font-bold mb-3">Join a Thriving Community</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Connect with other founders. Share strategies, give feedback,
+                    and build your network in a collaborative ecosystem.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">Active Community</div>
                 </div>
               </div>
-              <div className="group relative bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
-                <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">06</div>
+              <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <Network className="w-8 h-8 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6">
+                    <Network className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Grow Your Network</h3>
-                  <p className="text-white/90 mb-4">
-                    Practice networking and build relationships in a simulated environment, preparing you for real-world meetings.
+                  <h3 className="text-xl font-bold mb-3">Grow Your Network</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Practice networking and build relationships in a simulated
+                    environment, preparing you for real-world meetings.
                   </p>
-                  <div className="text-sm font-semibold text-white/70">Network Building</div>
                 </div>
               </div>
             </div>
@@ -347,58 +350,34 @@ export default function Home() {
               StartZig is built for learning, testing, and momentum—whether you're exploring, building, or teaching.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 border border-emerald-500/30 rounded-2xl p-8 hover:border-emerald-400 transition-all group">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
-                  🎯
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">Experience the Startup World</h3>
-                  <p className="text-gray-200/90 leading-relaxed">
-                    Build ventures just like in the real world. <span className="font-semibold text-white">Reach that sweet exit.</span>
-                  </p>
-                </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center group cursor-pointer">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                🎯
               </div>
+              <h3 className="font-bold text-lg mb-2">Experience Seekers</h3>
+              <p className="text-sm text-gray-400">Build ventures and reach that exit</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 border border-purple-500/30 rounded-2xl p-8 hover:border-purple-400 transition-all group">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
-                  💡
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">Entrepreneurs with an Idea</h3>
-                  <p className="text-gray-200/90 leading-relaxed">
-                    StartZig helps you test, refine, and validate your concept before you invest time and money.
-                  </p>
-                </div>
+            <div className="text-center group cursor-pointer">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                💡
               </div>
+              <h3 className="font-bold text-lg mb-2">Entrepreneurs</h3>
+              <p className="text-sm text-gray-400">Test and validate ideas</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-500/30 rounded-2xl p-8 hover:border-blue-400 transition-all group">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
-                  🎓
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">Students & Learners</h3>
-                  <p className="text-gray-200/90 leading-relaxed">
-                    StartZig turns theory into real practice. <span className="font-semibold text-white">Experience how startups evolve through real stages.</span>
-                  </p>
-                </div>
+            <div className="text-center group cursor-pointer">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                🎓
               </div>
+              <h3 className="font-bold text-lg mb-2">Students</h3>
+              <p className="text-sm text-gray-400">Learn by doing</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-500/30 rounded-2xl p-8 hover:border-amber-400 transition-all group">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
-                  👨‍🏫
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">Mentors, Instructors & Programs</h3>
-                  <p className="text-gray-200/90 leading-relaxed">
-                    The perfect platform for accelerators, incubators, and academic programs.
-                  </p>
-                </div>
+            <div className="text-center group cursor-pointer">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                👨‍🏫
               </div>
+              <h3 className="font-bold text-lg mb-2">Mentors</h3>
+              <p className="text-sm text-gray-400">Teach effectively</p>
             </div>
           </div>
         </div>
@@ -415,79 +394,52 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-white mb-10 text-center lg:text-left">
             Featured Venture Demos
           </h2>
-          <div className="space-y-6">
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-purple-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Rocket className="w-16 h-16 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-purple-900/50 to-gray-800 border border-purple-500/30 rounded-xl p-6 hover:border-purple-400 transition-all cursor-pointer group">
+              <div className="flex items-center gap-3 mb-4">
+                <Rocket className="w-8 h-8 text-purple-400" />
+                <h3 className="text-xl font-bold group-hover:text-purple-400 transition-colors">ShelfSense</h3>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold">ShelfSense</span>
-                  <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-semibold rounded">Retail Tech</span>
-                </div>
-                <p className="text-gray-400 mb-3">
-                  Smart retail shelf intelligence that helps stores prevent out-of-stocks and optimize product placement.
-                  Includes a sample MVP page with onboarding + value proposition + feedback section.
-                </p>
-                <div className="flex items-center gap-6 text-sm text-gray-400">
-                  <span>👥 50 Testers</span>
-                  <span>💰 $2M Raised</span>
-                  <span>📈 Growing Fast</span>
-                </div>
+              <p className="text-sm text-gray-400 mb-4">Smart retail shelf intelligence platform</p>
+              <div className="flex items-center gap-2 text-xs mb-4">
+                <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Retail Tech</span>
+                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$2M Raised</span>
               </div>
               <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto shrink-0">
-                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-sm">
+                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-emerald-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Lightbulb className="w-16 h-16 text-white" />
+            <div className="bg-gradient-to-br from-emerald-900/50 to-gray-800 border border-emerald-500/30 rounded-xl p-6 hover:border-emerald-400 transition-all cursor-pointer group">
+              <div className="flex items-center gap-3 mb-4">
+                <Lightbulb className="w-8 h-8 text-emerald-400" />
+                <h3 className="text-xl font-bold group-hover:text-emerald-400 transition-colors">Smokefree</h3>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold">Smokefree</span>
-                  <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded">Health</span>
-                </div>
-                <p className="text-gray-400 mb-3">
-                  A structured quit-smoking journey built around micro-habits, daily wins, and social reinforcement.
-                  See the MVP demo page and example feedback loops.
-                </p>
-                <div className="flex items-center gap-6 text-sm text-gray-400">
-                  <span>👥 120 Users</span>
-                  <span>💰 $1.5M Raised</span>
-                  <span>🎯 Proven Model</span>
-                </div>
+              <p className="text-sm text-gray-400 mb-4">Quit-smoking journey app</p>
+              <div className="flex items-center gap-2 text-xs mb-4">
+                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded">Health</span>
+                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$1.5M Raised</span>
               </div>
               <Link href="/Smokefree-demo.html" target="_blank">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto shrink-0">
-                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm">
+                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-blue-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Target className="w-16 h-16 text-white" />
+            <div className="bg-gradient-to-br from-blue-900/50 to-gray-800 border border-blue-500/30 rounded-xl p-6 hover:border-blue-400 transition-all cursor-pointer group">
+              <div className="flex items-center gap-3 mb-4">
+                <Target className="w-8 h-8 text-blue-400" />
+                <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors">UrbanPulse</h3>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold">UrbanPulse</span>
-                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded">Smart City</span>
-                </div>
-                <p className="text-gray-400 mb-3">
-                  A city insights platform that turns local signals into actionable opportunities for communities and small businesses.
-                  Demo includes positioning + MVP preview + feedback CTA.
-                </p>
-                <div className="flex items-center gap-6 text-sm text-gray-400">
-                  <span>👥 300+ Businesses</span>
-                  <span>💰 $5M Raised</span>
-                  <span>🚀 Scaling</span>
-                </div>
+              <p className="text-sm text-gray-400 mb-4">City insights platform</p>
+              <div className="flex items-center gap-2 text-xs mb-4">
+                <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">Smart City</span>
+                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$5M Raised</span>
               </div>
               <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto shrink-0">
-                  Open Demo <ArrowRight className="w-4 h-4 ml-2" />
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm">
+                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
