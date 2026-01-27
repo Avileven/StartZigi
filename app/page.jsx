@@ -254,7 +254,6 @@ export default function Home() {
           </div>
           <div className="mx-auto mt-16 max-w-none">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Card 1 */}
               <div className="group relative bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">01</div>
                 <div className="relative z-10">
@@ -268,8 +267,6 @@ export default function Home() {
                   <div className="text-sm font-semibold text-white/70">90% Success Rate</div>
                 </div>
               </div>
-
-              {/* Card 2 */}
               <div className="group relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">02</div>
                 <div className="relative z-10">
@@ -283,8 +280,6 @@ export default function Home() {
                   <div className="text-sm font-semibold text-white/70">500+ Founders Trained</div>
                 </div>
               </div>
-
-              {/* Card 3 */}
               <div className="group relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">03</div>
                 <div className="relative z-10">
@@ -298,8 +293,6 @@ export default function Home() {
                   <div className="text-sm font-semibold text-white/70">6 Core Skills</div>
                 </div>
               </div>
-
-              {/* Card 4 */}
               <div className="group relative bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">04</div>
                 <div className="relative z-10">
@@ -313,8 +306,6 @@ export default function Home() {
                   <div className="text-sm font-semibold text-white/70">Virtual Investment</div>
                 </div>
               </div>
-
-              {/* Card 5 */}
               <div className="group relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">05</div>
                 <div className="relative z-10">
@@ -328,8 +319,6 @@ export default function Home() {
                   <div className="text-sm font-semibold text-white/70">Active Community</div>
                 </div>
               </div>
-
-              {/* Card 6 */}
               <div className="group relative bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl p-8 hover:scale-105 transition-transform duration-300 cursor-pointer overflow-hidden">
                 <div className="absolute top-0 right-0 text-9xl font-bold text-white/10">06</div>
                 <div className="relative z-10">
@@ -346,7 +335,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
       </div>
       {/* [2026-01-13] ADD/UPDATE: "Who can benefit" section (no "For", light-blue background, extra lines requested) */}
       <div className="bg-gradient-to-b from-indigo-900/40 to-gray-900 py-20 sm:py-24">
@@ -368,12 +356,11 @@ export default function Home() {
                 <div>
                   <h3 className="text-2xl font-bold mb-3">Experience the Startup World</h3>
                   <p className="text-gray-200/90 leading-relaxed">
-                    Build ventures just like in the real world. <span className="text-emerald-300 font-semibold">Reach that sweet exit.</span>
+                    Build ventures just like in the real world. <span className="font-semibold text-white">Reach that sweet exit.</span>
                   </p>
                 </div>
               </div>
             </div>
-
             <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 border border-purple-500/30 rounded-2xl p-8 hover:border-purple-400 transition-all group">
               <div className="flex items-start gap-6">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
@@ -387,7 +374,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
             <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-500/30 rounded-2xl p-8 hover:border-blue-400 transition-all group">
               <div className="flex items-start gap-6">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
@@ -396,12 +382,11 @@ export default function Home() {
                 <div>
                   <h3 className="text-2xl font-bold mb-3">Students & Learners</h3>
                   <p className="text-gray-200/90 leading-relaxed">
-                    StartZig turns theory into real practice. <span className="text-blue-300 font-semibold">Experience how startups evolve through real stages.</span>
+                    StartZig turns theory into real practice. <span className="font-semibold text-white">Experience how startups evolve through real stages.</span>
                   </p>
                 </div>
               </div>
             </div>
-
             <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-500/30 rounded-2xl p-8 hover:border-amber-400 transition-all group">
               <div className="flex items-start gap-6">
                 <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0 group-hover:scale-110 transition-transform">
@@ -418,7 +403,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-      </div>
       {/* [2026-01-13] REMOVE: How It Works Section (entire section deleted) */}
       {/*
       <div className="py-24 sm:py-32">
@@ -432,9 +416,8 @@ export default function Home() {
             Featured Venture Demos
           </h2>
           <div className="space-y-6">
-            {/* Demo 1 */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-purple-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Rocket className="w-16 h-16 text-white" />
               </div>
               <div className="flex-1">
@@ -458,10 +441,8 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-
-            {/* Demo 2 */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-emerald-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-32 h-32 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Lightbulb className="w-16 h-16 text-white" />
               </div>
               <div className="flex-1">
@@ -485,10 +466,8 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-
-            {/* Demo 3 */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-blue-500 transition-all flex flex-col md:flex-row gap-6 items-center group">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center text-5xl shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Target className="w-16 h-16 text-white" />
               </div>
               <div className="flex-1">
@@ -521,7 +500,6 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </div>
       </div>
       {/* Footer */}
       <footer className="bg-gray-900">
