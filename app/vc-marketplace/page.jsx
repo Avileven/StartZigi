@@ -113,7 +113,12 @@ export default function VCMarketplace() {
   <Button variant="outline" size="sm" className="w-full">
     Visit Firm Profile <ChevronsRight className="w-4 h-4 ml-2"/>
   </Button>
-</Link>
+</Link><Button 
+  className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4"
+  onClick={() => window.location.href = `/vc-firm?slug=${firm.slug}`}
+>
+  View Firm Details
+</Button>
                     </div>
                   ))
                 ) : (
