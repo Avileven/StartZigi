@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2, Building2, Target, DollarSign, TrendingUp, Users, Mail, CheckCircle, X, ChevronsRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
 
 const VCFirmContactModal = ({ firm, venture, canApply }) => {
