@@ -192,8 +192,7 @@ export default function Home() {
             className="mt-6 text-lg leading-8 text-gray-300 animate-slideUp"
             style={{ animationDelay: "0.2s" }}
           >
-            The ultimate simulator to test your ideas, build your plan, and
-            secure funding—risk-free.
+            The future of entrepreneurship starts here.
           </p>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
