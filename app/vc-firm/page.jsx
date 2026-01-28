@@ -1,5 +1,7 @@
+// vc-firm 270126
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { VCFirm } from '@/api/entities';
 import { Venture } from '@/api/entities';
 import { VentureMessage } from '@/api/entities';
@@ -129,20 +131,26 @@ export default function VCFirmPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [userVenture, setUserVenture] = useState(null);
 
+  // שימוש ב-Hooks של Next.js לשליפת הפרמטרים מהכתובת
+  const searchParams = useSearchParams();
+  const slug = searchParams.get('slug');
+
   useEffect(() => {
     const loadData = async () => {
-      try {
-        // ✅ כבר בתוך useEffect - זה בסדר
-        const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
+      // אם אין slug בכתובת, אין טעם להמשיך בשליפה
+      if (!slug) {
+        setIsLoading(false);
+        return;
+      }
 
-        if (slug) {
-          const firms = await VCFirm.filter({ slug: slug });
-          if (firms.length > 0) {
-            setFirm(firms[0]);
-          }
+      try {
+        // שליפת פרטי הקרן לפי ה-slug
+        const firms = await VCFirm.filter({ slug: slug });
+        if (firms.length > 0) {
+          setFirm(firms[0]);
         }
 
+        // שליפת פרטי המיזם של המשתמש המחובר
         const user = await User.me();
         const userVentures = await Venture.filter({ created_by: user.email }, "-created_date");
         if (userVentures.length > 0) {
@@ -155,7 +163,7 @@ export default function VCFirmPage() {
     };
 
     loadData();
-  }, []);
+  }, [slug]); // ה-Effect ירוץ מחדש ברגע שה-slug מתקבל מהכתובת
 
   if (isLoading) {
     return (
@@ -170,7 +178,9 @@ export default function VCFirmPage() {
       <div className="flex h-full w-full items-center justify-center p-8">
         <Card className="text-center p-8">
           <CardTitle>Firm Not Found</CardTitle>
-          <CardDescription>The VC firm you're looking for could not be found.</CardDescription>
+          <CardDescription>
+            The VC firm you're looking for could not be found. (Slug: {slug || 'none'})
+          </CardDescription>
         </Card>
       </div>
     );
