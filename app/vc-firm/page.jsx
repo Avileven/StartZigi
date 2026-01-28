@@ -87,7 +87,7 @@ const VCFirmContactModal = ({ firm, venture, canApply }) => {
           Contact Firm
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="bg-white text-gray-900 shadow-2xl border border-gray-200">
         <DialogHeader>
           <DialogTitle>Contact {firm.name}</DialogTitle>
           <DialogDescription>
