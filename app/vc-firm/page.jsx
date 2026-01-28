@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { VCFirm } from '@/api/entities.js';
-import { Venture } from '@/api/entities.js';
-import { VentureMessage } from '@/api/entities.js';
-import { User } from '@/api/entities.js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
+import { VCFirm } from '@/api/entities';
+import { Venture } from '@/api/entities';
+import { VentureMessage } from '@/api/entities';
+import { User } from '@/api/entities';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
