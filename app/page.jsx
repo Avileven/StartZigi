@@ -189,11 +189,11 @@ export default function Home() {
             .
           </h1>
           <p
-            className="mt-6 text-lg leading-8 text-gray-300 animate-slideUp"
-            style={{ animationDelay: "0.2s" }}
-          >
-            The future of entrepreneurship starts here.
-          </p>
+  className="mt-6 text-4xl font-bold leading-tight text-white animate-slideUp"
+  style={{ animationDelay: "0.2s" }}
+>
+  The future of entrepreneurship starts here.
+</p>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
             style={{ animationDelay: "0.4s" }}
