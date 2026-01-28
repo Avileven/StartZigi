@@ -188,11 +188,11 @@ export default function Home() {
             </span>
             .
           </h1>
-          <p
-  className="mt-6 text-4xl font-bold leading-tight text-white animate-slideUp"
+         <p
+  className="mt-6 text-3xl font-bold leading-9 text-white animate-slideUp"
   style={{ animationDelay: "0.2s" }}
 >
-  The future of entrepreneurship starts here.
+  The future of entrepreneurship <span style={{ color: '#B096FF' }}>zigs</span> here.
 </p>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
