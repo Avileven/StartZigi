@@ -196,7 +196,7 @@ export default function Home() {
               </Button>
             )}
             
-            <a href="/HOW_IT_WORKS_FINAL.html" target="_blank">
+            <a href="/how-it-works.html" target="_blank">
               <Button
                 size="lg"
                 variant="outline"
