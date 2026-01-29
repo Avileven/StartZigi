@@ -1,3 +1,4 @@
+// mlp-development-center 280126
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
