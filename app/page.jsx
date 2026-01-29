@@ -192,7 +192,7 @@ export default function Home() {
   className="mt-6 text-3xl font-bold leading-9 text-white animate-slideUp"
   style={{ animationDelay: "0.2s" }}
 >
-  The future of entrepreneurship <span style={{ color: '#B096FF' }}>zigs</span> now.
+  A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
 </p>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
