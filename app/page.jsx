@@ -194,7 +194,7 @@ export default function Home() {
 >
  A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
 </p>
-         <div
+          <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
             style={{ animationDelay: "0.4s" }}
           >
