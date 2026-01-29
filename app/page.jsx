@@ -194,6 +194,33 @@ export default function Home() {
 >
   A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
 </p>
+         <div
+            className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
+            style={{ animationDelay: "0.4s" }}
+          >
+            {/* כאן נמצא הקוד הקיים שלך של הכפתור הראשי - אל תיגע בו! */}
+            {user ? (
+              hasVenture ? (
+                <Link href="/dashboard">...</Link>
+              ) : (
+                <Link href="/createventure">...</Link>
+              )
+            ) : (
+              <Button onClick={handleLogin}>...</Button>
+            )}
+
+            {/* פשוט תדביק את הכפתור הזה כאן, מחוץ לסוגריים של ה-user */}
+            <a href="/HOW-IT-WORKS.html" target="_blank">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                See How It Works
+              </Button>
+            </a>
+          </div>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
             style={{ animationDelay: "0.4s" }}
