@@ -192,7 +192,7 @@ export default function Home() {
   className="mt-6 text-3xl font-bold leading-9 text-white animate-slideUp"
   style={{ animationDelay: "0.2s" }}
 >
- A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
+  The future of entrepreneurship <span style={{ color: '#B096FF' }}>zigs</span> now.
 </p>
           <div
             className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
@@ -200,68 +200,32 @@ export default function Home() {
           >
             {user ? (
               hasVenture ? (
-                <>
-                  <Link href="/dashboard">
-                    <Button
-                      size="lg"
-                      className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
-                    >
-                      Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                  <a href="/HOW-IT-WORKS.html" target="_blank">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
-                    >
-                      <PlayCircle className="w-4 h-4 mr-2" />
-                      See How It Works
-                    </Button>
-                  </a>
-                </>
-              ) : (
-                <>
-                  <Link href="/createventure">
-                    <Button
-                      size="lg"
-                      className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
-                    >
-                      Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                  <a href="/HOW-IT-WORKS.html" target="_blank">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
-                    >
-                      <PlayCircle className="w-4 h-4 mr-2" />
-                      See How It Works
-                    </Button>
-                  </a>
-                </>
-              )
-            ) : (
-              <>
-                <Button
-                  onClick={handleLogin}
-                  size="lg"
-                  className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
-                >
-                  Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <a href="/HOW-IT-WORKS.html" target="_blank">
+                <Link href="/dashboard">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
                   >
-                    <PlayCircle className="w-4 h-4 mr-2" />
-                    See How It Works
+                    Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                </a>
-              </>
+                </Link>
+              ) : (
+                <Link href="/createventure">
+                  <Button
+                    size="lg"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+                  >
+                    Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <Button
+                onClick={handleLogin}
+                size="lg"
+                className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+              >
+                Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             )}
           </div>
         </div>
