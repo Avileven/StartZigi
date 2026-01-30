@@ -160,7 +160,7 @@ export default function Home() {
             className="mt-6 text-xl leading-8 text-indigo-100 animate-slideUp max-w-3xl mx-auto"
             style={{ animationDelay: "0.2s" }}
           >
-            A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
+            A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
           </p>
           <div
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp"
