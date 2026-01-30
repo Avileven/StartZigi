@@ -297,8 +297,8 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4 font-sans antialiased">
       <header className="text-center mb-6">
-        <h1 className="text-4xl font-extrabold text-white mb-2">🚀 MVP Builder Dashboard</h1>
-        <p className="text-purple-100">Configure your mobile app prototype in real-time!</p>
+        <h1 className="text-4xl font-extrabold text-white mb-2">🚀 Startzig Studio</h1>
+        <p className="text-purple-100">Configure your app in real-time!</p>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-6">
