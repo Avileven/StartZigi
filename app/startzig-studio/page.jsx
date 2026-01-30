@@ -21,8 +21,8 @@ const getInitialState = () => ({
     { sender: 'Admin', content: 'Welcome to the prototype chat!' },
     { sender: 'User1', content: 'What a cool app concept.' },
   ],
-  appTitle: 'My Awesome MVP',
-  appDescription: 'This is the official description of our minimum viable product. Customize this text to pitch your app idea!',
+  appTitle: 'startzig studio',
+  appDescription: 'Customize this text to pitch your app idea!',
   premiumPrice: '9.99',
 });
 
