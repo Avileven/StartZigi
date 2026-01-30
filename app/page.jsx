@@ -1,33 +1,27 @@
-// home 270126
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import {
-  Rocket,
   Target,
   Lightbulb,
   DollarSign,
   ArrowRight,
-  TrendingUp,
-  Check,
-  Zap,
   ShieldCheck,
-  Layers,
   BookOpen,
   Users,
   BarChart3,
   Network,
+  PlayCircle,
 } from "lucide-react";
 import AnimatedBg from "@/components/common/AnimatedBg";
+
 export default function Home() {
   const [user, setUser] = useState(null);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // [2026-01-13] FIX: removed fundingFeed state & loading logic (Live Funding Feed removed)
-  // const [fundingFeed, setFundingFeed] = useState([]);
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -35,7 +29,7 @@ export default function Home() {
           data: { user: currentUser },
         } = await supabase.auth.getUser();
         setUser(currentUser);
-        // בדיקה אם למשתמש יש venture
+
         if (currentUser) {
           const { data: ventures } = await supabase
             .from("ventures")
@@ -50,60 +44,32 @@ export default function Home() {
       }
       setIsLoading(false);
     };
-    // [2026-01-13] REMOVE: Live Funding Feed loader (feature removed)
-    /*
-    const loadFeed = async () => {
-      try {
-        const { data: events, error } = await supabase
-          .from('funding_events')
-          .select('*')
-          .order('created_date', { ascending: false })
-          .limit(5);
-        if (error) {
-          console.error("Error fetching funding events:", error);
-          setFundingFeed([]);
-        } else {
-          setFundingFeed(events || []);
-        }
-      } catch (error) {
-        console.error("Error loading funding feed:", error);
-        setFundingFeed([]);
-      }
-    };
-    */
+
     checkUser();
-    // loadFeed(); // [2026-01-13] REMOVE
   }, []);
-  // [2026-01-02] FIX: אין לנו /api/auth/login (זה של NextAuth). אצלנו דף ההתחברות הוא /login
+
   const handleLogin = () => {
     const next = window.location.pathname + window.location.search;
     window.location.href = `/login?next=${encodeURIComponent(next)}`;
   };
+
   const handleLogout = async () => {
-    // [2026-01-02] FIX: Logout של Supabase ואז הפניה נקייה לדף הבית (לא reload שמחזיר ללופים)
     await supabase.auth.signOut();
     window.location.href = "/";
   };
-  // [2026-01-13] REMOVE: formatMoney helper (Live Funding Feed removed)
-  /*
-  const formatMoney = (amount) => {
-    if (!amount) return '$0';
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${Math.round(amount / 1000)}K`;
-    return `$${amount}`;
-  };
-  */
+
   return (
     <div className="bg-gray-900 text-white">
       <style>{`
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-slideUp {
-            animation: slideUp 0.8s ease-out forwards;
+          animation: slideUp 0.8s ease-out forwards;
         }
       `}</style>
+
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,7 +143,8 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      {/* Hero Section (Slogan unchanged) */}
+
+      {/* Hero Section */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
         <AnimatedBg />
         <div className="relative text-center z-10 p-4">
@@ -188,15 +155,14 @@ export default function Home() {
             </span>
             .
           </h1>
-         <p
-  className="mt-6 text-3xl font-bold leading-9 text-white animate-slideUp"
-  style={{ animationDelay: "0.2s" }}
->
-  A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
-</p>
-         
+          <p
+            className="mt-6 text-xl leading-8 text-indigo-100 animate-slideUp max-w-3xl mx-auto"
+            style={{ animationDelay: "0.2s" }}
+          >
+            A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
+          </p>
           <div
-            className="mt-10 flex items-center justify-center gap-x-6 animate-slideUp"
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp"
             style={{ animationDelay: "0.4s" }}
           >
             {user ? (
@@ -228,16 +194,20 @@ export default function Home() {
                 Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
+            
+            <a href="/HOW_IT_WORKS_FINAL.html" target="_blank">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                See How It Works
+              </Button>
+            </a>
           </div>
         </div>
       </div>
-      {/* [2026-01-13] REMOVE: Stats Section (Total Ventures Launched / Value / Funding Raised) */}
-      {/*
-      <div className="bg-gray-800 py-12 sm:py-16">
-        ...
-      </div>
-      */}
-      {/* [2026-01-13] MOVE: Benefits FIRST after slogan */}
       <div id="benefits" className="bg-gray-800/50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
