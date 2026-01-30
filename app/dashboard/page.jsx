@@ -170,7 +170,7 @@ export default function Dashboard() {
               venture_id: activeVenture.id,
               message_type: 'phase_welcome',
               title: '🧪 Welcome to Beta Testing!',
-              content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
+              content: `Set up your beta testing page to start gathering sign-ups. Next: plan your investor pitch and access the VC Marketplace.`,
               phase: 'beta',
               priority: 3
             });
