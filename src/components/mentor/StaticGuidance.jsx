@@ -1,4 +1,4 @@
-// StaticGuidance 280126
+// StaticGuidance 300126
 import React from 'react';
 
 export const GUIDANCE_DATA = {
@@ -361,40 +361,78 @@ Define 1-2 key metrics for your selected features (e.g., "Users complete onboard
   },
 
   // MLP Phase sections
-  mlp_product_evolution: {
-    title: "Planning Your Product Evolution (MVP to MLP)",
-    content: `Moving from MVP (Minimum Viable Product) to MLP (Minimum Lovable Product) is about adding polish, improving the user experience, and incorporating key feedback.
-
-**Evolution Principles:**
-• **User-Driven**: Prioritize features that your early users are consistently asking for.
-• **Focus on "Lovable"**: What will make the experience not just functional, but enjoyable and delightful? This could be design polish, a faster workflow, or a killer feature.
-• **Data-Informed**: Use analytics to see where users are succeeding and where they are dropping off. Fix the friction points.
-
-**Key Areas for Evolution:**
-• **Onboarding**: How can you make it even easier for new users to get to their "aha!" moment?
-• **Core Workflow**: How can you remove steps or speed up the main task users are trying to accomplish?
-• **Design and Polish**: Improve visual design, add animations, and refine copy to build trust and delight.`,
-    examples: [
-      "Our MVP let users schedule posts, but it was purely functional. For our MLP, we're adding a content calendar view, a drag-and-drop interface, and performance improvements to make scheduling feel effortless and visually pleasing.",
-      "Feedback on our MVP showed users could create invoices, but they hated manually typing customer info. Our MLP evolution focuses on integrating with Google Contacts to pre-fill that data, turning a chore into a one-click action."
-    ]
+  mlp_feedback_analysis: {
+    title: "Analyze Your MVP Feedback",
+    content: `Quick Tips:
+• Look for patterns: Which features got consistently low ratings? Which got high praise?
+• Pay attention to feature requests that appear multiple times
+• Identify pain points users mentioned repeatedly
+• Note which features users barely used—those might need removal`,
+    examples: []
   },
-  mlp_refinement_roadmap: {
-    title: "Creating Your Refinement Roadmap",
-    content: `A refinement roadmap translates user insights into a structured plan for improving your product. It's not a list of features; it's a list of problems to solve.
-
-**Roadmap Components:**
-• **Themes**: Group your work into broad categories based on user problems (e.g., "Improve Onboarding," "Streamline Collaboration," "Enhance Reporting").
-• **Priority Improvements**: Within each theme, which changes will have the biggest impact on the user experience?
-• **Success Metrics**: How will you know if your changes worked? (e.g., "Reduce onboarding time by 50%," "Increase weekly active users by 15%").
-
-**Prioritization Frameworks:**
-• **Impact vs. Effort**: Focus on high-impact, low-effort improvements first.
-• **User Frequency**: Prioritize fixing problems in the most frequently-used parts of your product.
-• **RICE Score**: (Reach, Impact, Confidence, Effort) - A more formal way to score and compare potential features.`,
-    examples: [
-      "**Q3 Roadmap Theme: 'Effortless Onboarding'**\n1. **Problem:** 40% of users drop off during bank connection. **Solution:** Implement Plaid for one-click bank connection. **Metric:** Increase connection success rate to 90%.\n2. **Problem:** Users are confused after signing up. **Solution:** Add an interactive product tour for new users. **Metric:** Increase completion of one key task within 24 hours of signup by 30%.",
-    ]
+  mlp_enhancement_strategy: {
+    title: "Define MLP Enhancement Strategy",
+    content: `Quick Tips:
+• FIXED: Critical bugs, broken flows, performance issues
+• POLISHED: Better copy, clearer CTAs, improved visuals
+• ADDED: Small delighters like progress indicators, confirmations, smart defaults
+• Prioritize fixes over new features`,
+    examples: []
+  },
+  mlp_wow_moments: {
+    title: "Identify 'Wow' Moments",
+    content: `Quick Tips:
+• Think small but memorable: keyboard shortcuts, undo, auto-save
+• Personalization: greet users by name, remember preferences
+• Celebrations: confetti on first achievement, milestone badges
+• Smart defaults: pre-fill forms intelligently, suggest next actions`,
+    examples: []
+  },
+  mlp_user_journey: {
+    title: "User Journey Map",
+    content: `Quick Tips:
+• Awareness: How do they discover you? Clear value prop
+• Onboarding: First 5 minutes matter most—make it smooth
+• First Use: Guide them to one "aha!" moment quickly
+• Regular Use: Make the core action effortless
+• Advocacy: Give them something worth sharing`,
+    examples: []
+  },
+  mlp_ui_ux: {
+    title: "UI/UX Requirements",
+    content: `Quick Tips:
+• Consistency: Use the same colors, fonts, button styles throughout
+• Responsive: Test on mobile, tablet, desktop
+• Accessibility: High contrast, keyboard navigation, screen reader support
+• Micro-interactions: Button hover states, loading animations, smooth transitions`,
+    examples: []
+  },
+  mlp_technical: {
+    title: "Technical Excellence",
+    content: `Quick Tips:
+• Speed: Aim for <3 second load time
+• Zero critical bugs: Test core flows thoroughly
+• Security: Encrypt data, validate inputs, follow best practices
+• Error handling: Show helpful error messages, never crash silently`,
+    examples: []
+  },
+  mlp_visual_mockups: {
+    title: "Visual Mockups",
+    content: `Quick Tips:
+• Cover all key screens: landing page, signup, onboarding, main dashboard, settings
+• Show states: empty state, loading state, error state, success state
+• Use real (or realistic) data—no "lorem ipsum"
+• Include mobile views if applicable`,
+    examples: []
+  },
+  mlp_prototype: {
+    title: "Interactive Prototype",
+    content: `Quick Tips:
+• Make it clickable: Users should be able to navigate through key flows
+• Use realistic data: Actual names, numbers, content
+• Include branding: Logo, colors, fonts should match your vision
+• Test it yourself: Click through like a real user would`,
+    examples: []
   },
   mlp_user_love_metrics: {
     title: "Defining User Love Metrics",
