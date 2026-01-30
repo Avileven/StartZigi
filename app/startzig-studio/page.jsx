@@ -163,7 +163,17 @@ Make it look and feel like a real, professional app - not a prototype.`;
         max_tokens: maxTokens
       });
       
-      setGeneratedHtml(data?.response || "No HTML generated.");
+      // Clean the response - remove markdown code blocks
+      let cleanHtml = data?.response || "No HTML generated.";
+      
+      // Remove ```html or ```htm or ``` at start
+      cleanHtml = cleanHtml.replace(/^```(html|htm)?\s*/i, '');
+      // Remove ``` at end
+      cleanHtml = cleanHtml.replace(/\s*```\s*$/i, '');
+      // Trim whitespace
+      cleanHtml = cleanHtml.trim();
+      
+      setGeneratedHtml(cleanHtml);
       setShowAIModal(false);
       
     } catch (error) {
@@ -471,7 +481,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
       
       {/* Generated HTML Preview & Download */}
       {generatedHtml && (
-        <div className="max-w-4xl mx-auto mb-6">
+        <div className="max-w-6xl mx-auto mb-6">
           <div className="p-6 bg-green-50 border-2 border-green-300 rounded-2xl shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -486,13 +496,61 @@ Make it look and feel like a real, professional app - not a prototype.`;
                 ✕
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Your AI-generated prototype is ready!</p>
-            <button
-              onClick={handleDownloadGeneratedHtml}
-              className="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition shadow-lg"
-            >
-              📥 Download HTML File
-            </button>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Preview */}
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-3">📱 Live Preview</h4>
+                <div className="flex justify-center bg-gradient-to-br from-purple-600 to-indigo-700 p-4 rounded-xl">
+                  <iframe
+                    title="AI Generated Prototype Preview"
+                    srcDoc={generatedHtml}
+                    className="drop-shadow-2xl"
+                    style={{
+                      width: '375px',
+                      height: '667px',
+                      border: '12px solid #333',
+                      borderRadius: '40px',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                      background: 'white'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="p-4 bg-white rounded-xl border border-green-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">✨ Your prototype is ready!</h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Download the HTML file to view on any device or share with your team.
+                  </p>
+                  <button
+                    onClick={handleDownloadGeneratedHtml}
+                    className="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition shadow-lg"
+                  >
+                    📥 Download HTML File
+                  </button>
+                </div>
+                
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">💡 Next Steps</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>✓ Test on different devices</li>
+                    <li>✓ Share with stakeholders</li>
+                    <li>✓ Gather feedback</li>
+                    <li>✓ Iterate and improve</li>
+                  </ul>
+                </div>
+                
+                <button
+                  onClick={() => setShowAIModal(true)}
+                  className="w-full py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition"
+                >
+                  🔄 Generate Again
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
