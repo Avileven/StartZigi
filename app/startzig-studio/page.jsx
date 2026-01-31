@@ -1,4 +1,4 @@
-// startzig studio 310126 + AI Generation
+// startzig studio 310126 v1
 "use client";
 import React, { useState, useCallback, useMemo } from 'react';
 import { InvokeLLM } from '@/api/integrations';
