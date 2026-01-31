@@ -45,6 +45,7 @@ const App = () => {
   const [aiMode, setAiMode] = useState(null); // 'BASIC' or 'BOOST'
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState(null);
+  const [viewMode, setViewMode] = useState('mobile'); // 'mobile' or 'desktop'
 
 
   const handleSimpleContentChange = useCallback((key, value) => {
@@ -439,7 +440,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4 font-sans antialiased">
       <header className="text-center mb-6">
-        <h1 className="text-4xl font-extrabold text-white mb-2">Startzig Studio</h1>
+        <h1 className="text-5xl font-black text-white mb-2" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>StartZig Studio</h1>
         <p className="text-purple-100 mb-6">Build your MVP & MLP prototypes - BETA</p>
        
         {/* Instructions */}
@@ -449,6 +450,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
             <p><span className="font-bold">1.</span> Fill in the details in our basic builder below</p>
             <p><span className="font-bold">2.</span> Preview the result in real-time</p>
             <p><span className="font-bold">3.</span> Choose: Download immediately OR upgrade with dedicated AI</p>
+            <p><span className="font-bold">4.</span> Upload the file to the right place in your app and it will appear on your landing page</p>
           </div>
         </div>
       </header>
@@ -731,22 +733,50 @@ Make it look and feel like a real, professional app - not a prototype.`;
 
 
         <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center mb-4">
-            <span className="text-2xl mr-2">📱</span>
-            Live Preview
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+              <span className="text-2xl mr-2">📱</span>
+              Live Preview
+            </h2>
+           
+            {/* View Mode Selector */}
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('mobile')}
+                className={`px-3 py-1 rounded-md text-sm font-semibold transition ${
+                  viewMode === 'mobile'
+                    ? 'bg-white text-purple-600 shadow'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                📱 Mobile
+              </button>
+              <button
+                onClick={() => setViewMode('desktop')}
+                className={`px-3 py-1 rounded-md text-sm font-semibold transition ${
+                  viewMode === 'desktop'
+                    ? 'bg-white text-purple-600 shadow'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                💻 Desktop
+              </button>
+            </div>
+          </div>
+         
           <p className="text-center text-gray-600 mb-4">Watch your changes in real-time!</p>
          
           <div className="flex justify-center">
             <iframe
               title="MVP Prototype Preview"
               srcDoc={previewHtml}
-              className="mx-auto drop-shadow-2xl"
+              className="mx-auto drop-shadow-2xl transition-all duration-300"
               style={{
-                maxWidth: '375px',
-                height: '667px',
+                width: viewMode === 'mobile' ? '375px' : '100%',
+                maxWidth: viewMode === 'mobile' ? '375px' : '1200px',
+                height: viewMode === 'mobile' ? '667px' : '800px',
                 border: '12px solid #333',
-                borderRadius: '40px',
+                borderRadius: viewMode === 'mobile' ? '40px' : '12px',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
               }}
             />
