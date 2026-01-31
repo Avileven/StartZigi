@@ -72,73 +72,77 @@ export default function Home() {
       `}</style>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
-                    StartZig
-                  </span>
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                
-                <Link
-                  href="/community"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Community
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Pricing
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                {user ? (
-                  <>
-                    <Link href="/dashboard">
-                      <Button className="bg-indigo-600 hover:bg-indigo-700">
-                        Go to dashboard
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      onClick={handleLogout}
-                      className="text-white hover:bg-gray-700"
-                    >
-                      Logout
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="ghost"
-                      onClick={handleLogin}
-                      className="text-white hover:bg-gray-700"
-                    >
-                      Login
-                    </Button>
-                    <Link href="/register">
-                      <Button className="bg-indigo-600 hover:bg-indigo-700">
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center justify-between h-20">
+      
+      {/* לוגו - צד שמאל */}
+      <div className="flex-shrink-0">
+        <Link href="/">
+          <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
+            StartZig
+          </span>
+        </Link>
+      </div>
+
+      {/* קבוצת כפתורים - הכל מוצמד לימין */}
+      <div className="hidden md:flex items-center space-x-8">
+        
+        {/* קישורי ניווט - עכשיו הם מוצמדים לימין לפני כפתורי הפעולה */}
+        <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+          <Link
+            href="/community"
+            className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            Community
+          </Link>
+          <Link
+            href="/pricing"
+            className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            Pricing
+          </Link>
         </div>
-      </nav>
+
+        {/* כפתורי Auth / Dashboard */}
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <>
+              <Link href="/dashboard">
+                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                  Go to dashboard
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="text-white hover:bg-gray-700"
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={handleLogin}
+                className="text-white hover:bg-gray-700"
+              >
+                Login
+              </Button>
+              <Link href="/register">
+                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</nav>
 
       {/* Hero Section */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
