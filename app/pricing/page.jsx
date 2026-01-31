@@ -1,64 +1,66 @@
-//pricing
 "use client";
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { createPageUrl } from "@/lib/utils";
-import { Check, ArrowRight, Star, Rocket, Zap } from 'lucide-react';
+import { Check, Zap, Star, Trophy } from 'lucide-react';
 
 const tiers = [
   {
-    name: 'Explorer',
-    id: 'tier-explorer',
+    name: 'Basic',
+    id: 'tier-basic',
     href: '#',
-    price: { monthly: '$0', annually: '$0' },
-    description: 'The essentials to start your entrepreneurial journey, completely free.',
+    price: { monthly: '$5' },
+    description: 'Perfect for testing the waters and getting initial feedback.',
     features: [
-      'Create and manage one venture',
-      'Full access to Idea and Business Plan modules',
+      '20 Mentor Credits',
+      '4 Basic AI Mockups (or 2 Advanced)',
       'Landing page creation',
-      'Access to community forum',
+      'Community forum access',
     ],
     featured: false,
-    cta: 'Start for Free'
+    cta: 'Start Building',
+    icon: <Zap className="h-6 w-5 text-indigo-400" />
   },
   {
-    name: 'Founder',
-    id: 'tier-founder',
+    name: 'Pro',
+    id: 'tier-pro',
     href: '#',
-    price: { monthly: '$29', annually: '$290' },
-    description: 'A plan that scales with your venture, unlocking key growth tools.',
+    price: { monthly: '$10' },
+    description: 'The sweet spot for serious founders building their MVP.',
     features: [
-      'Everything in Explorer, plus:',
-      'MVP and Pitch development modules',
-      'Engage with Angel and VC simulators',
-      'Advanced promotion tools',
+      '100 Mentor Credits',
+      '20 Basic AI Mockups (or 10 Advanced)',
+      'Advanced Studio access',
+      'VC Marketplace (Virtual) access',
       'Detailed performance analytics',
     ],
-    featured: true,
-    cta: 'Get Started'
+    featured: true, // המודל שרוב האנשים יבחרו
+    cta: 'Most Popular',
+    icon: <Star className="h-6 w-5 text-indigo-400" />
   },
   {
-    name: 'Scale',
-    id: 'tier-scale',
+    name: 'Gold',
+    id: 'tier-gold',
     href: '#',
-    price: { monthly: '$79', annually: '$790' },
-    description: 'Dedicated support and resources for ventures ready for hyper-growth.',
+    price: { monthly: '$25' },
+    description: 'Unlimited power for high-growth ventures and heavy builders.',
     features: [
-      'Everything in Founder, plus:',
-      'Manage up to three ventures',
-      'Priority access to new simulation modules',
+      '500 Mentor Credits',
+      '100 Basic AI Mockups (or 50 Advanced)',
+      'Priority AI rendering',
       '1-on-1 simulated board meetings',
       'Dedicated support',
     ],
     featured: false,
-    cta: 'Contact Sales'
+    cta: 'Go Gold',
+    icon: <Trophy className="h-6 w-5 text-indigo-400" />
   },
 ]
 
 export default function Pricing() {
   return (
-    <div className="bg-gray-900 text-white">
+    <div className="bg-gray-900 text-white min-h-screen">
         <nav className="sticky top-0 bg-gray-900/80 backdrop-blur-md z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
@@ -82,33 +84,38 @@ export default function Pricing() {
         <div className="isolate overflow-hidden">
           <div className="mx-auto max-w-7xl px-6 pb-96 pt-24 text-center sm:pt-32 lg:px-8">
             <div className="mx-auto max-w-4xl">
-              <h2 className="text-base font-semibold leading-7 text-indigo-400">Pricing</h2>
+              <h2 className="text-base font-semibold leading-7 text-indigo-400">Flexible Credits</h2>
               <p className="mt-2 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                The right price for you, <br className="hidden sm:inline lg:hidden" />
-                whoever you are
+                Fuel your venture with <br />
+                StartZig Credits
               </p>
             </div>
             <div className="relative mt-6">
               <p className="mx-auto max-w-2xl text-lg leading-8 text-white/60">
-                Our simulation is free to start. As you grow, our plans provide the tools you need to take your venture to the next level.
+                1 Credit = 1 Mentor Consultation. Use them for expert advice or high-fidelity AI mockups in the Studio.
               </p>
             </div>
           </div>
+          
           <div className="flow-root bg-gray-900 pb-24 sm:pb-32">
             <div className="-mt-80">
               <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                <div className="mx-auto grid max-w-md grid-cols-1 gap-8 lg:max-w-4xl lg:grid-cols-2">
+                {/* שינוי ה-Grid ל-3 עמודות */}
+                <div className="mx-auto grid max-w-md grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-3">
                   {tiers.map((tier) => (
                     <div
                       key={tier.id}
-                      className={`flex flex-col justify-between rounded-3xl p-8 shadow-xl ring-1 ring-white/10 ${
-                        tier.featured ? 'bg-white/5' : ''
+                      className={`flex flex-col justify-between rounded-3xl p-8 shadow-xl ring-1 ring-white/10 transition-transform hover:scale-105 ${
+                        tier.featured ? 'bg-white/10 ring-indigo-500 scale-105 z-10' : 'bg-white/5'
                       }`}
                     >
                       <div>
-                        <h3 id={tier.id} className="text-base font-semibold leading-7 text-indigo-400">
-                          {tier.name}
-                        </h3>
+                        <div className="flex items-center justify-between">
+                            <h3 id={tier.id} className="text-lg font-semibold leading-7 text-indigo-400">
+                            {tier.name}
+                            </h3>
+                            {tier.icon}
+                        </div>
                         <div className="mt-4 flex items-baseline gap-x-2">
                           <span className="text-5xl font-bold tracking-tight text-white">{tier.price.monthly}</span>
                           <span className="text-base font-semibold leading-7 text-white/60">/month</span>
@@ -126,7 +133,7 @@ export default function Pricing() {
                       <a
                         href={tier.href}
                         aria-describedby={tier.id}
-                        className={`mt-8 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                        className={`mt-8 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                           tier.featured
                             ? 'bg-indigo-500 text-white shadow-sm hover:bg-indigo-400 focus-visible:outline-indigo-500'
                             : 'bg-white/10 text-white hover:bg-white/20 focus-visible:outline-white'
@@ -144,7 +151,7 @@ export default function Pricing() {
 
         <footer className="bg-gray-900">
             <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 lg:px-8">
-            <p className="text-center text-xs leading-5 text-gray-400">&copy; 2024 StartZig. All rights reserved.</p>
+            <p className="text-center text-xs leading-5 text-gray-400">&copy; 2026 StartZig. All rights reserved.</p>
             </div>
         </footer>
     </div>
