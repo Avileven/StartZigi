@@ -1,11 +1,8 @@
-//community
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import Link from "next/link";
-import { createPageUrl } from "@/lib/utils";
-import { ArrowRight, MessageSquare, Rss, Users } from 'lucide-react';
+import { ArrowRight, MessageSquare, Users } from 'lucide-react';
 
 const articles = [
   {
@@ -35,29 +32,65 @@ const FounderSpotlight = {
 }
 
 export default function Community() {
+  const [user, setUser] = useState(null);
+
   return (
-    <div className="bg-gray-900 text-white">
-        <nav className="sticky top-0 bg-gray-900/80 backdrop-blur-md z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-20">
-              <div className="flex items-center">
-                <Link href={createPageUrl("Home")} className="flex-shrink-0">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">StartZig</span>
+    <div className="bg-gray-900 text-white min-h-screen">
+      {/* סרגל ניווט מעודכן */}
+      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            
+            {/* לוגו */}
+            <div className="flex-shrink-0">
+              <Link href="/">
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
+                  StartZig
+                </span>
+              </Link>
+            </div>
+
+            {/* קישורים וכפתורים */}
+            <div className="hidden md:flex items-center space-x-8">
+              <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Why StartZig
+                </Link>
+                <Link href="/community" className="text-white bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Community
+                </Link>
+                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Pricing
                 </Link>
               </div>
-              <div className="hidden md:block">
-                <div className="ml-10 flex items-baseline space-x-4">
-                  <a href={createPageUrl("Home") + "#benefits"} className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Benefits</a>
-                  <Link href={createPageUrl("Community")} className="bg-gray-800 text-white px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                  <Link href={createPageUrl("Pricing")} className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pricing</Link>
-                </div>
+
+              <div className="flex items-center space-x-4">
+                {user ? (
+                  <Link href="/dashboard">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Go to dashboard
+                    </button>
+                  </Link>
+                ) : (
+                  <>
+                    <button className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Login
+                    </button>
+                    <Link href="/register">
+                      <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        Sign Up
+                      </button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
-        </nav>
+        </div>
+      </nav>
 
-      {/* Hero Section */}
-      <div className="relative bg-gray-800 py-24 sm:py-32">
+      {/* Hero Section - הוספתי pt-20 כדי שלא יוסתר ע"י ה-NAV */}
+      <div className="relative bg-gray-800 py-24 sm:py-32 mt-20">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')] bg-cover bg-center opacity-10"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Users className="w-16 h-16 mx-auto mb-6 text-indigo-400" />
@@ -103,12 +136,8 @@ export default function Community() {
                     </h3>
                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-300">{article.description}</p>
                   </div>
-                  <div className="relative mt-8 flex items-center gap-x-4">
-                    <div className="text-sm leading-6">
-                      <p className="font-semibold text-white">
-                          {article.author}
-                      </p>
-                    </div>
+                  <div className="relative mt-8 flex items-center gap-x-4 text-sm">
+                      <p className="font-semibold text-white">{article.author}</p>
                   </div>
                 </div>
               </article>
@@ -136,15 +165,15 @@ export default function Community() {
       </div>
 
       {/* CTA Section */}
-      <div className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
+      <div className="py-24 sm:py-32 text-center">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <MessageSquare className="w-12 h-12 mx-auto mb-6 text-indigo-400"/>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Ready to Join the Conversation?</h2>
           <p className="mt-6 text-lg leading-8 text-gray-300">
             Sign up today and start your journey with a community of innovators.
           </p>
           <div className="mt-10">
-            <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg">
+            <Button size="lg" className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg">
               Get Started for Free
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -152,7 +181,7 @@ export default function Community() {
         </div>
       </div>
 
-      <footer className="bg-gray-900">
+      <footer className="bg-gray-900 border-t border-white/5">
         <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 lg:px-8">
           <p className="text-center text-xs leading-5 text-gray-400">&copy; 2024 StartZig. All rights reserved.</p>
         </div>
