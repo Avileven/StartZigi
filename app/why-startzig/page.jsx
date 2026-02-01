@@ -8,7 +8,7 @@ export default function WhyStartZig() {
     const [textState, setTextState] = useState('up');
     const bgPathRef = useRef(null);
 
-    // לוגיקת האנימציה של הזיגזג ברקע 
+    // לוגיקת האנימציה של הזיגזג ברקע
     useEffect(() => {
         let animationFrameId;
         const duration = 8000;
@@ -24,7 +24,6 @@ export default function WhyStartZig() {
             for (let i = 0; i <= segments; i++) {
                 const t = i / segments;
                 const x = 100 + (600 * t);
-                // חישוב הגל הסינוסי שיוצר את הזיגזג המונפש [cite: 201]
                 const y = 300 + Math.sin((t * 8 + progress * 2) * Math.PI) * 120;
                 points.push(`${x} ${y}`);
             }
@@ -41,7 +40,7 @@ export default function WhyStartZig() {
         return () => cancelAnimationFrame(animationFrameId);
     }, []);
 
-    // אנימציית החלפת הטקסט (StartUp -> StartZig) [cite: 236-246]
+    // אנימציית החלפת הטקסט (StartUp -> StartZig)
     useEffect(() => {
         const timer1 = setTimeout(() => setTextState('fade'), 1500);
         const timer2 = setTimeout(() => setTextState('zig'), 2000);
@@ -54,7 +53,7 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
             
-            {/* רקע הזיגזג המונפש (Animated Background) [cite: 177-181] */}
+            {/* רקע הזיגזג המונפש */}
             <div className="fixed inset-0 pointer-events-none opacity-10 z-0">
                 <svg width="100%" height="100%" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
                     <path 
@@ -74,7 +73,7 @@ export default function WhyStartZig() {
                     <div className="flex items-center justify-between h-20">
                         <div className="flex-shrink-0">
                             <Link href="/">
-                                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
                                     StartZig
                                 </span>
                             </Link>
@@ -82,18 +81,18 @@ export default function WhyStartZig() {
                         <div className="hidden md:flex items-center space-x-8">
                             <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
                                 <Link href="/why-startzig" className="text-white bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium">Why StartZig</Link>
-                                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pricing</Link>
+                                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Community</Link>
+                                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Pricing</Link>
                             </div>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <main className="content-wrapper relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-20">
+            <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-20">
                 <div className="max-w-4xl w-full">
                     
-                    {/* כותרת עם הזיגזג הסטטי ברקע [cite: 215-225] */}
+                    {/* כותרת עם הזיגזג הסטטי */}
                     <div className="text-center mb-16 relative">
                         <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" viewBox="0 0 600 200">
                             <path d="M 50 150 L 120 120 L 110 80 L 180 100 L 170 60 L 240 80 L 230 40 L 300 60 L 290 30 L 360 50 L 550 20"
@@ -111,45 +110,51 @@ export default function WhyStartZig() {
                         </h1>
                     </div>
 
-                    {/* תוכן מלא [cite: 252-301] */}
+                    {/* גוף התוכן המלא */}
                     <div className="max-w-3xl mx-auto space-y-8 text-slate-200">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <p className="text-lg sm:text-xl leading-relaxed">
-                                The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. But starting is easy; staying alive through the turns is where the winners are decided. [cite: 253-254]
+                                The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. But starting is easy; staying alive through the turns is where the winners are decided.
                             </p>
                         </div>
 
                         <div className="animate-in fade-in slide-in-from-bottom-4 delay-300 duration-700">
                             <p className="text-lg sm:text-xl leading-relaxed">
-                                Real startups don't fly; they navigate. They stumble. They <span className="text-white font-bold">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. [cite: 260]
+                                Real startups don't fly; they navigate. They stumble. They <span className="text-white font-bold">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. They learn, adapt, and find unexpected paths to success.
                             </p>
                         </div>
 
-                        {/* הסיפור של מאיה [cite: 275-290] */}
+                        <div className="animate-in fade-in slide-in-from-bottom-4 delay-500 duration-700">
+                            <p className="text-lg sm:text-xl leading-relaxed">
+                                Anyone familiar with the startup world — or who's been an entrepreneur — knows the zigzag of the entrepreneurial journey. Here's an example:
+                            </p>
+                        </div>
+
+                        {/* סיפור מאיה */}
                         <div className="my-12 pl-6 border-l-4 border-blue-400 bg-white/5 p-8 rounded-r-xl">
                             <div className="space-y-4 text-base sm:text-lg leading-relaxed text-slate-300 text-left">
-                                <p><span className="text-white font-bold">Maya</span> wanted to build <span className="text-blue-400 font-semibold">FreshCast</span> - AI helping restaurants prevent food waste. [cite: 275]</p>
-                                <p>19 investors rejected her. The 20th believed and invested <span className="text-white font-bold">₪300K</span>. [cite: 278]</p>
-                                <p>After a year, a customer told her: <span className="italic">"Solve my staffing problem, not food waste."</span> [cite: 281]</p>
-                                <p>Maya did a <span className="text-amber-400 font-semibold text-xl">complete pivot</span>. [cite: 284]</p>
-                                <p>Lost 43% of customers, but the new product exploded. [cite: 287]</p>
-                                <p className="text-white font-bold text-xl">18 months later: $47M exit. [cite: 290]</p>
+                                <p><span className="text-white font-bold">Maya</span> wanted to build <span className="text-blue-400 font-semibold">FreshCast</span> - an AI system helping restaurants prevent food waste.</p>
+                                <p>19 investors rejected her. The 20th believed and invested <span className="text-white font-bold">₪300K</span>.</p>
+                                <p>After a year stuck at 30 customers, one customer told her: <span className="italic">"Solve my staffing problem, not food waste."</span></p>
+                                <p>Maya did a <span className="text-amber-400 font-semibold text-xl">complete pivot</span> - from food waste to smart staff scheduling.</p>
+                                <p>Lost 43% of customers in the transition, but the new product exploded.</p>
+                                <p className="text-white font-bold text-xl pt-2">18 months later: $47M exit.</p>
                             </div>
                         </div>
 
                         <div className="animate-in fade-in slide-in-from-bottom-4 delay-700">
-                            <p className="text-lg sm:text-xl leading-relaxed text-white font-semibold">
-                                This isn't a deviation from the plan. This is the journey. This is the zigzag. [cite: 297]
+                            <p className="text-lg sm:text-xl leading-relaxed text-white font-semibold italic">
+                                This isn't a deviation from the plan. This is the journey. This is the zigzag.
                             </p>
                             <p className="text-lg sm:text-xl leading-relaxed mt-4">
-                                And this is exactly what you practice at <span className="text-blue-400 font-bold">StartZig</span>. [cite: 300]
+                                And this is exactly what you practice at <span className="text-blue-400 font-bold">StartZig</span>.
                             </p>
                         </div>
 
-                        <div className="text-center pt-16">
-                            <Link href="/" className="block hover:opacity-90 transition-opacity">
-                                <p className="text-4xl sm:text-6xl font-black text-white">Don't just start up. [cite: 307]</p>
-                                <p className="text-4xl sm:text-6xl font-black text-purple-400 mt-2">StartZig. [cite: 309]</p>
+                        <div className="text-center pt-20">
+                            <Link href="/register" className="group">
+                                <p className="text-4xl sm:text-6xl font-black text-white leading-tight">Don't just start up.</p>
+                                <p className="text-4xl sm:text-6xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">StartZig.</p>
                             </Link>
                         </div>
                     </div>
