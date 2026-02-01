@@ -430,13 +430,7 @@ export default function Home() {
         </div>
       </div>
       {/* Footer */}
-      <footer className="bg-gray-900">
-        <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 lg:px-8">
-          <p className="text-center text-xs leading-5 text-gray-400">
-            &copy; 2026 StartZig. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      
     </div>
   );
 }
