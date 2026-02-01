@@ -1,9 +1,13 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 
+// אם יש לך רכיב Button של shadcn, תוכל להשתמש בו. 
+// אם לא, השארתי כפתורי button רגילים עם העיצוב המקורי שלך.
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [user, setUser] = useState(null); // לוגיקת משתמש לצורך ה-Navbar
 
   const tiers = [
     {
@@ -56,57 +60,114 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen py-24 px-6">
-      <div className="mx-auto max-w-7xl text-center">
-        <h2 className="text-4xl font-bold">Pricing Plans</h2>
-        
-        {/* Toggle חודשי/שנתי */}
-        <div className="mt-8 flex items-center justify-center gap-x-4">
-          <span className={!isAnnual ? 'text-white' : 'text-gray-400'}>Monthly</span>
-          <button
-            onClick={() => setIsAnnual(!isAnnual)}
-            className="relative h-6 w-11 rounded-full bg-gray-700 transition-colors"
-          >
-            <span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-indigo-500 transition-transform ${isAnnual ? 'translate-x-5' : ''}`} />
-          </button>
-          <span className={isAnnual ? 'text-white' : 'text-gray-400'}>
-            Yearly <span className="text-indigo-400 font-medium">(30% Off)</span>
-          </span>
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`flex flex-col rounded-3xl p-8 ring-1 ring-white/10 ${
-                tier.featured ? 'bg-white/10 ring-2 ring-indigo-500 scale-105 shadow-xl' : 'bg-white/5'
-              }`}
-            >
-              <h3 className="text-lg font-semibold text-indigo-400">{tier.name}</h3>
-              {tier.featured && <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-bold mt-1">Most Popular</p>}
-              
-              <div className="mt-4 flex items-baseline gap-x-1">
-                <span className="text-4xl font-bold">{tier.price}</span>
-                <span className="text-sm text-gray-400">/month</span>
-              </div>
-              <p className="mt-2 text-sm text-gray-300 h-10">{tier.description}</p>
-              
-              <ul className="mt-8 space-y-3 text-sm text-left flex-1">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex gap-x-3 text-gray-300">
-                    <Check className="h-5 w-5 text-indigo-400 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button className={`mt-8 w-full py-2 rounded-lg font-semibold transition-all ${
-                tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
-              }`}>
-                {tier.cta}
-              </button>
+    <div className="bg-gray-900 text-white min-h-screen">
+      {/* סרגל ניווט מעודכן  */}
+      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            
+            {/* לוגו [cite: 5-11] */}
+            <div className="flex-shrink-0">
+              <Link href="/">
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
+                  StartZig
+                </span>
+              </Link>
             </div>
-          ))}
+
+            {/* קישורי ניווט וכפתורי פעולה [cite: 12-63] */}
+            <div className="hidden md:flex items-center space-x-8">
+              <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+                {/* הקישור החדש כראשון משמאל */}
+                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Why StartZig
+                </Link>
+                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Community
+                </Link>
+                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors font-bold text-white">
+                  Pricing
+                </Link>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                {user ? (
+                  <Link href="/dashboard">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Go to dashboard
+                    </button>
+                  </Link>
+                ) : (
+                  <>
+                    <button className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Login
+                    </button>
+                    <Link href="/register">
+                      <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        Sign Up
+                      </button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* תוכן דף Pricing [cite: 671-719] */}
+      <div className="pt-32 pb-24 px-6">
+        <div className="mx-auto max-w-7xl text-center">
+          <h2 className="text-4xl font-bold">Pricing Plans</h2>
+
+          {/* Toggle חודשי/שנתי [cite: 674-686] */}
+          <div className="mt-8 flex items-center justify-center gap-x-4">
+            <span className={!isAnnual ? 'text-white' : 'text-gray-400'}>Monthly</span>
+            <button
+              onClick={() => setIsAnnual(!isAnnual)}
+              className="relative h-6 w-11 rounded-full bg-gray-700 transition-colors"
+            >
+              <span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-indigo-500 transition-transform ${isAnnual ? 'translate-x-5' : ''}`} />
+            </button>
+            <span className={isAnnual ? 'text-white' : 'text-gray-400'}>
+              Yearly <span className="text-indigo-400 font-medium">(30% Off)</span>
+            </span>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {tiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={`flex flex-col rounded-3xl p-8 ring-1 ring-white/10 ${
+                  tier.featured ? 'bg-white/10 ring-2 ring-indigo-500 scale-105 shadow-xl' : 'bg-white/5'
+                }`}
+              >
+                <h3 className="text-lg font-semibold text-indigo-400">{tier.name}</h3>
+                {tier.featured && <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-bold mt-1">Most Popular</p>}
+                
+                <div className="mt-4 flex items-baseline gap-x-1">
+                  <span className="text-4xl font-bold">{tier.price}</span>
+                  <span className="text-sm text-gray-400">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-300 h-10">{tier.description}</p>
+                
+                <ul className="mt-8 space-y-3 text-sm text-left flex-1">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex gap-x-3 text-gray-300">
+                      <Check className="h-5 w-5 text-indigo-400 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button className={`mt-8 w-full py-2 rounded-lg font-semibold transition-all ${
+                  tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
+                }`}>
+                  {tier.cta}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
