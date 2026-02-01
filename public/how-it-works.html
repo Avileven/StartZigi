@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,1399 +7,855 @@
     <title>How It Works - StartZig</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        body { 
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); 
-            margin: 0; 
-            padding: 0; 
-            min-height: 100vh; 
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+       
+        * {
+            font-family: 'Inter', sans-serif;
         }
-        
-        .mockup-frame {
-            position: relative;
-            background: #1e293b;
-            border-radius: 20px;
-            box-shadow: 0 0 80px rgba(99, 102, 241, 0.3), 0 40px 100px -20px rgba(0,0,0,0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-            max-width: 1200px;
-            margin: 0 auto;
+       
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-
-        .browser-header {
-            background: #0f172a;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .mockup-content {
-            background: #f9fafb;
-            min-height: 650px;
-            max-height: 750px;
-            overflow-y: auto;
-        }
-        
+       
+        /* Slide animations */
         .slide {
             display: none;
             opacity: 0;
-            transition: opacity 0.5s ease-in-out;
         }
-        
+       
         .slide.active {
             display: block;
-            opacity: 1;
+            animation: slideIn 0.5s ease-out forwards;
         }
-        
+       
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+       
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+       
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+       
+        /* Navigation */
         .nav-btn {
-            width: 36px;
-            height: 36px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            transition: all 0.3s;
             cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+       
         .nav-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.1);
         }
-        
+       
         .nav-btn:disabled {
             opacity: 0.3;
             cursor: not-allowed;
         }
+       
+        /* Dots */
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+        }
+       
+        .dot.active {
+            background: white;
+            width: 24px;
+            border-radius: 4px;
+        }
+       
+        /* Content card */
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+       
+        @media (max-width: 768px) {
+            .content-card {
+                padding: 1.5rem;
+                min-height: 300px;
+            }
+        }
+       
+        /* Money falling animation */
+        .money-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+       
+        .money-emoji {
+            position: absolute;
+            font-size: 2.5rem;
+            animation: moneyFall 3s linear infinite;
+            opacity: 0.8;
+        }
+       
+        @keyframes moneyFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(600px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+       
+        /* Thinking animation */
+        .thinking-cloud {
+            animation: float 3s ease-in-out infinite;
+        }
+       
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+       
+        .lightbulb {
+            animation: glow 2s ease-in-out infinite;
+        }
+       
+        @keyframes glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
     </style>
 </head>
 <body>
-    
-    <div class="min-h-screen flex flex-col items-center justify-center py-12 px-4">
-        
-        <div id="carousel" class="w-full max-w-7xl">
-            
-            <div class="slide active">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Create your business plan
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-0">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-0">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-5xl mx-auto p-8">
-        
-        <!-- Progress Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-lg font-semibold text-gray-900">Business Plan Completion</h2>
-                <span class="text-sm font-medium text-gray-600">100%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-indigo-600 h-2 rounded-full" style="width: 100%"></div>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">Each section requires at least 50 characters</p>
-        </div>
-
-        <!-- Mission Statement Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex items-how-it-works.html justify-between mb-3">
+    <div class="min-h-screen flex flex-col items-center justify-center py-6 px-4">
+        <div class="w-full max-w-5xl">
+            <!-- Header with Navigation -->
+            <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-base font-semibold text-gray-900 mb-1">1. Mission Statement</h3>
-                    <p class="text-sm text-gray-600">What is your company's core purpose and vision?</p>
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2">
+                        How StartZig Works
+                    </h1>
+                    <p class="text-white text-opacity-90 text-sm sm:text-base">
+                        Your journey from idea to funded startup
+                    </p>
                 </div>
-                <div class="flex gap-2">
-                    <button class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-md text-sm font-medium hover:bg-emerald-100 transition">
-                        Tips
-                    </button>
-                    <button class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-sm font-medium hover:bg-indigo-100 transition flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                        </svg>
-                        Mentor
-                    </button>
-                </div>
-            </div>
-            
-            <textarea 
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                rows="4"
-                readonly
-            >Democratizing education by enabling professionals to teach and learn skills directly from each other through live, interactive sessions.</textarea>
-            
-            <p class="text-xs text-gray-500 mt-2">136/50 characters minimum</p>
-        </div>
-
-        <!-- Problem Statement Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-start justify-between mb-3">
-                <div>
-                    <h3 class="text-base font-semibold text-gray-900 mb-1">2. Problem Statement</h3>
-                    <p class="text-sm text-gray-600">What specific problem does your venture solve?</p>
-                </div>
-                <div class="flex gap-2">
-                    <button class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-md text-sm font-medium hover:bg-emerald-100 transition">
-                        Tips
-                    </button>
-                    <button class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-sm font-medium hover:bg-indigo-100 transition flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                        </svg>
-                        Mentor
-                    </button>
-                </div>
-            </div>
-            
-            <textarea 
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                rows="4"
-                readonly
-            >Online courses are expensive ($200-$2000), impersonal, and have 90% dropout rates. Meanwhile, millions of skilled professionals have knowledge to share but no platform to monetize it easily.</textarea>
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Plan your revenue model
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-1">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-1">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-6xl mx-auto p-8">
-        
-        <!-- Main Container with blue gradient background -->
-        <div class="bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl p-8 border-2 border-blue-300">
-            
-            <!-- Header -->
-            <div class="flex items-center gap-2 mb-8">
-                <svg class="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                </svg>
-                <h1 class="text-3xl font-bold text-gray-900">Revenue Assumptions</h1>
-            </div>
-
-            <!-- Grid of 4 cards -->
-            <div class="grid grid-cols-2 gap-6">
-                
-                <!-- Card 1 -->
-                <div class="bg-white rounded-xl p-6 shadow-sm">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-base font-semibold text-gray-900 mb-1">1. Tier 1 Price (Monthly ARPU)</h3>
-                            <p class="text-xs text-gray-500 italic">How much users pay or how much you earn per user (ARPU).</p>
-                        </div>
-                        <button class="ml-4 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                            </svg>
-                            Mentor
-                        </button>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            value="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                    </div>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="bg-white rounded-xl p-6 shadow-sm">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-base font-semibold text-gray-900 mb-1">2. Tier 2 Price (Upsell ARPU)</h3>
-                            <p class="text-xs text-gray-500 italic">The monthly price for your premium tier.</p>
-                        </div>
-                        <button class="ml-4 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                            </svg>
-                            Mentor
-                        </button>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            value="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-white rounded-xl p-6 shadow-sm">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-base font-semibold text-gray-900 mb-1">3. Tier 2 Conversion Split (% of Paid Users)</h3>
-                            <p class="text-xs text-gray-500 italic">The percentage of your total paying users who subscribe to Tier 2.</p>
-                        </div>
-                        <button class="ml-4 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                            </svg>
-                            Mentor
-                        </button>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            value="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="bg-white rounded-xl p-6 shadow-sm">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-base font-semibold text-gray-900 mb-1">4. Free-to-Paid Conversion Rate (Monthly %)</h3>
-                            <p class="text-xs text-gray-500 italic">The share of free users who become paying users each month.</p>
-                        </div>
-                        <button class="ml-4 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                            </svg>
-                            Mentor
-                        </button>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            value="0"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Build your MVP, MLP and beta pages
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-2">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-2">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-5xl mx-auto p-8">
-        
-        <!-- Header with Icon -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-24 h-24 bg-indigo-600 rounded-full mb-6">
-                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.586 2.586A2 2 0 0011.172 2H4a2 2 0 00-2 2v7.172a2 2 0 00.586 1.414l8 8a2 2 0 002.828 0l7.172-7.172a2 2 0 000-2.828l-8-8zM7 9a2 2 0 110-4 2 2 0 010 4z"></path>
-                </svg>
-            </div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">MVP Development Center</h1>
-            <p class="text-lg text-gray-600">Build and document your Minimum Viable Product</p>
-        </div>
-
-        <!-- Product Definition Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="flex items-center justify-center w-8 h-8 bg-white border-2 border-gray-300 rounded">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                </div>
-                <div class="flex items-center gap-2 px-2 py-1 bg-blue-600 text-white rounded text-sm font-semibold">
-                    <span>1</span>
-                </div>
-                <h2 class="text-xl font-bold text-gray-900">Product Definition</h2>
-            </div>
-
-            <div class="mb-4">
-                <div class="flex items-start justify-between mb-3">
-                    <p class="text-sm text-gray-700 font-medium">Describe what your MVP does and what problem it solves</p>
-                    <div class="flex gap-2">
-                        <button class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Tips
-                        </button>
-                        <button class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-sm font-medium hover:bg-indigo-100 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                            </svg>
-                            Mentor
-                        </button>
-                    </div>
-                </div>
-
-                <textarea 
-                    class="w-full border-2 border-blue-500 rounded-lg p-4 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows="8"
-                    readonly
-                >AI-powered mental health platform that connects users with licensed therapists through a secure video chat interface. The MVP includes real-time matching algorithm based on user preferences, symptoms, and therapist availability, integrated scheduling system, secure HIPAA-compliant video calls, and automated session notes. Users can browse therapist profiles, read reviews, and book sessions 24/7. The platform addresses the problem of long wait times and limited access to mental health care by making therapy accessible, affordable, and convenient.</textarea>
-            </div>
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Invite a co-founder
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-3">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-3">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-5xl mx-auto py-12">
-        
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-3">Invite a Co-Founder</h1>
-            <p class="text-lg text-gray-600">Candidates will receive a link to view your Venture Profile.</p>
-        </div>
-
-        <!-- Two Column Layout -->
-        <div class="grid md:grid-cols-3 gap-8">
-            
-            <!-- Left Column: Form (2/3) -->
-            <div class="md:col-span-2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                    
-                    <!-- Icon and Title -->
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Send Invitation</h2>
-                    </div>
-                    
-                    <p class="text-sm text-gray-600 mb-8">Invite someone to join Smartech</p>
-
-                    <!-- Form Fields -->
-                    <div class="space-y-6">
-                        
-                        <!-- Name and Email Row -->
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Full Name <span class="text-red-500">*</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    value="Don Mandel"
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    readonly
-                                />
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Email Address <span class="text-red-500">*</span>
-                                </label>
-                                <input 
-                                    type="email" 
-                                    value="don@startzig.com"
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    readonly
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Message Field -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                Personal Message (Optional)
-                            </label>
-                            <textarea 
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                                rows="5"
-                                readonly
-                            >Ho don,
-come and join my venture.
-
-John k</textarea>
-                        </div>
-
-                        <!-- Send Button -->
-                        <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-lg transition-colors">
-                            Send Invitation
-                        </button>
-
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Right Column: Team Status (1/3) -->
-            <div>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-900">Team Status</h3>
-                    </div>
-                    
-                    <div class="flex items-center justify-between py-4 border-t border-gray-200">
-                        <span class="text-sm text-gray-600">Current Founders</span>
-                        <span class="text-2xl font-bold text-gray-900">1</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Invite friends for feedback
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-4">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-4">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-4">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-4">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-2xl mx-auto p-8">
-        
-        <!-- Form Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            
-            <!-- Icon -->
-            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-            </div>
-
-            <!-- Title -->
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Invite a Friend (via Email)</h2>
-            <p class="text-sm text-gray-600 mb-8">Send a personalized email invitation to external contacts for landing-page feedback.</p>
-
-            <!-- Form -->
-            <div class="space-y-6">
-                
-                <!-- Name Field -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-900 mb-2">
-                        Name <span class="text-red-500">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        value="Dan"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        readonly
-                    />
-                </div>
-
-                <!-- Email Field -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-900 mb-2">
-                        Email <span class="text-red-500">*</span>
-                    </label>
-                    <input 
-                        type="email" 
-                        value="dan@startzig.com"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        readonly
-                    />
-                </div>
-
-                <!-- Message Field -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-900 mb-2">
-                        Message (optional)
-                    </label>
-                    <textarea 
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-                        rows="4"
-                        readonly
-                    >please visit my MVP page</textarea>
-                </div>
-
-                <!-- Send Button -->
+               
+                <!-- Navigation - Top Right -->
                 <div class="flex items-center gap-3">
-                    <button class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-lg transition-colors">
-                        Send Invite
-                    </button>
-                    <button class="p-4 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    <button onclick="prevSlide()" id="prev-btn" class="nav-btn text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Get AI mentor feedback
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-5">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-5">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-5">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-5">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-4xl mx-auto p-8">
-        
-        <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-indigo-900 mb-2">Mentor: Product Definition</h1>
-            <p class="text-sm text-gray-600">AI-driven strategic guidance for your venture.</p>
-        </div>
-
-        <!-- Feedback Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 class="text-xl font-bold text-indigo-900 mb-4">Mentor Feedback</h2>
-            
-            <!-- Star Rating -->
-            <div class="flex gap-1 mb-6">
-                <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-                <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-            </div>
-
-            <!-- Analysis Section -->
-            <h3 class="text-lg font-bold text-indigo-900 mb-3">Analysis</h3>
-            <p class="text-gray-700 leading-relaxed">
-                Your current draft describes a very specific functional component, a "booking system with calendar integration." While this could be an important feature, it does not define a "full platform for community support." A product definition should articulate the core offering, its primary value proposition, and how it addresses the overarching problem for your target community. This draft is a tactical detail, not a strategic product statement. It completely misses the scope implied by "full platform," and it does not connect to a community element at all.
-            </p>
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Connect with virtual investors and VCs
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-6">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-6">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-6">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-6">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    <div class="max-w-6xl mx-auto py-12 px-12">
-        
-        <!-- Investor Cards - Centered with padding -->
-        <div class="grid grid-cols-3 gap-6">
-            
-            <!-- Isabella Rossi -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                   
+                    <div id="dots" class="flex items-center gap-2"></div>
+                   
+                    <button onclick="nextSlide()" id="next-btn" class="nav-btn text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                         </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900">Isabella Rossi</h3>
-                </div>
-                
-                <p class="text-sm text-gray-600 mb-6">Serial entrepreneur in the food industry.</p>
-                
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Typical Investment</span>
-                    </div>
-                    <p class="text-sm text-gray-600 pl-6">$50K - $150K</p>
-                </div>
-                
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Focus Areas</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 pl-6">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">Food And Beverage</span>
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">Sustainable Fashion</span>
-                    </div>
+                    </button>
                 </div>
             </div>
-
-            <!-- Kenji Saito -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900">Kenji Saito</h3>
-                </div>
-                
-                <p class="text-sm text-gray-600 mb-6">Former lead game designer at a major Japanese studio.</p>
-                
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Typical Investment</span>
-                    </div>
-                    <p class="text-sm text-gray-600 pl-6">$50K - $150K</p>
-                </div>
-                
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Focus Areas</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 pl-6">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">Gaming</span>
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">Consumer Apps</span>
-                    </div>
+           
+            <!-- Progress Bar -->
+            <div class="progress-bar mb-6">
+                <div id="progress" class="progress-fill" style="width: 10%"></div>
+            </div>
+           
+            <!-- Slide Container -->
+            <div class="content-card mb-6">
+                <div id="carousel">
+                    <!-- Slides will be rendered here -->
                 </div>
             </div>
-
-            <!-- Maria Lopez -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900">Maria Lopez</h3>
-                </div>
-                
-                <p class="text-sm text-gray-600 mb-6">Ph.D. in education and a former B2C SaaS executive.</p>
-                
-                <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Typical Investment</span>
-                    </div>
-                    <p class="text-sm text-gray-600 pl-6">$50K - $150K</p>
-                </div>
-                
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-900">Focus Areas</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 pl-6">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">B2b Saas</span>
-                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">Digital Health Biotech</span>
-                    </div>
-                </div>
+           
+            <!-- Counter at bottom -->
+            <div class="text-center mt-4 text-white text-sm opacity-80">
+                <span id="counter">1 / 12</span> • Use arrow keys or swipe to navigate
             </div>
-
-        </div>
-
-    </div>
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Contact VC firms
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-7">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-7">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-7">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-7">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-5xl mx-auto py-12 px-12">
-        
-        <!-- Header Section -->
-        <div class="mb-12">
-            <div class="flex items-start gap-6">
-                <div class="w-24 h-24 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <h1 class="text-4xl font-bold text-gray-900 mb-3">Apex Ridge Ventures</h1>
-                    <p class="text-lg text-gray-600 mb-4">Leading investment firm specializing in early-stage technology companies with global impact potential.</p>
-                    <div class="flex items-center gap-6 text-sm text-gray-500">
-                        <span>Founded in 2015</span>
-                        <span>|</span>
-                        <span>Fund III closed 8/2024 at $380M</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contact Button -->
-        <div class="mb-12">
-            <button class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-                Contact Firm
-            </button>
-        </div>
-
-        <!-- Two Column Layout -->
-        <div class="grid md:grid-cols-2 gap-8">
-            
-            <!-- Left Column: Portfolio -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Select Portfolio Companies</h2>
-                
-                <div class="space-y-6">
-                    <div class="pb-6 border-b border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">TechFlow</h3>
-                        <p class="text-sm text-gray-600">Cloud infrastructure platform for enterprise clients.</p>
-                    </div>
-                    
-                    <div class="pb-6 border-b border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">GreenWave</h3>
-                        <p class="text-sm text-gray-600">Sustainable packaging solutions for e-commerce.</p>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">MindBridge</h3>
-                        <p class="text-sm text-gray-600">Mental health platform connecting patients with therapists.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Investment Info -->
-            <div class="space-y-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-900">Investment Focus</h3>
-                    </div>
-                    <div class="pl-13">
-                        <p class="text-gray-700 font-semibold">Sector Agnostic</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-900">Typical Check Size</h3>
-                    </div>
-                    <div class="pl-13">
-                        <p class="text-3xl font-bold text-gray-900">$3M - $25M</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Pitch to investors
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-8">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-8">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-8">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-8">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    <div class="max-w-4xl mx-auto p-12 pt-20">
-
-        <!-- Messages Container -->
-        <div class="space-y-6">
-            
-            <!-- User Message -->
-            <div class="flex justify-end">
-                <div class="flex items-end gap-3">
-                    <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-5 py-3 max-w-md">
-                        <p class="text-sm">great thanks</p>
-                    </div>
-                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Isabella Message 1 -->
-            <div class="flex items-start gap-3">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e0e0e0'/%3E%3C/svg%3E" 
-                     alt="Isabella" 
-                     class="w-10 h-10 rounded-full flex-shrink-0">
-                <div class="bg-gray-200 text-gray-900 rounded-2xl rounded-tl-sm px-5 py-3 max-w-md">
-                    <p class="text-sm">I've gone over your business plan and have a few questions for you.</p>
-                </div>
-            </div>
-
-            <!-- Isabella Message 2 -->
-            <div class="flex items-start gap-3">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e0e0e0'/%3E%3C/svg%3E" 
-                     alt="Isabella" 
-                     class="w-10 h-10 rounded-full flex-shrink-0">
-                <div class="bg-gray-200 text-gray-900 rounded-2xl rounded-tl-sm px-5 py-3 max-w-md">
-                    <p class="text-sm">Regarding your solution: not sure yet what should be , but will follow next steps... What is the biggest technical challenge you anticipate in building this specifically, and how will you overcome it?</p>
-                </div>
-            </div>
-
-            <!-- User Response -->
-            <div class="flex justify-end">
-                <div class="flex items-end gap-3">
-                    <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-5 py-3 max-w-md">
-                        <p class="text-sm">The biggest challenge is scaling our AI matching algorithm while maintaining HIPAA compliance. We're addressing this by partnering with AWS for secure cloud infrastructure and hiring a dedicated security engineer. We've already completed our initial security audit and have a clear 6-month roadmap.</p>
-                    </div>
-                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="flex items-center justify-between mb-8 px-4">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white flex-1">
-                        Secure funding
-                    </h2>
-                    <div class="flex items-center gap-2 mx-8" id="dots-9">
-                        <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                        <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-indigo-500 w-8"></button>
-                        <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                    </div>
-                    <div class="flex gap-3" id="nav-9">
-                        <button onclick="prevSlide()" class="nav-btn text-white" id="prev-9">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button onclick="nextSlide()" class="nav-btn text-white" id="next-9">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="mockup-frame">
-                    <div class="browser-header"></div>
-                    <div class="mockup-content">
-    
-    <div class="max-w-4xl mx-auto py-12 px-8">
-        
-        <!-- Venture Info Header -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">theones</h2>
-            <div class="flex items-center gap-6 text-sm text-gray-600">
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                    </svg>
-                    <span>41 messages</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                    </svg>
-                    <span>0 likes</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>21 days old</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                    </svg>
-                    <span>Balance: $139,650</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Board Section -->
-        <div class="mb-4">
-            <h2 class="text-2xl font-bold text-gray-900">Board</h2>
-        </div>
-
-        <!-- Investment Offer Card -->
-        <div class="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-6">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <svg class="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
-                    </svg>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg font-bold text-gray-900">💡</span>
-                            <span class="text-lg font-bold text-gray-900">Investment Offer from Isabella Rossi!</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">INVESTMENT OFFER</div>
-                    <div class="text-xs text-emerald-600">Jan 20, 2026</div>
-                </div>
-            </div>
-
-            <p class="text-gray-800 leading-relaxed">
-                While I didn't get all the information I was hoping for in our conversation, I still believe in you and see the potential in what you're building. Your passion is evident and I think with some additional strategic work, you can make this successful. There's work to be done, but I think you have what it takes. I'm offering <span class="font-bold">$136,000</span> at a pre-money valuation of <span class="font-bold">$2,200,000</span>.
-            </p>
-        </div>
-
-    </div>
-
-</div>
-                </div>
-            </div>
-            
-            <div class="slide ">
-                <div class="w-full max-w-7xl mb-8">
-                    <div class="flex items-center justify-between px-4">
-                        <div class="flex-1"></div>
-                        <div class="flex items-center gap-2 mx-8" id="dots-10">
-                            <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(3)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(4)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(5)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(6)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(7)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(8)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(9)" class="w-2 h-2 rounded-full transition-all bg-white/30"></button>
-                            <button onclick="goToSlide(10)" class="w-2 h-2 rounded-full transition-all bg-white w-8"></button>
-                        </div>
-                        <div class="flex gap-3" id="nav-10">
-                            <button onclick="prevSlide()" class="nav-btn text-white" id="prev-10">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <button onclick="nextSlide()" class="nav-btn text-white" id="next-10" disabled>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-    
-    <div class="min-h-screen bg-gradient-to-r from-indigo-600 to-purple-600 flex flex-col items-center justify-center p-8">
-        
-        <!-- Navigation at top -->
-        <div class="w-full max-w-7xl mb-8">
-            <div class="flex items-center justify-between px-4">
-                <div class="flex-1"></div>
-                <div class="flex items-center gap-2 mx-8">
-                    <!-- Dots will be added by carousel -->
-                </div>
-                <div class="flex gap-3">
-                    <!-- Nav buttons will be added by carousel -->
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center max-w-5xl">
-            
-            <!-- Main Slogan -->
-            <h1 class="text-6xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight">
-                <span class="text-white">Don't just start up.</span>
-                <span class="text-indigo-200"> StartZig.</span>
-            </h1>
-
-            <!-- Subtitle -->
-            <p class="text-2xl md:text-3xl text-indigo-100 mb-12 font-light">
-                A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
-            </p>
-
-            <!-- CTA Button -->
-            <a href="https://www.startzig.com/register" 
-               class="inline-block px-12 py-5 bg-white text-indigo-600 font-black text-xl rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all shadow-2xl">
-                JOIN NOW
-            </a>
-
         </div>
     </div>
 
-
-            </div>
-
-        </div>
-    </div>
 
     <script>
-        let currentSlide = 0;
-        const totalSlides = 11;
-
-        function updateNavButtons() {
-            for (let i = 0; i < totalSlides; i++) {
-                const prevBtn = document.getElementById(`prev-${i}`);
-                const nextBtn = document.getElementById(`next-${i}`);
-                if (prevBtn) prevBtn.disabled = (currentSlide === 0);
-                if (nextBtn) nextBtn.disabled = (currentSlide === totalSlides - 1);
+        const slides = [
+            {
+                title: "The Idea",
+                icon: "💡",
+                content: `
+                    <div class="text-center py-12">
+                        <div class="relative inline-block mb-8">
+                            <div class="text-9xl lightbulb">💡</div>
+                            <div class="thinking-cloud text-6xl absolute -top-16 -right-16">💭</div>
+                        </div>
+                        <h3 class="text-4xl font-bold text-gray-900 mb-4">It starts with an idea...</h3>
+                        <p class="text-xl text-gray-600">Every great startup begins with a moment of inspiration</p>
+                    </div>
+                `
+            },
+            {
+                title: "Your Dashboard",
+                icon: "📊",
+                content: `
+                    <p class="text-gray-700 text-lg mb-6 text-center">
+                        Professional dashboard for managing your venture
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Sidebar -->
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold">S</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">StartZig</h4>
+                                    <p class="text-xs text-gray-600">Build your startup</p>
+                                </div>
+                            </div>
+                            <h5 class="text-xs font-bold text-gray-500 uppercase mb-3">Toolbox</h5>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 hover:bg-white rounded">💡 Edit Landing Page</div>
+                                <div class="p-2 hover:bg-white rounded">💰 Financials</div>
+                                <div class="p-2 hover:bg-white rounded">📄 Business Plan</div>
+                                <div class="p-2 hover:bg-white rounded">👥 Invite Co-Founder</div>
+                                <div class="p-2 hover:bg-white rounded">📢 Promotion Center</div>
+                                <div class="p-2 hover:bg-white rounded">📊 Revenue Modeling</div>
+                            </div>
+                        </div>
+                       
+                        <!-- Main content -->
+                        <div class="md:col-span-2">
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-4">
+                                <h3 class="text-3xl font-bold text-gray-900 mb-2">Good morning, Dan!</h3>
+                                <p class="text-gray-600">Sunday, February 1, 2026</p>
+                                <div class="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold">
+                                    🧪 Current Phase: BETA
+                                </div>
+                            </div>
+                           
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                                <h4 class="font-bold text-xl text-gray-900 mb-3">Smartech</h4>
+                                <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
+                                    <span>💬 7 messages</span>
+                                    <span>❤️ 0 likes</span>
+                                    <span>📅 6 days old</span>
+                                    <span>💰 Balance: $13,823</span>
+                                </div>
+                               
+                                <h5 class="font-bold text-lg text-gray-900 mb-3">Board</h5>
+                                <div class="bg-green-50 border-2 border-green-300 rounded-xl p-4">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-2xl">🎉</span>
+                                            <span class="font-bold text-gray-900">MLP Phase Complete!</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-xs font-bold text-green-700">PHASE COMPLETE</div>
+                                            <div class="text-xs text-gray-600">Jan 28, 2026</div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-3">
+                                        Congratulations! You've successfully completed your Minimum Lovable Product. You are now entering the Beta phase.
+                                    </p>
+                                    <button class="text-sm text-gray-600 hover:text-gray-800">✕ Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Create Your Business Plan",
+                icon: "📋",
+                content: `
+                    <p class="text-gray-700 text-lg mb-6">
+                        Start by defining your vision. Answer key questions about your startup idea, target market, and unique value proposition.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-purple-50 rounded-xl">
+                            <div class="text-3xl mb-2">💡</div>
+                            <h4 class="font-bold text-gray-800 mb-1">Vision</h4>
+                            <p class="text-sm text-gray-600">Define your core idea</p>
+                        </div>
+                        <div class="p-4 bg-blue-50 rounded-xl">
+                            <div class="text-3xl mb-2">🎯</div>
+                            <h4 class="font-bold text-gray-800 mb-1">Market</h4>
+                            <p class="text-sm text-gray-600">Identify your customers</p>
+                        </div>
+                        <div class="p-4 bg-green-50 rounded-xl">
+                            <div class="text-3xl mb-2">⚡</div>
+                            <h4 class="font-bold text-gray-800 mb-1">Value</h4>
+                            <p class="text-sm text-gray-600">What makes you unique</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Plan Your Revenue Model",
+                icon: "💰",
+                content: `
+                    <p class="text-gray-700 text-lg mb-6">
+                        How will your startup make money? Choose and refine your revenue strategy with AI-powered guidance.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                            <span class="text-2xl">💳</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Subscription Model</h4>
+                                <p class="text-sm text-gray-600">Recurring monthly or annual payments</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                            <span class="text-2xl">🛒</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800">E-Commerce</h4>
+                                <p class="text-sm text-gray-600">Direct product or service sales</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                            <span class="text-2xl">🎯</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Freemium</h4>
+                                <p class="text-sm text-gray-600">Free basic, paid premium features</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Build MVP, MLP & Beta Pages",
+                icon: "🎨",
+                content: `
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-full mb-4">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12.586 2.586A2 2 0 0011.172 2H4a2 2 0 00-2 2v7.172a2 2 0 00.586 1.414l8 8a2 2 0 002.828 0l7.172-7.172a2 2 0 000-2.828l-8-8zM7 9a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-3xl font-bold text-gray-900 mb-2">MVP Development Center</h3>
+                        <p class="text-lg text-gray-600">Build and document your Minimum Viable Product</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="flex items-center justify-center w-8 h-8 bg-white border-2 border-gray-300 rounded">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="px-2 py-1 bg-blue-600 text-white rounded text-sm font-semibold">1</div>
+                            <h4 class="text-xl font-bold text-gray-900">Product Definition</h4>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-700 font-medium mb-2">Describe what your MVP does and what problem it solves</p>
+                            <div class="bg-gray-50 border-2 border-blue-500 rounded-lg p-4">
+                                <p class="text-sm text-gray-900 leading-relaxed">
+                                    AI-powered mental health platform that connects users with licensed therapists through a secure video chat interface. The MVP includes real-time matching algorithm based on user preferences, symptoms, and therapist availability, integrated scheduling system, secure HIPAA-compliant video calls, and automated session notes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Invite a Co-Founder",
+                icon: "👥",
+                content: `
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Invite a Co-Founder</h3>
+                        <p class="text-base text-gray-600">Candidates will receive a link to view your Venture Profile.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-bold text-gray-900">Send Invitation</h4>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-6">Invite someone to join Smartech</p>
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-900 mb-2">Full Name *</label>
+                                            <input type="text" value="Don Mandel" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readonly />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-900 mb-2">Email Address *</label>
+                                            <input type="email" value="don@startzig.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readonly />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">Personal Message (Optional)</label>
+                                        <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none" rows="3" readonly>Ho don,
+come and join my venture.
+John k</textarea>
+                                    </div>
+                                    <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg text-sm">Send Invitation</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <h5 class="text-base font-bold text-gray-900">Team Status</h5>
+                                </div>
+                                <div class="flex items-center justify-between py-4 border-t border-gray-200">
+                                    <span class="text-sm text-gray-600">Current Founders</span>
+                                    <span class="text-2xl font-bold text-gray-900">1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Invite Friends for Feedback",
+                icon: "💬",
+                content: `
+                    <div class="max-w-lg mx-auto">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Invite a Friend (via Email)</h3>
+                            <p class="text-sm text-gray-600 mb-6">Send a personalized email invitation to external contacts for landing-page feedback.</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">Name *</label>
+                                    <input type="text" value="Dan" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm" readonly />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">Email *</label>
+                                    <input type="email" value="dan@startzig.com" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm" readonly />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">Message (optional)</label>
+                                    <textarea class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm resize-none" rows="3" readonly>please visit my MVP page</textarea>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm">Send Invite</button>
+                                    <button class="p-3 hover:bg-gray-100 rounded-lg">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Get AI Mentor Feedback",
+                icon: "🤖",
+                content: `
+                    <p class="text-gray-700 text-lg mb-6 text-center">
+                        Our mentor will guide you and you can always get feedback on your venture's content.
+                    </p>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-indigo-900 mb-2">Mentor: Product Definition</h3>
+                            <p class="text-sm text-gray-600">AI-driven strategic guidance for your venture.</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-bold text-indigo-900 mb-3">Mentor Feedback</h4>
+                            <div class="flex gap-1 mb-4">
+                                <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                </svg>
+                                <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                </svg>
+                                <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                </svg>
+                            </div>
+                            <h5 class="font-bold text-indigo-900 mb-2">Analysis</h5>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                Your current draft describes a very specific functional component, a "booking system with calendar integration." While this could be an important feature, it does not define a "full platform for community support." A product definition should articulate the core offering, its primary value proposition, and how it addresses the overarching problem for your target community.
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Connect with Virtual Investors",
+                icon: "🎭",
+                content: `
+                    <p class="text-gray-700 text-lg mb-6">
+                        Practice your pitch with AI-powered virtual investors before meeting the real ones.
+                    </p>
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl">
+                        <div class="text-center mb-6">
+                            <div class="text-6xl mb-3">🎯</div>
+                            <h4 class="font-bold text-xl text-gray-800 mb-2">Simulation Mode</h4>
+                            <p class="text-gray-600">AI investors ask tough questions and challenge your assumptions</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl mb-1">⏱️</div>
+                                <p class="text-xs text-gray-600 font-semibold">Unlimited Practice</p>
+                            </div>
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl mb-1">📊</div>
+                                <p class="text-xs text-gray-600 font-semibold">Performance Feedback</p>
+                            </div>
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl mb-1">🎓</div>
+                                <p class="text-xs text-gray-600 font-semibold">Learn & Improve</p>
+                            </div>
+                            <div class="text-center p-3 bg-white rounded-lg">
+                                <div class="text-2xl mb-1">💪</div>
+                                <p class="text-xs text-gray-600 font-semibold">Build Confidence</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Contact VC Firms",
+                icon: "🏢",
+                content: `
+                    <div class="mb-6">
+                        <div class="flex items-start gap-4 mb-6">
+                            <div class="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Apex Ridge Ventures</h3>
+                                <p class="text-base text-gray-600 mb-3">Leading investment firm specializing in early-stage technology companies with global impact potential.</p>
+                                <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                    <span>Founded in 2015</span>
+                                    <span>|</span>
+                                    <span>Fund III closed 8/2024 at $380M</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 mb-6">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            Contact Firm
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h4 class="text-lg font-bold text-gray-900 mb-4">Select Portfolio Companies</h4>
+                            <div class="space-y-4">
+                                <div class="pb-4 border-b border-gray-200">
+                                    <h5 class="font-bold text-gray-900 mb-1">TechFlow</h5>
+                                    <p class="text-sm text-gray-600">Cloud infrastructure platform for enterprise clients.</p>
+                                </div>
+                                <div class="pb-4 border-b border-gray-200">
+                                    <h5 class="font-bold text-gray-900 mb-1">GreenWave</h5>
+                                    <p class="text-sm text-gray-600">Sustainable packaging solutions for e-commerce.</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-gray-900 mb-1">MindBridge</h5>
+                                    <p class="text-sm text-gray-600">Mental health platform connecting patients with therapists.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                                        </svg>
+                                    </div>
+                                    <h5 class="font-bold text-gray-900">Investment Focus</h5>
+                                </div>
+                                <p class="text-gray-700 font-semibold">Sector Agnostic</p>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path>
+                                        </svg>
+                                    </div>
+                                    <h5 class="font-bold text-gray-900">Typical Check Size</h5>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">$3M - $25M</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Pitch to Investors",
+                icon: "🎤",
+                content: `
+                    <div class="space-y-4">
+                        <!-- User Message -->
+                        <div class="flex justify-end">
+                            <div class="flex items-end gap-3">
+                                <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-md">
+                                    <p class="text-sm">great thanks</p>
+                                </div>
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Isabella Message 1 -->
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0"></div>
+                            <div class="bg-gray-200 text-gray-900 rounded-2xl rounded-tl-sm px-4 py-3 max-w-md">
+                                <p class="text-sm">I've gone over your business plan and have a few questions for you.</p>
+                            </div>
+                        </div>
+                        <!-- Isabella Message 2 -->
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0"></div>
+                            <div class="bg-gray-200 text-gray-900 rounded-2xl rounded-tl-sm px-4 py-3 max-w-md">
+                                <p class="text-sm">Regarding your solution: not sure yet what should be, but will follow next steps... What is the biggest technical challenge you anticipate in building this specifically, and how will you overcome it?</p>
+                            </div>
+                        </div>
+                        <!-- User Response -->
+                        <div class="flex justify-end">
+                            <div class="flex items-end gap-3">
+                                <div class="bg-blue-600 text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-md">
+                                    <p class="text-sm">The biggest challenge is scaling our AI matching algorithm while maintaining HIPAA compliance. We're addressing this by partnering with AWS for secure cloud infrastructure and hiring a dedicated security engineer. We've already completed our initial security audit and have a clear 6-month roadmap.</p>
+                                </div>
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Secure Funding",
+                icon: "🎉",
+                content: `
+                    <div class="money-container">
+                        <div class="money-emoji" style="left: 10%; animation-delay: 0s;">💰</div>
+                        <div class="money-emoji" style="left: 25%; animation-delay: 0.5s;">💵</div>
+                        <div class="money-emoji" style="left: 40%; animation-delay: 1s;">💸</div>
+                        <div class="money-emoji" style="left: 55%; animation-delay: 1.5s;">💰</div>
+                        <div class="money-emoji" style="left: 70%; animation-delay: 2s;">💵</div>
+                        <div class="money-emoji" style="left: 85%; animation-delay: 2.5s;">💸</div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative z-10">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">theones</h3>
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                            <span>💬 41 messages</span>
+                            <span>📅 21 days old</span>
+                            <span>💰 Balance: $139,650</span>
+                        </div>
+                    </div>
+                    <h4 class="text-2xl font-bold text-gray-900 mb-4 relative z-10">Board</h4>
+                    <div class="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-6 relative z-10">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl">💡</span>
+                                        <span class="text-lg font-bold text-gray-900">Investment Offer from Isabella Rossi!</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">INVESTMENT OFFER</div>
+                                <div class="text-xs text-emerald-600">Jan 20, 2026</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-800 leading-relaxed text-sm">
+                            While I didn't get all the information I was hoping for in our conversation, I still believe in you and see the potential in what you're building. Your passion is evident and I think with some additional strategic work, you can make this successful. I'm offering <span class="font-bold text-xl text-emerald-700">$2,000,000</span> at a pre-money valuation of <span class="font-bold">$8,000,000</span>.
+                        </p>
+                        <div class="mt-6 text-center">
+                            <div class="text-6xl mb-4">🎉</div>
+                            <p class="text-2xl font-black text-emerald-700">Congratulations!</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Don't just start up",
+                icon: "🚀",
+                content: `
+                    <div class="text-center py-16">
+                        <h2 class="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-4">
+                            Don't just start up.
+                        </h2>
+                        <h2 class="text-5xl sm:text-6xl md:text-7xl font-black text-purple-300 mb-8">
+                            StartZig.
+                        </h2>
+                        <p class="text-xl sm:text-2xl text-white mb-12 max-w-3xl mx-auto opacity-90">
+                            A complete startup ecosystem for growing ideas backed by AI guidance and community wisdom.
+                        </p>
+                        <a href="https://www.startzig.com/register" class="inline-block px-12 py-5 bg-white text-indigo-700 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all">
+                            JOIN NOW
+                        </a>
+                    </div>
+                `
             }
+        ];
+
+
+        let currentSlide = 0;
+
+
+        function init() {
+            renderSlides();
+            renderDots();
+            showSlide(0);
         }
+
+
+        function renderSlides() {
+            const carousel = document.getElementById('carousel');
+            carousel.innerHTML = slides.map((slide, index) => `
+                <div class="slide ${index === 0 ? 'active' : ''}" id="slide-${index}">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-5xl">${slide.icon}</span>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">${slide.title}</h2>
+                    </div>
+                    ${slide.content}
+                </div>
+            `).join('');
+        }
+
+
+        function renderDots() {
+            const dotsContainer = document.getElementById('dots');
+            dotsContainer.innerHTML = slides.map((_, index) => `
+                <button onclick="goToSlide(${index})" class="dot ${index === 0 ? 'active' : ''}"></button>
+            `).join('');
+        }
+
 
         function showSlide(index) {
             document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.slide')[index].classList.add('active');
-            updateNavButtons();
+            document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+           
+            document.getElementById(`slide-${index}`).classList.add('active');
+            document.querySelectorAll('.dot')[index].classList.add('active');
+           
+            const progress = ((index + 1) / slides.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+           
+            document.getElementById('counter').textContent = `${index + 1} / ${slides.length}`;
+           
+            currentSlide = index;
+            updateButtons();
         }
 
-        function goToSlide(index) {
-            currentSlide = index;
-            showSlide(currentSlide);
-        }
 
         function nextSlide() {
-            if (currentSlide < totalSlides - 1) showSlide(++currentSlide);
+            if (currentSlide < slides.length - 1) {
+                showSlide(currentSlide + 1);
+            }
         }
+
 
         function prevSlide() {
-            if (currentSlide > 0) showSlide(--currentSlide);
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
         }
 
-        let count = 0;
-        const autoPlay = setInterval(() => {
-            if (count < totalSlides - 1) {
-                nextSlide();
-                count++;
-            } else clearInterval(autoPlay);
-        }, 3000);
-        
-        updateNavButtons();
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+
+        function updateButtons() {
+            document.getElementById('prev-btn').disabled = currentSlide === 0;
+            document.getElementById('next-btn').disabled = currentSlide === slides.length - 1;
+        }
+
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
+
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 50) nextSlide();
+            if (touchEndX > touchStartX + 50) prevSlide();
+        });
+
+
+        init();
     </script>
 </body>
 </html>
+
+
+
