@@ -67,10 +67,12 @@ export default function WhyStartZig() {
                 </svg>
             </div>
 
-            {/* Navbar */}
+            {/* סרגל ניווט - במבנה המדויק של דף Community */}
             <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
+                        
+                        {/* לוגו - צד שמאל */}
                         <div className="flex-shrink-0">
                             <Link href="/">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
@@ -78,11 +80,40 @@ export default function WhyStartZig() {
                                 </span>
                             </Link>
                         </div>
+
+                        {/* קישורי ניווט וכפתורי Auth - צד ימין */}
                         <div className="hidden md:flex items-center space-x-8">
                             <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                                <Link href="/why-startzig" className="text-white bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium">Why StartZig</Link>
-                                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Community</Link>
-                                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Pricing</Link>
+                                <Link href="/why-startzig" className="text-white bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Why StartZig
+                                </Link>
+                                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Community
+                                </Link>
+                                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Pricing
+                                </Link>
+                            </div>
+
+                            <div className="flex items-center space-x-4">
+                                {user ? (
+                                    <Link href="/dashboard">
+                                        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                            Go to dashboard
+                                        </button>
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <button className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                            Login
+                                        </button>
+                                        <Link href="/register">
+                                            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                                Sign Up
+                                            </button>
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -130,7 +161,7 @@ export default function WhyStartZig() {
                             </p>
                         </div>
 
-                        {/* סיפור מאיה */}
+                        {/* סיפור מאיה המקורי */}
                         <div className="my-12 pl-6 border-l-4 border-blue-400 bg-white/5 p-8 rounded-r-xl">
                             <div className="space-y-4 text-base sm:text-lg leading-relaxed text-slate-300 text-left">
                                 <p><span className="text-white font-bold">Maya</span> wanted to build <span className="text-blue-400 font-semibold">FreshCast</span> - an AI system helping restaurants prevent food waste.</p>
