@@ -7,158 +7,65 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        
+       
         * {
             font-family: 'Inter', sans-serif;
         }
-        
+       
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             margin: 0;
             padding: 0;
             min-height: 100vh;
         }
-        
-        /* StartUp floating away animation */
-        .startup-text {
-            display: inline-block;
-            animation: floatAway 3s ease-out forwards;
-            opacity: 1;
+       
+        /* Animated background zigzag */
+        .zigzag-background {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
         }
-        
-        @keyframes floatAway {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px);
-                opacity: 0;
-            }
+       
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
         }
-        
-        /* StartZig zigzag reveal */
-        .startzig-text {
-            display: inline-block;
-            opacity: 0;
-            animation: zigzagReveal 2s ease-out 3s forwards;
-        }
-        
-        @keyframes zigzagReveal {
-            0% {
-                opacity: 0;
-                transform: translateX(-50px) translateY(30px);
-            }
-            25% {
-                transform: translateX(20px) translateY(-10px);
-            }
-            50% {
-                transform: translateX(-10px) translateY(20px);
-            }
-            75% {
-                transform: translateX(10px) translateY(-10px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateX(0) translateY(0);
-            }
-        }
-        
+       
         /* Smooth fade in */
         .fade-in {
             opacity: 0;
             animation: fadeIn 1s ease-out forwards;
         }
-        
+       
         @keyframes fadeIn {
             to { opacity: 1; }
         }
-        
+       
         .slide-up {
             opacity: 0;
             transform: translateY(30px);
             animation: slideUp 0.8s ease-out forwards;
         }
-        
+       
         @keyframes slideUp {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
-        /* Journey timeline */
-        .timeline-item {
-            position: relative;
-            opacity: 0;
-            transform: translateX(-30px);
-            animation: slideInTimeline 0.6s ease-out forwards;
+       
+        /* Typography animation */
+        #up-text {
+            transition: opacity 0.5s;
         }
-        
-        @keyframes slideInTimeline {
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 12px;
-            width: 12px;
-            height: 12px;
-            background: #3b82f6;
-            border-radius: 50%;
-            border: 3px solid #1e293b;
-        }
-        
-        .timeline-item.pivot::before {
-            background: #f59e0b;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-        }
-        
-        .timeline-item.success::before {
-            background: #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-        }
-        
-        .timeline-line {
-            position: absolute;
-            left: -24px;
-            top: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(180deg, #3b82f6, #10b981);
-            opacity: 0.3;
-        }
-        
-        /* Zigzag visual path */
-        .zigzag-path {
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            animation: drawZigzag 3s ease-out 1s forwards;
-        }
-        
-        @keyframes drawZigzag {
-            to {
-                stroke-dashoffset: 0;
-            }
-        }
-        
-        .straight-path {
-            stroke-dasharray: 500;
-            stroke-dashoffset: 500;
-            animation: drawStraight 1.5s ease-out forwards;
-        }
-        
-        @keyframes drawStraight {
-            to {
-                stroke-dashoffset: 0;
-            }
-        }
-        
+       
         /* Delays */
         .delay-1 { animation-delay: 0.2s; }
         .delay-2 { animation-delay: 0.4s; }
@@ -166,226 +73,170 @@
         .delay-4 { animation-delay: 0.8s; }
         .delay-5 { animation-delay: 1s; }
         .delay-6 { animation-delay: 1.2s; }
-        .delay-7 { animation-delay: 1.4s; }
-        .delay-8 { animation-delay: 1.6s; }
     </style>
 </head>
 <body>
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl w-full">
-            <!-- Animated Title -->
-            <div class="text-center mb-16">
-                <h1 class="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6">
+    <!-- Animated Zigzag Background -->
+    <div class="zigzag-background">
+        <svg width="100%" height="100%" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+            <path id="bgZigzag" d="" stroke="#3b82f6" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        </svg>
+    </div>
+   
+    <script>
+        // Background zigzag animation
+        const bgPath = document.getElementById('bgZigzag');
+       
+        function animateBackground() {
+            const duration = 8000;
+            const startTime = Date.now();
+           
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = (elapsed % duration) / duration;
+               
+                if (elapsed > duration) {
+                    setTimeout(animateBackground, 1000);
+                    return;
+                }
+               
+                // Create flowing zigzag
+                const points = [];
+                const segments = 20;
+               
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const x = 100 + (600 * t);
+                    const y = 300 + Math.sin((t * 8 + progress * 2) * Math.PI) * 120;
+                    points.push(`${x} ${y}`);
+                }
+               
+                const pathData = 'M ' + points.join(' L ');
+                bgPath.setAttribute('d', pathData);
+               
+                requestAnimationFrame(animate);
+            }
+           
+            animate();
+        }
+       
+        setTimeout(animateBackground, 1000);
+    </script>
+
+
+    <div class="content-wrapper min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl w-full">
+            <!-- Animated Title with Zigzag Background -->
+            <div class="text-center mb-16 relative">
+                <!-- Static zigzag behind title -->
+                <svg class="absolute inset-0 w-full h-full opacity-10 pointer-events-none" viewBox="0 0 600 200">
+                    <path d="M 50 150 L 120 120 L 110 80 L 180 100 L 170 60 L 240 80 L 230 40 L 300 60 L 290 30 L 360 50 L 550 20"
+                          stroke="#3b82f6"
+                          stroke-width="6"
+                          fill="none"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          opacity="0.4"/>
+                </svg>
+               
+                <h1 class="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10 fade-in">
                     <span id="animated-title">
                         Why <span id="text-part">Start<span id="up-text" class="text-gray-400">Up</span></span>?
                     </span>
                 </h1>
             </div>
 
+
             <script>
                 // Typography animation
                 const upText = document.getElementById('up-text');
                 const textPart = document.getElementById('text-part');
-                
-                // Step 1: After 1s, fade out "Up"
+               
                 setTimeout(() => {
-                    upText.style.transition = 'opacity 0.5s';
                     upText.style.opacity = '0';
-                }, 1000);
-                
-                // Step 2: After 1.5s, replace with "Zig" in same position
+                }, 1500);
+               
                 setTimeout(() => {
                     textPart.innerHTML = 'Start<span id="zig-text" class="text-blue-400" style="opacity: 0">Zig</span>';
                     const zigText = document.getElementById('zig-text');
-                    
-                    // Fade in Zig
+                   
                     setTimeout(() => {
-                        zigText.style.transition = 'opacity 0.5s, transform 0.5s';
+                        zigText.style.transition = 'opacity 0.5s';
                         zigText.style.opacity = '1';
                     }, 100);
-                }, 1500);
+                }, 2000);
             </script>
+
 
             <!-- Main Content -->
             <div class="max-w-3xl mx-auto space-y-8 text-slate-200">
-                <!-- Intro -->
+                <!-- Opening -->
                 <div class="slide-up delay-1">
-                    <p class="text-xl sm:text-2xl leading-relaxed mb-4">
-                        The startup world glorifies the <span class="text-white font-bold">"hockey stick"</span> growth—a straight line shooting up and to the right.
-                    </p>
-                    <p class="text-xl sm:text-2xl leading-relaxed font-semibold text-white">
-                        But that's not reality. That's a survivor-bias fairy tale.
+                    <p class="text-lg sm:text-xl leading-relaxed">
+                        The name <span class="text-white font-bold">"StartUp"</span> implies a linear beginning. But starting is easy; staying alive through the turns is where the winners are decided.
                     </p>
                 </div>
 
-                <!-- Visual Animation -->
-                <div class="flex justify-center my-16 slide-up delay-2">
-                    <svg width="400" height="250" viewBox="0 0 400 250" class="w-full max-w-md">
-                        <defs>
-                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(148, 163, 184, 0.1)" stroke-width="1"/>
-                            </pattern>
-                        </defs>
-                        <rect width="400" height="250" fill="url(#grid)" />
-                        <path id="transformPath" d="" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-                        <circle id="endDot" cx="0" cy="0" r="6" fill="#3b82f6" opacity="0">
-                            <animate attributeName="r" values="6;10;6" dur="1s" repeatCount="indefinite"/>
-                        </circle>
-                        <text id="animLabel" x="200" y="30" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600" opacity="0"></text>
-                    </svg>
-                </div>
 
-                <script>
-                    const path = document.getElementById('transformPath');
-                    const endDot = document.getElementById('endDot');
-                    const animLabel = document.getElementById('animLabel');
-                    
-                    const startX = 50, startY = 220, endX = 350, endY = 50;
-                    
-                    function animateLoop() {
-                        const duration = 4000;
-                        const startTime = Date.now();
-                        
-                        function animate() {
-                            const elapsed = Date.now() - startTime;
-                            const progress = (elapsed % duration) / duration;
-                            
-                            if (elapsed > duration) {
-                                setTimeout(animateLoop, 500);
-                                return;
-                            }
-                            
-                            if (progress < 0.4) {
-                                const straightProgress = progress / 0.4;
-                                const currentX = startX + (endX - startX) * straightProgress;
-                                const currentY = startY + (endY - startY) * straightProgress;
-                                
-                                path.setAttribute('d', `M ${startX} ${startY} L ${currentX} ${currentY}`);
-                                endDot.setAttribute('cx', currentX);
-                                endDot.setAttribute('cy', currentY);
-                                endDot.setAttribute('opacity', '0.8');
-                                
-                                animLabel.textContent = 'The myth of linear growth...';
-                                animLabel.setAttribute('opacity', Math.min(straightProgress * 3, 0.7));
-                            } else {
-                                const zigzagProgress = (progress - 0.4) / 0.6;
-                                animLabel.textContent = 'Reality kicks in!';
-                                animLabel.setAttribute('opacity', '0.9');
-                                
-                                const points = [];
-                                const segments = 12;
-                                
-                                for (let i = 0; i <= segments; i++) {
-                                    const t = i / segments;
-                                    const x = startX + (endX - startX) * t;
-                                    const baseY = startY + (endY - startY) * t;
-                                    
-                                    let zigzagOffset = 0;
-                                    if (t > 0.3) {
-                                        const intensity = Math.min((t - 0.3) / 0.3, 1);
-                                        const zigzagAmount = 25 * intensity;
-                                        zigzagOffset = Math.sin(i * Math.PI * 0.8) * zigzagAmount;
-                                    }
-                                    
-                                    const y = baseY + zigzagOffset;
-                                    points.push(`${x} ${y}`);
-                                }
-                                
-                                const visibleSegments = Math.ceil(segments * Math.min(zigzagProgress * 1.5, 1));
-                                const visiblePoints = points.slice(0, visibleSegments + 1);
-                                const pathData = 'M ' + visiblePoints.join(' L ');
-                                path.setAttribute('d', pathData);
-                                
-                                if (visiblePoints.length > 0) {
-                                    const lastPoint = visiblePoints[visiblePoints.length - 1].split(' ');
-                                    endDot.setAttribute('cx', lastPoint[0]);
-                                    endDot.setAttribute('cy', lastPoint[1]);
-                                    endDot.setAttribute('opacity', '0.9');
-                                }
-                            }
-                            
-                            requestAnimationFrame(animate);
-                        }
-                        
-                        animate();
-                    }
-                    
-                    setTimeout(animateLoop, 2000);
-                </script>
-
-                <!-- Reality Section -->
-                <div class="slide-up delay-3">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-blue-400 mb-6">The Reality of the Journey</h2>
+                <!-- Core Message -->
+                <div class="slide-up delay-2">
                     <p class="text-lg sm:text-xl leading-relaxed">
                         Real startups don't fly; they navigate. They stumble. They <span class="text-white font-bold">zig</span> when everyone expects them to <span class="text-white font-bold">zag</span>. They learn, adapt, and find unexpected paths to success.
                     </p>
                 </div>
 
-                <!-- Quote -->
+
+                <!-- Story Introduction -->
+                <div class="slide-up delay-3">
+                    <p class="text-lg sm:text-xl leading-relaxed">
+                        Anyone familiar with the startup world — or who's been an entrepreneur — knows the zigzag of the entrepreneurial journey. Here's an example:
+                    </p>
+                </div>
+
+
+                <!-- Maya's Story -->
                 <div class="my-12 pl-6 border-l-4 border-blue-400 slide-up delay-4">
-                    <p class="text-xl sm:text-2xl italic leading-relaxed text-slate-300">
-                        "The path to success isn't straight up. It zigzags. And we help you master every turn."
-                    </p>
-                </div>
-
-                <!-- Why StartZig -->
-                <div class="slide-up delay-5">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
-                        Why We Are <span class="text-blue-400">StartZig</span> (and not StartUp)
-                    </h2>
-                    <p class="text-lg sm:text-xl leading-relaxed mb-8">
-                        The name "StartUp" implies a linear beginning. But starting is easy; staying alive through the turns is where the winners are decided.
-                    </p>
-                </div>
-
-                <!-- Journey Story -->
-                <div class="slide-up delay-6">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">The Journey of TechFlow</h2>
-                    <p class="text-base leading-relaxed mb-8 text-slate-300">
-                        A fictional startup that mastered the zigzag:
-                    </p>
-                    
-                    <div class="space-y-6 text-base leading-relaxed">
+                    <div class="space-y-4 text-base sm:text-lg leading-relaxed text-slate-300">
                         <p>
-                            <span class="text-slate-400 font-semibold">Q1 2020 —</span> Launched a project management tool with 50 beta users. Excitement was high.
+                            <span class="text-white font-bold">Maya</span> wanted to build <span class="text-blue-400 font-semibold">FreshCast</span> - an AI system helping restaurants prevent food waste.
                         </p>
-                        
+                       
                         <p>
-                            <span class="text-slate-400 font-semibold">Q2 2020 —</span> User engagement dropped 60%. The market was saturated with similar tools. Reality check.
+                            19 investors rejected her. The 20th believed and invested ₪300K.
                         </p>
-                        
+                       
                         <p>
-                            <span class="text-amber-400 font-semibold">Q3 2020 • PIVOT —</span> Listened to 3 remaining power users. Pivoted to serve remote design teams specifically. <span class="text-white font-semibold">First zig.</span>
+                            After a year stuck at 30 customers, one customer told her: <span class="italic">"Solve my staffing problem, not food waste."</span>
                         </p>
-                        
+                       
                         <p>
-                            <span class="text-slate-400 font-semibold">Q4 2020 —</span> Gained 200 design teams. Revenue: $5K MRR. Still struggling.
+                            Maya did a <span class="text-amber-400 font-semibold">complete pivot</span> - from food waste to smart staff scheduling.
                         </p>
-                        
+                       
                         <p>
-                            <span class="text-amber-400 font-semibold">Q1 2021 • ZAG —</span> Users wanted integrations with Figma and Sketch. Built an integration platform instead of more features. <span class="text-white font-semibold">Second turn.</span>
+                            Lost 43% of customers in the transition, but the new product exploded.
                         </p>
-                        
-                        <p>
-                            <span class="text-slate-400 font-semibold">Q3 2021 —</span> Integration approach went viral in design communities. 2,000 teams. $50K MRR. Breakthrough.
-                        </p>
-                        
-                        <p>
-                            <span class="text-emerald-400 font-semibold">Q2 2022 • PRODUCT-MARKET FIT —</span> Enterprise clients discovered them. 10,000 teams. $500K MRR. Series A funded.
-                        </p>
-                        
-                        <p class="text-white">
-                            <span class="text-emerald-400 font-semibold">Today —</span> 50,000+ teams. $5M ARR. Became the standard for design team collaboration.
+                       
+                        <p class="text-white font-bold">
+                            18 months later: $47M exit.
                         </p>
                     </div>
-                    
-                    <p class="mt-8 text-lg leading-relaxed text-slate-300">
-                        <span class="text-white font-bold">The lesson?</span> TechFlow didn't succeed because they had the perfect plan. They succeeded because they mastered the zigzag—listening, adapting, and finding unexpected paths forward.
+                </div>
+
+
+                <!-- Closing Message -->
+                <div class="slide-up delay-5">
+                    <p class="text-lg sm:text-xl leading-relaxed text-white font-semibold">
+                        This isn't a deviation from the plan. This is the journey. This is the zigzag.
+                    </p>
+                    <p class="text-lg sm:text-xl leading-relaxed mt-4">
+                        And this is exactly what you practice at <span class="text-blue-400 font-bold">StartZig</span>.
                     </p>
                 </div>
 
+
                 <!-- Footer CTA -->
-                <div class="text-center pt-16 pb-8 slide-up delay-7">
+                <div class="text-center pt-16 pb-8 slide-up delay-6">
                     <a href="/" class="block hover:opacity-90 transition-opacity">
                         <p class="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-tight">
                             Don't just start up.
@@ -394,9 +245,9 @@
                             StartZig.
                         </p>
                     </a>
-                    
+                   
                     <div class="mt-8">
-                        <a href="/" class="inline-block px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold rounded-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+                        <a href="https://www.startzig.com" class="inline-block px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold rounded-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
                             Go to Homepage →
                         </a>
                     </div>
@@ -406,4 +257,8 @@
     </div>
 </body>
 </html>
+
+
+
+But that's not reality. That's a survivor-bias fairy tale.
 
