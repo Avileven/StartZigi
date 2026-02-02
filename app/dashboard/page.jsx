@@ -106,20 +106,34 @@ export default function Dashboard() {
   // new valuation
   const updateBalance = useCallback(() => {
     if (!currentVenture) return;
+    
+    // חישוב באלאנס
     const totalFunding = messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
     const initialCapital = 15000;
     const totalStartingCapital = initialCapital + totalFunding;
     const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
+    
     if (!currentVenture.burn_rate_start) {
       setLiveBalance(totalStartingCapital);
-      return;
+    } else {
+      const startTime = new Date(currentVenture.burn_rate_start).getTime();
+      const now = new Date().getTime();
+      const secondsElapsed = (now - startTime) / 1000;
+      const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
+      setLiveBalance(Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond))));
     }
-    const startTime = new Date(currentVenture.burn_rate_start).getTime();
-    const now = new Date().getTime();
-    const secondsElapsed = (now - startTime) / 1000;
-    const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
-    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
-    setLiveBalance(calculated);
+
+    // חישוב שווי - כאן התיקון:
+    const baseValues = { idea: 500000, business_plan: 500000, mvp: 2000000, mlp: 4000000, beta: 6000000, growth: 10000000 };
+    const multipliers = { ai_deep_tech: 1.5, digital_health_biotech: 1.4, fintech: 1.2, web3_blockchain: 1.2, b2b_saas: 1.0, climatetech_energy: 0.9, consumer_apps: 0.7 };
+    const formulaVal = (baseValues[currentVenture.phase] || 500000) * (multipliers[currentVenture.sector] || 1.0);
+
+    // בדיקה אם היה גיוס
+    const lastFundingValuation = messages.find(m => m.message_type === 'investment_offer' && m.investment_offer_status === 'accepted')?.investment_offer_valuation || 0;
+
+    // אם גייסת - זה השווי. אם לא - הנוסחה.
+    setCurrentValuation(lastFundingValuation > 0 ? lastFundingValuation : formulaVal);
+
   }, [currentVenture, messages]);
   
 const updateValuation = useCallback(() => {
@@ -281,7 +295,7 @@ const updateValuation = useCallback(() => {
   }, 1000);
   
   return () => clearInterval(balanceInterval);
-}, [currentVenture, messages, updateBalance, updateValuation]); // הזרקה 3: הוספת התלות בסוף
+}, [currentVenture, messages, updateBalance]); // הזרקה 3: הוספת התלות בסוף
   const handleAcceptToS = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
