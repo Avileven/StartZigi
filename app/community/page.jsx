@@ -30,7 +30,7 @@ export default function Community() {
 
   return (
     <div className="bg-slate-900 text-white min-h-screen font-sans">
-      {/* סרגל ניווט תומך מובייל */}
+      {/* סרגל ניווט עקבי ומלא */}
       <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -42,39 +42,50 @@ export default function Community() {
               </Link>
             </div>
 
+            {/* המבורגר למובייל */}
             <div className="md:hidden">
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2">
                 {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
               </button>
             </div>
 
+            {/* תפריט דסקטופ עם Login */}
             <div className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium">Why StartZig</Link>
+                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Why StartZig</Link>
                 <Link href="/community" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium">Pricing</Link>
+                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Pricing</Link>
               </div>
-              <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all">
-                Sign Up
-              </Link>
+              
+              <div className="flex items-center space-x-4">
+                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                  Login
+                </Link>
+                <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">
+                  Sign Up
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* תפריט מובייל */}
+        {/* תפריט מובייל מלא */}
         {isMenuOpen && (
           <div className="md:hidden bg-slate-900 border-t border-white/10 px-4 py-6 space-y-4">
             <Link href="/why-startzig" className="block text-gray-300 text-lg">Why StartZig</Link>
             <Link href="/community" className="block text-white text-lg font-bold">Community</Link>
             <Link href="/pricing" className="block text-gray-300 text-lg">Pricing</Link>
-            <Link href="/register" className="block w-full text-center bg-indigo-600 py-3 rounded-xl font-bold">Sign Up</Link>
+            <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+              <Link href="/login" className="w-full text-center text-white py-3 rounded-xl border border-white/10">Login</Link>
+              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
+            </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section - מינימליסטי ויוקרתי */}
-      <section className="pt-40 pb-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
+      {/* Hero Section */}
+      <section className="pt-40 pb-20 px-6 text-center">
+        <div className="max-w-5xl mx-auto">
           <div className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-500/10 text-indigo-400 ring-1 ring-inset ring-indigo-500/20 mb-8">
             The Founder Network
           </div>
@@ -87,7 +98,7 @@ export default function Community() {
         </div>
       </section>
 
-      {/* Articles Section - כרטיסיות נקיות בלי תמונות סטוק */}
+      {/* Articles Section */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -105,19 +116,15 @@ export default function Community() {
         </div>
       </section>
 
-    
-      {/* Spotlight - פאונדר אמיתי ומוכר */}
+      {/* Paul Graham Quote Section */}
       <section className="py-24 px-6 bg-indigo-600/5 border-y border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-10 opacity-5">
-           <Zap className="w-64 h-64" />
-        </div>
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-10">
-          <div className="bg-slate-800 w-32 h-32 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-2xl">
+          <div className="bg-slate-800 w-32 h-32 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-2xl shadow-indigo-500/10">
             <span className="text-4xl font-serif italic text-indigo-400">PG</span>
           </div>
           <div>
             <h2 className="text-indigo-400 font-bold mb-3 uppercase tracking-[0.2em] text-xs">The Vision</h2>
-            <p className="text-2xl md:text-3xl font-medium leading-tight text-slate-200">
+            <p className="text-2xl md:text-3xl font-medium leading-tight text-slate-200 italic">
               "Most successful startups end up doing something different than they originally intended."
             </p>
             <p className="mt-6 font-bold text-white flex items-center gap-2">
@@ -127,9 +134,10 @@ export default function Community() {
         </div>
       </section>
 
-      {/* CTA - הכי פשוט, הכי חזק */}
+      {/* CTA Section */}
       <section className="py-32 px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-black mb-8">Ready to join?</h2>
+        <MessageSquare className="w-12 h-12 mx-auto mb-6 text-indigo-500 opacity-50" />
+        <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">Ready to join the <br/>conversation?</h2>
         <Link href="/register">
           <button className="bg-white text-slate-900 px-10 py-4 rounded-full font-bold text-lg hover:bg-indigo-400 hover:text-white transition-all duration-300 shadow-xl">
             Get Started Free
