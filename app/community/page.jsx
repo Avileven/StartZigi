@@ -105,18 +105,24 @@ export default function Community() {
         </div>
       </section>
 
-      {/* Founder Spotlight - עיצוב טיפוגרפי */}
-      <section className="py-20 px-6 bg-indigo-600/5 border-y border-white/5">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12">
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-32 h-32 rounded-full flex items-center justify-center shrink-0 shadow-2xl shadow-indigo-500/20">
-            <Award className="w-16 h-16 text-white" />
+    
+      {/* Spotlight - פאונדר אמיתי ומוכר */}
+      <section className="py-24 px-6 bg-indigo-600/5 border-y border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-10 opacity-5">
+           <Zap className="w-64 h-64" />
+        </div>
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-10">
+          <div className="bg-slate-800 w-32 h-32 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-2xl">
+            <span className="text-4xl font-serif italic text-indigo-400">PG</span>
           </div>
           <div>
-            <h2 className="text-indigo-400 font-bold mb-2 uppercase tracking-widest text-sm">Founder Spotlight</h2>
-            <p className="text-2xl font-medium leading-relaxed italic text-slate-200">
-              "StartZig gave me a sandbox to fail, learn, and ultimately succeed. It wasn't about the starting point, but the pivots in between."
+            <h2 className="text-indigo-400 font-bold mb-3 uppercase tracking-[0.2em] text-xs">The Vision</h2>
+            <p className="text-2xl md:text-3xl font-medium leading-tight text-slate-200">
+              "Most successful startups end up doing something different than they originally intended."
             </p>
-            <p className="mt-6 font-bold text-white">— Sarah Chen, EcoHarvest</p>
+            <p className="mt-6 font-bold text-white flex items-center gap-2">
+              Paul Graham <span className="text-slate-500 font-normal">— Co-founder, Y Combinator</span>
+            </p>
           </div>
         </div>
       </section>
