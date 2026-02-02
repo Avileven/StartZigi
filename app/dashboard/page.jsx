@@ -989,11 +989,10 @@ if (showToS) {
                      </span>
                      
                   </span>
-                  <span className="flex items-center gap-1 border-l pl-4 ml-2">
-  <TrendingUp className="w-4 h-4 text-green-600" />
-  <span>Valuation:</span>
-  <span className="font-bold text-gray-900">
-    ${currentValuation?.toLocaleString()}
+                 <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2">
+  <BarChart3 className="w-4 h-4 text-gray-400" />
+  <span className="font-bold text-gray-700">
+    ${currentValuation >= 1000000 ? Math.floor(currentValuation/1000000) + 'M' : Math.floor(currentValuation/1000) + 'K'}
   </span>
 </span>
                 </div>
