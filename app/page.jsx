@@ -20,6 +20,7 @@ import AnimatedBg from "@/components/common/AnimatedBg";
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -76,8 +77,8 @@ export default function Home() {
 <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-20">
-     
-      {/* לוגו - צד שמאל [cite: 1016-1022] */}
+      
+      {/* לוגו - צד שמאל */}
       <div className="flex-shrink-0">
         <Link href="/">
           <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
@@ -86,32 +87,36 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* קבוצת כפתורים וניווט [cite: 1023-1074] */}
+      {/* כפתור המבורגר לנייד - מופיע רק ב-sm/xs */}
+      <div className="md:hidden flex items-center">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="text-gray-300 hover:text-white p-2"
+        >
+          <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {isMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {/* קבוצת כפתורים וניווט - למחשב בלבד (md:flex) */}
       <div className="hidden md:flex items-center space-x-8">
-       
-        {/* קישורי ניווט - Why StartZig נוסף כראשון משמאל [cite: 1026] */}
         <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-          <Link
-            href="/why-startzig"
-            className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
+          <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Why StartZig
           </Link>
-          <Link
-            href="/community"
-            className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
+          <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Community
           </Link>
-          <Link
-            href="/pricing"
-            className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-          >
+          <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Pricing
           </Link>
         </div>
 
-        {/* כפתורי Auth / Dashboard [cite: 1041-1073] */}
         <div className="flex items-center space-x-4">
           {user ? (
             <>
@@ -120,19 +125,13 @@ export default function Home() {
                   Go to dashboard
                 </button>
               </Link>
-              <button
-                onClick={handleLogout}
-                className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
+              <button onClick={handleLogout} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Logout
               </button>
             </>
           ) : (
             <>
-              <button
-                onClick={handleLogin}
-                className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
+              <button onClick={handleLogin} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Login
               </button>
               <Link href="/register">
@@ -144,9 +143,44 @@ export default function Home() {
           )}
         </div>
       </div>
-
     </div>
   </div>
+
+  {/* תפריט נייד נפתח - מוצג רק כשיש לחיצה ורק במובייל */}
+  {isMenuOpen && (
+    <div className="md:hidden bg-gray-900 border-b border-white/10 px-4 pt-2 pb-6 space-y-2">
+      <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+        Why StartZig
+      </Link>
+      <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+        Community
+      </Link>
+      <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+        Pricing
+      </Link>
+      <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+        {user ? (
+          <>
+            <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full">
+              <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Go to dashboard</button>
+            </Link>
+            <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="w-full text-white bg-gray-800 py-3 rounded-md font-medium">
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => { handleLogin(); setIsMenuOpen(false); }} className="w-full text-white bg-gray-800 py-3 rounded-md font-medium">
+              Login
+            </button>
+            <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full">
+              <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Sign Up</button>
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  )}
 </nav>
 
       {/* Hero Section */}
