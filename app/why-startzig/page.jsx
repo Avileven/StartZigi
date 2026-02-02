@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 export default function WhyStartZig() {
     const [user, setUser] = useState(null);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [textState, setTextState] = useState('up');
     const bgPathRef = useRef(null);
 
