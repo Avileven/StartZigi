@@ -59,22 +59,15 @@ export default function WhyStartZig() {
             
             {/* רקע הזיגזג המונפש */}
             <div className="fixed inset-0 pointer-events-none opacity-10 z-0">
-                <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none filter blur-[1px]" viewBox="0 0 600 200">
-  <path 
-    d="M 50 150 L 120 120 L 190 140 L 260 100 L 330 120 L 400 80 L 470 100 L 550 60"
-    stroke="url(#grad1)" 
-    strokeWidth="4" 
-    fill="none" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-  />
-  <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style={{stopColor:'#3b82f6', stopOpacity:0.2}} />
-      <stop offset="50%" style={{stopColor:'#60a5fa', stopOpacity:1}} />
-      <stop offset="100%" style={{stopColor:'#a855f7', stopOpacity:0.2}} />
-    </linearGradient>
-  </defs>
+               <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 600 200">
+    <path 
+        d="M 50 150 L 120 50 L 190 150 L 260 50 L 330 150 L 400 50 L 470 150 L 550 50"
+        stroke="#3b82f6" 
+        strokeWidth="6" 
+        fill="none" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+    />
 </svg>
             </div>
 
