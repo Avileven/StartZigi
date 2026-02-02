@@ -148,12 +148,9 @@ export default function WhyStartZig() {
             <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-20">
                 <div className="max-w-4xl w-full">
                     
-                    {/* כותרת עם הזיגזג הסטטי */}
+                    {/* -בוטל-כותרת עם הזיגזג הסטטי */}
                     <div className="text-center mb-16 relative">
-                        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" viewBox="0 0 600 200">
-                            <path d="M 50 150 L 120 120 L 110 80 L 180 100 L 170 60 L 240 80 L 230 40 L 300 60 L 290 30 L 360 50 L 550 20"
-                                stroke="#3b82f6" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        
 
                         <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10 whitespace-nowrap">
   Why Start
