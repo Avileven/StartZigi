@@ -59,16 +59,23 @@ export default function WhyStartZig() {
             
             {/* רקע הזיגזג המונפש */}
             <div className="fixed inset-0 pointer-events-none opacity-10 z-0">
-                <svg width="100%" height="100%" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
-                    <path 
-                        ref={bgPathRef}
-                        stroke="#3b82f6" 
-                        strokeWidth="8" 
-                        fill="none" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                    />
-                </svg>
+                <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none filter blur-[1px]" viewBox="0 0 600 200">
+  <path 
+    d="M 50 150 L 120 120 L 190 140 L 260 100 L 330 120 L 400 80 L 470 100 L 550 60"
+    stroke="url(#grad1)" 
+    strokeWidth="4" 
+    fill="none" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+  />
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style={{stopColor:'#3b82f6', stopOpacity:0.2}} />
+      <stop offset="50%" style={{stopColor:'#60a5fa', stopOpacity:1}} />
+      <stop offset="100%" style={{stopColor:'#a855f7', stopOpacity:0.2}} />
+    </linearGradient>
+  </defs>
+</svg>
             </div>
 
             {/* סרגל ניווט מתוקן - עובד במובייל ובלי כפילויות */}
@@ -166,15 +173,15 @@ export default function WhyStartZig() {
                                 stroke="#3b82f6" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
 
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10">
-                            Why Start
-                            <span className={`inline-block ml-3 transition-opacity duration-500 ${textState === 'fade' ? 'opacity-0' : 'opacity-100'}`}>
-                                <span className={textState === 'zig' ? 'text-blue-400' : 'text-gray-400'}>
-                                    {textState === 'zig' ? 'Zig' : 'Up'}
-                                </span>
-                            </span>
-                            ?
-                        </h1>
+                        <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10 whitespace-nowrap">
+  Why Start
+  <span className={`inline-block ml-2 transition-opacity duration-500 ${textState === 'fade' ? 'opacity-0' : 'opacity-100'}`}>
+    <span className={textState === 'zig' ? 'text-blue-400' : 'text-gray-400'}>
+      {textState === 'zig' ? 'Zig' : 'Up'}
+    </span>
+  </span>
+  <span className="ml-1">?</span>
+</h1>
                     </div>
 
                     {/* גוף התוכן */}
