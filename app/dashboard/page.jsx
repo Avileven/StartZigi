@@ -94,9 +94,11 @@ export default function Dashboard() {
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
   const [liveBalance, setLiveBalance] = useState(0);
+  //new valuation
+  const [currentValuation, setCurrentValuation] = useState(0);
   const router = useRouter();
 
-  
+  // new valuation
   const updateBalance = useCallback(() => {
     if (!currentVenture) return;
     const totalFunding = messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
@@ -114,6 +116,33 @@ export default function Dashboard() {
     const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
     setLiveBalance(calculated);
   }, [currentVenture, messages]);
+const updateValuation = useCallback(() => {
+  if (!currentVenture) return;
+
+  const baseValues = {
+    idea: 500000,
+    business_plan: 500000,
+    mvp: 2000000,
+    mlp: 4000000,
+    beta: 6000000,
+    growth: 10000000
+  };
+
+  const multipliers = {
+    ai_deep_tech: 1.5,
+    digital_health_biotech: 1.4,
+    fintech: 1.2,
+    web3_blockchain: 1.2,
+    b2b_saas: 1.0,
+    climatetech_energy: 0.9,
+    consumer_apps: 0.7
+  };
+
+  const base = baseValues[currentVenture.phase] || 500000;
+  const mult = multipliers[currentVenture.sector] || 1.0;
+  
+  setCurrentValuation(base * mult);
+}, [currentVenture]);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -233,14 +262,20 @@ export default function Dashboard() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
-
+// update valuation
   useEffect(() => {
-    if (!currentVenture || !messages) return;
+  if (!currentVenture || !messages) return;
+  
+  updateBalance();
+  updateValuation(); // הזרקה 1: הרצה ראשונית
+  
+  const balanceInterval = setInterval(() => {
     updateBalance();
-    const balanceInterval = setInterval(updateBalance, 1000);
-    return () => clearInterval(balanceInterval);
-  }, [currentVenture, messages, updateBalance]);
-
+    updateValuation(); // הזרקה 2: הרצה בכל שנייה
+  }, 1000);
+  
+  return () => clearInterval(balanceInterval);
+}, [currentVenture, messages, updateBalance, updateValuation]); // הזרקה 3: הוספת התלות בסוף
   const handleAcceptToS = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -946,7 +981,15 @@ if (showToS) {
                      <span className="font-mono">
                       ${liveBalance?.toLocaleString()}
                      </span>
+                     
                   </span>
+                  <span className="flex items-center gap-1 border-l pl-4 ml-2">
+  <TrendingUp className="w-4 h-4 text-green-600" />
+  <span>Valuation:</span>
+  <span className="font-bold text-gray-900">
+    ${currentValuation?.toLocaleString()}
+  </span>
+</span>
                 </div>
               </CardHeader>
             </Card>
