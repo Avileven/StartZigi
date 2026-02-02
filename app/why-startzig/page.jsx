@@ -57,19 +57,8 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
             
-            {/* רקע הזיגזג המונפש */}
-            <div className="fixed inset-0 pointer-events-none opacity-10 z-0">
-               <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 600 200">
-    <path 
-        d="M 50 150 L 120 50 L 190 150 L 260 50 L 330 150 L 400 50 L 470 150 L 550 50"
-        stroke="#3b82f6" 
-        strokeWidth="6" 
-        fill="none" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-    />
-</svg>
-            </div>
+            {/* רקע הזיגזג המונפש -בוטל*/}
+            
 
             {/* סרגל ניווט מתוקן - עובד במובייל ובלי כפילויות */}
             <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
