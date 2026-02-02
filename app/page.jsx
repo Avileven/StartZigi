@@ -186,51 +186,66 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
         <AnimatedBg />
-        <div
-  className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp px-4"
-  style={{ animationDelay: "0.4s" }}
->
-  {/* Left Button Container */}
-  <div className="w-full sm:w-auto flex justify-center">
-    {user ? (
-      hasVenture ? (
-        <Link href="/dashboard" className="w-full sm:w-auto">
-          <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg w-full sm:w-auto min-w-[200px]">
-            Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-      ) : (
-        <Link href="/createventure" className="w-full sm:w-auto">
-          <Button size="lg" className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg w-full sm:w-auto min-w-[200px]">
-            Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-      )
-    ) : (
-      <Button
-        onClick={handleLogin}
-        size="lg"
-        className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg w-full sm:w-auto min-w-[200px]"
-      >
-        Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
-      </Button>
-    )}
-  </div>
-
-  {/* Right Button Container */}
-  <div className="w-full sm:w-auto flex justify-center">
-    <a href="/how-it-works.html" target="_blank" className="w-full sm:w-auto">
-      <Button
-        size="lg"
-        variant="outline"
-        className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg w-full sm:w-auto min-w-[200px]"
-      >
-        <PlayCircle className="w-4 h-4 mr-2" />
-        See How It Works
-      </Button>
-    </a>
-  </div>
-</div>
+        <div className="relative text-center z-10 p-4">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl animate-slideUp">
+            Don't just start up.{" "}
+            <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              StartZig
+            </span>
+            .
+          </h1>
+          <p
+            className="mt-6 text-xl leading-8 text-indigo-100 animate-slideUp max-w-3xl mx-auto"
+            style={{ animationDelay: "0.2s" }}
+          >
+            A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
+          </p>
+          <div
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp"
+            style={{ animationDelay: "0.4s" }}
+          >
+            {user ? (
+              hasVenture ? (
+                <Link href="/dashboard">
+                  <Button
+                    size="lg"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+                  >
+                    Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/createventure">
+                  <Button
+                    size="lg"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+                  >
+                    Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <Button
+                onClick={handleLogin}
+                size="lg"
+                className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+              >
+                Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+            
+            <a href="/how-it-works.html" target="_blank">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                See How It Works
+              </Button>
+            </a>
+          </div>
+        </div>
       </div>
       <div id="benefits" className="bg-gray-800/50 py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
