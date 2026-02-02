@@ -1,148 +1,140 @@
 "use client";
 import React, { useState } from 'react';
 import Link from "next/link";
-import { ArrowRight, MessageSquare, Users, Menu, X, Zap, Target, Award } from 'lucide-react';
+import { Menu, X, Rocket, Users, MessageSquare, Briefcase, ChevronRight, Award } from 'lucide-react';
 
-const articles = [
+const projectUpdates = [
   {
-    title: 'How to Craft the Perfect One-Minute Pitch',
-    author: 'Nexus Ventures',
-    description: 'Nail your first impression with a pitch that is concise, compelling, and memorable.',
-    icon: <Zap className="w-6 h-6 text-amber-400" />
+    name: 'AquaChain',
+    type: 'MVP',
+    description: 'מערכת מבוססת AI לניהול חכם של צריכת מים ביתית.',
+    callToAction: 'מזמינים משתמשים ראשונים לבדיקת ה-MVP ומתן פידבק ראשוני.',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10'
   },
   {
-    title: '5 Common Mistakes First-Time Founders Make',
-    author: 'Serial Entrepreneur',
-    description: 'Learn from the experiences of those who have been there. Avoid these common pitfalls.',
-    icon: <Target className="w-6 h-6 text-red-400" />
+    name: 'EduPath',
+    type: 'MLP',
+    description: 'פלטפורמת למידה מותאמת אישית שמתמקדת בחוויית המשתמש (Minimum Lovable Product).',
+    callToAction: 'מחפשים פאונדרים שרוצים לנסות את ה-MLP ולעזור לנו לדייק את ה-Vibe.',
+    color: 'text-purple-400',
+    bg: 'bg-purple-400/10'
   },
   {
-    title: 'Finding Your First 100 Customers',
-    author: 'Growth Marketer',
-    description: 'Traction is everything. Discover actionable strategies to acquire your first users.',
-    icon: <Users className="w-6 h-6 text-blue-400" />
-  },
+    name: 'GreenTrack',
+    type: 'BETA',
+    description: 'אפליקציה למעקב אחר טביעת רגל פחמנית של מוצרי צריכה.',
+    callToAction: 'נפתחה ההרשמה לגרסת ה-BETA הסגורה. מקומות מוגבלים.',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-400/10'
+  }
 ];
 
 export default function Community() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = null;
 
   return (
-    <div className="bg-slate-900 text-white min-h-screen font-sans">
-      {/* סרגל ניווט עקבי ומלא */}
+    <div className="bg-slate-900 text-white min-h-screen font-sans rtl">
+      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex-shrink-0">
-              <Link href="/">
-                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
-                  StartZig
-                </span>
-              </Link>
+              <Link href="/"><span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">StartZig</span></Link>
             </div>
-
-            {/* המבורגר למובייל */}
             <div className="md:hidden">
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2">
                 {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
               </button>
             </div>
-
-            {/* תפריט דסקטופ עם Login */}
-            <div className="hidden md:flex items-center space-x-8">
-              <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Why StartZig</Link>
-                <Link href="/community" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Pricing</Link>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
-                  Login
-                </Link>
-                <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">
-                  Sign Up
-                </Link>
-              </div>
+            <div className="hidden md:flex items-center space-x-8 space-x-reverse">
+              <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Why StartZig</Link>
+              <Link href="/community" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">Community</Link>
+              <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Pricing</Link>
+              <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium mr-4">Login</Link>
+              <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">Sign Up</Link>
             </div>
           </div>
         </div>
-
-        {/* תפריט מובייל מלא */}
         {isMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-t border-white/10 px-4 py-6 space-y-4">
+          <div className="md:hidden bg-slate-900 border-t border-white/10 px-4 py-6 space-y-4 text-right">
             <Link href="/why-startzig" className="block text-gray-300 text-lg">Why StartZig</Link>
             <Link href="/community" className="block text-white text-lg font-bold">Community</Link>
             <Link href="/pricing" className="block text-gray-300 text-lg">Pricing</Link>
             <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
-              <Link href="/login" className="w-full text-center text-white py-3 rounded-xl border border-white/10">Login</Link>
-              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
+              <Link href="/login" className="text-center text-white py-3 rounded-xl border border-white/10 font-bold">Login</Link>
+              <Link href="/register" className="text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
             </div>
           </div>
         )}
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-40 pb-20 px-6 text-center">
-        <div className="max-w-5xl mx-auto">
-          <div className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-500/10 text-indigo-400 ring-1 ring-inset ring-indigo-500/20 mb-8">
-            The Founder Network
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">
-            Think. Build. <span className="text-indigo-500 font-serif italic">Zig.</span>
+      <section className="pt-40 pb-16 px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-black mb-6">
+            Startup <span className="text-indigo-500">Feed</span>
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            The exclusive community for founders who refuse to follow the straight line. Share insights, find pivots, and grow.
+          <p className="text-xl text-slate-400 leading-relaxed">
+            מה קורה עכשיו ב-StartZig: מיזמים חדשים, עדכוני פיתוח והזדמנויות להשקעה.
           </p>
         </div>
       </section>
 
-      {/* Articles Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {articles.map((article) => (
-              <div key={article.title} className="group p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all duration-300 flex flex-col justify-between">
-                <div>
-                  <div className="mb-6">{article.icon}</div>
-                  <h3 className="text-xl font-bold mb-4 group-hover:text-indigo-400 transition-colors">{article.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-6">{article.description}</p>
-                </div>
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-500">{article.author}</div>
-              </div>
-            ))}
+      {/* VC Announcement - הודעה על הקרן החדשה */}
+      <section className="max-w-5xl mx-auto px-6 mb-20">
+        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
+          <div className="flex items-center gap-6">
+            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
+              <Briefcase className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-right">
+              <h3 className="text-2xl font-bold">חדש במערכת: Nexus Capital</h3>
+              <p className="text-indigo-200 opacity-80 mt-1">קרן הון סיכון המתמחה ב-Early Stage הצטרפה כשותפה רשמית.</p>
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* Paul Graham Quote Section */}
-      <section className="py-24 px-6 bg-indigo-600/5 border-y border-white/5 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-10">
-          <div className="bg-slate-800 w-32 h-32 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 shadow-2xl shadow-indigo-500/10">
-            <span className="text-4xl font-serif italic text-indigo-400">PG</span>
-          </div>
-          <div>
-            <h2 className="text-indigo-400 font-bold mb-3 uppercase tracking-[0.2em] text-xs">The Vision</h2>
-            <p className="text-2xl md:text-3xl font-medium leading-tight text-slate-200 italic">
-              "Most successful startups end up doing something different than they originally intended."
-            </p>
-            <p className="mt-6 font-bold text-white flex items-center gap-2">
-              Paul Graham <span className="text-slate-500 font-normal">— Co-founder, Y Combinator</span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-32 px-6 text-center">
-        <MessageSquare className="w-12 h-12 mx-auto mb-6 text-indigo-500 opacity-50" />
-        <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">Ready to join the <br/>conversation?</h2>
-        <Link href="/register">
-          <button className="bg-white text-slate-900 px-10 py-4 rounded-full font-bold text-lg hover:bg-indigo-400 hover:text-white transition-all duration-300 shadow-xl">
-            Get Started Free
+          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap hover:bg-indigo-100 transition-colors">
+            לצפייה בפרופיל הקרן
           </button>
-        </Link>
+        </div>
+      </section>
+
+      {/* Projects Feed - הלוח עם המיזמים שביקשת */}
+      <section className="max-w-5xl mx-auto px-6 pb-32">
+        <h2 className="text-2xl font-bold mb-8 text-right flex items-center gap-2 justify-end">
+          <Rocket className="w-6 h-6 text-indigo-400" />
+          עדכוני מיזמים חמים
+        </h2>
+        <div className="grid grid-cols-1 gap-6">
+          {projectUpdates.map((project) => (
+            <div key={project.name} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-right">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3 justify-end">
+                  <span className={`text-xs font-black px-2 py-1 rounded-md ${project.bg} ${project.color}`}>
+                    {project.type}
+                  </span>
+                  <h3 className="text-xl font-bold">{project.name}</h3>
+                </div>
+                <p className="text-slate-400 text-sm max-w-xl">{project.description}</p>
+                <p className="text-indigo-300 text-sm font-medium mt-1">{project.callToAction}</p>
+              </div>
+              <button className="flex items-center gap-2 text-white bg-slate-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+                צרו קשר
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Paul Graham Quote - השארנו בשביל האמינות */}
+      <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-2xl italic text-slate-300 leading-relaxed mb-6">
+            "הדרך היחידה לעשות עבודה מצוינת היא לאהוב את מה שאתה עושה. בסטארטאפים, זה אומר לאהוב את ה-Zig."
+          </p>
+          <p className="font-bold text-white">— פול גרהם, Y Combinator</p>
+        </div>
       </section>
     </div>
   );
