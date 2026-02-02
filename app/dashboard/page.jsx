@@ -992,6 +992,7 @@ if (showToS) {
                  <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2 text-gray-500 font-normal">
   <BarChart3 className="w-4 h-4" />
   <span>
+    <span>Val</span>
     ${currentValuation >= 1000000 
       ? Math.floor(currentValuation/1000000) + 'M' 
       : Math.floor(currentValuation/1000) + 'K'}
