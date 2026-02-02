@@ -992,12 +992,9 @@ if (showToS) {
                  <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2">
   <BarChart3 className="w-4 h-4 text-gray-400" />
   <span className="text-xs text-gray-400 font-medium uppercase">Val</span>
-  <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2 text-gray-500">
-  <BarChart3 className="w-4 h-4" />
-  <span>
-    ${currentValuation >= 1000000 ? Math.floor(currentValuation/1000000) + 'M' : Math.floor(currentValuation/100) / 10 + 'K'}
+  <span className="font-bold text-gray-700">
+    ${currentValuation >= 1000000 ? Math.floor(currentValuation/1000000) + 'M' : Math.floor(currentValuation/1000) + 'K'}
   </span>
-</span>
 </span>
                 </div>
               </CardHeader>
