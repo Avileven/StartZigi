@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 export default function WhyStartZig() {
     const [user, setUser] = useState(null);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [textState, setTextState] = useState('up');
     const bgPathRef = useRef(null);
 
@@ -82,40 +83,93 @@ export default function WhyStartZig() {
                         </div>
 
                         {/* קישורי ניווט וכפתורי Auth - צד ימין */}
-                        <div className="hidden md:flex items-center space-x-8">
-                            <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                                <Link href="/why-startzig" className="text-white bg-gray-800/50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                    Why StartZig
-                                </Link>
-                                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                    Community
-                                </Link>
-                                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                    Pricing
-                                </Link>
-                            </div>
+                       <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center justify-between h-20">
+      
+      {/* לוגו */}
+      <div className="flex-shrink-0">
+        <Link href="/">
+          <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
+            StartZig
+          </span>
+        </Link>
+      </div>
 
-                            <div className="flex items-center space-x-4">
-                                {user ? (
-                                    <Link href="/dashboard">
-                                        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                            Go to dashboard
-                                        </button>
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <button className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                            Login
-                                        </button>
-                                        <Link href="/register">
-                                            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                                Sign Up
-                                            </button>
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+      {/* כפתור המבורגר לנייד - מופיע רק כשקטן */}
+      <div className="md:hidden flex items-center">
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 hover:text-white p-2">
+          <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {isMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {/* תפריט מחשב - הקוד המקורי שלך (hidden md:flex) */}
+      <div className="hidden md:flex items-center space-x-8">
+        <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+          <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Why StartZig
+          </Link>
+          <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Community
+          </Link>
+          <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Pricing
+          </Link>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <Link href="/dashboard">
+              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                Go to dashboard
+              </button>
+            </Link>
+          ) : (
+            <>
+              <button onClick={handleLogin} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                Login
+              </button>
+              <Link href="/register">
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                  Sign Up
+                </button>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* תפריט נייד - מופיע רק כשלחוצים על ההמבורגר */}
+  {isMenuOpen && (
+    <div className="md:hidden bg-gray-900 border-t border-white/10 px-4 pt-2 pb-6 space-y-1">
+      <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">Why StartZig</Link>
+      <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">Community</Link>
+      <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">Pricing</Link>
+      <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+        {user ? (
+          <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+            <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium text-center">Go to dashboard</button>
+          </Link>
+        ) : (
+          <>
+            <button onClick={() => { handleLogin(); setIsMenuOpen(false); }} className="w-full text-white bg-gray-800 py-3 rounded-md font-medium text-center">Login</button>
+            <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+              <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium text-center">Sign Up</button>
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  )}
+</nav>
                     </div>
                 </div>
             </nav>
