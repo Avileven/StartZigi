@@ -96,6 +96,11 @@ export default function Dashboard() {
   const [liveBalance, setLiveBalance] = useState(0);
   //new valuation
   const [currentValuation, setCurrentValuation] = useState(0);
+  const formatValuation = (val) => {
+  if (!val) return "$0";
+  if (val >= 1000000) return `$${Math.floor(val / 1000000)}M`;
+  return `$${Math.floor(val / 1000)}K`;
+};
   const router = useRouter();
 
   // new valuation
@@ -116,6 +121,7 @@ export default function Dashboard() {
     const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
     setLiveBalance(calculated);
   }, [currentVenture, messages]);
+  
 const updateValuation = useCallback(() => {
   if (!currentVenture) return;
 
@@ -993,7 +999,12 @@ if (showToS) {
                 </div>
               </CardHeader>
             </Card>
-
+<span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2">
+  <BarChart3 className="w-4 h-4 text-gray-400" />
+  <span className="font-bold text-gray-700">
+    ${currentValuation >= 1000000 ? Math.floor(currentValuation/1000000) + 'M' : Math.floor(currentValuation/1000) + 'K'}
+  </span>
+</span>
             <div>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Board</h2>
 
