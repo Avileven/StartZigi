@@ -67,7 +67,7 @@ export default function Pricing() {
               </Link>
             </div>
 
-            {/* כפתור המבורגר */}
+            {/* המבורגר למובייל */}
             <div className="md:hidden">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -77,53 +77,44 @@ export default function Pricing() {
               </button>
             </div>
 
-            {/* תפריט דסקטופ */}
+            {/* תפריט דסקטופ מעודכן */}
             <div className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                   Why StartZig
                 </Link>
-                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                   Community
                 </Link>
-                <Link href="/pricing" className="text-white px-3 py-2 rounded-md text-sm font-bold transition-colors">
+                {/* כאן התיקון: Pricing מקבל רקע כמו ב-Community */}
+                <Link href="/pricing" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">
                   Pricing
                 </Link>
               </div>
 
               <div className="flex items-center space-x-4">
-                {user ? (
-                  <Link href="/dashboard">
-                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                      Go to dashboard
-                    </button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/login" className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                      Login
-                    </Link>
-                    <Link href="/register">
-                      <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                        Sign Up
-                      </button>
-                    </Link>
-                  </>
-                )}
+                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                  Login
+                </Link>
+                <Link href="/register">
+                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">
+                    Sign Up
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
         </div>
 
-        {/* תפריט מובייל נפתח */}
+        {/* תפריט מובייל (גם כאן Pricing מודגש כפעיל) */}
         {isMenuOpen && (
-          <div className="md:hidden bg-gray-900 border-t border-white/10 px-4 pt-2 pb-6 space-y-1">
-            <Link href="/why-startzig" className="block text-gray-300 py-3 rounded-md text-base font-medium">Why StartZig</Link>
-            <Link href="/community" className="block text-gray-300 py-3 rounded-md text-base font-medium">Community</Link>
-            <Link href="/pricing" className="block text-white py-3 rounded-md text-base font-bold">Pricing</Link>
+          <div className="md:hidden bg-gray-900 border-t border-white/10 px-4 py-6 space-y-4">
+            <Link href="/why-startzig" className="block text-gray-300 text-lg">Why StartZig</Link>
+            <Link href="/community" className="block text-gray-300 text-lg">Community</Link>
+            <Link href="/pricing" className="block text-white text-lg font-bold bg-white/5 px-3 py-2 rounded-lg">Pricing</Link>
             <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
-              <Link href="/login" className="w-full text-center text-white bg-gray-800 py-3 rounded-md">Login</Link>
-              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-md">Sign Up</Link>
+              <Link href="/login" className="w-full text-center text-white py-3 rounded-xl border border-white/10">Login</Link>
+              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
             </div>
           </div>
         )}
