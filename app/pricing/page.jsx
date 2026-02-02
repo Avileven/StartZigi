@@ -1,23 +1,19 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Check, Menu, X } from 'lucide-react';
 
-// אם יש לך רכיב Button של shadcn, תוכל להשתמש בו. 
-// אם לא, השארתי כפתורי button רגילים עם העיצוב המקורי שלך.
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [user, setUser] = useState(null); // לוגיקת משתמש לצורך ה-Navbar
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const user = null; 
 
   const tiers = [
     {
       name: 'Free',
       price: '$0',
       description: 'Free access to grow your idea',
-      features: [
-        'Use pro tools',
-        'Basic mentor access',
-      ],
+      features: ['Use pro tools', 'Basic mentor access'],
       cta: 'Start Free',
       featured: false,
     },
@@ -25,10 +21,7 @@ export default function Pricing() {
       name: 'Vision',
       price: '$5',
       description: '20 Mentor Credits',
-      features: [
-        '20 Mentor interactions',
-        'StartZig Studio- access to basic AI Generator',
-      ],
+      features: ['20 Mentor interactions', 'StartZig Studio- basic AI'],
       cta: 'Get Vision',
       featured: false,
     },
@@ -38,8 +31,8 @@ export default function Pricing() {
       description: '100 Mentor Credits',
       features: [
         '100 Mentor interactions',
-        'Full Mentor guidance through all stages',
-        'StartZig Studio- access to basic and Boost AI Generator',
+        'Full Mentor guidance',
+        'StartZig Studio- Boost AI',
       ],
       cta: 'Get Impact',
       featured: true,
@@ -50,9 +43,9 @@ export default function Pricing() {
       description: '500 Mentor Credits',
       features: [
         '500 Mentor interactions',
-        'Full Mentor guidance through all stages',
-        'StartZig Studio- access to basic and Boost AI Generator',
-        'Advanced social and media tools',
+        'Full Mentor guidance',
+        'StartZig Studio- All tools',
+        'Social & media tools',
       ],
       cta: 'Get Unicorn',
       featured: false,
@@ -61,12 +54,11 @@ export default function Pricing() {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-      {/* סרגל ניווט מעודכן  */}
+      {/* סרגל ניווט תומך מובייל */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             
-            {/* לוגו [cite: 5-11] */}
             <div className="flex-shrink-0">
               <Link href="/">
                 <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
@@ -75,17 +67,26 @@ export default function Pricing() {
               </Link>
             </div>
 
-            {/* קישורי ניווט וכפתורי פעולה [cite: 12-63] */}
+            {/* כפתור המבורגר */}
+            <div className="md:hidden">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-gray-300 hover:text-white p-2"
+              >
+                {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+              </button>
+            </div>
+
+            {/* תפריט דסקטופ */}
             <div className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                {/* הקישור החדש כראשון משמאל */}
                 <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Why StartZig
                 </Link>
                 <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Community
                 </Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors font-bold text-white">
+                <Link href="/pricing" className="text-white px-3 py-2 rounded-md text-sm font-bold transition-colors">
                   Pricing
                 </Link>
               </div>
@@ -99,9 +100,9 @@ export default function Pricing() {
                   </Link>
                 ) : (
                   <>
-                    <button className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    <Link href="/login" className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                       Login
-                    </button>
+                    </Link>
                     <Link href="/register">
                       <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
                         Sign Up
@@ -113,14 +114,26 @@ export default function Pricing() {
             </div>
           </div>
         </div>
+
+        {/* תפריט מובייל נפתח */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-gray-900 border-t border-white/10 px-4 pt-2 pb-6 space-y-1">
+            <Link href="/why-startzig" className="block text-gray-300 py-3 rounded-md text-base font-medium">Why StartZig</Link>
+            <Link href="/community" className="block text-gray-300 py-3 rounded-md text-base font-medium">Community</Link>
+            <Link href="/pricing" className="block text-white py-3 rounded-md text-base font-bold">Pricing</Link>
+            <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+              <Link href="/login" className="w-full text-center text-white bg-gray-800 py-3 rounded-md">Login</Link>
+              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-md">Sign Up</Link>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* תוכן דף Pricing [cite: 671-719] */}
+      {/* תוכן Pricing */}
       <div className="pt-32 pb-24 px-6">
         <div className="mx-auto max-w-7xl text-center">
           <h2 className="text-4xl font-bold">Pricing Plans</h2>
 
-          {/* Toggle חודשי/שנתי [cite: 674-686] */}
           <div className="mt-8 flex items-center justify-center gap-x-4">
             <span className={!isAnnual ? 'text-white' : 'text-gray-400'}>Monthly</span>
             <button
