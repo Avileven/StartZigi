@@ -108,38 +108,49 @@ export default function VCMeeting() {
   const processEvaluation = async (finalAnswers) => {
     setIsSubmitting(true);
     try {
-      // ... (כאן נמצא בניית ה-evaluationPrompt - נשאר אותו דבר)
+      // Build evaluation prompt
+      const answersText = Object.entries(finalAnswers)
+        .map(([id, item], index) => `Question ${index + 1}: ${item.question}\nAnswer: ${item.answer}`)
+        .join('\n\n');
 
-      console.log("DEBUG 1: Sending to AI...");
-      
-      // רק השורה הזו משתנה:
-const { response: rawResponse } = await InvokeLLM({
-    prompt: evaluationPrompt + `\n\nReturn ONLY a valid JSON object with this exact structure, no markdown, no backticks:
+      const evaluationPrompt = `You are a VC investor at ${vcFirm.name} evaluating a startup founder during a meeting.
+Venture: ${venture.name}
+
+Questions and answers from the meeting:
+${answersText}
+
+Evaluate each answer with a score from 1-10 and a rationale.
+If the average score is >= 6, the decision is "Go". Otherwise "No-Go".
+
+Return ONLY valid JSON, no markdown, no backticks:
 {
   "decision": "Go" or "No-Go",
   "evaluations": [
-    { "question_id": "...", "score": <number 1-10>, "rationale": "..." }
+    { "question_id": "<id>", "score": <number 1-10>, "rationale": "<string>" }
   ],
   "average_score": <number>,
-  "overall_rationale": "..."
-}`,
-});
+  "overall_rationale": "<string>"
+}`;
 
-// תיקון: ה-response יכול להיות string אמו object
-let evaluation;
-if (typeof rawResponse === 'string') {
-    const cleaned = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    evaluation = JSON.parse(cleaned);
-} else {
-    evaluation = rawResponse;
-}
+      console.log("DEBUG 1: Sending to AI...");
 
+      const { response: rawResponse } = await InvokeLLM({
+        prompt: evaluationPrompt,
+      });
+
+      // Parse safely - could be string or object
+      let evaluation;
+      if (typeof rawResponse === 'string') {
+        const cleaned = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        evaluation = JSON.parse(cleaned);
+      } else {
+        evaluation = rawResponse;
+      }
 
       console.log("DEBUG 2: AI Raw Response:", evaluation);
 
       setEvaluationResults(evaluation);
 
-      // בדיקה אם ה-AI באמת החזיר אובייקט עם decision
       console.log("DEBUG 3: Decision is:", evaluation?.decision);
 
       const isGo = evaluation.decision === 'Go';
@@ -147,7 +158,8 @@ if (typeof rawResponse === 'string') {
         ? `🎉 Great Meeting with ${vcFirm.name}!`
         : `📋 Meeting Update from ${vcFirm.name}`;
 
-      // ... (שאר הקוד של יצירת ההודעה)
+      // Build message content
+      const messageContent = `Meeting with ${vcFirm.name} is complete.\n\nScore: ${evaluation.average_score.toFixed(1)}/10\nDecision: ${evaluation.decision}\n\n${evaluation.overall_rationale}`;
       
       console.log("DEBUG 4: Attempting to create message in DB...");
       
