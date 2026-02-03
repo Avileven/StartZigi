@@ -113,12 +113,27 @@ export default function VCMeeting() {
       console.log("DEBUG 1: Sending to AI...");
       
       // רק השורה הזו משתנה:
-const { response: evaluation } = await InvokeLLM({
-    prompt: evaluationPrompt,
-    response_json_schema: { 
-        /* כאן תשאיר את כל מה שכתבת כבר, אל תשנה כלום בפנים */ 
-    }
+const { response: rawResponse } = await InvokeLLM({
+    prompt: evaluationPrompt + `\n\nReturn ONLY a valid JSON object with this exact structure, no markdown, no backticks:
+{
+  "decision": "Go" or "No-Go",
+  "evaluations": [
+    { "question_id": "...", "score": <number 1-10>, "rationale": "..." }
+  ],
+  "average_score": <number>,
+  "overall_rationale": "..."
+}`,
 });
+
+// תיקון: ה-response יכול להיות string אמו object
+let evaluation;
+if (typeof rawResponse === 'string') {
+    const cleaned = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    evaluation = JSON.parse(cleaned);
+} else {
+    evaluation = rawResponse;
+}
+
 
       console.log("DEBUG 2: AI Raw Response:", evaluation);
 
