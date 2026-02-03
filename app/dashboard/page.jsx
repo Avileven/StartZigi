@@ -992,7 +992,7 @@ if (showToS) {
                  <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2 text-gray-500 font-normal">
   <BarChart3 className="w-4 h-4" />
   <span>
-    <span>Val:</span>
+    <span>Val:F</span>
     ${currentValuation >= 1000000 
       ? Math.floor(currentValuation/1000000) + 'M' 
       : Math.floor(currentValuation/1000) + 'K'}
@@ -1015,6 +1015,7 @@ if (showToS) {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => {
+                    console.log("Check message:", message);
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
                     const isVCMeeting = message.message_type === 'vc_meeting_request';
