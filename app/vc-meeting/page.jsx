@@ -108,86 +108,31 @@ export default function VCMeeting() {
   const processEvaluation = async (finalAnswers) => {
     setIsSubmitting(true);
     try {
-      // Create evaluation prompt
-      const ventureContext = `
-        Venture: ${venture.name}
-        Description: ${venture.description}
-        Problem: ${venture.problem}
-        Solution: ${venture.solution}
-        Sector: ${venture.sector}
-      `;
+      // ... (כאן נמצא בניית ה-evaluationPrompt - נשאר אותו דבר)
 
-      const answersText = Object.entries(finalAnswers)
-        .map(([qId, data]) => `Q: ${data.question}\nA: ${data.answer}`)
-        .join('\n\n');
-
-      const evaluationPrompt = `
-        You are a VC evaluating an early-stage startup. Based on the venture context and founder answers below, score each answer 1-10 and provide brief rationale.
-
-        ${ventureContext}
-
-        FOUNDER ANSWERS:
-        ${answersText}
-
-        For each answer, provide:
-        1. Score (1-10)
-        2. Brief rationale (1-2 sentences)
-
-        Then calculate the average score and make a Go/No-Go decision:
-        - ≥7 → Go ✅
-        - <7 → No-Go ❌
-
-        Format your response as JSON with this structure:
-        {
-          "evaluations": [
-            {"question_id": "Q1", "score": 8, "rationale": "Strong insight..."},
-            {"question_id": "Q2", "score": 7, "rationale": "Good evidence..."},
-            {"question_id": "Q3", "score": 6, "rationale": "Realistic but..."}
-          ],
-          "average_score": 7.0,
-          "decision": "Go",
-          "overall_rationale": "Overall assessment..."
-        }
-      `;
-
+      console.log("DEBUG 1: Sending to AI...");
+      
       const evaluation = await InvokeLLM({
         prompt: evaluationPrompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            evaluations: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  question_id: { type: "string" },
-                  score: { type: "number" },
-                  rationale: { type: "string" }
-                }
-              }
-            },
-            average_score: { type: "number" },
-            decision: { type: "string" },
-            overall_rationale: { type: "string" }
-          }
-        }
+        response_json_schema: { /* הסכימה שלך... */ }
       });
+
+      console.log("DEBUG 2: AI Raw Response:", evaluation);
 
       setEvaluationResults(evaluation);
 
-      // Send result message to venture board
+      // בדיקה אם ה-AI באמת החזיר אובייקט עם decision
+      console.log("DEBUG 3: Decision is:", evaluation?.decision);
+
       const isGo = evaluation.decision === 'Go';
       const messageTitle = isGo 
         ? `🎉 Great Meeting with ${vcFirm.name}!`
         : `📋 Meeting Update from ${vcFirm.name}`;
 
-      let messageContent = '';
-      if (isGo) {
-        messageContent = `We are happy to update you that we find your venture very attractive and would like to proceed to the next stage. Before we proceed, we need to better understand your financial projections. Please fill in the budget.`;
-      } else {
-        messageContent = `Thank you for taking the time to meet with us. After careful consideration, we have decided not to move forward with your venture at this time. We wish you the best of luck with your entrepreneurial journey.`;
-      }
-
+      // ... (שאר הקוד של יצירת ההודעה)
+      
+      console.log("DEBUG 4: Attempting to create message in DB...");
+      
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: 'system',
@@ -199,10 +144,11 @@ export default function VCMeeting() {
         vc_stage: isGo ? 'stage_3_ready' : 'stage_2_complete'
       });
 
+      console.log("DEBUG 5: Message created successfully!");
       setMeetingComplete(true);
 
     } catch (error) {
-      console.error('Error processing evaluation:', error);
+      console.error('DEBUG ERROR:', error);
       alert('Error processing evaluation. Please try again.');
     }
     setIsSubmitting(false);
