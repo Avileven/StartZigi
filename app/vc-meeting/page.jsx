@@ -112,10 +112,13 @@ export default function VCMeeting() {
 
       console.log("DEBUG 1: Sending to AI...");
       
-      const evaluation = await InvokeLLM({
-        prompt: evaluationPrompt,
-        response_json_schema: { /* הסכימה שלך... */ }
-      });
+      // רק השורה הזו משתנה:
+const { response: evaluation } = await InvokeLLM({
+    prompt: evaluationPrompt,
+    response_json_schema: { 
+        /* כאן תשאיר את כל מה שכתבת כבר, אל תשנה כלום בפנים */ 
+    }
+});
 
       console.log("DEBUG 2: AI Raw Response:", evaluation);
 
