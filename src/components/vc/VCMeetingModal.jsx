@@ -1,4 +1,4 @@
-
+// VCmeetingModal4226
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
@@ -144,15 +144,18 @@ Overall Score: [numerical score 0.0-10.0]
 Overall Decision: [Go/No-Go]
 Reasoning: [2-3 sentences about their overall performance in answering questions]`;
 
-            const evaluation = await InvokeLLM({ 
+            const result = await InvokeLLM({ 
               prompt: evaluationPrompt
             });
 
+            // Extract the text response
+            const evaluationText = result.response;
+
             // Extract numerical score from evaluation
-            const scoreMatch = evaluation.match(/Overall Score:\s*(\d+(?:\.\d+)?)/);
+            const scoreMatch = evaluationText.match(/Overall Score:\s*(\d+(?:\.\d+)?)/);
             const ventureScreeningScore = scoreMatch ? parseFloat(scoreMatch[1]) : 7.0; // default fallback
 
-            const isGo = evaluation.includes('Overall Decision: Go');
+            const isGo = evaluationText.includes('Overall Decision: Go');
             
             if (messageId) {
               await VentureMessage.update(messageId, { is_dismissed: true });
@@ -187,7 +190,7 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
                 vc_firm_id: vcFirm.id,
                 vc_firm_name: vcFirm.name,
                 vc_stage: 'stage_2_rejected',
-                rejection_details: evaluation
+                rejection_details: evaluationText
               });
             }
 

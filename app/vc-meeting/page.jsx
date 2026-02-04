@@ -135,20 +135,11 @@ Return ONLY valid JSON, no markdown, no backticks:
 
       console.log("DEBUG 1: Sending to AI...");
 
-      
-console.log("=== BEFORE InvokeLLM ===");
-const llmResult = await InvokeLLM({
-  prompt: evaluationPrompt,
-});
-console.log("=== AFTER InvokeLLM ===");
-console.log("Full result:", llmResult);
-console.log("Type of result:", typeof llmResult);
-console.log("Result.response:", llmResult.response);
-console.log("Type of result.response:", typeof llmResult.response);
+      const result = await InvokeLLM({
+        prompt: evaluationPrompt,
+      });
 
-const rawResponse = llmResult.response;
-
-
+      const rawResponse = result.response;
 
       // Parse safely - could be string or object
       let evaluation;
