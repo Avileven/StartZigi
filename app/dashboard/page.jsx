@@ -1019,7 +1019,8 @@ if (showToS) {
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
                     const isVCMeeting = message.message_type === 'vc_meeting_request' || message.vc_stage === 'stage_2_ready';
-                    const isVCAdvancedMeeting = message.message_type === 'vc_advanced_meeting_request';
+                   const isVCAdvancedMeeting = message.message_type === 'vc_advanced_meeting_request' || message.vc_stage === 'stage_3_ready';
+
                     const isFeedbackRequest = message.message_type === 'feedback_request';
                     const isPromotion = message.message_type === 'promotion';
                     const isSystem = message.message_type === 'system' || message.message_type === 'phase_complete' || message.message_type === 'phase_welcome';
