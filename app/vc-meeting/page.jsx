@@ -139,18 +139,30 @@ Return ONLY valid JSON, no markdown, no backticks:
         prompt: evaluationPrompt,
       });
 
+      console.log("=== AI FULL RESULT ===");
+      console.log(result);
+
       const rawResponse = result.response;
+      
+      console.log("=== AI RAW RESPONSE (string) ===");
+      console.log(rawResponse);
 
       // Parse safely - could be string or object
       let evaluation;
       if (typeof rawResponse === 'string') {
         const cleaned = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        console.log("=== CLEANED JSON STRING ===");
+        console.log(cleaned);
         evaluation = JSON.parse(cleaned);
       } else {
         evaluation = rawResponse;
       }
 
-      console.log("DEBUG 2: AI Raw Response:", evaluation);
+      console.log("=== PARSED EVALUATION OBJECT ===");
+      console.log(evaluation);
+      console.log("Decision:", evaluation.decision);
+      console.log("Average Score:", evaluation.average_score);
+      console.log("Evaluations:", evaluation.evaluations);
 
       setEvaluationResults(evaluation);
 

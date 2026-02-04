@@ -1,4 +1,4 @@
-// VCmeetingModal4226
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
@@ -148,14 +148,29 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
               prompt: evaluationPrompt
             });
 
+            console.log("=== AI FULL RESULT ===");
+            console.log(result);
+            
             // Extract the text response
             const evaluationText = result.response;
+            
+            console.log("=== AI TEXT RESPONSE ===");
+            console.log(evaluationText);
 
             // Extract numerical score from evaluation
             const scoreMatch = evaluationText.match(/Overall Score:\s*(\d+(?:\.\d+)?)/);
-            const ventureScreeningScore = scoreMatch ? parseFloat(scoreMatch[1]) : 7.0; // default fallback
+            console.log("=== SCORE MATCH ===");
+            console.log("Match result:", scoreMatch);
+            console.log("Extracted score:", scoreMatch ? scoreMatch[1] : "NOT FOUND");
+            
+            const ventureScreeningScore = scoreMatch ? parseFloat(scoreMatch[1]) : 7.0;
+            console.log("=== FINAL VENTURE SCORE ===");
+            console.log(ventureScreeningScore);
 
             const isGo = evaluationText.includes('Overall Decision: Go');
+            console.log("=== GO/NO-GO DECISION ===");
+            console.log("Is Go?", isGo);
+            console.log("Search text:", evaluationText.includes('Overall Decision: Go') ? "FOUND 'Overall Decision: Go'" : "NOT FOUND");
             
             if (messageId) {
               await VentureMessage.update(messageId, { is_dismissed: true });
