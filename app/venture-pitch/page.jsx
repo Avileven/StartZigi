@@ -1,4 +1,4 @@
-// venture-pitch 4126
+// venture-pitch 5126
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Venture } from '@/api/entities';
@@ -155,7 +155,8 @@ export default function VenturePitchPage() {
         return <div className="p-8">Create a venture to build your pitch deck.</div>;
     }
     
-    const isComplete = venture.pitch_created;
+    // Allow editing even if pitch was previously finalized
+    const isComplete = false;
 
     return (
         <>
