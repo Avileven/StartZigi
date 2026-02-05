@@ -1,19 +1,20 @@
+// venture-pitch 4126
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Venture } from '@/api/entities.js';
-import { User } from '@/api/entities.js';
-import { VentureMessage } from '@/api/entities.js';
-import { businessPlan } from '@/api/entities.js';
+import { Venture } from '@/api/entities';
+import { User } from '@/api/entities';
+import { VentureMessage } from '@/api/entities';
+import { businessPlan as businessPlanEntity } from "@/api/entities";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
-import { Input } from '@/components/ui/input.jsx';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Lightbulb, Target, Users, TrendingUp, CheckCircle, Eye, HandCoins } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
-import MentorButton from '@/components/mentor/MentorButton.jsx';
+import MentorButton from '@/components/mentor/MentorButton';
 import MentorModal from '@/components/mentor/MentorModal';
 
 export default function VenturePitchPage() {
@@ -47,18 +48,18 @@ export default function VenturePitchPage() {
                 const currentVenture = ventures[0];
                 setVenture(currentVenture);
                 
-                const businessPlans = await businessPlan.filter({ venture_id: currentVenture.id });
-                const businessPlan = businessPlans.length > 0 ? businessPlans[0] : null;
+                const businessPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
+                const currentBusinessPlan = businessPlans.length > 0 ? businessPlans[0] : null;
 
                 setPitchData(prev => ({
                     ...prev,
                     ...(currentVenture.pitch_data || {}),
                     problem: currentVenture.pitch_data?.problem || currentVenture.problem || '',
                     solution: currentVenture.pitch_data?.solution || currentVenture.solution || '',
-                    market: currentVenture.pitch_data?.market || businessPlan?.market_size || '',
-                    team: currentVenture.pitch_data?.team || businessPlan?.entrepreneur_background || '',
+                    market: currentVenture.pitch_data?.market || currentBusinessPlan?.market_size || '',
+                    team: currentVenture.pitch_data?.team || currentBusinessPlan?.entrepreneur_background || '',
                     vision: currentVenture.pitch_data?.vision || '',
-                    the_ask: currentVenture.pitch_data?.the_ask || businessPlan?.funding_requirements || '',
+                    the_ask: currentVenture.pitch_data?.the_ask || currentBusinessPlan?.funding_requirements || '',
                 }));
             }
         } catch (error) {
