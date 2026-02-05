@@ -1,7 +1,7 @@
-//createVenture 1526
+//createVenture - Updated with Ideas Bank integration
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
-import { Lightbulb, Rocket, ArrowRight, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 
 const SECTORS = [
   { value: "ai_deep_tech", label: "AI / Deep Tech" },
@@ -22,22 +22,25 @@ const SECTORS = [
   { value: "web3_blockchain", label: "Web3 / Blockchain" }
 ];
 
-export default function CreateVenture() {
+function CreateVentureForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // ✅ קריאת פרמטרים מה-URL ואתחול ventureData
   const [ventureData, setVentureData] = useState({
-    name: "",
-    description: "",
-    problem: "",
-    solution: "",
-    sector: ""
+    name: searchParams.get('name') || "",
+    description: searchParams.get('description') || "",
+    problem: searchParams.get('problem') || "",
+    solution: searchParams.get('solution') || "",
+    sector: searchParams.get('sector') || ""
   });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [errorMessage, setErrorMessage] = useState(""); // ✅ הוספתי state לשגיאה
-  const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (field, value) => {
     setVentureData(prev => ({ ...prev, [field]: value }));
-    // ✅ נקה שגיאה כשהמשתמש משנה את השם
     if (field === "name" && errorMessage.includes("name")) {
       setErrorMessage("");
     }
@@ -45,7 +48,7 @@ export default function CreateVenture() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // ✅ נקה שגיאות קודמות
+    setErrorMessage("");
     
     if (step < 3) {
       setStep(step + 1);
@@ -60,7 +63,7 @@ export default function CreateVenture() {
           throw new Error("User not authenticated or user data missing.");
       }
 
-      // ✅ בדיקה אם השם כבר קיים לפני היצירה
+      // בדיקה אם השם כבר קיים
       const { data: existingVentures, error: checkError } = await supabase
         .from('ventures')
         .select('id')
@@ -72,7 +75,7 @@ export default function CreateVenture() {
       if (existingVentures && existingVentures.length > 0) {
         setErrorMessage(`The venture name "${ventureData.name}" is already taken. Please choose a different name.`);
         setIsLoading(false);
-        setStep(1); // ✅ חזור לשלב הראשון כדי שהמשתמש יוכל לשנות את השם
+        setStep(1);
         return;
       }
       
@@ -82,45 +85,40 @@ export default function CreateVenture() {
       const statusScore = 80;
       const totalScore = (teamScore + opportunityScore + statusScore) / 3;
 
-     
-const venturePayload = {
-  name: ventureData.name,
-  description: ventureData.description,
-  problem: ventureData.problem,
-  solution: ventureData.solution,
-  sector: ventureData.sector,
+      const venturePayload = {
+        name: ventureData.name,
+        description: ventureData.description,
+        problem: ventureData.problem,
+        solution: ventureData.solution,
+        sector: ventureData.sector,
 
-  team_score: teamScore,
-  opportunity_score: opportunityScore,
-  status_score: statusScore,
-  total_score: totalScore,
+        team_score: teamScore,
+        opportunity_score: opportunityScore,
+        status_score: statusScore,
+        total_score: totalScore,
 
-  phase: "business_plan",
-  virtual_capital: 0,
-  monthly_burn_rate: 0,
+        phase: "business_plan",
+        virtual_capital: 0,
+        monthly_burn_rate: 0,
 
-  // ✅ קריטי ל-RLS: המשתמש חייב להיות בתוך founder_user_ids
-  founder_user_ids: [String(user.id)],
-  founders_count: 1,
+        founder_user_ids: [String(user.id)],
+        founders_count: 1,
 
-  likes_count: 0,
-  messages_count: 0,
-  business_plan_completion: 0,
-  mvp_uploaded: false,
-  revenue_model_completed: false,
-  mlp_completed: false,
-  mlp_development_completed: false,
-  pitch_created: false,
-  funding_plan_completed: false,
-  mvp_feedback_count: 0,
-  pressure_challenge_completed: false,
+        likes_count: 0,
+        messages_count: 0,
+        business_plan_completion: 0,
+        mvp_uploaded: false,
+        revenue_model_completed: false,
+        mlp_completed: false,
+        mlp_development_completed: false,
+        pitch_created: false,
+        funding_plan_completed: false,
+        mvp_feedback_count: 0,
+        pressure_challenge_completed: false,
 
-  created_by: user.email,
-  created_by_id: String(user.id),
-};
-
-
-
+        created_by: user.email,
+        created_by_id: String(user.id),
+      };
 
       const { data: newVentures, error: ventureCreateError } = await supabase
         .from('ventures')
@@ -128,9 +126,8 @@ const venturePayload = {
         .select()
         .single();
 
-      // ✅ טיפול בשגיאת unique constraint מ-Supabase
       if (ventureCreateError) {
-        if (ventureCreateError.code === '23505') { // PostgreSQL unique violation code
+        if (ventureCreateError.code === '23505') {
           setErrorMessage(`The venture name "${ventureData.name}" is already taken. Please choose a different name.`);
           setStep(1);
           setIsLoading(false);
@@ -312,36 +309,29 @@ const venturePayload = {
               <p className="text-gray-600">Select the sector that best describes your venture.</p>
             </div>
 
-         
-<div>
-  <Label htmlFor="sector">Industry Sector *</Label>
+            <div>
+              <Label htmlFor="sector">Industry Sector *</Label>
+              <Select
+                value={ventureData.sector}
+                onValueChange={(value) => handleChange("sector", value)}
+              >
+                <SelectTrigger className="bg-white border border-gray-300">
+                  <SelectValue placeholder="Select your industry sector" />
+                </SelectTrigger>
 
-  <Select
-    value={ventureData.sector}
-    onValueChange={(value) => handleChange("sector", value)}
-  >
-    <SelectTrigger className="bg-white border border-gray-300">
-      <SelectValue placeholder="Select your industry sector" />
-    </SelectTrigger>
-
-    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-      {SECTORS.map((sector) => (
-        <SelectItem
-          key={sector.value}
-          value={sector.value}
-          className="cursor-pointer hover:bg-indigo-50 hover:text-indigo-900 focus:bg-indigo-50 focus:text-indigo-900"
-        >
-          {sector.label}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-</div>
-
-
-
-
-
+                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                  {SECTORS.map((sector) => (
+                    <SelectItem
+                      key={sector.value}
+                      value={sector.value}
+                      className="cursor-pointer hover:bg-indigo-50 hover:text-indigo-900 focus:bg-indigo-50 focus:text-indigo-900"
+                    >
+                      {sector.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-semibold text-blue-900 mb-2">Ready to Launch!</h3>
@@ -358,6 +348,34 @@ const venturePayload = {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
+        {/* ✅ הודעה וכפתור לבנק הרעיונות - מוצג רק בשלב 1 וכשאין נתונים מה-URL */}
+        {step === 1 && !searchParams.get('name') && (
+          <Card className="mb-6 border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Don't have an idea yet?
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Let us help you choose from our existing ideas bank. Browse through curated startup concepts and get started quickly!
+                  </p>
+                  <Button 
+                    onClick={() => router.push('/ideas-bank')}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Lightbulb className="w-4 h-4 mr-2" />
+                    Browse Ideas Bank
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             {[1, 2, 3].map((num) => (
@@ -378,7 +396,6 @@ const venturePayload = {
           </p>
         </div>
 
-        {/* ✅ הצגת הודעת שגיאה */}
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -427,5 +444,21 @@ const venturePayload = {
         </Card>
       </div>
     </div>
+  );
+}
+
+// ✅ עטיפה ב-Suspense - דרישת Next.js עבור useSearchParams
+export default function CreateVenture() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Lightbulb className="w-12 h-12 text-indigo-600 animate-pulse mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CreateVentureForm />
+    </Suspense>
   );
 }
