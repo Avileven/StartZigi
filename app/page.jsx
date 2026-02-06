@@ -1,4 +1,4 @@
-// v 020226 with how-it-work link
+// v 020226 with glass design - Blue hero with AnimatedBg
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -73,7 +73,6 @@ export default function Home() {
       `}</style>
 
       {/* Navigation */}
-      {/* סרגל ניווט מעודכן */}
 <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-20">
@@ -81,7 +80,7 @@ export default function Home() {
       {/* לוגו - צד שמאל */}
       <div className="flex-shrink-0">
         <Link href="/">
-          <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
             StartZig
           </span>
         </Link>
@@ -164,15 +163,11 @@ export default function Home() {
             <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full">
               <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Go to dashboard</button>
             </Link>
-            <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="w-full text-white bg-gray-800 py-3 rounded-md font-medium">
-              Logout
-            </button>
+            <button onClick={handleLogout} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Logout</button>
           </>
         ) : (
           <>
-            <button onClick={() => { handleLogin(); setIsMenuOpen(false); }} className="w-full text-white bg-gray-800 py-3 rounded-md font-medium">
-              Login
-            </button>
+            <button onClick={handleLogin} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Login</button>
             <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full">
               <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Sign Up</button>
             </Link>
@@ -183,149 +178,163 @@ export default function Home() {
   )}
 </nav>
 
-      {/* Hero Section */}
-      <div className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center">
+      {/* Hero Section - BLUE BACKGROUND WITH ANIMATEDBG */}
+      <div className="relative isolate overflow-hidden min-h-screen flex items-center justify-center">
+        {/* Blue Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-blue-700 to-indigo-800"></div>
+        
         <AnimatedBg />
-        <div className="relative text-center z-10 p-4">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl animate-slideUp">
-            Don't just start up.{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-              StartZig
-            </span>
-            .
-          </h1>
-          <p
-            className="mt-6 text-xl leading-8 text-indigo-100 animate-slideUp max-w-3xl mx-auto"
-            style={{ animationDelay: "0.2s" }}
-          >
-            A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
-          </p>
-          <div
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp"
-            style={{ animationDelay: "0.4s" }}
-          >
-            {user ? (
-              hasVenture ? (
-                <Link href="/dashboard">
+        
+        {/* Glass Container */}
+        <div className="relative z-10 max-w-5xl mx-auto px-6">
+          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12 shadow-2xl">
+            <div className="text-center">
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 animate-slideUp">
+                Don't just start up.{" "}
+                <span className="bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">
+                  StartZig
+                </span>
+                .
+              </h1>
+              <p
+                className="text-xl md:text-2xl leading-relaxed text-white/90 animate-slideUp max-w-3xl mx-auto mb-10"
+                style={{ animationDelay: "0.2s" }}
+              >
+                A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
+              </p>
+              <div
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideUp"
+                style={{ animationDelay: "0.4s" }}
+              >
+                {user ? (
+                  hasVenture ? (
+                    <Link href="/dashboard">
+                      <Button
+                        size="lg"
+                        className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/30 shadow-lg transition-all"
+                      >
+                        Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/createventure">
+                      <Button
+                        size="lg"
+                        className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/30 shadow-lg transition-all"
+                      >
+                        Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )
+                ) : (
+                  <Button
+                    onClick={handleLogin}
+                    size="lg"
+                    className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/30 shadow-lg transition-all"
+                  >
+                    Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+                
+                <a href="/how-it-works.html" target="_blank">
                   <Button
                     size="lg"
-                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
+                    variant="outline"
+                    className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg transition-all"
                   >
-                    Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    See How It Works
                   </Button>
-                </Link>
-              ) : (
-                <Link href="/createventure">
-                  <Button
-                    size="lg"
-                    className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
-                  >
-                    Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              )
-            ) : (
-              <Button
-                onClick={handleLogin}
-                size="lg"
-                className="bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg"
-              >
-                Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            )}
-            
-            <a href="/how-it-works.html" target="_blank">
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm shadow-lg"
-              >
-                <PlayCircle className="w-4 h-4 mr-2" />
-                See How It Works
-              </Button>
-            </a>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div id="benefits" className="bg-gray-800/50 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+
+      {/* Benefits Section - GLASS STYLE */}
+      <div id="benefits" className="relative py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 to-indigo-900/40"></div>
+        <div className="absolute inset-0 backdrop-blur-sm"></div>
+        
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-400">
+            <h2 className="text-base font-semibold leading-7 text-blue-300">
               Why StartZig?
             </h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Your Entrepreneurial Flight Simulator
             </p>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
+            <p className="mt-6 text-lg leading-8 text-gray-200">
               Practice makes perfect. We provide the tools and environment to
               hone your skills before you take the real-world plunge.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-none">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-blue-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-blue-400/30">
+                    <ShieldCheck className="w-6 h-6 text-blue-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Test Without Risk</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Test Without Risk</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
                 </p>
               </div>
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <BookOpen className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-indigo-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-indigo-400/30">
+                    <BookOpen className="w-6 h-6 text-indigo-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Learn from the Best</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Learn from the Best</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
                 </p>
               </div>
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <BarChart3 className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-purple-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-purple-400/30">
+                    <BarChart3 className="w-6 h-6 text-purple-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Build Real Skills</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Build Real Skills</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   From business planning and MVP development to fundraising, you'll go through the startup lifecycle and gain practical, hands-on experience.
                 </p>
               </div>
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <DollarSign className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-pink-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-pink-400/30">
+                    <DollarSign className="w-6 h-6 text-pink-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Secure Simulated Funding</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Secure Simulated Funding</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel growth.
                 </p>
               </div>
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <Users className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-emerald-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-emerald-400/30">
+                    <Users className="w-6 h-6 text-emerald-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Join a Thriving Community</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Join a Thriving Community</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   Connect with other founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
                 </p>
               </div>
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 hover:border-indigo-500 transition-colors">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/15 transition-all hover:scale-105 duration-300 shadow-xl">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center shrink-0">
-                    <Network className="w-5 h-5 text-indigo-400" />
+                  <div className="w-12 h-12 bg-cyan-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-cyan-400/30">
+                    <Network className="w-6 h-6 text-cyan-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-white pt-1">Grow Your Network</h3>
+                  <h3 className="text-xl font-bold text-white pt-2">Grow Your Network</h3>
                 </div>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-200 leading-relaxed">
                   Practice networking and build relationships in a simulated environment, preparing you for real-world meetings.
                 </p>
               </div>
@@ -333,9 +342,13 @@ export default function Home() {
           </div>
         </div>
       </div>
-      {/* [2026-01-13] ADD/UPDATE: "Who can benefit" section (no "For", light-blue background, extra lines requested) */}
-      <div className="bg-gradient-to-b from-indigo-900/40 to-gray-900 py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+
+      {/* Who can benefit Section - GLASS STYLE */}
+      <div className="relative py-20 sm:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/40 to-blue-900/40"></div>
+        <div className="absolute inset-0 backdrop-blur-sm"></div>
+        
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
               Who can benefit from StartZig?
@@ -345,110 +358,108 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-emerald-500 transition-colors">
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:bg-white/15 hover:border-emerald-400/50 transition-all hover:scale-105 duration-300 shadow-xl">
               <div className="flex items-start gap-4 mb-3">
-                <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Target className="w-5 h-5 text-emerald-400" />
+                <div className="w-12 h-12 bg-emerald-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-emerald-400/30">
+                  <Target className="w-6 h-6 text-emerald-300" />
                 </div>
                 <h3 className="text-lg font-bold text-white pt-1">Experience the Startup World</h3>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-200 leading-relaxed">
                 Build ventures just like in the real world. Experience the full startup lifecycle from ideation to exit. Learn what it takes to grow a company, manage burn rate, and reach that sweet exit moment.
               </p>
             </div>
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-purple-500 transition-colors">
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:bg-white/15 hover:border-purple-400/50 transition-all hover:scale-105 duration-300 shadow-xl">
               <div className="flex items-start gap-4 mb-3">
-                <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Lightbulb className="w-5 h-5 text-purple-400" />
+                <div className="w-12 h-12 bg-purple-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-purple-400/30">
+                  <Lightbulb className="w-6 h-6 text-purple-300" />
                 </div>
                 <h3 className="text-lg font-bold text-white pt-1">Entrepreneurs with an Idea</h3>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-200 leading-relaxed">
                 Test, refine, and validate your concept before investing time and money. Experiment with different business models, pitch to AI investors, and pivot without real-world consequences. Expose your venture to the community, get feedback, and find potential early users.
               </p>
             </div>
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors">
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:bg-white/15 hover:border-blue-400/50 transition-all hover:scale-105 duration-300 shadow-xl">
               <div className="flex items-start gap-4 mb-3">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
-                  <BookOpen className="w-5 h-5 text-blue-400" />
+                <div className="w-12 h-12 bg-blue-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-blue-400/30">
+                  <BookOpen className="w-6 h-6 text-blue-300" />
                 </div>
                 <h3 className="text-lg font-bold text-white pt-1">Students & Learners</h3>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-200 leading-relaxed">
                 Turn theory into practice. Experience how startups evolve through real stages—from MVP to scaling. Build your resume with hands-on entrepreneurial experience before graduation.
               </p>
             </div>
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-amber-500 transition-colors">
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 hover:bg-white/15 hover:border-amber-400/50 transition-all hover:scale-105 duration-300 shadow-xl">
               <div className="flex items-start gap-4 mb-3">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Users className="w-5 h-5 text-amber-400" />
+                <div className="w-12 h-12 bg-amber-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-amber-400/30">
+                  <Users className="w-6 h-6 text-amber-300" />
                 </div>
                 <h3 className="text-lg font-bold text-white pt-1">Mentors, Instructors & Programs</h3>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-200 leading-relaxed">
                 The perfect platform for accelerators, incubators, and academic programs. Give your students a safe environment to practice entrepreneurship with real feedback loops.
               </p>
             </div>
           </div>
         </div>
       </div>
-      {/* [2026-01-13] REMOVE: How It Works Section (entire section deleted) */}
-      {/*
-      <div className="py-24 sm:py-32">
-        ...
-      </div>
-      */}
-      {/* [2026-01-13] UPDATE: Featured Ventures FULL WIDTH, 3 stacked, links to /public HTML demos with .html */}
-      <div className="bg-gray-800/50 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+
+      {/* Featured Ventures Section - GLASS STYLE */}
+      <div className="relative py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 to-indigo-900/40"></div>
+        <div className="absolute inset-0 backdrop-blur-sm"></div>
+        
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-10 text-center lg:text-left">
             Featured Venture Demos
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-purple-900/50 to-gray-800 border border-purple-500/30 rounded-xl p-6 hover:border-purple-400 transition-all cursor-pointer group">
+            <div className="bg-white/10 backdrop-blur-lg border border-purple-400/30 rounded-2xl p-6 hover:bg-white/15 hover:border-purple-400/60 transition-all hover:scale-105 duration-300 shadow-xl cursor-pointer group">
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-4xl">📱</div>
-                <h3 className="text-xl font-bold group-hover:text-purple-400 transition-colors">ShelfSense</h3>
+                <h3 className="text-xl font-bold group-hover:text-purple-300 transition-colors">ShelfSense</h3>
               </div>
-              <p className="text-sm text-gray-400 mb-4">Smart retail shelf intelligence platform</p>
+              <p className="text-sm text-gray-200 mb-4">Smart retail shelf intelligence platform</p>
               <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Retail Tech</span>
-                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$2M Raised</span>
+                <span className="px-2 py-1 bg-purple-500/30 text-purple-200 rounded backdrop-blur-sm">Retail Tech</span>
+                <span className="px-2 py-1 bg-white/20 text-gray-200 rounded backdrop-blur-sm">$2M Raised</span>
               </div>
               <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-sm">
+                <Button className="w-full bg-purple-600/80 backdrop-blur-sm hover:bg-purple-600 text-sm border border-purple-400/30">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
-            <div className="bg-gradient-to-br from-emerald-900/50 to-gray-800 border border-emerald-500/30 rounded-xl p-6 hover:border-emerald-400 transition-all cursor-pointer group">
+            <div className="bg-white/10 backdrop-blur-lg border border-emerald-400/30 rounded-2xl p-6 hover:bg-white/15 hover:border-emerald-400/60 transition-all hover:scale-105 duration-300 shadow-xl cursor-pointer group">
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-4xl">🚭</div>
-                <h3 className="text-xl font-bold group-hover:text-emerald-400 transition-colors">Smokefree</h3>
+                <h3 className="text-xl font-bold group-hover:text-emerald-300 transition-colors">Smokefree</h3>
               </div>
-              <p className="text-sm text-gray-400 mb-4">Quit-smoking journey app</p>
+              <p className="text-sm text-gray-200 mb-4">Quit-smoking journey app</p>
               <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded">Health</span>
-                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$1.5M Raised</span>
+                <span className="px-2 py-1 bg-emerald-500/30 text-emerald-200 rounded backdrop-blur-sm">Health</span>
+                <span className="px-2 py-1 bg-white/20 text-gray-200 rounded backdrop-blur-sm">$1.5M Raised</span>
               </div>
               <Link href="/smokefree-demo.html" target="_blank">
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm">
+                <Button className="w-full bg-emerald-600/80 backdrop-blur-sm hover:bg-emerald-600 text-sm border border-emerald-400/30">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
-            <div className="bg-gradient-to-br from-blue-900/50 to-gray-800 border border-blue-500/30 rounded-xl p-6 hover:border-blue-400 transition-all cursor-pointer group">
+            <div className="bg-white/10 backdrop-blur-lg border border-blue-400/30 rounded-2xl p-6 hover:bg-white/15 hover:border-blue-400/60 transition-all hover:scale-105 duration-300 shadow-xl cursor-pointer group">
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-4xl">🏙️</div>
-                <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors">UrbanPulse</h3>
+                <h3 className="text-xl font-bold group-hover:text-blue-300 transition-colors">UrbanPulse</h3>
               </div>
-              <p className="text-sm text-gray-400 mb-4">City insights platform</p>
+              <p className="text-sm text-gray-200 mb-4">City insights platform</p>
               <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">Smart City</span>
-                <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded">$5M Raised</span>
+                <span className="px-2 py-1 bg-blue-500/30 text-blue-200 rounded backdrop-blur-sm">Smart City</span>
+                <span className="px-2 py-1 bg-white/20 text-gray-200 rounded backdrop-blur-sm">$5M Raised</span>
               </div>
               <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm">
+                <Button className="w-full bg-blue-600/80 backdrop-blur-sm hover:bg-blue-600 text-sm border border-blue-400/30">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
@@ -456,7 +467,7 @@ export default function Home() {
           </div>
           <div className="mt-12 text-center">
             <Link href="/register">
-              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
+              <Button size="lg" className="bg-white/20 backdrop-blur-lg hover:bg-white/30 border border-white/30 transition-all shadow-xl">
                 Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -468,4 +479,3 @@ export default function Home() {
     </div>
   );
 }
-
