@@ -1,10 +1,17 @@
 import React from 'react';
 
-export default function AnimatedBg() {
+export default function StartupDramaBg() {
   const ventures = [
-    "FinFlow", "NeuralLogic", "EcoGrid", "AI-Core", 
-    "HealthLink", "SecureNet", "CloudWise", "BioMatch", 
-    "SmartLog", "Nexus"
+    { name: "FinFlow", status: "fail" },
+    { name: "NeuralLogic", status: "winner" }, // השורד
+    { name: "EcoGrid", status: "fail" },
+    { name: "AI-Core", status: "fail" },
+    { name: "HealthLink", status: "fail" },
+    { name: "SecureNet", status: "winner" }, // השורד
+    { name: "CloudWise", status: "fail" },
+    { name: "BioMatch", status: "fail" },
+    { name: "SmartLog", status: "fail" },
+    { name: "Nexus", status: "fail" }
   ];
 
   return (
@@ -12,21 +19,14 @@ export default function AnimatedBg() {
       <style>{`
         .bg-animation {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            z-index: 0;
-            margin: 0;
-            padding: 0;
+            background: #0f0c29; /* רקע כהה ויוקרתי */
         }
 
         .bg-animation li {
             position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             list-style: none;
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(4px);
@@ -36,39 +36,48 @@ export default function AnimatedBg() {
             border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 600;
-            white-space: nowrap;
-            
-            /* רץ פעם אחת בלבד למשך 10 שניות ונעצר בסוף */
-            animation: startzig-once 10s ease-in-out forwards;
             bottom: -100px;
             opacity: 0;
         }
 
-        @keyframes startzig-once {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            15% { opacity: 1; }
-            30% { transform: translateY(-300px) translateX(50px); }
-            50% { transform: translateY(-200px) translateX(-30px); } /* ירידה בזיגזג */
-            70% { transform: translateY(-600px) translateX(40px); opacity: 1; }
-            100% { transform: translateY(-1200px) translateX(0); opacity: 0; } /* נעלם למעלה */
+        /* אנימציה למצליחים - עולים עד הסוף */
+        .winner {
+            animation: reach-top 12s ease-in-out forwards;
         }
 
-        /* פיזור התחלתי שונה לכל אחד */
-        .bg-animation li:nth-child(1) { left: 10%; animation-delay: 0.1s; }
-        .bg-animation li:nth-child(2) { left: 25%; animation-delay: 0.5s; }
-        .bg-animation li:nth-child(3) { left: 45%; animation-delay: 0.2s; }
-        .bg-animation li:nth-child(4) { left: 70%; animation-delay: 0.8s; }
-        .bg-animation li:nth-child(5) { left: 85%; animation-delay: 0.3s; }
-        .bg-animation li:nth-child(6) { left: 15%; animation-delay: 1.2s; }
-        .bg-animation li:nth-child(7) { left: 55%; animation-delay: 0.4s; }
-        .bg-animation li:nth-child(8) { left: 35%; animation-delay: 1.5s; }
-        .bg-animation li:nth-child(9) { left: 80%; animation-delay: 0.6s; }
-        .bg-animation li:nth-child(10) { left: 65%; animation-delay: 0.9s; }
+        /* אנימציה לנופלים - עולים וצונחים */
+        .fail {
+            animation: crash-down 8s ease-in-out forwards;
+        }
+
+        @keyframes reach-top {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            30% { transform: translateY(-300px) translateX(40px); }
+            60% { transform: translateY(-600px) translateX(-30px); }
+            100% { transform: translateY(-1200px) translateX(20px); opacity: 0; }
+        }
+
+        @keyframes crash-down {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            15% { opacity: 1; }
+            40% { transform: translateY(-400px) translateX(-50px); } /* מגיע לשיא */
+            55% { transform: translateY(-380px) translateX(-60px) rotate(10deg); } /* גמגום קטן */
+            100% { transform: translateY(200px) translateX(-80px) rotate(45deg); opacity: 0; } /* צניחה חופשית */
+        }
+
+        /* פיזור אקראי על המסך */
+        ${ventures.map((_, i) => `
+          .bg-animation li:nth-child(${i + 1}) { 
+            left: ${Math.random() * 80 + 5}%; 
+            animation-delay: ${i * 0.8}s; 
+          }
+        `).join('')}
       `}</style>
       
       <ul className="bg-animation">
-        {ventures.map((name, i) => (
-          <li key={i}>{name}</li>
+        {ventures.map((v, i) => (
+          <li key={i} className={v.status}>{v.name}</li>
         ))}
       </ul>
     </>
