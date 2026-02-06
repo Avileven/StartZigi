@@ -38,34 +38,32 @@ export default function AnimatedBg() {
             font-weight: 600;
             white-space: nowrap;
             
-            /* אנימציית STARTZIG */
-            animation: startzig 30s ease-in-out infinite;
+            /* רץ פעם אחת בלבד למשך 10 שניות ונעצר בסוף */
+            animation: startzig-once 10s ease-in-out forwards;
             bottom: -100px;
+            opacity: 0;
         }
 
-        /* הגדרת נקודות הציפה - עולה, יורד, זז הצידה */
-        @keyframes startzig {
+        @keyframes startzig-once {
             0% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            25% { transform: translateY(-250px) translateX(60px); }    /* עליה וימינה */
-            40% { transform: translateY(-180px) translateX(-40px); }   /* ירידה קלה ושמאלה */
-            60% { transform: translateY(-500px) translateX(80px); }    /* עליה חדה וימינה */
-            75% { transform: translateY(-450px) translateX(-20px); }   /* עוד ירידה קטנה */
-            90% { opacity: 1; }
-            100% { transform: translateY(-1100px) translateX(0); opacity: 0; } /* יציאה מלמעלה */
+            15% { opacity: 1; }
+            30% { transform: translateY(-300px) translateX(50px); }
+            50% { transform: translateY(-200px) translateX(-30px); } /* ירידה בזיגזג */
+            70% { transform: translateY(-600px) translateX(40px); opacity: 1; }
+            100% { transform: translateY(-1200px) translateX(0); opacity: 0; } /* נעלם למעלה */
         }
 
-        /* פיזור וזמנים שונים כדי שלא יזוזו כגוש אחד */
-        .bg-animation li:nth-child(1) { left: 10%; animation-delay: 0s; }
-        .bg-animation li:nth-child(2) { left: 25%; animation-delay: 5s; animation-duration: 35s; }
-        .bg-animation li:nth-child(3) { left: 45%; animation-delay: 2s; }
-        .bg-animation li:nth-child(4) { left: 70%; animation-delay: 8s; animation-duration: 40s; }
-        .bg-animation li:nth-child(5) { left: 85%; animation-delay: 1s; }
-        .bg-animation li:nth-child(6) { left: 15%; animation-delay: 12s; }
-        .bg-animation li:nth-child(7) { left: 55%; animation-delay: 4s; animation-duration: 32s; }
-        .bg-animation li:nth-child(8) { left: 35%; animation-delay: 15s; }
-        .bg-animation li:nth-child(9) { left: 80%; animation-delay: 3s; }
-        .bg-animation li:nth-child(10) { left: 65%; animation-delay: 9s; }
+        /* פיזור התחלתי שונה לכל אחד */
+        .bg-animation li:nth-child(1) { left: 10%; animation-delay: 0.1s; }
+        .bg-animation li:nth-child(2) { left: 25%; animation-delay: 0.5s; }
+        .bg-animation li:nth-child(3) { left: 45%; animation-delay: 0.2s; }
+        .bg-animation li:nth-child(4) { left: 70%; animation-delay: 0.8s; }
+        .bg-animation li:nth-child(5) { left: 85%; animation-delay: 0.3s; }
+        .bg-animation li:nth-child(6) { left: 15%; animation-delay: 1.2s; }
+        .bg-animation li:nth-child(7) { left: 55%; animation-delay: 0.4s; }
+        .bg-animation li:nth-child(8) { left: 35%; animation-delay: 1.5s; }
+        .bg-animation li:nth-child(9) { left: 80%; animation-delay: 0.6s; }
+        .bg-animation li:nth-child(10) { left: 65%; animation-delay: 0.9s; }
       `}</style>
       
       <ul className="bg-animation">
