@@ -28,8 +28,6 @@ export default function AnimatedBg() {
             align-items: center;
             justify-content: center;
             list-style: none;
-            
-            /* עיצוב תגית יוקרתי */
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -38,38 +36,36 @@ export default function AnimatedBg() {
             border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 600;
-            letter-spacing: 0.05em;
             white-space: nowrap;
-
-            /* אנימציה נקייה ללא סיבוב */
-            animation: animate-float 25s linear infinite;
-            bottom: -150px;
+            
+            /* אנימציית STARTZIG */
+            animation: startzig 30s ease-in-out infinite;
+            bottom: -100px;
         }
 
-        /* פיזור אקראי של המיזמים */
-        .bg-animation li:nth-child(1) { left: 10%; animation-duration: 20s; }
-        .bg-animation li:nth-child(2) { left: 25%; animation-duration: 25s; animation-delay: 2s; }
-        .bg-animation li:nth-child(3) { left: 45%; animation-duration: 22s; animation-delay: 4s; }
-        .bg-animation li:nth-child(4) { left: 70%; animation-duration: 28s; }
-        .bg-animation li:nth-child(5) { left: 85%; animation-duration: 18s; animation-delay: 1s; }
-        .bg-animation li:nth-child(6) { left: 15%; animation-duration: 30s; animation-delay: 5s; }
-        .bg-animation li:nth-child(7) { left: 55%; animation-duration: 24s; animation-delay: 8s; }
-        .bg-animation li:nth-child(8) { left: 35%; animation-duration: 26s; animation-delay: 12s; }
-        .bg-animation li:nth-child(9) { left: 80%; animation-duration: 21s; animation-delay: 3s; }
-        .bg-animation li:nth-child(10) { left: 65%; animation-duration: 29s; }
-
-        @keyframes animate-float {
-            0% {
-                transform: translateY(0);
-                opacity: 0;
-            }
+        /* הגדרת נקודות הציפה - עולה, יורד, זז הצידה */
+        @keyframes startzig {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
             10% { opacity: 1; }
+            25% { transform: translateY(-250px) translateX(60px); }    /* עליה וימינה */
+            40% { transform: translateY(-180px) translateX(-40px); }   /* ירידה קלה ושמאלה */
+            60% { transform: translateY(-500px) translateX(80px); }    /* עליה חדה וימינה */
+            75% { transform: translateY(-450px) translateX(-20px); }   /* עוד ירידה קטנה */
             90% { opacity: 1; }
-            100% {
-                transform: translateY(-1200px);
-                opacity: 0;
-            }
+            100% { transform: translateY(-1100px) translateX(0); opacity: 0; } /* יציאה מלמעלה */
         }
+
+        /* פיזור וזמנים שונים כדי שלא יזוזו כגוש אחד */
+        .bg-animation li:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .bg-animation li:nth-child(2) { left: 25%; animation-delay: 5s; animation-duration: 35s; }
+        .bg-animation li:nth-child(3) { left: 45%; animation-delay: 2s; }
+        .bg-animation li:nth-child(4) { left: 70%; animation-delay: 8s; animation-duration: 40s; }
+        .bg-animation li:nth-child(5) { left: 85%; animation-delay: 1s; }
+        .bg-animation li:nth-child(6) { left: 15%; animation-delay: 12s; }
+        .bg-animation li:nth-child(7) { left: 55%; animation-delay: 4s; animation-duration: 32s; }
+        .bg-animation li:nth-child(8) { left: 35%; animation-delay: 15s; }
+        .bg-animation li:nth-child(9) { left: 80%; animation-delay: 3s; }
+        .bg-animation li:nth-child(10) { left: 65%; animation-delay: 9s; }
       `}</style>
       
       <ul className="bg-animation">
