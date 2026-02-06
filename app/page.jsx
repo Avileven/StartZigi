@@ -61,7 +61,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-gray-900 text-white">
+    <div className="bg-gradient-to-b from-gray-900 via-blue-950 to-indigo-950 text-white">
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(30px); }
@@ -179,14 +179,14 @@ export default function Home() {
 </nav>
 
       {/* Hero Section - BLUE BACKGROUND WITH ANIMATEDBG */}
-      <div className="relative isolate overflow-hidden min-h-screen flex items-center justify-center">
+      <div className="relative isolate overflow-hidden min-h-screen flex items-center justify-center pt-20">
         {/* Blue Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-blue-700 to-indigo-800"></div>
         
         <AnimatedBg />
         
         {/* Glass Container */}
-        <div className="relative z-10 max-w-5xl mx-auto px-6">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 mt-8">
           <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12 shadow-2xl">
             <div className="text-center">
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 animate-slideUp">
