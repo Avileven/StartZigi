@@ -364,7 +364,7 @@ function CreateVentureForm() {
                     Let us help you choose from our existing ideas bank. Browse through curated startup concepts and get started quickly!
                   </p>
                   <Button 
-                    onClick={() => router.push('/ideas-bank')}
+                    onClick={() => router.push('/ideas')}
                     className="bg-indigo-600 hover:bg-indigo-700"
                   >
                     <Lightbulb className="w-4 h-4 mr-2" />

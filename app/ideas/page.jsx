@@ -48,7 +48,7 @@ export default function IdeasBank() {
       sector: selectedIdea.sector || ""
     });
 
-    router.push(`/ventures/new?${params.toString()}`);
+    router.push(`/createventure?${params.toString()}`);
   };
 
   const filteredIdeas = ideas.filter(idea => 
@@ -75,7 +75,7 @@ export default function IdeasBank() {
         <div className="flex items-center justify-between">
           <Button 
             variant="ghost" 
-            onClick={() => router.push('/ventures/new')}
+            onClick={() => router.push('/createventure')}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
