@@ -96,7 +96,7 @@ export default function Home() {
       
       <div className="flex-shrink-0">
         <Link href="/">
-          <span className="text-2xl font-bold text-white cursor-pointer">
+          <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
             StartZig
           </span>
         </Link>
