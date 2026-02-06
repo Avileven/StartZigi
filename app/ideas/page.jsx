@@ -38,7 +38,7 @@ export default function IdeasBank() {
   }, []);
 
   const handleAdopt = () => {
-    if (!selectedIdea || ventureName.trim().length < 3) return;
+    if (!selectedIdea || !ventureName || ventureName.trim().length < 3) return;
 
     const params = new URLSearchParams({
       name: ventureName.trim(),
@@ -143,7 +143,7 @@ export default function IdeasBank() {
                   }`}
                   onClick={() => {
                     setSelectedIdea(idea);
-                    setVentureName(idea.name);
+                    setVentureName(idea.name || "");
                   }}
                 >
                   <CardHeader className="pb-3">
@@ -197,7 +197,7 @@ export default function IdeasBank() {
                         className="text-lg py-6 border-2 focus:border-indigo-400"
                       />
                       <p className="text-xs text-slate-500">
-                        {ventureName.trim().length}/3 characters minimum
+                        {(ventureName || "").trim().length}/3 characters minimum
                       </p>
                     </div>
 
@@ -244,13 +244,13 @@ export default function IdeasBank() {
                     <Button 
                       className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-7 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
                       onClick={handleAdopt}
-                      disabled={ventureName.trim().length < 3}
+                      disabled={!ventureName || ventureName.trim().length < 3}
                     >
                       Start Building with This Idea
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
 
-                    {ventureName.trim().length < 3 && (
+                    {(!ventureName || ventureName.trim().length < 3) && (
                       <p className="text-sm text-amber-600 text-center">
                         Please enter at least 3 characters for your venture name
                       </p>
