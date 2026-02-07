@@ -35,45 +35,7 @@ export default function Community() {
 
   return (
     <div className="bg-slate-900 text-white min-h-screen font-sans">
-      {/* Consistent Navbar */}
-      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex-shrink-0">
-              <Link href="/"><span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">StartZig</span></Link>
-            </div>
-            <div className="md:hidden">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2">
-                {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
-              </button>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Why StartZig</Link>
-                <Link href="/community" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">Community</Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Pricing</Link>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Login</Link>
-                <Link href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">Sign Up</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-t border-white/10 px-4 py-6 space-y-4">
-            <Link href="/why-startzig" className="block text-gray-300 text-lg">Why StartZig</Link>
-            <Link href="/community" className="block text-white text-lg font-bold">Community</Link>
-            <Link href="/pricing" className="block text-gray-300 text-lg">Pricing</Link>
-            <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
-              <Link href="/login" className="text-center text-white py-3 rounded-xl border border-white/10">Login</Link>
-              <Link href="/register" className="text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
-            </div>
-          </div>
-        )}
-      </nav>
-
+         
       {/* Hero Section */}
       <section className="pt-40 pb-16 px-6 text-center">
         <div className="max-w-4xl mx-auto">

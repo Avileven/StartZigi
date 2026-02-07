@@ -54,72 +54,7 @@ export default function Pricing() {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-      {/* סרגל ניווט תומך מובייל */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-md z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
-                  StartZig
-                </span>
-              </Link>
-            </div>
-
-            {/* המבורגר למובייל */}
-            <div className="md:hidden">
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-300 hover:text-white p-2"
-              >
-                {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
-              </button>
-            </div>
-
-            {/* תפריט דסקטופ מעודכן */}
-            <div className="hidden md:flex items-center space-x-8">
-              <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
-                <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
-                  Why StartZig
-                </Link>
-                <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
-                  Community
-                </Link>
-                {/* כאן התיקון: Pricing מקבל רקע כמו ב-Community */}
-                <Link href="/pricing" className="text-white bg-white/10 px-3 py-2 rounded-md text-sm font-medium">
-                  Pricing
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
-                  Login
-                </Link>
-                <Link href="/register">
-                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-indigo-500/20">
-                    Sign Up
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* תפריט מובייל (גם כאן Pricing מודגש כפעיל) */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-gray-900 border-t border-white/10 px-4 py-6 space-y-4">
-            <Link href="/why-startzig" className="block text-gray-300 text-lg">Why StartZig</Link>
-            <Link href="/community" className="block text-gray-300 text-lg">Community</Link>
-            <Link href="/pricing" className="block text-white text-lg font-bold bg-white/5 px-3 py-2 rounded-lg">Pricing</Link>
-            <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
-              <Link href="/login" className="w-full text-center text-white py-3 rounded-xl border border-white/10">Login</Link>
-              <Link href="/register" className="w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-bold">Sign Up</Link>
-            </div>
-          </div>
-        )}
-      </nav>
-
+    
       {/* תוכן Pricing */}
       <div className="pt-32 pb-24 px-6">
         <div className="mx-auto max-w-7xl text-center">
