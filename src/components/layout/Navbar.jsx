@@ -9,6 +9,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasVenture, setHasVenture] = useState(false);
+  console.log("🔥 NAVBAR LOADED!");
 
   useEffect(() => {
     const checkUser = async () => {
