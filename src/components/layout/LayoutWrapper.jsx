@@ -1,7 +1,8 @@
 "use client";
 
 import ClientLayout from "./ClientLayout";
-import Footer from "./Footer"; 
+import Footer from "./Footer";
+import Navbar from "./Navbar";
 import { usePathname } from "next/navigation";
 
 export default function LayoutWrapper({ children }) {
@@ -26,10 +27,11 @@ export default function LayoutWrapper({ children }) {
     return <>{children}</>;
   }
 
-  // דפי שיווק - מקבלים פוטר אבל נשארים בחוץ (כמו המקור שלך)
+  // דפי שיווק - מקבלים Navbar + פוטר
   if (marketingPages.includes(pathname)) {
     return (
       <>
+        <Navbar />
         {children}
         <Footer />
       </>
