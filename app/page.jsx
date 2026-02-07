@@ -1,4 +1,4 @@
-// Final Glass Design - Hero with AnimatedBg, rest is pure Glass
+// Home page - No cards, dark blue-purple background, with footer
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -61,7 +61,7 @@ export default function Home() {
   };
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }} className="text-white">
+    <div className="bg-gradient-to-b from-gray-900 via-indigo-950 to-purple-950 text-white min-h-screen">
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(30px); }
@@ -70,27 +70,10 @@ export default function Home() {
         .animate-slideUp {
           animation: slideUp 0.8s ease-out forwards;
         }
-        .glass {
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .glass-strong {
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .hover-lift {
-          transition: all 0.3s ease;
-        }
-        .hover-lift:hover {
-          transform: translateY(-10px) scale(1.02);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
       `}</style>
 
-      {/* Navigation */}
-<nav className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-md z-50 border-b border-white/20">
+      {/* Navigation - 2 level gradient */}
+<nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10" style={{background: 'linear-gradient(180deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%)', backdropFilter: 'blur(12px)'}}>
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-20">
       
@@ -105,7 +88,7 @@ export default function Home() {
       <div className="md:hidden flex items-center">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="text-white p-2"
+          className="text-gray-300 hover:text-white p-2"
         >
           <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {isMenuOpen ? (
@@ -118,14 +101,14 @@ export default function Home() {
       </div>
 
       <div className="hidden md:flex items-center space-x-8">
-        <div className="flex items-center space-x-4 border-r border-white/20 pr-4">
-          <Link href="/why-startzig" className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+        <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+          <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Why StartZig
           </Link>
-          <Link href="/community" className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+          <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Community
           </Link>
-          <Link href="/pricing" className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+          <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
             Pricing
           </Link>
         </div>
@@ -134,21 +117,21 @@ export default function Home() {
           {user ? (
             <>
               <Link href="/dashboard">
-                <button className="glass hover:glass-strong text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
                   Go to dashboard
                 </button>
               </Link>
-              <button onClick={handleLogout} className="text-white hover:bg-white/10 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+              <button onClick={handleLogout} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Logout
               </button>
             </>
           ) : (
             <>
-              <button onClick={handleLogin} className="text-white hover:bg-white/10 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+              <button onClick={handleLogin} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Login
               </button>
               <Link href="/register">
-                <button className="glass hover:glass-strong text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
                   Sign Up
                 </button>
               </Link>
@@ -160,29 +143,29 @@ export default function Home() {
   </div>
 
   {isMenuOpen && (
-    <div className="md:hidden glass border-t border-white/20 px-4 pt-2 pb-6 space-y-2">
-      <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-white/80 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+    <div className="md:hidden bg-gray-900 border-b border-white/10 px-4 pt-2 pb-6 space-y-2">
+      <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
         Why StartZig
       </Link>
-      <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-white/80 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+      <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
         Community
       </Link>
-      <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-white/80 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+      <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
         Pricing
       </Link>
-      <div className="pt-4 border-t border-white/20 flex flex-col space-y-3">
+      <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
         {user ? (
           <>
             <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full">
-              <button className="w-full glass text-white py-3 rounded-md font-medium">Go to dashboard</button>
+              <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Go to dashboard</button>
             </Link>
-            <button onClick={handleLogout} className="w-full text-white glass py-3 rounded-md font-medium">Logout</button>
+            <button onClick={handleLogout} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Logout</button>
           </>
         ) : (
           <>
-            <button onClick={handleLogin} className="w-full text-white glass py-3 rounded-md font-medium">Login</button>
+            <button onClick={handleLogin} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Login</button>
             <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full">
-              <button className="w-full glass text-white py-3 rounded-md font-medium">Sign Up</button>
+              <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Sign Up</button>
             </Link>
           </>
         )}
@@ -191,68 +174,66 @@ export default function Home() {
   )}
 </nav>
 
-      {/* Hero Section - WITH ANIMATEDBG */}
+      {/* Hero Section - NO CARD, DIRECT ON BACKGROUND */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-20">
         <AnimatedBg />
         
-        <div className="relative z-10 glass-strong rounded-3xl p-12 max-w-4xl w-full mt-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
-              Don't just start up.{" "}
-              <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-                StartZig
-              </span>
-              .
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto animate-slideUp" style={{ animationDelay: "0.2s" }}>
-              A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp" style={{ animationDelay: "0.4s" }}>
-              {user ? (
-                hasVenture ? (
-                  <Link href="/dashboard">
-                    <Button size="lg" className="glass hover:glass-strong border-0 shadow-lg">
-                      Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/createventure">
-                    <Button size="lg" className="glass hover:glass-strong border-0 shadow-lg">
-                      Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                )
+        <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
+            Don't just start up.{" "}
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              StartZig
+            </span>
+            .
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto animate-slideUp" style={{ animationDelay: "0.2s" }}>
+            A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp" style={{ animationDelay: "0.4s" }}>
+            {user ? (
+              hasVenture ? (
+                <Link href="/dashboard">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+                    Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               ) : (
-                <Button onClick={handleLogin} size="lg" className="glass hover:glass-strong border-0 shadow-lg">
-                  Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-              
-              <a href="/how-it-works.html" target="_blank">
-                <Button size="lg" className="glass hover:bg-white/20 border-0">
-                  <PlayCircle className="w-4 h-4 mr-2" />
-                  See How It Works
-                </Button>
-              </a>
-            </div>
+                <Link href="/createventure">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+                    Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <Button onClick={handleLogin} size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+                Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+            
+            <a href="/how-it-works.html" target="_blank">
+              <Button size="lg" className="bg-transparent hover:bg-white/10 border border-white/30">
+                <PlayCircle className="w-4 h-4 mr-2" />
+                See How It Works
+              </Button>
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Benefits Section - PURE GLASS */}
+      {/* Benefits Section - NO CARDS */}
       <div className="py-24 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-xl font-semibold text-white/80 mb-2">Why StartZig?</h2>
+            <h2 className="text-xl font-semibold text-white/60 mb-2">Why StartZig?</h2>
             <h3 className="text-4xl md:text-5xl font-bold text-white mb-4">Your Entrepreneurial Flight Simulator</h3>
             <p className="text-xl text-white/70 max-w-2xl mx-auto">
               Practice makes perfect. We provide the tools and environment to hone your skills before you take the real-world plunge.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <ShieldCheck className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Test Without Risk</h3>
@@ -261,8 +242,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <BookOpen className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Learn from the Best</h3>
@@ -271,8 +252,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Build Real Skills</h3>
@@ -281,8 +262,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <DollarSign className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Secure Simulated Funding</h3>
@@ -291,8 +272,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Users className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Join a Thriving Community</h3>
@@ -301,8 +282,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-8">
-              <div className="w-16 h-16 glass-strong rounded-2xl flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Network className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">Grow Your Network</h3>
@@ -314,7 +295,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Who Can Benefit Section - PURE GLASS */}
+      {/* Who Can Benefit Section - NO CARDS */}
       <div className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -326,9 +307,9 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="glass hover-lift rounded-2xl p-6">
-              <div className="w-14 h-14 glass-strong rounded-xl flex items-center justify-center mb-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-lg font-bold mb-3">Experience the Startup World</h3>
@@ -337,8 +318,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-6">
-              <div className="w-14 h-14 glass-strong rounded-xl flex items-center justify-center mb-4">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Lightbulb className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-lg font-bold mb-3">Entrepreneurs with an Idea</h3>
@@ -347,8 +328,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-6">
-              <div className="w-14 h-14 glass-strong rounded-xl flex items-center justify-center mb-4">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <BookOpen className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-lg font-bold mb-3">Students & Learners</h3>
@@ -357,8 +338,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-6">
-              <div className="w-14 h-14 glass-strong rounded-xl flex items-center justify-center mb-4">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Users className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-lg font-bold mb-3">Mentors, Instructors & Programs</h3>
@@ -370,59 +351,53 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Featured Ventures Section - PURE GLASS */}
+      {/* Featured Ventures Section - NO CARDS */}
       <div className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-white mb-10 text-center">
             Featured Venture Demos
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="glass hover-lift rounded-2xl p-6 cursor-pointer group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-4xl">📱</div>
-                <h3 className="text-xl font-bold group-hover:text-pink-300 transition-colors">ShelfSense</h3>
-              </div>
-              <p className="text-sm text-white/70 mb-4">Smart retail shelf intelligence platform</p>
-              <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 glass-strong rounded">Retail Tech</span>
-                <span className="px-2 py-1 glass rounded">$2M Raised</span>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📱</div>
+              <h3 className="text-xl font-bold mb-2">ShelfSense</h3>
+              <p className="text-sm text-white/70 mb-3">Smart retail shelf intelligence platform</p>
+              <div className="flex items-center justify-center gap-2 text-xs mb-4">
+                <span className="px-3 py-1 bg-white/10 rounded">Retail Tech</span>
+                <span className="px-3 py-1 bg-white/10 rounded">$2M Raised</span>
               </div>
               <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button className="w-full glass-strong hover:bg-white/30 border-0 text-sm">
+                <Button className="bg-white/10 hover:bg-white/20 border-0">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-6 cursor-pointer group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-4xl">🚭</div>
-                <h3 className="text-xl font-bold group-hover:text-pink-300 transition-colors">Smokefree</h3>
-              </div>
-              <p className="text-sm text-white/70 mb-4">Quit-smoking journey app</p>
-              <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 glass-strong rounded">Health</span>
-                <span className="px-2 py-1 glass rounded">$1.5M Raised</span>
+            <div className="text-center">
+              <div className="text-6xl mb-4">🚭</div>
+              <h3 className="text-xl font-bold mb-2">Smokefree</h3>
+              <p className="text-sm text-white/70 mb-3">Quit-smoking journey app</p>
+              <div className="flex items-center justify-center gap-2 text-xs mb-4">
+                <span className="px-3 py-1 bg-white/10 rounded">Health</span>
+                <span className="px-3 py-1 bg-white/10 rounded">$1.5M Raised</span>
               </div>
               <Link href="/smokefree-demo.html" target="_blank">
-                <Button className="w-full glass-strong hover:bg-white/30 border-0 text-sm">
+                <Button className="bg-white/10 hover:bg-white/20 border-0">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
             </div>
 
-            <div className="glass hover-lift rounded-2xl p-6 cursor-pointer group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-4xl">🏙️</div>
-                <h3 className="text-xl font-bold group-hover:text-pink-300 transition-colors">UrbanPulse</h3>
-              </div>
-              <p className="text-sm text-white/70 mb-4">City insights platform</p>
-              <div className="flex items-center gap-2 text-xs mb-4">
-                <span className="px-2 py-1 glass-strong rounded">Smart City</span>
-                <span className="px-2 py-1 glass rounded">$5M Raised</span>
+            <div className="text-center">
+              <div className="text-6xl mb-4">🏙️</div>
+              <h3 className="text-xl font-bold mb-2">UrbanPulse</h3>
+              <p className="text-sm text-white/70 mb-3">City insights platform</p>
+              <div className="flex items-center justify-center gap-2 text-xs mb-4">
+                <span className="px-3 py-1 bg-white/10 rounded">Smart City</span>
+                <span className="px-3 py-1 bg-white/10 rounded">$5M Raised</span>
               </div>
               <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button className="w-full glass-strong hover:bg-white/30 border-0 text-sm">
+                <Button className="bg-white/10 hover:bg-white/20 border-0">
                   View Demo <ArrowRight className="w-3 h-3 ml-2" />
                 </Button>
               </Link>
@@ -430,13 +405,59 @@ export default function Home() {
           </div>
           <div className="mt-12 text-center">
             <Link href="/register">
-              <Button size="lg" className="glass-strong hover:bg-white/30 border-0 shadow-2xl">
+              <Button size="lg" className="bg-white/10 hover:bg-white/20 border border-white/20">
                 Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900/50 border-t border-white/10 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              StartZig
+            </span>
+          </div>
+          
+          {/* Main Links */}
+          <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm">
+            <Link href="/how-it-works.html" className="text-gray-400 hover:text-white transition-colors">
+              How It Works
+            </Link>
+            <Link href="/why-startzig" className="text-gray-400 hover:text-white transition-colors">
+              Why StartZig
+            </Link>
+            <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
+              Pricing
+            </Link>
+            <Link href="/community" className="text-gray-400 hover:text-white transition-colors">
+              Community
+            </Link>
+          </div>
+          
+          {/* Legal Links */}
+          <div className="flex flex-wrap justify-center gap-6 mb-8 text-xs">
+            <Link href="/terms" className="text-gray-500 hover:text-gray-300 transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/privacypolicy" className="text-gray-500 hover:text-gray-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/disclaimer" className="text-gray-500 hover:text-gray-300 transition-colors">
+              Disclaimer
+            </Link>
+          </div>
+          
+          {/* Copyright */}
+          <div className="text-center text-xs text-gray-500">
+            © 2026 StartZig. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
