@@ -413,51 +413,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-900/50 border-t border-white/10 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-              StartZig
-            </span>
-          </div>
-          
-          {/* Main Links */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm">
-            <Link href="/how-it-works.html" className="text-gray-400 hover:text-white transition-colors">
-              How It Works
-            </Link>
-            <Link href="/why-startzig" className="text-gray-400 hover:text-white transition-colors">
-              Why StartZig
-            </Link>
-            <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link href="/community" className="text-gray-400 hover:text-white transition-colors">
-              Community
-            </Link>
-          </div>
-          
-          {/* Legal Links */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 text-xs">
-            <Link href="/terms" className="text-gray-500 hover:text-gray-300 transition-colors">
-              Terms of Service
-            </Link>
-            <Link href="/privacypolicy" className="text-gray-500 hover:text-gray-300 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/disclaimer" className="text-gray-500 hover:text-gray-300 transition-colors">
-              Disclaimer
-            </Link>
-          </div>
-          
-          {/* Copyright */}
-          <div className="text-center text-xs text-gray-500">
-            © 2026 StartZig. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      {/* Footer - removed, using Footer component instead */}
     </div>
   );
 }
