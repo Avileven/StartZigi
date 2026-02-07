@@ -2,16 +2,16 @@ import React from 'react';
 
 export default function StartupDramaBg() {
   const ventures = [
-    { name: "FinFlow", status: "fail" },
-    { name: "NeuralLogic", status: "winner" }, // השורד
-    { name: "EcoGrid", status: "fail" },
-    { name: "AI-Core", status: "fail" },
-    { name: "HealthLink", status: "fail" },
-    { name: "SecureNet", status: "winner" }, // השורד
-    { name: "CloudWise", status: "fail" },
-    { name: "BioMatch", status: "fail" },
-    { name: "SmartLog", status: "fail" },
-    { name: "Nexus", status: "fail" }
+    { name: "FinFlow", status: "fail", speed: 9 },
+    { name: "NeuralLogic", status: "winner", speed: 14 }, 
+    { name: "EcoGrid", status: "fail", speed: 7 },
+    { name: "AI-Core", status: "fail", speed: 11 },
+    { name: "HealthLink", status: "fail", speed: 8 },
+    { name: "SecureNet", status: "winner", speed: 16 }, 
+    { name: "CloudWise", status: "fail", speed: 10 },
+    { name: "BioMatch", status: "fail", speed: 6 },
+    { name: "SmartLog", status: "fail", speed: 9 },
+    { name: "Nexus", status: "fail", speed: 12 }
   ];
 
   return (
@@ -22,7 +22,7 @@ export default function StartupDramaBg() {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #0f0c29; /* רקע כהה ויוקרתי */
+            /* רקע הוסר - שקוף */
         }
 
         .bg-animation li {
@@ -36,40 +36,65 @@ export default function StartupDramaBg() {
             border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 600;
-            bottom: -100px;
+            top: 50%; /* מתחילים מאמצע המסך */
             opacity: 0;
         }
 
-        /* אנימציה למצליחים - עולים עד הסוף */
+        /* אנימציה למצליחים - עולים עד הסוף וגדלים */
         .winner {
-            animation: reach-top 12s ease-in-out forwards;
+            animation: reach-top var(--duration) ease-in-out forwards;
         }
 
-        /* אנימציה לנופלים - עולים וצונחים */
+        /* אנימציה לנופלים - עולים קצת, קטנים וצונחים */
         .fail {
-            animation: crash-down 8s ease-in-out forwards;
+            animation: crash-down var(--duration) ease-in-out forwards;
         }
 
         @keyframes reach-top {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            30% { transform: translateY(-300px) translateX(40px); }
-            60% { transform: translateY(-600px) translateX(-30px); }
-            100% { transform: translateY(-1200px) translateX(20px); opacity: 0; }
+            0% { 
+                transform: translateY(0) translateX(0) scale(1); 
+                opacity: 0; 
+            }
+            10% { 
+                opacity: 1; 
+            }
+            30% { 
+                transform: translateY(-200px) translateX(40px) scale(1.2); 
+            }
+            60% { 
+                transform: translateY(-400px) translateX(-30px) scale(1.4); 
+            }
+            100% { 
+                transform: translateY(-700px) translateX(20px) scale(1.8); 
+                opacity: 0; 
+            }
         }
 
         @keyframes crash-down {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            15% { opacity: 1; }
-            40% { transform: translateY(-400px) translateX(-50px); } /* מגיע לשיא */
-            55% { transform: translateY(-380px) translateX(-60px) rotate(10deg); } /* גמגום קטן */
-            100% { transform: translateY(200px) translateX(-80px) rotate(45deg); opacity: 0; } /* צניחה חופשית */
+            0% { 
+                transform: translateY(0) translateX(0) scale(1); 
+                opacity: 0; 
+            }
+            15% { 
+                opacity: 1; 
+            }
+            35% { 
+                transform: translateY(-150px) translateX(-40px) scale(0.95); 
+            }
+            50% { 
+                transform: translateY(-130px) translateX(-50px) rotate(10deg) scale(0.85); 
+            }
+            100% { 
+                transform: translateY(300px) translateX(-80px) rotate(45deg) scale(0.5); 
+                opacity: 0; 
+            }
         }
 
         /* פיזור אקראי על המסך */
-        ${ventures.map((_, i) => `
+        ${ventures.map((v, i) => `
           .bg-animation li:nth-child(${i + 1}) { 
             left: ${Math.random() * 80 + 5}%; 
+            --duration: ${v.speed}s;
             animation-delay: ${i * 0.8}s; 
           }
         `).join('')}
