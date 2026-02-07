@@ -176,7 +176,10 @@ export default function Home() {
 
       {/* Hero Section - NO CARD, DIRECT ON BACKGROUND */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-20">
-        <AnimatedBg />
+        {/* AnimatedBg only in Hero */}
+        <div className="absolute inset-0">
+          <AnimatedBg />
+        </div>
         
         <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
@@ -189,30 +192,30 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto animate-slideUp" style={{ animationDelay: "0.2s" }}>
             A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp" style={{ animationDelay: "0.4s" }}>
+          <div className="flex flex-col gap-4 items-center animate-slideUp" style={{ animationDelay: "0.4s" }}>
             {user ? (
               hasVenture ? (
-                <Link href="/dashboard">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
-                    Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                <Link href="/dashboard" className="w-full max-w-sm">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full">
+                    Go to dashboard
                   </Button>
                 </Link>
               ) : (
-                <Link href="/createventure">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
-                    Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
+                <Link href="/createventure" className="w-full max-w-sm">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full">
+                    Create Your Venture
                   </Button>
                 </Link>
               )
             ) : (
-              <Button onClick={handleLogin} size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
-                Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
+              <Button onClick={handleLogin} size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full max-w-sm">
+                Start Your Journey
               </Button>
             )}
             
-            <a href="/how-it-works.html" target="_blank" className="w-full sm:w-auto">
-              <Button size="lg" className="bg-transparent hover:bg-white/10 border border-white/30 w-full">
-                See How It Works <PlayCircle className="w-4 h-4 ml-2" />
+            <a href="/how-it-works.html" target="_blank" className="w-full max-w-sm">
+              <Button size="lg" className="bg-transparent hover:bg-white/10 text-white px-8 py-3 rounded-full border border-white/30 w-full">
+                See How It Works
               </Button>
             </a>
           </div>
