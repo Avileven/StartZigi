@@ -193,27 +193,26 @@ export default function Home() {
             {user ? (
               hasVenture ? (
                 <Link href="/dashboard">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
                     Go to dashboard <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
               ) : (
                 <Link href="/createventure">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
                     Create Your Venture <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
               )
             ) : (
-              <Button onClick={handleLogin} size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20">
+              <Button onClick={handleLogin} size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 w-full sm:w-auto">
                 Start Your Journey <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
             
-            <a href="/how-it-works.html" target="_blank">
-              <Button size="lg" className="bg-transparent hover:bg-white/10 border border-white/30">
-                <PlayCircle className="w-4 h-4 mr-2" />
-                See How It Works
+            <a href="/how-it-works.html" target="_blank" className="w-full sm:w-auto">
+              <Button size="lg" className="bg-transparent hover:bg-white/10 border border-white/30 w-full">
+                See How It Works <PlayCircle className="w-4 h-4 ml-2" />
               </Button>
             </a>
           </div>
