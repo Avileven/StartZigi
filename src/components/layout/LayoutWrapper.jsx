@@ -19,7 +19,8 @@ export default function LayoutWrapper({ children }) {
     "/privacypolicy",
     "/disclaimer",
     "/createventure",
-    "/ideas"
+    "/ideas",
+    "/blog"
   ];
 
   // דפי כניסה/הרשמה - נשארים נקיים לגמרי כמו במקור (בלי לעטוף ב-DIV)
