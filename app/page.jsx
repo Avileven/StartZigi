@@ -77,10 +77,6 @@ export default function Home() {
 
       {/* Hero Section - NO CARD, DIRECT ON BACKGROUND */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-20">
-        {/* AnimatedBg only in Hero */}
-        <div className="absolute inset-0">
-          <AnimatedBg />
-        </div>
         
         <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
@@ -127,72 +123,83 @@ export default function Home() {
       <div className="py-24 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-xl font-semibold text-white/60 mb-2">Why StartZig?</h2>
-            <h3 className="text-4xl md:text-5xl font-bold text-white mb-4">Your Entrepreneurial Flight Simulator</h3>
+            <h3 className="text-4xl md:text-5xl font-bold text-white mb-4"><span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">Your</span> Entrepreneurial Flight Simulator</h3>
             <p className="text-xl text-white/70 max-w-2xl mx-auto">
               Practice makes perfect. We provide the tools and environment to hone your skills before you take the real-world plunge.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <ShieldCheck className="w-8 h-8 text-white" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Test Without Risk</h3>
-              <p className="text-white/70 leading-relaxed">
-                Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Test Without Risk</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  Validate your ideas in a realistic market simulation without risking your own capital. Make mistakes, pivot, and learn in a safe environment.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <BookOpen className="w-8 h-8 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Learn from the Best</h3>
-              <p className="text-white/70 leading-relaxed">
-                Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Learn from the Best</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  Interact with AI-driven investors modeled after real-world personas. Understand what they look for and refine your pitch based on their feedback.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <BarChart3 className="w-8 h-8 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <BarChart3 className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Build Real Skills</h3>
-              <p className="text-white/70 leading-relaxed">
-                From business planning and MVP development to fundraising, you'll go through the startup lifecycle and gain practical, hands-on experience.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Build Real Skills</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  From business planning and MVP development to fundraising, you'll go through the startup lifecycle and gain practical, hands-on experience.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <DollarSign className="w-8 h-8 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Secure Simulated Funding</h3>
-              <p className="text-white/70 leading-relaxed">
-                Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel growth.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Secure Simulated Funding</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  Prove your model, gain traction, and raise virtual capital from a network of angel and VC simulators to fuel growth.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Users className="w-8 h-8 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Users className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Join a Thriving Community</h3>
-              <p className="text-white/70 leading-relaxed">
-                Connect with other founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Join a Thriving Community</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  Connect with other founders. Share strategies, give feedback, and build your network in a collaborative ecosystem.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Network className="w-8 h-8 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Network className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Grow Your Network</h3>
-              <p className="text-white/70 leading-relaxed">
-                Practice networking and build relationships in a simulated environment, preparing you for real-world meetings.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold mb-2">Grow Your Network</h3>
+                <p className="text-white/70 leading-relaxed text-sm">
+                  Practice networking and build relationships in a simulated environment, preparing you for real-world meetings.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -203,52 +210,60 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Who can benefit from StartZig?
+              <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">Who can benefit</span> from StartZig?
             </h2>
             <p className="text-xl text-white/70 max-w-2xl mx-auto">
               StartZig is built for learning, testing, and momentum—whether you're exploring, building, or teaching.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Target className="w-7 h-7 text-white" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Target className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Experience the Startup World</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Build ventures just like in the real world. Experience the full startup lifecycle from ideation to exit. Learn what it takes to grow a company, manage burn rate, and reach that sweet exit moment.
-              </p>
+              <div>
+                <h3 className="text-base font-bold mb-2">Experience the Startup World</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Build ventures just like in the real world. Experience the full startup lifecycle from ideation to exit. Learn what it takes to grow a company, manage burn rate, and reach that sweet exit moment.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Lightbulb className="w-7 h-7 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Lightbulb className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Entrepreneurs with an Idea</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Test, refine, and validate your concept before investing time and money. Experiment with different business models, pitch to AI investors, and pivot without real-world consequences. Expose your venture to the community, get feedback, and find potential early users.
-              </p>
+              <div>
+                <h3 className="text-base font-bold mb-2">Entrepreneurs with an Idea</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Test, refine, and validate your concept before investing time and money. Experiment with different business models, pitch to AI investors, and pivot without real-world consequences. Expose your venture to the community, get feedback, and find potential early users.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-7 h-7 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Students & Learners</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Turn theory into practice. Experience how startups evolve through real stages—from MVP to scaling. Build your resume with hands-on entrepreneurial experience before graduation.
-              </p>
+              <div>
+                <h3 className="text-base font-bold mb-2">Students & Learners</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Turn theory into practice. Experience how startups evolve through real stages—from MVP to scaling. Build your resume with hands-on entrepreneurial experience before graduation.
+                </p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-7 h-7 text-white" />
+            <div className="flex gap-3">
+              <div className="flex-shrink-0">
+                <Users className="w-5 h-5 text-white mt-1" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Mentors, Instructors & Programs</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                The perfect platform for accelerators, incubators, and academic programs. Give your students a safe environment to practice entrepreneurship with real feedback loops.
-              </p>
+              <div>
+                <h3 className="text-base font-bold mb-2">Mentors, Instructors & Programs</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  The perfect platform for accelerators, incubators, and academic programs. Give your students a safe environment to practice entrepreneurship with real feedback loops.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -260,50 +275,56 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-white mb-10 text-center">
             Featured Venture Demos
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="text-6xl mb-4">📱</div>
-              <h3 className="text-xl font-bold mb-2">ShelfSense</h3>
-              <p className="text-sm text-white/70 mb-3">Smart retail shelf intelligence platform</p>
-              <div className="flex items-center justify-center gap-2 text-xs mb-4">
-                <span className="px-3 py-1 bg-white/10 rounded">Retail Tech</span>
-                <span className="px-3 py-1 bg-white/10 rounded">$2M Raised</span>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex gap-3">
+              <div className="text-3xl flex-shrink-0">📱</div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">ShelfSense</h3>
+                <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence platform</p>
+                <div className="flex gap-2 text-xs mb-3">
+                  <span className="px-2 py-1 bg-white/10 rounded">Retail Tech</span>
+                  <span className="px-2 py-1 bg-white/10 rounded">$2M Raised</span>
+                </div>
+                <Link href="/ShelfSense-demo.html" target="_blank">
+                  <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                    View Demo <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
-              <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button className="bg-white/10 hover:bg-white/20 border-0">
-                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
-                </Button>
-              </Link>
             </div>
 
-            <div className="text-center">
-              <div className="text-6xl mb-4">🚭</div>
-              <h3 className="text-xl font-bold mb-2">Smokefree</h3>
-              <p className="text-sm text-white/70 mb-3">Quit-smoking journey app</p>
-              <div className="flex items-center justify-center gap-2 text-xs mb-4">
-                <span className="px-3 py-1 bg-white/10 rounded">Health</span>
-                <span className="px-3 py-1 bg-white/10 rounded">$1.5M Raised</span>
+            <div className="flex gap-3">
+              <div className="text-3xl flex-shrink-0">🚭</div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">Smokefree</h3>
+                <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
+                <div className="flex gap-2 text-xs mb-3">
+                  <span className="px-2 py-1 bg-white/10 rounded">Health</span>
+                  <span className="px-2 py-1 bg-white/10 rounded">$1.5M Raised</span>
+                </div>
+                <Link href="/smokefree-demo.html" target="_blank">
+                  <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                    View Demo <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
-              <Link href="/smokefree-demo.html" target="_blank">
-                <Button className="bg-white/10 hover:bg-white/20 border-0">
-                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
-                </Button>
-              </Link>
             </div>
 
-            <div className="text-center">
-              <div className="text-6xl mb-4">🏙️</div>
-              <h3 className="text-xl font-bold mb-2">UrbanPulse</h3>
-              <p className="text-sm text-white/70 mb-3">City insights platform</p>
-              <div className="flex items-center justify-center gap-2 text-xs mb-4">
-                <span className="px-3 py-1 bg-white/10 rounded">Smart City</span>
-                <span className="px-3 py-1 bg-white/10 rounded">$5M Raised</span>
+            <div className="flex gap-3">
+              <div className="text-3xl flex-shrink-0">🏙️</div>
+              <div>
+                <h3 className="text-lg font-bold mb-1">UrbanPulse</h3>
+                <p className="text-xs text-white/70 mb-2">City insights platform</p>
+                <div className="flex gap-2 text-xs mb-3">
+                  <span className="px-2 py-1 bg-white/10 rounded">Smart City</span>
+                  <span className="px-2 py-1 bg-white/10 rounded">$5M Raised</span>
+                </div>
+                <Link href="/urbanpulse-demo.html" target="_blank">
+                  <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                    View Demo <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
-              <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button className="bg-white/10 hover:bg-white/20 border-0">
-                  View Demo <ArrowRight className="w-3 h-3 ml-2" />
-                </Button>
-              </Link>
             </div>
           </div>
           <div className="mt-12 text-center">
