@@ -88,7 +88,7 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent fade-in-startzig">
+            <span style={{background: 'linear-gradient(to right, #ec4899, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} className="fade-in-startzig">
               StartZig
             </span>
             .
@@ -265,17 +265,19 @@ export default function Home() {
       {/* Featured Ventures Section - NO CARDS */}
       <div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-white mb-10 text-center">
-            Featured Venture Demos
+          <h2 className="text-3xl font-bold mb-10 text-center">
+            <span style={{background: 'linear-gradient(to right, #ec4899, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
+              Featured Venture Demos
+            </span>
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
+          <div className="grid md:grid-cols-3 gap-6 justify-items-center">
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">📱</span>
                 ShelfSense
               </h3>
               <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence platform</p>
-              <div className="flex gap-2 text-xs mb-3">
+              <div className="flex justify-center gap-2 text-xs mb-3">
                 <span className="px-2 py-1 bg-white/10 rounded">Retail Tech</span>
                 <span className="px-2 py-1 bg-white/10 rounded">$2M Raised</span>
               </div>
@@ -286,13 +288,13 @@ export default function Home() {
               </Link>
             </div>
 
-            <div>
-              <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">🚭</span>
                 Smokefree
               </h3>
               <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
-              <div className="flex gap-2 text-xs mb-3">
+              <div className="flex justify-center gap-2 text-xs mb-3">
                 <span className="px-2 py-1 bg-white/10 rounded">Health</span>
                 <span className="px-2 py-1 bg-white/10 rounded">$1.5M Raised</span>
               </div>
@@ -303,13 +305,13 @@ export default function Home() {
               </Link>
             </div>
 
-            <div>
-              <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">🏙️</span>
                 UrbanPulse
               </h3>
               <p className="text-xs text-white/70 mb-2">City insights platform</p>
-              <div className="flex gap-2 text-xs mb-3">
+              <div className="flex justify-center gap-2 text-xs mb-3">
                 <span className="px-2 py-1 bg-white/10 rounded">Smart City</span>
                 <span className="px-2 py-1 bg-white/10 rounded">$5M Raised</span>
               </div>
