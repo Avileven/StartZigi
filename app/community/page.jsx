@@ -40,7 +40,7 @@ export default function Community() {
       <section className="pt-40 pb-16 px-6 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-black mb-6">
-            Startup <span className="text-indigo-500">Feed</span>
+            StartZig <span className="text-indigo-500">Feed</span>
           </h1>
           <p className="text-xl text-slate-400 leading-relaxed">
             Real-time updates from the StartZig ecosystem: new ventures, pivots, and funding opportunities.
