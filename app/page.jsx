@@ -70,6 +70,13 @@ export default function Home() {
         .animate-slideUp {
           animation: slideUp 0.8s ease-out forwards;
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .fade-in-startzig {
+          animation: fadeIn 2s ease-in forwards;
+        }
       `}</style>
 
       {/* Navigation - 2 level gradient */}
@@ -81,7 +88,7 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent fade-in-startzig">
               StartZig
             </span>
             .
