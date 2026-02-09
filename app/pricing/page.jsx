@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 
 export default function Pricing() {
-  const [isAnnual, setIsAnnual] = useState(false);
+  // ברירת מחדל נפתחת על שנתי
+  const [isAnnual, setIsAnnual] = useState(true);
 
   const tiers = [
     {
@@ -22,7 +23,8 @@ export default function Pricing() {
     },
     {
       name: 'Vision',
-      price: isAnnual ? '$3.5' : '$5',
+      // נשאר 5 דולר תמיד
+      price: '$5',
       description: 'Take your idea to the next level with more help from our mentor and basic AI tools.',
       features: [
         'Free access to grow your idea',
@@ -36,7 +38,8 @@ export default function Pricing() {
     },
     {
       name: 'Impact',
-      price: isAnnual ? '$7' : '$10',
+      // 12 חודשי, 9.6 שנתי (20% הנחה)
+      price: isAnnual ? '$9.6' : '$12',
       description: 'Access advanced tools and scale up your mentor support.',
       features: [
         'Free access to grow your idea',
@@ -51,7 +54,8 @@ export default function Pricing() {
     },
     {
       name: 'Unicorn',
-      price: isAnnual ? '$17.5' : '$25',
+      // 35 חודשי, 28 שנתי (20% הנחה)
+      price: isAnnual ? '$28' : '$35',
       description: 'Boost your venture guidance with top mentor credits and advanced social tools.',
       features: [
         'Free access to grow your idea',
@@ -78,12 +82,12 @@ export default function Pricing() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-          Ready to start <span className="text-indigo-400 italic">the zigzag?</span>
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
         </h1>
         
-        {/* Annual/Monthly Toggle */}
-        <div className="flex justify-center items-center gap-4 mb-12">
+        {/* Toggle - Default is Annual */}
+        <div className="flex justify-center items-center gap-4 mb-16">
           <span className={`text-sm ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
           <button 
             onClick={() => setIsAnnual(!isAnnual)}
@@ -92,7 +96,7 @@ export default function Pricing() {
             <div className={`w-4 h-4 bg-indigo-500 rounded-full transition-all ${isAnnual ? 'translate-x-6' : 'translate-x-0'}`} />
           </button>
           <span className={`text-sm ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
-            Annually <span className="text-indigo-400 font-bold text-xs ml-1">(Save 30%)</span>
+            Annually <span className="text-indigo-400 font-bold text-xs ml-1">(Save 20%)</span>
           </span>
         </div>
 
