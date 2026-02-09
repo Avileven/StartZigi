@@ -59,33 +59,7 @@
         }
        
         /* Navigation */
-        .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            color: #4f46e5;
-            z-index: 100;
-        }
-
-        /* מובייל: החצים בתוך המסך */
-        .prev-btn { left: 10px; }
-        .next-btn { right: 10px; }
-
-        /* מסך גדול: החצים יוצאים החוצה */
-        @media (min-width: 1024px) {
-            .prev-btn { left: -60px; }
-            .next-btn { right: -60px; }
-        }
+        
        
         .nav-btn:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.25);
