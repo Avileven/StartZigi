@@ -82,9 +82,9 @@ export default function Pricing() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
-        </h1>
+        <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
+  Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
+</h1>
         
         {/* Toggle - Default is Annual */}
         <div className="flex justify-center items-center gap-4 mb-16">
