@@ -60,37 +60,18 @@
        
         /* Navigation */
         .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            color: #4f46e5;
-            transition: all 0.3s ease;
-            z-index: 100;
-        }
-
-        .nav-btn:hover {
-            background: #f8fafc;
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        /* כאן התיקון הקריטי: */
-        .prev-btn { left: -60px; }
-        .next-btn { right: -60px; }
-
-        /* במובייל - החצים נכנסים פנימה לתוך המסך */
-        @media (max-width: 1024px) {
-            .prev-btn { left: 10px; }
-            .next-btn { right: 10px; }
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            
         }
        
         .nav-btn:hover:not(:disabled) {
