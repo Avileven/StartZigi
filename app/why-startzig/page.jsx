@@ -122,5 +122,15 @@ export default function WhyStartZig() {
                 </div>
             </main>
         </div>
+        
     );
+    {/* Paul Graham Quote */}
+      <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
+            "The way to do really great work is to love what you do. In startups, that means loving the Zig."
+          </p>
+          <p className="font-bold text-white uppercase tracking-widest text-sm">— Paul Graham, Y Combinator</p>
+        </div>
+      </section>
 }
