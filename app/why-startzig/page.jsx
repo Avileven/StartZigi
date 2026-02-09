@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AnimatedBg from "@/components/common/AnimatedBg"; 
 
 export default function WhyStartZig() {
     const [textState, setTextState] = useState('up');
@@ -23,85 +22,92 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans relative overflow-x-hidden">
             
-            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-                <AnimatedBg />
-            </div>
-
-            {/* pt-24 במובייל לעומת pt-32 בדסקטופ */}
             <main className="relative z-10 min-h-screen pt-24 md:pt-32 pb-24 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto w-full">
+                <div className="max-w-4xl mx-auto w-full text-center">
                     
-                    {/* Header Section - whitespace-nowrap מונע מהסימן שאלה לרדת */}
-                    <div className="text-center mb-12 md:mb-16 relative">
-                        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10 whitespace-nowrap">
+                    {/* כותרת - טיפול בסימן השאלה ובגודל במובייל */}
+                    <div className="mb-12 md:mb-16">
+                        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white mb-6 whitespace-nowrap inline-block">
                             Why Start
                             <span className={`inline-block ml-2 transition-opacity duration-500 ${textState === 'fade' ? 'opacity-0' : 'opacity-100'}`}>
                                 <span className={textState === 'zig' ? 'text-blue-400' : 'text-gray-400'}>
                                     {textState === 'zig' ? 'Zig' : 'Up'}
                                 </span>
                             </span>
-                            <span className="inline-block">?</span>
+                            <span>?</span>
                         </h1>
                     </div>
 
-                    <div className="max-w-3xl mx-auto space-y-10 md:space-y-12 text-slate-200">
+                    <div className="max-w-3xl mx-auto space-y-12 text-slate-200">
+                        
+                        {/* טקסט פתיחה ממורכז */}
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <p className="text-lg md:text-2xl leading-relaxed font-light">
-                                The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. But starting is easy; staying alive through the turns is where the winners are decided.
+                            <p className="text-xl md:text-2xl leading-relaxed font-light">
+                                The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. <br className="hidden md:block" />
+                                But starting is easy; staying alive through the turns is where the winners are decided.
                             </p>
                         </div>
 
-                        {/* פדינג גמיש (px-6 במובייל) */}
-                        <section className="py-10 md:py-12 px-6 md:px-8 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
-                            <div className="max-w-4xl mx-auto text-center">
-                                <p className="text-xl md:text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
-                                    "The way to do really great work is to love what you do. In startups, that means loving the Zig."
-                                </p>
-                                <p className="font-bold text-white uppercase tracking-widest text-xs md:text-sm">— Paul Graham, Y Combinator</p>
-                            </div>
+                        {/* ציטוט פול גרהאם */}
+                        <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
+                            <p className="text-xl md:text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
+                                "The way to do really great work is to love what you do. In startups, that means loving the Zig."
+                            </p>
+                            <p className="font-bold text-white uppercase tracking-widest text-xs md:text-sm">— Paul Graham, Y Combinator</p>
                         </section>
 
+                        {/* טקסט מעבר ממורכז */}
                         <div className="space-y-6 md:space-y-8">
-                            <p className="text-base md:text-xl leading-relaxed">
-                                Real startups don't fly; they navigate. They stumble. They <span className="text-white font-bold">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. They learn, adapt, and find unexpected paths to success.
+                            <p className="text-lg md:text-xl leading-relaxed">
+                                Real startups don't fly; they navigate. They stumble. <br className="hidden md:block" />
+                                They <span className="text-white font-bold text-blue-400">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. <br className="hidden md:block" />
+                                They learn, adapt, and find unexpected paths to success.
                             </p>
                         </div>
 
-                        <div className="text-center pt-4">
+                        {/* הקדמה לסיפור */}
+                        <div className="pt-4">
                             <p className="text-blue-400 font-medium tracking-wide uppercase text-xs md:text-sm px-4">
-                                Here is a classic example of how the zigzag journey actually looks in the real world:
+                                Here is a classic example of how the zigzag journey looks in the real world:
                             </p>
                         </div>
 
-                        {/* פדינג גמיש גם כאן */}
-                        <section className="py-10 md:py-12 px-6 md:px-8 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
-                            <div className="space-y-6 text-base md:text-xl leading-relaxed text-slate-300">
-                                <p>
+                        {/* סיפור מאיה המורחב - הכל ממורכז */}
+                        <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl text-center md:text-left">
+                            <div className="space-y-6 text-base md:text-lg leading-relaxed text-slate-300">
+                                <p className="text-center">
                                     <span className="text-white font-bold">Maya</span> spent two years developing <span className="text-blue-400 font-semibold">FreshCast</span>. Her vision was clear: using AI to predict demand and help high-end restaurants eliminate food waste.
                                 </p>
-                                <p>
+                                <p className="text-center">
                                     But the market didn't care. After pitching to <span className="text-white font-bold">19 investors</span>, her runway was disappearing. The 20th investor wrote a check for <span className="text-white font-bold">₪300K</span>, but even that wasn't enough to scale.
                                 </p>
-                                <p>
-                                    With three months of cash left, a client told her: <span className="italic text-white underline decoration-blue-500/50">"I don't care about food waste. I'm losing revenue because I can't manage my kitchen shifts."</span>
+                                <p className="text-center">
+                                    With three months of cash left, a client told her: <br />
+                                    <span className="italic text-white underline decoration-blue-500/50">"I don't care about food waste. I'm losing revenue because I can't manage my kitchen shifts."</span>
                                 </p>
-                                <p className="bg-amber-400/10 p-4 border-l-4 border-amber-400 italic text-sm md:text-base">
-                                    In that moment, Maya embraced the <span className="text-amber-400 font-bold">Zig</span>. 
+                                
+                                <div className="flex justify-center">
+                                    <p className="bg-amber-400/10 p-4 border-l-4 border-amber-400 italic text-center max-w-md">
+                                        In that moment, Maya embraced the <span className="text-amber-400 font-bold">Zig</span>. 
+                                    </p>
+                                </div>
+
+                                <p className="text-center">
+                                    She rebuilt her AI to solve <span className="text-white font-bold">staffing logistics</span>. The resistance vanished. Sales cycles dropped from months to days.
                                 </p>
-                                <p>
-                                    She rebuilt her AI to solve <span className="text-white font-bold">staffing logistics</span>. Sales cycles dropped from months to days.
-                                </p>
-                                <p className="text-white font-bold text-xl md:text-2xl pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                                    <span>18 months later:</span>
-                                    <span className="text-blue-400 text-2xl md:text-3xl">$47M EXIT</span>
-                                </p>
+                                
+                                <div className="pt-6 border-t border-white/10 flex flex-col items-center justify-center gap-2">
+                                    <span className="text-white font-bold text-xl uppercase tracking-widest">18 months later:</span>
+                                    <span className="text-blue-400 text-4xl md:text-5xl font-black">$47M EXIT</span>
+                                </div>
                             </div>
                         </section>
 
-                        <div className="text-center pt-10">
+                        {/* CTA סופי */}
+                        <div className="pt-10">
                             <Link href="/register" className="group inline-block">
                                 <p className="text-3xl md:text-6xl font-black text-white leading-tight">Don't just start up.</p>
-                                <p className="text-4xl md:text-6xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">StartZig.</p>
+                                <p className="text-4xl md:text-7xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">StartZig.</p>
                             </Link>
                         </div>
                     </div>
