@@ -127,13 +127,19 @@
             50% { opacity: 1; transform: scale(1.05); }
         }
         @media (max-width: 768px) {
-  .container {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+  .min-h-screen {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .max-w-5xl > div:first-child {
+    gap: 8px !important;
+  }
+  .nav-btn {
+    padding: 6px !important;
   }
   .nav-btn svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 18px !important;
+    height: 18px !important;
   }
 }
     </style>
