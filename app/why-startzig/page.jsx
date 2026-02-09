@@ -2,47 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+// וודא שהקובץ AnimatedBg נמצא באותה תיקייה או שנה את הנתיב בהתאם
+import AnimatedBg from './AnimatedBg'; 
 
 export default function WhyStartZig() {
-    // משתנים חסרים שהוספתי כדי למנוע את השגיאות בפוש
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const user = null; 
     const handleLogin = () => { window.location.href = "/login"; };
 
     const [textState, setTextState] = useState('up');
-    const bgPathRef = useRef(null);
-
-    // לוגיקת האנימציה של הזיגזג ברקע
-    useEffect(() => {
-        let animationFrameId;
-        const duration = 8000;
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = (elapsed % duration) / duration;
-
-            const points = [];
-            const segments = 20;
-
-            for (let i = 0; i <= segments; i++) {
-                const t = i / segments;
-                const x = 100 + (600 * t);
-                const y = 300 + Math.sin((t * 8 + progress * 2) * Math.PI) * 120;
-                points.push(`${x} ${y}`);
-            }
-
-            if (bgPathRef.current) {
-                const pathData = 'M ' + points.join(' L ');
-                bgPathRef.current.setAttribute('d', pathData);
-            }
-
-            animationFrameId = requestAnimationFrame(animate);
-        };
-
-        animate();
-        return () => cancelAnimationFrame(animationFrameId);
-    }, []);
 
     // אנימציית החלפת הטקסט (StartUp -> StartZig)
     useEffect(() => {
@@ -57,28 +25,25 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
             
-            {/* רקע הזיגזג המונפש -בוטל*/}
-            
+            {/* הוספת האנימציה כרקע */}
+            <div className="absolute inset-0 z-0 opacity-40">
+                <AnimatedBg />
+            </div>
 
-            {/* סרגל ניווט מתוקן - עובד במובייל ובלי כפילויות */}
-           
-
-            <main className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-20">
-                <div className="max-w-4xl w-full">
+            <main className="relative z-10 min-h-screen py-12 px-4 sm:px-6 lg:px-8 mt-20">
+                <div className="max-w-4xl mx-auto w-full">
                     
-                    {/* -בוטל-כותרת עם הזיגזג הסטטי */}
+                    {/* כותרת */}
                     <div className="text-center mb-16 relative">
-                        
-
                         <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 relative z-10 whitespace-nowrap">
-  Why Start
-  <span className={`inline-block ml-2 transition-opacity duration-500 ${textState === 'fade' ? 'opacity-0' : 'opacity-100'}`}>
-    <span className={textState === 'zig' ? 'text-blue-400' : 'text-gray-400'}>
-      {textState === 'zig' ? 'Zig' : 'Up'}
-    </span>
-  </span>
-  <span className="ml-1">?</span>
-</h1>
+                            Why Start
+                            <span className={`inline-block ml-2 transition-opacity duration-500 ${textState === 'fade' ? 'opacity-0' : 'opacity-100'}`}>
+                                <span className={textState === 'zig' ? 'text-blue-400' : 'text-gray-400'}>
+                                    {textState === 'zig' ? 'Zig' : 'Up'}
+                                </span>
+                            </span>
+                            <span className="ml-1">?</span>
+                        </h1>
                     </div>
 
                     {/* גוף התוכן */}
@@ -95,12 +60,6 @@ export default function WhyStartZig() {
                             </p>
                         </div>
 
-                        <div className="animate-in fade-in slide-in-from-bottom-4 delay-500 duration-700">
-                            <p className="text-lg sm:text-xl leading-relaxed">
-                                Anyone familiar with the startup world — or who's been an entrepreneur — knows the zigzag of the entrepreneurial journey.
-                            </p>
-                        </div>
-
                         {/* סיפור מאיה */}
                         <div className="my-12 pl-6 border-l-4 border-blue-400 bg-white/5 p-8 rounded-r-xl text-left">
                             <div className="space-y-4 text-base sm:text-lg leading-relaxed text-slate-300">
@@ -112,25 +71,25 @@ export default function WhyStartZig() {
                             </div>
                         </div>
 
-                        <div className="text-center pt-20">
-                            <Link href="/register" className="group">
+                        <div className="text-center pt-10 mb-20">
+                            <Link href="/register" className="group inline-block">
                                 <p className="text-4xl sm:text-6xl font-black text-white leading-tight">Don't just start up.</p>
                                 <p className="text-4xl sm:text-6xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">StartZig.</p>
                             </Link>
                         </div>
+
+                        {/* Paul Graham Quote - עכשיו הוא בתוך ה-Return */}
+                        <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
+                            <div className="max-w-4xl mx-auto text-center">
+                                <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
+                                    "The way to do really great work is to love what you do. In startups, that means loving the Zig."
+                                </p>
+                                <p className="font-bold text-white uppercase tracking-widest text-sm">— Paul Graham, Y Combinator</p>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </main>
         </div>
-        
     );
-    {/* Paul Graham Quote */}
-      <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
-            "The way to do really great work is to love what you do. In startups, that means loving the Zig."
-          </p>
-          <p className="font-bold text-white uppercase tracking-widest text-sm">— Paul Graham, Y Combinator</p>
-        </div>
-      </section>
 }
