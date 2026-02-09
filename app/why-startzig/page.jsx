@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-// וודא שהקובץ AnimatedBg נמצא באותה תיקייה או שנה את הנתיב בהתאם
 import AnimatedBg from "@/components/common/AnimatedBg"; 
 
 export default function WhyStartZig() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const user = null; 
-    const handleLogin = () => { window.location.href = "/login"; };
-
     const [textState, setTextState] = useState('up');
+
+    // תיקון: מבטיח שהדף תמיד ייטען מלמעלה
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     // אנימציית החלפת הטקסט (StartUp -> StartZig)
     useEffect(() => {
@@ -23,14 +23,15 @@ export default function WhyStartZig() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
+        <div className="min-h-screen bg-slate-900 text-white font-sans relative">
             
-            {/* הוספת האנימציה כרקע */}
-            <div className="absolute inset-0 z-0 opacity-40">
+            {/* רקע מונפש */}
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
                 <AnimatedBg />
             </div>
 
-            <main className="relative z-10 min-h-screen py-12 px-4 sm:px-6 lg:px-8 mt-20">
+            {/* שינוי מ-mt-20 ל-pt-32 כדי למנוע קפיצות גלילה */}
+            <main className="relative z-10 min-h-screen pt-32 pb-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto w-full">
                     
                     {/* כותרת */}
@@ -71,6 +72,7 @@ export default function WhyStartZig() {
                             </div>
                         </div>
 
+                        {/* קריאה לפעולה */}
                         <div className="text-center pt-10 mb-20">
                             <Link href="/register" className="group inline-block">
                                 <p className="text-4xl sm:text-6xl font-black text-white leading-tight">Don't just start up.</p>
@@ -78,7 +80,7 @@ export default function WhyStartZig() {
                             </Link>
                         </div>
 
-                        {/* Paul Graham Quote - עכשיו הוא בתוך ה-Return */}
+                        {/* Paul Graham Quote */}
                         <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
                             <div className="max-w-4xl mx-auto text-center">
                                 <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
