@@ -1,38 +1,50 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Check, Menu, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = null; 
 
   const tiers = [
     {
       name: 'Free',
       price: '$0',
-      description: 'Free access to grow your idea',
-      features: ['Use pro tools', 'Basic mentor access'],
+      description: 'Access all of StartZig’s core features at no cost and see what it can do.',
+      features: [
+        'Free access to grow your idea',
+        'Free access to the virtual investment marketplace',
+        'Basic community tools',
+        '5 Mentor interactions'
+      ],
       cta: 'Start Free',
       featured: false,
     },
     {
       name: 'Vision',
-      price: '$5',
-      description: '20 Mentor Credits',
-      features: ['20 Mentor interactions', 'StartZig Studio- basic AI'],
+      price: isAnnual ? '$3.5' : '$5',
+      description: 'Take your idea to the next level with more help from our mentor and basic AI tools.',
+      features: [
+        'Free access to grow your idea',
+        'Free access to the virtual investment marketplace',
+        'Basic community tools',
+        '25 Mentor interactions',
+        'StartZig Studio- basic AI'
+      ],
       cta: 'Get Vision',
       featured: false,
     },
     {
       name: 'Impact',
       price: isAnnual ? '$7' : '$10',
-      description: '100 Mentor Credits',
+      description: 'Access advanced tools and scale up your mentor support.',
       features: [
+        'Free access to grow your idea',
+        'Free access to the virtual investment marketplace',
+        'Basic community tools',
         '100 Mentor interactions',
-        'Full Mentor guidance',
         'StartZig Studio- Boost AI',
+        'Basic Social & media tools'
       ],
       cta: 'Get Impact',
       featured: true,
@@ -40,12 +52,14 @@ export default function Pricing() {
     {
       name: 'Unicorn',
       price: isAnnual ? '$17.5' : '$25',
-      description: '500 Mentor Credits',
+      description: 'Boost your venture guidance with top mentor credits and advanced social tools.',
       features: [
+        'Free access to grow your idea',
+        'Free access to the virtual investment marketplace',
+        'Advanced community tools',
         '500 Mentor interactions',
-        'Full Mentor guidance',
-        'StartZig Studio- All tools',
-        'Social & media tools',
+        'StartZig Studio- Boost AI',
+        'Advanced Social & media tools'
       ],
       cta: 'Get Unicorn',
       featured: false,
@@ -53,60 +67,82 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
-    
-      {/* תוכן Pricing */}
-      <div className="pt-32 pb-24 px-6">
-        <div className="mx-auto max-w-7xl text-center">
-          <h2 className="text-4xl font-bold">Pricing Plans</h2>
-
-          <div className="mt-8 flex items-center justify-center gap-x-4">
-            <span className={!isAnnual ? 'text-white' : 'text-gray-400'}>Monthly</span>
-            <button
-              onClick={() => setIsAnnual(!isAnnual)}
-              className="relative h-6 w-11 rounded-full bg-gray-700 transition-colors"
-            >
-              <span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-indigo-500 transition-transform ${isAnnual ? 'translate-x-5' : ''}`} />
-            </button>
-            <span className={isAnnual ? 'text-white' : 'text-gray-400'}>
-              Yearly <span className="text-indigo-400 font-medium">(30% Off)</span>
-            </span>
+    <div className="min-h-screen bg-[#0F172A] text-white font-sans">
+      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between bg-[#0F172A]">
+        <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+            <span className="text-white text-xl">S</span>
           </div>
+          StartZig
+        </Link>
+      </nav>
 
-          <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {tiers.map((tier) => (
-              <div
-                key={tier.name}
-                className={`flex flex-col rounded-3xl p-8 ring-1 ring-white/10 ${
-                  tier.featured ? 'bg-white/10 ring-2 ring-indigo-500 scale-105 shadow-xl' : 'bg-white/5'
-                }`}
-              >
-                <h3 className="text-lg font-semibold text-indigo-400">{tier.name}</h3>
-                {tier.featured && <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-bold mt-1">Most Popular</p>}
-                
-                <div className="mt-4 flex items-baseline gap-x-1">
-                  <span className="text-4xl font-bold">{tier.price}</span>
-                  <span className="text-sm text-gray-400">/month</span>
-                </div>
-                <p className="mt-2 text-sm text-gray-300 h-10">{tier.description}</p>
-                
-                <ul className="mt-8 space-y-3 text-sm text-left flex-1">
+      <div className="max-w-7xl mx-auto px-6 py-20 text-center">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+          Ready to start <span className="text-indigo-400 italic">the zigzag?</span>
+        </h1>
+        
+        {/* Annual/Monthly Toggle */}
+        <div className="flex justify-center items-center gap-4 mb-12">
+          <span className={`text-sm ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
+          <button 
+            onClick={() => setIsAnnual(!isAnnual)}
+            className="w-12 h-6 bg-indigo-500/20 rounded-full relative p-1 transition-all"
+          >
+            <div className={`w-4 h-4 bg-indigo-500 rounded-full transition-all ${isAnnual ? 'translate-x-6' : 'translate-x-0'}`} />
+          </button>
+          <span className={`text-sm ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
+            Annually <span className="text-indigo-400 font-bold text-xs ml-1">(Save 30%)</span>
+          </span>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-6">
+          {tiers.map((tier) => (
+            <div
+              key={tier.name}
+              className={`relative flex flex-col p-8 rounded-3xl border transition-all ${
+                tier.featured 
+                ? 'bg-[#1E293B] border-indigo-500 shadow-xl scale-105 z-10' 
+                : 'bg-[#1E293B]/50 border-white/10'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-4 text-left">
+                <h3 className="text-xl font-bold">{tier.name}</h3>
+                {tier.featured && (
+                  <span className="bg-indigo-500 text-[10px] uppercase px-2 py-1 rounded-full font-bold">Most Popular</span>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-400 text-left mb-6 min-h-[40px]">
+                {tier.description}
+              </p>
+
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className="text-4xl font-bold">{tier.price}</span>
+                <span className="text-gray-400 text-sm">/month</span>
+              </div>
+
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 text-left">
+                  Plan highlights:
+                </p>
+                <ul className="space-y-4 text-sm text-left">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex gap-x-3 text-gray-300">
-                      <Check className="h-5 w-5 text-indigo-400 shrink-0" />
-                      {feature}
+                    <li key={feature} className="flex items-start gap-3 text-gray-300">
+                      <Check className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-
-                <button className={`mt-8 w-full py-2 rounded-lg font-semibold transition-all ${
-                  tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
-                }`}>
-                  {tier.cta}
-                </button>
               </div>
-            ))}
-          </div>
+
+              <button className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
+                tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
+              }`}>
+                {tier.cta}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
