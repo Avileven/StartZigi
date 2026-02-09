@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 // וודא שהקובץ AnimatedBg נמצא באותה תיקייה או שנה את הנתיב בהתאם
-import AnimatedBg from './AnimatedBg'; 
+import AnimatedBg from "@/components/common/AnimatedBg"; 
 
 export default function WhyStartZig() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
