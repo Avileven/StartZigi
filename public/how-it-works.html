@@ -138,6 +138,26 @@
             0%, 100% { opacity: 0.6; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.05); }
         }
+        @media (max-width: 768px) {
+    .nav-btn {
+        top: auto;
+        bottom: -60px; /* מעביר את החצים אל מתחת לתוכן */
+        transform: none;
+    }
+    
+    .prev-btn {
+        left: 20px; /* חץ שמאלה בתוך המסך */
+    }
+    
+    .next-btn {
+        right: 20px; /* חץ ימינה בתוך המסך */
+    }
+
+    /* אופציונלי: מגדיל את המרווח התחתון של המכולה כדי שהחצים לא יסתירו את הפוטר */
+    .container {
+        margin-bottom: 80px;
+    }
+}
     </style>
 </head>
 <body>
