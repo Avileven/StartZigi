@@ -181,20 +181,34 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
               venture_screening_score: ventureScreeningScore 
             });
 
-            if (isGo) {
-              // Instead of immediate investment, ask for funding plan completion
+            if (ventureScreeningScore >= 8.5) {
+              // High score - Direct to Advanced Meeting
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'system',
                 title: `Great Progress with ${vcFirm.name}!`,
-                content: `Excellent performance in your initial meeting! Your venture screening score was ${ventureScreeningScore.toFixed(1)}/10. We're impressed and would like to move forward. Please join the advanced meeting to discuss the next steps and finalize the terms.`,
+                content: `Excellent performance in your initial meeting! We're impressed and would like to move forward. Please join the advanced meeting to discuss the next steps and finalize the terms.`,
                 phase: venture.phase,
                 priority: 4,
                 vc_firm_id: vcFirm.id,
                 vc_firm_name: vcFirm.name,
-                vc_stage: 'stage_3_ready'
+                vc_stage: 'stage_2_passed'  // Advanced Meeting
+              });
+            } else if (ventureScreeningScore >= 7.0 && ventureScreeningScore < 8.5) {
+              // Medium score - Follow-Up needed
+              await VentureMessage.create({
+                venture_id: venture.id,
+                message_type: 'system',
+                title: `Follow-Up Needed with ${vcFirm.name}`,
+                content: `Thank you for the initial meeting. Your venture screening score was ${ventureScreeningScore.toFixed(1)}/10. We're interested but need more information before proceeding. Please schedule a follow-up call to discuss further.`,
+                phase: venture.phase,
+                priority: 3,
+                vc_firm_id: vcFirm.id,
+                vc_firm_name: vcFirm.name,
+                vc_stage: 'stage_2_followup'  // Follow-Up
               });
             } else {
+              // Low score - Rejected
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'system',
