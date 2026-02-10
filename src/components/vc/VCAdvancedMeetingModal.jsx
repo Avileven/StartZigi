@@ -1,4 +1,4 @@
-
+// update 021026 add budget que
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { Budget } from '@/api/entities.js';
@@ -13,9 +13,9 @@ const calculateBudgetScore = (budget) => {
   const marketing = budget.marketing_costs || [];
   const operational = budget.operational_costs || [];
 
-  const totalSalaries = salaries.reduce((sum, item) => sum + (item.avg_salary * item.count * 12), 0);
-  const totalMarketing = marketing.reduce((sum, item) => sum + (item.cost * 12), 0);
-  const totalOperational = operational.reduce((sum, item) => sum + (item.cost * 12), 0);
+  const totalSalaries = salaries.reduce((sum, item) => sum + (item.avg_salary * item.count * (item.percentage || 100) / 100 * 24), 0);
+  const totalMarketing = marketing.reduce((sum, item) => sum + (item.cost * 24), 0);
+  const totalOperational = operational.reduce((sum, item) => sum + (item.cost * 24), 0);
   const totalBudget = totalSalaries + totalMarketing + totalOperational;
 
   const breakdown = {
@@ -40,13 +40,13 @@ const calculateBudgetScore = (budget) => {
   };
 
   // Core Viability Check (20 points)
-  if (totalBudget >= 365000) {
+  if (totalBudget >= 730000) {
     score += 20;
     details.coreViabilityPoints = 20;
   }
 
   // Salaries scoring logic
-  const salariesMinRatio = totalSalaries / 250000;
+  const salariesMinRatio = totalSalaries / 500000;
   if (salariesMinRatio >= 1.0) {
     details.salariesMinPoints = 17;
   } else if (salariesMinRatio >= 0.9) {
@@ -65,7 +65,7 @@ const calculateBudgetScore = (budget) => {
   }
 
   // Marketing scoring logic
-  const marketingMinRatio = totalMarketing / 75000;
+  const marketingMinRatio = totalMarketing / 150000;
   if (marketingMinRatio >= 1.0) {
     details.marketingMinPoints = 12;
   } else if (marketingMinRatio >= 0.9) {
@@ -84,7 +84,7 @@ const calculateBudgetScore = (budget) => {
   }
 
   // Operational scoring logic
-  const operationalMinRatio = totalOperational / 40000;
+  const operationalMinRatio = totalOperational / 80000;
   if (operationalMinRatio >= 1.0) {
     details.operationalMinPoints = 2;
   } else if (operationalMinRatio >= 0.9) {
@@ -113,8 +113,8 @@ const calculateBudgetScore = (budget) => {
 };
 
 const calculateInvestmentTerms = (ventureScreeningScore, budgetScore, totalBudget) => {
-  // Investment Amount = First-Year Funding Requirement * 2
-  const investmentAmount = totalBudget * 2;
+  // Investment Amount = 2-Year Budget (no multiplier needed as budget is already for 2 years)
+  const investmentAmount = totalBudget;
   
   // Venture Multiplier based on screening score
   let ventureMultiplier = 1.0;
@@ -156,7 +156,7 @@ const formatCalculationBreakdown = (evaluation) => {
 
 --- BUDGET CALCULATION BREAKDOWN ---
 
-Total Annual Budget: $${breakdown.totalBudget.toLocaleString()}
+Total 2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
 - Salaries: $${breakdown.totalSalaries.toLocaleString()} (${breakdown.salariesPercentage.toFixed(1)}%)
 - Marketing: $${breakdown.totalMarketing.toLocaleString()} (${breakdown.marketingPercentage.toFixed(1)}%)
 - Operations: $${breakdown.totalOperational.toLocaleString()} (${breakdown.operationalPercentage.toFixed(1)}%)
@@ -164,20 +164,20 @@ Total Annual Budget: $${breakdown.totalBudget.toLocaleString()}
 SCORING BREAKDOWN:
 
 1. Core Viability Check (20 points max):
-   - Required: $365,000+ → ${details.coreViabilityPoints}/20 points
+   - Required: $730,000+ → ${details.coreViabilityPoints}/20 points
 
 2. Salaries Category (43 points max):
-   - Minimum Spend ($250,000): ${details.salariesMinPoints}/17 points
+   - Minimum Spend ($500,000): ${details.salariesMinPoints}/17 points
    - Percentage Range (40-60%): ${details.salariesPercentPoints}/26 points
    - Category Subtotal: ${details.salariesMinPoints + details.salariesPercentPoints}/43 points
 
 3. Marketing Category (32 points max):
-   - Minimum Spend ($75,000): ${details.marketingMinPoints}/12 points
+   - Minimum Spend ($150,000): ${details.marketingMinPoints}/12 points
    - Percentage Range (15-25%): ${details.marketingPercentPoints}/20 points
    - Category Subtotal: ${details.marketingMinPoints + details.marketingPercentPoints}/32 points
 
 4. Operational Category (5 points max):
-   - Minimum Spend ($40,000): ${details.operationalMinPoints}/2 points
+   - Minimum Spend ($80,000): ${details.operationalMinPoints}/2 points
    - Percentage Range (5-10%): ${details.operationalPercentPoints}/3 points
    - Category Subtotal: ${details.operationalMinPoints + details.operationalPercentPoints}/5 points
 
@@ -207,8 +207,75 @@ VC Equity Stake: ${terms.vcEquityPercentage.toFixed(1)}%
 Founder Equity Remaining: ${(100 - terms.vcEquityPercentage).toFixed(1)}%`;
 };
 
+const evaluateFundingAsk = (answer, totalBudget) => {
+  // Extract number from answer (handles $1.2M, 1200000, etc.)
+  const cleanAnswer = answer.replace(/[,$]/g, '').toLowerCase();
+  let fundingAsk = 0;
+  
+  if (cleanAnswer.includes('m')) {
+    fundingAsk = parseFloat(cleanAnswer) * 1000000;
+  } else if (cleanAnswer.includes('k')) {
+    fundingAsk = parseFloat(cleanAnswer) * 1000;
+  } else {
+    fundingAsk = parseFloat(cleanAnswer);
+  }
+  
+  if (isNaN(fundingAsk) || fundingAsk <= 0) {
+    return {
+      score: 0,
+      feedback: "Unable to parse funding request",
+      ratio: 0,
+      fundingAsk: 0
+    };
+  }
+  
+  const ratio = fundingAsk / totalBudget;
+  
+  let score = 0;
+  let feedback = "";
+  
+  if (ratio >= 1.8 && ratio <= 2.2) {
+    score = 10;
+    feedback = "Perfect alignment with budget runway needs";
+  } else if (ratio >= 1.5 && ratio < 1.8) {
+    score = 8;
+    feedback = "Reasonable, though slightly tight on buffer";
+  } else if (ratio >= 1.0 && ratio < 1.5) {
+    score = 5;
+    feedback = "Concerning - limited buffer for execution risks";
+  } else if (ratio > 2.2 && ratio <= 3.0) {
+    score = 6;
+    feedback = "Ask exceeds budget justification significantly";
+  } else if (ratio > 3.0) {
+    score = 2;
+    feedback = "Unrealistic ask relative to stated budget";
+  } else {
+    score = 1;
+    feedback = "Insufficient funding to execute the stated plan";
+  }
+  
+  return { score, feedback, ratio, fundingAsk };
+};
+
+const generateBudgetQuestion = (breakdown) => {
+  const { salariesPercentage, marketingPercentage, operationalPercentage } = breakdown;
+  
+  if (salariesPercentage > 65) {
+    return `Your team salaries are ${salariesPercentage.toFixed(1)}% of the budget. Can you explain why you need such a large team early on?`;
+  }
+  if (marketingPercentage < 12) {
+    return `Your marketing budget is only ${marketingPercentage.toFixed(1)}%. How do you plan to acquire customers with such limited marketing spend?`;
+  }
+  if (operationalPercentage > 25) {
+    return `Operational costs are ${operationalPercentage.toFixed(1)}% of your budget. Can you break down what's included here?`;
+  }
+  
+  return "Your budget allocation looks balanced. Do you have any concerns about executing this plan?";
+};
+
 const QUESTIONS = [
   "Could you tell us how much money you would like to raise now?",
+  "DYNAMIC_BUDGET_QUESTION", // Will be replaced dynamically
   "Before we make our final decision, would you like to add any more data or thoughts?"
 ];
 
@@ -218,6 +285,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isAnswering, setIsAnswering] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [userAnswers, setUserAnswers] = useState([]); // NEW: Store user answers
   const chatEndRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
@@ -231,6 +299,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
       setCurrentQuestionIndex(0);
       setIsAnswering(false);
       setIsFinished(false);
+      setUserAnswers([]); // NEW: Reset answers
 
       const startMeeting = () => {
         setIsAnswering(true);
@@ -256,17 +325,40 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
     setIsAnswering(true);
     const userAnswer = userInput.trim();
     setUserInput('');
+    
+    // Save user answer
+    setUserAnswers(prev => [...prev, userAnswer]);
+    
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const acks = ["I see.", "Got it.", "Understood.", "That's helpful information."];
       const randomAck = acks[Math.floor(Math.random() * acks.length)];
       setConversation(prev => [...prev, { type: 'bot', text: randomAck }]);
 
       const nextIndex = currentQuestionIndex + 1;
       if (nextIndex < QUESTIONS.length) {
-        setTimeout(() => {
-          setConversation(prev => [...prev, { type: 'bot', text: QUESTIONS[nextIndex] }]);
+        setTimeout(async () => {
+          let nextQuestion = QUESTIONS[nextIndex];
+          
+          // Generate dynamic budget question if needed
+          if (nextQuestion === "DYNAMIC_BUDGET_QUESTION") {
+            try {
+              const budgets = await Budget.filter({ venture_id: venture.id });
+              if (budgets.length > 0) {
+                const budget = budgets[0];
+                const evaluation = calculateBudgetScore(budget);
+                nextQuestion = generateBudgetQuestion(evaluation.breakdown);
+              } else {
+                nextQuestion = "Before we decide, any final thoughts to share?";
+              }
+            } catch (error) {
+              console.error("Error generating dynamic question:", error);
+              nextQuestion = "Before we decide, any final thoughts to share?";
+            }
+          }
+          
+          setConversation(prev => [...prev, { type: 'bot', text: nextQuestion }]);
           setCurrentQuestionIndex(nextIndex);
           setIsAnswering(false);
         }, 1500);
@@ -311,10 +403,61 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
             const ventureScreeningScore = venture.venture_screening_score || 7.0;
             const budgetScore = testScore ? parseFloat(testScore) : evaluation.score;
             
+            // Evaluate funding ask from first answer
+            const fundingAskEval = evaluateFundingAsk(userAnswers[0] || "0", evaluation.breakdown.totalBudget);
+            
             const terms = calculateInvestmentTerms(ventureScreeningScore, budgetScore, evaluation.breakdown.totalBudget);
+            
+            // Investment decision with all 3 criteria
+            const shouldInvest = (
+              budgetScore >= 75 &&
+              ventureScreeningScore >= 7.0 &&
+              fundingAskEval.score >= 6.0
+            );
+            
+            // Console logging for debugging
+            console.group('💼 VC INVESTMENT DECISION ANALYSIS');
+            
+            console.log('📊 BUDGET EVALUATION:');
+            console.log('  Total 2-Year Budget:', `$${evaluation.breakdown.totalBudget.toLocaleString()}`);
+            console.log('  Budget Score:', `${budgetScore}/100`);
+            console.log('  Breakdown:', {
+              salaries: `${evaluation.breakdown.salariesPercentage.toFixed(1)}%`,
+              marketing: `${evaluation.breakdown.marketingPercentage.toFixed(1)}%`,
+              operational: `${evaluation.breakdown.operationalPercentage.toFixed(1)}%`
+            });
+            
+            console.log('\n🎯 VENTURE SCREENING:');
+            console.log('  Venture Score:', `${ventureScreeningScore}/10`);
+            
+            console.log('\n💰 FUNDING ASK EVALUATION:');
+            console.log('  Requested Amount:', `$${fundingAskEval.fundingAsk.toLocaleString()}`);
+            console.log('  Budget Ratio:', `${fundingAskEval.ratio.toFixed(2)}x`);
+            console.log('  Funding Ask Score:', `${fundingAskEval.score}/10`);
+            console.log('  Assessment:', fundingAskEval.feedback);
+            
+            console.log('\n✅ DECISION CRITERIA:');
+            console.log('  Budget Score >= 75?', budgetScore >= 75 ? '✅' : '❌', `(${budgetScore})`);
+            console.log('  Venture Score >= 7.0?', ventureScreeningScore >= 7.0 ? '✅' : '❌', `(${ventureScreeningScore})`);
+            console.log('  Funding Ask Score >= 6.0?', fundingAskEval.score >= 6.0 ? '✅' : '❌', `(${fundingAskEval.score})`);
+            
+            console.log('\n🎲 FINAL DECISION:', shouldInvest ? '✅ APPROVED' : '❌ REJECTED');
+            
+            if (shouldInvest) {
+              console.log('\n💎 INVESTMENT TERMS:');
+              console.log('  Investment Amount:', `$${terms.investmentAmount.toLocaleString()}`);
+              console.log('  Pre-Money Valuation:', `$${terms.preMoneyValuation.toLocaleString()}`);
+              console.log('  Post-Money Valuation:', `$${terms.postMoneyValuation.toLocaleString()}`);
+              console.log('  VC Equity:', `${terms.vcEquityPercentage.toFixed(2)}%`);
+              console.log('  Venture Multiplier:', `${terms.ventureMultiplier}x`);
+              console.log('  Budget Multiplier:', `${terms.budgetMultiplier}x`);
+            }
+            
+            console.groupEnd();
+            
             const proposalDetails = formatInvestmentProposal(terms, ventureScreeningScore, budgetScore);
 
-            if (budgetScore > 75) { // Clear "Go"
+            if (shouldInvest) { // Investment approved
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'investment_offer',
@@ -329,26 +472,12 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
                 investment_offer_valuation: terms.postMoneyValuation,
                 investment_offer_status: 'pending'
               });
-            } else if (budgetScore >= 65 && budgetScore <= 75) { // "On the fence" - trigger follow-up
-              await VentureMessage.create({
-                venture_id: venture.id,
-                message_type: 'vc_follow_up_required',
-                title: `Follow-up Required with ${vcFirm.name}`,
-                content: `We're impressed with your plan, but our committee is on the fence. We'd like to have one final 'call' to assess your leadership under pressure before making our decision.`,
-                phase: venture.phase,
-                priority: 3,
-                vc_firm_id: vcFirm.id,
-                vc_firm_name: vcFirm.name,
-                vc_stage: 'stage_3_followup',
-                pending_investment_offer_checksize: terms.investmentAmount,
-                pending_investment_offer_valuation: terms.postMoneyValuation
-              });
-            } else { // Clear "No Go"
+            } else { // Investment rejected
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'system',
                 title: `Investment Decision from ${vcFirm.name}`,
-                content: `Your funding budget does not meet the required thresholds for investment. At this stage, the decision is not to proceed with investment in your venture.${calculationBreakdown}`,
+                content: `After careful review, we have decided not to proceed with investment in your venture at this time.${calculationBreakdown}`,
                 phase: venture.phase,
                 priority: 2,
                 vc_firm_id: vcFirm.id,
