@@ -1,4 +1,4 @@
-//business plan 25126 updated
+//business plan 10226 updated
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -32,7 +32,7 @@ export default function businessPlan() {
   const [fundingRequirements, setFundingRequirements] = useState("");
 
 
-  const [salaries, setSalaries] = useState([{ id: '1', role: 'Founder', count: 1, avg_salary: 5000 }]);
+  const [salaries, setSalaries] = useState([{ id: '1', role: 'Founder', count: 1, percentage: 100, avg_salary: 5000 }]);
   const [marketingCosts, setMarketingCosts] = useState([{ id: '1', channel: 'Social Media Ads', cost: 1000 }]);
   const [operationalCosts, setOperationalCosts] = useState([{ id: '1', item: 'Office Rent', cost: 2000 }]);
 
@@ -127,8 +127,8 @@ export default function businessPlan() {
   }, [loadData]);
 
 
-  const addSalaryRow = () => {
-    setSalaries([...salaries, { id: Date.now().toString(), role: '', count: 1, avg_salary: 0 }]);
+  const addSalaryRow = (role = '') => {
+    setSalaries([...salaries, { id: Date.now().toString(), role: role, count: 1, percentage: 100, avg_salary: 0 }]);
   };
 
 
@@ -173,9 +173,9 @@ export default function businessPlan() {
 
 
   const calculateTotalBudget = () => {
-    const totalSalaries = salaries.reduce((sum, s) => sum + (s.count * s.avg_salary * 12), 0);
-    const totalMarketing = marketingCosts.reduce((sum, m) => sum + (m.cost * 12), 0);
-    const totalOperational = operationalCosts.reduce((sum, o) => sum + (o.cost * 12), 0);
+    const totalSalaries = salaries.reduce((sum, s) => sum + (s.count * s.avg_salary * (s.percentage / 100) * 24), 0);
+    const totalMarketing = marketingCosts.reduce((sum, m) => sum + (m.cost * 24), 0);
+    const totalOperational = operationalCosts.reduce((sum, o) => sum + (o.cost * 24), 0);
     return {
       salaries: totalSalaries,
       marketing: totalMarketing,
@@ -743,7 +743,7 @@ await VentureMessage.create({
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle>Funding Plan & Budget Breakdown</CardTitle>
-                    <CardDescription>Plan your monthly operational expenses and funding requirements for your first year</CardDescription>
+                    <CardDescription>Plan your monthly operational expenses and funding requirements for your first two years</CardDescription>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -763,15 +763,57 @@ await VentureMessage.create({
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Team Salaries (Monthly)</h3>
-                    <Button type="button" onClick={addSalaryRow} size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Role
-                    </Button>
+                    <div className="flex gap-2">
+                      <select 
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            addSalaryRow(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className="border rounded px-3 py-1 text-sm"
+                      >
+                        <option value="">Select Role...</option>
+                        <optgroup label="Engineering">
+                          <option value="CTO">CTO</option>
+                          <option value="Full Stack Developer">Full Stack Developer</option>
+                          <option value="Frontend Developer">Frontend Developer</option>
+                          <option value="Backend Developer">Backend Developer</option>
+                          <option value="Mobile Developer">Mobile Developer</option>
+                          <option value="DevOps Engineer">DevOps Engineer</option>
+                        </optgroup>
+                        <optgroup label="Product & Design">
+                          <option value="Product Manager">Product Manager</option>
+                          <option value="UI/UX Designer">UI/UX Designer</option>
+                          <option value="Product Designer">Product Designer</option>
+                        </optgroup>
+                        <optgroup label="Business & Operations">
+                          <option value="CEO">CEO</option>
+                          <option value="COO">COO</option>
+                          <option value="CFO">CFO</option>
+                          <option value="Business Development">Business Development</option>
+                        </optgroup>
+                        <optgroup label="Marketing & Sales">
+                          <option value="CMO">CMO</option>
+                          <option value="Marketing Manager">Marketing Manager</option>
+                          <option value="Sales Manager">Sales Manager</option>
+                          <option value="Content Creator">Content Creator</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                          <option value="HR Manager">HR Manager</option>
+                          <option value="Customer Support">Customer Support</option>
+                        </optgroup>
+                      </select>
+                      <Button type="button" onClick={() => addSalaryRow('')} size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Custom Role
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {salaries.map((salary) => (
                       <div key={salary.id} className="grid grid-cols-12 gap-3 items-center">
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                           <Input
                             value={salary.role}
                             onChange={(e) => updateSalary(salary.id, 'role', e.target.value)}
@@ -786,16 +828,26 @@ await VentureMessage.create({
                             placeholder="Count"
                           />
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-2">
+                          <Input
+                            type="number"
+                            value={salary.percentage}
+                            onChange={(e) => updateSalary(salary.id, 'percentage', parseInt(e.target.value) || 0)}
+                            placeholder="%"
+                            min="0"
+                            max="100"
+                          />
+                        </div>
+                        <div className="col-span-2">
                           <Input
                             type="number"
                             value={salary.avg_salary}
                             onChange={(e) => updateSalary(salary.id, 'avg_salary', parseInt(e.target.value) || 0)}
-                            placeholder="Avg Salary"
+                            placeholder="Salary"
                           />
                         </div>
                         <div className="col-span-2 text-sm font-medium">
-                          ${(salary.count * salary.avg_salary).toLocaleString()}
+                          ${((salary.count * salary.avg_salary * (salary.percentage / 100))).toLocaleString()}
                         </div>
                         <div className="col-span-1">
                           <Button
@@ -812,7 +864,7 @@ await VentureMessage.create({
                     ))}
                   </div>
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium">Total Annual Salaries: ${budget.salaries.toLocaleString()}</p>
+                    <p className="text-sm font-medium">Total 2-Year Salaries: ${budget.salaries.toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -858,7 +910,7 @@ await VentureMessage.create({
                     ))}
                   </div>
                   <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm font-medium">Total Annual Marketing: ${budget.marketing.toLocaleString()}</p>
+                    <p className="text-sm font-medium">Total 2-Year Marketing: ${budget.marketing.toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -904,13 +956,13 @@ await VentureMessage.create({
                     ))}
                   </div>
                   <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                    <p className="text-sm font-medium">Total Annual Operations: ${budget.operational.toLocaleString()}</p>
+                    <p className="text-sm font-medium">Total 2-Year Operations: ${budget.operational.toLocaleString()}</p>
                   </div>
                 </div>
 
 
                 <div className="p-6 bg-indigo-50 rounded-lg border-2 border-indigo-200">
-                  <h3 className="text-xl font-bold text-indigo-900 mb-4">Total Annual Budget</h3>
+                  <h3 className="text-xl font-bold text-indigo-900 mb-4">Total 2-Year Budget</h3>
                   <p className="text-3xl font-bold text-indigo-600 mb-2">${budget.total.toLocaleString()}</p>
                   <p className="text-sm text-indigo-700">Monthly Burn: ${budget.monthlyBurn.toLocaleString()}</p>
                   <p className="text-xs text-indigo-600 mt-3 italic">
