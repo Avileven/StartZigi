@@ -80,6 +80,99 @@ export const GUIDANCE_DATA = {
       "Our platform creates virtual 'coffee breaks' by randomly pairing remote team members for 15-minute, non-work-related video chats, complete with AI-powered conversation starters to break the ice."
     ]
   },
+  product_details: {
+    title: "Detailing Your Product/Service",
+    content: `This section provides an in-depth look at what you're building. Go beyond the elevator pitch and explain the core functionality, key features, and technical approach.
+
+**What to Include:**
+• **Core Functionality**: What does your product *do* at its most fundamental level?
+• **Key Features**: What are the 3-5 most important features that differentiate you?
+• **Technology Stack**: What technologies are you using to build this? (e.g., React, Python, AWS)
+• **User Experience**: Describe the user journey from onboarding to achieving their goal.
+• **Unique Selling Points (USPs)**: What makes your solution better than alternatives?
+
+**Writing Guidelines:**
+• Be specific and avoid vague marketing language.
+• Focus on user value, not just technical specifications.
+• If you have a prototype or mockups, describe the user journey.
+• Explain how your product solves the problem you identified.`,
+    examples: [
+      "Our B2B SaaS platform offers real-time inventory tracking (feature) so that e-commerce businesses can prevent stockouts and reduce carrying costs (benefit). It integrates directly with Shopify and WooCommerce APIs and uses a predictive AI model to forecast demand, a feature our competitors lack (USP).",
+      "Our mobile app connects local farmers directly with consumers (feature) so that users get access to fresher produce at a lower price while supporting their local economy (benefit). We use a geolocation-based matching algorithm and secure in-app payments (technology)."
+    ]
+  },
+  market_size: {
+    title: "Sizing Your Market Opportunity",
+    content: `Investors need to see that you're targeting a large and growing market. This section demonstrates the revenue potential and market dynamics.
+
+**Key Concepts (TAM, SAM, SOM):**
+• **Total Addressable Market (TAM)**: The total market demand for a product or service globally.
+• **Serviceable Addressable Market (SAM)**: The segment of the TAM targeted by your products and services within your geographical reach.
+• **Serviceable Obtainable Market (SOM)**: The portion of SAM that you can realistically capture in the next 3-5 years.
+
+**Market Research Sources:**
+• Industry reports (Gartner, Forrester, IDC)
+• Government statistics and census data
+• Competitor revenue (if public)
+• Trade associations and industry publications
+
+**Writing Guidelines:**
+• **Cite your sources**: Where did you get your market size data?
+• **Show growth**: Is the market growing? Include CAGR (Compound Annual Growth Rate).
+• **Identify trends**: What major trends are creating opportunities in this market?
+• **Be realistic**: Don't just show huge numbers—explain how you'll actually capture market share.`,
+    examples: [
+      "The global market for corporate e-learning (TAM) is projected to reach $375 billion by 2026 (Source: Global Market Insights, 2023). Our target segment is small-to-medium businesses in North America (SAM), which accounts for approximately $40 billion of that market. We aim to capture 0.5% of this segment within three years (SOM), representing a $200 million revenue opportunity. The market is growing at 15% CAGR, driven by remote work trends and skills gap challenges.",
+      "The U.S. organic food market (TAM) is currently $62 billion and growing at 12% annually. Our local focus targets urban areas with populations over 500K (SAM), representing $8 billion. We aim to capture 0.1% in year one through our two pilot cities (SOM = $8M)."
+    ]
+  },
+  founder_background: {
+    title: "Founder Background & Expertise",
+    content: `Early-stage investors often say they "invest in the jockey, not the horse." This section shows why you are the right person to build this venture.
+
+**What to Include:**
+• **Relevant Experience**: Past roles, projects, or accomplishments that directly relate to the problem you're solving.
+• **Domain Expertise**: Do you have deep knowledge of this industry or market?
+• **Technical Skills**: What are your core competencies? (Engineering, design, sales, operations)
+• **Past Successes**: Have you built a company before? Grown a team? Launched a successful product?
+• **Why This Problem**: What personal connection do you have to this problem? Why are you passionate about solving it?
+
+**Writing Guidelines:**
+• **Tell your story**: Why did you start this venture? What led you here?
+• **Be quantitative**: "Grew a previous startup's user base from 10K to 500K" is stronger than "experienced in marketing."
+• **Show momentum**: What have you already accomplished? (Early users, partnerships, revenue)
+• **Address gaps**: If you lack certain skills, explain how you'll fill them (co-founders, advisors, hires).`,
+    examples: [
+      "As a former emergency room physician for 12 years, I personally experienced the inefficiencies of outdated hospital software that cost lives. I led the digital transformation initiative at County General Hospital, reducing patient wait times by 40%. I've since completed Y Combinator and have recruited two senior engineers from Epic Systems to join as co-founders.",
+      "I spent 7 years as a product manager at Salesforce, where I shipped 3 major features used by over 100K enterprise customers. I left to solve a problem I saw firsthand: small businesses can't afford enterprise CRM tools. In 6 months, I've built an MVP, acquired 200 beta users, and generated $15K in MRR."
+    ]
+  },
+  budget_planning: {
+    title: "Planning Your Startup Budget",
+    content: `A realistic budget shows investors that you understand the financial realities of building a startup. This section breaks down your expected costs and demonstrates fiscal responsibility.
+
+**Key Budget Categories:**
+• **Team Salaries**: Your biggest expense. Be realistic about market rates and include part-time roles.
+• **Marketing & Customer Acquisition**: How will you acquire your first 100, 1000, 10000 customers?
+• **Operational Costs**: Infrastructure, tools, legal, accounting, insurance, office space.
+• **Product Development**: Cloud hosting, software licenses, third-party APIs.
+• **Buffer (10-20%)**: Always include a buffer for unexpected costs.
+
+**Budget Best Practices:**
+• **Start lean**: Your first year should focus on proving product-market fit, not scaling.
+• **Prioritize hiring**: Hire for the most critical skills you lack. Your first 3 hires are crucial.
+• **Track CAC**: Know how much it costs to acquire each customer and whether your model is sustainable.
+• **Plan for 18-24 months**: Investors want to see runway, not just a few months of cash.
+
+**Common Mistakes to Avoid:**
+• Underestimating customer acquisition costs (CAC)
+• Overestimating revenue in year one
+• Forgetting about taxes, legal fees, and insurance
+• Not accounting for seasonality or slow months`,
+    examples: [
+      "**Year 1 Budget Breakdown ($500K seed round):**\n• Team Salaries (60%): 2 engineers @ $120K each, 1 designer @ $90K, Founder salary @ $70K = $300K\n• Marketing (25%): Paid ads $75K, Content creation $25K, Events & PR $25K = $125K\n• Operations (15%): AWS hosting $20K, SaaS tools $15K, Legal & accounting $30K, Office/co-working $10K = $75K\n**Total: $500K for 12 months runway**"
+    ]
+  },
 
   // Business Plan sections
   mission_statement: {
