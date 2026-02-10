@@ -614,7 +614,7 @@ await VentureMessage.create({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competition' })}
+                      onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })}
                       className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                     >
                       Tips
@@ -648,7 +648,7 @@ await VentureMessage.create({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'entrepreneur_background' })}
+                      onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'founder_background' })}
                       className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                     >
                       Tips
