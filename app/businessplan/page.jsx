@@ -1,4 +1,4 @@
-//business plan 10226 updated
+//business plan 25126 updated
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -142,8 +142,8 @@ export default function businessPlan() {
   };
 
 
-  const addMarketingRow = () => {
-    setMarketingCosts([...marketingCosts, { id: Date.now().toString(), channel: '', cost: 0 }]);
+  const addMarketingRow = (channel = '') => {
+    setMarketingCosts([...marketingCosts, { id: Date.now().toString(), channel: channel, cost: 0 }]);
   };
 
 
@@ -157,8 +157,8 @@ export default function businessPlan() {
   };
 
 
-  const addOperationalRow = () => {
-    setOperationalCosts([...operationalCosts, { id: Date.now().toString(), item: '', cost: 0 }]);
+  const addOperationalRow = (item = '') => {
+    setOperationalCosts([...operationalCosts, { id: Date.now().toString(), item: item, cost: 0 }]);
   };
 
 
@@ -829,14 +829,16 @@ await VentureMessage.create({
                           />
                         </div>
                         <div className="col-span-2">
-                          <Input
-                            type="number"
+                          <select
                             value={salary.percentage}
-                            onChange={(e) => updateSalary(salary.id, 'percentage', parseInt(e.target.value) || 0)}
-                            placeholder="%"
-                            min="0"
-                            max="100"
-                          />
+                            onChange={(e) => updateSalary(salary.id, 'percentage', parseInt(e.target.value))}
+                            className="w-full border rounded px-3 py-2"
+                          >
+                            <option value="25">25%</option>
+                            <option value="50">50%</option>
+                            <option value="75">75%</option>
+                            <option value="100">100%</option>
+                          </select>
                         </div>
                         <div className="col-span-2">
                           <Input
@@ -872,10 +874,47 @@ await VentureMessage.create({
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Marketing Costs (Monthly)</h3>
-                    <Button type="button" onClick={addMarketingRow} size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Channel
-                    </Button>
+                    <div className="flex gap-2">
+                      <select 
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            addMarketingRow(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className="border rounded px-3 py-1 text-sm"
+                      >
+                        <option value="">Select Channel...</option>
+                        <optgroup label="Digital Marketing">
+                          <option value="Google Ads">Google Ads</option>
+                          <option value="Facebook Ads">Facebook Ads</option>
+                          <option value="Instagram Ads">Instagram Ads</option>
+                          <option value="LinkedIn Ads">LinkedIn Ads</option>
+                          <option value="TikTok Ads">TikTok Ads</option>
+                          <option value="Twitter Ads">Twitter Ads</option>
+                        </optgroup>
+                        <optgroup label="Content & SEO">
+                          <option value="SEO Services">SEO Services</option>
+                          <option value="Content Creation">Content Creation</option>
+                          <option value="Video Production">Video Production</option>
+                          <option value="Influencer Marketing">Influencer Marketing</option>
+                        </optgroup>
+                        <optgroup label="Traditional">
+                          <option value="PR & Media">PR & Media</option>
+                          <option value="Events & Sponsorships">Events & Sponsorships</option>
+                          <option value="Print Advertising">Print Advertising</option>
+                        </optgroup>
+                        <optgroup label="Tools & Software">
+                          <option value="Email Marketing (Mailchimp)">Email Marketing (Mailchimp)</option>
+                          <option value="Marketing Automation">Marketing Automation</option>
+                          <option value="Analytics Tools">Analytics Tools</option>
+                        </optgroup>
+                      </select>
+                      <Button type="button" onClick={() => addMarketingRow('')} size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Custom
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {marketingCosts.map((marketing) => (
@@ -918,10 +957,48 @@ await VentureMessage.create({
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Operational Costs (Monthly)</h3>
-                    <Button type="button" onClick={addOperationalRow} size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Cost
-                    </Button>
+                    <div className="flex gap-2">
+                      <select 
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            addOperationalRow(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className="border rounded px-3 py-1 text-sm"
+                      >
+                        <option value="">Select Item...</option>
+                        <optgroup label="Office & Infrastructure">
+                          <option value="Office Rent">Office Rent</option>
+                          <option value="Co-working Space">Co-working Space</option>
+                          <option value="Utilities (Electric, Water)">Utilities (Electric, Water)</option>
+                          <option value="Internet & Telecom">Internet & Telecom</option>
+                          <option value="Office Supplies">Office Supplies</option>
+                        </optgroup>
+                        <optgroup label="Software & Tools">
+                          <option value="AWS/Cloud Hosting">AWS/Cloud Hosting</option>
+                          <option value="SaaS Subscriptions">SaaS Subscriptions</option>
+                          <option value="Design Tools (Figma, Adobe)">Design Tools (Figma, Adobe)</option>
+                          <option value="Project Management Tools">Project Management Tools</option>
+                          <option value="CRM Software">CRM Software</option>
+                        </optgroup>
+                        <optgroup label="Legal & Finance">
+                          <option value="Legal Services">Legal Services</option>
+                          <option value="Accounting Services">Accounting Services</option>
+                          <option value="Insurance">Insurance</option>
+                          <option value="Banking Fees">Banking Fees</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                          <option value="Travel & Transportation">Travel & Transportation</option>
+                          <option value="Training & Development">Training & Development</option>
+                          <option value="Customer Support Tools">Customer Support Tools</option>
+                        </optgroup>
+                      </select>
+                      <Button type="button" onClick={() => addOperationalRow('')} size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Custom
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {operationalCosts.map((operational) => (
