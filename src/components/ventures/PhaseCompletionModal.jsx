@@ -11,7 +11,7 @@ const PHASE_CONTENT = {
     emoji: "💡",
     nextPhase: "PLAN",
     progressPercent: 20,
-    clockRotation: 72,
+    clockRotation: 0, // IDEA at top
     timeInPhase: "Completed",
     
     valuation: {
@@ -61,7 +61,7 @@ const PHASE_CONTENT = {
     emoji: "📋",
     nextPhase: "MVP",
     progressPercent: 40,
-    clockRotation: 144,
+    clockRotation: 72, // PLAN at 1 o'clock (72 degrees)
     timeInPhase: "Completed",
     
     valuation: {
@@ -116,7 +116,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: "MLP",
     progressPercent: 60,
-    clockRotation: 216,
+    clockRotation: 144, // MVP at 4 o'clock (144 degrees)
     timeInPhase: "Completed",
     
     valuation: {
@@ -133,19 +133,38 @@ const PHASE_CONTENT = {
         description: "Working prototype completed",
         icon: "⚙️",
         value: "100%"
+      },
+      {
+        id: 2,
+        title: "Business Plan Complete",
+        description: "Your business strategy is ready",
+        icon: "📋",
+        value: "Complete"
+      },
+      {
+        id: 3,
+        title: "Revenue Model Defined",
+        description: "Pricing and monetization strategy set",
+        icon: "💰",
+        value: "Complete"
       }
     ],
     
     challenges: [
       {
         id: 1,
-        title: "Polish User Experience",
-        description: "Make it lovable, not just functional"
+        title: "Complete MLP Development Center",
+        description: "Plan your enhancements"
       },
       {
         id: 2,
-        title: "Build MLP",
-        description: "Create your Minimum Lovable Product"
+        title: "Analyze Feedback",
+        description: "Use Product Feedback Center and scale up your MVP demo"
+      },
+      {
+        id: 3,
+        title: "Invite Users for Feedback",
+        description: "Use the Promotion Center to get early user insights"
       }
     ],
     
@@ -159,7 +178,7 @@ const PHASE_CONTENT = {
     emoji: "💝",
     nextPhase: "BETA",
     progressPercent: 75,
-    clockRotation: 270,
+    clockRotation: 216, // MLP at 7 o'clock (216 degrees)
     timeInPhase: "Completed",
     
     valuation: {
@@ -176,19 +195,43 @@ const PHASE_CONTENT = {
         description: "Lovable product live",
         icon: "🎨",
         value: "100%"
+      },
+      {
+        id: 2,
+        title: "User Feedback Analyzed",
+        description: "Product improvements implemented",
+        icon: "💬",
+        value: "Complete"
+      },
+      {
+        id: 3,
+        title: "MVP Scaled Up",
+        description: "Demo enhanced based on feedback",
+        icon: "📈",
+        value: "Complete"
       }
     ],
     
     challenges: [
       {
         id: 1,
-        title: "Recruit Beta Testers",
-        description: "Need 50+ testers to proceed"
+        title: "Set Up Beta Testing Page",
+        description: "Prepare for beta user recruitment"
       },
       {
         id: 2,
-        title: "Set Up Analytics",
-        description: "Track usage and behavior"
+        title: "Analyze Feedback & Scale MLP",
+        description: "Use Product Feedback Center to enhance your MLP demo"
+      },
+      {
+        id: 3,
+        title: "Complete Venture Pitch",
+        description: "Prepare your pitch before approaching the VC marketplace"
+      },
+      {
+        id: 4,
+        title: "Recruit 50 Beta Testers",
+        description: "You need 50 beta sign-ups to move to Growth phase"
       }
     ],
     
@@ -202,7 +245,7 @@ const PHASE_CONTENT = {
     emoji: "🎯",
     nextPhase: "GROWTH",
     progressPercent: 90,
-    clockRotation: 324,
+    clockRotation: 288, // BETA at 10 o'clock (288 degrees)
     timeInPhase: "Completed",
     
     valuation: {
