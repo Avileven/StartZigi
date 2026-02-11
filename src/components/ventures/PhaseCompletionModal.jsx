@@ -394,14 +394,6 @@ export default function PhaseCompletionModal({
               <h2 className="text-xl font-bold text-gray-800">Next: {content.nextPhase}</h2>
             </div>
 
-            {/* Feature Image - Angel Arena or VC Marketplace */}
-            {content.featureImage && (
-              <div className="mb-6">
-                {completedPhase === 'business_plan' && <AngelArenaPreview />}
-                {completedPhase === 'mlp' && <VCMarketplacePreview />}
-              </div>
-            )}
-
             <div className="space-y-3">
               {content.challenges.map((challenge, index) => (
                 <div 
@@ -476,14 +468,21 @@ export default function PhaseCompletionModal({
               <div className="text-sm text-gray-500 font-medium mt-1">Overall Progress</div>
             </div>
 
-            {/* Valuation */}
-            <ValuationCounter
-              before={content.valuation.before}
-              after={content.valuation.after}
-              equity={content.valuation.equity}
-              stakeValue={calculateStakeValue()}
-              animate={valuationAnimated}
-            />
+            {/* Valuation or Feature Preview */}
+            {content.featureImage ? (
+              <div className="w-full">
+                {completedPhase === 'business_plan' && <AngelArenaPreviewCompact />}
+                {completedPhase === 'mlp' && <VCMarketplacePreviewCompact />}
+              </div>
+            ) : (
+              <ValuationCounter
+                before={content.valuation.before}
+                after={content.valuation.after}
+                equity={content.valuation.equity}
+                stakeValue={calculateStakeValue()}
+                animate={valuationAnimated}
+              />
+            )}
           </div>
 
           {/* Right: Achievements */}
@@ -549,6 +548,106 @@ export default function PhaseCompletionModal({
             </Button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Angel Arena Compact Preview - Only 2 cards
+function AngelArenaPreviewCompact() {
+  const investors = [
+    {
+      name: "Isabella Rossi",
+      role: "Food Industry Expert",
+      investment: "$50K-$150K"
+    },
+    {
+      name: "Kenji Sato",
+      role: "Gaming & Apps",
+      investment: "$50K-$150K"
+    }
+  ];
+
+  return (
+    <div className="bg-gradient-to-br from-orange-50 to-purple-50 rounded-xl border-2 border-orange-300 p-4 shadow-md">
+      <div className="text-center mb-3">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-orange-500 mb-2">
+          <span className="text-white text-xl">👥</span>
+        </div>
+        <h3 className="text-sm font-bold text-gray-800">Angel Arena Unlocked!</h3>
+        <p className="text-xs text-gray-600 mt-1">Connect with angel investors</p>
+      </div>
+      
+      <div className="space-y-2">
+        {investors.map((investor, idx) => (
+          <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-purple-600 text-xs">👤</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-800 text-xs truncate">{investor.name}</h4>
+                <p className="text-xs text-gray-500 truncate">{investor.role}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-green-600 font-medium">💰 {investor.investment}</span>
+              <button className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs">
+                Meet
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// VC Marketplace Compact Preview - Only 2 cards
+function VCMarketplacePreviewCompact() {
+  const vcFirms = [
+    {
+      name: "Apex Ridge Ventures",
+      check: "$3M-$25M",
+      stages: "Series A-C"
+    },
+    {
+      name: "Meridian Stone Capital",
+      check: "$4M-$30M",
+      stages: "Series A-C"
+    }
+  ];
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300 p-4 shadow-md">
+      <div className="text-center mb-3">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 mb-2">
+          <span className="text-white text-xl">💼</span>
+        </div>
+        <h3 className="text-sm font-bold text-gray-800">VC Marketplace Unlocked!</h3>
+        <p className="text-xs text-gray-600 mt-1">Access venture capital firms</p>
+      </div>
+      
+      <div className="space-y-2">
+        {vcFirms.map((firm, idx) => (
+          <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs">🏢</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-800 text-xs truncate">{firm.name}</h4>
+                <p className="text-xs text-gray-500">{firm.stages}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-green-600 font-medium">💰 {firm.check}</span>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                View
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
