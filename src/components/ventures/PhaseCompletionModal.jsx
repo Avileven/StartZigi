@@ -64,6 +64,11 @@ const PHASE_CONTENT = {
     clockRotation: 72, // PLAN at 1 o'clock (72 degrees)
     timeInPhase: "Completed",
     
+    // Angel Arena Feature
+    featureImage: "/images/angel-arena-screenshot.png",
+    featureTitle: "🎯 Angel Arena Unlocked!",
+    featureDescription: "Connect with experienced angel investors. Meet with them personally to pitch your venture and secure the seed funding you need to grow.",
+    
     valuation: {
       before: 250000,
       after: 500000,
@@ -181,6 +186,11 @@ const PHASE_CONTENT = {
     clockRotation: 216, // MLP at 7 o'clock (216 degrees)
     timeInPhase: "Completed",
     
+    // VC Marketplace Feature
+    featureImage: "/images/vc-marketplace-screenshot.png",
+    featureTitle: "💼 VC Marketplace Unlocked!",
+    featureDescription: "Access leading venture capital firms. Connect with VCs specialized in your industry and stage to raise Series A funding.",
+    
     valuation: {
       before: 1000000,
       after: 2000000,
@@ -230,6 +240,11 @@ const PHASE_CONTENT = {
       },
       {
         id: 4,
+        title: "Enter the VC Marketplace",
+        description: "Connect with venture capital firms for Series A funding"
+      },
+      {
+        id: 5,
         title: "Recruit 50 Beta Testers",
         description: "You need 50 beta sign-ups to move to Growth phase"
       }
@@ -379,6 +394,14 @@ export default function PhaseCompletionModal({
               <h2 className="text-xl font-bold text-gray-800">Next: {content.nextPhase}</h2>
             </div>
 
+            {/* Feature Image - Angel Arena or VC Marketplace */}
+            {content.featureImage && (
+              <div className="mb-6">
+                {completedPhase === 'business_plan' && <AngelArenaPreview />}
+                {completedPhase === 'mlp' && <VCMarketplacePreview />}
+              </div>
+            )}
+
             <div className="space-y-3">
               {content.challenges.map((challenge, index) => (
                 <div 
@@ -526,6 +549,162 @@ export default function PhaseCompletionModal({
             </Button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Angel Arena Preview Component
+function AngelArenaPreview() {
+  const investors = [
+    {
+      name: "Isabella Rossi",
+      description: "Serial entrepreneur in the food industry.",
+      investment: "$50K - $150K",
+      focus: ["Food And Beverage", "Sustainable Fashion"]
+    },
+    {
+      name: "Kenji Sato",
+      description: "Former lead game designer at a major Japanese studio.",
+      investment: "$50K - $150K",
+      focus: ["Gaming", "Consumer Apps"]
+    },
+    {
+      name: "Maria Lopez",
+      description: "Ph.D. in education and a former B2C SaaS executive.",
+      investment: "$50K - $150K",
+      focus: ["B2b Saas", "Digital Health Biotech"]
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm">
+      <div className="flex items-center justify-center mb-3">
+        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+          <span className="text-white text-xl">👥</span>
+        </div>
+      </div>
+      <h3 className="text-center text-lg font-bold text-gray-800 mb-2">Angel Arena</h3>
+      <p className="text-center text-xs text-gray-600 mb-4">
+        Connect with experienced angel investors
+      </p>
+      
+      <div className="space-y-2">
+        {investors.map((investor, idx) => (
+          <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-purple-600 text-sm">👤</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-800 text-xs">{investor.name}</h4>
+                <p className="text-xs text-gray-600 line-clamp-1">{investor.description}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
+              <span>💰</span>
+              <span className="font-medium">{investor.investment}</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-1 mb-2">
+              {investor.focus.map((area, i) => (
+                <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                  {area}
+                </span>
+              ))}
+            </div>
+            
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              🚀 Meet with Investor
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// VC Marketplace Preview Component
+function VCMarketplacePreview() {
+  const vcFirms = [
+    {
+      name: "Apex Ridge Ventures",
+      description: "Leading investment firm specializing in early-stage technology companies with global impact potential.",
+      check: "$3M - $25M",
+      stages: ["Series A", "Series B", "Series C"],
+      focus: ["Sector Agnostic"],
+      since: "2015"
+    },
+    {
+      name: "Meridian Stone Capital",
+      description: "Strategic investment partner focused on transformative technologies shaping tomorrow's economy.",
+      check: "$4M - $30M",
+      stages: ["Series A", "Series B", "Series C"],
+      focus: ["ai deep tech", "digital health biotech", "fintech"],
+      since: "2018"
+    },
+    {
+      name: "Velocity Wave Partners",
+      description: "Innovation-driven VC firm backing entrepreneurs building the next generation of market leaders.",
+      check: "$6M - $45M",
+      stages: ["Series A", "Series B", "Series C"],
+      focus: ["Sector Agnostic"],
+      since: "2011"
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm">
+      <div className="flex items-center justify-center mb-3">
+        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+          <span className="text-white text-xl">💼</span>
+        </div>
+      </div>
+      <h3 className="text-center text-lg font-bold text-gray-800 mb-2">VC Marketplace</h3>
+      <p className="text-center text-xs text-gray-600 mb-4">
+        Access leading venture capital firms
+      </p>
+      
+      <div className="space-y-2 max-h-80 overflow-y-auto">
+        {vcFirms.map((firm, idx) => (
+          <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm">🏢</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="font-semibold text-gray-800 text-xs">{firm.name}</h4>
+                  <span className="text-xs text-gray-500">Since {firm.since}</span>
+                </div>
+                <p className="text-xs text-gray-600 line-clamp-2">{firm.description}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
+              <span>💰</span>
+              <span className="font-medium">Check: {firm.check}</span>
+            </div>
+            
+            <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
+              <span>📊</span>
+              <span>Stages: {firm.stages.join(", ")}</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-1 mb-2">
+              {firm.focus.map((area, i) => (
+                <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  {area}
+                </span>
+              ))}
+            </div>
+            
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
+              View Firm Details
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
