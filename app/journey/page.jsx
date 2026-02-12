@@ -396,9 +396,9 @@ export default function JourneyPage() {
         />
       </div>
 
-      <div className="flex-1 bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto mx-auto my-4">
+      <div className="flex-1 bg-white rounded-3xl shadow-2xl max-w-6xl w-full mx-auto my-4 overflow-hidden">
         
-        {/* Header with X */}
+        {/* Header with X - Compact */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2 flex items-center justify-end rounded-t-3xl">
           <button
             onClick={() => window.location.href = '/'}
@@ -408,43 +408,44 @@ export default function JourneyPage() {
           </button>
         </div>
 
-        {/* Dashboard */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-4">
-          <div className="text-center mb-4">
-            <h1 className={`text-xl font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
+        {/* Dashboard - Compact, Title Above 3 Indicators */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3">
+          {/* Title Centered Above */}
+          <div className="text-center mb-3">
+            <h1 className={`text-lg font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
               {content.title}
             </h1>
           </div>
 
-          <div className="grid grid-cols-4 gap-12 items-center">
+          <div className="grid grid-cols-4 gap-8 items-center">
             
             {/* EQUITY */}
             <div className="text-center">
-              <div className="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider">Equity</div>
-              <div className="text-5xl font-black text-gray-100">
+              <div className="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Equity</div>
+              <div className="text-4xl font-black text-gray-100">
                 {currentEquity}%
               </div>
             </div>
 
             {/* VALUATION */}
             <div className="text-center">
-              <div className="text-sm font-bold text-yellow-300 mb-3 uppercase tracking-wider">Valuation</div>
-              <div className="text-5xl font-black text-yellow-400">
+              <div className="text-xs font-bold text-yellow-300 mb-2 uppercase tracking-wider">Valuation</div>
+              <div className="text-4xl font-black text-yellow-400">
                 {formatValue(currentValuation)}
               </div>
             </div>
 
             {/* PROGRESS */}
             <div className="text-center">
-              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wider">Progress</div>
-              <div className="text-5xl font-black text-green-400">
+              <div className="text-xs font-bold text-green-300 mb-2 uppercase tracking-wider">Progress</div>
+              <div className="text-4xl font-black text-green-400">
                 {currentProgress}%
               </div>
             </div>
 
-            {/* CLOCK */}
+            {/* CLOCK - Smaller */}
             <div className="flex justify-center">
-              <svg viewBox="0 0 200 200" className="w-48 h-48">
+              <svg viewBox="0 0 200 200" className="w-36 h-36">
                 <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
                 <circle 
                   cx="100" cy="100" r="90" 
@@ -481,43 +482,43 @@ export default function JourneyPage() {
           </div>
         </div>
 
-        {/* Main Content - Challenges & Achievements with Fade Animation */}
+        {/* Main Content - Compact spacing */}
         <div 
-          className={`grid grid-cols-2 gap-8 p-8 transition-opacity duration-500 ${
+          className={`grid grid-cols-2 gap-6 px-8 py-4 transition-opacity duration-500 ${
             contentVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
           
           {/* Left: Next Challenges */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
-                <span className="text-white text-xl">🎯</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                <span className="text-white text-sm">🎯</span>
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Next: {content.nextPhase}</h2>
+              <h2 className="text-base font-bold text-gray-800">Next: {content.nextPhase}</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {content.challenges.map((challenge, index) => (
                 <div 
                   key={challenge.id}
-                  className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg"
+                  className="bg-orange-50 border-l-4 border-orange-500 p-2 rounded-r-lg"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-white text-xs font-bold">{challenge.id}</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800 text-sm">{challenge.title}</h3>
-                      <p className="text-xs text-gray-600 mt-1">{challenge.description}</p>
+                      <h3 className="font-semibold text-gray-800 text-xs">{challenge.title}</h3>
+                      <p className="text-xs text-gray-600 mt-0.5">{challenge.description}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="bg-orange-100 p-3 rounded-lg mt-4">
-              <div className="flex items-center gap-2 text-sm text-orange-800">
+            <div className="bg-orange-100 p-2 rounded-lg mt-2">
+              <div className="flex items-center gap-2 text-xs text-orange-800">
                 <span>⏱️</span>
                 <span className="font-medium">Estimated: {content.estimatedTime}</span>
               </div>
@@ -525,29 +526,29 @@ export default function JourneyPage() {
           </div>
 
           {/* Right: Achievements */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                <span className="text-white text-xl">✅</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                <span className="text-white text-sm">✅</span>
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Your Achievements</h2>
+              <h2 className="text-base font-bold text-gray-800">Your Achievements</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {content.achievements.map((achievement, index) => (
                 <div 
                   key={achievement.id}
-                  className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg"
+                  className="bg-green-50 border-l-4 border-green-500 p-2 rounded-r-lg"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-800 text-sm">{achievement.title}</h3>
-                      <p className="text-xs text-gray-600 mt-1">{achievement.description}</p>
+                      <h3 className="font-semibold text-gray-800 text-xs">{achievement.title}</h3>
+                      <p className="text-xs text-gray-600 mt-0.5">{achievement.description}</p>
                     </div>
-                    <div className="text-2xl">{achievement.icon}</div>
+                    <div className="text-lg">{achievement.icon}</div>
                   </div>
                   {achievement.value && (
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-gray-500">
                       <span className="font-medium">{achievement.value}</span>
                     </div>
                   )}
@@ -557,19 +558,19 @@ export default function JourneyPage() {
 
             {/* Capital Injection */}
             {content.valuation.capitalInjection > 0 && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-2 rounded-r-lg">
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">New Investment Received</h3>
-                  <p className="text-xs text-gray-600 mt-1">Capital injection added to your venture</p>
+                  <h3 className="font-semibold text-gray-800 text-xs">New Investment Received</h3>
+                  <p className="text-xs text-gray-600 mt-0.5">Capital injection added to your venture</p>
                 </div>
-                <div className="mt-2 text-lg font-bold text-green-600">
+                <div className="mt-1 text-sm font-bold text-green-600">
                   ${(content.valuation.capitalInjection).toLocaleString()}
                 </div>
               </div>
             )}
 
-            <div className="bg-green-100 p-3 rounded-lg mt-4">
-              <div className="flex items-center gap-2 text-sm text-green-800">
+            <div className="bg-green-100 p-2 rounded-lg mt-2">
+              <div className="flex items-center gap-2 text-xs text-green-800">
                 <span>🏆</span>
                 <span className="font-medium">Badge Unlocked: {content.badge}</span>
               </div>
