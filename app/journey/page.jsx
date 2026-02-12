@@ -386,20 +386,20 @@ export default function JourneyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
       
       {/* Progress Bar */}
-      <div className="h-2 bg-purple-900">
+      <div className="absolute top-0 left-0 right-0 h-2 bg-purple-900">
         <div 
           className="h-full bg-yellow-400 transition-all duration-1000"
           style={{ width: `${((currentPhaseIndex + 1) / PHASES.length) * 100}%` }}
         />
       </div>
 
-      <div className="flex-1 bg-white rounded-3xl shadow-2xl max-w-6xl w-full mx-auto my-4 overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full mx-4">
         
-        {/* Header with X - Compact */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2 flex items-center justify-end rounded-t-3xl">
+        {/* Header with X - Very compact */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-1 flex items-center justify-end rounded-t-3xl">
           <button
             onClick={() => window.location.href = '/'}
             className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
@@ -408,43 +408,49 @@ export default function JourneyPage() {
           </button>
         </div>
 
-        {/* Dashboard - Compact, Title Above 3 Indicators */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3">
-          {/* Title Centered Above */}
-          <div className="text-center mb-3">
-            <h1 className={`text-lg font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
-              {content.title}
-            </h1>
-          </div>
-
-          <div className="grid grid-cols-4 gap-8 items-center">
+        {/* Dashboard - Very compact, title centered above 3 indicators only */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2">
+          
+          <div className="grid grid-cols-4 gap-8 items-start">
             
-            {/* EQUITY */}
-            <div className="text-center">
-              <div className="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Equity</div>
-              <div className="text-4xl font-black text-gray-100">
-                {currentEquity}%
+            {/* Left 3 columns: Title + 3 Indicators */}
+            <div className="col-span-3">
+              {/* Title Centered Above 3 Indicators */}
+              <div className="text-center mb-2">
+                <h1 className={`text-lg font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
+                  {content.title}
+                </h1>
+              </div>
+
+              <div className="grid grid-cols-3 gap-8">
+                {/* EQUITY */}
+                <div className="text-center">
+                  <div className="text-xs font-bold text-gray-300 mb-1 uppercase tracking-wider">Equity</div>
+                  <div className="text-4xl font-black text-gray-100">
+                    {currentEquity}%
+                  </div>
+                </div>
+
+                {/* VALUATION */}
+                <div className="text-center">
+                  <div className="text-xs font-bold text-yellow-300 mb-1 uppercase tracking-wider">Valuation</div>
+                  <div className="text-4xl font-black text-yellow-400">
+                    {formatValue(currentValuation)}
+                  </div>
+                </div>
+
+                {/* PROGRESS */}
+                <div className="text-center">
+                  <div className="text-xs font-bold text-green-300 mb-1 uppercase tracking-wider">Progress</div>
+                  <div className="text-4xl font-black text-green-400">
+                    {currentProgress}%
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* VALUATION */}
-            <div className="text-center">
-              <div className="text-xs font-bold text-yellow-300 mb-2 uppercase tracking-wider">Valuation</div>
-              <div className="text-4xl font-black text-yellow-400">
-                {formatValue(currentValuation)}
-              </div>
-            </div>
-
-            {/* PROGRESS */}
-            <div className="text-center">
-              <div className="text-xs font-bold text-green-300 mb-2 uppercase tracking-wider">Progress</div>
-              <div className="text-4xl font-black text-green-400">
-                {currentProgress}%
-              </div>
-            </div>
-
-            {/* CLOCK - Smaller */}
-            <div className="flex justify-center">
+            {/* Right column: CLOCK */}
+            <div className="flex justify-center items-center">
               <svg viewBox="0 0 200 200" className="w-36 h-36">
                 <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
                 <circle 
@@ -482,9 +488,9 @@ export default function JourneyPage() {
           </div>
         </div>
 
-        {/* Main Content - Compact spacing */}
+        {/* Main Content - Very compact */}
         <div 
-          className={`grid grid-cols-2 gap-6 px-8 py-4 transition-opacity duration-500 ${
+          className={`grid grid-cols-2 gap-6 px-8 py-3 transition-opacity duration-500 ${
             contentVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -576,20 +582,6 @@ export default function JourneyPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Phase Indicators */}
-      <div className="bg-black px-8 py-6">
-        <div className="flex items-center justify-center gap-3">
-          {PHASES.map((phase, index) => (
-            <div 
-              key={phase}
-              className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                index <= currentPhaseIndex ? 'bg-purple-400 scale-150' : 'bg-gray-600'
-              }`}
-            />
-          ))}
         </div>
       </div>
     </div>
