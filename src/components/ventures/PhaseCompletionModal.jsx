@@ -314,6 +314,9 @@ export default function PhaseCompletionModal({
   const [valuationAnimated, setValuationAnimated] = useState(false);
   const [showAngelArenaPreview, setShowAngelArenaPreview] = useState(false);
   const [showVCPreview, setShowVCPreview] = useState(false);
+  const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentValuation, setCurrentValuation] = useState(0);
+  const [currentStake, setCurrentStake] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -335,13 +338,46 @@ export default function PhaseCompletionModal({
     if (isOpen) {
       setAutoCloseTimer(10);
       setValuationAnimated(false);
+      setCurrentProgress(0);
+      setCurrentValuation(0);
+      setCurrentStake(0);
       
-      // Start valuation animation after delay
+      // Start animations after delay
       setTimeout(() => {
         setValuationAnimated(true);
       }, 800);
     }
   }, [isOpen]);
+
+  // Animate progress, valuation, and stake together
+  useEffect(() => {
+    if (!valuationAnimated || !completedPhase) return;
+
+    const content = PHASE_CONTENT[completedPhase];
+    if (!content) return;
+
+    const duration = 2000;
+    const startTime = Date.now();
+    const targetProgress = content.progressPercent;
+    const targetValuation = content.valuation.after;
+    const targetStake = (content.valuation.after * content.valuation.equity) / 100;
+
+    const animationFrame = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+
+      setCurrentProgress(Math.floor(targetProgress * easeOut));
+      setCurrentValuation(Math.floor(targetValuation * easeOut));
+      setCurrentStake(Math.floor(targetStake * easeOut));
+
+      if (progress < 1) {
+        requestAnimationFrame(animationFrame);
+      }
+    };
+
+    requestAnimationFrame(animationFrame);
+  }, [valuationAnimated, completedPhase]);
 
   if (!isOpen || !completedPhase) return null;
 
@@ -352,91 +388,116 @@ export default function PhaseCompletionModal({
     return (content.valuation.after * content.valuation.equity) / 100;
   };
 
+  const formatValue = (value) => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${Math.floor(value / 1000)}K`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500">
         
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-8 relative overflow-hidden">
+        {/* Compact Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 flex items-center justify-between">
+          <div className="text-white text-sm font-semibold">{content.emoji} {content.title}</div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center z-10"
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
           >
             <X className="w-5 h-5 text-white" />
           </button>
-          
-          <div className="grid grid-cols-2 gap-8 items-start">
-            {/* Left: Title + Valuation */}
-            <div>
-              <div className="text-5xl mb-3">{content.emoji}</div>
-              <h1 className="text-3xl font-black text-white mb-2">{content.title}</h1>
-              <p className="text-purple-100 text-sm mb-6">{content.subtitle}</p>
-              
-              {/* Valuation in Header */}
-              <ValuationCounter
-                before={content.valuation.before}
-                after={content.valuation.after}
-                equity={content.valuation.equity}
-                stakeValue={calculateStakeValue()}
-                animate={valuationAnimated}
-                inHeader={true}
-              />
+        </div>
+
+        {/* Dashboard - Compact */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6">
+          <div className="grid grid-cols-3 gap-8 items-start">
+            
+            {/* Left: Venture Valuation - No Frame */}
+            <div className="text-white">
+              <div className="text-xs font-semibold mb-3 text-purple-200">💰 VENTURE VALUATION</div>
+              <div className="flex items-center gap-3 mb-2">
+                <div>
+                  <div className="text-xs text-purple-200 mb-1">Before</div>
+                  <div className="text-lg font-bold text-purple-200 line-through">{formatValue(content.valuation.before)}</div>
+                </div>
+                <div className="text-xl text-white">→</div>
+                <div>
+                  <div className="text-xs text-yellow-200 mb-1">After</div>
+                  <div className="text-2xl font-black text-white">
+                    {formatValue(currentValuation)}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs space-y-1 mt-3">
+                <div className="flex justify-between">
+                  <span className="text-purple-200">Equity:</span>
+                  <span className="font-bold">{content.valuation.equity}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-purple-200">Stake Value:</span>
+                  <span className="font-bold text-yellow-200">{formatValue(currentStake)}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Right: Clock */}
-            <div className="flex flex-col items-center justify-start pt-4">
-              <div className="rounded-full p-2 bg-white/10 shadow-lg">
-                <svg viewBox="0 0 200 200" className="w-48 h-48">
-                  <circle cx="100" cy="100" r="90" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="12" />
-                  <circle 
-                    cx="100" cy="100" r="90" 
-                    fill="none" 
-                    stroke="#8b5cf6" 
-                    strokeWidth="12" 
-                    strokeLinecap="round"
-                    strokeDasharray="565"
-                    strokeDashoffset={565 * (1 - content.progressPercent / 100)}
-                    style={{
-                      transform: 'rotate(-90deg)',
-                      transformOrigin: '100px 100px',
-                      transition: 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                    }}
-                  />
-                  <circle cx="100" cy="100" r="70" fill="white" />
-                  <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#16a34a' : '#9ca3af'} textAnchor="middle">IDEA</text>
-                  <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : '#9ca3af'} textAnchor="middle">PLAN</text>
-                  <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MVP</text>
-                  <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MLP</text>
-                  <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : '#9ca3af'} textAnchor="middle">BETA</text>
-                  <path 
-                    fill="#6b7280" 
-                    opacity="0.7"
-                    d="M97 100 L103 100 L103 30 L97 30 Z"
-                    style={{
-                      transform: `rotate(${content.clockRotation}deg)`,
-                      transformOrigin: '100px 100px',
-                      transition: 'transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                    }}
-                  />
-                  <circle cx="100" cy="100" r="5" fill="#8b5cf6" />
-                </svg>
+            {/* Center: Progress - No Frame */}
+            <div className="text-center text-white">
+              <div className="text-xs font-semibold mb-2 text-purple-200">PROGRESS</div>
+              <div className="text-6xl font-black mb-1">
+                {currentProgress}%
               </div>
-              
-              <div className="text-center mt-3">
-                <div className="text-4xl font-black text-white">
-                  {content.progressPercent}%
-                </div>
-                <div className="text-sm text-purple-200 font-medium mt-1">Overall Progress</div>
-              </div>
+              <div className="text-xs text-purple-200">{content.subtitle}</div>
+            </div>
+
+            {/* Right: Clock - No Blue Circle Background */}
+            <div className="flex flex-col items-center">
+              <svg viewBox="0 0 200 200" className="w-40 h-40">
+                <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
+                <circle 
+                  cx="100" cy="100" r="90" 
+                  fill="none" 
+                  stroke="#fbbf24"
+                  strokeWidth="8" 
+                  strokeLinecap="round"
+                  strokeDasharray="565"
+                  strokeDashoffset={565 * (1 - content.progressPercent / 100)}
+                  style={{
+                    transform: 'rotate(-90deg)',
+                    transformOrigin: '100px 100px',
+                    transition: 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  }}
+                />
+                <circle cx="100" cy="100" r="70" fill="rgba(255,255,255,0.15)" />
+                <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
+                <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
+                <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
+                <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
+                <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
+                <path 
+                  fill="#fbbf24"
+                  opacity="0.9"
+                  d="M97 100 L103 100 L103 30 L97 30 Z"
+                  style={{
+                    transform: `rotate(${content.clockRotation}deg)`,
+                    transformOrigin: '100px 100px',
+                    transition: 'transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  }}
+                />
+                <circle cx="100" cy="100" r="5" fill="#fbbf24" />
+              </svg>
             </div>
           </div>
 
-          {/* New Investment Notification */}
+          {/* New Balance - Centered Below */}
           {content.valuation.capitalInjection > 0 && (
-            <div className="mt-6 text-center animate-in slide-in-from-bottom-4 duration-700">
-              <div className="inline-flex items-center gap-3 bg-yellow-400/20 border-2 border-yellow-300 rounded-full px-8 py-3 shadow-lg backdrop-blur-sm">
+            <div className="text-center mt-4">
+              <div className="inline-flex items-center gap-3">
                 <span className="text-2xl animate-bounce">🎉</span>
-                <span className="font-bold text-yellow-100 text-lg">New Investment: ${(content.valuation.capitalInjection).toLocaleString()}</span>
+                <span className="font-bold text-yellow-200 text-lg">YOUR NEW BALANCE IS ${(content.valuation.capitalInjection).toLocaleString()}</span>
                 <span className="text-2xl animate-bounce">🎉</span>
               </div>
             </div>
