@@ -297,21 +297,37 @@ export default function JourneyPage() {
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentEquity, setCurrentEquity] = useState(0);
   const [journeyComplete, setJourneyComplete] = useState(false);
+  const [contentVisible, setContentVisible] = useState(true);
 
   const currentPhase = PHASES[currentPhaseIndex];
   const content = PHASE_CONTENT[currentPhase];
+
+  // Phase title colors
+  const phaseColors = {
+    idea: 'text-green-400',
+    business_plan: 'text-blue-400',
+    mvp: 'text-orange-400',
+    mlp: 'text-purple-400',
+    beta: 'text-pink-400'
+  };
 
   // Auto-play through phases
   useEffect(() => {
     if (!isPlaying) return;
 
     const phaseTimer = setTimeout(() => {
-      if (currentPhaseIndex < PHASES.length - 1) {
-        setCurrentPhaseIndex(prev => prev + 1);
-      } else {
-        setIsPlaying(false);
-        setJourneyComplete(true);
-      }
+      // Fade out content before changing phase
+      setContentVisible(false);
+      
+      setTimeout(() => {
+        if (currentPhaseIndex < PHASES.length - 1) {
+          setCurrentPhaseIndex(prev => prev + 1);
+          setContentVisible(true); // Fade in new content
+        } else {
+          setIsPlaying(false);
+          setJourneyComplete(true);
+        }
+      }, 500); // Wait for fade out
     }, 6000);
 
     return () => clearTimeout(phaseTimer);
@@ -356,7 +372,6 @@ export default function JourneyPage() {
     return (
       <div className="min-h-screen bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
         <div className="text-center animate-in fade-in duration-700">
-          <div className="text-8xl mb-6">🎉</div>
           <h1 className="text-6xl font-black text-white mb-4">Journey Complete!</h1>
           <p className="text-2xl text-purple-200 mb-8">You've experienced all phases of StartZig</p>
           <button 
@@ -396,7 +411,9 @@ export default function JourneyPage() {
         {/* Dashboard */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-4">
           <div className="text-center mb-4">
-            <h1 className="text-xl font-bold text-white">{content.title}</h1>
+            <h1 className={`text-xl font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
+              {content.title}
+            </h1>
           </div>
 
           <div className="grid grid-cols-4 gap-12 items-center">
@@ -464,8 +481,12 @@ export default function JourneyPage() {
           </div>
         </div>
 
-        {/* Main Content - Challenges & Achievements */}
-        <div className="grid grid-cols-2 gap-8 p-8">
+        {/* Main Content - Challenges & Achievements with Fade Animation */}
+        <div 
+          className={`grid grid-cols-2 gap-8 p-8 transition-opacity duration-500 ${
+            contentVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           
           {/* Left: Next Challenges */}
           <div className="space-y-4">
