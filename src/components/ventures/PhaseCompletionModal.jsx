@@ -312,6 +312,8 @@ export default function PhaseCompletionModal({
 }) {
   const [autoCloseTimer, setAutoCloseTimer] = useState(10);
   const [valuationAnimated, setValuationAnimated] = useState(false);
+  const [showAngelArenaPreview, setShowAngelArenaPreview] = useState(false);
+  const [showVCPreview, setShowVCPreview] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -352,7 +354,7 @@ export default function PhaseCompletionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-center relative overflow-hidden">
@@ -468,11 +470,34 @@ export default function PhaseCompletionModal({
               <div className="text-sm text-gray-500 font-medium mt-1">Overall Progress</div>
             </div>
 
-            {/* Valuation or Feature Preview */}
+            {/* Valuation or Feature Preview Button */}
             {content.featureImage ? (
-              <div className="w-full">
-                {completedPhase === 'business_plan' && <AngelArenaPreviewCompact />}
-                {completedPhase === 'mlp' && <VCMarketplacePreviewCompact />}
+              <div className="w-full flex flex-col gap-3">
+                <ValuationCounter
+                  before={content.valuation.before}
+                  after={content.valuation.after}
+                  equity={content.valuation.equity}
+                  stakeValue={calculateStakeValue()}
+                  animate={valuationAnimated}
+                />
+                {completedPhase === 'business_plan' && (
+                  <button
+                    onClick={() => setShowAngelArenaPreview(true)}
+                    className="bg-gradient-to-r from-orange-500 to-purple-500 hover:from-orange-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">👁️</span>
+                    <span>Preview Angel Arena</span>
+                  </button>
+                )}
+                {completedPhase === 'mlp' && (
+                  <button
+                    onClick={() => setShowVCPreview(true)}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">👁️</span>
+                    <span>Preview VC Marketplace</span>
+                  </button>
+                )}
               </div>
             ) : (
               <ValuationCounter
@@ -549,106 +574,46 @@ export default function PhaseCompletionModal({
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-// Angel Arena Compact Preview - Only 2 cards
-function AngelArenaPreviewCompact() {
-  const investors = [
-    {
-      name: "Isabella Rossi",
-      role: "Food Industry Expert",
-      investment: "$50K-$150K"
-    },
-    {
-      name: "Kenji Sato",
-      role: "Gaming & Apps",
-      investment: "$50K-$150K"
-    }
-  ];
-
-  return (
-    <div className="bg-gradient-to-br from-orange-50 to-purple-50 rounded-xl border-2 border-orange-300 p-4 shadow-md">
-      <div className="text-center mb-3">
-        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-orange-500 mb-2">
-          <span className="text-white text-xl">👥</span>
-        </div>
-        <h3 className="text-sm font-bold text-gray-800">Angel Arena Unlocked!</h3>
-        <p className="text-xs text-gray-600 mt-1">Connect with angel investors</p>
-      </div>
-      
-      <div className="space-y-2">
-        {investors.map((investor, idx) => (
-          <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-purple-600 text-xs">👤</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-800 text-xs truncate">{investor.name}</h4>
-                <p className="text-xs text-gray-500 truncate">{investor.role}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-green-600 font-medium">💰 {investor.investment}</span>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs">
-                Meet
+      {/* Angel Arena Preview Modal */}
+      {showAngelArenaPreview && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowAngelArenaPreview(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-purple-500 p-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white">Angel Arena</h3>
+              <button
+                onClick={() => setShowAngelArenaPreview(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+              >
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// VC Marketplace Compact Preview - Only 2 cards
-function VCMarketplacePreviewCompact() {
-  const vcFirms = [
-    {
-      name: "Apex Ridge Ventures",
-      check: "$3M-$25M",
-      stages: "Series A-C"
-    },
-    {
-      name: "Meridian Stone Capital",
-      check: "$4M-$30M",
-      stages: "Series A-C"
-    }
-  ];
-
-  return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300 p-4 shadow-md">
-      <div className="text-center mb-3">
-        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 mb-2">
-          <span className="text-white text-xl">💼</span>
-        </div>
-        <h3 className="text-sm font-bold text-gray-800">VC Marketplace Unlocked!</h3>
-        <p className="text-xs text-gray-600 mt-1">Access venture capital firms</p>
-      </div>
-      
-      <div className="space-y-2">
-        {vcFirms.map((firm, idx) => (
-          <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs">🏢</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-800 text-xs truncate">{firm.name}</h4>
-                <p className="text-xs text-gray-500">{firm.stages}</p>
-              </div>
+            <div className="p-6">
+              <AngelArenaPreview />
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-green-600 font-medium">💰 {firm.check}</span>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
-                View
+          </div>
+        </div>
+      )}
+
+      {/* VC Marketplace Preview Modal */}
+      {showVCPreview && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowVCPreview(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-500 p-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white">VC Marketplace</h3>
+              <button
+                onClick={() => setShowVCPreview(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+              >
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
+            <div className="p-6">
+              <VCMarketplacePreview />
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
