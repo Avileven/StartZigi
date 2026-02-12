@@ -401,9 +401,8 @@ export default function PhaseCompletionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500">
         
-        {/* Compact Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 flex items-center justify-between">
-          <div className="text-white text-sm font-semibold">{content.emoji} {content.title}</div>
+        {/* Compact Header with X */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2 flex items-center justify-end">
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
@@ -412,8 +411,13 @@ export default function PhaseCompletionModal({
           </button>
         </div>
 
-        {/* Dashboard - Single Row, 4 Items, All Animated */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-8">
+        {/* Dashboard - Compact with centered title */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-4">
+          {/* Centered Title Above Dashboard */}
+          <div className="text-center mb-4">
+            <h1 className="text-xl font-bold text-white">{content.title}</h1>
+          </div>
+
           <div className="grid grid-cols-4 gap-12 items-center">
             
             {/* 1. EQUITY */}
@@ -440,7 +444,7 @@ export default function PhaseCompletionModal({
               </div>
             </div>
 
-            {/* 4. CLOCK - Animated arc */}
+            {/* 4. CLOCK - Thinner gray needle */}
             <div className="flex justify-center">
               <svg viewBox="0 0 200 200" className="w-48 h-48">
                 <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
@@ -464,17 +468,17 @@ export default function PhaseCompletionModal({
                 <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
                 <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
                 <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
+                {/* Thinner gray transparent needle */}
                 <path 
-                  fill="#fb923c"
-                  opacity="0.9"
-                  d="M97 100 L103 100 L103 30 L97 30 Z"
+                  fill="rgba(156, 163, 175, 0.6)"
+                  d="M98 100 L102 100 L102 35 L98 35 Z"
                   style={{
                     transform: `rotate(${content.clockRotation}deg)`,
                     transformOrigin: '100px 100px',
                     transition: 'transform 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }}
                 />
-                <circle cx="100" cy="100" r="5" fill="#fb923c" />
+                <circle cx="100" cy="100" r="4" fill="rgba(156, 163, 175, 0.8)" />
               </svg>
             </div>
           </div>
