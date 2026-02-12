@@ -316,7 +316,7 @@ export default function PhaseCompletionModal({
   const [showVCPreview, setShowVCPreview] = useState(false);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentValuation, setCurrentValuation] = useState(0);
-  const [currentStake, setCurrentStake] = useState(0);
+  const [currentEquity, setCurrentEquity] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -340,7 +340,7 @@ export default function PhaseCompletionModal({
       setValuationAnimated(false);
       setCurrentProgress(0);
       setCurrentValuation(0);
-      setCurrentStake(0);
+      setCurrentEquity(0);
       
       // Start animations after delay
       setTimeout(() => {
@@ -349,18 +349,18 @@ export default function PhaseCompletionModal({
     }
   }, [isOpen]);
 
-  // Animate progress, valuation, and stake together
+  // Animate ALL 4 dashboard items together - 5 seconds
   useEffect(() => {
     if (!valuationAnimated || !completedPhase) return;
 
     const content = PHASE_CONTENT[completedPhase];
     if (!content) return;
 
-    const duration = 2000;
+    const duration = 5000; // 5 seconds
     const startTime = Date.now();
     const targetProgress = content.progressPercent;
     const targetValuation = content.valuation.after;
-    const targetStake = (content.valuation.after * content.valuation.equity) / 100;
+    const targetEquity = content.valuation.equity;
 
     const animationFrame = () => {
       const elapsed = Date.now() - startTime;
@@ -369,7 +369,7 @@ export default function PhaseCompletionModal({
 
       setCurrentProgress(Math.floor(targetProgress * easeOut));
       setCurrentValuation(Math.floor(targetValuation * easeOut));
-      setCurrentStake(Math.floor(targetStake * easeOut));
+      setCurrentEquity(Math.floor(targetEquity * easeOut));
 
       if (progress < 1) {
         requestAnimationFrame(animationFrame);
@@ -412,50 +412,37 @@ export default function PhaseCompletionModal({
           </button>
         </div>
 
-        {/* Dashboard - Compact */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6">
-          <div className="grid grid-cols-3 gap-8 items-start">
+        {/* Dashboard - Single Row, 4 Items, All Animated */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-8">
+          <div className="grid grid-cols-4 gap-12 items-center">
             
-            {/* Left: Venture Valuation - No Frame */}
-            <div className="text-white">
-              <div className="text-xs font-semibold mb-3 text-purple-200">💰 VENTURE VALUATION</div>
-              <div className="flex items-center gap-3 mb-2">
-                <div>
-                  <div className="text-xs text-purple-200 mb-1">Before</div>
-                  <div className="text-lg font-bold text-purple-200 line-through">{formatValue(content.valuation.before)}</div>
-                </div>
-                <div className="text-xl text-white">→</div>
-                <div>
-                  <div className="text-xs text-yellow-200 mb-1">After</div>
-                  <div className="text-2xl font-black text-white">
-                    {formatValue(currentValuation)}
-                  </div>
-                </div>
-              </div>
-              <div className="text-xs space-y-1 mt-3">
-                <div className="flex justify-between">
-                  <span className="text-purple-200">Equity:</span>
-                  <span className="font-bold">{content.valuation.equity}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-purple-200">Stake Value:</span>
-                  <span className="font-bold text-yellow-200">{formatValue(currentStake)}</span>
-                </div>
+            {/* 1. EQUITY */}
+            <div className="text-center">
+              <div className="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider">Equity</div>
+              <div className="text-5xl font-black text-gray-100">
+                {currentEquity}%
               </div>
             </div>
 
-            {/* Center: Progress - No Frame */}
-            <div className="text-center text-white">
-              <div className="text-xs font-semibold mb-2 text-purple-200">PROGRESS</div>
-              <div className="text-6xl font-black mb-1">
+            {/* 2. VALUATION */}
+            <div className="text-center">
+              <div className="text-sm font-bold text-yellow-300 mb-3 uppercase tracking-wider">Valuation</div>
+              <div className="text-5xl font-black text-yellow-400">
+                {formatValue(currentValuation)}
+              </div>
+            </div>
+
+            {/* 3. PROGRESS */}
+            <div className="text-center">
+              <div className="text-sm font-bold text-orange-300 mb-3 uppercase tracking-wider">Progress</div>
+              <div className="text-5xl font-black text-orange-400">
                 {currentProgress}%
               </div>
-              <div className="text-xs text-purple-200">{content.subtitle}</div>
             </div>
 
-            {/* Right: Clock - No Blue Circle Background */}
-            <div className="flex flex-col items-center">
-              <svg viewBox="0 0 200 200" className="w-40 h-40">
+            {/* 4. CLOCK - Animated needle */}
+            <div className="flex justify-center">
+              <svg viewBox="0 0 200 200" className="w-48 h-48">
                 <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
                 <circle 
                   cx="100" cy="100" r="90" 
@@ -468,10 +455,10 @@ export default function PhaseCompletionModal({
                   style={{
                     transform: 'rotate(-90deg)',
                     transformOrigin: '100px 100px',
-                    transition: 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                    transition: 'stroke-dashoffset 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }}
                 />
-                <circle cx="100" cy="100" r="70" fill="rgba(255,255,255,0.15)" />
+                <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
                 <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
                 <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
                 <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
@@ -484,7 +471,7 @@ export default function PhaseCompletionModal({
                   style={{
                     transform: `rotate(${content.clockRotation}deg)`,
                     transformOrigin: '100px 100px',
-                    transition: 'transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                    transition: 'transform 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }}
                 />
                 <circle cx="100" cy="100" r="5" fill="#fbbf24" />
@@ -494,11 +481,11 @@ export default function PhaseCompletionModal({
 
           {/* New Balance - Centered Below */}
           {content.valuation.capitalInjection > 0 && (
-            <div className="text-center mt-4">
+            <div className="text-center mt-6">
               <div className="inline-flex items-center gap-3">
-                <span className="text-2xl animate-bounce">🎉</span>
+                <span className="text-2xl">🎉</span>
                 <span className="font-bold text-yellow-200 text-lg">YOUR NEW BALANCE IS ${(content.valuation.capitalInjection).toLocaleString()}</span>
-                <span className="text-2xl animate-bounce">🎉</span>
+                <span className="text-2xl">🎉</span>
               </div>
             </div>
           )}
