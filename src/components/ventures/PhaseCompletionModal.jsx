@@ -432,30 +432,30 @@ export default function PhaseCompletionModal({
               </div>
             </div>
 
-            {/* 3. PROGRESS */}
+            {/* 3. PROGRESS - GREEN */}
             <div className="text-center">
-              <div className="text-sm font-bold text-orange-300 mb-3 uppercase tracking-wider">Progress</div>
-              <div className="text-5xl font-black text-orange-400">
+              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wider">Progress</div>
+              <div className="text-5xl font-black text-green-400">
                 {currentProgress}%
               </div>
             </div>
 
-            {/* 4. CLOCK - Animated needle */}
+            {/* 4. CLOCK - Animated arc */}
             <div className="flex justify-center">
               <svg viewBox="0 0 200 200" className="w-48 h-48">
                 <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
                 <circle 
                   cx="100" cy="100" r="90" 
                   fill="none" 
-                  stroke="#fbbf24"
+                  stroke="#fb923c"
                   strokeWidth="8" 
                   strokeLinecap="round"
                   strokeDasharray="565"
-                  strokeDashoffset={565 * (1 - content.progressPercent / 100)}
+                  strokeDashoffset={565 * (1 - currentProgress / 100)}
                   style={{
                     transform: 'rotate(-90deg)',
                     transformOrigin: '100px 100px',
-                    transition: 'stroke-dashoffset 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                    transition: 'none'
                   }}
                 />
                 <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
@@ -465,7 +465,7 @@ export default function PhaseCompletionModal({
                 <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
                 <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
                 <path 
-                  fill="#fbbf24"
+                  fill="#fb923c"
                   opacity="0.9"
                   d="M97 100 L103 100 L103 30 L97 30 Z"
                   style={{
@@ -474,21 +474,10 @@ export default function PhaseCompletionModal({
                     transition: 'transform 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }}
                 />
-                <circle cx="100" cy="100" r="5" fill="#fbbf24" />
+                <circle cx="100" cy="100" r="5" fill="#fb923c" />
               </svg>
             </div>
           </div>
-
-          {/* New Balance - Centered Below */}
-          {content.valuation.capitalInjection > 0 && (
-            <div className="text-center mt-6">
-              <div className="inline-flex items-center gap-3">
-                <span className="text-2xl">🎉</span>
-                <span className="font-bold text-yellow-200 text-lg">YOUR NEW BALANCE IS ${(content.valuation.capitalInjection).toLocaleString()}</span>
-                <span className="text-2xl">🎉</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Main Content */}
@@ -586,6 +575,19 @@ export default function PhaseCompletionModal({
                 </div>
               ))}
             </div>
+
+            {/* Capital Injection Achievement */}
+            {content.valuation.capitalInjection > 0 && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">New Investment Received</h3>
+                  <p className="text-xs text-gray-600 mt-1">Capital injection added to your venture</p>
+                </div>
+                <div className="mt-2 text-lg font-bold text-green-600">
+                  ${(content.valuation.capitalInjection).toLocaleString()}
+                </div>
+              </div>
+            )}
 
             <div className="bg-green-100 p-3 rounded-lg mt-4">
               <div className="flex items-center gap-2 text-sm text-green-800">
