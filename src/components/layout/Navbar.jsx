@@ -82,7 +82,7 @@ export default function Navbar() {
                 onMouseLeave={() => setIsResourcesOpen(false)}
               >
                 <button className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                  RESOURCES
+                  Resources 
                   <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>

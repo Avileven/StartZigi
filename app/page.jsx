@@ -117,11 +117,7 @@ export default function Home() {
               </Button>
             )}
             
-            <a href="/how-it-works.html" target="_blank" className="w-full max-w-sm">
-              <Button size="lg" className="bg-transparent hover:bg-white/10 text-white px-8 py-3 rounded-full border border-white/30 w-full">
-                See How It Works
-              </Button>
-            </a>
+            
           </div>
         </div>
       </div>
