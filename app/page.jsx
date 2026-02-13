@@ -16,7 +16,7 @@ import {
   Network,
   PlayCircle,
 } from "lucide-react";
-import AnimatedBg from "@/components/common/AnimatedBg";
+import JourneyPreview from "@/components/utils/JourneyPreview";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-
+<JourneyPreview />
       {/* Benefits Section - NO CARDS */}
       <div className="py-24 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
