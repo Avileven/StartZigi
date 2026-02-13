@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 // ✅ FIX: remove /src from imports (Vercel path + you already moved entities)
 // was: "@/src/api/entities"
 import { Venture, User } from "@/api/entities";
+import PhaseCompletionModal from "@/components/ventures/PhaseCompletionModal";
 
 import {
   LayoutDashboard,
@@ -88,6 +89,10 @@ export default function ClientLayout({ children }) {
   const [user, setUser] = useState(null);
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Phase completion modal state
+  const [showPhaseModal, setShowPhaseModal] = useState(false);
+  const [completedPhase, setCompletedPhase] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -130,6 +135,21 @@ export default function ClientLayout({ children }) {
           "-created_date"
         );
         setVenture(ventures[0] || null);
+        
+        // ✨ Check for phase change and show completion modal
+        if (ventures[0]) {
+          const lastSeenPhase = localStorage.getItem('lastSeenPhase');
+          const currentPhase = ventures[0].phase;
+          
+          // If phase changed, show completion modal for the OLD phase
+          if (lastSeenPhase && lastSeenPhase !== currentPhase) {
+            setCompletedPhase(lastSeenPhase);
+            setShowPhaseModal(true);
+          }
+          
+          // Update last seen phase
+          localStorage.setItem('lastSeenPhase', currentPhase);
+        }
       } catch (error) {
         console.error("Failed to load user or venture data:", error);
         setUser(null);
@@ -368,6 +388,13 @@ pathname === "/"
           <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
+      
+      {/* Phase Completion Modal */}
+      <PhaseCompletionModal
+        isOpen={showPhaseModal}
+        onClose={() => setShowPhaseModal(false)}
+        completedPhase={completedPhase}
+      />
     </SidebarProvider>
   );
 }
