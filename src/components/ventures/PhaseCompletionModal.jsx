@@ -64,11 +64,6 @@ const PHASE_CONTENT = {
     clockRotation: 72, // PLAN at 1 o'clock (72 degrees)
     timeInPhase: "Completed",
     
-    // Angel Arena Feature
-    featureImage: "/images/angel-arena-screenshot.png",
-    featureTitle: "🎯 Angel Arena Unlocked!",
-    featureDescription: "Connect with experienced angel investors. Meet with them personally to pitch your venture and secure the seed funding you need to grow.",
-    
     valuation: {
       before: 250000,
       after: 500000,
@@ -186,11 +181,6 @@ const PHASE_CONTENT = {
     clockRotation: 216, // MLP at 7 o'clock (216 degrees)
     timeInPhase: "Completed",
     
-    // VC Marketplace Feature
-    featureImage: "/images/vc-marketplace-screenshot.png",
-    featureTitle: "💼 VC Marketplace Unlocked!",
-    featureDescription: "Access leading venture capital firms. Connect with VCs specialized in your industry and stage to raise Series A funding.",
-    
     valuation: {
       before: 1000000,
       after: 2000000,
@@ -240,11 +230,6 @@ const PHASE_CONTENT = {
       },
       {
         id: 4,
-        title: "Enter the VC Marketplace",
-        description: "Connect with venture capital firms for Series A funding"
-      },
-      {
-        id: 5,
         title: "Recruit 50 Beta Testers",
         description: "You need 50 beta sign-ups to move to Growth phase"
       }
@@ -310,74 +295,20 @@ export default function PhaseCompletionModal({
   onClose, 
   completedPhase 
 }) {
-  const [autoCloseTimer, setAutoCloseTimer] = useState(10);
   const [valuationAnimated, setValuationAnimated] = useState(false);
-  const [showAngelArenaPreview, setShowAngelArenaPreview] = useState(false);
-  const [showVCPreview, setShowVCPreview] = useState(false);
-  const [currentProgress, setCurrentProgress] = useState(0);
-  const [currentValuation, setCurrentValuation] = useState(0);
-  const [currentEquity, setCurrentEquity] = useState(0);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const interval = setInterval(() => {
-      setAutoCloseTimer(prev => {
-        if (prev <= 1) {
-          onClose();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isOpen, onClose]);
+  // Removed auto-close - modal stays until user clicks Close
 
   useEffect(() => {
     if (isOpen) {
-      setAutoCloseTimer(10);
       setValuationAnimated(false);
-      setCurrentProgress(0);
-      setCurrentValuation(0);
-      setCurrentEquity(0);
       
-      // Start animations after delay
+      // Start valuation animation after delay
       setTimeout(() => {
         setValuationAnimated(true);
       }, 800);
     }
   }, [isOpen]);
-
-  // Animate ALL 4 dashboard items together - 5 seconds
-  useEffect(() => {
-    if (!valuationAnimated || !completedPhase) return;
-
-    const content = PHASE_CONTENT[completedPhase];
-    if (!content) return;
-
-    const duration = 5000; // 5 seconds
-    const startTime = Date.now();
-    const targetProgress = content.progressPercent;
-    const targetValuation = content.valuation.after;
-    const targetEquity = content.valuation.equity;
-
-    const animationFrame = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-
-      setCurrentProgress(Math.floor(targetProgress * easeOut));
-      setCurrentValuation(Math.floor(targetValuation * easeOut));
-      setCurrentEquity(Math.floor(targetEquity * easeOut));
-
-      if (progress < 1) {
-        requestAnimationFrame(animationFrame);
-      }
-    };
-
-    requestAnimationFrame(animationFrame);
-  }, [valuationAnimated, completedPhase]);
 
   if (!isOpen || !completedPhase) return null;
 
@@ -388,106 +319,38 @@ export default function PhaseCompletionModal({
     return (content.valuation.after * content.valuation.equity) / 100;
   };
 
-  const formatValue = (value) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    } else if (value >= 1000) {
-      return `$${Math.floor(value / 1000)}K`;
-    }
-    return `$${value.toLocaleString()}`;
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
         
-        {/* Compact Header with X */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2 flex items-center justify-end">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-center relative overflow-hidden">
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
           >
             <X className="w-5 h-5 text-white" />
           </button>
-        </div>
-
-        {/* Dashboard - Compact with centered title */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-4">
-          {/* Centered Title Above Dashboard */}
-          <div className="text-center mb-4">
-            <h1 className="text-xl font-bold text-white">{content.title}</h1>
-          </div>
-
-          <div className="grid grid-cols-4 gap-12 items-center">
-            
-            {/* 1. EQUITY */}
-            <div className="text-center">
-              <div className="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider">Equity</div>
-              <div className="text-5xl font-black text-gray-100">
-                {currentEquity}%
+          
+          <div className="text-5xl mb-2">{content.emoji}</div>
+          <h1 className="text-3xl font-black text-white mb-2">{content.title}</h1>
+          <p className="text-purple-100 text-sm">{content.subtitle}</p>
+          
+          {/* Capital Injection */}
+          {content.valuation.capitalInjection > 0 && (
+            <div className="mt-4 inline-block bg-yellow-400/20 border-2 border-yellow-300 rounded-full px-6 py-2">
+              <div className="flex items-center gap-2 text-yellow-100">
+                <span className="text-xl">💰</span>
+                <span className="font-bold">Capital Injection: ${(content.valuation.capitalInjection).toLocaleString()}</span>
               </div>
             </div>
-
-            {/* 2. VALUATION */}
-            <div className="text-center">
-              <div className="text-sm font-bold text-yellow-300 mb-3 uppercase tracking-wider">Valuation</div>
-              <div className="text-5xl font-black text-yellow-400">
-                {formatValue(currentValuation)}
-              </div>
-            </div>
-
-            {/* 3. PROGRESS - GREEN */}
-            <div className="text-center">
-              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wider">Progress</div>
-              <div className="text-5xl font-black text-green-400">
-                {currentProgress}%
-              </div>
-            </div>
-
-            {/* 4. CLOCK - Thinner gray needle */}
-            <div className="flex justify-center">
-              <svg viewBox="0 0 200 200" className="w-48 h-48">
-                <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
-                <circle 
-                  cx="100" cy="100" r="90" 
-                  fill="none" 
-                  stroke="#fb923c"
-                  strokeWidth="8" 
-                  strokeLinecap="round"
-                  strokeDasharray="565"
-                  strokeDashoffset={565 * (1 - currentProgress / 100)}
-                  style={{
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: '100px 100px',
-                    transition: 'none'
-                  }}
-                />
-                <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
-                <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
-                <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
-                <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
-                <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
-                {/* Thinner gray transparent needle */}
-                <path 
-                  fill="rgba(156, 163, 175, 0.6)"
-                  d="M98 100 L102 100 L102 35 L98 35 Z"
-                  style={{
-                    transform: `rotate(${content.clockRotation}deg)`,
-                    transformOrigin: '100px 100px',
-                    transition: 'transform 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                  }}
-                />
-                <circle cx="100" cy="100" r="4" fill="rgba(156, 163, 175, 0.8)" />
-              </svg>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-2 gap-8 p-8">
+        <div className="grid grid-cols-3 gap-8 p-8">
           
-          {/* Left: Next Challenges + Preview Buttons */}
+          {/* Left: Next Challenges */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
@@ -522,30 +385,62 @@ export default function PhaseCompletionModal({
                 <span className="font-medium">Estimated: {content.estimatedTime}</span>
               </div>
             </div>
+          </div>
 
-            {/* Feature Preview Buttons */}
-            {content.featureImage && (
-              <div className="mt-4">
-                {completedPhase === 'business_plan' && (
-                  <button
-                    onClick={() => setShowAngelArenaPreview(true)}
-                    className="w-full bg-gradient-to-r from-orange-500 to-purple-500 hover:from-orange-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <span className="text-lg">👁️</span>
-                    <span>Preview Angel Arena</span>
-                  </button>
-                )}
-                {completedPhase === 'mlp' && (
-                  <button
-                    onClick={() => setShowVCPreview(true)}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <span className="text-lg">👁️</span>
-                    <span>Preview VC Marketplace</span>
-                  </button>
-                )}
+          {/* Center: Clock + Valuation */}
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="rounded-full p-2 bg-white shadow-lg">
+              <svg viewBox="0 0 200 200" className="w-56 h-56">
+                <circle cx="100" cy="100" r="90" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="12" />
+                <circle 
+                  cx="100" cy="100" r="90" 
+                  fill="none" 
+                  stroke="#8b5cf6" 
+                  strokeWidth="12" 
+                  strokeLinecap="round"
+                  strokeDasharray="565"
+                  strokeDashoffset={565 * (1 - content.progressPercent / 100)}
+                  style={{
+                    transform: 'rotate(-90deg)',
+                    transformOrigin: '100px 100px',
+                    transition: 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  }}
+                />
+                <circle cx="100" cy="100" r="70" fill="white" />
+                <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#16a34a' : '#9ca3af'} textAnchor="middle">IDEA</text>
+                <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : '#9ca3af'} textAnchor="middle">PLAN</text>
+                <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MVP</text>
+                <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MLP</text>
+                <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : '#9ca3af'} textAnchor="middle">BETA</text>
+                <path 
+                  fill="#6b7280" 
+                  opacity="0.7"
+                  d="M97 100 L103 100 L103 30 L97 30 Z"
+                  style={{
+                    transform: `rotate(${content.clockRotation}deg)`,
+                    transformOrigin: '100px 100px',
+                    transition: 'transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  }}
+                />
+                <circle cx="100" cy="100" r="5" fill="#8b5cf6" />
+              </svg>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                {content.progressPercent}%
               </div>
-            )}
+              <div className="text-sm text-gray-500 font-medium mt-1">Overall Progress</div>
+            </div>
+
+            {/* Valuation */}
+            <ValuationCounter
+              before={content.valuation.before}
+              after={content.valuation.after}
+              equity={content.valuation.equity}
+              stakeValue={calculateStakeValue()}
+              animate={valuationAnimated}
+            />
           </div>
 
           {/* Right: Achievements */}
@@ -580,19 +475,6 @@ export default function PhaseCompletionModal({
               ))}
             </div>
 
-            {/* Capital Injection Achievement */}
-            {content.valuation.capitalInjection > 0 && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
-                <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">New Investment Received</h3>
-                  <p className="text-xs text-gray-600 mt-1">Capital injection added to your venture</p>
-                </div>
-                <div className="mt-2 text-lg font-bold text-green-600">
-                  ${(content.valuation.capitalInjection).toLocaleString()}
-                </div>
-              </div>
-            )}
-
             <div className="bg-green-100 p-3 rounded-lg mt-4">
               <div className="flex items-center gap-2 text-sm text-green-800">
                 <span>🏆</span>
@@ -601,209 +483,36 @@ export default function PhaseCompletionModal({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Angel Arena Preview Modal */}
-      {showAngelArenaPreview && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowAngelArenaPreview(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-purple-500 p-4 flex items-center justify-between rounded-t-2xl">
-              <h3 className="text-xl font-bold text-white">Angel Arena</h3>
-              <button
-                onClick={() => setShowAngelArenaPreview(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <div className="p-6">
-              <AngelArenaPreview />
-            </div>
+        {/* Footer */}
+        <div className="bg-gray-50 px-8 py-6 flex items-center justify-between border-t">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">Phase:</span> {content.timeInPhase}
+          </div>
+          
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              onClick={onClose}
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={onClose}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-lg"
+            >
+              Continue to {content.nextPhase} Phase →
+            </Button>
           </div>
         </div>
-      )}
-
-      {/* VC Marketplace Preview Modal */}
-      {showVCPreview && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowVCPreview(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-500 p-4 flex items-center justify-between rounded-t-2xl">
-              <h3 className="text-xl font-bold text-white">VC Marketplace</h3>
-              <button
-                onClick={() => setShowVCPreview(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <div className="p-6">
-              <VCMarketplacePreview />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Angel Arena Preview Component
-function AngelArenaPreview() {
-  const investors = [
-    {
-      name: "Isabella Rossi",
-      description: "Serial entrepreneur in the food industry.",
-      investment: "$50K - $150K",
-      focus: ["Food And Beverage", "Sustainable Fashion"]
-    },
-    {
-      name: "Kenji Sato",
-      description: "Former lead game designer at a major Japanese studio.",
-      investment: "$50K - $150K",
-      focus: ["Gaming", "Consumer Apps"]
-    },
-    {
-      name: "Maria Lopez",
-      description: "Ph.D. in education and a former B2C SaaS executive.",
-      investment: "$50K - $150K",
-      focus: ["B2b Saas", "Digital Health Biotech"]
-    }
-  ];
-
-  return (
-    <div className="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm">
-      <div className="flex items-center justify-center mb-3">
-        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
-          <span className="text-white text-xl">👥</span>
-        </div>
-      </div>
-      <h3 className="text-center text-lg font-bold text-gray-800 mb-2">Angel Arena</h3>
-      <p className="text-center text-xs text-gray-600 mb-4">
-        Connect with experienced angel investors
-      </p>
-      
-      <div className="space-y-2">
-        {investors.map((investor, idx) => (
-          <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <div className="flex items-start gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-purple-600 text-sm">👤</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-800 text-xs">{investor.name}</h4>
-                <p className="text-xs text-gray-600 line-clamp-1">{investor.description}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
-              <span>💰</span>
-              <span className="font-medium">{investor.investment}</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-1 mb-2">
-              {investor.focus.map((area, i) => (
-                <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                  {area}
-                </span>
-              ))}
-            </div>
-            
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
-              🚀 Meet with Investor
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// VC Marketplace Preview Component
-function VCMarketplacePreview() {
-  const vcFirms = [
-    {
-      name: "Apex Ridge Ventures",
-      description: "Leading investment firm specializing in early-stage technology companies with global impact potential.",
-      check: "$3M - $25M",
-      stages: ["Series A", "Series B", "Series C"],
-      focus: ["Sector Agnostic"],
-      since: "2015"
-    },
-    {
-      name: "Meridian Stone Capital",
-      description: "Strategic investment partner focused on transformative technologies shaping tomorrow's economy.",
-      check: "$4M - $30M",
-      stages: ["Series A", "Series B", "Series C"],
-      focus: ["ai deep tech", "digital health biotech", "fintech"],
-      since: "2018"
-    },
-    {
-      name: "Velocity Wave Partners",
-      description: "Innovation-driven VC firm backing entrepreneurs building the next generation of market leaders.",
-      check: "$6M - $45M",
-      stages: ["Series A", "Series B", "Series C"],
-      focus: ["Sector Agnostic"],
-      since: "2011"
-    }
-  ];
-
-  return (
-    <div className="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm">
-      <div className="flex items-center justify-center mb-3">
-        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
-          <span className="text-white text-xl">💼</span>
-        </div>
-      </div>
-      <h3 className="text-center text-lg font-bold text-gray-800 mb-2">VC Marketplace</h3>
-      <p className="text-center text-xs text-gray-600 mb-4">
-        Access leading venture capital firms
-      </p>
-      
-      <div className="space-y-2 max-h-80 overflow-y-auto">
-        {vcFirms.map((firm, idx) => (
-          <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <div className="flex items-start gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm">🏢</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-gray-800 text-xs">{firm.name}</h4>
-                  <span className="text-xs text-gray-500">Since {firm.since}</span>
-                </div>
-                <p className="text-xs text-gray-600 line-clamp-2">{firm.description}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
-              <span>💰</span>
-              <span className="font-medium">Check: {firm.check}</span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
-              <span>📊</span>
-              <span>Stages: {firm.stages.join(", ")}</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-1 mb-2">
-              {firm.focus.map((area, i) => (
-                <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                  {area}
-                </span>
-              ))}
-            </div>
-            
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition-colors">
-              View Firm Details
-            </button>
-          </div>
-        ))}
       </div>
     </div>
   );
 }
 
 // Valuation Counter Component
-function ValuationCounter({ before, after, equity, stakeValue, animate, inHeader = false }) {
+function ValuationCounter({ before, after, equity, stakeValue, animate }) {
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentStake, setCurrentStake] = useState(0);
 
@@ -841,41 +550,6 @@ function ValuationCounter({ before, after, equity, stakeValue, animate, inHeader
     }
     return `$${value.toLocaleString()}`;
   };
-
-  if (inHeader) {
-    return (
-      <div className="bg-white/10 backdrop-blur-sm border-2 border-white/30 rounded-2xl p-4 shadow-lg">
-        <div className="text-white text-sm font-semibold mb-3">💰 VENTURE VALUATION</div>
-        
-        <div className="flex items-center gap-4 mb-3">
-          <div className="text-center">
-            <div className="text-purple-200 text-xs mb-1">Before</div>
-            <div className="text-xl font-bold text-purple-200 line-through">{formatValue(before)}</div>
-          </div>
-          
-          <div className="text-2xl text-white">→</div>
-          
-          <div className="text-center">
-            <div className="text-yellow-200 text-xs mb-1">After</div>
-            <div className="text-3xl font-black text-white">
-              {formatValue(currentValuation)}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-2 border-white/30 pt-3">
-          <div className="flex items-center justify-between text-sm text-white">
-            <span>Your Equity:</span>
-            <span className="font-bold">{equity}%</span>
-          </div>
-          <div className="flex items-center justify-between text-sm mt-2 text-white">
-            <span>Your Stake Value:</span>
-            <span className="font-bold text-yellow-200">{formatValue(currentStake)}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-2xl p-6 w-full shadow-lg">
