@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function JourneyPreview() {
   return (
     <div className="max-w-4xl mx-auto my-12 px-4">
-      <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
+      <h2  className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
         Experience the Full Entrepreneurial Journey
       </h2>
       
