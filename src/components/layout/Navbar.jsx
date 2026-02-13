@@ -8,7 +8,7 @@ import Link from "next/link";
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasVenture, setHasVenture] = useState(false);
+  const [isResourcesOpen, setIsResourcesOpen] = useState(false); // State חדש לדרופדאון
 
   useEffect(() => {
     const checkUser = async () => {
@@ -17,21 +17,10 @@ export default function Navbar() {
           data: { user: currentUser },
         } = await supabase.auth.getUser();
         setUser(currentUser);
-
-        if (currentUser) {
-          const { data: ventures } = await supabase
-            .from("ventures")
-            .select("id")
-            .eq("created_by", currentUser.email)
-            .limit(1);
-          setHasVenture(ventures && ventures.length > 0);
-        }
       } catch (error) {
         setUser(null);
-        setHasVenture(false);
       }
     };
-
     checkUser();
   }, []);
 
@@ -82,13 +71,34 @@ export default function Navbar() {
               <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Community
               </Link>
-              {/* Blog Link added here */}
-              <Link href="/blog" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Blog
-              </Link>
               <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Pricing
               </Link>
+
+              {/* Resources Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setIsResourcesOpen(true)}
+                onMouseLeave={() => setIsResourcesOpen(false)}
+              >
+                <button className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                  RESOURCES
+                  <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {isResourcesOpen && (
+                  <div className="absolute top-full left-0 w-48 bg-black/90 border border-white/10 rounded-md py-2 shadow-xl">
+                    <Link href="/blog" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      Blog
+                    </Link>
+                    <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      How it Works
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -129,13 +139,18 @@ export default function Navbar() {
           <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             Community
           </Link>
-          {/* Mobile Blog Link added here */}
-          <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
-            Blog
-          </Link>
           <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             Pricing
           </Link>
+          
+          <div className="text-gray-500 px-3 py-2 text-xs font-bold uppercase">Resources</div>
+          <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+            Blog
+          </Link>
+          <Link href="/how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+            How it Works
+          </Link>
+
           <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
             {user ? (
               <>
