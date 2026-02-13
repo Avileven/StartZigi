@@ -392,7 +392,13 @@ pathname === "/"
       {/* Phase Completion Modal */}
       <PhaseCompletionModal
         isOpen={showPhaseModal}
-        onClose={() => setShowPhaseModal(false)}
+        onClose={() => {
+          setShowPhaseModal(false);
+          // Mark as seen - update localStorage to current phase
+          if (venture) {
+            localStorage.setItem('lastSeenPhase', venture.phase);
+          }
+        }}
         completedPhase={completedPhase}
       />
     </SidebarProvider>

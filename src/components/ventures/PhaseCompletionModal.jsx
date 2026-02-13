@@ -321,7 +321,7 @@ export default function PhaseCompletionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-center relative overflow-hidden">
