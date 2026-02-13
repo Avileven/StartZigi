@@ -1,14 +1,11 @@
-export default function Page() {
+"use client"
+
+export default function HowItWorks() {
   return (
-    <div style={{ 
-      marginTop: '100px', 
-      textAlign: 'center', 
-      fontSize: '40px', 
-      color: 'red',
-      backgroundColor: 'yellow',
-      padding: '20px'
-    }}>
-      !!! הדף עובד - HOW IT WORKS !!!
-    </div>
+    <iframe
+      src="/how-it-works.html"
+      className="w-full h-screen border-0"
+      title="How It Works - StartZig"
+    />
   );
 }
