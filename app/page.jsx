@@ -125,7 +125,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-<JourneyPreview />
+
       {/* Benefits Section - NO CARDS */}
       <div className="py-24 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
@@ -203,7 +203,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-
+<JourneyPreview />
       {/* Who Can Benefit Section - NO CARDS */}
       <div className="py-24 px-6">
         <div className="max-w-7xl mx-auto">

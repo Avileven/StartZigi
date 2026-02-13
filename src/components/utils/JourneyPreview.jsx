@@ -5,9 +5,7 @@ import Link from 'next/link';
 export default function JourneyPreview() {
   return (
     <div className="max-w-4xl mx-auto my-12 px-4">
-      <h2  className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-        Experience the Full Entrepreneurial Journey
-      </h2>
+      
       
       <Link href="/journey" className="block relative group cursor-pointer">
         {/* MVP Complete Preview - Static Image */}
