@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import AnimatedBg from '@/components/common/AnimatedBg';
+
 
 export default function HowItWorks() {
     useEffect(() => {
@@ -12,10 +12,7 @@ export default function HowItWorks() {
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans relative overflow-x-hidden">
             
-            {/* Background Animation */}
-            <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
-                <AnimatedBg />
-            </div>
+            
 
             <main className="relative z-10 min-h-screen pt-24 md:pt-32 pb-24 px-6 sm:px-10 lg:px-16">
                 <div className="max-w-6xl mx-auto w-full">
@@ -34,7 +31,7 @@ export default function HowItWorks() {
                         {/* Slide 1: Your Dashboard */}
                         <section className="flex flex-col lg:flex-row gap-12 items-start">
                             <div className="lg:w-1/3 space-y-4 text-left lg:sticky lg:top-32">
-                                <div className="text-blue-400 font-bold tracking-widest uppercase text-xs">Step 01</div>
+                                <div className="text-blue-400 font-bold tracking-widest uppercase text-xs"></div>
                                 <h3 className="text-3xl font-bold text-white">Your Control Center</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
                                     Professional dashboard for managing your venture. Access your toolbox, monitor revenue, and track your startup's lifecycle from one central hub.
@@ -100,7 +97,7 @@ export default function HowItWorks() {
                         {/* Slide 2: Invite a Co-Founder */}
                         <section className="flex flex-col lg:flex-row-reverse gap-12 items-start">
                             <div className="lg:w-1/3 space-y-4 text-left lg:sticky lg:top-32">
-                                <div className="text-purple-400 font-bold tracking-widest uppercase text-xs">Step 02</div>
+                                <div className="text-purple-400 font-bold tracking-widest uppercase text-xs"></div>
                                 <h3 className="text-3xl font-bold text-white">Invite a Co-Founder</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
                                     Expand your leadership. Candidates will receive a professional link to view your Venture Profile and join your mission.
@@ -161,7 +158,7 @@ export default function HowItWorks() {
                         {/* Slide 3: Pitch to Investors */}
                         <section className="flex flex-col lg:flex-row gap-12 items-start">
                             <div className="lg:w-1/3 space-y-4 text-left lg:sticky lg:top-32">
-                                <div className="text-emerald-400 font-bold tracking-widest uppercase text-xs">Step 03</div>
+                                <div className="text-emerald-400 font-bold tracking-widest uppercase text-xs"></div>
                                 <h3 className="text-3xl font-bold text-white">Pitch to Investors</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
                                     Simulate the real pressure. Answer tough questions from AI investors and refine your strategy based on their critical feedback.
