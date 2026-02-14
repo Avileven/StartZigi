@@ -24,7 +24,7 @@ import {
   X,
   Clock,
   CheckCircle2,
-  User as UserIcon,
+  UserCircle,
 } from "lucide-react";
 
 const STATUSES = {
@@ -260,7 +260,7 @@ export default function AngelArena() {
 
               <div className="flex items-start gap-4">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getGradientForInvestor(selectedInvestor.name)}`}>
-                  <UserIcon className="w-10 h-10 text-white" />
+                  <UserCircle className="w-10 h-10 text-white" />
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-bold mb-1">
