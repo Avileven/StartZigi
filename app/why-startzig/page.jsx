@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-// ייבוא רכיב האנימציה שביקשת
+// וודא שהנתיב לרכיב האנימציה שלך מדויק
 import AnimatedBg from '@/components/common/AnimatedBg';
 
 export default function WhyStartZig() {
@@ -56,21 +56,26 @@ export default function WhyStartZig() {
                             <p className="font-bold text-white uppercase tracking-widest text-xs md:text-sm">— Paul Graham, Y Combinator</p>
                         </section>
 
-                        <div className="space-y-6 md:space-y-8">
-                            <p className="text-lg md:text-xl leading-relaxed">
-                                Real startups don't fly; they navigate. They stumble. <br className="hidden md:block" />
-                                They <span className="text-white font-bold text-blue-400">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. <br className="hidden md:block" />
-                                They learn, adapt, and find unexpected paths to success.
-                            </p>
+                        {/* מסגרת האנימציה עם הטקסט בתוכה */}
+                        <div className="relative h-80 w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-950/50 flex items-center justify-center">
+                            {/* רכיב האנימציה ברקע */}
+                            <div className="absolute inset-0 z-0 opacity-40">
+                                <AnimatedBg />
+                            </div>
+                            
+                            {/* הטקסט שביקשת בתוך המסגרת */}
+                            <div className="relative z-10 px-6 max-w-2xl">
+                                <p className="text-lg md:text-xl leading-relaxed font-medium">
+                                    Real startups don't fly; they navigate. They stumble. <br className="hidden md:block" />
+                                    They <span className="text-blue-400 font-bold">zig</span> when everyone expects them to <span className="text-white font-bold">zag</span>. <br className="hidden md:block" />
+                                    They learn, adapt, and find unexpected paths to success.
+                                </p>
+                            </div>
                         </div>
 
-                        {/* שילוב האנימציה - מופיעה כאן ברצף הויזואלי */}
-                        <div className="relative h-64 w-full overflow-hidden rounded-3xl border border-white/5 bg-slate-900/50">
-                            <AnimatedBg />
-                        </div>
-
-                        {/* סיפור מאיה - המשפט שהיה בחוץ הוכנס פנימה */}
+                        {/* סיפור מאיה - המלבן המעוצב */}
                         <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl text-center">
+                            {/* המשפט הוכנס לתוך המלבן */}
                             <div className="mb-8">
                                 <p className="text-blue-400 font-medium tracking-wide uppercase text-xs md:text-sm">
                                     Here is a classic example of how the zigzag journey looks in the real world:
