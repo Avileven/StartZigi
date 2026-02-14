@@ -278,7 +278,12 @@ export default function AngelArena() {
             </CardHeader>
 
             <CardContent className="pt-6 space-y-6">
+              {/* Define availability status */}
+              {(() => {
+                const isAvailable = selectedInvestor.status === 'AVAILABLE';
               
+                return (
+                  <>
               {/* Background */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -361,6 +366,9 @@ export default function AngelArena() {
                   }
                 </p>
               </div>
+              </>
+                );
+              })()}
 
             </CardContent>
           </Card>
