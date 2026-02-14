@@ -321,15 +321,20 @@ export default function VCMarketplace() {
                 </div>
               )}
 
-              {/* Action Button */}
+              {/* Action Button - Contact or Visit */}
               <div className="pt-4">
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
-                  onClick={() => window.location.href = `/vc-firm?slug=${selectedFirm.slug}`}
-                >
-                  <Building2 className="w-5 h-5 mr-2" />
-                  View Full Profile
-                </Button>
+                <a href={`/vc-firm?slug=${selectedFirm.slug}`} target="_blank" rel="noopener noreferrer">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
+                  >
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Contact Firm
+                  </Button>
+                </a>
+                
+                <p className="mt-4 text-sm text-gray-500 text-center">
+                  Opens firm's contact page
+                </p>
               </div>
 
             </CardContent>
