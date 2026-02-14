@@ -1,71 +1,124 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { VCFirm } from '@/api/entities';
+import { Venture } from '@/api/entities';
+import { User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Link from "next/link";
-import { createPageUrl } from '@/utils';
 import { 
   Building2, 
-  ChevronsRight, 
-  Newspaper,
-  TrendingUp,
-  Search,
-  Filter,
+  Loader2,
+  X,
   DollarSign,
   Target,
+  TrendingUp,
   ShieldCheck,
-  Loader2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
+
+const GRADIENTS = [
+  'bg-gradient-to-br from-blue-500 to-indigo-600',
+  'bg-gradient-to-br from-purple-500 to-pink-600',
+  'bg-gradient-to-br from-green-500 to-teal-600',
+  'bg-gradient-to-br from-orange-500 to-red-600',
+  'bg-gradient-to-br from-indigo-500 to-purple-700',
+  'bg-gradient-to-br from-cyan-500 to-blue-600',
+  'bg-gradient-to-br from-rose-500 to-pink-600',
+  'bg-gradient-to-br from-amber-500 to-orange-600',
+  'bg-gradient-to-br from-violet-500 to-purple-600',
+  'bg-gradient-to-br from-emerald-500 to-green-600',
+];
+
+const getGradientForFirm = (name) => {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return GRADIENTS[hash % GRADIENTS.length];
+};
+
+const parseFundingAmount = (fundingInfo) => {
+  if (!fundingInfo) return 0;
+  const match = fundingInfo.match(/\$(\d+(?:\.\d+)?)\s*(M|B|K)?/i);
+  if (!match) return 0;
+  
+  const amount = parseFloat(match[1]);
+  const unit = match[2]?.toUpperCase();
+  
+  if (unit === 'B') return amount * 1000;
+  if (unit === 'M') return amount;
+  if (unit === 'K') return amount / 1000;
+  return amount;
+};
+
+const formatFunding = (fundingInfo) => {
+  if (!fundingInfo) return 'N/A';
+  const match = fundingInfo.match(/\$(\d+(?:\.\d+)?)\s*(M|B|K)?/i);
+  if (!match) return fundingInfo;
+  return `$${match[1]}${match[2] || ''}`;
+};
+
+const getCircleSize = (fundingInfo) => {
+  const amount = parseFundingAmount(fundingInfo);
+  if (amount >= 500) return 'w-48 h-48'; // $500M+
+  if (amount >= 200) return 'w-40 h-40'; // $200M+
+  if (amount >= 100) return 'w-36 h-36'; // $100M+
+  return 'w-32 h-32'; // < $100M
+};
 
 export default function VCMarketplace() {
   const [firms, setFirms] = useState([]);
+  const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [focusFilter, setFocusFilter] = useState('all');
+  const [selectedFirm, setSelectedFirm] = useState(null);
 
   useEffect(() => {
-    const loadFirms = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        const allFirms = await VCFirm.list("-created_date");
+        const [allFirms, user] = await Promise.all([
+          VCFirm.list("-created_date"),
+          User.me(),
+        ]);
+        
         setFirms(allFirms);
+
+        if (user?.id) {
+          let userVentures = [];
+          try {
+            userVentures = await Venture.filter(
+              { founder_user_id: user.id },
+              "-created_date"
+            );
+          } catch (e) {
+            userVentures = [];
+          }
+
+          if (!userVentures || userVentures.length === 0) {
+            userVentures = await Venture.filter(
+              { created_by: user.email },
+              "-created_date"
+            );
+          }
+
+          if (userVentures.length > 0) {
+            setVenture(userVentures[0]);
+          }
+        }
       } catch (error) {
-        console.error("Error loading VC firms:", error);
+        console.error("Error loading data:", error);
       }
       setIsLoading(false);
     };
-    loadFirms();
+    loadData();
   }, []);
 
-  const fundAnnouncements = useMemo(() => {
-    return firms
-      .filter(firm => firm.funding_info)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 6);
-  }, [firms]);
+  const handleFirmClick = (firm) => {
+    setSelectedFirm(firm);
+  };
 
-  const filteredFirms = useMemo(() => {
-    return firms.filter(firm => {
-      const matchesSearch = firm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (firm.background && firm.background.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesFocus = focusFilter === 'all' || (firm.focus_areas && firm.focus_areas.includes(focusFilter));
-      return matchesSearch && matchesFocus;
-    });
-  }, [firms, searchTerm, focusFilter]);
-
-  const allFocusAreas = useMemo(() => {
-    const areas = new Set();
-    firms.forEach(firm => {
-      if (firm.focus_areas) {
-        firm.focus_areas.forEach(area => areas.add(area));
-      }
-    });
-    return Array.from(areas).sort();
-  }, [firms]);
+  const handleClose = () => {
+    setSelectedFirm(null);
+  };
 
   if (isLoading) {
     return (
@@ -76,204 +129,226 @@ export default function VCMarketplace() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-white" />
+    <>
+      <div className="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Building2 className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-5xl font-black text-gray-900 mb-2">
+              VC Marketplace
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Connect with top-tier venture capital firms
+            </p>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">VC Marketplace</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Discover and connect with top-tier venture capital firms ready to fund the next generation of breakout companies.
-          </p>
-        </div>
 
-        {/* Recent Fund News */}
-        <div className="mb-12">
-          <Card className="shadow-lg border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl font-bold">
-                <Newspaper className="w-6 h-6 text-indigo-600"/>
-                Recent Fund News
-              </CardTitle>
-              <CardDescription>The latest funding announcements from across the StartZig ecosystem.</CardDescription>
+          {/* VC Firms Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
+            {firms.map((firm, index) => {
+              const gradientClass = getGradientForFirm(firm.name);
+              const sizeClass = getCircleSize(firm.funding_info);
+              
+              return (
+                <div
+                  key={firm.id}
+                  className="flex flex-col items-center"
+                  style={{ 
+                    animation: `slideIn 0.6s ease-out forwards`,
+                    animationDelay: `${index * 0.05}s`,
+                    opacity: 0
+                  }}
+                >
+                  <button
+                    onClick={() => handleFirmClick(firm)}
+                    className={`
+                      relative rounded-full flex items-center justify-center
+                      transition-all duration-300 shadow-lg
+                      cursor-pointer hover:scale-110 hover:shadow-2xl
+                      ${gradientClass}
+                      ${sizeClass}
+                    `}
+                  >
+                    {/* Funding Amount */}
+                    <span 
+                      className="text-2xl font-black text-white relative z-10 text-center px-3"
+                      style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+                    >
+                      {formatFunding(firm.funding_info)}
+                    </span>
+                  </button>
+
+                  {/* Firm Name */}
+                  <p className="mt-3 text-center font-semibold text-gray-900 text-sm max-w-[150px]">
+                    {firm.name}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      </div>
+
+      {/* Details Modal */}
+      {selectedFirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500 shadow-2xl bg-white border-0">
+            
+            {/* Header */}
+            <CardHeader className="relative pb-4 border-b">
+              <button
+                onClick={handleClose}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-start gap-4">
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getGradientForFirm(selectedFirm.name)}`}>
+                  <Building2 className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold mb-1">
+                    {selectedFirm.name}
+                  </CardTitle>
+                  {selectedFirm.founded && (
+                    <p className="text-sm text-gray-600">Founded in {selectedFirm.founded}</p>
+                  )}
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {fundAnnouncements.length > 0 ? (
-                  fundAnnouncements.map(firm => (
-                    <div key={firm.id} className="p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
-                      <p className="text-xs text-gray-500 mb-2">Published by StartZig News Group</p>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{firm.name}</h3>
-                      <p className="text-gray-600 text-sm mb-3">
-                        Announced <span className="font-medium text-indigo-700">{firm.funding_info}</span>.
-                      </p>
-                      <Link href={`/vc-firm?slug=${firm.slug}`}>
-  <Button variant="outline" size="sm" className="w-full">
-    Visit Firm Profile <ChevronsRight className="w-4 h-4 ml-2"/>
-  </Button>
-</Link><Button 
-  className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4"
-  onClick={() => window.location.href = `/vc-firm?slug=${firm.slug}`}
->
-  View Firm Details
-</Button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="col-span-full text-center text-gray-500">No recent fund announcements available.</p>
+
+            <CardContent className="pt-6 space-y-6">
+              
+              {/* Background */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  About
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {selectedFirm.background}
+                </p>
+              </div>
+
+              {/* Fund Info & Check Size */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedFirm.funding_info && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 mb-1">Latest Fund</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {selectedFirm.funding_info}
+                    </p>
+                  </div>
+                )}
+
+                {selectedFirm.typical_check && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 mb-1">Check Size</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {selectedFirm.typical_check}
+                    </p>
+                  </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Search and Filter */}
-        <div className="mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search VC firms..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <Select value={focusFilter} onValueChange={setFocusFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Filter by focus" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Focus Areas</SelectItem>
-                      {allFocusAreas.map(area => (
-                        <SelectItem key={area} value={area}>
-                          {area.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* VC Firms Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFirms.map(firm => (
-            <Card key={firm.id} className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-white" />
-                  </div>
-                  {firm.founded && (
-                    <Badge variant="outline" className="text-xs">
-                      Since {firm.founded}
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="text-xl font-bold">{firm.name}</CardTitle>
-                <CardDescription className="text-sm line-clamp-3 h-[4.5rem]">
-                  {firm.background}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
+              {/* Investment Stages */}
+              {selectedFirm.investment_stages && selectedFirm.investment_stages.length > 0 && (
                 <div>
-                  <div className="grid grid-cols-1 gap-3 text-sm">
-                    {firm.typical_check && (
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-600">Check: {firm.typical_check}</span>
-                      </div>
-                    )}
-                    {firm.investment_stages && firm.investment_stages.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-blue-500" />
-                        <span className="text-gray-600">Stages: {firm.investment_stages.join(', ')}</span>
-                      </div>
-                    )}
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Investment Stages</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFirm.investment_stages.map(stage => (
+                      <Badge key={stage} className="bg-blue-100 text-blue-700">
+                        {stage}
+                      </Badge>
+                    ))}
                   </div>
-
-                  <div className="my-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Target className="w-4 h-4 text-indigo-500"/>
-                      <h4 className="text-sm font-semibold text-gray-900">Focus Areas</h4>
-                    </div>
-                    {firm.focus_areas && firm.focus_areas.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {firm.focus_areas.slice(0, 3).map(area => (
-                          <Badge key={area} variant="secondary" className="text-xs">
-                            {area.replace(/_/g, ' ')}
-                          </Badge>
-                        ))}
-                        {firm.focus_areas.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{firm.focus_areas.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    ) : (
-                       <Badge variant="secondary" className="text-xs">Sector Agnostic</Badge>
-                    )}
-                  </div>
-
-                  {/* Internal Parameters Display */}
-                  {firm.internal_parameters && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <ShieldCheck className="w-4 h-4 text-red-500"/>
-                        <h4 className="text-sm font-semibold text-gray-900">Investment Criteria</h4>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {firm.internal_parameters.sector_restriction && (
-                          <Badge variant="destructive" className="text-xs">Sector Restricted</Badge>
-                        )}
-                        {firm.internal_parameters.revenue_only && (
-                          <Badge variant="destructive" className="text-xs">Revenue Required</Badge>
-                        )}
-                        {firm.internal_parameters.team_required && (
-                          <Badge variant="destructive" className="text-xs">Team Required</Badge>
-                        )}
-                        {firm.internal_parameters.investment_frozen && (
-                          <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">Investment Frozen</Badge>
-                        )}
-                        {(!firm.internal_parameters.sector_restriction && 
-                          !firm.internal_parameters.revenue_only && 
-                          !firm.internal_parameters.team_required && 
-                          !firm.internal_parameters.investment_frozen) && (
-                          <Badge variant="default" className="text-xs bg-green-100 text-green-800">Open to All</Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
+              )}
 
-                <Link href={`/vc-firm?slug=${firm.slug}`} className="mt-4">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                    View Firm Details
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+              {/* Focus Areas */}
+              {selectedFirm.focus_areas && selectedFirm.focus_areas.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Focus Areas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFirm.focus_areas.map((area, idx) => {
+                      const colors = [
+                        'bg-green-100 text-green-700',
+                        'bg-blue-100 text-blue-700',
+                        'bg-orange-100 text-orange-700',
+                        'bg-purple-100 text-purple-700',
+                      ];
+                      return (
+                        <span
+                          key={area}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${colors[idx % colors.length]}`}
+                        >
+                          {area.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Investment Criteria */}
+              {selectedFirm.internal_parameters && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Investment Criteria</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFirm.internal_parameters.sector_restriction && (
+                      <Badge variant="destructive" className="text-xs">Sector Restricted</Badge>
+                    )}
+                    {selectedFirm.internal_parameters.revenue_only && (
+                      <Badge variant="destructive" className="text-xs">Revenue Required</Badge>
+                    )}
+                    {selectedFirm.internal_parameters.team_required && (
+                      <Badge variant="destructive" className="text-xs">Team Required</Badge>
+                    )}
+                    {selectedFirm.internal_parameters.investment_frozen && (
+                      <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">Investment Frozen</Badge>
+                    )}
+                    {(!selectedFirm.internal_parameters.sector_restriction && 
+                      !selectedFirm.internal_parameters.revenue_only && 
+                      !selectedFirm.internal_parameters.team_required && 
+                      !selectedFirm.internal_parameters.investment_frozen) && (
+                      <Badge variant="default" className="text-xs bg-green-100 text-green-800">Open to All</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Button */}
+              <div className="pt-4">
+                <Button
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
+                  onClick={() => window.location.href = `/vc-firm?slug=${selectedFirm.slug}`}
+                >
+                  <Building2 className="w-5 h-5 mr-2" />
+                  View Full Profile
+                </Button>
+              </div>
+
+            </CardContent>
+          </Card>
         </div>
+      )}
 
-        {filteredFirms.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">No firms found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter criteria</p>
-          </div>
-        )}
-      </div>
-    </div>
+      <style jsx global>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </>
   );
 }
