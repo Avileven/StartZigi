@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React from 'react';
 import Link from "next/link";
-import { Rocket, MessageSquare, Briefcase, ChevronRight, ArrowRight } from 'lucide-react';
+import { Rocket, MessageSquare, Briefcase, ArrowRight } from 'lucide-react';
 
 const projectUpdates = [
   {
@@ -46,74 +46,8 @@ export default function Community() {
         </div>
       </section>
 
-      {/* 1. Featured Venture Demos (Moved Up) */}
-      <div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center">
-            <span style={{background: 'linear-gradient(to right, #ec4899, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
-              Featured Venture Demos
-            </span>
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6 justify-items-center">
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">📱</span> ShelfSense
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence</p>
-              <Link href="/ShelfSense-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </button>
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🚭</span> Smokefree
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
-              <Link href="/smokefree-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </button>
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🏙️</span> UrbanPulse
-              </h3>
-              <p className="text-xs text-white/70 mb-2">City insights platform</p>
-              <Link href="/urbanpulse-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. VC Announcement (Now After Demos) */}
-      <section className="max-w-5xl mx-auto px-6 mb-20 mt-10">
-        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
-          <div className="flex items-center gap-6">
-            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
-              <Briefcase className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold">New VC Alert: Nexus Capital</h3>
-              <p className="text-indigo-200 opacity-80 mt-1">Official StartZig partner for Early-Stage funding.</p>
-            </div>
-          </div>
-          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors">
-            View VC Profile
-          </button>
-        </div>
-      </section>
-
-      {/* 3. Projects Feed (Hot Venture Updates) */}
-      <section className="max-w-5xl mx-auto px-6 pb-32">
+      {/* 1. Hot Venture Updates (NOW FIRST) */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
         <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
           <Rocket className="w-6 h-6 text-indigo-400" />
           Hot Venture Updates
@@ -134,13 +68,31 @@ export default function Community() {
                   {project.callToAction}
                 </p>
               </div>
-              <Link href={project.link} target="_blank">
-                <button className="flex items-center gap-2 text-white bg-white/10 px-5 py-3 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all group-hover:translate-x-1">
+              <Link href={project.link} target="_blank" className="w-full md:w-auto">
+                <button className="w-full flex items-center justify-center gap-2 text-white bg-white/10 px-6 py-3 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all group-hover:translate-x-1">
                   View Demo <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 2. VC Announcement (NOW AFTER UPDATES) */}
+      <section className="max-w-5xl mx-auto px-6 mb-32">
+        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
+          <div className="flex items-center gap-6">
+            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
+              <Briefcase className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold">New VC Alert: Nexus Capital</h3>
+              <p className="text-indigo-200 opacity-80 mt-1">Official StartZig partner for Early-Stage funding.</p>
+            </div>
+          </div>
+          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors">
+            View VC Profile
+          </button>
         </div>
       </section>
 
