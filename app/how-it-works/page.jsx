@@ -17,15 +17,7 @@ export default function HowItWorks() {
             <main className="relative z-10 min-h-screen pt-24 md:pt-32 pb-24 px-6 sm:px-10 lg:px-16">
                 <div className="max-w-6xl mx-auto w-full">
                     
-                    {/* Header */}
-                    <div className="max-w-4xl mb-24 text-left">
-                        <h1 className="text-4xl md:text-6xl font-black mb-6">How it Works</h1>
-                        <p className="text-xl text-white/70 leading-relaxed">
-                            StartZig is more than a tool—it's a high-fidelity startup simulator. 
-                            From your first idea to a simulated exit, here is how you'll build your venture.
-                        </p>
-                    </div>
-
+                    
                     <div className="space-y-48">
                         
                         {/* Slide 1: Your Dashboard */}
@@ -102,7 +94,7 @@ It integrates advanced tools for crafting a comprehensive business plan, modelin
                                 <div className="text-purple-400 font-bold tracking-widest uppercase text-xs"></div>
                                 <h3 className="text-3xl font-bold text-white">Collaborative Growth</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
-                                    StartZig allows you to invite co-founders and engage users from both inside and outside the platform to provide feedback on your venture. From the initial concept to the advanced stages, you can gather insights on your landing page and product, manage team access, and grow your startup’s community through every phase of development..
+                                    StartZig allows you to invite co-founders and engage users from both inside and outside the platform to provide feedback on your venture. From the initial concept to the advanced stages, you can gather insights on your landing page and product, manage team access, and grow your startup’s community through every phase of development.
                                 </p>
                             </div>
 
