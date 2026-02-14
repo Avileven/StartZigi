@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from 'react';
 import Link from "next/link";
-import { Menu, X, Rocket, Users, MessageSquare, Briefcase, ChevronRight, Award } from 'lucide-react';
+// הוספתי את ArrowRight לייבוא כאן
+import { Menu, X, Rocket, Users, MessageSquare, Briefcase, ChevronRight, Award, ArrowRight } from 'lucide-react';
 
 const projectUpdates = [
   {
@@ -35,7 +36,7 @@ export default function Community() {
 
   return (
     <div className="bg-slate-900 text-white min-h-screen font-sans">
-         
+      
       {/* Hero Section */}
       <section className="pt-40 pb-16 px-6 text-center">
         <div className="max-w-4xl mx-auto">
@@ -65,7 +66,9 @@ export default function Community() {
           </button>
         </div>
       </section>
-<div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
+
+      {/* Venture Demos Section */}
+      <div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-10 text-center">
             <span style={{background: 'linear-gradient(to right, #ec4899, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
@@ -73,10 +76,11 @@ export default function Community() {
             </span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6 justify-items-center">
+            
+            {/* Demo 1 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">📱</span>
-                ShelfSense
+                <span className="text-2xl">📱</span> ShelfSense
               </h3>
               <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence platform</p>
               <div className="flex justify-center gap-2 text-xs mb-3">
@@ -84,16 +88,16 @@ export default function Community() {
                 <span className="px-2 py-1 bg-white/10 rounded">$2M Raised</span>
               </div>
               <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+                </button>
               </Link>
             </div>
 
+            {/* Demo 2 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🚭</span>
-                Smokefree
+                <span className="text-2xl">🚭</span> Smokefree
               </h3>
               <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
               <div className="flex justify-center gap-2 text-xs mb-3">
@@ -101,16 +105,16 @@ export default function Community() {
                 <span className="px-2 py-1 bg-white/10 rounded">$1.5M Raised</span>
               </div>
               <Link href="/smokefree-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+                </button>
               </Link>
             </div>
 
+            {/* Demo 3 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🏙️</span>
-                UrbanPulse
+                <span className="text-2xl">🏙️</span> UrbanPulse
               </h3>
               <p className="text-xs text-white/70 mb-2">City insights platform</p>
               <div className="flex justify-center gap-2 text-xs mb-3">
@@ -118,24 +122,26 @@ export default function Community() {
                 <span className="px-2 py-1 bg-white/10 rounded">$5M Raised</span>
               </div>
               <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+                </button>
               </Link>
             </div>
           </div>
+
           <div className="mt-12 text-center">
             <Link href="/register">
-              <Button size="lg" className="bg-white/10 hover:bg-white/20 border border-white/20">
+              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center mx-auto transition-colors">
                 Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
       </div>
+
       {/* Projects Feed */}
       <section className="max-w-5xl mx-auto px-6 pb-32">
-        <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
+        <h2 className="text-2xl font-bold mb-8 mt-16 flex items-center gap-2">
           <Rocket className="w-6 h-6 text-indigo-400" />
           Hot Venture Updates
         </h2>
@@ -163,7 +169,7 @@ export default function Community() {
         </div>
       </section>
 
-      {/* Paul Graham Quote */}
+      {/* Quote Section */}
       <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
