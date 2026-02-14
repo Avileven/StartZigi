@@ -191,14 +191,8 @@ export default function AngelArena() {
                         : 'cursor-not-allowed opacity-60'
                       }
                       ${statusConfig.color}
-                      ${isAvailable ? 'ring-4 ring-offset-4 ' + statusConfig.ringColor : ''}
                     `}
                   >
-                    {/* Pulse animation for available */}
-                    {isAvailable && (
-                      <div className={`absolute inset-0 rounded-full ${statusConfig.color} animate-ping opacity-20`}></div>
-                    )}
-                    
                     {/* Initials */}
                     <span className="text-3xl font-bold text-white relative z-10">
                       {investor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -229,8 +223,8 @@ export default function AngelArena() {
 
       {/* Details Modal */}
       {selectedInvestor && !showPitchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500 shadow-2xl bg-white border-0">
             
             {/* Header */}
             <CardHeader className="relative pb-4 border-b">
