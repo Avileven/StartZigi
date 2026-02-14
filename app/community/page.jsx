@@ -1,39 +1,36 @@
 "use client";
 import React, { useState } from 'react';
 import Link from "next/link";
-// הוספתי את ArrowRight לייבוא כאן
-import { Menu, X, Rocket, Users, MessageSquare, Briefcase, ChevronRight, Award, ArrowRight } from 'lucide-react';
+import { Rocket, MessageSquare, Briefcase, ChevronRight, ArrowRight } from 'lucide-react';
 
 const projectUpdates = [
   {
-    name: 'AquaChain',
-    type: 'MVP',
-    description: 'AI-powered smart management for residential water consumption.',
-    callToAction: 'Inviting early adopters to test our MVP and provide initial feedback.',
+    name: 'ShelfSense',
+    type: 'RAISED $2M',
+    description: 'Smart retail shelf intelligence platform using computer vision to optimize inventory.',
+    callToAction: 'Check out the interactive retail dashboard demo.',
+    link: '/ShelfSense-demo.html',
     color: 'text-blue-400',
-    bg: 'bg-blue-400/10'
   },
   {
-    name: 'EduPath',
-    type: 'MLP',
-    description: 'A personalized learning platform focused on the "Minimum Lovable Product" experience.',
-    callToAction: 'Looking for founders to try our MLP and help us refine the Vibe.',
+    name: 'Smokefree',
+    type: 'RAISED $1.5M',
+    description: 'A behavioral science-backed platform helping users quit smoking through personalized journeys.',
+    callToAction: 'Experience the mobile app flow and user milestone tracking.',
+    link: '/smokefree-demo.html',
     color: 'text-purple-400',
-    bg: 'bg-purple-400/10'
   },
   {
-    name: 'GreenTrack',
-    type: 'BETA',
-    description: 'Real-time carbon footprint tracking for consumer products.',
-    callToAction: 'Registration for our closed BETA is now open. Limited spots available.',
+    name: 'UrbanPulse',
+    type: 'RAISED $5M',
+    description: 'Comprehensive city insights platform for urban planners and smart city developers.',
+    callToAction: 'Explore the live data visualization and city heatmaps.',
+    link: '/urbanpulse-demo.html',
     color: 'text-emerald-400',
-    bg: 'bg-emerald-400/10'
   }
 ];
 
 export default function Community() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   return (
     <div className="bg-slate-900 text-white min-h-screen font-sans">
       
@@ -49,25 +46,7 @@ export default function Community() {
         </div>
       </section>
 
-      {/* VC Announcement */}
-      <section className="max-w-5xl mx-auto px-6 mb-20">
-        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
-          <div className="flex items-center gap-6">
-            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
-              <Briefcase className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold">New VC Alert: Nexus Capital</h3>
-              <p className="text-indigo-200 opacity-80 mt-1">A leading Early-Stage fund has joined as an official StartZig partner.</p>
-            </div>
-          </div>
-          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap hover:bg-indigo-100 transition-colors">
-            View VC Profile
-          </button>
-        </div>
-      </section>
-
-      {/* Venture Demos Section */}
+      {/* 1. Featured Venture Demos (Moved Up) */}
       <div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-10 text-center">
@@ -76,72 +55,66 @@ export default function Community() {
             </span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6 justify-items-center">
-            
-            {/* Demo 1 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">📱</span> ShelfSense
               </h3>
-              <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence platform</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Retail Tech</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$2M Raised</span>
-              </div>
+              <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence</p>
               <Link href="/ShelfSense-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
                 </button>
               </Link>
             </div>
 
-            {/* Demo 2 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">🚭</span> Smokefree
               </h3>
               <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Health</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$1.5M Raised</span>
-              </div>
               <Link href="/smokefree-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
                 </button>
               </Link>
             </div>
 
-            {/* Demo 3 */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-2xl">🏙️</span> UrbanPulse
               </h3>
               <p className="text-xs text-white/70 mb-2">City insights platform</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Smart City</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$5M Raised</span>
-              </div>
               <Link href="/urbanpulse-demo.html" target="_blank">
-                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto">
+                <button className="bg-white/10 hover:bg-white/20 border-0 text-xs px-4 py-2 rounded-md flex items-center mx-auto mt-4">
                   View Demo <ArrowRight className="w-3 h-3 ml-1" />
                 </button>
               </Link>
             </div>
           </div>
-
-          <div className="mt-12 text-center">
-            <Link href="/register">
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center mx-auto transition-colors">
-                Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
-            </Link>
-          </div>
         </div>
       </div>
 
-      {/* Projects Feed */}
+      {/* 2. VC Announcement (Now After Demos) */}
+      <section className="max-w-5xl mx-auto px-6 mb-20 mt-10">
+        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
+          <div className="flex items-center gap-6">
+            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
+              <Briefcase className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold">New VC Alert: Nexus Capital</h3>
+              <p className="text-indigo-200 opacity-80 mt-1">Official StartZig partner for Early-Stage funding.</p>
+            </div>
+          </div>
+          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors">
+            View VC Profile
+          </button>
+        </div>
+      </section>
+
+      {/* 3. Projects Feed (Hot Venture Updates) */}
       <section className="max-w-5xl mx-auto px-6 pb-32">
-        <h2 className="text-2xl font-bold mb-8 mt-16 flex items-center gap-2">
+        <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
           <Rocket className="w-6 h-6 text-indigo-400" />
           Hot Venture Updates
         </h2>
@@ -161,9 +134,11 @@ export default function Community() {
                   {project.callToAction}
                 </p>
               </div>
-              <button className="flex items-center gap-2 text-white bg-white/10 px-5 py-3 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all group-hover:translate-x-1">
-                Connect <ChevronRight className="w-4 h-4" />
-              </button>
+              <Link href={project.link} target="_blank">
+                <button className="flex items-center gap-2 text-white bg-white/10 px-5 py-3 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-all group-hover:translate-x-1">
+                  View Demo <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
             </div>
           ))}
         </div>
