@@ -21,7 +21,6 @@ export default function WhyStartZig() {
                             But starting is easy; staying alive through the turns is where the winners are decided.
                         </p>
 
-                        {/* אזור האנימציה שמשולב בתוך הרצף של הפסקאות */}
                         <div className="relative">
                             <div className="absolute inset-0 z-0 opacity-20 h-full w-full">
                                 <AnimatedBg />
@@ -41,7 +40,7 @@ export default function WhyStartZig() {
                             </div>
                         </div>
 
-                        {/* סיפור מאיה - המשך ישיר בטקסט שוטף */}
+                        {/* סיפור מאיה - המשך ישיר ללא קווים מפרידים */}
                         <div className="pt-10 space-y-6 text-lg md:text-xl text-slate-300">
                             <p className="text-blue-400 font-bold tracking-widest uppercase text-xs">
                                 A Classic Zigzag Example
@@ -56,17 +55,17 @@ export default function WhyStartZig() {
                             <p>
                                 In that moment, Maya embraced the <span className="text-amber-400 font-bold">Zig</span>. She rebuilt her AI to solve <span className="text-white font-bold">staffing logistics</span>. The resistance vanished. Sales cycles dropped from months to days.
                             </p>
+                            
+                            {/* האקזיט מוטמע כחלק מהטקסט של הדוגמה */}
+                            <p className="pt-4">
+                                <span className="text-white/60 text-sm uppercase tracking-widest mr-2">18 Months Later:</span>
+                                <span className="text-emerald-400 font-black text-2xl md:text-3xl">$47M EXIT</span>
+                            </p>
                         </div>
                     </div>
 
-                    {/* נקודת השיא - חוזר למרכז (Impact) */}
-                    <div className="pt-16 pb-20 text-center border-t border-white/5 mt-16">
-                        <p className="text-white/60 text-sm uppercase tracking-widest mb-2">18 Months Later:</p>
-                        <p className="text-emerald-400 text-6xl md:text-8xl font-black tracking-tighter">$47M EXIT</p>
-                    </div>
-
-                    {/* CTA סופי - ממורכז */}
-                    <div className="text-center pt-10">
+                    {/* CTA סופי - ממורכז בתחתית הדף */}
+                    <div className="text-center pt-32">
                         <Link href="/register" className="group inline-block">
                             <p className="text-3xl md:text-6xl font-black text-white leading-tight">Don't just start up.</p>
                             <p className="text-4xl md:text-7xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">StartZig.</p>
