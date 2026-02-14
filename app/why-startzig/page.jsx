@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+// ייבוא רכיב האנימציה שביקשת
+import AnimatedBg from '@/components/common/AnimatedBg';
 
 export default function WhyStartZig() {
     const [textState, setTextState] = useState('up');
@@ -25,7 +27,7 @@ export default function WhyStartZig() {
             <main className="relative z-10 min-h-screen pt-24 md:pt-32 pb-24 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto w-full text-center">
                     
-                    {/* כותרת - טיפול בסימן השאלה ובגודל במובייל */}
+                    {/* Hero Title */}
                     <div className="mb-12 md:mb-16">
                         <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white mb-6 whitespace-nowrap inline-block">
                             Why Start
@@ -40,7 +42,6 @@ export default function WhyStartZig() {
 
                     <div className="max-w-3xl mx-auto space-y-12 text-slate-200">
                         
-                        {/* טקסט פתיחה ממורכז */}
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <p className="text-xl md:text-2xl leading-relaxed font-light">
                                 The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. <br className="hidden md:block" />
@@ -48,7 +49,6 @@ export default function WhyStartZig() {
                             </p>
                         </div>
 
-                        {/* ציטוט פול גרהאם */}
                         <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl">
                             <p className="text-xl md:text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
                                 "The way to do really great work is to love what you do. In startups, that means loving the Zig."
@@ -56,7 +56,6 @@ export default function WhyStartZig() {
                             <p className="font-bold text-white uppercase tracking-widest text-xs md:text-sm">— Paul Graham, Y Combinator</p>
                         </section>
 
-                        {/* טקסט מעבר ממורכז */}
                         <div className="space-y-6 md:space-y-8">
                             <p className="text-lg md:text-xl leading-relaxed">
                                 Real startups don't fly; they navigate. They stumble. <br className="hidden md:block" />
@@ -65,23 +64,27 @@ export default function WhyStartZig() {
                             </p>
                         </div>
 
-                        {/* הקדמה לסיפור */}
-                        <div className="pt-4">
-                            <p className="text-blue-400 font-medium tracking-wide uppercase text-xs md:text-sm px-4">
-                                Here is a classic example of how the zigzag journey looks in the real world:
-                            </p>
+                        {/* שילוב האנימציה - מופיעה כאן ברצף הויזואלי */}
+                        <div className="relative h-64 w-full overflow-hidden rounded-3xl border border-white/5 bg-slate-900/50">
+                            <AnimatedBg />
                         </div>
 
-                        {/* סיפור מאיה המורחב - הכל ממורכז */}
-                        <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl text-center md:text-left">
+                        {/* סיפור מאיה - המשפט שהיה בחוץ הוכנס פנימה */}
+                        <section className="py-10 md:py-12 px-6 md:px-10 bg-indigo-600/5 border-t border-white/5 rounded-2xl text-center">
+                            <div className="mb-8">
+                                <p className="text-blue-400 font-medium tracking-wide uppercase text-xs md:text-sm">
+                                    Here is a classic example of how the zigzag journey looks in the real world:
+                                </p>
+                            </div>
+
                             <div className="space-y-6 text-base md:text-lg leading-relaxed text-slate-300">
-                                <p className="text-center">
+                                <p>
                                     <span className="text-white font-bold">Maya</span> spent two years developing <span className="text-blue-400 font-semibold">FreshCast</span>. Her vision was clear: using AI to predict demand and help high-end restaurants eliminate food waste.
                                 </p>
-                                <p className="text-center">
+                                <p>
                                     But the market didn't care. After pitching to <span className="text-white font-bold">19 investors</span>, her runway was disappearing. The 20th investor wrote a check for <span className="text-white font-bold">₪300K</span>, but even that wasn't enough to scale.
                                 </p>
-                                <p className="text-center">
+                                <p>
                                     With three months of cash left, a client told her: <br />
                                     <span className="italic text-white underline decoration-blue-500/50">"I don't care about food waste. I'm losing revenue because I can't manage my kitchen shifts."</span>
                                 </p>
@@ -92,7 +95,7 @@ export default function WhyStartZig() {
                                     </p>
                                 </div>
 
-                                <p className="text-center">
+                                <p>
                                     She rebuilt her AI to solve <span className="text-white font-bold">staffing logistics</span>. The resistance vanished. Sales cycles dropped from months to days.
                                 </p>
                                 
@@ -103,7 +106,6 @@ export default function WhyStartZig() {
                             </div>
                         </section>
 
-                        {/* CTA סופי */}
                         <div className="pt-10">
                             <Link href="/register" className="group inline-block">
                                 <p className="text-3xl md:text-6xl font-black text-white leading-tight">Don't just start up.</p>
