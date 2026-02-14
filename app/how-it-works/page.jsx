@@ -34,7 +34,9 @@ export default function HowItWorks() {
                                 <div className="text-blue-400 font-bold tracking-widest uppercase text-xs"></div>
                                 <h3 className="text-3xl font-bold text-white">Your Control Center</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
-                                    Professional dashboard for managing your venture. Access your toolbox, monitor revenue, and track your startup's lifecycle from one central hub.
+                                    Professional dashboard for managing your venture. Access your toolbox, monitor revenue, and track your startup's lifecycle from one central hub.It guides you through every critical milestone—from Initial Idea and Business Planning to MVP, MLP, Beta, and Growth stages.
+
+It integrates advanced tools for crafting a comprehensive business plan, modeling your revenue, and managing investor communications. Through the dashboard, you can monitor your venture’s financial health in real-time, manage budgets, and maintain total control over your startup’s strategic roadmap.
                                 </p>
                             </div>
 
@@ -98,9 +100,9 @@ export default function HowItWorks() {
                         <section className="flex flex-col lg:flex-row-reverse gap-12 items-start">
                             <div className="lg:w-1/3 space-y-4 text-left lg:sticky lg:top-32">
                                 <div className="text-purple-400 font-bold tracking-widest uppercase text-xs"></div>
-                                <h3 className="text-3xl font-bold text-white">Invite a Co-Founder</h3>
+                                <h3 className="text-3xl font-bold text-white">Collaborative Growth</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
-                                    Expand your leadership. Candidates will receive a professional link to view your Venture Profile and join your mission.
+                                    StartZig allows you to invite co-founders and engage users from both inside and outside the platform to provide feedback on your venture. From the initial concept to the advanced stages, you can gather insights on your landing page and product, manage team access, and grow your startup’s community through every phase of development..
                                 </p>
                             </div>
 
@@ -159,9 +161,9 @@ export default function HowItWorks() {
                         <section className="flex flex-col lg:flex-row gap-12 items-start">
                             <div className="lg:w-1/3 space-y-4 text-left lg:sticky lg:top-32">
                                 <div className="text-emerald-400 font-bold tracking-widest uppercase text-xs"></div>
-                                <h3 className="text-3xl font-bold text-white">Pitch to Investors</h3>
+                                <h3 className="text-3xl font-bold text-white">Complete Fundraising Expirence</h3>
                                 <p className="text-xl text-white/70 leading-relaxed">
-                                    Simulate the real pressure. Answer tough questions from AI investors and refine your strategy based on their critical feedback.
+                                    The system facilitates the fundraising experience through outreach to Angel investors and Venture Capital firms.Simulate the real pressure. Answer tough questions from AI investors and refine your strategy based on their critical feedback.
                                 </p>
                             </div>
 
