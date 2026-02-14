@@ -1,124 +1,168 @@
+// vc-firm 270126
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { VCFirm } from '@/api/entities';
 import { Venture } from '@/api/entities';
+import { VentureMessage } from '@/api/entities';
 import { User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Building2, 
-  Loader2,
-  X,
-  DollarSign,
-  Target,
-  TrendingUp,
-  ShieldCheck,
-  CheckCircle2,
-  Clock
-} from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Loader2, Building2, Target, DollarSign, TrendingUp, Users, Mail, CheckCircle, X, ChevronsRight } from 'lucide-react';
+import { createPageUrl } from '@/utils';
 
-const GRADIENTS = [
-  'bg-gradient-to-br from-blue-500 to-indigo-600',
-  'bg-gradient-to-br from-purple-500 to-pink-600',
-  'bg-gradient-to-br from-green-500 to-teal-600',
-  'bg-gradient-to-br from-orange-500 to-red-600',
-  'bg-gradient-to-br from-indigo-500 to-purple-700',
-  'bg-gradient-to-br from-cyan-500 to-blue-600',
-  'bg-gradient-to-br from-rose-500 to-pink-600',
-  'bg-gradient-to-br from-amber-500 to-orange-600',
-  'bg-gradient-to-br from-violet-500 to-purple-600',
-  'bg-gradient-to-br from-emerald-500 to-green-600',
-];
+const VCFirmContactModal = ({ firm, venture, canApply }) => {
+  const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const router = useRouter();
 
-const getGradientForFirm = (name) => {
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return GRADIENTS[hash % GRADIENTS.length];
+  const handleApply = async () => {
+    if (!venture) {
+      alert("No active venture found.");
+      return;
+    }
+    setIsSending(true);
+
+    const params = firm.screening_parameters || {};
+    let rejectionReason = null;
+    let rejectionDetails = null;
+
+    // Stage 1: Automated Screening
+    if (params.freeze_investment) {
+      rejectionReason = params.rejection_messages?.freeze || "Thank you for the time you've invested in this process. While we were very impressed by your presentation, we have made the difficult decision to pause all new investments at this time. This is not a reflection of your venture's potential, but rather a temporary shift in our fund's strategy.";
+    } else if (params.team_focus && (venture.founders_count || 1) < 2) {
+      rejectionReason = params.rejection_messages?.team || "Your venture's potential is clear, but we've found that our most successful partnerships are with teams that have multiple co-founders. We strongly believe that a diverse founding team is a key indicator of future success. We encourage you to seek out a co-founder who can help you build your vision.";
+    } else if (params.sector_focus && !firm.focus_areas?.includes(venture.sector)) {
+      rejectionReason = params.rejection_messages?.sector || "Thank you for sharing your innovative work with us. While your vision is compelling, it doesn't align with our current investment thesis. We wish you the best of luck in finding the right partner to help you grow.";
+    } else if (params.phase_focus && !['mlp', 'growth', 'ma'].includes(venture.phase)) {
+       rejectionReason = params.rejection_messages?.phase || "We typically invest in companies with more established traction. We encourage you to re-apply once you've reached the MLP phase or beyond.";
+    }
+
+    try {
+      if (rejectionReason) {
+        // Create rejection message
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'system',
+          title: `Update from ${firm.name}`,
+          content: rejectionReason,
+          phase: venture.phase,
+          priority: 2,
+          vc_firm_id: firm.id,
+          vc_stage: 'stage_1_rejected'
+        });
+      } else {
+        // Create invitation message for Stage 2
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'system',
+          title: `Invitation to Meeting: ${firm.name}`,
+          content: `Congratulations! You've passed the initial screening with ${firm.name}. Click 'Join Meeting' to begin the automated evaluation process.`,
+          phase: venture.phase,
+          priority: 4,
+          vc_firm_id: firm.id,
+          vc_stage: 'stage_2_ready'
+        });
+      }
+      
+      // ✅ תיקון: החלפתי navigate ל-router.push
+      router.push(createPageUrl('Dashboard'));
+
+    } catch (error) {
+      console.error("Failed to send application:", error);
+      alert("There was an error processing your application. Please try again.");
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white" disabled={!canApply}>
+          <Mail className="w-5 h-5 mr-2" />
+          Contact Firm
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-white text-gray-900 shadow-2xl border border-gray-200">
+        <DialogHeader>
+          <DialogTitle>Contact {firm.name}</DialogTitle>
+          <DialogDescription>
+            Send a brief message to introduce your venture.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="message">Your Message</Label>
+            <Textarea
+              id="message"
+              placeholder="e.g., We are developing a groundbreaking solution in the AI space and believe we align with your firm's investment thesis..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <p className="text-xs text-gray-500 italic">
+            attached is an executive summary of the venture.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleApply} disabled={isSending}>
+            {isSending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : "Send Application"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
-const parseFundingAmount = (fundingInfo) => {
-  if (!fundingInfo) return 0;
-  const match = fundingInfo.match(/\$(\d+(?:\.\d+)?)\s*(M|B|K)?/i);
-  if (!match) return 0;
-  
-  const amount = parseFloat(match[1]);
-  const unit = match[2]?.toUpperCase();
-  
-  if (unit === 'B') return amount * 1000;
-  if (unit === 'M') return amount;
-  if (unit === 'K') return amount / 1000;
-  return amount;
-};
 
-const formatFunding = (fundingInfo) => {
-  if (!fundingInfo) return 'N/A';
-  const match = fundingInfo.match(/\$(\d+(?:\.\d+)?)\s*(M|B|K)?/i);
-  if (!match) return fundingInfo;
-  return `$${match[1]}${match[2] || ''}`;
-};
-
-const getCircleSize = (fundingInfo) => {
-  const amount = parseFundingAmount(fundingInfo);
-  if (amount >= 500) return 'w-48 h-48'; // $500M+
-  if (amount >= 200) return 'w-40 h-40'; // $200M+
-  if (amount >= 100) return 'w-36 h-36'; // $100M+
-  return 'w-32 h-32'; // < $100M
-};
-
-export default function VCMarketplace() {
-  const [firms, setFirms] = useState([]);
-  const [venture, setVenture] = useState(null);
+export default function VCFirmPage() {
+  const [firm, setFirm] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFirm, setSelectedFirm] = useState(null);
+  const [userVenture, setUserVenture] = useState(null);
+
+  // שימוש ב-Hooks של Next.js לשליפת הפרמטרים מהכתובת
+  const searchParams = useSearchParams();
+  const slug = searchParams.get('slug');
 
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
+      // אם אין slug בכתובת, אין טעם להמשיך בשליפה
+      if (!slug) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const [allFirms, user] = await Promise.all([
-          VCFirm.list("-created_date"),
-          User.me(),
-        ]);
-        
-        setFirms(allFirms);
+        // שליפת פרטי הקרן לפי ה-slug
+        const firms = await VCFirm.filter({ slug: slug });
+        if (firms.length > 0) {
+          setFirm(firms[0]);
+        }
 
-        if (user?.id) {
-          let userVentures = [];
-          try {
-            userVentures = await Venture.filter(
-              { founder_user_id: user.id },
-              "-created_date"
-            );
-          } catch (e) {
-            userVentures = [];
-          }
-
-          if (!userVentures || userVentures.length === 0) {
-            userVentures = await Venture.filter(
-              { created_by: user.email },
-              "-created_date"
-            );
-          }
-
-          if (userVentures.length > 0) {
-            setVenture(userVentures[0]);
-          }
+        // שליפת פרטי המיזם של המשתמש המחובר
+        const user = await User.me();
+        const userVentures = await Venture.filter({ created_by: user.email }, "-created_date");
+        if (userVentures.length > 0) {
+          setUserVenture(userVentures[0]);
         }
       } catch (error) {
         console.error("Error loading data:", error);
       }
       setIsLoading(false);
     };
+
     loadData();
-  }, []);
-
-  const handleFirmClick = (firm) => {
-    setSelectedFirm(firm);
-  };
-
-  const handleClose = () => {
-    setSelectedFirm(null);
-  };
+  }, [slug]); // ה-Effect ירוץ מחדש ברגע שה-slug מתקבל מהכתובת
 
   if (isLoading) {
     return (
@@ -128,232 +172,147 @@ export default function VCMarketplace() {
     );
   }
 
-  return (
-    <>
-      <div className="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Building2 className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-5xl font-black text-gray-900 mb-2">
-              VC Marketplace
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Connect with top-tier venture capital firms
-            </p>
-          </div>
-
-          {/* VC Firms Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
-            {firms.map((firm, index) => {
-              const gradientClass = getGradientForFirm(firm.name);
-              const sizeClass = getCircleSize(firm.funding_info);
-              
-              return (
-                <div
-                  key={firm.id}
-                  className="flex flex-col items-center"
-                  style={{ 
-                    animation: `slideIn 0.6s ease-out forwards`,
-                    animationDelay: `${index * 0.05}s`,
-                    opacity: 0
-                  }}
-                >
-                  <button
-                    onClick={() => handleFirmClick(firm)}
-                    className={`
-                      relative rounded-full flex items-center justify-center
-                      transition-all duration-300 shadow-lg
-                      cursor-pointer hover:scale-110 hover:shadow-2xl
-                      ${gradientClass}
-                      ${sizeClass}
-                    `}
-                  >
-                    {/* Funding Amount */}
-                    <span 
-                      className="text-2xl font-black text-white relative z-10 text-center px-3"
-                      style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
-                    >
-                      {formatFunding(firm.funding_info)}
-                    </span>
-                  </button>
-
-                  {/* Firm Name */}
-                  <p className="mt-3 text-center font-semibold text-gray-900 text-sm max-w-[150px]">
-                    {firm.name}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
+  if (!firm) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <Card className="text-center p-8">
+          <CardTitle>Firm Not Found</CardTitle>
+          <CardDescription>
+            The VC firm you're looking for could not be found. (Slug: {slug || 'none'})
+          </CardDescription>
+        </Card>
       </div>
+    );
+  }
 
-      {/* Details Modal */}
-      {selectedFirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-500 shadow-2xl bg-white border-0">
-            
-            {/* Header */}
-            <CardHeader className="relative pb-4 border-b">
-              <button
-                onClick={handleClose}
-                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+  const canApply = userVenture && userVenture.pitch_created && userVenture.funding_plan_completed;
 
-              <div className="flex items-start gap-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getGradientForFirm(selectedFirm.name)}`}>
-                  <Building2 className="w-10 h-10 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold mb-1">
-                    {selectedFirm.name}
-                  </CardTitle>
-                  {selectedFirm.founded && (
-                    <p className="text-sm text-gray-600">Founded in {selectedFirm.founded}</p>
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-5xl mx-auto p-4 md:p-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
+          <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-12 h-12 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{firm.name}</h1>
+            <p className="text-lg text-gray-600">
+              {firm.background}
+            </p>
+            <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+              {firm.founded && <span>Founded in {firm.founded}</span>}
+              {firm.funding_info && <span className="hidden md:block">|</span>}
+              {firm.funding_info && <span>{firm.funding_info}</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="mb-12">
+          <VCFirmContactModal firm={firm} venture={userVenture} canApply={canApply} />
+          {!canApply && (
+            <p className="text-sm text-red-600 mt-2">
+              You must complete your Venture Pitch and Funding Plan before contacting VC firms.
+            </p>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="md:col-span-2 space-y-8">
+            {firm.portfolio && firm.portfolio.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Portfolio Companies</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {firm.portfolio.map((company, index) => (
+                    <div key={index} className="border-b pb-4 last:border-b-0">
+                      <h3 className="font-semibold text-gray-800">{company.name}</h3>
+                      <p className="text-sm text-gray-600">{company.description}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {firm.exits && firm.exits.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notable Exits</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {firm.exits.map((company, index) => (
+                    <div key={index} className="border-b pb-4 last:border-b-0">
+                      <h3 className="font-semibold text-gray-800">{company.name}</h3>
+                      <p className="text-sm text-gray-600">{company.description}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column / Sidebar */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-indigo-600" />
+                  Investment Focus
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {firm.focus_areas && firm.focus_areas.length > 0 ? (
+                    firm.focus_areas.map(area => (
+                      <Badge key={area} variant="secondary">
+                        {area.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="secondary">Sector Agnostic</Badge>
                   )}
                 </div>
-              </div>
-            </CardHeader>
+              </CardContent>
+            </Card>
 
-            <CardContent className="pt-6 space-y-6">
-              
-              {/* Background */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  About
-                </h3>
-                <p className="text-gray-700 leading-relaxed">
-                  {selectedFirm.background}
-                </p>
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  Typical Check Size
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{firm.typical_check || "Not disclosed"}</p>
+              </CardContent>
+            </Card>
 
-              {/* Fund Info & Check Size */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedFirm.funding_info && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-600 mb-1">Latest Fund</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {selectedFirm.funding_info}
-                    </p>
-                  </div>
-                )}
-
-                {selectedFirm.typical_check && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-600 mb-1">Check Size</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {selectedFirm.typical_check}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Investment Stages */}
-              {selectedFirm.investment_stages && selectedFirm.investment_stages.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Investment Stages</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedFirm.investment_stages.map(stage => (
-                      <Badge key={stage} className="bg-blue-100 text-blue-700">
-                        {stage}
-                      </Badge>
-                    ))}
-                  </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  Investment Stages
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {firm.investment_stages && firm.investment_stages.length > 0 ? (
+                    firm.investment_stages.map(stage => (
+                      <Badge key={stage} variant="outline">{stage}</Badge>
+                    ))
+                  ) : (
+                    <Badge variant="outline">All Stages</Badge>
+                  )}
                 </div>
-              )}
-
-              {/* Focus Areas */}
-              {selectedFirm.focus_areas && selectedFirm.focus_areas.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Focus Areas</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedFirm.focus_areas.map((area, idx) => {
-                      const colors = [
-                        'bg-green-100 text-green-700',
-                        'bg-blue-100 text-blue-700',
-                        'bg-orange-100 text-orange-700',
-                        'bg-purple-100 text-purple-700',
-                      ];
-                      return (
-                        <span
-                          key={area}
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${colors[idx % colors.length]}`}
-                        >
-                          {area.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Investment Criteria */}
-              {selectedFirm.internal_parameters && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Investment Criteria</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedFirm.internal_parameters.sector_restriction && (
-                      <Badge variant="destructive" className="text-xs">Sector Restricted</Badge>
-                    )}
-                    {selectedFirm.internal_parameters.revenue_only && (
-                      <Badge variant="destructive" className="text-xs">Revenue Required</Badge>
-                    )}
-                    {selectedFirm.internal_parameters.team_required && (
-                      <Badge variant="destructive" className="text-xs">Team Required</Badge>
-                    )}
-                    {selectedFirm.internal_parameters.investment_frozen && (
-                      <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">Investment Frozen</Badge>
-                    )}
-                    {(!selectedFirm.internal_parameters.sector_restriction && 
-                      !selectedFirm.internal_parameters.revenue_only && 
-                      !selectedFirm.internal_parameters.team_required && 
-                      !selectedFirm.internal_parameters.investment_frozen) && (
-                      <Badge variant="default" className="text-xs bg-green-100 text-green-800">Open to All</Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Button - Contact or Visit */}
-              <div className="pt-4">
-                <a href={`/vc-firm?slug=${selectedFirm.slug}`} target="_blank" rel="noopener noreferrer">
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
-                  >
-                    <Building2 className="w-5 h-5 mr-2" />
-                    Contact Firm
-                  </Button>
-                </a>
-                
-                <p className="mt-4 text-sm text-gray-500 text-center">
-                  Opens firm's contact page
-                </p>
-              </div>
-
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      )}
-
-      <style jsx global>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </>
+      </div>
+    </div>
   );
 }
