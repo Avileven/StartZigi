@@ -32,6 +32,27 @@ const STATUSES = {
   IN_MEETING: { color: 'bg-yellow-500', label: 'In Meeting', icon: Clock, ringColor: 'ring-yellow-400' },
 };
 
+const GRADIENTS = [
+  'bg-gradient-to-br from-purple-500 to-indigo-600',
+  'bg-gradient-to-br from-pink-500 to-rose-600',
+  'bg-gradient-to-br from-blue-500 to-cyan-600',
+  'bg-gradient-to-br from-green-500 to-emerald-600',
+  'bg-gradient-to-br from-orange-500 to-red-600',
+  'bg-gradient-to-br from-indigo-500 to-purple-700',
+  'bg-gradient-to-br from-teal-500 to-green-600',
+  'bg-gradient-to-br from-fuchsia-500 to-pink-600',
+  'bg-gradient-to-br from-amber-500 to-orange-600',
+  'bg-gradient-to-br from-violet-500 to-purple-600',
+  'bg-gradient-to-br from-sky-500 to-blue-600',
+  'bg-gradient-to-br from-rose-500 to-pink-600',
+];
+
+// Generate consistent gradient from investor name
+const getGradientForInvestor = (name) => {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return GRADIENTS[hash % GRADIENTS.length];
+};
+
 export default function AngelArena() {
   const [investors, setInvestors] = useState([]);
   const [venture, setVenture] = useState(null);
@@ -169,6 +190,7 @@ export default function AngelArena() {
             {investors.map((investor, index) => {
               const statusConfig = STATUSES[investor.status];
               const isAvailable = investor.status === 'AVAILABLE';
+              const gradientClass = getGradientForInvestor(investor.name);
               
               return (
                 <div
@@ -190,12 +212,15 @@ export default function AngelArena() {
                         ? 'cursor-pointer hover:scale-110 hover:shadow-2xl' 
                         : 'cursor-not-allowed opacity-60'
                       }
-                      ${statusConfig.color}
+                      ${gradientClass}
                     `}
                   >
-                    {/* Initials */}
-                    <span className="text-3xl font-bold text-white relative z-10">
-                      {investor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {/* Full Name with shadow for readability */}
+                    <span 
+                      className="text-base font-bold text-white relative z-10 text-center px-3 leading-tight"
+                      style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+                    >
+                      {investor.name}
                     </span>
 
                     {/* Status Icon */}
@@ -206,11 +231,8 @@ export default function AngelArena() {
                     </div>
                   </button>
 
-                  {/* Name */}
-                  <p className="mt-3 text-center font-semibold text-gray-900 text-sm">
-                    {investor.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
+                  {/* Status Only */}
+                  <p className="mt-3 text-xs font-medium text-gray-600">
                     {statusConfig.label}
                   </p>
                 </div>
