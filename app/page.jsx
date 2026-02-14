@@ -258,77 +258,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Featured Ventures Section - NO CARDS */}
-      <div className="py-24 px-6 bg-gradient-to-b from-indigo-950 to-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center">
-            <span style={{background: 'linear-gradient(to right, #ec4899, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
-              Featured Venture Demos
-            </span>
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6 justify-items-center">
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">📱</span>
-                ShelfSense
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Smart retail shelf intelligence platform</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Retail Tech</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$2M Raised</span>
-              </div>
-              <Link href="/ShelfSense-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🚭</span>
-                Smokefree
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Quit-smoking journey app</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Health</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$1.5M Raised</span>
-              </div>
-              <Link href="/smokefree-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-2xl">🏙️</span>
-                UrbanPulse
-              </h3>
-              <p className="text-xs text-white/70 mb-2">City insights platform</p>
-              <div className="flex justify-center gap-2 text-xs mb-3">
-                <span className="px-2 py-1 bg-white/10 rounded">Smart City</span>
-                <span className="px-2 py-1 bg-white/10 rounded">$5M Raised</span>
-              </div>
-              <Link href="/urbanpulse-demo.html" target="_blank">
-                <Button size="sm" className="bg-white/10 hover:bg-white/20 border-0 text-xs">
-                  View Demo <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <div className="mt-12 text-center">
-            <Link href="/register">
-              <Button size="lg" className="bg-white/10 hover:bg-white/20 border border-white/20">
-                Start Building Yours <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer - removed, using Footer component instead */}
+      
     </div>
   );
 }
