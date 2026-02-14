@@ -24,6 +24,7 @@ import {
   X,
   Clock,
   CheckCircle2,
+  User as UserIcon,
 } from "lucide-react";
 
 const STATUSES = {
