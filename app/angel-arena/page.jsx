@@ -258,14 +258,15 @@ export default function AngelArena() {
               </button>
 
               <div className="flex items-start gap-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg ${STATUSES[selectedInvestor.status].color}`}>
-                  {selectedInvestor.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getGradientForInvestor(selectedInvestor.name)}`}>
+                  <UserIcon className="w-10 h-10 text-white" />
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-bold mb-1">
                     {selectedInvestor.name}
                   </CardTitle>
-                  <div className="flex items-center gap-2 mb-2">
+                  <p className="text-gray-600 mb-2">Angel Investor</p>
+                  <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${STATUSES[selectedInvestor.status].color}`}></div>
                     <span className="text-sm font-medium text-gray-600">
                       {STATUSES[selectedInvestor.status].label}
@@ -289,63 +290,75 @@ export default function AngelArena() {
 
               {/* Investment Range */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                    <h4 className="font-semibold text-gray-900">Typical Investment</h4>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-600 mb-1">Investment Range</p>
+                  <p className="text-2xl font-bold text-green-600">
                     {formatMoney(selectedInvestor.typical_check_min)} - {formatMoney(selectedInvestor.typical_check_max)}
                   </p>
                 </div>
 
-                {selectedInvestor.preferred_valuation_max && (
-                  <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Briefcase className="w-5 h-5 text-blue-600" />
-                      <h4 className="font-semibold text-gray-900">Preferred Valuation</h4>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-700">
-                      {formatMoney(selectedInvestor.preferred_valuation_min)} - {formatMoney(selectedInvestor.preferred_valuation_max)}
-                    </p>
-                  </div>
-                )}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-600 mb-1">Portfolio</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {selectedInvestor.portfolio_count || '—'} {selectedInvestor.portfolio_count ? 'Startups' : ''}
+                  </p>
+                </div>
               </div>
 
               {/* Focus Areas */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Target className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                    Focus Areas
-                  </h3>
-                </div>
+                <p className="text-sm font-semibold text-gray-700 mb-3">Focus Areas</p>
                 {selectedInvestor.focus_sectors && selectedInvestor.focus_sectors.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {selectedInvestor.focus_sectors.map((sector) => (
-                      <Badge
-                        key={sector}
-                        variant="outline"
-                        className="text-sm px-4 py-1"
-                      >
-                        {sector.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </Badge>
-                    ))}
+                    {selectedInvestor.focus_sectors.map((sector, idx) => {
+                      const colors = [
+                        'bg-green-100 text-green-700',
+                        'bg-blue-100 text-blue-700',
+                        'bg-orange-100 text-orange-700',
+                        'bg-purple-100 text-purple-700',
+                      ];
+                      return (
+                        <span
+                          key={sector}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${colors[idx % colors.length]}`}
+                        >
+                          {sector.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <Badge variant="secondary" className="text-sm">No Preference</Badge>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">No Preference</span>
                 )}
               </div>
 
               {/* Action Button */}
               <div className="pt-4">
-                <Button
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-6 text-lg shadow-lg"
-                  onClick={handleOpenPitch}
-                >
-                  <Rocket className="w-5 h-5 mr-2" />
-                  Meet with {selectedInvestor.name.split(' ')[0]}
-                </Button>
+                {isAvailable ? (
+                  <Button
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
+                    onClick={handleOpenPitch}
+                  >
+                    <Rocket className="w-5 h-5 mr-2" />
+                    Meet with {selectedInvestor.name.split(' ')[0]}
+                  </Button>
+                ) : (
+                  <Button
+                    disabled
+                    className="w-full bg-gray-300 text-gray-600 font-bold py-6 text-lg shadow-lg rounded-xl cursor-not-allowed"
+                  >
+                    <Clock className="w-5 h-5 mr-2" />
+                    Currently Busy
+                  </Button>
+                )}
+                
+                {/* Status Footer */}
+                <p className="mt-4 text-sm text-gray-500 text-center">
+                  {isAvailable 
+                    ? '← Last active: Just now' 
+                    : '← Available in ~30 min'
+                  }
+                </p>
               </div>
 
             </CardContent>
