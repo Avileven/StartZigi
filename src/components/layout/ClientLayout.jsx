@@ -50,6 +50,12 @@ const getNavigationItems = (venture) => {
 
 
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
+      {
+      title: "Exit Path",
+      url: createPageUrl("ma"),
+      icon: TrendingUp,
+      alwaysActive: true,
+    },
     {
       title: "Beta Page",
       // ✅ FIX: folder is /beta-testing
