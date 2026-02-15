@@ -126,28 +126,15 @@ const updateValuation = useCallback(() => {
   if (!currentVenture) return;
 
   const baseValues = {
-    idea: 500000,
+    idea: 250000,
     business_plan: 500000,
-    mvp: 2000000,
-    mlp: 4000000,
-    beta: 6000000,
+    mvp: 1000000,
+    mlp: 2500000,
+    beta: 5000000,
     growth: 10000000
   };
 
-  const multipliers = {
-    ai_deep_tech: 1.5,
-    digital_health_biotech: 1.4,
-    fintech: 1.2,
-    web3_blockchain: 1.2,
-    b2b_saas: 1.0,
-    climatetech_energy: 0.9,
-    consumer_apps: 0.7
-  };
-
-  const base = baseValues[currentVenture.phase] || 500000;
-  const mult = multipliers[currentVenture.sector] || 1.0;
-  
-  setCurrentValuation(base * mult);
+  setCurrentValuation(baseValues[currentVenture.phase]);
 }, [currentVenture]);
 
   const loadDashboard = useCallback(async () => {
@@ -992,7 +979,7 @@ if (showToS) {
                  <span className="flex items-center gap-1 border-l border-gray-200 pl-4 ml-2 text-gray-500 font-normal">
   <BarChart3 className="w-4 h-4" />
   <span>
-    <span>Val:F</span>
+    <span>Val:</span>
     ${currentValuation >= 1000000 
       ? Math.floor(currentValuation/1000000) + 'M' 
       : Math.floor(currentValuation/1000) + 'K'}
