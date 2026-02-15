@@ -94,38 +94,30 @@ export default function MAPage() {
       
       {/* Hero Section - Clean & Professional */}
       <div className="bg-white">
-  {/* הזרקת ה-Keyframes ישירות לראש ה-div כדי שהאנימציה תעבוד */}
   <style>{`
     @keyframes emerge {
-      0% { opacity: 0; filter: blur(20px); transform: scale(0.8) translateY(20px); }
-      100% { opacity: 1; filter: blur(0); transform: scale(1) translateY(0); }
+      0% { opacity: 0; filter: blur(15px); transform: translateY(15px); }
+      100% { opacity: 1; filter: blur(0); transform: translateY(0); }
     }
   `}</style>
-
+  
   <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
     <div className="text-center">
-      
-      {/* אנימציית ה-EXIT - האותיות מתגבשות מהטשטוש */}
-      <div className="mb-2 flex justify-center gap-2">
-        {['E', 'X', 'I', 'T'].map((letter, i) => (
-          <span 
-            key={i} 
-            className="text-6xl md:text-8xl font-black text-indigo-600"
-            style={{ 
-              display: 'inline-block',
-              animation: 'emerge 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-              animationDelay: `${i * 0.1}s`,
-              opacity: 0 
-            }}
-          >
-            {letter}
-          </span>
-        ))}
-      </div>
-
       <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
-        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          M&A & Exit Opportunities
+        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex justify-center flex-wrap gap-x-3">
+          {["M&A", "&", "Exit", "Opportunities"].map((word, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                animation: 'emerge 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                animationDelay: `${i * 0.15}s`,
+                opacity: 0
+              }}
+            >
+              {word}
+            </span>
+          ))}
         </span>
       </h1>
       <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
