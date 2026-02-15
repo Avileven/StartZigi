@@ -106,8 +106,8 @@ export default function MAPage() {
     <div className="text-center">
       
       {/* אנימציית ה-EXIT - האותיות מתגבשות מהטשטוש */}
-      <div className="mb-2 flex justify-center gap-2">
-        {['M','&','A','&','E', 'X', 'I', 'T'].map((letter, i) => (
+      <div className="mb-3 flex justify-center gap-2">
+        {['M','&','A',' ','&',' ','E', 'x', 'i', 't'].map((letter, i) => (
           <span 
             key={i} 
             className="text-6xl md:text-8xl font-black text-indigo-600"
