@@ -106,7 +106,7 @@ export default function MAPage() {
     <div className="text-center">
       
       {/* אנימציית ה-EXIT - האותיות מתגבשות מהטשטוש */}
-      <div className="mb-3 flex justify-center gap-2">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
         {['M','&','A',' ','&',' ','E', 'x', 'i', 't'].map((letter, i) => (
           <span 
             key={i} 
@@ -125,7 +125,7 @@ export default function MAPage() {
 
       <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
         <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          M&A & Exit Opportunities
+          Opportunities
         </span>
       </h1>
       <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
