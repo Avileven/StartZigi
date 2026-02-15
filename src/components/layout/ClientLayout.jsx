@@ -1,4 +1,4 @@
-// ClientLayout 210126
+// ClientLayout 150226
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -50,12 +50,6 @@ const getNavigationItems = (venture) => {
 
 
     { title: "Dashboard", url: createPageUrl("dashboard"), icon: LayoutDashboard, alwaysActive: true },
-      {
-      title: "Exit Path",
-      url: createPageUrl("ma"),
-      icon: TrendingUp,
-      alwaysActive: true,
-    },
     {
       title: "Beta Page",
       // ✅ FIX: folder is /beta-testing
@@ -259,6 +253,29 @@ pathname === "/"
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      {/* ========================================
+                          🆕 EXIT PATH - ADDED FOR M&A FEATURE
+                          ======================================== */}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          className={`mb-1 rounded-lg transition-colors duration-200 ${
+                            pathname === "/ma"
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "hover:bg-indigo-50 hover:text-indigo-700"
+                          }`}
+                        >
+                          <Link
+                            href="/ma"
+                            className="flex items-center gap-3 px-3 py-2"
+                          >
+                            <TrendingUp className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-medium">Exit Path</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {/* ======================================== */}
 
                       {landingPageItem && (
                         <SidebarMenuItem>
