@@ -95,9 +95,14 @@ export default function MAPage() {
       {/* Hero Section - Clean & Professional */}
       <div className="bg-white">
   <style>{`
-    @keyframes emerge {
-      0% { opacity: 0; filter: blur(15px); transform: translateY(15px); }
-      100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+    @keyframes emergeEffect {
+      from { opacity: 0; filter: blur(10px); transform: translateY(10px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+    .word-animate {
+      display: inline-block;
+      opacity: 0;
+      animation: emergeEffect 0.7s ease-out forwards;
     }
   `}</style>
   
@@ -108,12 +113,8 @@ export default function MAPage() {
           {["M&A", "&", "Exit", "Opportunities"].map((word, i) => (
             <span
               key={i}
-              style={{
-                display: 'inline-block',
-                animation: 'emerge 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-                animationDelay: `${i * 0.15}s`,
-                opacity: 0
-              }}
+              className="word-animate"
+              style={{ animationDelay: `${i * 0.1}s` }}
             >
               {word}
             </span>
