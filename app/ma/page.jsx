@@ -93,13 +93,15 @@ export default function MAPage() {
     <div className="min-h-screen bg-white">
       
       {/* Hero Section - Clean & Professional */}
-      <div className="bg-white border-b-2 border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 py-20 md:py-28">
+      <div className="bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight text-gray-900">
-              M&A & Exit Opportunities
+            <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                M&A & Exit Opportunities
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
               Every entrepreneur dreams of the ultimate exit—the moment when years of innovation culminate in a life-changing acquisition.
             </p>
           </div>
@@ -205,20 +207,20 @@ export default function MAPage() {
             <div className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">M&A Market at a Glance</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 text-center border-2 border-purple-200 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: '0ms'}}>
-                  <div className="text-4xl md:text-5xl font-black text-purple-600 mb-2">{MA_ARTICLE_DATA.marketStats.totalDeals}</div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 text-center border-2 border-purple-200">
+                  <div className="text-3xl md:text-4xl font-black text-purple-600 mb-2">{MA_ARTICLE_DATA.marketStats.totalDeals}</div>
                   <div className="text-sm font-semibold text-purple-700">Total Deals</div>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 text-center border-2 border-blue-200 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: '100ms'}}>
-                  <div className="text-4xl md:text-5xl font-black text-blue-600 mb-2">{MA_ARTICLE_DATA.marketStats.totalValue}</div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 text-center border-2 border-blue-200">
+                  <div className="text-3xl md:text-4xl font-black text-blue-600 mb-2">{MA_ARTICLE_DATA.marketStats.totalValue}</div>
                   <div className="text-sm font-semibold text-blue-700">Total Value</div>
                 </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 text-center border-2 border-green-200 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: '200ms'}}>
-                  <div className="text-4xl md:text-5xl font-black text-green-600 mb-2">{MA_ARTICLE_DATA.marketStats.avgDealSize}</div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 text-center border-2 border-green-200">
+                  <div className="text-3xl md:text-4xl font-black text-green-600 mb-2">{MA_ARTICLE_DATA.marketStats.avgDealSize}</div>
                   <div className="text-sm font-semibold text-green-700">Avg Deal Size</div>
                 </div>
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 text-center border-2 border-orange-200 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: '300ms'}}>
-                  <div className="text-4xl md:text-5xl font-black text-orange-600 mb-2">{MA_ARTICLE_DATA.marketStats.growthYoY}</div>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 text-center border-2 border-orange-200">
+                  <div className="text-3xl md:text-4xl font-black text-orange-600 mb-2">{MA_ARTICLE_DATA.marketStats.growthYoY}</div>
                   <div className="text-sm font-semibold text-orange-700">YoY Growth</div>
                 </div>
               </div>
