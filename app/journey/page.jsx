@@ -49,12 +49,12 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Funding Plan & Budget",
-        description: "Plan your expenses and revenue model"
+        description: ""
       },
       {
         id: 3,
-        title: "New Investment Recorded",
-        description: "$15,000 added to your venture account"
+        title: "Financial Launch",
+        description: "$15,000 added to your venture account. From now on, your monthly burn rate is $5,000"
       }
     ]
   },
@@ -143,7 +143,7 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Core Features Built",
-        description: "Essential functionality completed",
+        description: "Built initial application prototype",
         icon: "🛠️",
         value: "Complete"
       }
@@ -304,7 +304,7 @@ const PHASE_CONTENT = {
       title: "Congratulations!",
       content: `Your StartZig has evolved from an idea to a thriving business with real users and proven traction.
 
-You've entered the Growth phase—where the market takes notice.
+You've entered the Growth phase—where the market takes notice. Your venture continues registering users and increasing marketing spend to accelerate growth.
 
 **What's happening now:**
 Industry leaders are actively scouting for innovative companies like yours. Your progress has positioned you as a potential acquisition target, and market leaders in your sector may approach you with exit opportunities.
@@ -398,7 +398,6 @@ export default function PhaseCompletionDemo() {
       <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-900 to-teal-900 flex items-center justify-center p-4">
         <div className="max-w-3xl w-full">
           <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center">
-            <div className="text-6xl mb-6">{content.emoji}</div>
             <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
               {content.title}
             </h1>
@@ -591,27 +590,6 @@ export default function PhaseCompletionDemo() {
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Capital Injection - ONLY IN IDEA PHASE */}
-            {currentPhase === 'idea' && content.valuation.capitalInjection > 0 && (
-              <div className="md:col-span-2 bg-yellow-50 border-l-4 border-yellow-500 p-2 rounded-r-lg">
-                <div>
-                  <h3 className="font-semibold text-gray-800 text-xs">New Investment Received</h3>
-                  <p className="text-xs text-gray-600 mt-0.5">Initial capital injection added to your venture</p>
-                </div>
-                <div className="mt-1 text-sm font-bold text-green-600">
-                  ${(content.valuation.capitalInjection).toLocaleString()}
-                </div>
-              </div>
-            )}
-
-            <div className="md:col-span-2 bg-green-100 p-2 rounded-lg mt-2">
-              <div className="flex items-center gap-2 text-xs text-green-800">
-                <span>🏆</span>
-                <span className="font-semibold">Badge Earned:</span>
-                <span className="font-bold">{content.badge}</span>
-              </div>
             </div>
           </div>
 
