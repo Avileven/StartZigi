@@ -46,8 +46,13 @@ const PHASE_CONTENT = {
       },
       {
         id: 2,
-        title: "Funding Plan & Budget Breakdown",
-        description: "Plan your forecast monthly expenses and funding requirements for your first two years"
+        title: "Funding Plan & Budget",
+        description: ""
+      },
+      {
+        id: 3,
+        title: "Financial Launch",
+        description: "$15,000 added to your venture account. From now on, your monthly burn rate is $5,000"
       }
     ],
     
@@ -74,15 +79,15 @@ const PHASE_CONTENT = {
     achievements: [
       {
         id: 1,
-        title: "Business Plan Completed",
-        description: "Comprehensive plan documented",
-        icon: "📄",
-        value: "100%"
+        title: "Business Plan Complete",
+        description: "Comprehensive strategy documented",
+        icon: "✓",
+        value: null
       },
       {
         id: 2,
-        title: "Budget Completed",
-        description: "2-year financial plan ready",
+        title: "Financial Model Ready",
+        description: "Revenue projections validated",
         icon: "💰",
         value: "Complete"
       }
@@ -91,13 +96,13 @@ const PHASE_CONTENT = {
     challenges: [
       {
         id: 1,
-        title: "Complete Minimum Viable Product",
-        description: "Build your working prototype"
+        title: "Build Your MVP",
+        description: "Create your minimum viable product"
       },
       {
         id: 2,
-        title: "Enter StartZig Studio",
-        description: "Access development tools and resources"
+        title: "Enter the Promotion Center",
+        description: "Prepare for user feedback collection"
       },
       {
         id: 3,
@@ -129,23 +134,16 @@ const PHASE_CONTENT = {
     achievements: [
       {
         id: 1,
-        title: "MVP Built",
-        description: "Working prototype completed",
-        icon: "⚙️",
-        value: "100%"
+        title: "MVP Launched",
+        description: "First version of product deployed",
+        icon: "✓",
+        value: null
       },
       {
         id: 2,
-        title: "Business Plan Complete",
-        description: "Your business strategy is ready",
-        icon: "📋",
-        value: "Complete"
-      },
-      {
-        id: 3,
-        title: "Revenue Model Defined",
-        description: "Pricing and monetization strategy set",
-        icon: "💰",
+        title: "Core Features Built",
+        description: "Built initial application prototype",
+        icon: "🛠️",
         value: "Complete"
       }
     ],
@@ -153,18 +151,18 @@ const PHASE_CONTENT = {
     challenges: [
       {
         id: 1,
-        title: "Complete MLP Development Center",
-        description: "Plan your enhancements"
+        title: "Optimize User Experience",
+        description: "Refine product based on user feedback"
       },
       {
         id: 2,
-        title: "Analyze Feedback",
-        description: "Use Product Feedback Center and scale up your MVP demo"
+        title: "Build Your MLP",
+        description: "Create your Minimum Lovable Product"
       },
       {
         id: 3,
-        title: "Invite Users for Feedback",
-        description: "Use the Promotion Center to get early user insights"
+        title: "Enter the Promotion Center",
+        description: "Collect product feedback from early users"
       }
     ],
     
@@ -192,46 +190,39 @@ const PHASE_CONTENT = {
       {
         id: 1,
         title: "MLP Launched",
-        description: "Lovable product live",
-        icon: "🎨",
-        value: "100%"
+        description: "Upgraded version of product deployed",
+        icon: "✓",
+        value: null
       },
       {
         id: 2,
-        title: "User Feedback Analyzed",
-        description: "Product improvements implemented",
-        icon: "💬",
-        value: "Complete"
-      },
-      {
-        id: 3,
-        title: "MVP Scaled Up",
-        description: "Demo enhanced based on feedback",
-        icon: "📈",
-        value: "Complete"
+        title: "Demo Updated",
+        description: "Your updated demo version was loaded to your landing page",
+        icon: null,
+        value: null
       }
     ],
     
     challenges: [
       {
         id: 1,
-        title: "Set Up Beta Testing Page",
-        description: "Prepare for beta user recruitment"
+        title: "Build Your BETA version",
+        description: "Prepare your BETA based on community feedback"
       },
       {
         id: 2,
-        title: "Analyze Feedback & Scale MLP",
-        description: "Use Product Feedback Center to enhance your MLP demo"
+        title: "Beta registration",
+        description: "Invite users to sign into your beta"
       },
       {
         id: 3,
-        title: "Complete Venture Pitch",
-        description: "Prepare your pitch before approaching the VC marketplace"
+        title: "Create your Pitch",
+        description: "Create your pitch before approaching professional investors"
       },
       {
         id: 4,
-        title: "Recruit 50 Beta Testers",
-        description: "You need 50 beta sign-ups to move to Growth phase"
+        title: "Secure funding",
+        description: "Enter the VC Marketplace and secure funding"
       }
     ],
     
@@ -258,30 +249,30 @@ const PHASE_CONTENT = {
     achievements: [
       {
         id: 1,
-        title: "Beta Testing Done",
-        description: "Extensive user feedback collected",
+        title: "Product in Beta",
+        description: "Public testing phase launched",
         icon: "✓",
-        value: "100%"
+        value: null
       },
       {
         id: 2,
-        title: "Beta Testers",
-        description: "Active testing community",
+        title: "User Feedback Loop",
+        description: "Active beta testing community",
         icon: "👥",
-        value: "50+"
+        value: "Active"
       }
     ],
     
     challenges: [
       {
         id: 1,
-        title: "Growth Strategy",
-        description: "Plan for user acquisition and scaling"
+        title: "Finalize Product",
+        description: "Move from beta to production"
       },
       {
         id: 2,
-        title: "Marketing Channels",
-        description: "Identify best channels for growth"
+        title: "Acquire 50 beta users",
+        description: "Validate product-market fit with real users"
       }
     ],
     
@@ -473,13 +464,6 @@ export default function PhaseCompletionModal({
                   )}
                 </div>
               ))}
-            </div>
-
-            <div className="bg-green-100 p-3 rounded-lg mt-4">
-              <div className="flex items-center gap-2 text-sm text-green-800">
-                <span>🏆</span>
-                <span className="font-medium">Badge Unlocked: {content.badge}</span>
-              </div>
             </div>
           </div>
         </div>
