@@ -561,6 +561,15 @@ const getGreeting = (username) => {
       });
     }
 
+if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
+      assets.push({
+        id: 'product_feedback',
+        title: 'Product Feedback',
+        icon: MessageSquare,
+        page: 'product-feedback'
+      });
+    }
+
     if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
       assets.push({
         id: 'revenue_modeling',
