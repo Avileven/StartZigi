@@ -1,3 +1,6 @@
+// app\beta-testing\page.jsx 
+// FIXED 180226: Added missing required fields (id, created_date, updated_date, created_by) to BetaTester.create()
+// This fixes "null value in column created_by violates not-null constraint" error
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -93,11 +96,23 @@ export default function BetaTesting() {
     }
     setIsSubmitting(true);
     try {
+      // FIX: Add all required fields for beta_testers table
+      // Schema requires: id, created_date, updated_date, created_by (all NOT NULL)
+      const now = new Date().toISOString();
+      const newId = crypto.randomUUID();
+      
       await BetaTester.create({
+        // Required system fields
+        id: newId,
+        created_date: now,
+        updated_date: now,
+        created_by: formData.email, // Using tester's email as created_by
+        created_by_id: null, // Public signup - no authenticated user
+        // Venture and tester data
         venture_id: venture.id,
         full_name: formData.fullName,
         email: formData.email,
-        interest_reason: formData.interest,
+        interest_reason: formData.interest || null,
       });
       setSubmitted(true);
       
