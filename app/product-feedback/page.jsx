@@ -3,15 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
+import { BetaTester } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function ProductFeedback() {
   const [venture, setVenture] = useState(null);
   const [featureFeedback, setFeatureFeedback] = useState([]);
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
+  const [betaTesters, setBetaTesters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
 
@@ -30,6 +32,10 @@ export default function ProductFeedback() {
 
           const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
           setSuggestedFeatures(suggestions);
+
+          // Load beta testers
+          const testers = await BetaTester.filter({ venture_id: currentVenture.id });
+          setBetaTesters(testers);
 
           // Calculate analytics
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
@@ -230,6 +236,51 @@ export default function ProductFeedback() {
                 </Card>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Beta Sign-ups Section */}
+        {betaTesters.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Beta Sign-ups</h2>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    Total Sign-ups: {betaTesters.length}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {betaTesters
+                    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+                    .map((tester) => (
+                      <div key={tester.id} className="border-l-4 border-indigo-200 bg-indigo-50 p-4 rounded-r-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900">{tester.full_name}</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Signed up: {new Date(tester.created_date).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                            {tester.interest_reason && (
+                              <div className="mt-2">
+                                <p className="text-sm font-medium text-gray-700">Why they joined:</p>
+                                <p className="text-sm text-gray-600 mt-1">{tester.interest_reason}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
