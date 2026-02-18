@@ -1,4 +1,4 @@
-// ClientLayout 150226
+// ClientLayout 180226
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -106,10 +106,11 @@ export default function ClientLayout({ children }) {
           pathname?.startsWith("/reset-password") ||
           pathname?.startsWith("/auth"); // callback routes
 
-        // ✅ FIX 2: keep bypass for venture-landing (public / anonymous)
+        // ✅ FIX 2: keep bypass for venture-landing and beta-testing (public / anonymous)
         const isVentureLanding = pathname?.includes("venture-landing");
+        const isBetaTesting = pathname?.includes("beta-testing");
 
-        if (isAuthPage || isVentureLanding) {
+        if (isAuthPage || isVentureLanding || isBetaTesting) {
           setUser(null);
           setVenture(null);
           setIsLoading(false);
@@ -182,8 +183,8 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
     }
   }
 
-  // ✅ keep bypass render for venture-landing (no sidebar)
-  if (pathname && pathname.includes("venture-landing")) {
+  // ✅ keep bypass render for public pages (no sidebar)
+  if (pathname && (pathname.includes("venture-landing") || pathname.includes("beta-testing"))) {
     return <div className="min-h-screen bg-white">{children}</div>;
   }
 
@@ -427,6 +428,7 @@ pathname === "/"
     </SidebarProvider>
   );
 }
+
 
 
 
