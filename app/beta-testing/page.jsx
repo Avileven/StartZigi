@@ -1,11 +1,20 @@
 // app\beta-testing\page.jsx 
-// FIXED 180226: Added missing required fields (id, created_date, updated_date, created_by) to BetaTester.create()
-// This fixes "null value in column created_by violates not-null constraint" error
+// FIXED 180226: Made page PUBLIC - no authentication required
+// 
+// HOW IT WORKS:
+// - This is a PUBLIC beta sign-up page (not the actual product)
+// - Users can register to become beta testers by providing name, email, and reason
+// - Entrepreneur can share this page via Promotion Center to invite people to sign up
+// - Access via: /beta-testing?id=venture_id (no token needed - just venture ID)
+// - Registered users are saved to beta_testers table and shown in Product Feedback Center
+// 
+// PREVIOUS FIX (180226): Added missing required fields (id, created_date, updated_date, created_by) 
+// to BetaTester.create() - fixed "null value in column created_by violates not-null constraint" error
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Venture } from '@/api/entities.js';
-import { VentureMessage } from '@/api/entities.js';
+import { supabase } from '@/lib/supabase'; // For public access without auth
 import { BetaTester } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,22 +51,39 @@ export default function BetaTesting() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // ✅ הזזתי את זה לתוך useEffect
         const urlParams = new URLSearchParams(window.location.search);
         const ventureId = urlParams.get('id');
         
         if (ventureId) {
-          const [ventures, testers] = await Promise.all([
-            Venture.filter({ id: ventureId }),
-            BetaTester.filter({ venture_id: ventureId })
-          ]);
+          // PUBLIC ACCESS: Fetch venture data without authentication
+          // Using supabase directly instead of Venture.filter() which requires auth
+          const { data: ventureData, error: ventureError } = await supabase
+            .from('ventures')
+            .select('*')
+            .eq('id', ventureId)
+            .single();
           
-          if (ventures.length > 0) {
-            const loadedVenture = ventures[0];
-            setVenture(loadedVenture);
-            setTesterCount(testers.length);
+          if (ventureError) {
+            console.error('Error fetching venture:', ventureError);
+            setIsLoading(false);
+            return;
+          }
+          
+          // Fetch existing beta testers count (public data)
+          const { data: testersData, error: testersError } = await supabase
+            .from('beta_testers')
+            .select('*')
+            .eq('venture_id', ventureId);
+          
+          if (testersError) {
+            console.error('Error fetching testers:', testersError);
+          }
+          
+          if (ventureData) {
+            setVenture(ventureData);
+            setTesterCount(testersData?.length || 0);
             
-            const featuredDemo = loadedVenture.beta_data?.featured_demo;
+            const featuredDemo = ventureData.beta_data?.featured_demo;
             if (featuredDemo) {
               if (featuredDemo.type === 'html' && featuredDemo.htmlContent) {
                 setDemoHtmlContent(featuredDemo.htmlContent);
@@ -116,8 +142,13 @@ export default function BetaTesting() {
       });
       setSubmitted(true);
       
-      const updatedTesters = await BetaTester.filter({ venture_id: venture.id });
-      const newTesterCount = updatedTesters.length;
+      // Update tester count (public access)
+      const { data: updatedTesters } = await supabase
+        .from('beta_testers')
+        .select('*')
+        .eq('venture_id', venture.id);
+      
+      const newTesterCount = updatedTesters?.length || 0;
       setTesterCount(newTesterCount);
 
       await VentureMessage.create({
