@@ -1,7 +1,7 @@
-
 // api/send-invite/route.js
 // [2026-01-10] FIX: Support multiple invite targets (co_founder -> venture-profile, external_feedback -> venture-landing)
 //                 without breaking existing co-founder flow.
+// [UPDATED 180226] ADDED: beta_testing type for public beta sign-up page invitations
 
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
@@ -14,15 +14,16 @@ function getBaseUrl(request) {
 
   const proto = request.headers.get("x-forwarded-proto") || "https";
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-
   if (!host) return "https://www.startzig.com";
+
   return `${proto}://${host}`;
 }
 
 // [2026-01-10] FIX: Build link by invite type (default keeps previous behavior)
+// [UPDATED 180226] ADDED: beta_testing case
 function buildInviteLink({ baseUrl, ventureId, invitationToken, inviteType }) {
   const token = encodeURIComponent(invitationToken);
-
+  
   // Normalize type
   const t = String(inviteType || "co_founder").toLowerCase();
 
@@ -41,11 +42,19 @@ function buildInviteLink({ baseUrl, ventureId, invitationToken, inviteType }) {
     const url = `${baseUrl}/venture-landing?id=${encodeURIComponent(
       ventureId
     )}&token=${token}&invitation_token=${token}`;
-
     return {
       url,
       ctaText: "Open Venture Landing Page",
       headline: "has invited you to review their venture and share feedback:",
+    };
+  }
+
+  // ✅ UPDATED [180226]: beta testing invites -> public beta page (no token needed, just venture ID)
+  if (t === "beta_testing") {
+    return {
+      url: `${baseUrl}/beta-testing?id=${encodeURIComponent(ventureId)}`,
+      ctaText: "Join Beta Program",
+      headline: "has invited you to join the beta testing program for:",
     };
   }
 
@@ -68,7 +77,7 @@ export async function POST(request) {
       inviterName,
       invitationToken,
       ventureId,
-      type, // e.g. "external_feedback"
+      type, // e.g. "external_feedback" or "beta_testing"
       invitationType, // optional alias
     } = body || {};
 
@@ -102,6 +111,7 @@ export async function POST(request) {
     const baseUrl = getBaseUrl(request);
 
     // ✅ [2026-01-10] FIX: choose link by invite type (keeps old co-founder behavior as default)
+    // ✅ UPDATED [180226]: now supports beta_testing type
     const { url: inviteUrl, ctaText, headline } = buildInviteLink({
       baseUrl,
       ventureId,
@@ -109,11 +119,14 @@ export async function POST(request) {
       inviteType: resolvedType,
     });
 
+    // ✅ UPDATED [180226]: Different subject line for beta testing
     const { data, error } = await resend.emails.send({
       from: "StartZig <invite@startzig.com>",
       to: [email],
       subject:
-        resolvedType === "external_feedback"
+        resolvedType === "beta_testing"
+          ? `${inviterName} invited you to join ${ventureName} Beta!`
+          : resolvedType === "external_feedback"
           ? `${inviterName} invited you to review: ${ventureName}`
           : `${inviterName} invited you to view the venture: ${ventureName}`,
       html: `
@@ -122,13 +135,10 @@ export async function POST(request) {
           <p style="color: #475569; font-size: 16px;">
             <strong>${inviterName}</strong> ${headline}
           </p>
-
           <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
             <h2 style="color: #6366f1; margin: 0;">${ventureName}</h2>
           </div>
-
           <p style="color: #475569; font-size: 16px;">Click the button below:</p>
-
           <div style="text-align: center; margin-top: 30px;">
             <a href="${inviteUrl}"
                style="background-color: #6366f1; color: white; padding: 14px 32px;
@@ -136,7 +146,6 @@ export async function POST(request) {
               ${ctaText}
             </a>
           </div>
-
           <p style="margin-top: 30px; font-size: 12px; color: #94a3b8; line-height: 1.5;">
             This is a private invitation. If the button doesn't work, copy and paste this link into your browser:<br/>
             <span style="color: #6366f1;">${inviteUrl}</span>
@@ -157,5 +166,3 @@ export async function POST(request) {
     return NextResponse.json({ error: error?.message || "Unknown error" }, { status: 500 });
   }
 }
-
-
