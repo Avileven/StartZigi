@@ -1,3 +1,4 @@
+// 190226 V update model and download
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -1224,10 +1225,6 @@ export default function RevenueModelingExperience() {
       return;
     }
 
-    if (!window.confirm("Are you sure you want to finalize your revenue model? You won't be able to edit it after this.")) {
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       if (!venture) {
@@ -1236,32 +1233,43 @@ export default function RevenueModelingExperience() {
         return;
       }
 
-      // Update the venture with revenue model completion and data, and directly transition phase to 'mlp'
-      await Venture.update(venture.id, {
+      // Check if this is first time completion
+      const isFirstTime = !venture.revenue_model_completed;
+      
+      // Prepare update data
+      const updateData = {
         revenue_model_data: {
           ...revenueData,
           finalized_date: new Date().toISOString()
         },
-        revenue_model_completed: true,
-        phase: 'mlp' // Direct transition to MLP phase
-      });
+        revenue_model_completed: true
+      };
+      
+      // Only transition phase on first completion from MVP
+      if (isFirstTime && venture.phase === 'mvp') {
+        updateData.phase = 'mlp';
+      }
+      
+      await Venture.update(venture.id, updateData);
 
-      // System message for revenue model completion (completed in MVP phase)
-      await VentureMessage.create({
-        venture_id: venture.id,
-        message_type: 'phase_complete',
-        title: '✅ Revenue Model Finalized!',
-        content: `Your revenue model for "${venture.name}" is now finalized.`,
-        phase: 'mvp', // Message relates to MVP phase completion
-        priority: 3
-      });
+      // Only send messages and alerts on first completion
+      if (isFirstTime && venture.phase === 'mvp') {
+        // System message for revenue model completion (completed in MVP phase)
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'phase_complete',
+          title: '✅ Revenue Model Finalized!',
+          content: `Your revenue model for "${venture.name}" is now finalized.`,
+          phase: 'mvp', // Message relates to MVP phase completion
+          priority: 3
+        });
 
-      // Create MLP welcome message
-      await VentureMessage.create({
-        venture_id: venture.id,
-        message_type: 'phase_welcome',
-        title: '💖 Welcome to the MLP Phase!',
-        content: `Great progress! You're now in the Minimum Lovable Product phase. Your mission is to gather user feedback and make your product truly lovable.
+        // Create MLP welcome message
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'phase_welcome',
+          title: '💖 Welcome to the MLP Phase!',
+          content: `Great progress! You're now in the Minimum Lovable Product phase. Your mission is to gather user feedback and make your product truly lovable.
 
 Key tasks:
 • Complete the MLP Development Center to plan your enhancements
@@ -1270,11 +1278,15 @@ Key tasks:
 • Analyze feedback in the Product Feedback Center
 
 Once you've completed MLP development, you'll be ready to move to the Beta phase.`,
-        phase: 'mlp',
-        priority: 3
-      });
+          phase: 'mlp',
+          priority: 3
+        });
 
-      alert('Revenue model finalized successfully! You\'ve progressed to the MLP phase. Redirecting to dashboard...');
+        alert('Revenue model finalized successfully! You\'ve progressed to the MLP phase. Redirecting to dashboard...');
+      } else {
+        alert('Revenue model updated successfully!');
+      }
+      
       router.push(createPageUrl('Dashboard')); // Navigate to Dashboard
     } catch (error) {
       console.error("Error finalizing revenue model:", error);
@@ -1282,6 +1294,63 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDownloadCSV = () => {
+    // Prepare CSV content with all revenue model data
+    const csvRows = [];
+    
+    // Header
+    csvRows.push('Revenue Model Report');
+    csvRows.push(`Venture: ${venture?.name || 'Unknown'}`);
+    csvRows.push(`Generated: ${new Date().toLocaleDateString()}`);
+    csvRows.push('');
+    
+    // Parameters
+    csvRows.push('PARAMETERS');
+    csvRows.push(`Business Model,${businessModel}`);
+    csvRows.push(`Tier 1 Price,$${tier1Price}`);
+    csvRows.push(`Tier 2 Price,$${tier2Price}`);
+    csvRows.push(`Tier 2 Conversion Split,${tier2ConversionSplit}%`);
+    csvRows.push(`Ad Revenue Per 1000,$${adRevenuePer1000}`);
+    csvRows.push(`Avg Transaction Value,$${avgTransactionValue}`);
+    csvRows.push(`Monthly Marketing Budget,$${monthlyMarketingBudget}`);
+    csvRows.push(`Acquisition Cost,$${acquisitionCost}`);
+    csvRows.push(`Initial Users,${initialUsers}`);
+    csvRows.push(`Churn Risk,${churnRisk}%`);
+    csvRows.push(`Free to Paid Conversion,${freeToPaidConversion}%`);
+    csvRows.push(`Target Market Factor,${targetMarketFactor}`);
+    csvRows.push(`Target Market Value,$${formatNumber(targetMarketValue)}`);
+    csvRows.push('');
+    
+    // Summary
+    csvRows.push('SUMMARY');
+    csvRows.push(`Year 1 Revenue,$${formatNumber(year1Revenue)}`);
+    csvRows.push(`Year 2 Cumulative Revenue,$${formatNumber(year2CumulativeRevenue)}`);
+    csvRows.push(`Year 1 Total Users,${formatNumber(year1TotalUsers)}`);
+    csvRows.push(`Year 1 Paying Users,${formatNumber(year1PayingUsers)}`);
+    csvRows.push(`Month 24 Total Users,${formatNumber(totalUsersMonth24)}`);
+    csvRows.push(`Month 24 Paying Users,${formatNumber(payingUsersMonth24)}`);
+    csvRows.push('');
+    
+    // Monthly Data
+    csvRows.push('MONTHLY PROJECTIONS');
+    csvRows.push('Month,Total Users,Paying Users,Total Revenue');
+    modelData.forEach((month, index) => {
+      csvRows.push(`${index + 1},${Math.floor(month.TotalUsers)},${Math.floor(month.PayingUsers)},$${Math.floor(month.TotalRevenue)}`);
+    });
+    
+    // Create blob and download
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `revenue-model-${venture?.name || 'report'}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const modelData = useFinancialModel({
@@ -1666,7 +1735,7 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
           <p>Disclaimer: Financial results are illustrative, based on a modified S-curve growth model incorporating paid and organic acquisition.</p>
         </footer>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex justify-center gap-4">
           <Button 
             onClick={handleFinalizeModel}
             className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
@@ -1678,6 +1747,15 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
                 ? 'Update Model' 
                 : 'Finalize Revenue Model'
             }
+          </Button>
+          
+          <Button
+            onClick={handleDownloadCSV}
+            variant="outline"
+            className="px-6 py-3 text-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Mentor - Download Report as CSV
           </Button>
         </div>
 
