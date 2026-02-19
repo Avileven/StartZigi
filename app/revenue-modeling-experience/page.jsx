@@ -1125,7 +1125,25 @@ export default function RevenueModelingExperience() {
       const currentUser = await User.me();
       const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
       if (ventures.length > 0) {
-        setVenture(ventures[0]);
+        const currentVenture = ventures[0];
+        setVenture(currentVenture);
+        
+        // Load saved revenue model data if exists
+        if (currentVenture.revenue_model_data) {
+          const saved = currentVenture.revenue_model_data;
+          setBusinessModel(saved.businessModel || 'subscription');
+          setTier1Price(saved.tier1Price || 0);
+          setTier2Price(saved.tier2Price || 0);
+          setTier2ConversionSplit(saved.tier2ConversionSplit || 0);
+          setAdRevenuePer1000(saved.adRevenuePer1000 || 0);
+          setAvgTransactionValue(saved.avgTransactionValue || 0);
+          setMonthlyMarketingBudget(saved.monthlyMarketingBudget || 0);
+          setAcquisitionCost(saved.acquisitionCost || 0);
+          setInitialUsers(saved.initialUsers || 0);
+          setChurnRisk(saved.churnRisk || 0);
+          setFreeToPaidConversion(saved.freeToPaidConversion || 0);
+          setTargetMarketFactor(saved.targetMarketFactor || 0);
+        }
       }
     };
     fetchCurrentVenture();
@@ -1654,7 +1672,12 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
             className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Finalizing...' : 'Finalize Revenue Model'}
+            {isSubmitting 
+              ? 'Saving...' 
+              : venture?.revenue_model_completed 
+                ? 'Update Model' 
+                : 'Finalize Revenue Model'
+            }
           </Button>
         </div>
 
