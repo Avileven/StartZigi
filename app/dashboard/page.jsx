@@ -570,25 +570,16 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
       });
     }
 
-    if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
-      assets.push({
-        id: 'revenue_modeling',
-        title: 'Revenue Modeling',
-        icon: BarChart3,
-        page: 'revenue-modeling-experience', // createPageUrl will convert to /revenuemodeling-experience
-        openInNewWindow: true
-      });
-    }
-
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
-      assets.push({
-        id: 'revenue_modeling',
-        title: 'revenue-modeling-experience',
-        icon: BarChart3,
-        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
-        openInNewWindow: true
-      });
-    }
+    // Revenue Modeling - available after MVP upload, stays available for updates
+if (currentVenture.mvp_uploaded) {
+  assets.push({
+    id: 'revenue_modeling',
+    title: 'Revenue Modeling',
+    icon: BarChart3,
+    page: 'revenue-modeling-experience',
+    openInNewWindow: true
+  });
+}   
    
     if (currentVenture.phase === 'mlp') {
       if (!currentVenture.mlp_development_completed) {
