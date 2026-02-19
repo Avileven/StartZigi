@@ -1,5 +1,5 @@
 
-// app/promotion-center/page.jsx 190226
+// app/promotion-center/page.jsx 190226 with beta
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -63,6 +63,9 @@ export default function PromotionCenter() {
   });
 
   const router = useRouter();
+
+  // Check if venture is in BETA phase
+  const isBetaPhase = venture?.phase === 'beta';
 
   useEffect(() => {
     loadData();
@@ -176,7 +179,8 @@ export default function PromotionCenter() {
         invitation_token: invitationToken,
 
         // [2026-01-10] FIX: critical - mark type so this invite is treated as external feedback
-        invitation_type: "external_feedback",
+        // UPDATED: Auto-detect based on venture phase (beta_testing or external_feedback)
+        invitation_type: isBetaPhase ? "beta_testing" : "external_feedback",
 
         status: "pending",
         created_by_id: user.id,
@@ -198,7 +202,8 @@ export default function PromotionCenter() {
           ventureId: venture.id,
 
           // [2026-01-10] FIX: pass type so server can generate the correct link if you support it there
-          type: "external_feedback",
+          // UPDATED: Send beta_testing or external_feedback based on phase
+          type: isBetaPhase ? "beta_testing" : "external_feedback",
         }),
       });
 
@@ -437,56 +442,64 @@ export default function PromotionCenter() {
         {/* Launch new campaign */}
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Launch New Campaign
+            {isBetaPhase ? "Invite to Beta Testing" : "Launch New Campaign"}
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* In-App package (unchanged navigation) */}
-          <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => router.push(createPageUrl("Promotion?type=in-app"))}
-          >
-            <CardHeader>
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-indigo-600" />
-              </div>
-              <CardTitle>In-App Promotion Package</CardTitle>
-              <CardDescription>
-                Reach registered platform users with targeted invitations to visit
-                your landing page and provide feedback.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                <li className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                  Target platform community
-                </li>
-                <li className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-green-500" />
-                  Choose audience size (50-500 users)
-                </li>
-                <li className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-yellow-500" />
-                  Costs virtual currency
-                </li>
-              </ul>
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                Select In-App Package
-              </Button>
-            </CardContent>
-          </Card>
+        <div className={`grid ${isBetaPhase ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2'} gap-6`}>
+          {/* In-App package - HIDE in BETA phase */}
+          {!isBetaPhase && (
+            <Card
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push(createPageUrl("Promotion?type=in-app"))}
+            >
+              <CardHeader>
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-indigo-600" />
+                </div>
+                <CardTitle>In-App Promotion Package</CardTitle>
+                <CardDescription>
+                  Reach registered platform users with targeted invitations to visit
+                  your landing page and provide feedback.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                  <li className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-green-500" />
+                    Target platform community
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-green-500" />
+                    Choose audience size (50-500 users)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-yellow-500" />
+                    Costs virtual currency
+                  </li>
+                </ul>
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                  Select In-App Package
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* [2026-01-10] FIX: Email invite – same flow as InviteCoFounder, but external_feedback type */}
+          {/* UPDATED: Different text for BETA phase vs regular feedback */}
           <Card className={showEmailForm ? "ring-2 ring-green-500 shadow-md" : ""}>
             <CardHeader>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <Mail className="w-6 h-6 text-green-600" />
               </div>
-              <CardTitle>Invite a Friend (via Email)</CardTitle>
+              <CardTitle>
+                {isBetaPhase ? "Invite to Beta Testing" : "Invite a Friend (via Email)"}
+              </CardTitle>
               <CardDescription>
-                Send a personalized email invitation to external contacts for landing-page feedback.
+                {isBetaPhase 
+                  ? "Send personalized email invitations for people to sign up for your beta program."
+                  : "Send a personalized email invitation to external contacts for landing-page feedback."
+                }
               </CardDescription>
             </CardHeader>
 
@@ -502,11 +515,11 @@ export default function PromotionCenter() {
                   <ul className="space-y-2 text-sm text-gray-600 mb-4">
                     <li className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-green-500" />
-                      Reach external audiences
+                      {isBetaPhase ? "Invite beta testers" : "Reach external audiences"}
                     </li>
                     <li className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-green-500" />
-                      Temporary access via token
+                      {isBetaPhase ? "Public sign-up page" : "Temporary access via token"}
                     </li>
                     <li className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-green-500" />
@@ -518,7 +531,7 @@ export default function PromotionCenter() {
                     className="w-full bg-green-600 hover:bg-green-700"
                     onClick={() => setShowEmailForm(true)}
                   >
-                    Create Email Invite
+                    {isBetaPhase ? "Invite to Beta" : "Create Email Invite"}
                   </Button>
                 </>
               ) : (
