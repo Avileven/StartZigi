@@ -66,6 +66,14 @@ export default function PromotionCenter() {
 
   // Check if venture is in BETA phase
   const isBetaPhase = venture?.phase === 'beta';
+  
+
+console.log('🔍 Promotion Center DEBUG:', { 
+  phase: venture?.phase, 
+  isBetaPhase,
+  phaseType: typeof venture?.phase 
+});
+
 
   useEffect(() => {
     loadData();
