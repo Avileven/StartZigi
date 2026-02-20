@@ -1,7 +1,8 @@
+// financials 20226
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Venture, User, VentureMessage, PromotionCampaign } from "@/api/entities";
+import { Venture, User, VentureMessage, PromotionCampaign, FundingEvent } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, TrendingUp, DollarSign, ArrowLeft, History, PieChart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ export default function Financials() {
   const [messages, setMessages] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [liveBalance, setLiveBalance] = useState(0);
+  // [FIX] מקור אמת אחד: funding_events במקום venture_messages
+  const [fundingEvents, setFundingEvents] = useState([]);
   const router = useRouter();
 
   const loadData = useCallback(async () => {
@@ -25,9 +28,10 @@ export default function Financials() {
       if (ventures.length > 0) {
         const v = ventures[0];
         setVenture(v);
-        const msgs = await VentureMessage.filter({ venture_id: v.id }, "-created_date");
+        // [FIX] טוענים funding_events כמקור אמת להשקעות
+        const events = await FundingEvent.filter({ venture_id: v.id }, "-created_date");
         const cmps = await PromotionCampaign.filter({ venture_id: v.id }, "-created_date");
-        setMessages(msgs);
+        setFundingEvents(events);
         setCampaigns(cmps);
       }
     } catch (e) {
@@ -39,22 +43,16 @@ export default function Financials() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // פונקציית החישוב המאוחדת - מונעת שגיאות Reference
+  // [FIX] חישוב יתרה מ-venture.virtual_capital (מקור אמת בDB) + שריפה בזמן אמת
+  // לא מחשבים מהודעות - הDB כבר מעודכן נכון כשיש השקעה
   const updateTick = useCallback(() => {
     if (!venture) return;
 
-    // 1. חישוב השקעות (סכום ההודעות שאושרו)
-    const totalFunding = messages
-      .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
-      .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
-
-    const initialCapital = 15000;
-    const totalStartingCapital = initialCapital + totalFunding;
+    const startingCapital = venture.virtual_capital || 15000;
     const monthlyBurn = venture.monthly_burn_rate || 5000;
 
-    // 2. חישוב שריפה בזמן אמת
     if (!venture.burn_rate_start) {
-      setLiveBalance(totalStartingCapital);
+      setLiveBalance(startingCapital);
       return;
     }
 
@@ -62,10 +60,10 @@ export default function Financials() {
     const now = new Date().getTime();
     const secondsElapsed = (now - startTime) / 1000;
     const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
-    
-    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
+
+    const calculated = Math.floor(Math.max(0, startingCapital - (secondsElapsed * burnPerSecond)));
     setLiveBalance(calculated);
-  }, [venture, messages]);
+  }, [venture]);
 
   useEffect(() => {
     updateTick();
@@ -78,18 +76,21 @@ export default function Financials() {
 
   // משתני עזר לתצוגה
   const displayBurnRate = venture.monthly_burn_rate || 5000;
-  const displayTotalFunding = messages
-    .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted")
-    .reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
 
+  // [FIX] סה"כ השקעות מ-funding_events (מקור אמת) ולא מהודעות
+  const displayTotalFunding = fundingEvents.reduce((s, e) => s + (e.amount || 0), 0);
+
+  // [FIX] ערך אחזקות מייסד: venture.valuation מ-DB הוא מקור האמת
+  // ה-valuation מתעדכן בDB בכל השקעה (ב-handleInvestmentDecision בדשבורד)
   const founderEquityValue = (() => {
     let founderEquity = 1;
-    messages
-      .filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted" && m.investment_offer_checksize && m.investment_offer_valuation)
-      .forEach(m => {
-        const sold = m.investment_offer_checksize / m.investment_offer_valuation;
+    // עוברים על כל אירועי ההשקעה ומחשבים אחוז מניות שנמכר
+    fundingEvents.forEach(e => {
+      if (e.amount && venture.valuation) {
+        const sold = e.amount / venture.valuation;
         founderEquity *= (1 - sold);
-      });
+      }
+    });
     return Math.round(founderEquity * (venture.valuation || 0));
   })();
 
@@ -170,18 +171,25 @@ export default function Financials() {
               <History className="w-5 h-5" /> Investment History
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 max-h-[150px] overflow-y-auto">
-            {messages.filter(m => m.message_type === 'investment_offer' && m.investment_offer_status === 'accepted').length === 0 ? (
+          <CardContent className="pt-4 max-h-[200px] overflow-y-auto">
+            {/* [FIX] קריאה מ-funding_events עם פרטי משקיע מלאים */}
+            {fundingEvents.length === 0 ? (
               <p className="text-gray-400 text-sm italic py-2">No investments recorded yet.</p>
             ) : (
-              messages
-                .filter(m => m.message_type === 'investment_offer' && m.investment_offer_status === 'accepted')
-                .map((m, i) => (
-                  <div key={i} className="flex justify-between text-sm py-1 border-b last:border-0">
-                    <span className="text-gray-600">{m.vc_firm_name || 'Seed Round'}</span>
-                    <span className="font-bold text-green-600">${(m.investment_offer_checksize || 0).toLocaleString()}</span>
+              fundingEvents.map((e, i) => (
+                <div key={i} className="py-2 border-b last:border-0">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-semibold text-gray-800">{e.investor_name || 'Unknown Investor'}</span>
+                    <span className="font-bold text-green-600">${(e.amount || 0).toLocaleString()}</span>
                   </div>
-                ))
+                  <div className="flex justify-between text-xs text-gray-500 mt-0.5">
+                    <span>{e.investment_type || 'VC'}</span>
+                    {venture.valuation && (
+                      <span>@ ${venture.valuation.toLocaleString()} valuation</span>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </CardContent>
         </Card>
