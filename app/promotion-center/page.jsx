@@ -93,7 +93,9 @@ console.log('🔍 Promotion Center DEBUG:', {
       }
 
       // [2026-01-10] FIX: identical to InviteCoFounder – take latest venture (no created_by filter that can be undefined)
-      const ventures = await Venture.list("-created_date");
+      
+const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
+
       if (!ventures || ventures.length === 0) {
         setVenture(null);
         setCampaigns([]);
