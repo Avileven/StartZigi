@@ -115,7 +115,7 @@ const updateBalance = useCallback(() => {
   }
   const startTime = new Date(currentVenture.burn_rate_start).getTime();
   const now = new Date().getTime();
-  const seconsElapsed = (now - startTime) / 1000;
+  const secondsElapsed = (now - startTime) / 1000;
   const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
   const calculated = Math.floor(Math.max(0, startingCapital - (secondsElapsed * burnPerSecond)));
   setLiveBalance(calculated);
