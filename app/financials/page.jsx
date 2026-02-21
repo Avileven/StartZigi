@@ -1,4 +1,4 @@
-// financials 20226
+// financials 21226
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -151,6 +151,19 @@ export default function Financials() {
             <div className="text-3xl font-bold text-gray-900">${founderEquityValue.toLocaleString()}</div>
           </CardContent>
         </Card>
+       <Card className="border-t-4 border-t-purple-500 shadow-md">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+      <TrendingUp className="w-5 h-5 text-purple-600" /> Company Valuation
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="text-3xl font-bold text-gray-900">
+      ${(venture.valuation || 0).toLocaleString()}
+    </div>
+  </CardContent>
+</Card>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -183,7 +196,7 @@ export default function Financials() {
                     <span className="font-bold text-green-600">${(e.amount || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mt-0.5">
-                    <span>{e.investment_type || 'VC'}</span>
+                    <span>{e.investor_name || e.investment_type || 'VC'}</span>
                     {venture.valuation && (
                       <span>@ ${venture.valuation.toLocaleString()} valuation</span>
                     )}
