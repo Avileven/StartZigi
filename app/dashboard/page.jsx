@@ -984,8 +984,9 @@ if (showToS) {
   <span>
     <span>Val:</span>
     ${currentValuation >= 1000000 
-      ? Math.floor(currentValuation/1000000) + 'M' 
-      : Math.floor(currentValuation/1000) + 'K'}
+      
+? (currentValuation/1000000).toFixed(1) + 'M'
+: Math.floor(currentValuation/1000) + 'K'}
   </span>
 </span>
                 </div>
