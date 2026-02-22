@@ -1,4 +1,4 @@
-// ClientLayout 220226 WITH CREDITS
+// ClientLayout 220226 plus credits
 "use client";
 
 import { supabase } from '@/lib/supabase';
@@ -21,6 +21,7 @@ import {
   Shield,
   ExternalLink,
   FlaskConical,
+  UserCircle,
 } from "lucide-react";
 
 import {
@@ -363,6 +364,29 @@ pathname === "/"
                   </SidebarGroupContent>
                 </SidebarGroup>
 
+                {/* [MY ACCOUNT] לינק לדף החשבון - זמין מכל שלב */}
+                <SidebarGroup>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          className={`mb-1 rounded-lg transition-colors duration-200 ${
+                            pathname === "/my-account"
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "hover:bg-indigo-50 hover:text-indigo-700"
+                          }`}
+                        >
+                          <Link href="/my-account" className="flex items-center gap-3 px-3 py-2">
+                            <UserCircle className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-medium">My Account</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+
                 {user && user.role === "admin" && (
                   <SidebarGroup>
                     <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
@@ -410,14 +434,17 @@ pathname === "/"
                 <p className="text-xs text-gray-500 truncate">
                   Phase: {userPhase.replace("_", " ")}
                 </p>
-                {/* [CREDITS] תצוגת קרדיטים שנשארו */}
-                {credits && (
-                  <p className="text-xs truncate mt-0.5">
-                    <span className={credits.credits_used >= credits.credits_limit ? "text-red-500 font-medium" : "text-indigo-500"}>
-                      Credits: {credits.credits_limit - credits.credits_used}/{credits.credits_limit}
-                    </span>
-                  </p>
-                )}
+                {/* [CREDITS] תצוגת תכנית וקרדיטים - ברירת מחדל Free */}
+                <p className="text-xs truncate mt-0.5">
+                  <span className="text-indigo-500 font-medium capitalize">
+                    {credits?.plan || 'Free'} Plan
+                  </span>
+                </p>
+                <p className="text-xs truncate mt-0.5">
+                  <span className={credits && credits.credits_used >= credits.credits_limit ? "text-red-500 font-medium" : "text-gray-400"}>
+                    Credits: {credits ? (credits.credits_limit - credits.credits_used) : 5}/{credits?.credits_limit || 5}
+                  </span>
+                </p>
               </div>
             </div>
           </SidebarFooter>
