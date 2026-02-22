@@ -431,9 +431,7 @@ pathname === "/"
                 <p className="font-medium text-gray-900 text-sm truncate">
                   {user?.email || "Entrepreneur"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  Phase: {userPhase.replace("_", " ")}
-                </p>
+                
                 {/* [CREDITS] תצוגת תכנית וקרדיטים - ברירת מחדל Free */}
                 <p className="text-xs truncate mt-0.5">
                   <span className="text-indigo-500 font-medium capitalize">
