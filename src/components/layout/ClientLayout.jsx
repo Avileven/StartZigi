@@ -440,11 +440,7 @@ pathname === "/"
                     {credits?.plan || 'Free'} Plan
                   </span>
                 </p>
-                <p className="text-xs truncate mt-0.5">
-                  <span className={credits && credits.credits_used >= credits.credits_limit ? "text-red-500 font-medium" : "text-gray-400"}>
-                    Credits: {credits ? (credits.credits_limit - credits.credits_used) : 5}/{credits?.credits_limit || 5}
-                  </span>
-                </p>
+                
               </div>
             </div>
           </SidebarFooter>
