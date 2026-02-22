@@ -1,4 +1,4 @@
-// startzig studio 310126 v1
+// startzig studio 220226 with credits
 "use client";
 import React, { useState, useCallback, useMemo } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -180,9 +180,13 @@ Make it look and feel like a real, professional app - not a prototype.`;
     }
    
     try {
+      // [CREDITS] מעביר creditType לפי המצב:
+      //   BASIC = 3 קרדיטים, BOOST = 10 קרדיטים
+      const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
       const data = await InvokeLLM({
         prompt: fullPrompt,
-        max_tokens: maxTokens
+        max_tokens: maxTokens,
+        creditType
       });
      
       // Clean the response - remove markdown code blocks
@@ -199,8 +203,13 @@ Make it look and feel like a real, professional app - not a prototype.`;
       setShowAIModal(false);
      
     } catch (error) {
-      console.error('AI Generation error:', error);
-      alert('Failed to generate HTML. Please try again.');
+      // [CREDITS] טיפול בחסימה כשנגמרו הקרדיטים
+      if (error.message === 'NO_CREDITS') {
+        alert('⚠️ You\'ve used all your credits this month. Upgrade your plan to get more.');
+      } else {
+        console.error('AI Generation error:', error);
+        alert('Failed to generate HTML. Please try again.');
+      }
     }
    
     setIsGenerating(false);

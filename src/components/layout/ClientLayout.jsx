@@ -1,5 +1,7 @@
-// ClientLayout 180226
+// ClientLayout 220226 WITH CREDITS
 "use client";
+
+import { supabase } from '@/lib/supabase';
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -93,6 +95,8 @@ export default function ClientLayout({ children }) {
   // Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
   const [completedPhase, setCompletedPhase] = useState(null);
+  // [CREDITS] קרדיטים של המשתמש
+  const [credits, setCredits] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -136,6 +140,16 @@ export default function ClientLayout({ children }) {
           "-created_date"
         );
         setVenture(ventures[0] || null);
+        
+        // [CREDITS] טעינת קרדיטים של המשתמש
+        if (currentUser) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('credits_used, credits_limit, plan')
+            .eq('id', currentUser.id)
+            .single();
+          if (profile) setCredits(profile);
+        }
         
         // ✨ Check for phase change and show completion modal
         if (ventures[0]) {
@@ -396,6 +410,14 @@ pathname === "/"
                 <p className="text-xs text-gray-500 truncate">
                   Phase: {userPhase.replace("_", " ")}
                 </p>
+                {/* [CREDITS] תצוגת קרדיטים שנשארו */}
+                {credits && (
+                  <p className="text-xs truncate mt-0.5">
+                    <span className={credits.credits_used >= credits.credits_limit ? "text-red-500 font-medium" : "text-indigo-500"}>
+                      Credits: {credits.credits_limit - credits.credits_used}/{credits.credits_limit}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
           </SidebarFooter>

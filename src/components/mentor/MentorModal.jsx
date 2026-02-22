@@ -1,4 +1,4 @@
-// MentorModal 240126
+// MentorModal 220226
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -89,11 +89,16 @@ export default function MentorModal({
         Language: English.
       `;
 
-
-      const data = await InvokeLLM({ prompt });
+      // [CREDITS] מעביר creditType='mentor' - עולה קרדיט אחד
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
       setFeedback(data?.response || "No response from AI.");
     } catch (error) {
-      setFeedback("Error generating feedback.");
+      // [CREDITS] טיפול בחסימה כשנגמרו הקרדיטים
+      if (error.message === 'NO_CREDITS') {
+        setFeedback("⚠️ You've used all your mentor credits this month. Upgrade your plan to get more.");
+      } else {
+        setFeedback("Error generating feedback.");
+      }
     }
     setIsGettingFeedback(false);
   };

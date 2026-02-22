@@ -1,11 +1,54 @@
+// 220226 WITH CREDIT
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+
+// [CREDITS] מיפוי תכניות לקרדיטים
+const PLAN_CREDITS = {
+  free: 5,
+  vision: 25,
+  impact: 100,
+  unicorn: 500,
+};
 
 export default function Pricing() {
-  // ברירת מחדל נפתחת על שנתי
   const [isAnnual, setIsAnnual] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const router = useRouter();
+
+  // [CREDITS] עדכון תכנית המשתמש בDB
+  const handleSelectPlan = async (planName) => {
+    const plan = planName.toLowerCase();
+    if (plan === 'free') {
+      router.push('/dashboard');
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      await supabase.from('user_profiles').update({
+        plan,
+        credits_limit: PLAN_CREDITS[plan],
+        credits_used: 0,
+        credits_reset_date: new Date().toISOString()
+      }).eq('id', user.id);
+
+      // TODO: כאן יתווסף Stripe בעתיד
+      alert(`Plan updated to ${planName}! Redirecting to dashboard...`);
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Plan update error:', error);
+      alert('Failed to update plan. Please try again.');
+    }
+    setIsUpdating(false);
+  };
 
   const tiers = [
     {
@@ -140,10 +183,14 @@ export default function Pricing() {
                 </ul>
               </div>
 
-              <button className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
+              {/* [CREDITS] כפתור בחירת תכנית - מעדכן user_profiles בDB */}
+              <button
+                onClick={() => handleSelectPlan(tier.name)}
+                disabled={isUpdating}
+                className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
                 tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
-              }`}>
-                {tier.cta}
+              } disabled:opacity-50`}>
+                {isUpdating ? 'Updating...' : tier.cta}
               </button>
             </div>
           ))}
