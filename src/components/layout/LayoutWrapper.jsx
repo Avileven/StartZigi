@@ -33,7 +33,9 @@ export default function LayoutWrapper({ children }) {
     return (
       <>
         <Navbar />
-        {children}
+        <div className="pt-20">
+          {children}
+        </div>
         <Footer />
       </>
     );
