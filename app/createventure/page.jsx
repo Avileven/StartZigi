@@ -422,7 +422,7 @@ function CreateVentureForm() {
 
           {/* עמודה צדדית - Ideas Bank (רק בשלב 1) */}
           {step === 1 && !searchParams.get('name') && (
-            <div className="w-full md:w-72 flex-shrink-0">
+            <div className="w-full md:w-56 flex-shrink-0">
               <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-3">
