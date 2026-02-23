@@ -347,101 +347,108 @@ function CreateVentureForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* ✅ הודעה וכפתור לבנק הרעיונות - מוצג רק בשלב 1 וכשאין נתונים מה-URL */}
-        {step === 1 && !searchParams.get('name') && (
-          <Card className="mb-6 border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+
+          {/* עמודה ראשית - Create Your Venture */}
+          <div className="flex-1 min-w-0">
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                {[1, 2, 3].map((num) => (
+                  <div
+                    key={num}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      num <= step 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {num}
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-sm text-gray-500">
+                Step {step} of 3: {step === 1 ? 'Basic Info' : step === 2 ? 'Problem & Solution' : 'Industry'}
+              </p>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Don't have an idea yet?
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Let us help you choose from our existing ideas bank. Browse through curated startup concepts and get started quickly!
+                  <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+                </div>
+              </div>
+            )}
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">Create Your Venture</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit}>
+                  {renderStep()}
+
+                  {getValidationMessage() && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                      <p className="text-sm text-amber-800">{getValidationMessage()}</p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between mt-8">
+                    {step > 1 && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setStep(step - 1)}
+                      >
+                        Back
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      type="submit" 
+                      disabled={!canProceed() || isLoading}
+                      className={`${step === 1 ? 'ml-auto' : ''} bg-indigo-600 hover:bg-indigo-700`}
+                    >
+                      {isLoading ? "Creating..." : step === 3 ? "Launch Venture" : "Continue"}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* עמודה צדדית - Ideas Bank (רק בשלב 1) */}
+          {step === 1 && !searchParams.get('name') && (
+            <div className="w-full md:w-72 flex-shrink-0">
+              <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900">
+                      Don't have an idea yet?
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Browse our curated startup concepts and get started quickly!
                   </p>
                   <Button 
                     onClick={() => router.push('/ideas')}
-                    className="bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700"
                   >
                     <Lightbulb className="w-4 h-4 mr-2" />
                     Browse Ideas Bank
                   </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            {[1, 2, 3].map((num) => (
-              <div
-                key={num}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  num <= step 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {num}
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-sm text-gray-500">
-            Step {step} of 3: {step === 1 ? 'Basic Info' : step === 2 ? 'Problem & Solution' : 'Industry'}
-          </p>
-        </div>
-
-        {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        )}
+          )}
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">Create Your Venture</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              {renderStep()}
-
-              {getValidationMessage() && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-sm text-amber-800">{getValidationMessage()}</p>
-                </div>
-              )}
-
-              <div className="flex justify-between mt-8">
-                {step > 1 && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setStep(step - 1)}
-                  >
-                    Back
-                  </Button>
-                )}
-                
-                <Button 
-                  type="submit" 
-                  disabled={!canProceed() || isLoading}
-                  className={`${step === 1 ? 'ml-auto' : ''} bg-indigo-600 hover:bg-indigo-700`}
-                >
-                  {isLoading ? "Creating..." : step === 3 ? "Launch Venture" : "Continue"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );
