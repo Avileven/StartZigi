@@ -1,4 +1,4 @@
-// ClientLayout 220226 plus credits
+// ClientLayout 230226 plus credits
 "use client";
 
 import { supabase } from '@/lib/supabase';
@@ -154,17 +154,28 @@ export default function ClientLayout({ children }) {
         
         // ✨ Check for phase change and show completion modal
         if (ventures[0]) {
-          const lastSeenPhase = localStorage.getItem('lastSeenPhase');
           const currentPhase = ventures[0].phase;
-          
-          // If phase changed, show completion modal for the OLD phase
+
+          // [PHASE MODAL] קריאת last_seen_phase מה-DB במקום localStorage
+          const { data: profilePhase } = await supabase
+            .from('user_profiles')
+            .select('last_seen_phase')
+            .eq('id', currentUser.id)
+            .single();
+
+          const lastSeenPhase = profilePhase?.last_seen_phase || null;
+
+          // אם השלב השתנה - מציגים את המודל
           if (lastSeenPhase && lastSeenPhase !== currentPhase) {
             setCompletedPhase(lastSeenPhase);
             setShowPhaseModal(true);
           }
-          
-          // Update last seen phase
-          localStorage.setItem('lastSeenPhase', currentPhase);
+
+          // עדכון last_seen_phase ב-DB
+          await supabase
+            .from('user_profiles')
+            .update({ last_seen_phase: currentPhase })
+            .eq('id', currentUser.id);
         }
       } catch (error) {
         console.error("Failed to load user or venture data:", error);
