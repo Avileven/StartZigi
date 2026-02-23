@@ -1,4 +1,4 @@
-//business plan 020226 updated
+//business plan 230226 updated
 "use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -415,9 +415,9 @@ await VentureMessage.create({
   };
 
   const tabs = [
-    { label: 'Product & Vision', progress: tab1Progress },
-    { label: 'Market', progress: tab2Progress },
-    { label: 'Financials', progress: tab3Progress },
+    { label: 'Product & Vision', progress: tab1Progress, activeClass: 'border-indigo-500 bg-indigo-50 text-indigo-700', dotActive: 'bg-indigo-500', color: 'indigo' },
+    { label: 'Market', progress: tab2Progress, activeClass: 'border-teal-500 bg-teal-50 text-teal-700', dotActive: 'bg-teal-500', color: 'teal' },
+    { label: 'Financials', progress: tab3Progress, activeClass: 'border-purple-500 bg-purple-50 text-purple-700', dotActive: 'bg-purple-500', color: 'purple' },
   ];
 
   if (isLoading) {
@@ -472,7 +472,7 @@ await VentureMessage.create({
                 onClick={() => handleTabChange(idx)}
                 className={`flex-1 py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all ${
                   activeTab === idx
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    ? tab.activeClass
                     : getTabColor(tab.progress)
                 }`}
               >
@@ -494,10 +494,10 @@ await VentureMessage.create({
           {/* Tab 1 - Product & Vision */}
           {activeTab === 0 && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>1. Mission Statement</CardTitle><CardDescription>What is your company's core purpose and vision?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">1. Mission Statement</CardTitle><CardDescription>What is your company's core purpose and vision?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mission_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('mission_statement', 'Mission Statement', 'mission')} />
@@ -510,10 +510,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>2. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">2. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'problem_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('problem_statement', 'Problem Statement', 'problem')} />
@@ -526,10 +526,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>3. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">3. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'proposed_solution' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('proposed_solution', 'Solution Overview', 'solution')} />
@@ -542,10 +542,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>4. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">4. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'product_details' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('product_details', 'Product/Service Details', 'productDetails')} />
@@ -558,10 +558,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>5. Founder Background</CardTitle><CardDescription>What makes you and your team qualified?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">5. Founder Background</CardTitle><CardDescription>What makes you and your team qualified?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'founder_background' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('entrepreneur_background', 'Founder Background', 'entrepreneurBackground')} />
@@ -585,10 +585,10 @@ await VentureMessage.create({
           {/* Tab 2 - Market */}
           {activeTab === 1 && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="border-teal-200">
+                <CardHeader className="bg-teal-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>6. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
+                    <div><CardTitle className="text-teal-800">6. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'market_size' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('market_size', 'Market Size & Opportunity', 'marketSize')} />
@@ -601,10 +601,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-teal-200">
+                <CardHeader className="bg-teal-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>7. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
+                    <div><CardTitle className="text-teal-800">7. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'target_customers' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('target_customers', 'Target Customers', 'targetCustomers')} />
@@ -617,10 +617,10 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-teal-200">
+                <CardHeader className="bg-teal-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>8. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
+                    <div><CardTitle className="text-teal-800">8. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('competition', 'Competitive Landscape', 'competition')} />
@@ -635,7 +635,7 @@ await VentureMessage.create({
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => handleTabChange(0)}>← Back</Button>
-                <Button onClick={() => handleTabChange(2)} className="bg-indigo-600 hover:bg-indigo-700">Next: Financials →</Button>
+                <Button onClick={() => handleTabChange(2)} className="bg-teal-600 hover:bg-teal-700">Next: Financials →</Button>
               </div>
             </div>
           )}
@@ -645,10 +645,10 @@ await VentureMessage.create({
             <div className="space-y-6">
 
               {/* Budget */}
-              <Card>
-                <CardHeader>
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>Funding Plan & Budget Breakdown</CardTitle><CardDescription>Plan your monthly operational expenses and funding requirements for your first two years</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">Funding Plan & Budget Breakdown</CardTitle><CardDescription>Plan your monthly operational expenses and funding requirements for your first two years</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'budget_planning' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('budget_planning', 'Budget Planning', '')} />
@@ -823,10 +823,10 @@ await VentureMessage.create({
               </Card>
 
               {/* Revenue Model */}
-              <Card>
-                <CardHeader>
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>9. Revenue Model</CardTitle><CardDescription>How will your venture make money?</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">9. Revenue Model</CardTitle><CardDescription>How will your venture make money?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'revenue_model' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('revenue_model', 'Revenue Model', 'revenueModel')} />
@@ -840,10 +840,10 @@ await VentureMessage.create({
               </Card>
 
               {/* Funding Requirements */}
-              <Card>
-                <CardHeader>
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle>10. Funding Requirements</CardTitle><CardDescription>How much funding do you need and how will you use it?</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">10. Funding Requirements</CardTitle><CardDescription>How much funding do you need and how will you use it?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'funding_requirements' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('funding_requirements', 'Funding Requirements', 'fundingRequirements')} />
@@ -866,7 +866,7 @@ await VentureMessage.create({
                 <Button
                   onClick={handleSave}
                   disabled={isSaving || !allComplete}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
                   size="lg"
                 >
                   {isSaving ? (
