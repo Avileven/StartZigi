@@ -1,6 +1,7 @@
+// 23226
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,19 @@ export default function IdeasBank() {
     }
     fetchIdeas();
   }, []);
+
+  const adoptRef = useRef(null);
+
+  const handleSelectIdea = (idea) => {
+    setSelectedIdea(idea);
+    setVentureName(idea.name || "");
+    // גלילה אוטומטית לחלון Adopt במובייל
+    setTimeout(() => {
+      if (adoptRef.current) {
+        adoptRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
 
   const handleAdopt = () => {
     if (!selectedIdea || !ventureName || ventureName.trim().length < 3) return;
@@ -141,10 +155,7 @@ export default function IdeasBank() {
                       ? 'ring-2 ring-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md' 
                       : 'hover:bg-slate-50 hover:border-indigo-200'
                   }`}
-                  onClick={() => {
-                    setSelectedIdea(idea);
-                    setVentureName(idea.name || "");
-                  }}
+                  onClick={() => handleSelectIdea(idea)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start gap-3">
@@ -172,7 +183,7 @@ export default function IdeasBank() {
             </div>
 
             {/* Right Column - Selected Idea Details */}
-            <div className="lg:sticky lg:top-6 h-fit">
+            <div className="lg:sticky lg:top-6 h-fit" ref={adoptRef}>
               {selectedIdea ? (
                 <Card className="border-2 border-indigo-300 shadow-2xl bg-gradient-to-br from-white to-indigo-50">
                   <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-b">
