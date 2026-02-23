@@ -1,4 +1,4 @@
-//createVenture - Updated 23226
+//createVenture - Updated with Ideas Bank integration
 "use client";
 
 import React, { useState, Suspense } from "react";
