@@ -113,12 +113,10 @@ const App = () => {
   const handleGenerateWithAI = useCallback(async (mode) => {
     setIsGenerating(true);
     setGeneratedHtml(null);
-   
+
     const activeFeatures = appState.features.filter(f => f.isActive);
    
-    // Build prompt based on mode
     const basePrompt = `You are an expert mobile app developer.
-
 
 App Configuration:
 - Title: ${appState.appTitle}
@@ -126,9 +124,7 @@ App Configuration:
 - Features: ${activeFeatures.map(f => `${f.icon} ${f.name}: ${f.description}`).join(', ')}
 - Premium Price: $${appState.premiumPrice}
 
-
 Create a complete, single-file HTML prototype.`;
-
 
     let fullPrompt;
     let maxTokens;
@@ -136,7 +132,6 @@ Create a complete, single-file HTML prototype.`;
     if (mode === 'BASIC') {
       maxTokens = 3000;
       fullPrompt = `${basePrompt}
-
 
 Requirements for BASIC mode:
 - Clean, professional UI
@@ -148,13 +143,10 @@ Requirements for BASIC mode:
 - NO device frame simulation (no fixed 375px container)
 - Let the layout fill the browser naturally and adapt to any screen size
 
-
 Keep it simple but functional. Focus on clean structure and basic features.`;
     } else {
-      // BOOST mode
       maxTokens = 10000;
       fullPrompt = `${basePrompt}
-
 
 Requirements for BOOST mode:
 - Professional, production-quality UI
@@ -175,44 +167,43 @@ Requirements for BOOST mode:
 - NO device frame simulation or fixed width containers
 - Let the layout fill the browser and respond to screen size naturally
 
-
 Make it look and feel like a real, professional app - not a prototype.`;
     }
-   
+
+    // timeout לפי מצב - BASIC: 20 שניות, BOOST: 30 שניות
+    const timeoutMs = mode === 'BASIC' ? 20000 : 30000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+    );
+
     try {
-      // [CREDITS] מעביר creditType לפי המצב:
-      //   BASIC = 3 קרדיטים, BOOST = 10 קרדיטים
       const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
-      const data = await InvokeLLM({
-        prompt: fullPrompt,
-        max_tokens: maxTokens,
-        creditType
-      });
+      const data = await Promise.race([
+        InvokeLLM({ prompt: fullPrompt, max_tokens: maxTokens, creditType }),
+        timeoutPromise
+      ]);
      
-      // Clean the response - remove markdown code blocks
       let cleanHtml = data?.response || "No HTML generated.";
-     
-      // Remove ```html or ```htm or ``` at start
       cleanHtml = cleanHtml.replace(/^```(html|htm)?\s*/i, '');
-      // Remove ``` at end
       cleanHtml = cleanHtml.replace(/\s*```\s*$/i, '');
-      // Trim whitespace
       cleanHtml = cleanHtml.trim();
      
       setGeneratedHtml(cleanHtml);
       setShowAIModal(false);
      
     } catch (error) {
-      // [CREDITS] טיפול בחסימה כשנגמרו הקרדיטים
       if (error.message === 'NO_CREDITS') {
         alert('⚠️ You\'ve used all your credits this month. Upgrade your plan to get more.');
+      } else if (error.message === 'TIMEOUT') {
+        alert('⏱️ No response received. This may be a connection issue. Please check your internet and try again.');
       } else {
         console.error('AI Generation error:', error);
         alert('Failed to generate HTML. Please try again.');
       }
+    } finally {
+      // תמיד משחרר את ה-spinner, בכל מצב
+      setIsGenerating(false);
     }
-   
-    setIsGenerating(false);
   }, [appState]);
  
   // Download generated HTML
@@ -231,7 +222,8 @@ Make it look and feel like a real, professional app - not a prototype.`;
   }, [generatedHtml, appState.appTitle, aiMode]);
 
 
-  const previewHtml = useMemo(() => {
+  const buildHtml = useCallback((mode = 'mobile') => {
+    const isDesktop = mode === 'desktop';
     const activeFeatures = appState.features.filter(f => f.isActive);
 
 
@@ -366,20 +358,25 @@ Make it look and feel like a real, professional app - not a prototype.`;
 <head>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; }
-    #app-container { transition: all 0.3s ease; position: relative; max-width: 375px; height: 667px; border: 12px solid #333; border-radius: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; position: relative; }
+    body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; overflow: hidden; background: ${isDesktop ? '#f0f2f5' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}; display: flex; align-items: center; justify-content: center; }
+    #app-container { transition: all 0.3s ease; position: relative; ${isDesktop ? 'width: 100%; max-width: 100%; height: 100vh; border: none; border-radius: 0;' : 'max-width: 375px; height: 667px; border: 12px solid #333; border-radius: 40px;'} box-shadow: ${isDesktop ? 'none' : '0 10px 30px rgba(0,0,0,0.3)'}; overflow: hidden; position: relative; }
     .app-content { width: 100%; height: 100%; position: relative; overflow: hidden; }
-    .screen { display: none; height: 100%; overflow-y: auto; padding: 16px; padding-top: 95px; box-sizing: border-box; }
+    .screen { display: none; height: 100%; overflow-y: auto; padding: 16px; padding-top: ${isDesktop ? '70px' : '110px'}; box-sizing: border-box; }
     .screen.active { display: block; }
-    .screen.full-height { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 16px; }
+    .screen.full-height { display: flex; flex-direction: column; align-items: center; justify-content: ${isDesktop ? 'flex-start' : 'center'}; padding-top: ${isDesktop ? '80px' : '110px'}; }
     .screen.full-height.active { display: flex; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; position: absolute; top: 0; width: 100%; z-index: 10; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); box-sizing: border-box; }
-    .header-top { display: flex; align-items: center; margin-bottom: 8px; }
-    .header-title { text-align: center; font-size: 14px; font-weight: 600; opacity: 0.95; }
-    .nav-bar { background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%); display: flex; flex-direction: column; position: absolute; top: 0; left: 0; height: 100%; width: 75%; max-width: 280px; z-index: 50; padding: 20px; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 20px rgba(0,0,0,0.3); overflow-y: auto; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: ${isDesktop ? '0 24px' : '12px 16px'}; height: ${isDesktop ? '60px' : 'auto'}; position: absolute; top: 0; width: 100%; z-index: 10; display: flex; ${isDesktop ? 'flex-direction: row; align-items: center; gap: 16px;' : 'flex-direction: column;'} box-shadow: 0 4px 20px rgba(0,0,0,0.15); box-sizing: border-box; }
+    .header-top { display: flex; align-items: center; ${isDesktop ? '' : 'margin-bottom: 8px;'} }
+    .header-title { text-align: center; font-size: ${isDesktop ? '18px' : '14px'}; font-weight: 600; opacity: 0.95; ${isDesktop ? 'flex: 1;' : ''} }
+    .nav-bar { background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%); display: flex; flex-direction: column; position: absolute; top: 0; left: 0; height: 100%; width: ${isDesktop ? '260px' : '75%'}; max-width: ${isDesktop ? '260px' : '280px'}; z-index: 50; padding: 20px; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 20px rgba(0,0,0,0.3); overflow-y: auto; }
     .nav-bar.open { transform: translateX(0); }
     .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 40; display: none; }
     .overlay.active { display: block; }
+    ${isDesktop ? `
+    @media (min-width: 768px) {
+      .nav-bar { width: 260px; }
+      .screen { padding-left: 24px; padding-right: 24px; }
+    }` : ''}
   </style>
 </head>
 <body id="app-body">
@@ -433,17 +430,20 @@ Make it look and feel like a real, professional app - not a prototype.`;
   }, [appState]);
 
 
+  const previewHtml = useMemo(() => buildHtml(viewMode), [buildHtml, viewMode]);
+
   const handleDownloadHtml = useCallback(() => {
-    const blob = new Blob([previewHtml], { type: 'text/html' });
+    const html = buildHtml(viewMode);
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'mvp_prototype.html';
+    a.download = `mvp_prototype_${viewMode}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [previewHtml]);
+  }, [buildHtml, viewMode]);
 
 
   return (
@@ -471,7 +471,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">Generate Prototype</h2>
               <button
-                onClick={() => setShowAIModal(false)}
+                onClick={() => { setShowAIModal(false); setIsGenerating(false); }}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ✕
@@ -516,8 +516,21 @@ Make it look and feel like a real, professional app - not a prototype.`;
            
             {isGenerating && (
               <div className="mt-6 text-center">
-                <div className="animate-spin text-4xl mb-2">⚙️</div>
-                <p className="text-sm text-gray-600">Generating your prototype...</p>
+                <div className="animate-spin text-4xl mb-3">⚙️</div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Generating your prototype...</p>
+                <p className="text-xs text-gray-500 mb-1">⏳ Contacting AI server</p>
+                <p className="text-xs text-gray-400 mb-3">
+                  {aiMode === 'BASIC' ? 'Usually takes ~5 seconds' : 'Usually takes ~10 seconds'}
+                </p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3 overflow-hidden">
+                  <div className="bg-indigo-500 h-1.5 rounded-full animate-pulse" style={{width: '60%'}} />
+                </div>
+                <button
+                  onClick={() => { setIsGenerating(false); setShowAIModal(false); }}
+                  className="text-xs text-red-500 hover:text-red-700 underline"
+                >
+                  Cancel
+                </button>
               </div>
             )}
           </div>
@@ -775,20 +788,64 @@ Make it look and feel like a real, professional app - not a prototype.`;
          
           <p className="text-center text-gray-600 mb-4">Watch your changes in real-time!</p>
          
-          <div className="flex justify-center">
-            <iframe
-              title="MVP Prototype Preview"
-              srcDoc={previewHtml}
-              className="mx-auto drop-shadow-2xl transition-all duration-300"
-              style={{
-                width: viewMode === 'mobile' ? '375px' : '100%',
-                maxWidth: viewMode === 'mobile' ? '375px' : '1200px',
-                height: viewMode === 'mobile' ? '667px' : '800px',
-                border: '12px solid #333',
-                borderRadius: viewMode === 'mobile' ? '40px' : '12px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-              }}
-            />
+          <div className="flex justify-center items-start">
+            {viewMode === 'mobile' ? (
+              /* Mobile: phone frame */
+              <div style={{
+                background: '#1a1a1a',
+                borderRadius: '48px',
+                padding: '16px 12px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 2px #333',
+                display: 'inline-block',
+              }}>
+                {/* Speaker notch */}
+                <div style={{ width: '60px', height: '6px', background: '#333', borderRadius: '3px', margin: '0 auto 10px' }} />
+                <iframe
+                  title="MVP Prototype Preview - Mobile"
+                  srcDoc={previewHtml}
+                  style={{
+                    width: '375px',
+                    height: '667px',
+                    border: 'none',
+                    borderRadius: '32px',
+                    display: 'block',
+                    overflow: 'hidden',
+                  }}
+                />
+                {/* Home button */}
+                <div style={{ width: '40px', height: '40px', background: '#333', borderRadius: '50%', margin: '10px auto 0', border: '2px solid #444' }} />
+              </div>
+            ) : (
+              /* Desktop: browser-like frame */
+              <div style={{
+                width: '100%',
+                maxWidth: '1100px',
+                background: '#e0e0e0',
+                borderRadius: '12px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                overflow: 'hidden',
+              }}>
+                {/* Browser chrome */}
+                <div style={{ background: '#d0d0d0', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #bbb' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f57' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#febc2e' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#28c840' }} />
+                  <div style={{ flex: 1, background: '#fff', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                    🔒 {appState.appTitle || 'My App'}.app
+                  </div>
+                </div>
+                <iframe
+                  title="MVP Prototype Preview - Desktop"
+                  srcDoc={previewHtml}
+                  style={{
+                    width: '100%',
+                    height: '700px',
+                    border: 'none',
+                    display: 'block',
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -797,12 +854,32 @@ Make it look and feel like a real, professional app - not a prototype.`;
           <h3 className="text-xl font-bold text-gray-800 mb-4">Ready to Export?</h3>
          
           <div className="space-y-3">
-            {/* Download Button */}
+            {/* Download Button - current view mode */}
             <button
               onClick={handleDownloadHtml}
               className="w-full py-4 px-6 text-lg font-bold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              📥 Download Prototype HTML
+              📥 Download {viewMode === 'mobile' ? '📱 Mobile' : '💻 Desktop'} Prototype
+            </button>
+
+            {/* Download the other format */}
+            <button
+              onClick={() => {
+                const otherMode = viewMode === 'mobile' ? 'desktop' : 'mobile';
+                const html = buildHtml(otherMode);
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `mvp_prototype_${otherMode}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="w-full py-3 px-6 text-sm font-semibold rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all border border-gray-200"
+            >
+              {viewMode === 'mobile' ? '💻 Also download Desktop version' : '📱 Also download Mobile version'}
             </button>
            
             {/* AI Generate Button - only show if app title is filled */}
