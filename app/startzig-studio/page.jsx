@@ -215,6 +215,8 @@ Make it look and feel like a real, professional app - not a prototype.`;
       
       console.log('✅ InvokeLLM returned:', data ? 'has data' : 'empty');
       setGeneratingStatus('⚙️ Processing result...');
+      
+console.log('📏 Response length:', data?.response?.length);
      
       let cleanHtml = data?.response || "No HTML generated.";
       cleanHtml = cleanHtml.replace(/^```(html|htm)?\s*/i, '');
