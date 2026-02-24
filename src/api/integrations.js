@@ -71,6 +71,7 @@ export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
    
+    console.log('📡 Calling Gemini...');
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -83,6 +84,7 @@ export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
       }),
     });
 
+    console.log('✅ Gemini responded, status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
