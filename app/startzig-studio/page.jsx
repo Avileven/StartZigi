@@ -45,6 +45,7 @@ const App = () => {
   const [aiMode, setAiMode] = useState(null); // 'BASIC' or 'BOOST'
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState('');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [generatedHtml, setGeneratedHtml] = useState(null);
   const [viewMode, setViewMode] = useState('mobile'); // 'mobile' or 'desktop'
 
@@ -180,13 +181,20 @@ Requirements for BOOST mode:
 Make it look and feel like a real, professional app - not a prototype.`;
     }
    
+    let timerInterval = null;
     try {
       const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
       
       console.log('🚀 InvokeLLM starting...', { mode, creditType });
       setGeneratingStatus('📡 Connecting to AI...');
+      setElapsedSeconds(0);
       
-      const timeoutMs = mode === 'BASIC' ? 20000 : 30000;
+      // טיימר שסופר שניות
+      timerInterval = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+      
+      const timeoutMs = 120000; // 120 שניות
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
       );
@@ -217,8 +225,10 @@ Make it look and feel like a real, professional app - not a prototype.`;
         alert('❌ Error: ' + (error.message || 'Unknown error. Check console for details.'));
       }
     } finally {
+      clearInterval(timerInterval);
       setIsGenerating(false);
       setGeneratingStatus('');
+      setElapsedSeconds(0);
     }
   }, [appState]);
  
@@ -526,11 +536,13 @@ Make it look and feel like a real, professional app - not a prototype.`;
                 <div className="animate-spin text-4xl mb-2">⚙️</div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">Generating your prototype...</p>
                 {generatingStatus && (
-                  <p className="text-xs text-indigo-600 font-medium">{generatingStatus}</p>
+                  <p className="text-xs text-indigo-600 font-medium mb-1">{generatingStatus}</p>
                 )}
+                <p className="text-2xl font-mono font-bold text-gray-500">{elapsedSeconds}s</p>
+                <p className="text-xs text-gray-400 mb-3">AI is working, please wait...</p>
                 <button
-                  onClick={() => { setIsGenerating(false); setGeneratingStatus(''); setShowAIModal(false); }}
-                  className="mt-3 text-xs text-red-500 hover:text-red-700 underline"
+                  onClick={() => { setIsGenerating(false); setGeneratingStatus(''); setElapsedSeconds(0); setShowAIModal(false); }}
+                  className="mt-1 text-xs text-red-500 hover:text-red-700 underline"
                 >
                   Cancel
                 </button>
