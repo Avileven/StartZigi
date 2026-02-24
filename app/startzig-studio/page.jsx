@@ -119,26 +119,26 @@ const App = () => {
     const activeFeatures = appState.features.filter(f => f.isActive);
    
     // Build prompt based on mode
-    // בונים את ה-HTML הנוכחי של הסימולטור כנקודת התחלה
-    const simulatorHtml = buildPreviewHtml();
-
     const basePrompt = `You are an expert mobile app developer and UI designer.
 
-I have a working app prototype built with a simulator. Here is the current HTML:
+Create a complete, beautiful, single-file HTML mobile app prototype with the following details:
 
-\`\`\`html
-${simulatorHtml}
-\`\`\`
+App Title: ${appState.appTitle}
+App Description: ${appState.appDescription}
+Premium Price: $${appState.premiumPrice}
 
-App details:
-- Title: ${appState.appTitle}
-- Description: ${appState.appDescription}
-- Active Features: ${activeFeatures.map(f => `${f.icon} ${f.name}: ${f.description}`).join(', ')}
-- Premium Price: $${appState.premiumPrice}
-- Mock Posts: ${JSON.stringify(appState.mockPosts)}
-- Mock Messages: ${JSON.stringify(appState.mockMessages)}
+Active Screens (create one screen per feature):
+${activeFeatures.map(f => `- ${f.icon} ${f.name}: ${f.description}`).join('\n')}
 
-Your job is to take this prototype and make it significantly better. Keep the same structure and navigation, but upgrade the visual design, content richness, and interactivity.`;
+Community Feed Posts to display:
+${appState.mockPosts.map(p => `- ${p.user}: "${p.content}"`).join('\n')}
+
+Direct Messages to display:
+${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
+
+NAVIGATION: Use a hamburger menu (☰) in the top-left header that slides open a left sidebar with links to each screen.
+
+IMPORTANT: Return ONLY the complete HTML code, nothing else.`;
 
 
     let fullPrompt;
