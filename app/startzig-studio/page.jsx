@@ -47,6 +47,12 @@ const App = () => {
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [improvementNotes, setImprovementNotes] = useState('');
+  const [designPrefs, setDesignPrefs] = useState({
+    platform: 'mobile',
+    navigation: 'hamburger',
+    colorScheme: 'colorful',
+    style: 'modern',
+  });
   const generatedSectionRef = useRef(null);
   const [generatedHtml, setGeneratedHtml] = useState(null);
   const [viewMode, setViewMode] = useState('mobile'); // 'mobile' or 'desktop'
@@ -138,9 +144,14 @@ ${appState.mockPosts.map(p => `- ${p.user}: "${p.content}"`).join('\n')}
 Direct Messages to display:
 ${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
 
-NAVIGATION: Use a hamburger menu (☰) in the top-left header that slides open a left sidebar with links to each screen.
+Design Requirements:
+- Platform: ${designPrefs.platform === 'mobile' ? 'Mobile only - design for 375px width' : designPrefs.platform === 'desktop' ? 'Desktop only - full width layout' : 'Responsive - works on both mobile and desktop'}
+- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header that opens a left sidebar' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons' : designPrefs.navigation === 'sidebar' ? 'Permanent sidebar always visible on the left' : 'Top navigation bar with links'}
+- Color Scheme: ${designPrefs.colorScheme === 'colorful' ? 'Vibrant, colorful gradient design' : designPrefs.colorScheme === 'dark' ? 'Dark theme with dark backgrounds and light text' : designPrefs.colorScheme === 'light' ? 'Clean light theme, white backgrounds' : 'Minimal, mostly white with subtle accents'}
+- Design Style: ${designPrefs.style === 'modern' ? 'Modern, clean with rounded corners and shadows' : designPrefs.style === 'business' ? 'Professional business look, formal typography' : designPrefs.style === 'playful' ? 'Fun and playful with bold colors and rounded shapes' : 'Elegant and premium with refined typography'}
 
-IMPORTANT: Return ONLY the complete HTML code, nothing else. Do NOT use placeholder images or 'APP LOGO' text - use emoji or colored div instead.`;
+IMPORTANT: Return ONLY the complete HTML code, nothing else. Do NOT use placeholder images or 'APP LOGO' text - use emoji or colored div instead.
+${improvementNotes ? `\n\nUser requested improvements for this version:\n${improvementNotes}` : ''}`;
 
 
     let fullPrompt;
@@ -502,69 +513,102 @@ Make it look and feel like a real, professional app - not a prototype.`;
      
       {/* AI Generation Modal */}
       {showAIModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 my-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">Generate Prototype</h2>
-              <button
-                onClick={() => setShowAIModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ✕
-              </button>
+              <h2 className="text-2xl font-bold text-gray-800">✨ Generate Prototype</h2>
+              <button onClick={() => { setShowAIModal(false); setIsGenerating(false); }} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
             </div>
-           
-            <p className="text-gray-600 mb-6">Choose your generation mode:</p>
-           
-            <div className="space-y-4">
-              {/* BASIC Mode */}
-              <button
-                onClick={() => {
-                  setAiMode('BASIC');
-                  handleGenerateWithAI('BASIC');
-                }}
-                disabled={isGenerating}
-                className="w-full p-4 border-2 border-blue-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-left disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-lg text-gray-800">⚡ BASIC</h3>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Fast & Light</span>
+
+            {!isGenerating && (<>
+              {/* Design Preferences */}
+              <div className="mb-5 space-y-4">
+                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Design Preferences</h3>
+
+                {/* Platform */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">📱 Platform</p>
+                  <div className="flex gap-2">
+                    {[['mobile','📱 Mobile'],['desktop','💻 Desktop'],['both','📱💻 Both']].map(([val, label]) => (
+                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, platform: val}))}
+                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.platform === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">Clean, functional prototype with basic features and working navigation</p>
-              </button>
-             
-              {/* BOOST Mode */}
-              <button
-                onClick={() => {
-                  setAiMode('BOOST');
-                  handleGenerateWithAI('BOOST');
-                }}
-                disabled={isGenerating}
-                className="w-full p-4 border-2 border-purple-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition text-left disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-lg text-gray-800">🚀 BOOST</h3>
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Professional</span>
+
+                {/* Navigation */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">🧭 Navigation Style</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[['hamburger','☰ Hamburger'],['bottom','⬇ Bottom Bar'],['sidebar','◀ Sidebar'],['topnav','— Top Nav']].map(([val, label]) => (
+                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, navigation: val}))}
+                        className={`py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.navigation === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">Production-quality prototype with charts, animations, rich content & advanced interactivity</p>
-              </button>
-            </div>
-           
-            {isGenerating && (
-              <div className="mt-6 text-center">
-                <div className="animate-spin text-4xl mb-2">⚙️</div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Generating your prototype...</p>
-                {generatingStatus && (
-                  <p className="text-xs text-indigo-600 font-medium mb-1">{generatingStatus}</p>
-                )}
-                <p className="text-2xl font-mono font-bold text-gray-500">{elapsedSeconds}s</p>
-                <p className="text-xs text-gray-400 mb-3">AI is working, please wait...</p>
-                <button
-                  onClick={() => { setIsGenerating(false); setGeneratingStatus(''); setElapsedSeconds(0); setShowAIModal(false); }}
-                  className="mt-1 text-xs text-red-500 hover:text-red-700 underline"
-                >
-                  Cancel
+
+                {/* Color Scheme */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">🎨 Color Scheme</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[['colorful','🌈 Colorful'],['dark','🌑 Dark'],['light','☀️ Light'],['minimal','⬜ Minimal']].map(([val, label]) => (
+                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, colorScheme: val}))}
+                        className={`py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.colorScheme === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Style */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">✏️ Design Style</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[['modern','🔷 Modern'],['business','💼 Business'],['playful','🎮 Playful'],['elegant','💎 Elegant']].map(([val, label]) => (
+                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, style: val}))}
+                        className={`py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.style === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode Selection */}
+              <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">Generation Mode</h3>
+              <div className="space-y-3 mb-4">
+                <button onClick={() => { setAiMode('BASIC'); handleGenerateWithAI('BASIC'); }}
+                  className="w-full p-4 border-2 border-blue-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-left">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-gray-800">⚡ BASIC</h3>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">3 credits</span>
+                  </div>
+                  <p className="text-sm text-gray-600">Clean, functional prototype with working navigation</p>
                 </button>
+                <button onClick={() => { setAiMode('BOOST'); handleGenerateWithAI('BOOST'); }}
+                  className="w-full p-4 border-2 border-purple-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition text-left">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-gray-800">🚀 BOOST</h3>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">10 credits</span>
+                  </div>
+                  <p className="text-sm text-gray-600">Professional prototype with animations and rich content</p>
+                </button>
+              </div>
+            </>)}
+
+            {isGenerating && (
+              <div className="py-6 text-center">
+                <div className="animate-spin text-5xl mb-4">⚙️</div>
+                <p className="text-base font-bold text-gray-700 mb-1">Generating your prototype...</p>
+                <p className="text-sm text-orange-500 font-medium mb-3">⏳ This may take a few minutes</p>
+                {generatingStatus && <p className="text-xs text-indigo-600 mb-2">{generatingStatus}</p>}
+                <p className="text-3xl font-mono font-bold text-gray-400 mb-4">{elapsedSeconds}s</p>
+                <button onClick={() => { setIsGenerating(false); setGeneratingStatus(''); setElapsedSeconds(0); setShowAIModal(false); }}
+                  className="text-xs text-red-500 hover:text-red-700 underline">Cancel</button>
               </div>
             )}
           </div>
