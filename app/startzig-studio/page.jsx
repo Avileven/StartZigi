@@ -1,4 +1,4 @@
-// startzig studio 240226 with credits
+// startzig studio 240226 with credits and 2 ai
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -129,13 +129,13 @@ const App = () => {
     // Build prompt based on mode
     const basePrompt = `You are an expert mobile app developer and UI designer.
 
-Create a complete, beautiful, single-file HTML mobile app prototype with the following details:
+Create a complete, beautiful, single-file HTML app prototype with the following details:
 
 App Title: ${appState.appTitle}
 App Description: ${appState.appDescription}
 Premium Price: $${appState.premiumPrice}
 
-Active Screens (create one screen per feature):
+Active Screens (create ONE separate screen per feature, each with its own unique content):
 ${activeFeatures.map(f => `- ${f.icon} ${f.name}: ${f.description}`).join('\n')}
 
 Community Feed Posts to display:
@@ -145,13 +145,28 @@ Direct Messages to display:
 ${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
 
 Design Requirements:
-- Platform: ${designPrefs.platform === 'mobile' ? 'Mobile only - design for 375px width' : designPrefs.platform === 'desktop' ? 'Desktop only - full width layout' : 'Responsive - works on both mobile and desktop'}
-- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header that opens a left sidebar' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons' : designPrefs.navigation === 'sidebar' ? 'Permanent sidebar always visible on the left' : 'Top navigation bar with links'}
+- Platform: ${designPrefs.platform === 'mobile' ? 'Mobile only - design for 375px width, centered on page' : designPrefs.platform === 'desktop' ? 'Desktop - full width layout, use the entire screen' : 'Responsive - works on both mobile and desktop'}
+- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header that opens a left sidebar overlay' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons and labels' : designPrefs.navigation === 'sidebar' ? 'Permanent sidebar on the left, always visible' : 'Top navigation bar with links/tabs'}
 - Color Scheme: ${designPrefs.colorScheme === 'colorful' ? 'Vibrant, colorful gradient design' : designPrefs.colorScheme === 'dark' ? 'Dark theme with dark backgrounds and light text' : designPrefs.colorScheme === 'light' ? 'Clean light theme, white backgrounds' : 'Minimal, mostly white with subtle accents'}
 - Design Style: ${designPrefs.style === 'modern' ? 'Modern, clean with rounded corners and shadows' : designPrefs.style === 'business' ? 'Professional business look, formal typography' : designPrefs.style === 'playful' ? 'Fun and playful with bold colors and rounded shapes' : 'Elegant and premium with refined typography'}
 
-IMPORTANT: Return ONLY the complete HTML code, nothing else. Do NOT use placeholder images or 'APP LOGO' text - use emoji or colored div instead.
-${improvementNotes ? `\n\nUser requested improvements for this version:\n${improvementNotes}` : ''}`;
+CRITICAL SCREEN SWITCHING RULES - YOU MUST FOLLOW EXACTLY:
+1. Every screen must have class="screen" and a unique id
+2. ALL screens must start hidden with style="display:none" EXCEPT the first one
+3. Use this EXACT JavaScript pattern for switching screens:
+
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  document.getElementById(screenId).style.display = 'block';
+}
+
+4. Every navigation link must call showScreen('screen-id') and NOTHING else
+5. NEVER show multiple screens at the same time
+6. Each screen must contain ONLY its own content - NO mixing of content between screens
+
+Do NOT use placeholder images or 'APP LOGO' text - use emoji or a colored div instead.
+RETURN ONLY the complete HTML code, nothing else.
+${improvementNotes ? `\nUser requested improvements:\n${improvementNotes}` : ''}`;
 
 
     let fullPrompt;
