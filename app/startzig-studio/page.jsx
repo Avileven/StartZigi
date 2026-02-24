@@ -1,6 +1,6 @@
-// startzig studio 220226 with credits
+// startzig studio 240226 with credits
 "use client";
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
 
 
@@ -46,6 +46,8 @@ const App = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [improvementNotes, setImprovementNotes] = useState('');
+  const generatedSectionRef = useRef(null);
   const [generatedHtml, setGeneratedHtml] = useState(null);
   const [viewMode, setViewMode] = useState('mobile'); // 'mobile' or 'desktop'
 
@@ -138,7 +140,7 @@ ${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
 
 NAVIGATION: Use a hamburger menu (☰) in the top-left header that slides open a left sidebar with links to each screen.
 
-IMPORTANT: Return ONLY the complete HTML code, nothing else.`;
+IMPORTANT: Return ONLY the complete HTML code, nothing else. Do NOT use placeholder images or 'APP LOGO' text - use emoji or colored div instead.`;
 
 
     let fullPrompt;
@@ -203,7 +205,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
         setElapsedSeconds(prev => prev + 1);
       }, 1000);
       
-      const timeoutMs = 120000; // 120 שניות
+      const timeoutMs = 180000; // 120 שניות
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
       );
@@ -215,8 +217,6 @@ Make it look and feel like a real, professional app - not a prototype.`;
       
       console.log('✅ InvokeLLM returned:', data ? 'has data' : 'empty');
       setGeneratingStatus('⚙️ Processing result...');
-      
-console.log('📏 Response length:', data?.response?.length);
      
       let cleanHtml = data?.response || "No HTML generated.";
       cleanHtml = cleanHtml.replace(/^```(html|htm)?\s*/i, '');
@@ -258,6 +258,13 @@ console.log('📏 Response length:', data?.response?.length);
     URL.revokeObjectURL(url);
   }, [generatedHtml, appState.appTitle, aiMode]);
 
+
+  // גלילה אוטומטית לתוצאה כשהיא מופיעה
+  useEffect(() => {
+    if (generatedHtml && generatedSectionRef.current) {
+      generatedSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [generatedHtml]);
 
   const buildPreviewHtml = useCallback(() => {
     const activeFeatures = appState.features.filter(f => f.isActive);
@@ -566,7 +573,7 @@ console.log('📏 Response length:', data?.response?.length);
      
       {/* Generated HTML Preview & Download */}
       {generatedHtml && (
-        <div className="max-w-6xl mx-auto mb-6">
+        <div ref={generatedSectionRef} className="max-w-6xl mx-auto mb-6">
           <div className="p-6 bg-green-50 border-2 border-green-300 rounded-2xl shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -628,12 +635,25 @@ console.log('📏 Response length:', data?.response?.length);
                   </ul>
                 </div>
                
-                <button
-                  onClick={() => setShowAIModal(true)}
-                  className="w-full py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition"
-                >
-                  🔄 Generate Again
-                </button>
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                  <h4 className="font-semibold text-gray-800 mb-1">🔄 Improve this prototype</h4>
+                  <p className="text-xs text-gray-500 mb-2">Short feedback only (max 200 chars)</p>
+                  <textarea
+                    maxLength={200}
+                    rows={3}
+                    placeholder="e.g. Make the colors darker, add more posts..."
+                    className="w-full border border-purple-200 rounded-lg p-2 text-sm mb-2 resize-none"
+                    value={improvementNotes}
+                    onChange={(e) => setImprovementNotes(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-400 text-right mb-2">{improvementNotes.length}/200</p>
+                  <button
+                    onClick={() => setShowAIModal(true)}
+                    className="w-full py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition"
+                  >
+                    🔄 Generate Improved Version
+                  </button>
+                </div>
               </div>
             </div>
           </div>
