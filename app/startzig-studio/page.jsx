@@ -119,17 +119,26 @@ const App = () => {
     const activeFeatures = appState.features.filter(f => f.isActive);
    
     // Build prompt based on mode
-    const basePrompt = `You are an expert mobile app developer.
+    // בונים את ה-HTML הנוכחי של הסימולטור כנקודת התחלה
+    const simulatorHtml = buildPreviewHtml();
 
+    const basePrompt = `You are an expert mobile app developer and UI designer.
 
-App Configuration:
+I have a working app prototype built with a simulator. Here is the current HTML:
+
+\`\`\`html
+${simulatorHtml}
+\`\`\`
+
+App details:
 - Title: ${appState.appTitle}
 - Description: ${appState.appDescription}
-- Features: ${activeFeatures.map(f => `${f.icon} ${f.name}: ${f.description}`).join(', ')}
+- Active Features: ${activeFeatures.map(f => `${f.icon} ${f.name}: ${f.description}`).join(', ')}
 - Premium Price: $${appState.premiumPrice}
+- Mock Posts: ${JSON.stringify(appState.mockPosts)}
+- Mock Messages: ${JSON.stringify(appState.mockMessages)}
 
-
-Create a complete, single-file HTML prototype.`;
+Your job is to take this prototype and make it significantly better. Keep the same structure and navigation, but upgrade the visual design, content richness, and interactivity.`;
 
 
     let fullPrompt;
@@ -248,7 +257,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
   }, [generatedHtml, appState.appTitle, aiMode]);
 
 
-  const previewHtml = useMemo(() => {
+  const buildPreviewHtml = useCallback(() => {
     const activeFeatures = appState.features.filter(f => f.isActive);
 
 
@@ -449,6 +458,7 @@ Make it look and feel like a real, professional app - not a prototype.`;
 </html>`;
   }, [appState]);
 
+  const previewHtml = useMemo(() => buildPreviewHtml(), [buildPreviewHtml]);
 
   const handleDownloadHtml = useCallback(() => {
     const blob = new Blob([previewHtml], { type: 'text/html' });
