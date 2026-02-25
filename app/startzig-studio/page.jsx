@@ -1,11 +1,11 @@
-// startzig studio 250226 with credits & temp 
+// startzig studio 220226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
 
 
 const defaultFeatureTemplates = [
-  { id: 'home', name: 'Dashboard', icon: '🏠', description: 'Application welcome screen.', isActive: true, isDefault: true },
+  { id: 'home', name: 'Home', icon: '🏠', description: 'Application welcome screen.', isActive: true, isDefault: true },
   { id: 'posts', name: 'Community Feed', icon: '🗣', description: 'A scrollable feed for sharing updates and engaging with others.', isActive: true },
   { id: 'messages', name: 'Direct Messaging', icon: '✉️', description: 'Real-time 1:1 communication between users.', isActive: true },
   { id: 'counter', name: 'Simple Counter', icon: '🔢', description: 'A basic utility for tracking scores, counts, or goals.', isActive: false },
@@ -204,11 +204,11 @@ const VENTURE_CONFIGS = {
     }
   },
   saas: {
-    name: 'SaaS / Dashboard',
+    name: 'SaaS / Home',
     icon: '📊',
     desc: 'דשבורד לניהול עם מטריקות ונתונים',
     screenHints: {
-      home: 'Dashboard overview with KPI cards (users, revenue, growth). Hero: ' + UNSPLASH.saas.hero,
+      home: 'Home overview with KPI cards (users, revenue, growth). Hero: ' + UNSPLASH.saas.hero,
       posts: 'Activity feed / notifications log',
       messages: 'Team messaging or support tickets',
       business: 'Pricing plans and upgrade options',
@@ -377,7 +377,8 @@ const App = () => {
           + '\nThe html value is inner content only — NO <html>, <head>, <body>, <header>, <nav> tags.'
           + '\nDO NOT use position:fixed, position:sticky, or large padding-top — the template already has a fixed header.'
           + '\nStart content directly with a div. Use Tailwind classes only.'
-          + '\nNo placeholder images unless you have a real Unsplash URL.';
+          + '\nNo placeholder images unless you have a real Unsplash URL.'
+          + '\nFor every <img> tag, always add: onerror="this.style.display=\'none\'" to hide broken images gracefully.';
 
         const data = await Promise.race([
           InvokeLLM({ prompt, max_tokens: isBoost ? 2000 : 1200, creditType }),
