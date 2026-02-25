@@ -1,4 +1,4 @@
-// startzig studio 240226 with credits and 2 ai
+// startzig studio 250226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -145,10 +145,12 @@ Direct Messages to display:
 ${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
 
 Design Requirements:
-- Platform: ${designPrefs.platform === 'mobile' ? 'Mobile only - design for 375px width, centered on page' : designPrefs.platform === 'desktop' ? 'Desktop - full width layout, use the entire screen' : 'Responsive - works on both mobile and desktop'}
-- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header that opens a left sidebar overlay' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons and labels' : designPrefs.navigation === 'sidebar' ? 'Permanent sidebar on the left, always visible' : 'Top navigation bar with links/tabs'}
+- Platform: ${designPrefs.platform === 'mobile' ? 'MOBILE ONLY: max-width 375px centered. Phone-like layout.' : designPrefs.platform === 'desktop' ? 'DESKTOP ONLY: body width 100%, no max-width, no phone frame, no centered container, no overflow:hidden on body. Content fills entire browser window. body and html must have width:100% and min-height:100vh.' : 'RESPONSIVE: use media queries for both mobile and desktop'}
+- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header opens a left sidebar. No top nav links.' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons. No hamburger, no sidebar.' : designPrefs.navigation === 'sidebar' ? 'Permanent left sidebar always visible. No hamburger button.' : 'TOP NAV BAR ONLY: all navigation links must be visible in a fixed horizontal top bar at all times. Absolutely NO hamburger button. NO sidebar. NO bottom nav. Links are always visible in the header.'}
 - Color Scheme: ${designPrefs.colorScheme === 'colorful' ? 'Vibrant, colorful gradient design' : designPrefs.colorScheme === 'dark' ? 'Dark theme with dark backgrounds and light text' : designPrefs.colorScheme === 'light' ? 'Clean light theme, white backgrounds' : 'Minimal, mostly white with subtle accents'}
 - Design Style: ${designPrefs.style === 'modern' ? 'Modern, clean with rounded corners and shadows' : designPrefs.style === 'business' ? 'Professional business look, formal typography' : designPrefs.style === 'playful' ? 'Fun and playful with bold colors and rounded shapes' : 'Elegant and premium with refined typography'}
+
+CRITICAL SCROLLING RULE: NEVER set overflow:hidden on body or html. All screens must be scrollable. Use overflow-y:auto on screen containers.
 
 CRITICAL SCREEN SWITCHING RULES - YOU MUST FOLLOW EXACTLY:
 1. Every screen must have class="screen" and a unique id
