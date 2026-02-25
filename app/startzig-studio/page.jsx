@@ -372,8 +372,10 @@ const App = () => {
           + (imageNote ? '\n' + imageNote : '')
           + (improvementNotes ? '\nImprovements: ' + improvementNotes : '')
           + '\n\nReturn ONLY a JSON object: {"html": "...tailwind html content for this screen..."}'
-          + '\nThe html value should be the inner content only (no <html>, <head>, <body> tags).'
-          + '\nUse Tailwind classes. No placeholder images unless you have a real URL.';
+          + '\nThe html value is inner content only — NO <html>, <head>, <body>, <header>, <nav> tags.'
+          + '\nDO NOT use position:fixed, position:sticky, or large padding-top — the template already has a fixed header.'
+          + '\nStart content directly with a div. Use Tailwind classes only.'
+          + '\nNo placeholder images unless you have a real Unsplash URL.';
 
         const data = await Promise.race([
           InvokeLLM({ prompt, max_tokens: isBoost ? 2000 : 1200, creditType }),
@@ -680,12 +682,13 @@ const App = () => {
      
       {/* AI Generation Modal */}
       {showAIModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 my-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">✨ Generate Prototype</h2>
-              <button onClick={() => { setShowAIModal(false); setIsGenerating(false); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg font-bold">✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full my-4">
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+              <h2 className="text-xl font-bold text-gray-800">✨ Generate Prototype</h2>
+              <button onClick={() => { setShowAIModal(false); setIsGenerating(false); }} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 text-gray-600 text-lg font-bold transition">✕</button>
             </div>
+            <div className="p-6 pt-4">
 
             {!isGenerating && (<>
               {/* Venture Type */}
@@ -772,6 +775,7 @@ const App = () => {
                   className="text-xs text-red-500 hover:text-red-700 underline">Cancel</button>
               </div>
             )}
+          </div>
           </div>
         </div>
       )}
