@@ -328,90 +328,90 @@ const App = () => {
 
 
 
-  // AI Generation Handler
+  // AI Generation Handler - per-screen JSON approach
   const handleGenerateWithAI = useCallback(async (mode) => {
     setIsGenerating(true);
     setGeneratedHtml(null);
-   
+
     const activeFeatures = appState.features.filter(f => f.isActive);
-   
-    console.log("🎨 designPrefs:", JSON.stringify(designPrefs));
-    // Build template structure
-    const templateHtml = buildResponsiveTemplate(activeFeatures, appState.appTitle, designPrefs, ventureType);
-
-    // Build prompt - AI fills content per screen using venture hints
     const config = typeof VENTURE_CONFIGS !== 'undefined' ? VENTURE_CONFIGS[ventureType] : null;
-    const screenInstructions = activeFeatures.map(f => {
-      const hint = config && config.screenHints ? (config.screenHints[f.id] || '') : '';
-      let extra = '';
-      if (f.id === 'posts') extra = '\nFeed posts to show: ' + appState.mockPosts.map(p => p.user + ': "' + p.content + '"').join(', ');
-      if (f.id === 'messages') extra = '\nMessages: ' + appState.mockMessages.map(m => m.sender + ': "' + m.content + '"').join(', ');
-      if (f.id === 'business') extra = '\nPremium price: $' + appState.premiumPrice;
-      return 'Screen id="' + f.id + '" — ' + f.icon + ' ' + f.name + ': ' + f.description + (hint ? '\nDesign hint: ' + hint : '') + extra;
-    }).join('\n\n');
+    const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
+    const isBoost = mode === 'BOOST';
 
-    const modeInstructions = mode === 'BASIC'
-      ? 'BASIC: clean simple content, cards and text. No charts.'
-      : 'BOOST: rich professional content, add Chart.js CDN for charts, smooth animations, working forms.';
+    let timerInterval = setInterval(() => setElapsedSeconds(prev => prev + 1), 1000);
 
-    const ventureHint = config ? ('Venture type: ' + config.name + ' — ' + config.desc) : '';
-
-    const fullPrompt = 'You are a UI developer filling in HTML template placeholders.'
-      + '\n\nApp: ' + appState.appTitle + ' — ' + appState.appDescription
-      + '\n' + ventureHint
-      + '\n' + modeInstructions
-      + (improvementNotes ? '\nUser improvements requested: ' + improvementNotes : '')
-      + '\n\nFill each {{CONTENT_ID}} placeholder with beautiful Tailwind HTML content.'
-      + '\nDo NOT modify CSS, JS, or navigation — only replace placeholders.'
-      + '\nUse the Unsplash image URLs provided in hints (img tags with the URLs).'
-      + '\nReturn the COMPLETE HTML file.'
-      + '\n\nSCREENS:\n' + screenInstructions
-      + '\n\nTEMPLATE:\n' + templateHtml;
-
-    const maxTokens = mode === 'BASIC' ? 4000 : 10000;
-   
-    let timerInterval = null;
     try {
-      const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
-      
-      console.log('🚀 InvokeLLM starting...', { mode, creditType });
       setGeneratingStatus('📡 Connecting to AI...');
       setElapsedSeconds(0);
-      
-      // טיימר שסופר שניות
-      timerInterval = setInterval(() => {
-        setElapsedSeconds(prev => prev + 1);
-      }, 1000);
-      
-      const timeoutMs = 180000; // 120 שניות
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
-      );
 
-      const data = await Promise.race([
-        InvokeLLM({ prompt: fullPrompt, max_tokens: maxTokens, creditType }),
-        timeoutPromise
-      ]);
-      
-      console.log('✅ InvokeLLM returned:', data ? 'has data' : 'empty');
-      setGeneratingStatus('⚙️ Processing result...');
-     
-      let cleanHtml = data?.response || "No HTML generated.";
-      cleanHtml = cleanHtml.replace(/^```(html|htm)?\s*/i, '');
-      cleanHtml = cleanHtml.replace(/\s*```\s*$/i, '');
-      cleanHtml = cleanHtml.trim();
-     
-      setGeneratedHtml(cleanHtml);
+      // Build content for each screen one by one
+      const screenContents = {};
+
+      for (let i = 0; i < activeFeatures.length; i++) {
+        const f = activeFeatures[i];
+        setGeneratingStatus('🎨 Building screen ' + (i + 1) + ' of ' + activeFeatures.length + ': ' + f.name + '...');
+
+        const hint = config && config.screenHints ? (config.screenHints[f.id] || '') : '';
+        let dataHint = '';
+        if (f.id === 'posts') dataHint = ' Posts: ' + appState.mockPosts.map(p => p.user + ': "' + p.content + '"').join(', ');
+        if (f.id === 'messages') dataHint = ' Messages: ' + appState.mockMessages.map(m => m.sender + ': "' + m.content + '"').join(', ');
+        if (f.id === 'business') dataHint = ' Premium price: $' + appState.premiumPrice;
+
+        const colorInfo = 'Color scheme: ' + designPrefs.colorScheme + ', Style: ' + designPrefs.style;
+        const modeInfo = isBoost
+          ? 'Rich professional content with animations, interactive elements, real data.'
+          : 'Clean simple content with cards and text.';
+        const imageNote = hint.includes('unsplash') ? 'Use this image URL in an <img> tag: ' + hint.split('Use image: ').pop().split(',')[0].split('\n')[0] : '';
+
+        const prompt = 'Generate HTML content for one app screen using Tailwind CSS.'
+          + '\nApp: ' + appState.appTitle + ' — ' + appState.appDescription
+          + '\nScreen: ' + f.icon + ' ' + f.name + ' — ' + f.description
+          + '\n' + colorInfo
+          + '\n' + modeInfo
+          + (dataHint ? '\n' + dataHint : '')
+          + (imageNote ? '\n' + imageNote : '')
+          + (improvementNotes ? '\nImprovements: ' + improvementNotes : '')
+          + '\n\nReturn ONLY a JSON object: {"html": "...tailwind html content for this screen..."}'
+          + '\nThe html value should be the inner content only (no <html>, <head>, <body> tags).'
+          + '\nUse Tailwind classes. No placeholder images unless you have a real URL.';
+
+        const data = await Promise.race([
+          InvokeLLM({ prompt, max_tokens: isBoost ? 2000 : 1200, creditType }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 45000))
+        ]);
+
+        let html = '';
+        try {
+          const raw = (data?.response || '').replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+          const parsed = JSON.parse(raw);
+          html = parsed.html || '';
+        } catch(e) {
+          // fallback: try to extract html directly
+          const match = (data?.response || '').match(/"html"\s*:\s*"([\s\S]*?)(?:"\s*}|"\s*$)/);
+          html = match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '<p class="p-4 text-gray-500">Content unavailable</p>';
+        }
+
+        screenContents[f.id] = html;
+      }
+
+      // Inject all content into template
+      setGeneratingStatus('⚙️ Assembling prototype...');
+      let finalHtml = buildResponsiveTemplate(activeFeatures, appState.appTitle, designPrefs, ventureType);
+      activeFeatures.forEach(f => {
+        finalHtml = finalHtml.replace('{{CONTENT_' + f.id.toUpperCase() + '}}', screenContents[f.id] || '');
+      });
+
+      setGeneratedHtml(finalHtml);
       setShowAIModal(false);
-     
+
     } catch (error) {
-      console.error('❌ InvokeLLM error:', error.message, error);
+      console.error('❌ Error:', error.message);
       if (error.message === 'NO_CREDITS') {
         alert('⚠️ You\'ve used all your credits this month. Upgrade your plan to get more.');
       } else if (error.message === 'TIMEOUT') {
         alert('⏱️ AI did not respond in time. Please try again.');
       } else {
-        alert('❌ Error: ' + (error.message || 'Unknown error. Check console for details.'));
+        alert('❌ Error: ' + (error.message || 'Unknown error'));
       }
     } finally {
       clearInterval(timerInterval);
@@ -419,7 +419,7 @@ const App = () => {
       setGeneratingStatus('');
       setElapsedSeconds(0);
     }
-  }, [appState]);
+  }, [appState, designPrefs, ventureType, improvementNotes]);
  
   // Download generated HTML
   const handleDownloadGeneratedHtml = useCallback(() => {
@@ -684,7 +684,7 @@ const App = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 my-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">✨ Generate Prototype</h2>
-              <button onClick={() => { setShowAIModal(false); setIsGenerating(false); }} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+              <button onClick={() => { setShowAIModal(false); setIsGenerating(false); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg font-bold">✕</button>
             </div>
 
             {!isGenerating && (<>
@@ -711,32 +711,6 @@ const App = () => {
               {/* Design Preferences */}
               <div className="mb-5 space-y-4">
                 <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">עיצוב</h3>
-
-                {/* Platform */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">📱 Platform</p>
-                  <div className="flex gap-2">
-                    {[['mobile','📱 Mobile'],['desktop','💻 Desktop'],['both','📱💻 Both']].map(([val, label]) => (
-                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, platform: val}))}
-                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.platform === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Navigation */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">🧭 Navigation Style</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {[['hamburger','☰ Hamburger'],['bottom','⬇ Bottom Bar'],['sidebar','◀ Sidebar'],['topnav','— Top Nav']].map(([val, label]) => (
-                      <button key={val} onClick={() => setDesignPrefs(p => ({...p, navigation: val}))}
-                        className={`py-2 px-3 rounded-lg text-xs font-semibold border-2 transition ${designPrefs.navigation === val ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Color Scheme */}
                 <div>
