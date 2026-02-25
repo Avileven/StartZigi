@@ -42,7 +42,7 @@ export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
 
 
           // [CREDITS] עלות לפי סוג פעולה
-          const costs = { mentor: 1, studio_basic: 3, studio_boost: 10 };
+          const costs = { mentor: 1, studio_basic: 5, studio_boost: 10 };
           const cost = costs[creditType] || 1;
 
 
