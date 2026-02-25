@@ -1,4 +1,4 @@
-// startzig studio 250226 with credits
+// startzig studio 220226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -34,6 +34,147 @@ const getInitialState = () => ({
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
+
+
+// ============================================
+// Template Builder - outside component to avoid JSX issues
+// ============================================
+// Template builder - clean JS, no JSX issues
+function getColors(designPrefs) {
+  const scheme = designPrefs.colorScheme;
+  const style = designPrefs.style;
+  if (scheme === 'dark') return { headerBg: 'linear-gradient(135deg,#1a1a2e,#16213e)', sidebarBg: 'linear-gradient(180deg,#0f0f23,#1a1a3e)', accent: '#6366f1' };
+  if (scheme === 'light') return { headerBg: 'linear-gradient(135deg,#4f46e5,#7c3aed)', sidebarBg: 'linear-gradient(180deg,#4f46e5,#7c3aed)', accent: '#4f46e5' };
+  if (scheme === 'minimal') return { headerBg: '#374151', sidebarBg: '#374151', accent: '#374151' };
+  if (style === 'business') return { headerBg: 'linear-gradient(135deg,#1e3a5f,#2d6a9f)', sidebarBg: 'linear-gradient(180deg,#1e3a5f,#2d6a9f)', accent: '#2d6a9f' };
+  if (style === 'playful') return { headerBg: 'linear-gradient(135deg,#f97316,#ec4899)', sidebarBg: 'linear-gradient(180deg,#f97316,#ec4899)', accent: '#f97316' };
+  if (style === 'elegant') return { headerBg: 'linear-gradient(135deg,#1c1c2e,#6b21a8)', sidebarBg: 'linear-gradient(180deg,#1c1c2e,#6b21a8)', accent: '#6b21a8' };
+  return { headerBg: 'linear-gradient(135deg,#667eea,#764ba2)', sidebarBg: 'linear-gradient(180deg,#667eea,#764ba2)', accent: '#667eea' };
+}
+
+function buildTemplate(features, appTitle, designPrefs) {
+  const colors = getColors(designPrefs);
+  const nav = designPrefs.navigation;
+  const platform = designPrefs.platform;
+
+  const screensHtml = features.map(function(f, i) {
+    return '<div id="screen-' + f.id + '" class="screen' + (i === 0 ? ' active' : '') + '">\n{{CONTENT_' + f.id.toUpperCase() + '}}\n</div>';
+  }).join('\n');
+
+  const JS = 'function showScreen(id){'
+    + 'document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active")});'
+    + 'document.getElementById(id).classList.add("active");'
+    + 'document.querySelectorAll(".nav-link,.bottom-btn").forEach(function(l){l.classList.remove("active")});'
+    + 'var el=document.querySelector("[data-screen=\\""+id+"\\"]");'
+    + 'if(el)el.classList.add("active");'
+    + 'var sb=document.getElementById("sidebar");if(sb)sb.classList.remove("open");'
+    + 'var ov=document.getElementById("overlay");if(ov)ov.classList.remove("show");'
+    + '}'
+    + 'document.addEventListener("DOMContentLoaded",function(){'
+    + 'var first=document.querySelector(".screen");if(first)first.classList.add("active");'
+    + 'var firstBtn=document.querySelector(".nav-link,.bottom-btn");if(firstBtn)firstBtn.classList.add("active");'
+    + '});';
+
+  function makeNavLink(f) {
+    return '<button class="nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.icon + ' ' + f.name + '</button>';
+  }
+
+  function makeBottomBtn(f) {
+    return '<button class="bottom-btn" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)"><span style="font-size:20px">' + f.icon + '</span><span>' + f.name + '</span></button>';
+  }
+
+  const head = '<!DOCTYPE html><html lang="en"><head>'
+    + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    + '<title>' + appTitle + '</title>'
+    + '<script src="https://cdn.tailwindcss.com"><\/script>';
+
+  if (nav === 'hamburger' || (platform === 'mobile' && nav !== 'bottom')) {
+    const navLinks = features.map(makeNavLink).join('\n');
+    const openCloseNav = 'function openNav(){document.getElementById("sidebar").classList.add("open");document.getElementById("overlay").classList.add("show")}'
+      + 'function closeNav(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("show")}';
+    return head
+      + '<style>'
+      + '*{box-sizing:border-box;margin:0;padding:0}'
+      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;max-width:430px;margin:0 auto;min-height:100vh}'
+      + '.screen{display:none;padding:76px 16px 24px;min-height:100vh;overflow-y:auto}'
+      + '.screen.active{display:block}'
+      + '#sidebar{position:fixed;top:0;left:-280px;width:280px;height:100vh;background:' + colors.sidebarBg + ';z-index:100;transition:left 0.3s;padding:24px 16px;overflow-y:auto}'
+      + '#sidebar.open{left:0}'
+      + '#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}'
+      + '#overlay.show{display:block}'
+      + 'header{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
+      + '.nav-link{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,0.85);cursor:pointer;margin-bottom:4px;font-size:14px;font-weight:500;border:none;background:none;width:100%;text-align:left}'
+      + '.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.2);color:white}'
+      + '.sidebar-title{color:white;font-size:18px;font-weight:700;padding:0 4px 20px}'
+      + '</style></head><body>'
+      + '<div id="overlay" onclick="closeNav()"></div>'
+      + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + navLinks + '</div>'
+      + '<header><button onclick="openNav()" style="background:none;border:none;color:white;font-size:26px;cursor:pointer">&#9776;</button>'
+      + '<span style="color:white;font-weight:700;font-size:17px">' + appTitle + '</span><div style="width:32px"></div></header>'
+      + screensHtml
+      + '<script>' + openCloseNav + JS + '<\/script>'
+      + '</body></html>';
+  }
+
+  if (nav === 'bottom') {
+    const navBtns = features.map(makeBottomBtn).join('\n');
+    return head
+      + '<style>'
+      + '*{box-sizing:border-box;margin:0;padding:0}'
+      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;max-width:430px;margin:0 auto;min-height:100vh}'
+      + 'header{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;justify-content:center;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
+      + '.screen{display:none;padding:76px 16px 80px;min-height:100vh;overflow-y:auto}'
+      + '.screen.active{display:block}'
+      + '#bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:64px;background:white;border-top:1px solid #e5e7eb;display:flex;z-index:50}'
+      + '.bottom-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#9ca3af;font-size:10px;font-weight:500;border:none;background:none}'
+      + '.bottom-btn.active{color:' + colors.accent + '}'
+      + '</style></head><body>'
+      + '<header><span style="color:white;font-weight:700;font-size:17px">' + appTitle + '</span></header>'
+      + screensHtml
+      + '<nav id="bottom-nav">' + navBtns + '</nav>'
+      + '<script>' + JS + '<\/script>'
+      + '</body></html>';
+  }
+
+  if (nav === 'sidebar') {
+    const navLinks = features.map(makeNavLink).join('\n');
+    return head
+      + '<style>'
+      + '*{box-sizing:border-box;margin:0;padding:0}'
+      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;min-height:100vh;width:100%;display:flex}'
+      + '#sidebar{width:240px;min-height:100vh;background:' + colors.sidebarBg + ';position:fixed;top:0;left:0;padding:24px 14px;overflow-y:auto;z-index:10}'
+      + '.sidebar-title{color:white;font-size:18px;font-weight:700;padding:0 4px 24px}'
+      + '.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.8);cursor:pointer;margin-bottom:4px;font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left}'
+      + '.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.2);color:white}'
+      + '#main{margin-left:240px;flex:1;min-height:100vh}'
+      + '.screen{display:none;padding:32px 36px;min-height:100vh;overflow-y:auto}'
+      + '.screen.active{display:block}'
+      + '</style></head><body>'
+      + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + navLinks + '</div>'
+      + '<div id="main">' + screensHtml + '</div>'
+      + '<script>' + JS + '<\/script>'
+      + '</body></html>';
+  }
+
+  // topnav - desktop default
+  const navLinks = features.map(makeNavLink).join('\n');
+  return head
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:Inter,sans-serif;background:#f3f4f6;min-height:100vh;width:100%}'
+    + 'header{position:fixed;top:0;left:0;width:100%;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;padding:0 32px;gap:8px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
+    + '.logo{color:white;font-weight:800;font-size:18px;margin-right:16px;white-space:nowrap}'
+    + '.nav-link{color:rgba(255,255,255,0.8);font-size:13px;font-weight:500;cursor:pointer;padding:6px 12px;border-radius:8px;white-space:nowrap;border:none;background:none}'
+    + '.nav-link:hover,.nav-link.active{color:white;background:rgba(255,255,255,0.2)}'
+    + '.screen{display:none;padding:80px 40px 40px;min-height:100vh;width:100%;overflow-y:auto}'
+    + '.screen.active{display:block}'
+    + '</style></head><body>'
+    + '<header><span class="logo">' + appTitle + '</span>' + navLinks + '</header>'
+    + screensHtml
+    + '<script>' + JS + '<\/script>'
+    + '</body></html>';
+}
 
 
 const App = () => {
@@ -119,6 +260,7 @@ const App = () => {
   }, [appState, newFeatureName, newFeatureContent]);
 
 
+
   // AI Generation Handler
   const handleGenerateWithAI = useCallback(async (mode) => {
     setIsGenerating(true);
@@ -126,99 +268,43 @@ const App = () => {
    
     const activeFeatures = appState.features.filter(f => f.isActive);
    
-    // Build prompt based on mode
-    const basePrompt = `You are an expert mobile app developer and UI designer.
+    // Build template structure
+    const templateHtml = buildTemplate(activeFeatures, appState.appTitle, designPrefs);
 
-Create a complete, beautiful, single-file HTML app prototype with the following details:
+    // Build prompt - AI only fills content per screen
+    const screenInstructions = activeFeatures.map(f => {
+      let extra = '';
+      if (f.id === 'posts') extra = `\nPosts to show:\n${appState.mockPosts.map(p => `- ${p.user}: "${p.content}"`).join('\n')}`;
+      if (f.id === 'messages') extra = `\nMessages to show:\n${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}`;
+      if (f.id === 'business') extra = `\nPremium price: $${appState.premiumPrice}`;
+      return `Screen id="${f.id}" — ${f.icon} ${f.name}: ${f.description}${extra}`;
+    }).join('\n\n');
 
-App Title: ${appState.appTitle}
-App Description: ${appState.appDescription}
-Premium Price: $${appState.premiumPrice}
+    const modeInstructions = mode === 'BASIC'
+      ? 'BASIC mode: clean, simple content. Cards, text, basic buttons. Keep it minimal and functional.'
+      : 'BOOST mode: rich, professional content. Add charts (Chart.js CDN), animations, working forms, interactive elements. Make it look production-ready.';
 
-Active Screens (create ONE separate screen per feature, each with its own unique content):
-${activeFeatures.map(f => `- ${f.icon} ${f.name}: ${f.description}`).join('\n')}
+    const fullPrompt = `You are a UI developer. I have an HTML template with screens already set up. Your job is to fill in the content for each screen.
 
-Community Feed Posts to display:
-${appState.mockPosts.map(p => `- ${p.user}: "${p.content}"`).join('\n')}
+App: ${appState.appTitle} — ${appState.appDescription}
+${modeInstructions}
+${improvementNotes ? `User requested improvements: ${improvementNotes}\n` : ''}
+Here is the HTML template. Replace each {{CONTENT_SCREENID}} placeholder with rich HTML content for that screen. Do NOT change anything outside the placeholders — keep all CSS, JS, navigation exactly as is.
 
-Direct Messages to display:
-${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}
+SCREENS TO FILL:
+${screenInstructions}
 
-Design Requirements:
-- Platform: ${designPrefs.platform === 'mobile' ? 'MOBILE ONLY: max-width 375px centered. Phone-like layout.' : designPrefs.platform === 'desktop' ? 'DESKTOP ONLY: body width 100%, no max-width, no phone frame, no centered container, no overflow:hidden on body. Content fills entire browser window. body and html must have width:100% and min-height:100vh.' : 'RESPONSIVE: use media queries for both mobile and desktop'}
-- Navigation: ${designPrefs.navigation === 'hamburger' ? 'Hamburger menu (☰) in header opens a left sidebar. No top nav links.' : designPrefs.navigation === 'bottom' ? 'Fixed bottom navigation bar with icons. No hamburger, no sidebar.' : designPrefs.navigation === 'sidebar' ? 'Permanent left sidebar always visible. No hamburger button.' : 'TOP NAV BAR ONLY: all navigation links must be visible in a fixed horizontal top bar at all times. Absolutely NO hamburger button. NO sidebar. NO bottom nav. Links are always visible in the header.'}
-- Color Scheme: ${designPrefs.colorScheme === 'colorful' ? 'Vibrant, colorful gradient design' : designPrefs.colorScheme === 'dark' ? 'Dark theme with dark backgrounds and light text' : designPrefs.colorScheme === 'light' ? 'Clean light theme, white backgrounds' : 'Minimal, mostly white with subtle accents'}
-- Design Style: ${designPrefs.style === 'modern' ? 'Modern, clean with rounded corners and shadows' : designPrefs.style === 'business' ? 'Professional business look, formal typography' : designPrefs.style === 'playful' ? 'Fun and playful with bold colors and rounded shapes' : 'Elegant and premium with refined typography'}
+RULES:
+- Replace ONLY the {{CONTENT_FEATUREID}} placeholders
+- Use Tailwind classes for styling
+- Do NOT use placeholder images — use emoji or colored divs
+- BOOST: add Chart.js CDN in <head> if needed
+- Return the COMPLETE HTML file
 
-CRITICAL SCROLLING RULE: NEVER set overflow:hidden on body or html. All screens must be scrollable. Use overflow-y:auto on screen containers.
+TEMPLATE:
+${templateHtml}`;
 
-CRITICAL SCREEN SWITCHING RULES - YOU MUST FOLLOW EXACTLY:
-1. Every screen must have class="screen" and a unique id
-2. ALL screens must start hidden with style="display:none" EXCEPT the first one
-3. Use this EXACT JavaScript pattern for switching screens:
-
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-  document.getElementById(screenId).style.display = 'block';
-}
-
-4. Every navigation link must call showScreen('screen-id') and NOTHING else
-5. NEVER show multiple screens at the same time
-6. Each screen must contain ONLY its own content - NO mixing of content between screens
-
-Do NOT use placeholder images or 'APP LOGO' text - use emoji or a colored div instead.
-RETURN ONLY the complete HTML code, nothing else.
-${improvementNotes ? `\nUser requested improvements:\n${improvementNotes}` : ''}`;
-
-
-    let fullPrompt;
-    let maxTokens;
-   
-    if (mode === 'BASIC') {
-      maxTokens = 3000;
-      fullPrompt = `${basePrompt}
-
-
-Requirements for BASIC mode:
-- Clean, professional UI
-- Working navigation between screens
-- Basic interactivity (buttons, forms)
-- Use Tailwind CDN for styling
-- Single HTML file with embedded CSS/JS
-- IMPORTANT: Responsive design - full screen on desktop, mobile-optimized on small screens
-- NO device frame simulation (no fixed 375px container)
-- Let the layout fill the browser naturally and adapt to any screen size
-
-
-Keep it simple but functional. Focus on clean structure and basic features.`;
-    } else {
-      // BOOST mode
-      maxTokens = 10000;
-      fullPrompt = `${basePrompt}
-
-
-Requirements for BOOST mode:
-- Professional, production-quality UI
-- Rich, contextual content for each feature
-- Advanced interactivity:
-  * Working forms with validation
-  * Interactive charts (use Chart.js CDN)
-  * Toggle switches, progress bars
-  * Dynamic content (posts, messages that can be added)
-- Beautiful design with:
-  * Smooth animations
-  * Gradient backgrounds
-  * Card-based layouts
-  * Professional color scheme
-- Use Tailwind CDN + Chart.js CDN
-- Single HTML file with all assets embedded
-- IMPORTANT: Fully responsive design - adapts beautifully from mobile to desktop
-- NO device frame simulation or fixed width containers
-- Let the layout fill the browser and respond to screen size naturally
-
-
-Make it look and feel like a real, professional app - not a prototype.`;
-    }
+    const maxTokens = mode === 'BASIC' ? 4000 : 10000;
    
     let timerInterval = null;
     try {
