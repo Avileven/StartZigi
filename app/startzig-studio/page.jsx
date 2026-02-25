@@ -1,4 +1,4 @@
-// startzig studio 220226 with credits
+// startzig studio 250226 with credits & temp 
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -333,7 +333,9 @@ const App = () => {
     setIsGenerating(true);
     setGeneratedHtml(null);
 
-    const activeFeatures = appState.features.filter(f => f.isActive);
+    const allActiveFeatures = appState.features.filter(f => f.isActive);
+    const screenLimit = mode === 'BASIC' ? 4 : 8;
+    const activeFeatures = allActiveFeatures.slice(0, screenLimit);
     const config = typeof VENTURE_CONFIGS !== 'undefined' ? VENTURE_CONFIGS[ventureType] : null;
     const creditType = mode === 'BASIC' ? 'studio_basic' : 'studio_boost';
     const isBoost = mode === 'BOOST';
@@ -693,13 +695,13 @@ const App = () => {
             {!isGenerating && (<>
               {/* Venture Type */}
               <div className="mb-5">
-                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">סוג המיזם</h3>
+                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">Venture Type</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    ['social', '🗣', 'Social / Community', 'פיד, הודעות, פרופיל'],
-                    ['saas', '📊', 'SaaS / Dashboard', 'מטריקות, ניהול, נתונים'],
-                    ['marketplace', '🛍', 'Marketplace', 'מוצרים, קניה, מוכרים'],
-                    ['service', '📅', 'Service / Booking', 'שירותים, הזמנות, לוח זמנים'],
+                    ['social', '🗣', 'Social / Community', 'Feed, messages, profile'],
+                    ['saas', '📊', 'SaaS / Home', 'Metrics, management, data'],
+                    ['marketplace', '🛍', 'Marketplace', 'Products, shopping, sellers'],
+                    ['service', '📅', 'Service / Booking', 'Services, bookings, schedule'],
                   ].map(([val, icon, label, desc]) => (
                     <button key={val} onClick={() => setVentureType(val)}
                       className={`p-3 rounded-xl border-2 text-left transition ${ventureType === val ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -713,7 +715,7 @@ const App = () => {
 
               {/* Design Preferences */}
               <div className="mb-5 space-y-4">
-                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">עיצוב</h3>
+                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Design</h3>
 
                 {/* Color Scheme */}
                 <div>
@@ -749,9 +751,10 @@ const App = () => {
                   className="w-full p-4 border-2 border-blue-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-left">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-bold text-gray-800">⚡ BASIC</h3>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">3 credits</span>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">5 credits</span>
                   </div>
                   <p className="text-sm text-gray-600">Clean, functional prototype with working navigation</p>
+                  <p className="text-xs text-blue-500 mt-1 font-medium">Up to 4 screens</p>
                 </button>
                 <button onClick={() => { setAiMode('BOOST'); handleGenerateWithAI('BOOST'); }}
                   className="w-full p-4 border-2 border-purple-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition text-left">
@@ -760,6 +763,7 @@ const App = () => {
                     <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">10 credits</span>
                   </div>
                   <p className="text-sm text-gray-600">Professional prototype with animations and rich content</p>
+                  <p className="text-xs text-purple-500 mt-1 font-medium">Up to 8 screens</p>
                 </button>
               </div>
             </>)}
