@@ -41,140 +41,206 @@ const formatTime = (timestamp) => {
 // Template Builder - outside component to avoid JSX issues
 // ============================================
 // Template builder - clean JS, no JSX issues
-function getColors(designPrefs) {
-  const scheme = designPrefs.colorScheme;
-  const style = designPrefs.style;
-  if (scheme === 'dark') return { headerBg: 'linear-gradient(135deg,#1a1a2e,#16213e)', sidebarBg: 'linear-gradient(180deg,#0f0f23,#1a1a3e)', accent: '#6366f1' };
-  if (scheme === 'light') return { headerBg: 'linear-gradient(135deg,#4f46e5,#7c3aed)', sidebarBg: 'linear-gradient(180deg,#4f46e5,#7c3aed)', accent: '#4f46e5' };
-  if (scheme === 'minimal') return { headerBg: '#374151', sidebarBg: '#374151', accent: '#374151' };
-  if (style === 'business') return { headerBg: 'linear-gradient(135deg,#1e3a5f,#2d6a9f)', sidebarBg: 'linear-gradient(180deg,#1e3a5f,#2d6a9f)', accent: '#2d6a9f' };
-  if (style === 'playful') return { headerBg: 'linear-gradient(135deg,#f97316,#ec4899)', sidebarBg: 'linear-gradient(180deg,#f97316,#ec4899)', accent: '#f97316' };
-  if (style === 'elegant') return { headerBg: 'linear-gradient(135deg,#1c1c2e,#6b21a8)', sidebarBg: 'linear-gradient(180deg,#1c1c2e,#6b21a8)', accent: '#6b21a8' };
-  return { headerBg: 'linear-gradient(135deg,#667eea,#764ba2)', sidebarBg: 'linear-gradient(180deg,#667eea,#764ba2)', accent: '#667eea' };
+// ============================================
+// TEMPLATES V2 - by venture type
+// ============================================
+
+const UNSPLASH = {
+  social: {
+    hero: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
+    avatar1: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80',
+    avatar2: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80',
+    avatar3: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80',
+    cover: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+  },
+  saas: {
+    hero: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+    team1: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&q=80',
+    team2: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&q=80',
+    office: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
+  },
+  marketplace: {
+    product1: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+    product2: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&q=80',
+    product3: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80',
+    product4: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&q=80',
+    seller: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80',
+  },
+  service: {
+    hero: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80',
+    provider1: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&q=80',
+    provider2: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=80&q=80',
+    provider3: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=80&q=80',
+    location: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80',
+  }
+};
+
+function getTemplateColors(colorScheme, style) {
+  const presets = {
+    colorful_modern:   { h: 'linear-gradient(135deg,#667eea,#764ba2)', s: 'linear-gradient(180deg,#667eea,#764ba2)', a: '#667eea', bg: '#f3f4f6', card: '#fff' },
+    colorful_playful:  { h: 'linear-gradient(135deg,#f97316,#ec4899)', s: 'linear-gradient(180deg,#f97316,#ec4899)', a: '#f97316', bg: '#fff7ed', card: '#fff' },
+    colorful_business: { h: 'linear-gradient(135deg,#1e3a5f,#2d6a9f)', s: 'linear-gradient(180deg,#1e3a5f,#2d6a9f)', a: '#2d6a9f', bg: '#f0f4f8', card: '#fff' },
+    colorful_elegant:  { h: 'linear-gradient(135deg,#1c1c2e,#6b21a8)', s: 'linear-gradient(180deg,#1c1c2e,#6b21a8)', a: '#6b21a8', bg: '#faf5ff', card: '#fff' },
+    dark_modern:       { h: 'linear-gradient(135deg,#1a1a2e,#16213e)', s: 'linear-gradient(180deg,#0f0f23,#1a1a3e)', a: '#6366f1', bg: '#0f0f1a', card: '#1a1a2e' },
+    dark_playful:      { h: 'linear-gradient(135deg,#1a0a0a,#3d0c0c)', s: 'linear-gradient(180deg,#1a0a0a,#3d0c0c)', a: '#ef4444', bg: '#0f0a0a', card: '#1a0a0a' },
+    dark_business:     { h: 'linear-gradient(135deg,#0a0a14,#0d1b2a)', s: 'linear-gradient(180deg,#0a0a14,#0d1b2a)', a: '#3b82f6', bg: '#070710', card: '#0d1120' },
+    dark_elegant:      { h: 'linear-gradient(135deg,#0a0a0a,#1a0a2e)', s: 'linear-gradient(180deg,#0a0a0a,#1a0a2e)', a: '#a855f7', bg: '#050508', card: '#0f0f1a' },
+    light_modern:      { h: '#4f46e5', s: '#4f46e5', a: '#4f46e5', bg: '#f8fafc', card: '#fff' },
+    light_playful:     { h: '#f97316', s: '#f97316', a: '#f97316', bg: '#fff7ed', card: '#fff' },
+    light_business:    { h: '#1e40af', s: '#1e40af', a: '#1e40af', bg: '#eff6ff', card: '#fff' },
+    light_elegant:     { h: '#7c3aed', s: '#7c3aed', a: '#7c3aed', bg: '#faf5ff', card: '#fff' },
+    minimal_modern:    { h: '#374151', s: '#374151', a: '#374151', bg: '#f9fafb', card: '#fff' },
+    minimal_business:  { h: '#1f2937', s: '#1f2937', a: '#1f2937', bg: '#f3f4f6', card: '#fff' },
+  };
+  const key = colorScheme + '_' + style;
+  return presets[key] || presets['colorful_modern'];
 }
 
-function buildTemplate(features, appTitle, designPrefs) {
-  const colors = getColors(designPrefs);
-  const nav = designPrefs.navigation;
-  const platform = designPrefs.platform;
+function buildResponsiveTemplate(features, appTitle, designPrefs, ventureType) {
+  const c = getTemplateColors(designPrefs.colorScheme, designPrefs.style);
+  const imgs = UNSPLASH[ventureType] || UNSPLASH.social;
+  const isDark = designPrefs.colorScheme === 'dark';
+  const textColor = isDark ? '#e8e8f0' : '#1f2937';
+  const mutedColor = isDark ? '#9090a8' : '#6b7280';
 
   const screensHtml = features.map(function(f, i) {
     return '<div id="screen-' + f.id + '" class="screen' + (i === 0 ? ' active' : '') + '">\n{{CONTENT_' + f.id.toUpperCase() + '}}\n</div>';
   }).join('\n');
 
-  const JS = 'function showScreen(id){'
+  const JS = ''
+    + 'function showScreen(id){'
     + 'document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active")});'
     + 'document.getElementById(id).classList.add("active");'
-    + 'document.querySelectorAll(".nav-link,.bottom-btn").forEach(function(l){l.classList.remove("active")});'
-    + 'var el=document.querySelector("[data-screen=\\""+id+"\\"]");'
-    + 'if(el)el.classList.add("active");'
+    + 'document.querySelectorAll(".nav-link,.bb").forEach(function(l){l.classList.remove("active")});'
+    + 'var els=document.querySelectorAll("[data-screen=\\""+id+"\\"]");'
+    + 'els.forEach(function(el){el.classList.add("active")});'
     + 'var sb=document.getElementById("sidebar");if(sb)sb.classList.remove("open");'
     + 'var ov=document.getElementById("overlay");if(ov)ov.classList.remove("show");'
+    + 'window.scrollTo(0,0);'
     + '}'
+    + 'function openNav(){document.getElementById("sidebar").classList.add("open");document.getElementById("overlay").classList.add("show")}'
+    + 'function closeNav(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("show")}'
     + 'document.addEventListener("DOMContentLoaded",function(){'
     + 'var first=document.querySelector(".screen");if(first)first.classList.add("active");'
-    + 'var firstBtn=document.querySelector(".nav-link,.bottom-btn");if(firstBtn)firstBtn.classList.add("active");'
+    + 'var firstBtn=document.querySelector(".nav-link,.bb");if(firstBtn)firstBtn.classList.add("active");'
     + '});';
 
-  function makeNavLink(f) {
+  const mobileNavLinks = features.map(function(f) {
     return '<button class="nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.icon + ' ' + f.name + '</button>';
-  }
+  }).join('\n');
 
-  function makeBottomBtn(f) {
-    return '<button class="bottom-btn" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)"><span style="font-size:20px">' + f.icon + '</span><span>' + f.name + '</span></button>';
-  }
+  const desktopNavLinks = features.map(function(f) {
+    return '<button class="nav-link desktop-nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.icon + ' ' + f.name + '</button>';
+  }).join('\n');
 
-  const head = '<!DOCTYPE html><html lang="en"><head>'
+  return '<!DOCTYPE html><html lang="en"><head>'
     + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'
     + '<title>' + appTitle + '</title>'
-    + '<script src="https://cdn.tailwindcss.com"><\/script>';
-
-  if (nav === 'hamburger' || (platform === 'mobile' && nav !== 'bottom')) {
-    const navLinks = features.map(makeNavLink).join('\n');
-    const openCloseNav = 'function openNav(){document.getElementById("sidebar").classList.add("open");document.getElementById("overlay").classList.add("show")}'
-      + 'function closeNav(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("show")}';
-    return head
-      + '<style>'
-      + '*{box-sizing:border-box;margin:0;padding:0}'
-      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;max-width:430px;margin:0 auto;min-height:100vh}'
-      + '.screen{display:none;padding:76px 16px 24px;min-height:100vh;overflow-y:auto}'
-      + '.screen.active{display:block}'
-      + '#sidebar{position:fixed;top:0;left:-280px;width:280px;height:100vh;background:' + colors.sidebarBg + ';z-index:100;transition:left 0.3s;padding:24px 16px;overflow-y:auto}'
-      + '#sidebar.open{left:0}'
-      + '#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}'
-      + '#overlay.show{display:block}'
-      + 'header{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
-      + '.nav-link{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,0.85);cursor:pointer;margin-bottom:4px;font-size:14px;font-weight:500;border:none;background:none;width:100%;text-align:left}'
-      + '.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.2);color:white}'
-      + '.sidebar-title{color:white;font-size:18px;font-weight:700;padding:0 4px 20px}'
-      + '</style></head><body>'
-      + '<div id="overlay" onclick="closeNav()"></div>'
-      + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + navLinks + '</div>'
-      + '<header><button onclick="openNav()" style="background:none;border:none;color:white;font-size:26px;cursor:pointer">&#9776;</button>'
-      + '<span style="color:white;font-weight:700;font-size:17px">' + appTitle + '</span><div style="width:32px"></div></header>'
-      + screensHtml
-      + '<script>' + openCloseNav + JS + '<\/script>'
-      + '</body></html>';
-  }
-
-  if (nav === 'bottom') {
-    const navBtns = features.map(makeBottomBtn).join('\n');
-    return head
-      + '<style>'
-      + '*{box-sizing:border-box;margin:0;padding:0}'
-      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;max-width:430px;margin:0 auto;min-height:100vh}'
-      + 'header{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;justify-content:center;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
-      + '.screen{display:none;padding:76px 16px 80px;min-height:100vh;overflow-y:auto}'
-      + '.screen.active{display:block}'
-      + '#bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:64px;background:white;border-top:1px solid #e5e7eb;display:flex;z-index:50}'
-      + '.bottom-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#9ca3af;font-size:10px;font-weight:500;border:none;background:none}'
-      + '.bottom-btn.active{color:' + colors.accent + '}'
-      + '</style></head><body>'
-      + '<header><span style="color:white;font-weight:700;font-size:17px">' + appTitle + '</span></header>'
-      + screensHtml
-      + '<nav id="bottom-nav">' + navBtns + '</nav>'
-      + '<script>' + JS + '<\/script>'
-      + '</body></html>';
-  }
-
-  if (nav === 'sidebar') {
-    const navLinks = features.map(makeNavLink).join('\n');
-    return head
-      + '<style>'
-      + '*{box-sizing:border-box;margin:0;padding:0}'
-      + 'body{font-family:Inter,sans-serif;background:#f3f4f6;min-height:100vh;width:100%;display:flex}'
-      + '#sidebar{width:240px;min-height:100vh;background:' + colors.sidebarBg + ';position:fixed;top:0;left:0;padding:24px 14px;overflow-y:auto;z-index:10}'
-      + '.sidebar-title{color:white;font-size:18px;font-weight:700;padding:0 4px 24px}'
-      + '.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.8);cursor:pointer;margin-bottom:4px;font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left}'
-      + '.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.2);color:white}'
-      + '#main{margin-left:240px;flex:1;min-height:100vh}'
-      + '.screen{display:none;padding:32px 36px;min-height:100vh;overflow-y:auto}'
-      + '.screen.active{display:block}'
-      + '</style></head><body>'
-      + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + navLinks + '</div>'
-      + '<div id="main">' + screensHtml + '</div>'
-      + '<script>' + JS + '<\/script>'
-      + '</body></html>';
-  }
-
-  // topnav - desktop default
-  const navLinks = features.map(makeNavLink).join('\n');
-  return head
+    + '<script src="https://cdn.tailwindcss.com"><\/script>'
     + '<style>'
     + '*{box-sizing:border-box;margin:0;padding:0}'
-    + 'body{font-family:Inter,sans-serif;background:#f3f4f6;min-height:100vh;width:100%}'
-    + 'header{position:fixed;top:0;left:0;width:100%;height:60px;background:' + colors.headerBg + ';display:flex;align-items:center;padding:0 32px;gap:8px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
-    + '.logo{color:white;font-weight:800;font-size:18px;margin-right:16px;white-space:nowrap}'
-    + '.nav-link{color:rgba(255,255,255,0.8);font-size:13px;font-weight:500;cursor:pointer;padding:6px 12px;border-radius:8px;white-space:nowrap;border:none;background:none}'
-    + '.nav-link:hover,.nav-link.active{color:white;background:rgba(255,255,255,0.2)}'
-    + '.screen{display:none;padding:80px 40px 40px;min-height:100vh;width:100%;overflow-y:auto}'
+    + 'body{font-family:Inter,sans-serif;background:' + c.bg + ';color:' + textColor + ';min-height:100vh}'
+    + '.screen{display:none;padding:68px 16px 80px;min-height:100vh;overflow-y:auto}'
     + '.screen.active{display:block}'
+    // Mobile header
+    + 'header{position:fixed;top:0;left:0;width:100%;height:56px;background:' + c.h + ';display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}'
+    + '.hamburger{background:none;border:none;color:white;font-size:24px;cursor:pointer;display:block}'
+    + '.logo{color:white;font-weight:700;font-size:17px}'
+    // Sidebar
+    + '#sidebar{position:fixed;top:0;left:-280px;width:280px;height:100vh;background:' + c.s + ';z-index:100;transition:left 0.3s;padding:24px 16px;overflow-y:auto}'
+    + '#sidebar.open{left:0}'
+    + '#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}'
+    + '#overlay.show{display:block}'
+    + '.sidebar-title{color:white;font-size:18px;font-weight:700;padding:0 4px 20px}'
+    + '.nav-link{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,0.85);cursor:pointer;margin-bottom:4px;font-size:14px;font-weight:500;border:none;background:none;width:100%;text-align:left}'
+    + '.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.2);color:white}'
+    // Bottom nav mobile
+    + '#bottom-nav{position:fixed;bottom:0;left:0;width:100%;height:62px;background:' + c.card + ';border-top:1px solid #e5e7eb;display:flex;z-index:50;box-shadow:0 -2px 8px rgba(0,0,0,0.08)}'
+    + '.bb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:' + mutedColor + ';font-size:10px;font-weight:500;border:none;background:none}'
+    + '.bb.active{color:' + c.a + '}'
+    // Desktop overrides
+    + '@media(min-width:768px){'
+    + '.hamburger{display:none}'
+    + '#sidebar{display:none}'
+    + '#bottom-nav{display:none}'
+    + 'header{justify-content:flex-start;gap:8px;padding:0 32px}'
+    + '.desktop-nav-links{display:flex!important;gap:4px}'
+    + '.screen{padding:72px 40px 40px}'
+    + '.screen-inner{max-width:1100px;margin:0 auto}'
+    + '}'
+    + '.desktop-nav-links{display:none}'
+    + '.desktop-nav-link{white-space:nowrap}'
     + '</style></head><body>'
-    + '<header><span class="logo">' + appTitle + '</span>' + navLinks + '</header>'
+    + '<div id="overlay" onclick="closeNav()"></div>'
+    + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + mobileNavLinks + '</div>'
+    + '<header>'
+    + '<button class="hamburger" onclick="openNav()">&#9776;</button>'
+    + '<span class="logo">' + appTitle + '</span>'
+    + '<div class="desktop-nav-links">' + desktopNavLinks + '</div>'
+    + '<div class="hamburger" style="visibility:hidden">&#9776;</div>'
+    + '</header>'
     + screensHtml
+    + '<nav id="bottom-nav">'
+    + features.slice(0, 5).map(function(f) {
+        return '<button class="bb" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)"><span style="font-size:20px">' + f.icon + '</span><span>' + f.name + '</span></button>';
+      }).join('')
+    + '</nav>'
     + '<script>' + JS + '<\/script>'
     + '</body></html>';
 }
+
+// Venture type configs - what the AI gets as instructions per screen
+const VENTURE_CONFIGS = {
+  social: {
+    name: 'Social / Community',
+    icon: '🗣',
+    desc: 'אפליקציה חברתית עם פיד, הודעות ופרופיל',
+    screenHints: {
+      home: 'Welcome screen with hero image and app value proposition. Use image: ' + UNSPLASH.social.hero,
+      posts: 'Social feed with posts. Each post has avatar, name, content, likes, comments. Avatars: ' + UNSPLASH.social.avatar1 + ', ' + UNSPLASH.social.avatar2 + ', ' + UNSPLASH.social.avatar3,
+      messages: 'Direct messaging screen with chat bubbles',
+      business: 'Premium/subscription plans with pricing cards',
+      settings: 'User profile settings with avatar and form fields. Avatar: ' + UNSPLASH.social.avatar1,
+    }
+  },
+  saas: {
+    name: 'SaaS / Dashboard',
+    icon: '📊',
+    desc: 'דשבורד לניהול עם מטריקות ונתונים',
+    screenHints: {
+      home: 'Dashboard overview with KPI cards (users, revenue, growth). Hero: ' + UNSPLASH.saas.hero,
+      posts: 'Activity feed / notifications log',
+      messages: 'Team messaging or support tickets',
+      business: 'Pricing plans and upgrade options',
+      settings: 'Account and team settings. Team avatars: ' + UNSPLASH.saas.team1 + ', ' + UNSPLASH.saas.team2,
+      metrics: 'Analytics charts and performance metrics',
+    }
+  },
+  marketplace: {
+    name: 'Marketplace',
+    icon: '🛍',
+    desc: 'מארקטפלייס עם מוצרים, קניה ומוכרים',
+    screenHints: {
+      home: 'Homepage with featured products grid. Products: ' + UNSPLASH.marketplace.product1 + ', ' + UNSPLASH.marketplace.product2,
+      posts: 'Product listings / category browse. More products: ' + UNSPLASH.marketplace.product3 + ', ' + UNSPLASH.marketplace.product4,
+      messages: 'Buyer-seller messaging',
+      business: 'Seller plans / commission pricing',
+      settings: 'Seller profile and store settings. Seller: ' + UNSPLASH.marketplace.seller,
+    }
+  },
+  service: {
+    name: 'Service / Booking',
+    icon: '📅',
+    desc: 'אפליקציית שירותים עם הזמנות ולוח זמנים',
+    screenHints: {
+      home: 'Service discovery with hero and categories. Hero: ' + UNSPLASH.service.hero,
+      posts: 'Service providers list with ratings. Providers: ' + UNSPLASH.service.provider1 + ', ' + UNSPLASH.service.provider2 + ', ' + UNSPLASH.service.provider3,
+      messages: 'Client-provider messaging',
+      business: 'Service pricing tiers',
+      settings: 'Profile and availability settings. Avatar: ' + UNSPLASH.service.provider1,
+    }
+  }
+};
 
 
 const App = () => {
@@ -188,6 +254,7 @@ const App = () => {
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [improvementNotes, setImprovementNotes] = useState('');
+  const [ventureType, setVentureType] = useState('social');
   const [designPrefs, setDesignPrefs] = useState({
     platform: 'mobile',
     navigation: 'hamburger',
@@ -268,41 +335,38 @@ const App = () => {
    
     const activeFeatures = appState.features.filter(f => f.isActive);
    
+    console.log("🎨 designPrefs:", JSON.stringify(designPrefs));
     // Build template structure
-    const templateHtml = buildTemplate(activeFeatures, appState.appTitle, designPrefs);
+    const templateHtml = buildResponsiveTemplate(activeFeatures, appState.appTitle, designPrefs, ventureType);
 
-    // Build prompt - AI only fills content per screen
+    // Build prompt - AI fills content per screen using venture hints
+    const config = typeof VENTURE_CONFIGS !== 'undefined' ? VENTURE_CONFIGS[ventureType] : null;
     const screenInstructions = activeFeatures.map(f => {
+      const hint = config && config.screenHints ? (config.screenHints[f.id] || '') : '';
       let extra = '';
-      if (f.id === 'posts') extra = `\nPosts to show:\n${appState.mockPosts.map(p => `- ${p.user}: "${p.content}"`).join('\n')}`;
-      if (f.id === 'messages') extra = `\nMessages to show:\n${appState.mockMessages.map(m => `- ${m.sender}: "${m.content}"`).join('\n')}`;
-      if (f.id === 'business') extra = `\nPremium price: $${appState.premiumPrice}`;
-      return `Screen id="${f.id}" — ${f.icon} ${f.name}: ${f.description}${extra}`;
+      if (f.id === 'posts') extra = '\nFeed posts to show: ' + appState.mockPosts.map(p => p.user + ': "' + p.content + '"').join(', ');
+      if (f.id === 'messages') extra = '\nMessages: ' + appState.mockMessages.map(m => m.sender + ': "' + m.content + '"').join(', ');
+      if (f.id === 'business') extra = '\nPremium price: $' + appState.premiumPrice;
+      return 'Screen id="' + f.id + '" — ' + f.icon + ' ' + f.name + ': ' + f.description + (hint ? '\nDesign hint: ' + hint : '') + extra;
     }).join('\n\n');
 
     const modeInstructions = mode === 'BASIC'
-      ? 'BASIC mode: clean, simple content. Cards, text, basic buttons. Keep it minimal and functional.'
-      : 'BOOST mode: rich, professional content. Add charts (Chart.js CDN), animations, working forms, interactive elements. Make it look production-ready.';
+      ? 'BASIC: clean simple content, cards and text. No charts.'
+      : 'BOOST: rich professional content, add Chart.js CDN for charts, smooth animations, working forms.';
 
-    const fullPrompt = `You are a UI developer. I have an HTML template with screens already set up. Your job is to fill in the content for each screen.
+    const ventureHint = config ? ('Venture type: ' + config.name + ' — ' + config.desc) : '';
 
-App: ${appState.appTitle} — ${appState.appDescription}
-${modeInstructions}
-${improvementNotes ? `User requested improvements: ${improvementNotes}\n` : ''}
-Here is the HTML template. Replace each {{CONTENT_SCREENID}} placeholder with rich HTML content for that screen. Do NOT change anything outside the placeholders — keep all CSS, JS, navigation exactly as is.
-
-SCREENS TO FILL:
-${screenInstructions}
-
-RULES:
-- Replace ONLY the {{CONTENT_FEATUREID}} placeholders
-- Use Tailwind classes for styling
-- Do NOT use placeholder images — use emoji or colored divs
-- BOOST: add Chart.js CDN in <head> if needed
-- Return the COMPLETE HTML file
-
-TEMPLATE:
-${templateHtml}`;
+    const fullPrompt = 'You are a UI developer filling in HTML template placeholders.'
+      + '\n\nApp: ' + appState.appTitle + ' — ' + appState.appDescription
+      + '\n' + ventureHint
+      + '\n' + modeInstructions
+      + (improvementNotes ? '\nUser improvements requested: ' + improvementNotes : '')
+      + '\n\nFill each {{CONTENT_ID}} placeholder with beautiful Tailwind HTML content.'
+      + '\nDo NOT modify CSS, JS, or navigation — only replace placeholders.'
+      + '\nUse the Unsplash image URLs provided in hints (img tags with the URLs).'
+      + '\nReturn the COMPLETE HTML file.'
+      + '\n\nSCREENS:\n' + screenInstructions
+      + '\n\nTEMPLATE:\n' + templateHtml;
 
     const maxTokens = mode === 'BASIC' ? 4000 : 10000;
    
@@ -624,9 +688,29 @@ ${templateHtml}`;
             </div>
 
             {!isGenerating && (<>
+              {/* Venture Type */}
+              <div className="mb-5">
+                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">סוג המיזם</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    ['social', '🗣', 'Social / Community', 'פיד, הודעות, פרופיל'],
+                    ['saas', '📊', 'SaaS / Dashboard', 'מטריקות, ניהול, נתונים'],
+                    ['marketplace', '🛍', 'Marketplace', 'מוצרים, קניה, מוכרים'],
+                    ['service', '📅', 'Service / Booking', 'שירותים, הזמנות, לוח זמנים'],
+                  ].map(([val, icon, label, desc]) => (
+                    <button key={val} onClick={() => setVentureType(val)}
+                      className={`p-3 rounded-xl border-2 text-left transition ${ventureType === val ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <div className="text-xl mb-1">{icon}</div>
+                      <div className="font-semibold text-sm text-gray-800">{label}</div>
+                      <div className="text-xs text-gray-500">{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Design Preferences */}
               <div className="mb-5 space-y-4">
-                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Design Preferences</h3>
+                <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">עיצוב</h3>
 
                 {/* Platform */}
                 <div>
