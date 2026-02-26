@@ -1,4 +1,4 @@
-// src\api\integrations.js 220226 WITH CREDIT
+// src\api\integrations.js 260226 WITH CREDIT
 import { supabase } from '@/lib/supabase'
 
 
@@ -7,9 +7,14 @@ import { supabase } from '@/lib/supabase'
 // ============================================
 // [CREDITS] creditType קובע כמה קרדיטים יורדו:
 //   'mentor'       = 1 קרדיט  (פידבק מנטור)
-//   'studio_basic' = 3 קרדיטים (Studio BASIC)
+//   'studio_basic' = 5 קרדיטים (Studio BASIC)
 //   'studio_boost' = 10 קרדיטים (Studio BOOST)
 // אם בדיקת הקרדיטים נכשלת מסיבה טכנית - ה-AI עדיין עובד (fail-safe)
+//
+// [MODEL SELECTION]
+//   mentor       → gemini-2.5-flash (fast, cheap)
+//   studio_basic → gemini-2.5-pro   (higher quality)
+//   studio_boost → gemini-2.5-pro   (higher quality)
 export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
   try {
 
@@ -70,9 +75,14 @@ export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
 
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-   
-    console.log('📡 Calling Gemini...');
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+
+    // [MODEL SELECTION] Studio → Pro (quality), Mentor → Flash (speed/cost)
+    const model = (creditType === 'studio_basic' || creditType === 'studio_boost')
+      ? 'gemini-2.5-pro'
+      : 'gemini-2.5-flash';
+
+    console.log(`📡 Calling Gemini (${model})...`);
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -218,6 +228,3 @@ export const Core = {
   CreateFileSignedUrl,
   UploadPrivateFile,
 }
-
-
-
