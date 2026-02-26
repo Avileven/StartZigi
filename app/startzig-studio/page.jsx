@@ -1,4 +1,4 @@
-// startzig studio 220226 with credits
+// startzig studio 260226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
@@ -27,6 +27,7 @@ const getInitialState = () => ({
   ],
   appTitle: 'startzig studio',
   appDescription: 'Customize this text to pitch your app idea!',
+  appOverview: '',
   premiumPrice: '9.99',
 });
 
@@ -125,12 +126,15 @@ function buildResponsiveTemplate(features, appTitle, designPrefs, ventureType) {
     + 'var firstBtn=document.querySelector(".nav-link,.bb");if(firstBtn)firstBtn.classList.add("active");'
     + '});';
 
-  const mobileNavLinks = features.map(function(f) {
-    return '<button class="nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.icon + ' ' + f.name + '</button>';
+  // For AI template: exclude 'home' from nav (logo click goes to home instead)
+  const navFeatures = features.filter(function(f) { return f.id !== 'home'; });
+
+  const mobileNavLinks = navFeatures.map(function(f) {
+    return '<button class="nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.name + '</button>';
   }).join('\n');
 
-  const desktopNavLinks = features.map(function(f) {
-    return '<button class="nav-link desktop-nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.icon + ' ' + f.name + '</button>';
+  const desktopNavLinks = navFeatures.map(function(f) {
+    return '<button class="nav-link desktop-nav-link" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)">' + f.name + '</button>';
   }).join('\n');
 
   return '<!DOCTYPE html><html lang="en"><head>'
@@ -175,14 +179,14 @@ function buildResponsiveTemplate(features, appTitle, designPrefs, ventureType) {
     + '<div id="sidebar"><div class="sidebar-title">' + appTitle + '</div>' + mobileNavLinks + '</div>'
     + '<header>'
     + '<button class="hamburger" onclick="openNav()">&#9776;</button>'
-    + '<span class="logo">' + appTitle + '</span>'
+    + '<span class="logo" onclick="showScreen(&quot;screen-home&quot;)" style="cursor:pointer">' + appTitle + '</span>'
     + '<div class="desktop-nav-links">' + desktopNavLinks + '</div>'
     + '<div class="hamburger" style="visibility:hidden">&#9776;</div>'
     + '</header>'
     + screensHtml
     + '<nav id="bottom-nav">'
-    + features.slice(0, 5).map(function(f) {
-        return '<button class="bb" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)"><span style="font-size:20px">' + f.icon + '</span><span>' + f.name + '</span></button>';
+    + navFeatures.slice(0, 5).map(function(f) {
+        return '<button class="bb" data-screen="screen-' + f.id + '" onclick="showScreen(&quot;screen-' + f.id + '&quot;)"><span>' + f.name + '</span></button>';
       }).join('')
     + '</nav>'
     + '<script>' + JS + '<\/script>'
@@ -367,7 +371,9 @@ const App = () => {
 
         const prompt = 'Generate HTML content for one app screen using Tailwind CSS.'
           + '\nApp: ' + appState.appTitle + ' — ' + appState.appDescription
-          + '\nScreen: ' + f.icon + ' ' + f.name + ' — ' + f.description
+          + (appState.appOverview ? '\nApp Overview: ' + appState.appOverview : '')
+          + '\nScreen: ' + f.name + ' — ' + f.description
+          + (f.id === 'home' ? '\nThis is the landing/home page. Use the App title, tagline and overview above to create rich, relevant content.' : '')
           + '\n' + colorInfo
           + '\n' + modeInfo
           + (dataHint ? '\n' + dataHint : '')
@@ -377,6 +383,7 @@ const App = () => {
           + '\nThe html value is inner content only — NO <html>, <head>, <body>, <header>, <nav> tags.'
           + '\nDO NOT use position:fixed, position:sticky, or large padding-top — the template already has a fixed header.'
           + '\nStart content directly with a div. Use Tailwind classes only.'
+          + '\nDO NOT use any emoji icons in navigation menus or next to section titles. Clean text only.'
           + '\nNo placeholder images unless you have a real Unsplash URL.'
           + '\nFor every <img> tag, always add: onerror="this.style.display=\'none\'" to hide broken images gracefully.';
 
@@ -891,12 +898,22 @@ const App = () => {
             />
           </label>
           <label className="block">
-            <span className="text-sm font-semibold text-gray-700">App Description</span>
+            <span className="text-sm font-semibold text-gray-700">App Description <span className="text-gray-400 font-normal">(Tagline)</span></span>
             <textarea
-              rows="3"
+              rows="2"
               className="mt-2 block w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3 text-gray-800"
               value={appState.appDescription}
               onChange={(e) => handleSimpleContentChange('appDescription', e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-semibold text-gray-700">App Overview <span className="text-gray-400 font-normal">(Value Proposition)</span></span>
+            <textarea
+              rows="4"
+              placeholder="Describe what your app does, who it's for, and what makes it different..."
+              className="mt-2 block w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3 text-gray-800"
+              value={appState.appOverview}
+              onChange={(e) => handleSimpleContentChange('appOverview', e.target.value)}
             />
           </label>
         </div>
