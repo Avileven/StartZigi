@@ -382,7 +382,7 @@ const App = () => {
 
         const data = await Promise.race([
           InvokeLLM({ prompt, max_tokens: isBoost ? 2000 : 1200, creditType }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 45000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 90000))
         ]);
 
         let html = '';
