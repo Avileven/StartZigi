@@ -1,3 +1,4 @@
+// V 27226
 "use client";
 
 import React, { useEffect } from 'react';
@@ -22,7 +23,15 @@ export default function WhyStartZig() {
                     
                     {/* גוף הטקסט - פונט דף הבית, יישור לשמאל, זרימה שוטפת */}
                     <div className="text-left space-y-8 text-xl text-white/70 leading-relaxed">
-                        
+
+                        <p>
+                            Building a startup is harder than it looks. Choosing the right idea, finding the right market, designing a product people actually want, getting real feedback before you run out of runway — every step is a minefield that most founders navigate alone, without a map.
+                        </p>
+
+                        <p>
+                            StartZig was built by founders who lived through those gaps — the moments where you don't know what you don't know. The wrong hire, the pitch that fell flat, the pivot you made too late. We built the platform we wished we had: a place to practice the hard decisions before they cost you everything. And our vision doesn't stop there — we're building toward a real marketplace where founders, communities and investors meet, connect, and make things happen.
+                        </p>
+
                         <p>
                             The name <span className="text-white font-bold">"StartUp"</span> implies a linear beginning. 
                             But starting is easy; staying alive through the turns is where the winners are decided.
@@ -60,6 +69,10 @@ export default function WhyStartZig() {
                             <p className="pt-4 flex items-center gap-3">
                                 <span className="text-white/40 text-sm uppercase tracking-widest">18 Months Later:</span>
                                 <span className="text-emerald-400 font-bold">$47M EXIT</span>
+                            </p>
+
+                            <p className="pt-4">
+                                StartZig was built for founders like Maya. A platform that simulates the full startup journey — from idea to exit — with AI mentorship, real investor scenarios, and tools like ZigForge to visualize your product before you build it.
                             </p>
                         </div>
                     </div>
