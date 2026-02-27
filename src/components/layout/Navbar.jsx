@@ -1,31 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-// מיפוי נתיבים לשמות דפים
-const PAGE_NAMES = {
-  "/": null,
-  "/why-startzig": "Why StartZig",
-  "/pricing": "Pricing",
-  "/community": "Community",
-  "/blog": "Blog",
-  "/how-it-works": "How it Works",
-  "/dashboard": "Dashboard",
-  "/zigforge": "ZigForge",
-  "/register": "Sign Up",
-  "/login": "Login",
-};
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isResourcesOpen, setIsResourcesOpen] = useState(false);
-  const pathname = usePathname();
-
-  const currentPageName = PAGE_NAMES[pathname] || null;
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,22 +37,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
 
-          {/* Logo + שם הדף הנוכחי */}
-          <div className="flex-shrink-0 flex items-center gap-3">
+          <div className="flex-shrink-0">
             <Link href="/">
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
                 StartZig
               </span>
             </Link>
-            {currentPageName && (
-              <>
-                <span className="text-white/30 text-lg">/</span>
-                <span className="text-white/70 text-sm font-medium">{currentPageName}</span>
-              </>
-            )}
           </div>
 
-          {/* Mobile hamburger */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
