@@ -29,6 +29,7 @@ import {
   Lightbulb,
   FileText,
   Rocket,
+  Layout,
   Plus,
   Briefcase,
   CheckCircle,
