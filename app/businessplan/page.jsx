@@ -331,7 +331,7 @@ await VentureMessage.create({
   venture_id: venture.id,
   message_type: 'phase_welcome',
   title: '🚀 Welcome to MVP Phase!',
-  content: 'Time to build your Minimum Viable Product.',
+  content: 'Time to build your Minimum Viable Product. ZigForge is now available to design a visual prototype of your app. ',
   phase: 'mvp',
   priority: 2, // עדיפות גבוהה יותר כדי שזה יהיה הדבר הראשון שרואים מעל הודעת הכסף
   created_by: user.email,
