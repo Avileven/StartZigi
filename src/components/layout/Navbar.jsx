@@ -68,9 +68,6 @@ export default function Navbar() {
               <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Why StartZig
               </Link>
-              <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Community
-              </Link>
               <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Pricing
               </Link>
@@ -96,6 +93,9 @@ export default function Navbar() {
                     <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
                       How it Works
                     </Link>
+                    <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Community
+              </Link>
                   </div>
                 )}
               </div>
