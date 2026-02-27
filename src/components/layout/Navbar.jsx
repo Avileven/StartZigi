@@ -1,21 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+// מיפוי נתיבים לשמות דפים
+const PAGE_NAMES = {
+  "/": null,
+  "/why-startzig": "Why StartZig",
+  "/pricing": "Pricing",
+  "/community": "Community",
+  "/blog": "Blog",
+  "/how-it-works": "How it Works",
+  "/dashboard": "Dashboard",
+  "/zigforge": "ZigForge",
+  "/register": "Sign Up",
+  "/login": "Login",
+};
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isResourcesOpen, setIsResourcesOpen] = useState(false); // State חדש לדרופדאון
+  const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+  const pathname = usePathname();
+
+  const currentPageName = PAGE_NAMES[pathname] || null;
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
       } catch (error) {
         setUser(null);
@@ -38,15 +53,23 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-gradient-to-b from-indigo-500 to-black to-75%">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
-          <div className="flex-shrink-0">
+
+          {/* Logo + שם הדף הנוכחי */}
+          <div className="flex-shrink-0 flex items-center gap-3">
             <Link href="/">
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
                 StartZig
               </span>
             </Link>
+            {currentPageName && (
+              <>
+                <span className="text-white/30 text-lg">/</span>
+                <span className="text-white/70 text-sm font-medium">{currentPageName}</span>
+              </>
+            )}
           </div>
 
+          {/* Mobile hamburger */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -73,18 +96,18 @@ export default function Navbar() {
               </Link>
 
               {/* Resources Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => setIsResourcesOpen(true)}
                 onMouseLeave={() => setIsResourcesOpen(false)}
               >
                 <button className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                  Resources 
+                  Resources
                   <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
+
                 {isResourcesOpen && (
                   <div className="absolute top-full left-0 w-48 bg-black/90 border border-white/10 rounded-md py-2 shadow-xl">
                     <Link href="/blog" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
@@ -93,9 +116,9 @@ export default function Navbar() {
                     <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
                       How it Works
                     </Link>
-                    <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Community
-              </Link>
+                    <Link href="/community" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      Community
+                    </Link>
                   </div>
                 )}
               </div>
@@ -142,7 +165,7 @@ export default function Navbar() {
           <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             Pricing
           </Link>
-          
+
           <div className="text-gray-500 px-3 py-2 text-xs font-bold uppercase">Resources</div>
           <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
             Blog
