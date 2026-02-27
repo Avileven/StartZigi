@@ -639,7 +639,7 @@ export default function MVPDevelopment() {
 
                 <div className="mb-4">
                   <a
-                    href="https://startzig.vercel.app/startzig-studio"
+                    href="https://startzig.vercel.app/zigforge"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -649,7 +649,7 @@ export default function MVPDevelopment() {
                       size="lg"
                     >
                       <Wrench className="w-5 h-5 mr-2" />
-                      Launch startzig-studio
+                      Launch zigforge
                       <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
                   </a>

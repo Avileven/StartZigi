@@ -565,6 +565,15 @@ const getGreeting = (username) => {
     }
 
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
+  assets.push({
+    id: 'zigforge',
+    title: 'ZigForge',
+    icon: Layout,
+    page: 'zigforge'
+  });
+}
+
+if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
       assets.push({
         id: 'product_feedback',
         title: 'Product Feedback',

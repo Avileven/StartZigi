@@ -647,12 +647,12 @@ export default function MLPDevelopmentCenter() {
                 <CardContent className="space-y-4">
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
                     <p className="text-sm text-blue-800 mb-3">
-                      <strong>Need to create an updated prototype file?</strong> Use the startzig studio to create new HTML prototypes.
+                      <strong>Need to create an updated prototype file?</strong> Use the zigforge studio to create new HTML prototypes.
                     </p>
-                    <a href={createPageUrl('startzig-studio')} target="_blank" rel="noopener noreferrer">
+                    <a href={createPageUrl('zigforge')} target="_blank" rel="noopener noreferrer">
                       <Button type="button" variant="outline" className="w-full">
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Open startzig studio
+                        Open zigforge studio
                       </Button>
                     </a>
                   </div>

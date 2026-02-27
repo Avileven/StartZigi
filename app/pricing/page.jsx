@@ -74,7 +74,7 @@ export default function Pricing() {
         'Free access to the virtual investment marketplace',
         'Basic community tools',
         '25 Mentor interactions',
-        'StartZig Studio- basic AI'
+        'zigforge Studio- basic AI'
       ],
       cta: 'Get Vision',
       featured: false,
@@ -89,7 +89,7 @@ export default function Pricing() {
         'Free access to the virtual investment marketplace',
         'Basic community tools',
         '100 Mentor interactions',
-        'StartZig Studio- Boost AI',
+        'zigforge Studio- Boost AI',
         'Basic Social & media tools'
       ],
       cta: 'Get Impact',
@@ -105,7 +105,7 @@ export default function Pricing() {
         'Free access to the virtual investment marketplace',
         'Advanced community tools',
         '500 Mentor interactions',
-        'StartZig Studio- Boost AI',
+        'zigforge Studio- Boost AI',
         'Advanced Social & media tools'
       ],
       cta: 'Get Unicorn',
