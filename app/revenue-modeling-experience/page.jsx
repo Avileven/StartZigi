@@ -1,4 +1,4 @@
-// 190226 V update model and download
+// 280226 V with mentor
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
+import MentorButton from '@/components/mentor/MentorButton.jsx';
+import MentorModal from '@/components/mentor/MentorModal';
 
 
 // --- Configuration Constants ---
@@ -832,7 +834,7 @@ const ParameterInput = ({ label, value, onChange, unit, overview, onMentorClick 
           className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs ml-2"
         >
           <MessageSquare className="w-3 h-3 mr-1" />
-          Mentor
+          Tips
         </Button>
       </div>
       <div className="flex items-center gap-2">
@@ -1120,6 +1122,7 @@ export default function RevenueModelingExperience() {
   const [sliderModalOpen, setSliderModalOpen] = useState(false);
   const [currentParameter, setCurrentParameter] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
 
   useEffect(() => {
     const fetchCurrentVenture = async () => {
@@ -1218,6 +1221,14 @@ export default function RevenueModelingExperience() {
     return true;
   }, [venture, initialUsers, targetMarketFactor, businessModel, tier1Price, adRevenuePer1000, avgTransactionValue]);
 
+
+  const openMentorModal = (sectionId, sectionTitle) => {
+    setMentorModal({ isOpen: true, sectionId, sectionTitle, fieldKey: '' });
+  };
+
+  const closeMentorModal = () => {
+    setMentorModal({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
+  };
 
   const handleFinalizeModel = async () => {
     if (!canFinalize()) {
@@ -1749,13 +1760,17 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
             }
           </Button>
           
+          <MentorButton
+            onClick={() => openMentorModal('revenue_model_review', 'Revenue Model Analysis')}
+          />
+
           <Button
             onClick={handleDownloadCSV}
             variant="outline"
             className="px-6 py-3 text-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
           >
             <MessageSquare className="w-5 h-5 mr-2" />
-            Mentor - Download Report as CSV
+            Download Report as CSV
           </Button>
         </div>
 
@@ -1767,6 +1782,27 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
             onSave={handleSliderSave}
           />
         )}
+
+        <MentorModal
+          isOpen={mentorModal.isOpen}
+          onClose={closeMentorModal}
+          sectionId={mentorModal.sectionId}
+          sectionTitle={mentorModal.sectionTitle}
+          fieldValue={`Business Model: ${businessModel}
+Tier 1 Price: $${tier1Price}
+Tier 2 Price: $${tier2Price}
+Tier 2 Conversion Split: ${tier2ConversionSplit}%
+Ad Revenue per 1000 users: $${adRevenuePer1000}
+Avg Transaction Value: $${avgTransactionValue}
+Monthly Marketing Budget: $${monthlyMarketingBudget}
+Customer Acquisition Cost (CAC): $${acquisitionCost}
+Initial Users: ${initialUsers}
+Churn Risk: ${churnRisk}%
+Free to Paid Conversion: ${freeToPaidConversion}%
+Target Market Factor: ${targetMarketFactor}
+Target Market Value: $${targetMarketValue}`}
+          onUpdateField={() => {}}
+        />
       </div>
     </div>
   );
