@@ -1,4 +1,4 @@
-// 280226 V with mentor
+// 280226 V update mentor
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -1742,7 +1742,13 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
           </div>
         </div>
 
-        <footer className="mt-12 text-center text-gray-500 text-sm">
+        <div className="mt-8 flex justify-center gap-4">
+          <MentorButton
+            onClick={() => openMentorModal('revenue_model_review', 'Revenue Model Analysis')}
+          />
+        </div>
+
+        <footer className="mt-6 text-center text-gray-500 text-sm">
           <p>Disclaimer: Financial results are illustrative, based on a modified S-curve growth model incorporating paid and organic acquisition.</p>
         </footer>
 
@@ -1759,10 +1765,6 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
                 : 'Finalize Revenue Model'
             }
           </Button>
-          
-          <MentorButton
-            onClick={() => openMentorModal('revenue_model_review', 'Revenue Model Analysis')}
-          />
 
           <Button
             onClick={handleDownloadCSV}
