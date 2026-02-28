@@ -574,14 +574,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
   });
 }
 
-if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
-      assets.push({
-        id: 'product_feedback',
-        title: 'Product Feedback',
-        icon: MessageSquare,
-        page: 'product-feedback'
-      });
-    }
+
 
     // Revenue Modeling - available after MVP upload, stays available for updates
 if (currentVenture.mvp_uploaded) {
