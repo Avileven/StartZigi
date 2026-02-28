@@ -1,4 +1,4 @@
-// 280226 V update mentor
+// 280226 V with mentor
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -1742,10 +1742,13 @@ Once you've completed MLP development, you'll be ready to move to the Beta phase
           </div>
         </div>
 
-        <div className="mt-8 flex justify-center gap-4">
-          <MentorButton
-            onClick={() => openMentorModal('revenue_model_review', 'Revenue Model Analysis')}
-          />
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <p className="text-sm text-gray-500">Not sure about your parameters? Get AI feedback on your revenue model before finalizing.</p>
+          <div className="transform scale-125">
+            <MentorButton
+              onClick={() => openMentorModal('revenue_model_review', 'Revenue Model Analysis')}
+            />
+          </div>
         </div>
 
         <footer className="mt-6 text-center text-gray-500 text-sm">
