@@ -1,4 +1,4 @@
-//dashboard 260126 plus  balance
+//dashboard 290126 plus  balance
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -29,7 +29,6 @@ import {
   Lightbulb,
   FileText,
   Rocket,
-  Layout,
   Plus,
   Briefcase,
   CheckCircle,
@@ -105,24 +104,23 @@ export default function Dashboard() {
   const router = useRouter();
 
   // new valuation
-  
-const updateBalance = useCallback(() => {
-  if (!currentVenture) return;
-  const startingCapital = currentVenture.virtual_capital || 15000;
-  const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
-  if (!currentVenture.burn_rate_start) {
-    setLiveBalance(startingCapital);
-    return;
-  }
-  const startTime = new Date(currentVenture.burn_rate_start).getTime();
-  const now = new Date().getTime();
-  const secondsElapsed = (now - startTime) / 1000;
-  const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
-  const calculated = Math.floor(Math.max(0, startingCapital - (secondsElapsed * burnPerSecond)));
-  setLiveBalance(calculated);
-}, [currentVenture]); // הוסר messages מהתלויות
-
-
+  const updateBalance = useCallback(() => {
+    if (!currentVenture) return;
+    const totalFunding = messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
+    const initialCapital = 15000;
+    const totalStartingCapital = initialCapital + totalFunding;
+    const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
+    if (!currentVenture.burn_rate_start) {
+      setLiveBalance(totalStartingCapital);
+      return;
+    }
+    const startTime = new Date(currentVenture.burn_rate_start).getTime();
+    const now = new Date().getTime();
+    const secondsElapsed = (now - startTime) / 1000;
+    const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
+    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
+    setLiveBalance(calculated);
+  }, [currentVenture, messages]);
   
 const updateValuation = useCallback(() => {
   if (!currentVenture) return;
@@ -136,8 +134,7 @@ const updateValuation = useCallback(() => {
     growth: 10000000
   };
 
-  setCurrentValuation(currentVenture.valuation || baseValues[currentVenture.phase] || 0);
-
+  setCurrentValuation(baseValues[currentVenture.phase]);
 }, [currentVenture]);
 
   const loadDashboard = useCallback(async () => {
@@ -179,8 +176,7 @@ const updateValuation = useCallback(() => {
           if (activeVenture.mlp_development_completed && !activeVenture.mlp_completed) {
             await Venture.update(activeVenture.id, {
               mlp_completed: true,
-              phase: 'beta',
-              valuation: 5000000
+              phase: 'beta'
             });
            
             await VentureMessage.create({
@@ -566,26 +562,33 @@ const getGreeting = (username) => {
     }
 
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
-  assets.push({
-    id: 'zigforge',
-    title: 'ZigForge',
-    icon: Layout,
-    page: 'zigforge'
-  });
-}
+      assets.push({
+        id: 'product_feedback',
+        title: 'Product Feedback',
+        icon: MessageSquare,
+        page: 'product-feedback'
+      });
+    }
 
+    if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
+      assets.push({
+        id: 'revenue_modeling',
+        title: 'Revenue Modeling',
+        icon: BarChart3,
+        page: 'revenue-modeling-experience', // createPageUrl will convert to /revenuemodeling-experience
+        openInNewWindow: true
+      });
+    }
 
-
-    // Revenue Modeling - available after MVP upload, stays available for updates
-if (currentVenture.mvp_uploaded) {
-  assets.push({
-    id: 'revenue_modeling',
-    title: 'Revenue Modeling',
-    icon: BarChart3,
-    page: 'revenue-modeling-experience',
-    openInNewWindow: true
-  });
-}   
+    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
+      assets.push({
+        id: 'revenue_modeling',
+        title: 'revenue-modeling-experience',
+        icon: BarChart3,
+        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
+        openInNewWindow: true
+      });
+    }
    
     if (currentVenture.phase === 'mlp') {
       if (!currentVenture.mlp_development_completed) {
@@ -987,9 +990,8 @@ if (showToS) {
   <span>
     <span>Val:</span>
     ${currentValuation >= 1000000 
-      
-? (currentValuation/1000000).toFixed(1) + 'M'
-: Math.floor(currentValuation/1000) + 'K'}
+      ? Math.floor(currentValuation/1000000) + 'M' 
+      : Math.floor(currentValuation/1000) + 'K'}
   </span>
 </span>
                 </div>
