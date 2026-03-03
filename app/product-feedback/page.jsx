@@ -1,9 +1,11 @@
+// 30326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
+import { ProductFeedback } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users } from 'lucide-react';
@@ -14,6 +16,7 @@ export default function ProductFeedback() {
   const [featureFeedback, setFeatureFeedback] = useState([]);
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
   const [betaTesters, setBetaTesters] = useState([]);
+  const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
 
@@ -36,6 +39,9 @@ export default function ProductFeedback() {
           // Load beta testers
           const testers = await BetaTester.filter({ venture_id: currentVenture.id });
           setBetaTesters(testers);
+
+          const pfeedback = await ProductFeedback.filter({ venture_id: currentVenture.id }, '-created_date');
+          setProductFeedbacks(pfeedback);
 
           // Calculate analytics
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
@@ -230,6 +236,30 @@ export default function ProductFeedback() {
                         {suggestion.user_email && (
                           <p className="text-sm text-gray-500 mt-1">Suggested by: {suggestion.user_email}</p>
                         )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Product Feedback Section */}
+        {productFeedbacks.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">User Feedback</h2>
+            <div className="space-y-4">
+              {productFeedbacks.map((fb) => (
+                <Card key={fb.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <MessageSquare className="w-5 h-5 text-indigo-500 mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-700">{fb.feedback_text}</p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
