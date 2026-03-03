@@ -1,17 +1,16 @@
-// 30326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
-import { ProductFeedback } from '@/api/entities.js';
+import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function ProductFeedback() {
+export default function ProductFeedbackPage() {
   const [venture, setVenture] = useState(null);
   const [featureFeedback, setFeatureFeedback] = useState([]);
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
@@ -24,12 +23,15 @@ export default function ProductFeedback() {
     const loadData = async () => {
       try {
         const user = await User.me();
+        console.log('[ProductFeedback] user:', user?.email);
+
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        console.log('user:', user?.email, 'ventures:', ventures.length);
+        console.log('[ProductFeedback] ventures found:', ventures.length);
+
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
+          console.log('[ProductFeedback] venture id:', currentVenture.id, 'name:', currentVenture.name);
           setVenture(currentVenture);
-          console.log('venture id:', currentVenture.id);
 
           const feedback = await MVPFeatureFeedback.filter({ venture_id: currentVenture.id });
           setFeatureFeedback(feedback);
@@ -37,54 +39,43 @@ export default function ProductFeedback() {
           const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
           setSuggestedFeatures(suggestions);
 
-          // Load beta testers
           const testers = await BetaTester.filter({ venture_id: currentVenture.id });
           setBetaTesters(testers);
 
-          const pfeedback = await ProductFeedback.filter({ venture_id: currentVenture.id }, '-created_date');
+          const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
+          console.log('[ProductFeedback] product feedbacks found:', pfeedback.length);
           setProductFeedbacks(pfeedback);
 
-          // Calculate analytics
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
             const featureAnalytics = {};
-            
             currentVenture.mvp_data.feature_matrix
               .filter(f => f.isSelected)
               .forEach(feature => {
                 const feedbackForFeature = feedback.filter(f => f.feature_id === feature.id);
-                
                 if (feedbackForFeature.length > 0) {
                   const ratings = feedbackForFeature.map(f => f.rating);
                   const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
-                  
-                  const neverUse = ratings.filter(r => r >= 0 && r <= 2).length;
-                  const confusing = ratings.filter(r => r >= 3 && r <= 4).length;
-                  const niceToHave = ratings.filter(r => r >= 5 && r <= 7).length;
-                  const essential = ratings.filter(r => r >= 8 && r <= 10).length;
-                  
                   featureAnalytics[feature.id] = {
                     name: feature.featureName,
                     avgRating: avgRating.toFixed(1),
                     totalResponses: feedbackForFeature.length,
                     breakdown: {
-                      neverUse,
-                      confusing,
-                      niceToHave,
-                      essential
+                      neverUse: ratings.filter(r => r >= 0 && r <= 2).length,
+                      confusing: ratings.filter(r => r >= 3 && r <= 4).length,
+                      niceToHave: ratings.filter(r => r >= 5 && r <= 7).length,
+                      essential: ratings.filter(r => r >= 8 && r <= 10).length,
                     }
                   };
                 }
               });
-            
             setAnalytics(featureAnalytics);
           }
         }
       } catch (error) {
-        console.error("Error loading feedback data:", error);
+        console.error('[ProductFeedback] Error loading feedback data:', error);
       }
       setIsLoading(false);
     };
-
     loadData();
   }, []);
 
@@ -130,13 +121,12 @@ export default function ProductFeedback() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Total Feedback</p>
-                  <p className="text-3xl font-bold text-gray-900">{venture.mvp_feedback_count || 0}</p>
+                  <p className="text-3xl font-bold text-gray-900">{productFeedbacks.length + (venture.mvp_feedback_count || 0)}</p>
                 </div>
                 <MessageSquare className="w-10 h-10 text-blue-500" />
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -148,7 +138,6 @@ export default function ProductFeedback() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -162,6 +151,27 @@ export default function ProductFeedback() {
           </Card>
         </div>
 
+        {productFeedbacks.length > 0 && (
+          <div className="space-y-4 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">User Feedback</h2>
+            {productFeedbacks.map((fb) => (
+              <Card key={fb.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-5 h-5 text-indigo-500 mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-gray-700">{fb.feedback_text}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
         {Object.keys(analytics).length > 0 ? (
           <div className="space-y-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Feature Ratings</h2>
@@ -172,9 +182,7 @@ export default function ProductFeedback() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle>{data.name}</CardTitle>
-                      <Badge className={category.color}>
-                        {category.label}
-                      </Badge>
+                      <Badge className={category.color}>{category.label}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -218,13 +226,13 @@ export default function ProductFeedback() {
           <Card className="mb-8">
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No feedback received yet. Share your landing page to start collecting feedback!</p>
+              <p className="text-gray-600">No feature feedback received yet. Share your landing page to start collecting feedback!</p>
             </CardContent>
           </Card>
         )}
 
         {suggestedFeatures.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Suggested Features from Users</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {suggestedFeatures.map((suggestion) => (
@@ -246,42 +254,15 @@ export default function ProductFeedback() {
           </div>
         )}
 
-        {/* Product Feedback Section */}
-        {productFeedbacks.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">User Feedback</h2>
-            <div className="space-y-4">
-              {productFeedbacks.map((fb) => (
-                <Card key={fb.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <MessageSquare className="w-5 h-5 text-indigo-500 mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-gray-700">{fb.feedback_text}</p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Beta Sign-ups Section */}
         {betaTesters.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Beta Sign-ups</h2>
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-indigo-600" />
-                    Total Sign-ups: {betaTesters.length}
-                  </CardTitle>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  Total Sign-ups: {betaTesters.length}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -289,23 +270,17 @@ export default function ProductFeedback() {
                     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
                     .map((tester) => (
                       <div key={tester.id} className="border-l-4 border-indigo-200 bg-indigo-50 p-4 rounded-r-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{tester.full_name}</h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Signed up: {new Date(tester.created_date).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })}
-                            </p>
-                            {tester.interest_reason && (
-                              <div className="mt-2">
-                                <p className="text-sm font-medium text-gray-700">Why they joined:</p>
-                                <p className="text-sm text-gray-600 mt-1">{tester.interest_reason}</p>
-                              </div>
-                            )}
-                          </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{tester.full_name}</h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Signed up: {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                          {tester.interest_reason && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-gray-700">Why they joined:</p>
+                              <p className="text-sm text-gray-600 mt-1">{tester.interest_reason}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
