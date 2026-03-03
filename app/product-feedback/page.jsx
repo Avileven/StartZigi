@@ -1,3 +1,4 @@
+// 030326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -7,7 +8,7 @@ import { BetaTester } from '@/api/entities.js';
 import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function ProductFeedbackPage() {
@@ -23,17 +24,18 @@ export default function ProductFeedbackPage() {
     const loadData = async () => {
       try {
         const user = await User.me();
-        console.log('[ProductFeedback] user:', user?.email);
+        console.log('[FeedbackHub] user:', user?.email);
 
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        console.log('[ProductFeedback] ventures found:', ventures.length);
+        console.log('[FeedbackHub] ventures found:', ventures.length);
 
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
-          console.log('[ProductFeedback] venture id:', currentVenture.id, 'name:', currentVenture.name);
+          console.log('[FeedbackHub] venture id:', currentVenture.id, 'name:', currentVenture.name);
           setVenture(currentVenture);
 
           const feedback = await MVPFeatureFeedback.filter({ venture_id: currentVenture.id });
+          console.log('[FeedbackHub] MVP feature feedback:', feedback.length);
           setFeatureFeedback(feedback);
 
           const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
@@ -43,7 +45,7 @@ export default function ProductFeedbackPage() {
           setBetaTesters(testers);
 
           const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
-          console.log('[ProductFeedback] product feedbacks found:', pfeedback.length);
+          console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
           setProductFeedbacks(pfeedback);
 
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
@@ -55,10 +57,11 @@ export default function ProductFeedbackPage() {
                 if (feedbackForFeature.length > 0) {
                   const ratings = feedbackForFeature.map(f => f.rating);
                   const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+                  const total = ratings.length;
                   featureAnalytics[feature.id] = {
                     name: feature.featureName,
                     avgRating: avgRating.toFixed(1),
-                    totalResponses: feedbackForFeature.length,
+                    totalResponses: total,
                     breakdown: {
                       neverUse: ratings.filter(r => r >= 0 && r <= 2).length,
                       confusing: ratings.filter(r => r >= 3 && r <= 4).length,
@@ -72,7 +75,7 @@ export default function ProductFeedbackPage() {
           }
         }
       } catch (error) {
-        console.error('[ProductFeedback] Error loading feedback data:', error);
+        console.error('[FeedbackHub] Error loading feedback data:', error);
       }
       setIsLoading(false);
     };
@@ -81,17 +84,16 @@ export default function ProductFeedbackPage() {
 
   const getCategoryFromRating = (avgRating) => {
     const rating = parseFloat(avgRating);
-    if (rating >= 0 && rating <= 2) return { label: 'Never use', color: 'bg-red-100 text-red-800' };
-    if (rating >= 3 && rating <= 4) return { label: 'Confusing', color: 'bg-yellow-100 text-yellow-800' };
-    if (rating >= 5 && rating <= 7) return { label: 'Nice To Have', color: 'bg-blue-100 text-blue-800' };
-    if (rating >= 8 && rating <= 10) return { label: 'Essential', color: 'bg-green-100 text-green-800' };
-    return { label: '', color: 'bg-gray-100 text-gray-800' };
+    if (rating >= 8) return { label: 'Essential', color: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
+    if (rating >= 5) return { label: 'Nice To Have', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' };
+    if (rating >= 3) return { label: 'Confusing', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' };
+    return { label: 'Never use', color: 'bg-red-100 text-red-800', dot: 'bg-red-500' };
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-full items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -104,146 +106,117 @@ export default function ProductFeedbackPage() {
     );
   }
 
+  const totalFeedback = productFeedbacks.length + (venture.mvp_feedback_count || 0);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <BarChart3 className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Product Feedback Center</h1>
-          <p className="text-gray-600">Analyze feedback from your MVP users</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Venture Feedback Hub</h1>
+          <p className="text-gray-500 text-lg">All feedback collected across your startup journey</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Total Feedback</p>
-                  <p className="text-3xl font-bold text-gray-900">{productFeedbacks.length + (venture.mvp_feedback_count || 0)}</p>
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {[
+            { label: 'Total Feedback', value: totalFeedback, icon: <MessageSquare className="w-5 h-5 text-indigo-500" />, bg: 'bg-indigo-50' },
+            { label: 'Features Analyzed', value: Object.keys(analytics).length, icon: <TrendingUp className="w-5 h-5 text-green-500" />, bg: 'bg-green-50' },
+            { label: 'Suggested Features', value: suggestedFeatures.length, icon: <Lightbulb className="w-5 h-5 text-yellow-500" />, bg: 'bg-yellow-50' },
+            { label: 'Beta Sign-ups', value: betaTesters.length, icon: <Users className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50' },
+          ].map((stat, i) => (
+            <Card key={i} className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-3`}>
+                  {stat.icon}
                 </div>
-                <MessageSquare className="w-10 h-10 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Features Tested</p>
-                  <p className="text-3xl font-bold text-gray-900">{Object.keys(analytics).length}</p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Suggested Features</p>
-                  <p className="text-3xl font-bold text-gray-900">{suggestedFeatures.length}</p>
-                </div>
-                <Lightbulb className="w-10 h-10 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {productFeedbacks.length > 0 && (
-          <div className="space-y-4 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">User Feedback</h2>
-            {productFeedbacks.map((fb) => (
-              <Card key={fb.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="w-5 h-5 text-indigo-500 mt-1 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-gray-700">{fb.feedback_text}</p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {/* MVP Feature Ratings */}
+        {Object.keys(analytics).length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-1 h-7 bg-indigo-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900">MVP Feature Ratings</h2>
+            </div>
+            <div className="space-y-4">
+              {Object.entries(analytics).map(([featureId, data]) => {
+                const category = getCategoryFromRating(data.avgRating);
+                const total = data.totalResponses;
+                const pNever = Math.round((data.breakdown.neverUse / total) * 100);
+                const pConfusing = Math.round((data.breakdown.confusing / total) * 100);
+                const pNice = Math.round((data.breakdown.niceToHave / total) * 100);
+                const pEssential = Math.round((data.breakdown.essential / total) * 100);
 
-        {Object.keys(analytics).length > 0 ? (
-          <div className="space-y-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Feature Ratings</h2>
-            {Object.entries(analytics).map(([featureId, data]) => {
-              const category = getCategoryFromRating(data.avgRating);
-              return (
-                <Card key={featureId}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{data.name}</CardTitle>
-                      <Badge className={category.color}>{category.label}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-4xl font-bold text-indigo-600">{data.avgRating}</div>
-                          <div className="text-sm text-gray-500">Avg Rating</div>
+                return (
+                  <Card key={featureId} className="border-0 shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${category.dot}`} />
+                          <h3 className="font-semibold text-gray-900 text-lg">{data.name}</h3>
                         </div>
-                        <div className="flex-1">
-                          <div className="grid grid-cols-4 gap-2 text-center">
-                            <div className="p-2 bg-red-50 rounded">
-                              <div className="font-bold text-red-700">{data.breakdown.neverUse}</div>
-                              <div className="text-xs text-gray-600">Never use</div>
-                            </div>
-                            <div className="p-2 bg-yellow-50 rounded">
-                              <div className="font-bold text-yellow-700">{data.breakdown.confusing}</div>
-                              <div className="text-xs text-gray-600">Confusing</div>
-                            </div>
-                            <div className="p-2 bg-blue-50 rounded">
-                              <div className="font-bold text-blue-700">{data.breakdown.niceToHave}</div>
-                              <div className="text-xs text-gray-600">Nice To Have</div>
-                            </div>
-                            <div className="p-2 bg-green-50 rounded">
-                              <div className="font-bold text-green-700">{data.breakdown.essential}</div>
-                              <div className="text-xs text-gray-600">Essential</div>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                            <span className="font-bold text-gray-900 text-lg">{data.avgRating}</span>
+                            <span className="text-gray-400 text-sm">/10</span>
                           </div>
+                          <Badge className={category.color}>{category.label}</Badge>
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Based on {data.totalResponses} response{data.totalResponses !== 1 ? 's' : ''}
+
+                      {/* Progress bar */}
+                      <div className="h-3 rounded-full overflow-hidden flex mb-3">
+                        {pNever > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pNever}%` }} title={`Never use: ${pNever}%`} />}
+                        {pConfusing > 0 && <div className="bg-yellow-400 h-full transition-all" style={{ width: `${pConfusing}%` }} title={`Confusing: ${pConfusing}%`} />}
+                        {pNice > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pNice}%` }} title={`Nice to have: ${pNice}%`} />}
+                        {pEssential > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pEssential}%` }} title={`Essential: ${pEssential}%`} />}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+
+                      <div className="flex gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Never use {pNever}%</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Confusing {pConfusing}%</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Nice to have {pNice}%</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Essential {pEssential}%</span>
+                        <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        ) : (
-          <Card className="mb-8">
-            <CardContent className="p-8 text-center">
-              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No feature feedback received yet. Share your landing page to start collecting feedback!</p>
-            </CardContent>
-          </Card>
         )}
 
+        {/* Suggested Features */}
         {suggestedFeatures.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Suggested Features from Users</h2>
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-1 h-7 bg-yellow-400 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900">Suggested Features</h2>
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
               {suggestedFeatures.map((suggestion) => (
-                <Card key={suggestion.id}>
+                <Card key={suggestion.id} className="border-0 shadow-sm">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <Lightbulb className="w-5 h-5 text-yellow-500 mt-1" />
+                      <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Lightbulb className="w-4 h-4 text-yellow-500" />
+                      </div>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{suggestion.feature_name}</p>
                         {suggestion.user_email && (
-                          <p className="text-sm text-gray-500 mt-1">Suggested by: {suggestion.user_email}</p>
+                          <p className="text-sm text-gray-400 mt-1">by {suggestion.user_email}</p>
                         )}
                       </div>
                     </div>
@@ -254,41 +227,82 @@ export default function ProductFeedbackPage() {
           </div>
         )}
 
+        {/* Beta Sign-ups */}
         {betaTesters.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Beta Sign-ups</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-600" />
-                  Total Sign-ups: {betaTesters.length}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {betaTesters
-                    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-                    .map((tester) => (
-                      <div key={tester.id} className="border-l-4 border-indigo-200 bg-indigo-50 p-4 rounded-r-lg">
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-1 h-7 bg-purple-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900">Beta Sign-ups</h2>
+              <Badge className="bg-purple-100 text-purple-800 ml-2">{betaTesters.length}</Badge>
+            </div>
+            <div className="space-y-3">
+              {betaTesters
+                .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+                .map((tester) => (
+                  <Card key={tester.id} className="border-0 shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-purple-700">
+                          {tester.full_name?.[0]?.toUpperCase() || '?'}
+                        </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{tester.full_name}</h3>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Signed up: {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          <p className="font-semibold text-gray-900">{tester.full_name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                           </p>
                           {tester.interest_reason && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium text-gray-700">Why they joined:</p>
-                              <p className="text-sm text-gray-600 mt-1">{tester.interest_reason}</p>
-                            </div>
+                            <p className="text-sm text-gray-600 mt-2 italic">"{tester.interest_reason}"</p>
                           )}
                         </div>
                       </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
           </div>
         )}
+
+        {/* MLP User Feedback */}
+        {productFeedbacks.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-1 h-7 bg-pink-500 rounded-full" />
+              <h2 className="text-2xl font-bold text-gray-900">MLP User Feedback</h2>
+              <Badge className="bg-pink-100 text-pink-800 ml-2">{productFeedbacks.length}</Badge>
+            </div>
+            <div className="space-y-3">
+              {productFeedbacks.map((fb) => (
+                <Card key={fb.id} className="border-0 shadow-sm">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-4 h-4 text-pink-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-gray-700">{fb.feedback_text}</p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {totalFeedback === 0 && Object.keys(analytics).length === 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-12 text-center">
+              <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No feedback yet</h3>
+              <p className="text-gray-400">Share your landing page to start collecting feedback from users.</p>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );
