@@ -583,9 +583,9 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
       assets.push({
         id: 'revenue_modeling',
-        title: 'revenue-modeling-experience',
+        title: 'Revenue Modeling',
         icon: BarChart3,
-        page: 'revenue-modeling', // createPageUrl will convert to /revenuemodeling-experience
+        page: 'revenue-modeling-experience', 
         openInNewWindow: true
       });
     }
