@@ -1,4 +1,4 @@
-// 300126 
+// 030326 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -41,6 +41,8 @@ export default function MLPDevelopmentCenter() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [missingFields, setMissingFields] = useState([]);
   const [staticGuidanceModal, setStaticGuidanceModal] = useState({
     isOpen: false,
     sectionId: ''
@@ -78,6 +80,23 @@ export default function MLPDevelopmentCenter() {
     };
     loadData();
   }, []);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Autosave every 30 seconds
+  useEffect(() => {
+    if (!venture) return;
+    const interval = setInterval(async () => {
+      try {
+        await Venture.update(venture.id, { mlp_data: mlpData });
+        showToast('Auto-saved', 'success');
+      } catch (e) {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [venture, mlpData]);
 
   const handleInputChange = (field, value) => {
     setMlpData(prev => ({ ...prev, [field]: value }));
@@ -144,37 +163,33 @@ export default function MLPDevelopmentCenter() {
     if (!venture) return;
     setIsSaving(true);
     try {
-      await Venture.update(venture.id, {
-        mlp_data: mlpData
-      });
-      alert("MLP Development draft saved successfully!");
+      await Venture.update(venture.id, { mlp_data: mlpData });
+      showToast('Draft saved successfully!');
     } catch (error) {
       console.error("Error saving draft:", error);
-      alert("Error saving draft. Please try again.");
+      showToast('Error saving draft. Please try again.', 'error');
     }
     setIsSaving(false);
   };
 
-  const allStepsCompleted = () => {
-    return (
-      mlpData.feedback_analysis.trim() !== '' &&
-      mlpData.enhancement_strategy.trim() !== '' &&
-      mlpData.wow_moments.trim() !== '' &&
-      mlpData.user_journey.trim() !== '' &&
-      mlpData.ui_ux_requirements.trim() !== '' &&
-      mlpData.technical_excellence.trim() !== '' &&
-      mlpData.visual_mockups.trim() !== '' &&
-      mlpData.prototype_description.trim() !== '' &&
-      mlpData.uploaded_files.length > 0
-    );
-  };
-
   const handleComplete = async () => {
     if (!venture) return;
-    if (!allStepsCompleted()) {
-      alert('Please complete all sections of the MLP Development process before finishing.');
+    const missing = [];
+    if (!mlpData.feedback_analysis.trim()) missing.push('Feedback Analysis');
+    if (!mlpData.enhancement_strategy.trim()) missing.push('Enhancement Strategy');
+    if (!mlpData.wow_moments.trim()) missing.push('"Wow" Moments');
+    if (!mlpData.user_journey.trim()) missing.push('User Journey');
+    if (!mlpData.ui_ux_requirements.trim()) missing.push('UI/UX Requirements');
+    if (!mlpData.technical_excellence.trim()) missing.push('Technical Excellence');
+    if (!mlpData.visual_mockups.trim()) missing.push('Visual Mockups');
+    if (!mlpData.prototype_description.trim()) missing.push('Prototype Description');
+    if (mlpData.uploaded_files.length === 0) missing.push('Uploaded Files');
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      showToast(`Please complete: ${missing.join(', ')}`, 'error');
       return;
     }
+    setMissingFields([]);
     setIsCompleting(true);
     try {
       await Venture.update(venture.id, {
@@ -199,11 +214,11 @@ export default function MLPDevelopmentCenter() {
         phase: 'beta',
         priority: 3
       });
-      alert('MLP Development Complete!\n\nExcellent! Your MLP is complete. You have now entered the Beta phase.');
+      showToast('MLP Development Complete! You have now entered the Beta phase.');
       router.push(createPageUrl('Dashboard'));
     } catch (error) {
       console.error("Error completing MLP:", error);
-      alert("There was an error completing your MLP. Please try again.");
+      showToast('There was an error completing your MLP. Please try again.', 'error');
     }
     setIsCompleting(false);
   };
@@ -267,6 +282,13 @@ export default function MLPDevelopmentCenter() {
     }
   };
 
+  const completionPct = React.useMemo(() => {
+    const fields = [mlpData.feedback_analysis, mlpData.enhancement_strategy, mlpData.wow_moments, mlpData.user_journey, mlpData.ui_ux_requirements, mlpData.technical_excellence, mlpData.visual_mockups, mlpData.prototype_description];
+    const filesOk = mlpData.uploaded_files.length > 0 ? 1 : 0;
+    const completed = fields.filter(f => f && f.trim()).length + filesOk;
+    return Math.round((completed / 9) * 100);
+  }, [mlpData]);
+
   const feedbackStats = calculateFeedbackStats();
 
   if (isLoading) {
@@ -291,9 +313,16 @@ export default function MLPDevelopmentCenter() {
 
   return (
     <>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="p-4 md:p-8 bg-gradient-to-br from-gray-50 to-purple-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Heart className="w-8 h-8 text-white" />
             </div>
@@ -301,12 +330,34 @@ export default function MLPDevelopmentCenter() {
             <p className="text-lg text-gray-600">Transform your MVP into a Minimum Lovable Product</p>
           </div>
 
+          {/* Intro paragraph */}
+          <div className="mb-8 p-6 bg-white rounded-2xl border border-purple-100 shadow-sm">
+            <p className="text-gray-700 leading-relaxed">
+              <span className="font-bold text-purple-700">Well done on reaching this stage! 🎉</span>
+              <br /><br />
+              The MVP phase was your first step — you built the skeleton of your product and proved it can work. Now it's time to make it lovable.
+              <br /><br />
+              The MLP phase is about precision: refining your product based on real user feedback, sharpening the experience, and building the moments that make users say "I can't live without this." Less about adding features, more about getting the details right.
+            </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-6 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-gray-700">Overall Completion</span>
+              <span className="text-sm font-bold text-purple-700">{completionPct}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="bg-gradient-to-r from-pink-500 to-purple-600 h-3 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+            </div>
+          </div>
+
           <Tabs defaultValue="phase1" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="phase1">Phase 1: Transform Feedback</TabsTrigger>
-              <TabsTrigger value="phase2">Phase 2: Experience Design</TabsTrigger>
-              <TabsTrigger value="phase3">Phase 3: Visualization</TabsTrigger>
-              <TabsTrigger value="phase4">Phase 4: Review & Submit</TabsTrigger>
+              <TabsTrigger value="phase1" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Phase 1: Feedback</TabsTrigger>
+              <TabsTrigger value="phase2" className="data-[state=active]:bg-pink-600 data-[state=active]:text-white">Phase 2: Experience</TabsTrigger>
+              <TabsTrigger value="phase3" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Phase 3: Visualization</TabsTrigger>
+              <TabsTrigger value="phase4" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Phase 4: Review</TabsTrigger>
             </TabsList>
 
             <TabsContent value="phase1" className="space-y-6">
@@ -645,14 +696,20 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                    <p className="text-sm text-blue-800 mb-3">
-                      <strong>Need to create an updated prototype file?</strong> Use the zigforge studio to create new HTML prototypes.
-                    </p>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200 mb-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <ExternalLink className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-purple-800">Create your prototype with ZigForge</p>
+                        <p className="text-sm text-purple-600">Build a visual prototype of your MLP before uploading</p>
+                      </div>
+                    </div>
                     <a href={createPageUrl('zigforge')} target="_blank" rel="noopener noreferrer">
-                      <Button type="button" variant="outline" className="w-full">
+                      <Button type="button" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Open zigforge studio
+                        Open ZigForge Studio
                       </Button>
                     </a>
                   </div>
