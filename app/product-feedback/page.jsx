@@ -25,7 +25,7 @@ export default function ProductFeedback() {
       try {
         const user = await User.me();
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        
+        console.log('user:', user?.email, 'ventures:', ventures.length);
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
           setVenture(currentVenture);
