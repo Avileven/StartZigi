@@ -29,6 +29,7 @@ export default function ProductFeedback() {
         if (ventures.length > 0) {
           const currentVenture = ventures[0];
           setVenture(currentVenture);
+          console.log('venture id:', currentVenture.id);
 
           const feedback = await MVPFeatureFeedback.filter({ venture_id: currentVenture.id });
           setFeatureFeedback(feedback);
