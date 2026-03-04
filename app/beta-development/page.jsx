@@ -1,4 +1,3 @@
-
 //40326
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
@@ -303,7 +302,7 @@ export default function BetaDevelopment() {
     const completionPct = (() => {
         const fields = [betaData.headline, betaData.description, betaData.user_acquisition_strategy, betaData.feedback_collection_strategy];
         const filled = fields.filter(f => f && f.trim().length > 0).length;
-        const benefitsFilled = betaData.benefits.every(b => b.title.trim() && b.description.trim()) ? 1 : 0;
+        const benefitsFilled = betaData.benefits.some(b => b.title.trim() && b.description.trim()) ? 1 : 0;
         const demoFilled = betaData.featured_demo ? 1 : 0;
         return Math.round(((filled + benefitsFilled + demoFilled) / 6) * 100);
     })();
