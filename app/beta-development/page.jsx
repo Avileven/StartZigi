@@ -1,5 +1,5 @@
 
-// 40326
+//40326
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -332,7 +332,9 @@ export default function BetaDevelopment() {
                         <p className="text-gray-700 leading-relaxed">
                             <span className="font-bold text-blue-700">You've made it to Beta! 🚀</span>
                             <br /><br />
-                            This is where you go public. Your goal is to attract real users, collect sign-ups, and gather structured feedback. Configure your beta page below — the more compelling it is, the more testers you'll attract. You need <strong>50 beta sign-ups</strong> to move to the Growth phase.
+                            This page is <strong>not your product</strong> — it's your <strong>beta sign-up page</strong>. Its job is to attract early users, convince them to join your beta program, and collect their sign-ups. The more compelling it is, the more testers you'll attract.
+                            <br /><br />
+                            You need <strong>50 beta sign-ups</strong> to move to the Growth phase. Use the Promotion Center to share this page.
                         </p>
                     </div>
 
@@ -525,7 +527,7 @@ export default function BetaDevelopment() {
                                                             <SelectTrigger className="w-36">
                                                                 <SelectValue />
                                                             </SelectTrigger>
-                                                            <SelectContent>
+                                                            <SelectContent className="z-[9999] bg-white border border-gray-200 shadow-xl">
                                                                 <SelectItem value="Sparkles">✨ Sparkles</SelectItem>
                                                                 <SelectItem value="Rocket">🚀 Rocket</SelectItem>
                                                                 <SelectItem value="Users">👥 Users</SelectItem>
@@ -598,14 +600,33 @@ export default function BetaDevelopment() {
                                 </CardHeader>
                                 <CardContent>
                                     {!betaData.featured_demo ? (
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                            <Label htmlFor="demo-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-                                                <span>Upload demo file</span>
-                                                <Input id="demo-upload" name="demo-upload" type="file" className="sr-only" onChange={handleFileUpload} accept="image/*,.html" disabled={isUploading} />
-                                            </Label>
-                                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, or HTML files</p>
-                                            {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
+                                        <div className="space-y-4">
+                                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-xl border-2 border-purple-200">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                                                        <Sparkles className="w-5 h-5 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-purple-800">Create a prototype with ZigForge</p>
+                                                        <p className="text-sm text-purple-600">Build an HTML demo to showcase your product</p>
+                                                    </div>
+                                                </div>
+                                                <a href={createPageUrl('zigforge')} target="_blank" rel="noopener noreferrer">
+                                                    <Button type="button" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
+                                                        <Sparkles className="w-4 h-4 mr-2" />
+                                                        Open ZigForge Studio
+                                                    </Button>
+                                                </a>
+                                            </div>
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                                <Label htmlFor="demo-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                                                    <span>Upload demo file</span>
+                                                    <Input id="demo-upload" name="demo-upload" type="file" className="sr-only" onChange={handleFileUpload} accept="image/*,.html" disabled={isUploading} />
+                                                </Label>
+                                                <p className="text-xs text-gray-500 mt-1">PNG, JPG, or HTML files</p>
+                                                {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-lg p-4">

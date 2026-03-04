@@ -1,5 +1,7 @@
+// 40326
 import { businessPlan } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
+import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
 
 // Centralized phase validation logic
 export const validatePhaseTransition = async (venture, targetPhase, additionalData = {}) => {
@@ -40,13 +42,22 @@ export const validatePhaseTransition = async (venture, targetPhase, additionalDa
       return { valid: true };
     },
     
-    beta: () => {
+    beta: async () => {
       if (!venture.mlp_completed) {
         return { 
           valid: false, 
           message: 'MLP must be completed before proceeding to Beta phase.',
           requiredAction: 'Complete your MLP',
           redirectTo: 'MLPDevelopment'
+        };
+      }
+      const feedbacks = await ProductFeedbackEntity.filter({ venture_id: venture.id });
+      if (feedbacks.length < 10) {
+        return {
+          valid: false,
+          message: `You need at least 10 MLP feedback responses before moving to Beta. You currently have ${feedbacks.length}. Share your MLP page using the Promotion Center.`,
+          requiredAction: 'Collect MLP feedback',
+          redirectTo: 'product-feedback'
         };
       }
       return { valid: true };
