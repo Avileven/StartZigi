@@ -1,4 +1,4 @@
-// 030326 
+// 40326 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -6,6 +6,7 @@ import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
+import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
 import { UploadFile } from '@/api/integrations';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
@@ -192,30 +193,59 @@ export default function MLPDevelopmentCenter() {
     setMissingFields([]);
     setIsCompleting(true);
     try {
-      await Venture.update(venture.id, {
-        mlp_development_completed: true,
-        mlp_completed: true,
-        mlp_data: mlpData,
-        phase: 'beta'
-      });
-      await VentureMessage.create({
-        venture_id: venture.id,
-        message_type: 'phase_complete',
-        title: '🎉 MLP Phase Complete!',
-        content: `Congratulations! You've successfully completed your Minimum Lovable Product. You are now entering the Beta phase.`,
-        phase: 'mlp',
-        priority: 4
-      });
-      await VentureMessage.create({
-        venture_id: venture.id,
-        message_type: 'phase_welcome',
-        title: '🧪 Welcome to Beta Testing!',
-        content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
-        phase: 'beta',
-        priority: 3
-      });
-      showToast('MLP Development Complete! You have now entered the Beta phase.');
-      router.push(createPageUrl('Dashboard'));
+      // Check how many MLP feedback responses exist
+      const feedbacks = await ProductFeedbackEntity.filter({ venture_id: venture.id });
+      const feedbackCount = feedbacks.length;
+
+      if (feedbackCount < 10) {
+        // Save MLP as completed but don't move to beta yet
+        await Venture.update(venture.id, {
+          mlp_development_completed: true,
+          mlp_completed: true,
+          mlp_data: mlpData,
+        });
+
+        if (!venture.mlp_feedback_message_sent) {
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'action_required',
+            title: '🎉 MLP Complete — Now Collect Feedback!',
+            content: `Great work completing your MLP! Before moving to Beta, you need to collect feedback from at least 10 visitors. You currently have ${feedbackCount}. Share your MLP page using the Promotion Center and come back when you have 10 responses.`,
+            phase: 'mlp',
+            priority: 5
+          });
+          await Venture.update(venture.id, { mlp_feedback_message_sent: true });
+        }
+
+        showToast(`MLP saved! You need ${10 - feedbackCount} more feedback responses before moving to Beta.`, 'error');
+        router.push(createPageUrl('Dashboard'));
+      } else {
+        // 10+ feedbacks — move to beta
+        await Venture.update(venture.id, {
+          mlp_development_completed: true,
+          mlp_completed: true,
+          mlp_data: mlpData,
+          phase: 'beta'
+        });
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'phase_complete',
+          title: '🎉 MLP Phase Complete!',
+          content: `Congratulations! You completed your MLP and collected ${feedbackCount} feedback responses. You are now entering the Beta phase!`,
+          phase: 'mlp',
+          priority: 4
+        });
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'phase_welcome',
+          title: '🧪 Welcome to Beta Testing!',
+          content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
+          phase: 'beta',
+          priority: 3
+        });
+        showToast('MLP Complete! You have moved to the Beta phase.');
+        router.push(createPageUrl('Dashboard'));
+      }
     } catch (error) {
       console.error("Error completing MLP:", error);
       showToast('There was an error completing your MLP. Please try again.', 'error');
