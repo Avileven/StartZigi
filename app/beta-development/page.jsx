@@ -1,3 +1,5 @@
+
+// 40326
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -51,6 +53,13 @@ export default function BetaDevelopment() {
         feedback_collection_strategy: '' // New field
     });
 
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const [mentorModal, setMentorModal] = useState({
         isOpen: false,
         sectionId: '',
@@ -94,6 +103,18 @@ export default function BetaDevelopment() {
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    // Autosave every 30 seconds
+    useEffect(() => {
+        if (!venture) return;
+        const interval = setInterval(async () => {
+            try {
+                await Venture.update(venture.id, { beta_data: betaData });
+                showToast('Auto-saved', 'success');
+            } catch (e) {}
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [venture, betaData]);
 
     const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
         let fieldValue = fieldKey ? betaData[fieldKey] || '' : '';
@@ -212,10 +233,10 @@ export default function BetaDevelopment() {
                 featured_demo: demoData
             }));
 
-            alert('File uploaded successfully!');
+            showToast('File uploaded successfully!');
         } catch (error) {
             console.error('Error uploading file:', error);
-            alert('Error uploading file. Please try again.');
+            showToast('Error uploading file. Please try again.', 'error');
         }
         setIsUploading(false);
     };
@@ -240,11 +261,11 @@ export default function BetaDevelopment() {
             // Removed the VentureMessage.create for this change.
             // This component focuses solely on configuring beta_data.
 
-            alert("Beta configuration saved successfully!");
+            showToast("Beta configuration saved!");
             router.push(createPageUrl("Dashboard")); // Navigate back after saving
         } catch (error) {
             console.error("Error saving beta data:", error);
-            alert("There was an error saving your beta configuration. Please try again.");
+            showToast("Error saving. Please try again.", "error");
         }
         setIsSaving(false);
     };
@@ -279,10 +300,25 @@ export default function BetaDevelopment() {
     const areBenefitsFilled = betaData.benefits.every(b => b.title.trim() && b.description.trim());
     const isDemoUploaded = !!betaData.featured_demo;
 
+    const completionPct = (() => {
+        const fields = [betaData.headline, betaData.description, betaData.user_acquisition_strategy, betaData.feedback_collection_strategy];
+        const filled = fields.filter(f => f && f.trim().length > 0).length;
+        const benefitsFilled = betaData.benefits.every(b => b.title.trim() && b.description.trim()) ? 1 : 0;
+        const demoFilled = betaData.featured_demo ? 1 : 0;
+        return Math.round(((filled + benefitsFilled + demoFilled) / 6) * 100);
+    })();
+
     return (
         <>
-            <div className="min-h-screen bg-gray-50 p-4 md:p-8"> {/* Changed background to match new design */}
-                <div className="max-w-4xl mx-auto space-y-8">
+            {/* Toast */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+                    {toast.message}
+                </div>
+            )}
+
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
+                <div className="max-w-4xl mx-auto space-y-6">
                     <div className="text-center">
                         <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Rocket className="w-8 h-8 text-white" />
@@ -291,11 +327,31 @@ export default function BetaDevelopment() {
                         <p className="text-gray-600 mt-2">Configure your public beta testing page to attract early users.</p>
                     </div>
 
+                    {/* Intro */}
+                    <div className="p-6 bg-white rounded-2xl border border-blue-100 shadow-sm">
+                        <p className="text-gray-700 leading-relaxed">
+                            <span className="font-bold text-blue-700">You've made it to Beta! 🚀</span>
+                            <br /><br />
+                            This is where you go public. Your goal is to attract real users, collect sign-ups, and gather structured feedback. Configure your beta page below — the more compelling it is, the more testers you'll attract. You need <strong>50 beta sign-ups</strong> to move to the Growth phase.
+                        </p>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-semibold text-gray-700">Page Completion</span>
+                            <span className="text-sm font-bold text-blue-700">{completionPct}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3">
+                            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+                        </div>
+                    </div>
+
                     <Tabs defaultValue="content" className="w-full">
                         <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="content">Page Content</TabsTrigger>
-                            <TabsTrigger value="benefits">Benefits</TabsTrigger>
-                            <TabsTrigger value="demo">Featured Demo</TabsTrigger>
+                            <TabsTrigger value="content" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Page Content</TabsTrigger>
+                            <TabsTrigger value="benefits" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Benefits</TabsTrigger>
+                            <TabsTrigger value="demo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Featured Demo</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="content" className="space-y-6">
@@ -332,7 +388,12 @@ export default function BetaDevelopment() {
                                             onChange={(e) => handleChange('headline', e.target.value)}
                                             placeholder="e.g., The Future of [Your Industry]. Join Our Private Beta."
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">{betaData.headline.trim().length}/{MIN_HEADLINE_LENGTH} characters minimum</p>
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className={`h-full rounded-full transition-all ${betaData.headline.trim().length >= MIN_HEADLINE_LENGTH ? 'bg-green-500' : 'bg-blue-400'}`} style={{ width: `${Math.min((betaData.headline.trim().length / MIN_HEADLINE_LENGTH) * 100, 100)}%` }} />
+                                            </div>
+                                            <span className={`text-xs ${betaData.headline.trim().length >= MIN_HEADLINE_LENGTH ? 'text-green-600' : 'text-gray-400'}`}>{betaData.headline.trim().length}/{MIN_HEADLINE_LENGTH}</span>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -361,7 +422,12 @@ export default function BetaDevelopment() {
                                             placeholder="Briefly describe your product and why someone should join the beta program."
                                             className="h-24"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">{betaData.description.trim().length}/{MIN_DESCRIPTION_LENGTH} characters minimum</p>
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className={`h-full rounded-full transition-all ${betaData.description.trim().length >= MIN_DESCRIPTION_LENGTH ? 'bg-green-500' : 'bg-blue-400'}`} style={{ width: `${Math.min((betaData.description.trim().length / MIN_DESCRIPTION_LENGTH) * 100, 100)}%` }} />
+                                            </div>
+                                            <span className={`text-xs ${betaData.description.trim().length >= MIN_DESCRIPTION_LENGTH ? 'text-green-600' : 'text-gray-400'}`}>{betaData.description.trim().length}/{MIN_DESCRIPTION_LENGTH}</span>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -576,18 +642,30 @@ export default function BetaDevelopment() {
                             Back to Dashboard
                         </Button>
 
-                        <Button
-                            onClick={handleSave} // Changed to handleSave
-                            disabled={!canSave() || isSaving}
-                            className="bg-blue-600 hover:bg-blue-700"
-                            size="lg"
-                        >
-                            {isSaving ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                            ) : (
-                                <>Save Beta Configuration<CheckCircle className="w-4 h-4 ml-2" /></> // Changed button text
+                        <div className="flex items-center gap-3">
+                            {venture && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => window.open(`/beta-testing?id=${venture.id}`, '_blank')}
+                                    className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                >
+                                    <ArrowRight className="w-4 h-4 mr-2" />
+                                    Preview Beta Page
+                                </Button>
                             )}
-                        </Button>
+                            <Button
+                                onClick={handleSave}
+                                disabled={!canSave() || isSaving}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                size="lg"
+                            >
+                                {isSaving ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                                ) : (
+                                    <>Save Beta Configuration<CheckCircle className="w-4 h-4 ml-2" /></>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
