@@ -280,7 +280,7 @@ export default function MVPDevelopment() {
         venture_id: venture.id,
         message_type: 'phase_complete',
         title: '🎉 MVP Uploaded Successfully!',
-        content: `Great work! Your MVP for "${venture.name}" has been documented and uploaded. You can now proceed to revenue modeling.`,
+        content: `Great work! Your MVP for "${venture.name}" has been documented and uploaded. Use the Promotion Center to share it and collect user feedback — it will drive better product decisions and strengthen your investor case.You can now proceed to revenue modeling.`,
         phase: 'mvp',
         priority: 3
       });
