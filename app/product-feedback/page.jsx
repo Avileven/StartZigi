@@ -1,5 +1,4 @@
-
-// 50326 update with mentor
+// 050326 with mentor
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -7,8 +6,8 @@ import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
 import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
-import { businessPlan } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
+import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, Sparkles } from 'lucide-react';
@@ -54,6 +53,9 @@ export default function ProductFeedbackPage() {
           console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
           setProductFeedbacks(pfeedback);
 
+          const bp = await businessPlan.filter({ venture_id: currentVenture.id });
+          if (bp.length > 0) setBusinessPlanData(bp[0]);
+
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
             const featureAnalytics = {};
             currentVenture.mvp_data.feature_matrix
@@ -92,46 +94,32 @@ export default function ProductFeedbackPage() {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
-      // Build context from all available data
       const featureSummary = Object.entries(analytics).map(([, data]) =>
-        `Feature: "${data.name}" - Avg rating: ${data.avgRating}/10 (${data.totalResponses} responses). Breakdown: Never use ${data.breakdown.neverUse}, Confusing ${data.breakdown.confusing}, Nice to have ${data.breakdown.niceToHave}, Essential ${data.breakdown.essential}.`
+        'Feature: "' + data.name + '" - Avg: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Never use: ' + data.breakdown.neverUse + ', Confusing: ' + data.breakdown.confusing + ', Nice to have: ' + data.breakdown.niceToHave + ', Essential: ' + data.breakdown.essential + '.'
       ).join('\n');
-
-      const mlpFeedbackSummary = productFeedbacks.map(fb => `- "${fb.feedback_text}"`).join('\n');
-      const suggestedSummary = suggestedFeatures.map(s => `- ${s.feature_name}`).join('\n');
-
+      const mlpSummary = productFeedbacks.map(fb => '- "' + fb.feedback_text + '"').join('\n');
+      const suggestedSummary = suggestedFeatures.map(s => '- ' + s.feature_name).join('\n');
       const bpContext = businessPlanData
-        ? `Mission: ${businessPlanData.mission || 'N/A'}\nProblem: ${businessPlanData.problem || 'N/A'}\nSolution: ${businessPlanData.solution || 'N/A'}\nTarget customers: ${businessPlanData.target_customers || 'N/A'}`
+        ? 'Mission: ' + (businessPlanData.mission || 'N/A') + '\nProblem: ' + (businessPlanData.problem || 'N/A') + '\nSolution: ' + (businessPlanData.solution || 'N/A') + '\nTarget customers: ' + (businessPlanData.target_customers || 'N/A')
         : 'No business plan data available.';
 
-      const prompt = `You are an expert product strategist analyzing real user feedback for a startup called "${venture?.name}".
-
-BUSINESS CONTEXT:
-${bpContext}
-
-MVP FEATURE RATINGS (from beta users):
-${featureSummary || 'No feature ratings yet.'}
-
-MLP USER FEEDBACK (open text responses):
-${mlpFeedbackSummary || 'No MLP feedback yet.'}
-
-SUGGESTED FEATURES FROM USERS:
-${suggestedSummary || 'No suggestions yet.'}
-
-Based on all this data, provide a structured analysis:
-
-1. WHAT IS WORKING: Which features resonate most with users and why.
-2. WHAT NEEDS IMPROVEMENT: Specific pain points or confusion areas identified in the feedback.
-3. PRODUCT RECOMMENDATIONS: 3-5 concrete, prioritized improvements the founder should make next.
-4. STRATEGIC INSIGHT: One key insight about the product-market fit based on the feedback patterns.
-
-Be specific, actionable, and direct. Use plain text only — no markdown, no bullet symbols, no asterisks. Use numbered lists where needed.`;
+      const prompt = 'You are an expert product strategist analyzing real user feedback for a startup called "' + (venture?.name || '') + '".\n\n'
+        + 'BUSINESS CONTEXT:\n' + bpContext + '\n\n'
+        + 'MVP FEATURE RATINGS:\n' + (featureSummary || 'No feature ratings yet.') + '\n\n'
+        + 'MLP USER FEEDBACK:\n' + (mlpSummary || 'No MLP feedback yet.') + '\n\n'
+        + 'SUGGESTED FEATURES FROM USERS:\n' + (suggestedSummary || 'No suggestions yet.') + '\n\n'
+        + 'Provide a structured analysis with these 4 sections:\n'
+        + '1. WHAT IS WORKING: Which features resonate most and why.\n'
+        + '2. WHAT NEEDS IMPROVEMENT: Pain points and confusion areas.\n'
+        + '3. PRODUCT RECOMMENDATIONS: 3-5 concrete prioritized improvements.\n'
+        + '4. STRATEGIC INSIGHT: One key insight about product-market fit.\n\n'
+        + 'Be specific and actionable. Plain text only, no markdown, no asterisks.';
 
       const data = await InvokeLLM({ prompt, creditType: 'mentor' });
       setAiAnalysis(data?.response || 'No analysis generated.');
     } catch (error) {
       if (error.message === 'NO_CREDITS') {
-        setAiAnalysis('⚠️ You have used all your mentor credits this month. Upgrade your plan to get more.');
+        setAiAnalysis('You have used all your mentor credits this month. Upgrade your plan to get more.');
       } else {
         setAiAnalysis('Error generating analysis. Please try again.');
       }
@@ -318,6 +306,45 @@ Be specific, actionable, and direct. Use plain text only — no markdown, no bul
             </div>
           </div>
         )}
+
+        {/* AI Analysis */}
+        <div className="mb-10">
+          <Card className="border-0 shadow-sm bg-gradient-to-r from-indigo-50 to-purple-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">AI Feedback Analysis</h3>
+                    <p className="text-sm text-gray-500">Strategic insights based on all your feedback data</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow transition-all disabled:opacity-60"
+                >
+                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isAnalyzing ? 'Analyzing...' : 'Analyze My Feedback'}
+                </button>
+              </div>
+              {aiAnalysis && (
+                <div className="mt-5 p-5 bg-white rounded-xl border border-indigo-100 shadow-sm">
+                  {aiAnalysis.split('\n').map((line, i) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return null;
+                    const isHeader = /^[1-4]\.\s+(WHAT|PRODUCT|STRATEGIC)/.test(trimmed);
+                    return isHeader
+                      ? <h4 key={i} className="font-bold text-indigo-800 mt-4 mb-1 text-base">{trimmed}</h4>
+                      : <p key={i} className="text-gray-700 leading-relaxed text-sm mb-1">{trimmed}</p>;
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* MLP User Feedback */}
         {productFeedbacks.length > 0 && (
