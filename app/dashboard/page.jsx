@@ -1,4 +1,4 @@
-//dashboard 290126 plus  balance
+//dashboard 050326 plus  balance
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -172,44 +172,9 @@ const updateValuation = useCallback(() => {
         if (userVentures.length > 0) {
           const activeVenture = userVentures[0];
          
-          // AUTO-FIX: If mlp_development_completed is true but mlp_completed is false, fix it
-          if (activeVenture.mlp_development_completed && !activeVenture.mlp_completed) {
-            await Venture.update(activeVenture.id, {
-              mlp_completed: true,
-              phase: 'beta'
-            });
-           
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'phase_complete',
-              title: '🎉 MLP Phase Complete!',
-              content: `Congratulations! You've successfully completed your Minimum Lovable Product. You are now entering the Beta phase.`,
-              phase: 'mlp',
-              priority: 4
-            });
-
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'phase_welcome',
-              title: '🧪 Welcome to Beta Testing!',
-              content: `Set up your beta testing page to start gathering sign-ups. Next: plan your investor pitch and access the VC Marketplace.`,
-              phase: 'beta',
-              priority: 3
-            });
-
-            const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
-            await VentureMessage.create({
-              venture_id: activeVenture.id,
-              message_type: 'system',
-              title: '📊 Beta Phase Requirements',
-              content: `You need 50 beta sign-ups to move to Growth phase. You currently have ${currentTesters.length}. Use the Promotion Center to reach more potential testers!`,
-              phase: 'beta',
-              priority: 3
-            });
-           
-            activeVenture.mlp_completed = true;
-            activeVenture.phase = 'beta';
-          }
+          // AUTO-FIX removed: previously forced phase='beta' when mlp_development_completed=true but mlp_completed=false.
+          // This bypassed the 10 product_feedback requirement. Phase transition now happens exclusively in
+          // mlp-development-center/page.jsx handleComplete().
          
           // AUTO-FIX: If in Beta phase and no "50 testers" message exists, create it
           if (activeVenture.phase === 'beta') {

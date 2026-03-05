@@ -1,4 +1,4 @@
-// 40326 
+// 050326 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -231,7 +231,7 @@ export default function MLPDevelopmentCenter() {
           venture_id: venture.id,
           message_type: 'phase_complete',
           title: '🎉 MLP Phase Complete!',
-          content: `Congratulations! You completed your MLP and collected ${feedbackCount} feedback responses. You are now entering the Beta phase!`,
+          content: `Congratulations! You completed your MLP and collected ${feedbackCount} feedback responses. You are now entering the Beta phase! Next: complete your Venture Pitch to unlock the VC Marketplace.`,
           phase: 'mlp',
           priority: 4
         });
