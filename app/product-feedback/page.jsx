@@ -1,4 +1,5 @@
-// 030326
+
+// 50326 update with mentor
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -6,9 +7,11 @@ import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
 import { BetaTester } from '@/api/entities.js';
 import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
+import { businessPlan } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
+import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function ProductFeedbackPage() {
@@ -19,6 +22,9 @@ export default function ProductFeedbackPage() {
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [businessPlanData, setBusinessPlanData] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -81,6 +87,57 @@ export default function ProductFeedbackPage() {
     };
     loadData();
   }, []);
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    setAiAnalysis(null);
+    try {
+      // Build context from all available data
+      const featureSummary = Object.entries(analytics).map(([, data]) =>
+        `Feature: "${data.name}" - Avg rating: ${data.avgRating}/10 (${data.totalResponses} responses). Breakdown: Never use ${data.breakdown.neverUse}, Confusing ${data.breakdown.confusing}, Nice to have ${data.breakdown.niceToHave}, Essential ${data.breakdown.essential}.`
+      ).join('\n');
+
+      const mlpFeedbackSummary = productFeedbacks.map(fb => `- "${fb.feedback_text}"`).join('\n');
+      const suggestedSummary = suggestedFeatures.map(s => `- ${s.feature_name}`).join('\n');
+
+      const bpContext = businessPlanData
+        ? `Mission: ${businessPlanData.mission || 'N/A'}\nProblem: ${businessPlanData.problem || 'N/A'}\nSolution: ${businessPlanData.solution || 'N/A'}\nTarget customers: ${businessPlanData.target_customers || 'N/A'}`
+        : 'No business plan data available.';
+
+      const prompt = `You are an expert product strategist analyzing real user feedback for a startup called "${venture?.name}".
+
+BUSINESS CONTEXT:
+${bpContext}
+
+MVP FEATURE RATINGS (from beta users):
+${featureSummary || 'No feature ratings yet.'}
+
+MLP USER FEEDBACK (open text responses):
+${mlpFeedbackSummary || 'No MLP feedback yet.'}
+
+SUGGESTED FEATURES FROM USERS:
+${suggestedSummary || 'No suggestions yet.'}
+
+Based on all this data, provide a structured analysis:
+
+1. WHAT IS WORKING: Which features resonate most with users and why.
+2. WHAT NEEDS IMPROVEMENT: Specific pain points or confusion areas identified in the feedback.
+3. PRODUCT RECOMMENDATIONS: 3-5 concrete, prioritized improvements the founder should make next.
+4. STRATEGIC INSIGHT: One key insight about the product-market fit based on the feedback patterns.
+
+Be specific, actionable, and direct. Use plain text only — no markdown, no bullet symbols, no asterisks. Use numbered lists where needed.`;
+
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      setAiAnalysis(data?.response || 'No analysis generated.');
+    } catch (error) {
+      if (error.message === 'NO_CREDITS') {
+        setAiAnalysis('⚠️ You have used all your mentor credits this month. Upgrade your plan to get more.');
+      } else {
+        setAiAnalysis('Error generating analysis. Please try again.');
+      }
+    }
+    setIsAnalyzing(false);
+  };
 
   const getCategoryFromRating = (avgRating) => {
     const rating = parseFloat(avgRating);
