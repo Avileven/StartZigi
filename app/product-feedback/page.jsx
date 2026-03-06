@@ -1,4 +1,4 @@
-// 050326 with mentor
+// 060326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
