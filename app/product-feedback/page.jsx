@@ -10,8 +10,9 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, Sparkles } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, Sparkles, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function ProductFeedbackPage() {
   const [venture, setVenture] = useState(null);
@@ -166,6 +167,38 @@ export default function ProductFeedbackPage() {
           <p className="text-gray-500 text-lg">All feedback collected across your startup journey</p>
         </div>
 
+        {/* AI Analysis */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-500">Strategic insights based on all your feedback data</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+            >
+              {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+              {isAnalyzing ? 'Analyzing...' : 'Mentor'}
+            </Button>
+          </div>
+          {aiAnalysis && (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                {aiAnalysis.split('\n').map((line, i) => {
+                  const trimmed = line.trim();
+                  if (!trimmed) return null;
+                  const isHeader = /^[1-4]\.\s+[A-Z]/.test(trimmed);
+                  return isHeader
+                    ? <h4 key={i} className="font-bold text-indigo-800 mt-4 mb-1 text-sm">{trimmed}</h4>
+                    : <p key={i} className="text-gray-700 leading-relaxed text-sm mb-1">{trimmed}</p>;
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
@@ -306,45 +339,6 @@ export default function ProductFeedbackPage() {
             </div>
           </div>
         )}
-
-        {/* AI Analysis */}
-        <div className="mb-10">
-          <Card className="border-0 shadow-sm bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">AI Feedback Analysis</h3>
-                    <p className="text-sm text-gray-500">Strategic insights based on all your feedback data</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleAnalyze}
-                  disabled={isAnalyzing}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow transition-all disabled:opacity-60"
-                >
-                  {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isAnalyzing ? 'Analyzing...' : 'Analyze My Feedback'}
-                </button>
-              </div>
-              {aiAnalysis && (
-                <div className="mt-5 p-5 bg-white rounded-xl border border-indigo-100 shadow-sm">
-                  {aiAnalysis.split('\n').map((line, i) => {
-                    const trimmed = line.trim();
-                    if (!trimmed) return null;
-                    const isHeader = /^[1-4]\.\s+(WHAT|PRODUCT|STRATEGIC)/.test(trimmed);
-                    return isHeader
-                      ? <h4 key={i} className="font-bold text-indigo-800 mt-4 mb-1 text-base">{trimmed}</h4>
-                      : <p key={i} className="text-gray-700 leading-relaxed text-sm mb-1">{trimmed}</p>;
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
         {/* MLP User Feedback */}
         {productFeedbacks.length > 0 && (
