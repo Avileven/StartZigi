@@ -104,17 +104,24 @@ export default function ProductFeedbackPage() {
         ? 'Mission: ' + (businessPlanData.mission || 'N/A') + '\nProblem: ' + (businessPlanData.problem || 'N/A') + '\nSolution: ' + (businessPlanData.solution || 'N/A') + '\nTarget customers: ' + (businessPlanData.target_customers || 'N/A')
         : 'No business plan data available.';
 
-      const prompt = 'You are an expert product strategist analyzing real user feedback for a startup called "' + (venture?.name || '') + '".\n\n'
+      const prompt = 'You are a sharp product strategist. Analyze this startup feedback data and respond in exactly 3 short sections. Each section: 1 header line in caps followed by max 2-3 bullet points, one sentence each. No fluff, no explanations.\n\n'
+        + 'Startup: "' + (venture?.name || '') + '"\n\n'
         + 'BUSINESS CONTEXT:\n' + bpContext + '\n\n'
         + 'MVP FEATURE RATINGS:\n' + (featureSummary || 'No feature ratings yet.') + '\n\n'
         + 'MLP USER FEEDBACK:\n' + (mlpSummary || 'No MLP feedback yet.') + '\n\n'
         + 'SUGGESTED FEATURES FROM USERS:\n' + (suggestedSummary || 'No suggestions yet.') + '\n\n'
-        + 'Provide a structured analysis with these 4 sections:\n'
-        + '1. WHAT IS WORKING: Which features resonate most and why.\n'
-        + '2. WHAT NEEDS IMPROVEMENT: Pain points and confusion areas.\n'
-        + '3. PRODUCT RECOMMENDATIONS: 3-5 concrete prioritized improvements.\n'
-        + '4. STRATEGIC INSIGHT: One key insight about product-market fit.\n\n'
-        + 'Be specific and actionable. Plain text only, no markdown, no asterisks.';
+        + 'Respond with EXACTLY this structure, nothing else:\n\n'
+        + "WHAT'S WORKING:\n"
+        + '- [one sentence]\n'
+        + '- [one sentence]\n\n'
+        + 'WHAT NEEDS ATTENTION:\n'
+        + '- [one sentence]\n'
+        + '- [one sentence]\n\n'
+        + 'RECOMMENDED NEW FEATURES:\n'
+        + '1. [feature name] — [one sentence reason, referencing business plan or user suggestions]\n'
+        + '2. [feature name] — [one sentence reason]\n'
+        + '3. [feature name] — [one sentence reason]\n\n'
+        + 'Plain text only. No markdown. No extra commentary.';
 
       const data = await InvokeLLM({ prompt, creditType: 'mentor' });
       setAiAnalysis(data?.response || 'No analysis generated.');
@@ -169,27 +176,26 @@ export default function ProductFeedbackPage() {
 
         {/* AI Analysis */}
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">Strategic insights based on all your feedback data</p>
+          <p className="text-sm text-gray-500 text-center mb-3">Strategic insights based on all your feedback data</p>
+          <div className="flex justify-center">
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={handleAnalyze}
               disabled={isAnalyzing}
-              className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 px-8 py-3 text-base"
             >
-              {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+              {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
               {isAnalyzing ? 'Analyzing...' : 'Mentor'}
             </Button>
           </div>
           {aiAnalysis && (
-            <Card className="border-0 shadow-sm">
+            <Card className="border-0 shadow-sm mt-5">
               <CardContent className="p-5">
                 {aiAnalysis.split('\n').map((line, i) => {
                   const trimmed = line.trim();
                   if (!trimmed) return null;
-                  const isHeader = /^[1-4]\.\s+[A-Z]/.test(trimmed);
+                  const isHeader = /^[A-Z][A-Z\s']+:/.test(trimmed);
                   return isHeader
                     ? <h4 key={i} className="font-bold text-indigo-800 mt-4 mb-1 text-sm">{trimmed}</h4>
                     : <p key={i} className="text-gray-700 leading-relaxed text-sm mb-1">{trimmed}</p>;
