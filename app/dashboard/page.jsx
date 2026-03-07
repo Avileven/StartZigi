@@ -1071,6 +1071,17 @@ if (showToS) {
     X Dismiss
   </Button>
 )}
+{/* [ADDED] כפתור מחיקה להודעות action_required */}
+{message.message_type === 'action_required' && (
+  <Button
+    variant="outline"
+    size="sm"
+    className="mt-2 text-gray-500 hover:bg-gray-50"
+    onClick={() => dismissMessage(message)}
+  >
+    <X className="w-4 h-4 mr-2" /> Dismiss
+  </Button>
+)}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
                             <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
                               <p className="text-sm font-medium">Investment Offer Details:</p>
