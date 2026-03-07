@@ -205,7 +205,13 @@ export default function MLPDevelopmentCenter() {
           mlp_data: mlpData,
         });
 
-        if (!venture.mlp_feedback_message_sent) {
+        // [CHANGED] removed mlp_feedback_message_sent column (does not exist in DB).
+        // [ADDED] check if message already exists in venture_messages to avoid duplicates.
+        const existingFeedbackMsg = await VentureMessage.filter({
+          venture_id: venture.id,
+          title: '🎉 MLP Complete — Now Collect Feedback!'
+        });
+        if (existingFeedbackMsg.length === 0) {
           await VentureMessage.create({
             venture_id: venture.id,
             message_type: 'action_required',
@@ -214,7 +220,6 @@ export default function MLPDevelopmentCenter() {
             phase: 'mlp',
             priority: 5
           });
-          await Venture.update(venture.id, { mlp_feedback_message_sent: true });
         }
 
         showToast(`MLP saved! You need ${10 - feedbackCount} more feedback responses before moving to Beta.`, 'error');
