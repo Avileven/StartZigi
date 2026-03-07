@@ -1,4 +1,4 @@
-//dashboard 050326 plus  balance
+//dashboard 070326 plus  balance
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -103,38 +103,31 @@ export default function Dashboard() {
 };
   const router = useRouter();
 
-  // new valuation
+  // [CHANGED] updateBalance: removed hardcoded initialCapital=15000 and totalFunding from messages.
+  // [ADDED] now reads virtual_capital from DB as single source of truth.
+  // virtual_capital is written to DB by loadDashboard (phase sync) and handleInvestmentDecision (investments).
   const updateBalance = useCallback(() => {
     if (!currentVenture) return;
-    const totalFunding = messages.filter(m => m.message_type === "investment_offer" && m.investment_offer_status === "accepted").reduce((s, m) => s + (m.investment_offer_checksize || 0), 0);
-    const initialCapital = 15000;
-    const totalStartingCapital = initialCapital + totalFunding;
+    const startingCapital = currentVenture.virtual_capital || 0;
     const monthlyBurn = currentVenture.monthly_burn_rate || 5000;
     if (!currentVenture.burn_rate_start) {
-      setLiveBalance(totalStartingCapital);
+      setLiveBalance(startingCapital);
       return;
     }
     const startTime = new Date(currentVenture.burn_rate_start).getTime();
     const now = new Date().getTime();
     const secondsElapsed = (now - startTime) / 1000;
     const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
-    const calculated = Math.floor(Math.max(0, totalStartingCapital - (secondsElapsed * burnPerSecond)));
+    const calculated = Math.floor(Math.max(0, startingCapital - (secondsElapsed * burnPerSecond)));
     setLiveBalance(calculated);
-  }, [currentVenture, messages]);
+  }, [currentVenture]);
   
+// [CHANGED] updateValuation: removed local baseValues calculation.
+// [ADDED] now reads valuation from DB as single source of truth.
+// valuation is written to DB by loadDashboard (phase sync) and handleInvestmentDecision (investments).
 const updateValuation = useCallback(() => {
   if (!currentVenture) return;
-
-  const baseValues = {
-    idea: 250000,
-    business_plan: 500000,
-    mvp: 1000000,
-    mlp: 2500000,
-    beta: 5000000,
-    growth: 10000000
-  };
-
-  setCurrentValuation(baseValues[currentVenture.phase]);
+  setCurrentValuation(currentVenture.valuation || 0);
 }, [currentVenture]);
 
   const loadDashboard = useCallback(async () => {
@@ -198,6 +191,30 @@ const updateValuation = useCallback(() => {
             }
           }
          
+          // [ADDED] Sync valuation to DB based on current phase.
+          // This ensures Financials page reads the correct value from DB.
+          // Only updates if DB value is lower than expected (never overwrites a higher investment valuation).
+          const phaseValuations = {
+            business_plan: 250000,  // completed IDEA
+            mvp: 500000,            // completed BUSINESS_PLAN
+            mlp: 1000000,           // completed MVP
+            beta: 2500000,          // completed MLP
+            growth: 5000000,        // completed BETA
+          };
+          const expectedValuation = phaseValuations[activeVenture.phase];
+          if (expectedValuation && (!activeVenture.valuation || activeVenture.valuation < expectedValuation)) {
+            await Venture.update(activeVenture.id, { valuation: expectedValuation });
+            activeVenture.valuation = expectedValuation;
+          }
+
+          // [ADDED] Sync virtual_capital to DB when entering MVP phase for the first time.
+          // $15,000 is injected when Business Plan is completed and user moves to MVP.
+          // Only sets it if not already set (so investments are never overwritten).
+          if (activeVenture.phase === 'mvp' && !activeVenture.virtual_capital) {
+            await Venture.update(activeVenture.id, { virtual_capital: 15000 });
+            activeVenture.virtual_capital = 15000;
+          }
+
           setCurrentVenture(activeVenture);
 
           const ventureMessages = await VentureMessage.filter(
