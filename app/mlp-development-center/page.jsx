@@ -1,4 +1,4 @@
-// 080326 v with colors and public remark
+// 080326 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -464,7 +464,8 @@ export default function MLPDevelopmentCenter() {
                     </div>
                   )}
                   <div className="mt-6">
-                    <Label htmlFor="feedback_analysis">Feedback Analysis Summary <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
+                    <Label htmlFor="feedback_analysis">Feedback Analysis Summary</Label>
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                     <Textarea
                       id="feedback_analysis"
                       value={mlpData.feedback_analysis}
@@ -500,7 +501,8 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>For each feature you're keeping, define what needs to be FIXED, POLISHED, and ADDED</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="enhancement_strategy">Enhancement Strategy <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
+                  <Label htmlFor="enhancement_strategy">Enhancement Strategy</Label>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                   <Textarea
                     id="enhancement_strategy"
                     value={mlpData.enhancement_strategy}
@@ -535,7 +537,8 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>What small features will surprise and delight users?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="wow_moments">"Wow" Moments & Delight Factors <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
+                  <Label htmlFor="wow_moments">"Wow" Moments & Delight Factors</Label>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                   <Textarea
                     id="wow_moments"
                     value={mlpData.wow_moments}
@@ -572,7 +575,8 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>Define the user experience from awareness to advocacy</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="user_journey">User Journey (Awareness → Onboarding → First Use → Regular Use → Advocacy) <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
+                  <Label htmlFor="user_journey">User Journey (Awareness → Onboarding → First Use → Regular Use → Advocacy)</Label>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                   <Textarea
                     id="user_journey"
                     value={mlpData.user_journey}
@@ -728,7 +732,7 @@ export default function MLPDevelopmentCenter() {
                     <Upload className="w-5 h-5 text-green-600" />
                     3.3 Upload MLP Files
                   </CardTitle>
-                  <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files. <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Shown on public MLP page</span></CardDescription>
+                  <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200 mb-4">
