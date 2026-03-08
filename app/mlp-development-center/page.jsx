@@ -831,12 +831,21 @@ export default function MLPDevelopmentCenter() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving}>
-                      {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Draft'}
-                    </Button>
-                    <Button onClick={handleComplete} disabled={isCompleting} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700">
-                      {isCompleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Completing...</> : 'Complete MLP Development'}
-                    </Button>
+                    {/* [CHANGED] If already completed — show only Save Draft as primary button, hide Complete */}
+                    {venture?.mlp_development_completed ? (
+                      <Button onClick={handleSaveDraft} disabled={isSaving} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700">
+                        {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Changes'}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving}>
+                          {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Draft'}
+                        </Button>
+                        <Button onClick={handleComplete} disabled={isCompleting} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700">
+                          {isCompleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Completing...</> : 'Complete MLP Development'}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
