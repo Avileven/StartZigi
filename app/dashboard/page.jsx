@@ -1,4 +1,4 @@
-//dashboard 070326 plus  balance
+//dashboard 080326 plus  balance
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -497,12 +497,15 @@ const getGreeting = (username) => {
     const assets = [];
     const currentPhaseIndex = PHASES_ORDER.indexOf(currentVenture.phase);
 
-    assets.push({
-      id: 'edit_landing_page',
-      title: 'Edit Landing Page',
-      icon: Lightbulb,
-      page: 'edit-landing-page' // createPageUrl will convert to /editlandingpage
-    });
+    // [CHANGED] Edit Landing Page hidden from MLP phase onwards
+    if (currentPhaseIndex < PHASES_ORDER.indexOf('mlp')) {
+      assets.push({
+        id: 'edit_landing_page',
+        title: 'Edit Landing Page',
+        icon: Lightbulb,
+        page: 'edit-landing-page' // createPageUrl will convert to /editlandingpage
+      });
+    }
    
     assets.push({
       id: 'financials',
@@ -579,16 +582,14 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
     }
    
     if (currentVenture.phase === 'mlp') {
-      if (!currentVenture.mlp_development_completed) {
-        assets.push({
-          id: 'mlp_development_center',
-          title: 'MLP Development Center',
-          icon: Heart,
-          page: 'mlp-development-center' // createPageUrl will convert to /mlpdevelopmentcenter
-        });
-      }
-
-      
+      // [CHANGED] removed mlp_development_completed condition — show always while in MLP phase.
+      // Button disappears automatically when user moves to Beta (phase changes).
+      assets.push({
+        id: 'mlp_development_center',
+        title: 'MLP Development Center',
+        icon: Heart,
+        page: 'mlp-development-center'
+      });
     }
 
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
