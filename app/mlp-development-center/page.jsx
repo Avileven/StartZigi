@@ -1,4 +1,4 @@
-// 050326 
+// 080326 v with colors and public remark
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.jsx';
-import { Loader2, Upload, FileText, Heart, Sparkles, TrendingUp, Users, Target, CheckCircle, ExternalLink, Info } from 'lucide-react';
+import { Loader2, Upload, FileText, Heart, Sparkles, TrendingUp, Users, Target, CheckCircle, ExternalLink, Info, Globe } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MentorButton from '@/components/mentor/MentorButton.jsx';
 import MentorModal from '@/components/mentor/MentorModal';
@@ -398,7 +398,7 @@ export default function MLPDevelopmentCenter() {
             <TabsContent value="phase1" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-indigo-700">
                     <Target className="w-5 h-5 text-indigo-600" />
                     1.1 Analyze Your MVP Feedback
                     <div className="ml-auto flex items-center gap-2">
@@ -464,7 +464,7 @@ export default function MLPDevelopmentCenter() {
                     </div>
                   )}
                   <div className="mt-6">
-                    <Label htmlFor="feedback_analysis">Feedback Analysis Summary</Label>
+                    <Label htmlFor="feedback_analysis">Feedback Analysis Summary <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
                     <Textarea
                       id="feedback_analysis"
                       value={mlpData.feedback_analysis}
@@ -478,8 +478,8 @@ export default function MLPDevelopmentCenter() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  <CardTitle className="flex items-center gap-2 text-indigo-700">
+                    <TrendingUp className="w-5 h-5 text-indigo-600" />
                     1.2 Define MLP Enhancement Strategy
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -500,7 +500,7 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>For each feature you're keeping, define what needs to be FIXED, POLISHED, and ADDED</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="enhancement_strategy">Enhancement Strategy</Label>
+                  <Label htmlFor="enhancement_strategy">Enhancement Strategy <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
                   <Textarea
                     id="enhancement_strategy"
                     value={mlpData.enhancement_strategy}
@@ -535,7 +535,7 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>What small features will surprise and delight users?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="wow_moments">"Wow" Moments & Delight Factors</Label>
+                  <Label htmlFor="wow_moments">"Wow" Moments & Delight Factors <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
                   <Textarea
                     id="wow_moments"
                     value={mlpData.wow_moments}
@@ -550,8 +550,8 @@ export default function MLPDevelopmentCenter() {
             <TabsContent value="phase2" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-purple-600" />
+                  <CardTitle className="flex items-center gap-2 text-pink-700">
+                    <Users className="w-5 h-5 text-pink-600" />
                     2.1 User Journey Map
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -572,7 +572,7 @@ export default function MLPDevelopmentCenter() {
                   <CardDescription>Define the user experience from awareness to advocacy</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="user_journey">User Journey (Awareness → Onboarding → First Use → Regular Use → Advocacy)</Label>
+                  <Label htmlFor="user_journey">User Journey (Awareness → Onboarding → First Use → Regular Use → Advocacy) <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Visible on public MLP page</span></Label>
                   <Textarea
                     id="user_journey"
                     value={mlpData.user_journey}
@@ -585,7 +585,7 @@ export default function MLPDevelopmentCenter() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-pink-700">
                     2.2 UI/UX Requirements
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -619,7 +619,7 @@ export default function MLPDevelopmentCenter() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-pink-700">
                     2.3 Technical Excellence
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -655,8 +655,8 @@ export default function MLPDevelopmentCenter() {
             <TabsContent value="phase3" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <FileText className="w-5 h-5 text-green-600" />
                     3.1 Visual Mockups
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -690,7 +690,7 @@ export default function MLPDevelopmentCenter() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-green-700">
                     3.2 Interactive Prototype
                     <div className="ml-auto flex items-center gap-2">
                       <Button
@@ -728,7 +728,7 @@ export default function MLPDevelopmentCenter() {
                     <Upload className="w-5 h-5 text-green-600" />
                     3.3 Upload MLP Files
                   </CardTitle>
-                  <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files.</CardDescription>
+                  <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files. <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 ml-1"><Globe className="w-3 h-3" /> Shown on public MLP page</span></CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200 mb-4">
