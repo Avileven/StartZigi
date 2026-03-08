@@ -588,12 +588,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
         });
       }
 
-      assets.push({
-        id: 'product_feedback',
-        title: 'Product Feedback Center',
-        icon: MessageSquare,
-        page: 'product-feedback' // createPageUrl will convert to /productfeedback
-      });
+      
     }
 
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
