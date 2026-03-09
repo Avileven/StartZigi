@@ -273,6 +273,22 @@ export default function BetaDevelopment() {
                 });
             }
 
+            // Send Venture Pitch nudge only once
+            const existingPitchMsg = await VentureMessage.filter({
+                venture_id: venture.id,
+                title: '🎤 Complete Your Venture Pitch!'
+            });
+            if (existingPitchMsg.length === 0) {
+                await VentureMessage.create({
+                    venture_id: venture.id,
+                    message_type: 'action_required',
+                    title: '🎤 Complete Your Venture Pitch!',
+                    content: `Your beta page is live! Next step: complete your Venture Pitch to unlock the VC Marketplace and start raising funding.`,
+                    phase: 'beta',
+                    priority: 4
+                });
+            }
+
             showToast("Beta configuration saved!");
             router.push(createPageUrl("Dashboard")); // Navigate back after saving
         } catch (error) {
