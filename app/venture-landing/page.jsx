@@ -1,5 +1,5 @@
 
-// 90326
+// 090326 WITH 'MLP
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -535,154 +535,152 @@ export default function VentureLanding() {
 
           {venture.mlp_development_completed && venture.mlp_data ? (
             <>
-              {/* MLP Section */}
-              <div className="mb-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Lovable Product (MLP)</h2>
-
-                <div className="space-y-6 mb-8">
-                  {venture.mlp_data.feedback_analysis && (
-                    <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-blue-500" />
-                          What We Learned from Users
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ReadMoreText text={venture.mlp_data.feedback_analysis} />
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {venture.mlp_data.enhancement_strategy && (
-                    <Card className="shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                          How We're Making It Better
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ReadMoreText text={venture.mlp_data.enhancement_strategy} />
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {venture.mlp_data.wow_moments && (
-                    <Card className="shadow-lg bg-gradient-to-br from-yellow-50 to-amber-50">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Heart className="w-5 h-5 text-yellow-500" />
-                          Delightful Moments You'll Love
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ReadMoreText text={venture.mlp_data.wow_moments} />
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {venture.mlp_data.user_journey && (
-                    <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-pink-50">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-purple-500" />
-                          Your Journey with Us
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ReadMoreText text={venture.mlp_data.user_journey} />
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* MLP Hero Header */}
+              <div className="text-center mb-12 py-10 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 rounded-2xl">
+                <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-10 h-10 text-white" />
                 </div>
+                <h2 className="text-4xl font-extrabold text-gray-900 mb-3">Our Lovable Product</h2>
+                <p className="text-lg text-gray-500 max-w-xl mx-auto">
+                  We took your feedback and built something you'll truly love.
+                </p>
+              </div>
 
-                {/* MLP Uploaded Files */}
-                {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Product Showcase</h3>
-                    <div className="space-y-4">
-                      {venture.mlp_data.uploaded_files.map((file, index) => {
-                        const fileName = file?.name || "";
-                        const fileUrl = file?.url || "";
-                        const fileExt = fileName.split(".").pop()?.toLowerCase();
-                        const isHTML = ["html", "htm"].includes(fileExt);
-                        const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
-                        const isPDF = fileExt === "pdf";
+              {/* MLP Content Cards */}
+              <div className="space-y-6 mb-8">
+                {venture.mlp_data.feedback_analysis && (
+                  <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 border-0">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-indigo-800">
+                        <Sparkles className="w-5 h-5 text-indigo-500" />
+                        What We Learned from Users
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ReadMoreText text={venture.mlp_data.feedback_analysis} />
+                    </CardContent>
+                  </Card>
+                )}
 
-                        if (isHTML) {
-                          const content = mlpHtmlContents[fileUrl];
-                          if (content) {
-                            return (
-                              <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                <div className="bg-gray-100 px-4 py-2 border-b">
-                                  <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                </div>
-                                <iframe
-                                  srcDoc={content}
-                                  className="w-full h-[600px] border-0"
-                                  title={fileName}
-                                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                                  loading="lazy"
-                                />
-                              </div>
-                            );
-                          }
-                          return (
-                            <div key={index} className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]">
-                              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                              <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
-                            </div>
-                          );
-                        }
+                {venture.mlp_data.enhancement_strategy && (
+                  <Card className="shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-0">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-emerald-800">
+                        <CheckCircle className="w-5 h-5 text-emerald-500" />
+                        How We're Making It Better
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ReadMoreText text={venture.mlp_data.enhancement_strategy} />
+                    </CardContent>
+                  </Card>
+                )}
 
-                        if (isImage) {
-                          return (
-                            <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                              <div className="bg-gray-100 px-4 py-2 border-b">
-                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                              </div>
-                              <div className="p-4">
-                                <img src={fileUrl} alt={fileName} className="w-full h-auto" />
-                              </div>
-                            </div>
-                          );
-                        }
+                {venture.mlp_data.wow_moments && (
+                  <Card className="shadow-lg bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-amber-800">
+                        <Heart className="w-5 h-5 text-amber-500" />
+                        Delightful Moments You'll Love
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ReadMoreText text={venture.mlp_data.wow_moments} />
+                    </CardContent>
+                  </Card>
+                )}
 
-                        if (isPDF) {
-                          return (
-                            <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                              <div className="bg-gray-100 px-4 py-2 border-b">
-                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                              </div>
-                              <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
-                            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg">
-                              <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                              <div>
-                                <span className="text-sm text-blue-600 hover:underline block font-medium">{fileName}</span>
-                                <span className="text-xs text-gray-500">Click to view</span>
-                              </div>
-                              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
-                            </a>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                {venture.mlp_data.user_journey && (
+                  <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border-0">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-800">
+                        <Users className="w-5 h-5 text-purple-500" />
+                        Your Journey with Us
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ReadMoreText text={venture.mlp_data.user_journey} />
+                    </CardContent>
+                  </Card>
                 )}
               </div>
 
+              {/* MLP Uploaded Files */}
+              {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
+                <div className="mb-10">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Product Showcase</h3>
+                  <div className="space-y-4">
+                    {venture.mlp_data.uploaded_files.map((file, index) => {
+                      const fileName = file?.name || "";
+                      const fileUrl = file?.url || "";
+                      const fileExt = fileName.split(".").pop()?.toLowerCase();
+                      const isHTML = ["html", "htm"].includes(fileExt);
+                      const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+                      const isPDF = fileExt === "pdf";
+
+                      if (isHTML) {
+                        const content = mlpHtmlContents[fileUrl];
+                        if (content) {
+                          return (
+                            <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+                              <div className="bg-gray-100 px-4 py-2 border-b">
+                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                              </div>
+                              <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
+                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={index} className="border-2 rounded-xl bg-white p-6 flex flex-col items-center justify-center h-[200px]">
+                            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                            <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+                          </div>
+                        );
+                      }
+                      if (isImage) {
+                        return (
+                          <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+                            <div className="bg-gray-100 px-4 py-2 border-b">
+                              <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                            </div>
+                            <div className="p-4">
+                              <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (isPDF) {
+                        return (
+                          <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+                            <div className="bg-gray-100 px-4 py-2 border-b">
+                              <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                            </div>
+                            <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={index} className="border-2 rounded-xl shadow-lg bg-white p-6">
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-4 rounded-lg">
+                            <FileText className="w-12 h-12 text-indigo-500 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-lg text-indigo-600 hover:underline font-medium block">{fileName}</span>
+                              <span className="text-sm text-gray-500">Click to view</span>
+                            </div>
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* MLP Feedback Form */}
-              <Card className="shadow-lg mb-12">
+              <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-indigo-800">
                     <MessageSquare className="w-5 h-5 text-indigo-600" />
                     Share Your Feedback
                   </CardTitle>
@@ -708,11 +706,8 @@ export default function VentureLanding() {
                           disabled={isSubmittingMlpFeedback}
                         />
                       </div>
-                      <Button
-                        type="submit"
-                        disabled={isSubmittingMlpFeedback || !mlpFeedbackText.trim()}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700"
-                      >
+                      <Button type="submit" disabled={isSubmittingMlpFeedback || !mlpFeedbackText.trim()}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700">
                         {isSubmittingMlpFeedback ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
                         ) : (
@@ -779,13 +774,8 @@ export default function VentureLanding() {
                                         <div className="bg-gray-100 px-4 py-2 border-b">
                                           <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
                                         </div>
-                                        <iframe
-                                          srcDoc={content}
-                                          className="w-full h-[600px] border-0"
-                                          title={fileName}
-                                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                                          loading="lazy"
-                                        />
+                                        <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
+                                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
                                       </div>
                                     );
                                   }
@@ -796,7 +786,6 @@ export default function VentureLanding() {
                                     </div>
                                   );
                                 }
-
                                 if (isImage) {
                                   return (
                                     <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
@@ -809,7 +798,6 @@ export default function VentureLanding() {
                                     </div>
                                   );
                                 }
-
                                 if (isPDF) {
                                   return (
                                     <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
@@ -820,7 +808,6 @@ export default function VentureLanding() {
                                     </div>
                                   );
                                 }
-
                                 return (
                                   <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
                                     <a href={fileUrl} target="_blank" rel="noopener noreferrer"
@@ -849,32 +836,29 @@ export default function VentureLanding() {
                   <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
                 </div>
               )}
+
+              <Card className="shadow-lg mb-12">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-red-500" />
+                    Support This Venture
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">Show your support for {venture.name} by liking this venture!</p>
+                  <Button
+                    onClick={handleLike}
+                    disabled={hasLiked || (currentUser && venture.created_by === currentUser.email)}
+                    className={hasLiked ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${hasLiked ? "fill-current" : ""}`} />
+                    {hasLiked ? "Liked!" : "Like This Venture"}
+                  </Button>
+                  {hasLiked && <p className="text-sm text-green-600 mt-2">Thank you for your support!</p>}
+                </CardContent>
+              </Card>
             </>
           )}
-
-          <Card className="shadow-lg mb-12">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500" />
-                Support This Venture
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">Show your support for {venture.name} by liking this venture!</p>
-              <Button
-                onClick={handleLike}
-                disabled={hasLiked || (currentUser && venture.created_by === currentUser.email)}
-                className={hasLiked ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
-              >
-                <Heart className={`w-4 h-4 mr-2 ${hasLiked ? "fill-current" : ""}`} />
-                {hasLiked ? "Liked!" : "Like This Venture"}
-              </Button>
-
-              {hasLiked && <p className="text-sm text-green-600 mt-2">Thank you for your support!</p>}
-            </CardContent>
-          </Card>
-
-          {/* NOTE: אם אתה רוצה להציג כפתור "Join" במסלול token — תגיד לי, נוסיף אותו בלי לשבור כלום */}
         </main>
       </div>
     </>
