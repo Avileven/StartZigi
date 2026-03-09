@@ -1,4 +1,4 @@
-//dashboard 080326 plus  balance
+//dashboard 090326 
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -1144,6 +1144,14 @@ if (showToS) {
                             </div>
                           )}
                            
+                          {message.message_type === 'external_feedback_invite' && (
+                            <div className="mt-4">
+                                <Button onClick={() => dismissMessage(message)} variant="outline">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                </Button>
+                            </div>
+                          )}
+
                           {isSystem && !isRejection && (
                             <div className="mt-4">
                                 <Button onClick={() => dismissMessage(message)} variant="outline">
