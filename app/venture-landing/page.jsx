@@ -1,5 +1,5 @@
 
-// app/venture-landing/page.jsx 18126 TEST
+// 90326
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -15,6 +15,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@supabase/supabase-js";
 
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+
 import {
   Lightbulb,
   Target,
@@ -25,6 +28,9 @@ import {
   Code,
   Loader2,
   ExternalLink,
+  Sparkles,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
@@ -74,6 +80,11 @@ export default function VentureLanding() {
 
   // FIX: שומרים invitation_token פעם אחת
   const [invitationToken, setInvitationToken] = useState(null);
+
+  // MLP feedback state
+  const [mlpFeedbackText, setMlpFeedbackText] = useState("");
+  const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
+  const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
 
   // FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
@@ -414,6 +425,26 @@ export default function VentureLanding() {
     await loadVenture(currentUser);
   };
 
+  const handleMlpFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!mlpFeedbackText.trim() || !venture) return;
+    setIsSubmittingMlpFeedback(true);
+    try {
+      const { error } = await supabase.from("product_feedback").insert([{
+        venture_id: venture.id,
+        feedback_text: mlpFeedbackText.trim(),
+        feedback_type: "other",
+      }]);
+      if (error) throw error;
+      setMlpFeedbackSubmitted(true);
+      setMlpFeedbackText("");
+    } catch (err) {
+      console.error("Error submitting MLP feedback:", err);
+      alert("There was an error submitting your feedback. Please try again.");
+    }
+    setIsSubmittingMlpFeedback(false);
+  };
+
   const getSectorLabel = (sector) => {
     const labels = {
       ai_deep_tech: "AI / Deep Tech",
@@ -502,140 +533,323 @@ export default function VentureLanding() {
             </Card>
           </div>
 
-          {venture.mvp_uploaded && venture.mvp_data && (
-            <div className="mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
+          {venture.mlp_development_completed && venture.mlp_data ? (
+            <>
+              {/* MLP Section */}
+              <div className="mb-12">
+                <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Lovable Product (MLP)</h2>
 
-              <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-purple-600" />
-                        Product Definition
-                      </h3>
-                      <ReadMoreText text={venture.mvp_data.product_definition} />
-                    </div>
+                <div className="space-y-6 mb-8">
+                  {venture.mlp_data.feedback_analysis && (
+                    <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-blue-500" />
+                          What We Learned from Users
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ReadMoreText text={venture.mlp_data.feedback_analysis} />
+                      </CardContent>
+                    </Card>
+                  )}
 
-                    <div>
-                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                        <Code className="w-5 h-5 text-blue-600" />
-                        Technical Approach
-                      </h3>
-                      <ReadMoreText text={venture.mvp_data.technical_specs} />
-                    </div>
+                  {venture.mlp_data.enhancement_strategy && (
+                    <Card className="shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          How We're Making It Better
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ReadMoreText text={venture.mlp_data.enhancement_strategy} />
+                      </CardContent>
+                    </Card>
+                  )}
 
-                    <div>
-                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                        <Users className="w-5 h-5 text-green-600" />
-                        User Testing & Validation
-                      </h3>
-                      <ReadMoreText text={venture.mvp_data.user_testing} />
-                    </div>
-                  </div>
+                  {venture.mlp_data.wow_moments && (
+                    <Card className="shadow-lg bg-gradient-to-br from-yellow-50 to-amber-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Heart className="w-5 h-5 text-yellow-500" />
+                          Delightful Moments You'll Love
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ReadMoreText text={venture.mlp_data.wow_moments} />
+                      </CardContent>
+                    </Card>
+                  )}
 
-                  <div className="space-y-6">
-                    {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
+                  {venture.mlp_data.user_journey && (
+                    <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-pink-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Users className="w-5 h-5 text-purple-500" />
+                          Your Journey with Us
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ReadMoreText text={venture.mlp_data.user_journey} />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
 
-                        <div className="space-y-4">
-                          {venture.mvp_data.uploaded_files.map((file, index) => {
-                            const fileName = file?.name || "";
-                            const fileUrl = file?.url || "";
-                            const fileExt = fileName.split(".").pop()?.toLowerCase();
+                {/* MLP Uploaded Files */}
+                {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Product Showcase</h3>
+                    <div className="space-y-4">
+                      {venture.mlp_data.uploaded_files.map((file, index) => {
+                        const fileName = file?.name || "";
+                        const fileUrl = file?.url || "";
+                        const fileExt = fileName.split(".").pop()?.toLowerCase();
+                        const isHTML = ["html", "htm"].includes(fileExt);
+                        const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+                        const isPDF = fileExt === "pdf";
 
-                            const isHTML = ["html", "htm"].includes(fileExt);
-                            const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
-                            const isPDF = fileExt === "pdf";
-
-                            if (isHTML) {
-                              const content = mvpHtmlContents[fileUrl];
-                              if (content) {
-                                return (
-                                  <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                    <div className="bg-gray-100 px-4 py-2 border-b">
-                                      <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                    </div>
-                                    <iframe
-                                      srcDoc={content}
-                                      className="w-full h-[600px] border-0"
-                                      title={fileName}
-                                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <div
-                                  key={index}
-                                  className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]"
-                                >
-                                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                                  <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
-                                </div>
-                              );
-                            }
-
-                            if (isImage) {
-                              return (
-                                <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                  <div className="bg-gray-100 px-4 py-2 border-b">
-                                    <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                  </div>
-                                  <div className="p-4">
-                                    <img src={fileUrl} alt={fileName} className="w-full h-auto" />
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            if (isPDF) {
-                              return (
-                                <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                  <div className="bg-gray-100 px-4 py-2 border-b">
-                                    <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                  </div>
-                                  <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
-                                </div>
-                              );
-                            }
-
+                        if (isHTML) {
+                          const content = mlpHtmlContents[fileUrl];
+                          if (content) {
                             return (
-                              <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
-                                <a
-                                  href={fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg"
-                                >
-                                  <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                                  <div>
-                                    <span className="text-sm text-blue-600 hover:underline block font-medium">
-                                      {fileName}
-                                    </span>
-                                    <span className="text-xs text-gray-500">Click to view</span>
-                                  </div>
-                                  <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
-                                </a>
+                              <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                <div className="bg-gray-100 px-4 py-2 border-b">
+                                  <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                </div>
+                                <iframe
+                                  srcDoc={content}
+                                  className="w-full h-[600px] border-0"
+                                  title={fileName}
+                                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                                  loading="lazy"
+                                />
                               </div>
                             );
-                          })}
+                          }
+                          return (
+                            <div key={index} className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]">
+                              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                              <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+                            </div>
+                          );
+                        }
+
+                        if (isImage) {
+                          return (
+                            <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                              <div className="bg-gray-100 px-4 py-2 border-b">
+                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                              </div>
+                              <div className="p-4">
+                                <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (isPDF) {
+                          return (
+                            <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                              <div className="bg-gray-100 px-4 py-2 border-b">
+                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                              </div>
+                              <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
+                            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg">
+                              <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
+                              <div>
+                                <span className="text-sm text-blue-600 hover:underline block font-medium">{fileName}</span>
+                                <span className="text-xs text-gray-500">Click to view</span>
+                              </div>
+                              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                            </a>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* MLP Feedback Form */}
+              <Card className="shadow-lg mb-12">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-indigo-600" />
+                    Share Your Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {mlpFeedbackSubmitted ? (
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
+                      <p className="text-gray-500 text-sm mt-1">Your response helps the team improve their product.</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleMlpFeedbackSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="mlp-feedback">What do you think about this product?</Label>
+                        <Textarea
+                          id="mlp-feedback"
+                          value={mlpFeedbackText}
+                          onChange={(e) => setMlpFeedbackText(e.target.value)}
+                          placeholder="Your feedback helps make this product even better..."
+                          className="min-h-[100px] mt-2"
+                          required
+                          disabled={isSubmittingMlpFeedback}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isSubmittingMlpFeedback || !mlpFeedbackText.trim()}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        {isSubmittingMlpFeedback ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                        ) : (
+                          <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
+                        )}
+                      </Button>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              {venture.mvp_uploaded && venture.mvp_data && (
+                <div className="mb-12">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
+
+                  <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                    <div className="grid lg:grid-cols-2 gap-8">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-5 h-5 text-purple-600" />
+                            Product Definition
+                          </h3>
+                          <ReadMoreText text={venture.mvp_data.product_definition} />
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+                            <Code className="w-5 h-5 text-blue-600" />
+                            Technical Approach
+                          </h3>
+                          <ReadMoreText text={venture.mvp_data.technical_specs} />
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+                            <Users className="w-5 h-5 text-green-600" />
+                            User Testing & Validation
+                          </h3>
+                          <ReadMoreText text={venture.mvp_data.user_testing} />
                         </div>
                       </div>
-                    )}
+
+                      <div className="space-y-6">
+                        {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
+                            <div className="space-y-4">
+                              {venture.mvp_data.uploaded_files.map((file, index) => {
+                                const fileName = file?.name || "";
+                                const fileUrl = file?.url || "";
+                                const fileExt = fileName.split(".").pop()?.toLowerCase();
+                                const isHTML = ["html", "htm"].includes(fileExt);
+                                const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+                                const isPDF = fileExt === "pdf";
+
+                                if (isHTML) {
+                                  const content = mvpHtmlContents[fileUrl];
+                                  if (content) {
+                                    return (
+                                      <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                        <div className="bg-gray-100 px-4 py-2 border-b">
+                                          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                        </div>
+                                        <iframe
+                                          srcDoc={content}
+                                          className="w-full h-[600px] border-0"
+                                          title={fileName}
+                                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                                          loading="lazy"
+                                        />
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <div key={index} className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]">
+                                      <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                                      <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+                                    </div>
+                                  );
+                                }
+
+                                if (isImage) {
+                                  return (
+                                    <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                      <div className="bg-gray-100 px-4 py-2 border-b">
+                                        <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                      </div>
+                                      <div className="p-4">
+                                        <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                if (isPDF) {
+                                  return (
+                                    <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
+                                      <div className="bg-gray-100 px-4 py-2 border-b">
+                                        <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+                                      </div>
+                                      <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
+                                    <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg">
+                                      <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
+                                      <div>
+                                        <span className="text-sm text-blue-600 hover:underline block font-medium">{fileName}</span>
+                                        <span className="text-xs text-gray-500">Click to view</span>
+                                      </div>
+                                      <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
+                                    </a>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {hasSelectedFeaturesForMVPFeedback && (
-            <div className="mb-12">
-              <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
-            </div>
+              {hasSelectedFeaturesForMVPFeedback && (
+                <div className="mb-12">
+                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
+                </div>
+              )}
+            </>
           )}
 
           <Card className="shadow-lg mb-12">
