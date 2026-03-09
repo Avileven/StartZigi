@@ -1,4 +1,4 @@
-//40326
+//90326
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -257,8 +257,21 @@ export default function BetaDevelopment() {
                 // It will remain in its current phase until explicitly changed elsewhere.
             });
 
-            // Removed the VentureMessage.create for this change.
-            // This component focuses solely on configuring beta_data.
+            // Send beta requirements message only once (first save)
+            const existingMsg = await VentureMessage.filter({
+                venture_id: venture.id,
+                title: '📊 Beta Phase Requirements'
+            });
+            if (existingMsg.length === 0) {
+                await VentureMessage.create({
+                    venture_id: venture.id,
+                    message_type: 'system',
+                    title: '📊 Beta Phase Requirements',
+                    content: `Congrats! Your beta page is now live. Your goal is to sign up 50 beta testers to move to the Growth phase. Use the Promotion Center to reach more potential testers!`,
+                    phase: 'beta',
+                    priority: 3
+                });
+            }
 
             showToast("Beta configuration saved!");
             router.push(createPageUrl("Dashboard")); // Navigate back after saving
