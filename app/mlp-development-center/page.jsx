@@ -1,4 +1,4 @@
-// 080326 
+// 090326 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -72,6 +72,29 @@ export default function MLPDevelopmentCenter() {
             setMlpData(currentVenture.mlp_data);
           } else if (currentVenture.mlp_development_data) {
             setMlpData(currentVenture.mlp_development_data);
+          }
+
+          // Auto-check: if MLP is completed and venture is still in mlp phase, check feedback count
+          if (currentVenture.mlp_development_completed && currentVenture.phase === 'mlp') {
+            const feedbacks = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id });
+            if (feedbacks.length >= 10) {
+              await Venture.update(currentVenture.id, { phase: 'beta' });
+              await VentureMessage.create({
+                venture_id: currentVenture.id,
+                message_type: 'phase_complete',
+                title: 'You\'ve moved to Beta!',
+                content: `Congratulations! You collected ${feedbacks.length} feedback responses. You are now in the Beta phase!`,
+                phase: 'mlp',
+              });
+              await VentureMessage.create({
+                venture_id: currentVenture.id,
+                message_type: 'phase_welcome',
+                title: 'Welcome to Beta!',
+                content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
+                phase: 'beta',
+              });
+              setVenture({ ...currentVenture, phase: 'beta' });
+            }
           }
         }
       } catch (error) {
