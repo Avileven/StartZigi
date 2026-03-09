@@ -1,38 +1,18 @@
-
-// 090326 WITH 'MLP
+// app/venture-landing/page.jsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase"; // FIX: לא משתמשים ב-auth.me (מייצר אצלך user=null בעמוד הזה)
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  // CardDescription, // NOTE: לא בשימוש כרגע
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@supabase/supabase-js";
-
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
+import { createClient } from "@supabase/supabase-js";
 import {
-  Lightbulb,
-  Target,
-  Heart,
-  FileText,
-  CheckCircle,
-  Users,
-  Code,
-  Loader2,
-  ExternalLink,
-  Sparkles,
-  MessageSquare,
-  Send,
+  Lightbulb, Target, Heart, FileText, CheckCircle, Users, Code,
+  Loader2, ExternalLink, Sparkles, MessageSquare, Send,
 } from "lucide-react";
-
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
 import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
@@ -40,23 +20,78 @@ import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
 const ReadMoreText = ({ text, maxLength = 300 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!text) return null;
-
-  if (text.length <= maxLength) {
-    return <p className="text-gray-700 leading-relaxed">{text}</p>;
-  }
-
+  if (text.length <= maxLength) return <p className="text-gray-700 leading-relaxed">{text}</p>;
   const displayedText = isExpanded ? text : `${text.substring(0, maxLength)}...`;
-
   return (
     <div>
       <p className="text-gray-700 leading-relaxed">{displayedText}</p>
-      <Button
-        variant="link"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="p-0 h-auto text-blue-600"
-      >
+      <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 h-auto text-blue-600">
         {isExpanded ? "Read Less" : "Read More"}
       </Button>
+    </div>
+  );
+};
+
+const renderFile = (file, index, htmlContents) => {
+  const fileName = file?.name || "";
+  const fileUrl = file?.url || "";
+  const fileExt = fileName.split(".").pop()?.toLowerCase();
+  const isHTML = ["html", "htm"].includes(fileExt);
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+  const isPDF = fileExt === "pdf";
+
+  if (isHTML) {
+    const content = htmlContents[fileUrl];
+    if (content) {
+      return (
+        <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+          <div className="bg-gray-100 px-4 py-2 border-b">
+            <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+          </div>
+          <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
+        </div>
+      );
+    }
+    return (
+      <div key={index} className="border-2 rounded-xl bg-white p-6 flex flex-col items-center justify-center h-[200px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
+      </div>
+    );
+  }
+  if (isImage) {
+    return (
+      <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+        <div className="bg-gray-100 px-4 py-2 border-b">
+          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+        </div>
+        <div className="p-4">
+          <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+        </div>
+      </div>
+    );
+  }
+  if (isPDF) {
+    return (
+      <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+        <div className="bg-gray-100 px-4 py-2 border-b">
+          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+        </div>
+        <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+      </div>
+    );
+  }
+  return (
+    <div key={index} className="border-2 rounded-xl shadow-lg bg-white p-6">
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-4 rounded-lg">
+        <FileText className="w-12 h-12 text-indigo-500 flex-shrink-0" />
+        <div className="flex-1">
+          <span className="text-lg text-indigo-600 hover:underline font-medium block">{fileName}</span>
+          <span className="text-sm text-gray-500">Click to view</span>
+        </div>
+      </a>
     </div>
   );
 };
@@ -65,47 +100,30 @@ export default function VentureLanding() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-
   const [mvpHtmlContents, setMvpHtmlContents] = useState({});
-  const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [mlpHtmlContents, setMlpHtmlContents] = useState({});
+  const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
-
   const [currentUser, setCurrentUser] = useState(null);
   const [hasLiked, setHasLiked] = useState(false);
-
-  // Join state
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
-
-  // FIX: שומרים invitation_token פעם אחת
   const [invitationToken, setInvitationToken] = useState(null);
-
-  // MLP feedback state
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
 
-  // FIX: פונקציה אחת לטעינת HTML — זמינה לשני המסלולים
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
-
     const htmlPromises = files.map(async (file) => {
       const fileName = file?.name || "";
       const fileUrl = file?.url || "";
       const fileExt = fileName.split(".").pop()?.toLowerCase();
-      const isHTML = ["html", "htm"].includes(fileExt);
-
-      if (isHTML && fileUrl) {
+      if (["html", "htm"].includes(fileExt) && fileUrl) {
         try {
           const response = await fetch(fileUrl);
-          if (!response.ok) {
-            console.error(
-              `Failed to fetch HTML from ${fileUrl} (${context}): ${response.status} ${response.statusText}`
-            );
-            return null;
-          }
+          if (!response.ok) return null;
           const text = await response.text();
           return { url: fileUrl, content: text };
         } catch (err) {
@@ -115,206 +133,104 @@ export default function VentureLanding() {
       }
       return null;
     });
-
     const results = await Promise.all(htmlPromises);
     const contentMap = {};
-    results.forEach((result) => {
-      if (result) contentMap[result.url] = result.content;
-    });
+    results.forEach((result) => { if (result) contentMap[result.url] = result.content; });
     setContentState(contentMap);
   }, []);
 
-  const loadVenture = useCallback(
-    async (user) => {
-      setIsLoading(true);
+  const loadVenture = useCallback(async (user) => {
+    setIsLoading(true);
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("invitation_token");
+      const ventureId = urlParams.get("id");
 
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get("invitation_token");
-        const ventureId = urlParams.get("id");
+      console.log("[venture-landing] loadVenture", { hasToken: !!token, ventureId, userEmail: user?.email ?? null });
 
-        // NOTE: דיבאג קצר
-        console.log("[venture-landing] loadVenture", {
-          hasToken: !!token,
-          ventureId,
-          userEmail: user?.email ?? null,
-          userId: user?.id ?? null,
-        });
+      if (token) {
+        const inviteClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          { global: { headers: { "invitation-token": token } } }
+        );
+        const { data: invite, error: inviteErr } = await inviteClient
+          .from("co_founder_invitations")
+          .select("venture_id,status,invitee_email,invitation_token,invitation_type")
+          .eq("invitation_token", token)
+          .maybeSingle();
 
-        // ====== מסלול הזמנה (אנונימי) ======
-        if (token) {
-          const inviteClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            { global: { headers: { "invitation-token": token } } }
-          );
+        if (inviteErr || !invite) { setVenture(null); return; }
+        if (!["sent", "accepted"].includes(invite.status)) { setVenture(null); return; }
 
-          const { data: invite, error: inviteErr } = await inviteClient
-            .from("co_founder_invitations")
-            .select("venture_id,status,invitee_email,invitation_token,invitation_type")
-            .eq("invitation_token", token)
-            .maybeSingle(); // FIX: לא ליפול ב-406 אם אין שורה
+        const { data: ventures, error: vErr } = await inviteClient
+          .from("ventures").select("*").eq("id", String(invite.venture_id));
 
-          if (inviteErr || !invite) {
-            console.error("[venture-landing] invite not found / error", inviteErr);
-            setVenture(null);
-            return;
-          }
+        if (vErr) { setVenture(null); return; }
 
-          if (!["sent", "accepted"].includes(invite.status)) {
-            console.warn("[venture-landing] invite status not allowed:", invite.status);
-            setVenture(null);
-            return;
-          }
-
-          const ventureUuid = String(invite.venture_id);
-
-          const { data: ventures, error: vErr } = await inviteClient
-            .from("ventures")
-            .select("*")
-            .eq("id", ventureUuid);
-
-          if (vErr) {
-            console.error("[venture-landing] venture fetch error (token route):", vErr);
-            setVenture(null);
-            return;
-          }
-
-          if (ventures && ventures.length > 0) {
-            const loadedVenture = ventures[0];
-            setVenture(loadedVenture);
-
-            if (loadedVenture.mvp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
-            }
-            if (loadedVenture.revenue_model_data?.uploaded_files) {
-              await loadHtmlFiles(
-                loadedVenture.revenue_model_data.uploaded_files,
-                setRevenueHtmlContents,
-                "Revenue Model"
-              );
-            }
-            if (loadedVenture.mlp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
-            }
-            if (loadedVenture.business_plan_data?.uploaded_files) {
-              await loadHtmlFiles(
-                loadedVenture.business_plan_data.uploaded_files,
-                setbusinessPlanHtmlContents,
-                "Business Plan"
-              );
-            }
-          } else {
-            setVenture(null);
-          }
-
-          return; // token route done
-        }
-
-        // ====== מסלול רגיל לפי ?id= ======
-        if (ventureId) {
-          const { data: ventures, error } = await supabase
-            .from("ventures")
-            .select("*")
-            .eq("id", ventureId);
-
-          console.log("[venture-landing] ventures result (id route)", {
-            count: ventures?.length || 0,
-            error: error || null,
-          });
-
-          if (error) throw error;
-
-          if (ventures && ventures.length > 0) {
-            const loadedVenture = ventures[0];
-            setVenture(loadedVenture);
-
-            if (user) {
-              if (loadedVenture.liked_by_users?.includes(user.id)) {
-                setHasLiked(true);
-              } else if (user.liked_venture_ids?.includes(loadedVenture.id)) {
-                setHasLiked(true);
-              } else {
-                setHasLiked(false);
-              }
-            }
-
-            if (loadedVenture.mvp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
-            }
-            if (loadedVenture.revenue_model_data?.uploaded_files) {
-              await loadHtmlFiles(
-                loadedVenture.revenue_model_data.uploaded_files,
-                setRevenueHtmlContents,
-                "Revenue Model"
-              );
-            }
-            if (loadedVenture.mlp_data?.uploaded_files) {
-              await loadHtmlFiles(loadedVenture.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
-            }
-            if (loadedVenture.business_plan_data?.uploaded_files) {
-              await loadHtmlFiles(
-                loadedVenture.business_plan_data.uploaded_files,
-                setbusinessPlanHtmlContents,
-                "Business Plan"
-              );
-            }
-          } else {
-            setVenture(null);
-          }
+        if (ventures && ventures.length > 0) {
+          const v = ventures[0];
+          setVenture(v);
+          if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+          if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+          if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
+          if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
         } else {
           setVenture(null);
         }
-      } catch (error) {
-        console.error("Error loading venture:", error);
-        setVenture(null);
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    },
-    [loadHtmlFiles]
-  );
 
-  // FIX: handleJoinAsCofounder בסקופ הקומפוננטה
+      if (ventureId) {
+        const { data: ventures, error } = await supabase.from("ventures").select("*").eq("id", ventureId);
+        if (error) throw error;
+        if (ventures && ventures.length > 0) {
+          const v = ventures[0];
+          setVenture(v);
+          if (user) {
+            setHasLiked(v.liked_by_users?.includes(user.id) || user.liked_venture_ids?.includes(v.id) || false);
+          }
+          if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+          if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+          if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
+          if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+        } else {
+          setVenture(null);
+        }
+      } else {
+        setVenture(null);
+      }
+    } catch (error) {
+      console.error("Error loading venture:", error);
+      setVenture(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadHtmlFiles]);
+
   const handleJoinAsCofounder = useCallback(async () => {
     setJoinError(null);
-
-    // חייב להיות משתמש מחובר
     if (!currentUser) {
-      const nextUrl = window.location.pathname + window.location.search;
-      window.location.href = `/login?next=${encodeURIComponent(nextUrl)}`;
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
       return;
     }
-
-    if (!invitationToken) {
-      setJoinError("Missing invitation token in URL.");
-      return;
-    }
-
+    if (!invitationToken) { setJoinError("Missing invitation token in URL."); return; }
     setIsJoining(true);
     try {
       const { data, error } = await supabase.rpc("accept_co_founder_invite", {
         p_user_id: String(currentUser.id),
         p_invitation_token: invitationToken,
       });
-
       if (error) throw error;
-
-      if (data?.error) {
-        setJoinError(data.error);
-        return;
-      }
-
+      if (data?.error) { setJoinError(data.error); return; }
       if (data?.status === "success") {
         setJoinSuccess(true);
         await loadVenture(currentUser);
         window.location.href = "/dashboard";
         return;
       }
-
       setJoinError("Unexpected response from server.");
     } catch (e) {
-      console.error("JOIN failed:", e);
       setJoinError(e?.message || "Failed to join venture.");
     } finally {
       setIsJoining(false);
@@ -325,94 +241,47 @@ export default function VentureLanding() {
     const fetchUserAndVenture = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("invitation_token");
-
       setInvitationToken(token);
-
-      // אם זה דף הזמנה – לא דורשים session, קוראים עם anon client + header
       if (token) {
         setCurrentUser(null);
         await loadVenture(null);
         return;
       }
-
-      // ==============================
-      // FIX מרכזי: מביאים user+session ישירות מה-Supabase (לא auth.me)
-      // ==============================
       const { data: userData, error: userErr } = await supabase.auth.getUser();
       const user = userErr ? null : (userData?.user ?? null);
       setCurrentUser(user);
-
-      const { data: sessionData } = await supabase.auth.getSession();
-
-      console.log("[venture-landing] getUser()", {
-        email: user?.email ?? null,
-        id: user?.id ?? null,
-        userErr: userErr?.message ?? null,
-      });
-
-      console.log("[venture-landing] session()", {
-        hasSession: !!sessionData?.session,
-        accessToken: sessionData?.session?.access_token ? "yes" : "no",
-      });
-      // ==============================
-
       if (urlParams.get("welcome") === "true") {
         setShowWelcome(true);
         const ventureId = urlParams.get("id");
-        const newUrl = window.location.pathname + (ventureId ? `?id=${ventureId}` : "");
-        window.history.replaceState({}, document.title, newUrl);
+        window.history.replaceState({}, document.title, window.location.pathname + (ventureId ? `?id=${ventureId}` : ""));
       }
-
       await loadVenture(user);
     };
-
     fetchUserAndVenture();
   }, [loadVenture]);
 
   const handleLike = async () => {
-    if (!currentUser) {
-      alert("Please log in to like this venture.");
-      return;
-    }
-
-    if (venture.created_by === currentUser.email) {
-      alert("You cannot like your own venture!");
-      return;
-    }
-
-    if (hasLiked) {
-      alert("You have already liked this venture!");
-      return;
-    }
-
+    if (!currentUser) { alert("Please log in to like this venture."); return; }
+    if (venture.created_by === currentUser.email) { alert("You cannot like your own venture!"); return; }
+    if (hasLiked) { alert("You have already liked this venture!"); return; }
     try {
       setHasLiked(true);
       const newLikesCount = (venture.likes_count || 0) + 1;
       setVenture((prev) => ({ ...prev, likes_count: newLikesCount }));
-
-      const { error: updateError } = await supabase
-        .from("ventures")
-        .update({ likes_count: newLikesCount })
-        .eq("id", venture.id);
-
+      const { error: updateError } = await supabase.from("ventures").update({ likes_count: newLikesCount }).eq("id", venture.id);
       if (updateError) throw updateError;
-
-      const { error: messageError } = await supabase.from("venture_messages").insert([
-        {
-          venture_id: venture.id,
-          message_type: "like_notification",
-          title: "Someone Liked Your Venture!",
-          content: `A user from the community liked your venture "${venture.name}". Keep up the great work!`,
-          from_venture_id: null,
-          from_venture_name: currentUser.full_name || currentUser.email,
-          from_venture_landing_page_url: null,
-          phase: venture.phase,
-          priority: 1,
-        },
-      ]);
-
+      const { error: messageError } = await supabase.from("venture_messages").insert([{
+        venture_id: venture.id,
+        message_type: "like_notification",
+        title: "Someone Liked Your Venture!",
+        content: `A user from the community liked your venture "${venture.name}". Keep up the great work!`,
+        from_venture_id: null,
+        from_venture_name: currentUser.full_name || currentUser.email,
+        from_venture_landing_page_url: null,
+        phase: venture.phase,
+        priority: 1,
+      }]);
       if (messageError) throw messageError;
-
       alert("Thank you for liking this venture!");
     } catch (error) {
       console.error("Error liking venture:", error);
@@ -422,9 +291,7 @@ export default function VentureLanding() {
     }
   };
 
-  const handleInteractiveFeedbackSubmitted = async () => {
-    await loadVenture(currentUser);
-  };
+  const handleInteractiveFeedbackSubmitted = async () => { await loadVenture(currentUser); };
 
   const handleMlpFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -447,12 +314,9 @@ export default function VentureLanding() {
 
   const getSectorLabel = (sector) => {
     const labels = {
-      ai_deep_tech: "AI / Deep Tech",
-      fintech: "FinTech",
-      digital_health_biotech: "Digital Health / Biotech",
-      b2b_saas: "B2B SaaS",
-      consumer_apps: "Consumer Apps / Marketplaces",
-      climatetech_energy: "ClimateTech / Energy / AgriTech",
+      ai_deep_tech: "AI / Deep Tech", fintech: "FinTech",
+      digital_health_biotech: "Digital Health / Biotech", b2b_saas: "B2B SaaS",
+      consumer_apps: "Consumer Apps / Marketplaces", climatetech_energy: "ClimateTech / Energy / AgriTech",
       web3_blockchain: "Web3 / Blockchain",
     };
     return labels[sector] || sector;
@@ -471,17 +335,15 @@ export default function VentureLanding() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Venture Not Found</h1>
-          <p className="text-gray-600">
-            The venture you're looking for doesn't exist or has been removed.
-          </p>
+          <p className="text-gray-600">The venture you're looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     );
   }
 
+  const isMLPMode = venture.mlp_development_completed && venture.mlp_data;
   const hasSelectedFeaturesForMVPFeedback =
-    venture.mvp_uploaded &&
-    venture.mvp_data &&
+    venture.mvp_uploaded && venture.mvp_data &&
     Array.isArray(venture.mvp_data.feature_matrix) &&
     venture.mvp_data.feature_matrix.some((f) => f.isSelected);
 
@@ -491,188 +353,72 @@ export default function VentureLanding() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <main className="max-w-5xl mx-auto p-4 md:p-8">
-          <Card className="shadow-xl mb-8">
-            <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
-                  <p className="text-gray-600 text-lg">{venture.description}</p>
-                  <div className="flex items-center gap-4 mt-4">
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      {getSectorLabel(venture.sector)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
 
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-red-500" />
-                  The Problem We Solve
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ReadMoreText text={venture.problem} />
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5 text-yellow-500" />
-                  Our Innovative Solution
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ReadMoreText text={venture.solution} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {venture.mlp_development_completed && venture.mlp_data ? (
+          {isMLPMode ? (
             <>
-              {/* MLP Hero Header */}
-              <div className="text-center mb-12 py-10 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 rounded-2xl">
-                <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              {/* MLP Hero */}
+              <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-indigo-600 rounded-2xl flex flex-col items-center justify-center text-center px-8 py-16 mb-10 shadow-xl">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5">
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-4xl font-extrabold text-gray-900 mb-3">Our Lovable Product</h2>
-                <p className="text-lg text-gray-500 max-w-xl mx-auto">
-                  We took your feedback and built something you'll truly love.
-                </p>
+                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">Our Lovable Product</h1>
+                <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
               </div>
 
               {/* MLP Content Cards */}
-              <div className="space-y-6 mb-8">
+              <div className="space-y-6 mb-10">
                 {venture.mlp_data.feedback_analysis && (
-                  <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 border-0">
+                  <Card className="shadow-md bg-gradient-to-br from-blue-50 to-indigo-50 border-0">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-indigo-800">
                         <Sparkles className="w-5 h-5 text-indigo-500" />
                         What We Learned from Users
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ReadMoreText text={venture.mlp_data.feedback_analysis} />
-                    </CardContent>
+                    <CardContent><ReadMoreText text={venture.mlp_data.feedback_analysis} /></CardContent>
                   </Card>
                 )}
-
                 {venture.mlp_data.enhancement_strategy && (
-                  <Card className="shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 border-0">
+                  <Card className="shadow-md bg-gradient-to-br from-green-50 to-emerald-50 border-0">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-emerald-800">
                         <CheckCircle className="w-5 h-5 text-emerald-500" />
                         How We're Making It Better
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ReadMoreText text={venture.mlp_data.enhancement_strategy} />
-                    </CardContent>
+                    <CardContent><ReadMoreText text={venture.mlp_data.enhancement_strategy} /></CardContent>
                   </Card>
                 )}
-
                 {venture.mlp_data.wow_moments && (
-                  <Card className="shadow-lg bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
+                  <Card className="shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-amber-800">
                         <Heart className="w-5 h-5 text-amber-500" />
                         Delightful Moments You'll Love
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ReadMoreText text={venture.mlp_data.wow_moments} />
-                    </CardContent>
+                    <CardContent><ReadMoreText text={venture.mlp_data.wow_moments} /></CardContent>
                   </Card>
                 )}
-
                 {venture.mlp_data.user_journey && (
-                  <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border-0">
+                  <Card className="shadow-md bg-gradient-to-br from-purple-50 to-pink-50 border-0">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-purple-800">
                         <Users className="w-5 h-5 text-purple-500" />
                         Your Journey with Us
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ReadMoreText text={venture.mlp_data.user_journey} />
-                    </CardContent>
+                    <CardContent><ReadMoreText text={venture.mlp_data.user_journey} /></CardContent>
                   </Card>
                 )}
               </div>
 
-              {/* MLP Uploaded Files */}
+              {/* MLP Files */}
               {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
                   <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Product Showcase</h3>
                   <div className="space-y-4">
-                    {venture.mlp_data.uploaded_files.map((file, index) => {
-                      const fileName = file?.name || "";
-                      const fileUrl = file?.url || "";
-                      const fileExt = fileName.split(".").pop()?.toLowerCase();
-                      const isHTML = ["html", "htm"].includes(fileExt);
-                      const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
-                      const isPDF = fileExt === "pdf";
-
-                      if (isHTML) {
-                        const content = mlpHtmlContents[fileUrl];
-                        if (content) {
-                          return (
-                            <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-                              <div className="bg-gray-100 px-4 py-2 border-b">
-                                <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                              </div>
-                              <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
-                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
-                            </div>
-                          );
-                        }
-                        return (
-                          <div key={index} className="border-2 rounded-xl bg-white p-6 flex flex-col items-center justify-center h-[200px]">
-                            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                            <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
-                          </div>
-                        );
-                      }
-                      if (isImage) {
-                        return (
-                          <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-                            <div className="bg-gray-100 px-4 py-2 border-b">
-                              <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                            </div>
-                            <div className="p-4">
-                              <img src={fileUrl} alt={fileName} className="w-full h-auto" />
-                            </div>
-                          </div>
-                        );
-                      }
-                      if (isPDF) {
-                        return (
-                          <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-                            <div className="bg-gray-100 px-4 py-2 border-b">
-                              <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                            </div>
-                            <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
-                          </div>
-                        );
-                      }
-                      return (
-                        <div key={index} className="border-2 rounded-xl shadow-lg bg-white p-6">
-                          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-4 rounded-lg">
-                            <FileText className="w-12 h-12 text-indigo-500 flex-shrink-0" />
-                            <div className="flex-1">
-                              <span className="text-lg text-indigo-600 hover:underline font-medium block">{fileName}</span>
-                              <span className="text-sm text-gray-500">Click to view</span>
-                            </div>
-                          </a>
-                        </div>
-                      );
-                    })}
+                    {venture.mlp_data.uploaded_files.map((file, index) => renderFile(file, index, mlpHtmlContents))}
                   </div>
                 </div>
               )}
@@ -696,23 +442,17 @@ export default function VentureLanding() {
                     <form onSubmit={handleMlpFeedbackSubmit} className="space-y-4">
                       <div>
                         <Label htmlFor="mlp-feedback">What do you think about this product?</Label>
-                        <Textarea
-                          id="mlp-feedback"
-                          value={mlpFeedbackText}
+                        <Textarea id="mlp-feedback" value={mlpFeedbackText}
                           onChange={(e) => setMlpFeedbackText(e.target.value)}
                           placeholder="Your feedback helps make this product even better..."
-                          className="min-h-[100px] mt-2"
-                          required
-                          disabled={isSubmittingMlpFeedback}
-                        />
+                          className="min-h-[100px] mt-2" required disabled={isSubmittingMlpFeedback} />
                       </div>
                       <Button type="submit" disabled={isSubmittingMlpFeedback || !mlpFeedbackText.trim()}
                         className="w-full bg-indigo-600 hover:bg-indigo-700">
-                        {isSubmittingMlpFeedback ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
-                        ) : (
-                          <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
-                        )}
+                        {isSubmittingMlpFeedback
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                          : <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
+                        }
                       </Button>
                     </form>
                   )}
@@ -721,10 +461,43 @@ export default function VentureLanding() {
             </>
           ) : (
             <>
+              {/* MVP Header */}
+              <Card className="shadow-xl mb-8">
+                <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+                  <div>
+                    <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
+                    <p className="text-gray-600 text-lg">{venture.description}</p>
+                    <div className="flex items-center gap-4 mt-4">
+                      <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="w-5 h-5 text-red-500" />
+                      The Problem We Solve
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent><ReadMoreText text={venture.problem} /></CardContent>
+                </Card>
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5 text-yellow-500" />
+                      Our Innovative Solution
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent><ReadMoreText text={venture.solution} /></CardContent>
+                </Card>
+              </div>
+
               {venture.mvp_uploaded && venture.mvp_data && (
                 <div className="mb-12">
                   <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
-
                   <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
                     <div className="grid lg:grid-cols-2 gap-8">
                       <div className="space-y-6">
@@ -735,7 +508,6 @@ export default function VentureLanding() {
                           </h3>
                           <ReadMoreText text={venture.mvp_data.product_definition} />
                         </div>
-
                         <div>
                           <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
                             <Code className="w-5 h-5 text-blue-600" />
@@ -743,7 +515,6 @@ export default function VentureLanding() {
                           </h3>
                           <ReadMoreText text={venture.mvp_data.technical_specs} />
                         </div>
-
                         <div>
                           <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
                             <Users className="w-5 h-5 text-green-600" />
@@ -752,76 +523,12 @@ export default function VentureLanding() {
                           <ReadMoreText text={venture.mvp_data.user_testing} />
                         </div>
                       </div>
-
                       <div className="space-y-6">
                         {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
                           <div>
                             <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
                             <div className="space-y-4">
-                              {venture.mvp_data.uploaded_files.map((file, index) => {
-                                const fileName = file?.name || "";
-                                const fileUrl = file?.url || "";
-                                const fileExt = fileName.split(".").pop()?.toLowerCase();
-                                const isHTML = ["html", "htm"].includes(fileExt);
-                                const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
-                                const isPDF = fileExt === "pdf";
-
-                                if (isHTML) {
-                                  const content = mvpHtmlContents[fileUrl];
-                                  if (content) {
-                                    return (
-                                      <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                        <div className="bg-gray-100 px-4 py-2 border-b">
-                                          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                        </div>
-                                        <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
-                                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
-                                      </div>
-                                    );
-                                  }
-                                  return (
-                                    <div key={index} className="border rounded-lg bg-white p-6 flex flex-col items-center justify-center h-[200px]">
-                                      <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                                      <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
-                                    </div>
-                                  );
-                                }
-                                if (isImage) {
-                                  return (
-                                    <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                      <div className="bg-gray-100 px-4 py-2 border-b">
-                                        <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                      </div>
-                                      <div className="p-4">
-                                        <img src={fileUrl} alt={fileName} className="w-full h-auto" />
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                                if (isPDF) {
-                                  return (
-                                    <div key={index} className="border rounded-lg overflow-hidden shadow-md bg-white">
-                                      <div className="bg-gray-100 px-4 py-2 border-b">
-                                        <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-                                      </div>
-                                      <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <div key={index} className="border rounded-lg bg-white p-4 shadow-md">
-                                    <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                                      className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg">
-                                      <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                                      <div>
-                                        <span className="text-sm text-blue-600 hover:underline block font-medium">{fileName}</span>
-                                        <span className="text-xs text-gray-500">Click to view</span>
-                                      </div>
-                                      <ExternalLink className="w-4 h-4 text-gray-400 ml-auto" />
-                                    </a>
-                                  </div>
-                                );
-                              })}
+                              {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
                             </div>
                           </div>
                         )}
@@ -846,11 +553,9 @@ export default function VentureLanding() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 mb-4">Show your support for {venture.name} by liking this venture!</p>
-                  <Button
-                    onClick={handleLike}
+                  <Button onClick={handleLike}
                     disabled={hasLiked || (currentUser && venture.created_by === currentUser.email)}
-                    className={hasLiked ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
-                  >
+                    className={hasLiked ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}>
                     <Heart className={`w-4 h-4 mr-2 ${hasLiked ? "fill-current" : ""}`} />
                     {hasLiked ? "Liked!" : "Like This Venture"}
                   </Button>
@@ -859,9 +564,9 @@ export default function VentureLanding() {
               </Card>
             </>
           )}
+
         </main>
       </div>
     </>
   );
 }
-
