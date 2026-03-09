@@ -65,7 +65,7 @@ export const validatePhaseTransition = async (venture, targetPhase, additionalDa
     
     growth: async () => {
       const betaTesters = await BetaTester.filter({ venture_id: venture.id });
-      if (betaTesters.length < 50) {
+      if (betaTesters.length < 10) {
         return { 
           valid: false, 
           message: `You need at least 50 beta testers to proceed to Growth phase. You currently have ${betaTesters.length}.`,
