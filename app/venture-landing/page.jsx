@@ -35,6 +35,7 @@ import {
 
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
+import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
 
 const ReadMoreText = ({ text, maxLength = 300 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -430,12 +431,11 @@ export default function VentureLanding() {
     if (!mlpFeedbackText.trim() || !venture) return;
     setIsSubmittingMlpFeedback(true);
     try {
-      const { error } = await supabase.from("product_feedback").insert([{
+      await ProductFeedbackEntity.create({
         venture_id: venture.id,
         feedback_text: mlpFeedbackText.trim(),
         feedback_type: "other",
-      }]);
-      if (error) throw error;
+      });
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
     } catch (err) {
