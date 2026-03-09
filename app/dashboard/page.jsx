@@ -170,26 +170,7 @@ const updateValuation = useCallback(() => {
           // mlp-development-center/page.jsx handleComplete().
          
           // AUTO-FIX: If in Beta phase and no "50 testers" message exists, create it
-          if (activeVenture.phase === 'beta') {
-            const existingMessages = await VentureMessage.filter({
-              venture_id: activeVenture.id,
-              title: '📊 Beta Phase Requirements',
-              is_dismissed: false
-            });
-           
-            const currentTesters = await BetaTester.filter({ venture_id: activeVenture.id });
-
-            if (existingMessages.length === 0 && currentTesters.length < 50) {
-              await VentureMessage.create({
-                venture_id: activeVenture.id,
-                message_type: 'system',
-                title: '📊 Beta Phase Requirements',
-                content: `You need 50 beta sign-ups to move to Growth phase. You currently have ${currentTesters.length}. Use the Promotion Center to reach more potential testers!`,
-                phase: 'beta',
-                priority: 3
-              });
-            }
-          }
+          
          
           // [ADDED] Sync valuation to DB based on current phase.
           // This ensures Financials page reads the correct value from DB.
