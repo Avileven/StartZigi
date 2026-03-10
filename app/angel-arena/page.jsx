@@ -177,13 +177,17 @@ export default function AngelArena() {
   const meetingStatus = selectedMeeting?.status || null;
 
   // Is Join button active? meeting_scheduled_at has passed but within 20 min window
-  const isJoinActive = () => {
-    if (!selectedMeeting?.meeting_scheduled_at) return false;
-    const now = new Date();
-    const meetingTime = new Date(selectedMeeting.meeting_scheduled_at);
-    const diff = (now - meetingTime) / 1000 / 60; // minutes
-    return diff >= 0 && diff <= 20;
-  };
+ // const isJoinActive = () => {
+    // if (!selectedMeeting?.meeting_scheduled_at) return false;
+   // const now = new Date();
+    // const meetingTime = new Date(selectedMeeting.meeting_scheduled_at);
+    //const diff = (now - meetingTime) / 1000 / 60; // minutes
+   // return diff >= 0 && diff <= 20;
+ // };
+ const isJoinActive = () => {
+  if (!selectedMeeting?.meeting_scheduled_at) return false;
+  return true; // לבדיקה בלבד — מחק אחר כך
+};
 
   return (
     <>
