@@ -94,7 +94,6 @@ export default function ScheduleMeetingModal({ investor, meeting, onClose }) {
         phase: meeting.phase || null,
         priority: 3,
         is_dismissed: false,
-        investor_meeting_id: meeting.id,
       });
 
       setConfirmed(true);
