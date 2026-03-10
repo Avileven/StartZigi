@@ -1,4 +1,4 @@
-//dashboard 100326 
+//dashboard 100326 WITH ANGEL+
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -11,6 +11,9 @@ import { BetaTester } from "@/api/entities";
 // תיקון: הוסרה סיומת .js מיותרת
 import { VCFirm } from '@/api/entities';
 import { FundingEvent } from '@/api/entities';
+// [ADDED] Angel Arena screening flow
+import { InvestorMeeting } from '@/api/entities';
+import { Investor } from '@/api/entities';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -45,7 +48,8 @@ import {
   PhoneForwarded,
   Code,
   Sparkles,
-  Megaphone
+  Megaphone,
+  CalendarClock
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -129,6 +133,87 @@ const updateValuation = useCallback(() => {
   if (!currentVenture) return;
   setCurrentValuation(currentVenture.valuation || 0);
 }, [currentVenture]);
+
+  // [ADDED] Angel Arena — screening check. Runs on every dashboard load.
+  // Checks pending screenings (after 36h) and missed meetings (after 20min window).
+  // Silent fail — never crashes the dashboard.
+  const runScreeningCheck = async (venture) => {
+    try {
+      // ── Pending screenings ──
+      const pendingMeetings = await InvestorMeeting.filter({ venture_id: venture.id, status: 'pending_screening' });
+      const now = new Date();
+
+      for (const meeting of pendingMeetings) {
+        const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
+        if (hoursElapsed < 36) continue;
+
+        const investors = await Investor.filter({ id: meeting.investor_id });
+        if (!investors.length) continue;
+        const investor = investors[0];
+
+        let passed = true;
+        let rejectReason = '';
+
+        if (investor.investor_type === 'no_go') {
+          passed = false;
+          rejectReason = `Thank you for reaching out. We are currently focusing on our existing portfolio and are not taking new investments at this time.`;
+        } else if (investor.investor_type === 'team_focused' && (venture.founders_count || 1) < 2) {
+          passed = false;
+          rejectReason = `After reviewing your materials, we've decided to pass. We have a strong preference for ventures with multiple co-founders.`;
+        } else if (investor.focus_sectors?.length > 0 && venture.sector && !investor.focus_sectors.includes(venture.sector)) {
+          passed = false;
+          rejectReason = `Thank you for sharing your business plan. Unfortunately, your venture's sector doesn't align with our current investment focus.`;
+        }
+
+        if (passed) {
+          await InvestorMeeting.update(meeting.id, { status: 'screening_passed', screening_result: 'passed', screening_result_sent_at: now.toISOString() });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'angel_screening_passed',
+            title: `🎉 ${investor.name} wants to meet you!`,
+            content: `Great news! ${investor.name} reviewed your business plan and is interested in learning more. Go to Angel Arena to schedule your Zoom meeting. Good luck!`,
+            phase: venture.phase,
+            priority: 4,
+            is_dismissed: false,
+          });
+        } else {
+          await InvestorMeeting.update(meeting.id, { status: 'screening_rejected', screening_result: 'rejected', screening_result_sent_at: now.toISOString() });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'system',
+            title: `📋 Response from ${investor.name}`,
+            content: rejectReason,
+            phase: venture.phase,
+            priority: 2,
+            is_dismissed: false,
+          });
+        }
+      }
+
+      // ── Missed meetings (scheduled but 20min window passed) ──
+      const scheduledMeetings = await InvestorMeeting.filter({ venture_id: venture.id, meeting_status: 'scheduled' });
+      for (const meeting of scheduledMeetings) {
+        if (!meeting.meeting_scheduled_at) continue;
+        const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60;
+        if (minutesSince <= 20) continue;
+
+        const investors = await Investor.filter({ id: meeting.investor_id });
+        const investorName = investors[0]?.name || 'The investor';
+        await InvestorMeeting.update(meeting.id, { meeting_status: 'missed', status: 'screening_rejected' });
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'system',
+          title: `😔 Missed Meeting with ${investorName}`,
+          content: `You missed your scheduled meeting with ${investorName}. The investor has moved on. You can try reaching out to other investors in the Angel Arena.`,
+          phase: venture.phase,
+          priority: 3,
+          is_dismissed: false,
+        });
+      }
+    } catch (err) {
+      console.error('Angel screening check error:', err);
+    }
+  };
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -215,6 +300,9 @@ const updateValuation = useCallback(() => {
             await Venture.update(activeVenture.id, { virtual_capital: 15000 });
             activeVenture.virtual_capital = 15000;
           }
+
+          // [ADDED] Angel Arena — check pending screenings and missed meetings
+          await runScreeningCheck(activeVenture);
 
           setCurrentVenture(activeVenture);
 
@@ -1005,6 +1093,9 @@ if (showToS) {
                     const isFeedbackRequest = message.message_type === 'feedback_request';
                     const isPromotion = message.message_type === 'promotion';
                     const isSystem = message.message_type === 'system' || message.message_type === 'phase_complete' || message.message_type === 'phase_welcome';
+                    // [ADDED] Angel Arena messages
+                    const isAngelScreeningPassed = message.message_type === 'angel_screening_passed';
+                    const isAngelMeetingScheduled = message.message_type === 'angel_meeting_scheduled';
 
                     let cardClass = 'bg-white border-l-4';
                     let icon = MessageSquare;
@@ -1030,6 +1121,14 @@ if (showToS) {
                       cardClass = 'bg-yellow-50 border-l-4 border-yellow-500';
                       icon = BookOpen;
                       iconClass = 'text-yellow-600';
+                    } else if (isAngelScreeningPassed) {
+                      cardClass = 'bg-emerald-50 border-l-4 border-emerald-500';
+                      icon = CheckCircle;
+                      iconClass = 'text-emerald-600';
+                    } else if (isAngelMeetingScheduled) {
+                      cardClass = 'bg-indigo-50 border-l-4 border-indigo-400';
+                      icon = Calendar;
+                      iconClass = 'text-indigo-600';
                     } else if (isSystem) {
                        cardClass = 'bg-gray-100 border-l-4 border-gray-400';
                        icon = Code;
@@ -1177,6 +1276,30 @@ if (showToS) {
                                 <Button onClick={() => dismissMessage(message)} variant="outline">
                                     <X className="w-4 h-4 mr-2" /> Dismiss
                                 </Button>
+                            </div>
+                          )}
+
+                          {/* [ADDED] Angel screening passed — go to Angel Arena to schedule */}
+                          {isAngelScreeningPassed && (
+                            <div className="mt-4 flex gap-2">
+                              <Button
+                                onClick={() => router.push('/angel-arena')}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                <CalendarClock className="w-4 h-4 mr-2" /> Schedule Meeting
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* [ADDED] Angel meeting scheduled — show details, Dismiss only */}
+                          {isAngelMeetingScheduled && (
+                            <div className="mt-4 flex gap-2">
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
                             </div>
                           )}
                         </CardContent>
