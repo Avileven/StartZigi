@@ -1,4 +1,4 @@
-//dashboard 090326 
+//dashboard 100326 
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -169,9 +169,29 @@ const updateValuation = useCallback(() => {
           // This bypassed the 10 product_feedback requirement. Phase transition now happens exclusively in
           // mlp-development-center/page.jsx handleComplete().
          
-          // AUTO-FIX: If in Beta phase and no "50 testers" message exists, create it
-          
-         
+          // Auto-check: if in beta phase and enough testers, move to growth
+          if (activeVenture.phase === 'beta') {
+            const betaTesters = await BetaTester.filter({ venture_id: activeVenture.id });
+            if (betaTesters.length >= 10) {
+              await Venture.update(activeVenture.id, { phase: 'growth' });
+              await VentureMessage.create({
+                venture_id: activeVenture.id,
+                message_type: 'phase_complete',
+                title: '🚀 Beta Phase Complete!',
+                content: `Congratulations! You collected ${betaTesters.length} beta testers and are now moving to the Growth phase!`,
+                phase: 'beta',
+              });
+              await VentureMessage.create({
+                venture_id: activeVenture.id,
+                message_type: 'phase_welcome',
+                title: '📈 Welcome to Growth!',
+                content: `It's time to scale your startup. Focus on growing your user base and securing funding.`,
+                phase: 'growth',
+              });
+              activeVenture.phase = 'growth';
+            }
+          }
+
           // [ADDED] Sync valuation to DB based on current phase.
           // This ensures Financials page reads the correct value from DB.
           // Only updates if DB value is lower than expected (never overwrites a higher investment valuation).
