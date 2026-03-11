@@ -1,4 +1,4 @@
-//dashboard 100326 WITH ANGEL+
+//dashboard 110326 
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -55,6 +55,8 @@ import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import VCMeetingModal from '@/components/vc/VCMeetingModal';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
+// [ADDED] Angel Arena scheduling
+import ScheduleMeetingModal from '@/components/angels/ScheduleMeetingModal';
 
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
@@ -92,6 +94,10 @@ export default function Dashboard() {
   const [showToS, setShowToS] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isAdvancedMeetingModalOpen, setIsAdvancedMeetingModalOpen] = useState(false);
+  // [ADDED] Angel Arena schedule modal
+  const [isAngelScheduleModalOpen, setIsAngelScheduleModalOpen] = useState(false);
+  const [selectedAngelMeeting, setSelectedAngelMeeting] = useState(null);
+  const [selectedAngelInvestor, setSelectedAngelInvestor] = useState(null);
   const [selectedVCFirm, setSelectedVCFirm] = useState(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
@@ -145,8 +151,7 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-        // if (hoursElapsed < 36) continue;
-        if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
+        if (hoursElapsed < 36) continue;
 
         const investors = await Investor.filter({ id: meeting.investor_id });
         if (!investors.length) continue;
@@ -518,6 +523,23 @@ const updateValuation = useCallback(() => {
       console.error("Error fetching VC Firm for advanced meeting:", error);
       // Using a custom message box instead of alert
       alert("An error occurred while preparing the advanced meeting.");
+    }
+  };
+
+  // [ADDED] Angel Arena — open schedule modal directly from dashboard message
+  const handleAngelSchedule = async (message) => {
+    try {
+      // Find the meeting record via investor_meeting_id or by matching venture+screening_passed
+      const meetings = await InvestorMeeting.filter({ venture_id: currentVenture.id, status: 'screening_passed' });
+      if (!meetings.length) { alert("Could not find the meeting details."); return; }
+      const meeting = meetings[0];
+      const investors = await Investor.filter({ id: meeting.investor_id });
+      if (!investors.length) { alert("Could not find the investor details."); return; }
+      setSelectedAngelMeeting(meeting);
+      setSelectedAngelInvestor(investors[0]);
+      setIsAngelScheduleModalOpen(true);
+    } catch (err) {
+      console.error("Error opening angel schedule:", err);
     }
   };
 
@@ -911,6 +933,20 @@ if (showToS) {
         router={router}
       />
 
+      {/* [ADDED] Angel Arena Schedule Modal */}
+      {isAngelScheduleModalOpen && selectedAngelInvestor && selectedAngelMeeting && (
+        <ScheduleMeetingModal
+          investor={selectedAngelInvestor}
+          meeting={selectedAngelMeeting}
+          onClose={() => {
+            setIsAngelScheduleModalOpen(false);
+            setSelectedAngelMeeting(null);
+            setSelectedAngelInvestor(null);
+            loadDashboard();
+          }}
+        />
+      )}
+
       <div className="min-h-screen bg-gray-50 flex">
         <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
           <div>
@@ -1280,11 +1316,11 @@ if (showToS) {
                             </div>
                           )}
 
-                          {/* [ADDED] Angel screening passed — go to Angel Arena to schedule */}
+                          {/* [ADDED] Angel screening passed — open schedule modal directly */}
                           {isAngelScreeningPassed && (
                             <div className="mt-4 flex gap-2">
                               <Button
-                                onClick={() => router.push('/angel-arena')}
+                                onClick={() => handleAngelSchedule(message)}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                               >
                                 <CalendarClock className="w-4 h-4 mr-2" /> Schedule Meeting
