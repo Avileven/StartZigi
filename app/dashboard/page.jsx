@@ -103,6 +103,8 @@ export default function Dashboard() {
   // [ADDED] PitchModal state for joining angel meeting from dashboard
   const [isAngelPitchOpen, setIsAngelPitchOpen] = useState(false);
   const [pitchInvestor, setPitchInvestor] = useState(null);
+  // [ADDED] Scheduled meeting time — loaded on dashboard load for button state
+  const [angelScheduledAt, setAngelScheduledAt] = useState(null);
   const [selectedVCFirm, setSelectedVCFirm] = useState(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
@@ -315,6 +317,16 @@ const updateValuation = useCallback(() => {
 
           // [ADDED] Angel Arena — check pending screenings and missed meetings
           await runScreeningCheck(activeVenture);
+
+          // [ADDED] Load scheduled angel meeting time for Join button state
+          try {
+            const scheduledMeetings = await InvestorMeeting.filter({ venture_id: activeVenture.id, meeting_status: 'scheduled' });
+            if (scheduledMeetings.length > 0) {
+              setAngelScheduledAt(new Date(scheduledMeetings[0].meeting_scheduled_at));
+            } else {
+              setAngelScheduledAt(null);
+            }
+          } catch (e) { setAngelScheduledAt(null); }
 
           setCurrentVenture(activeVenture);
 
@@ -560,7 +572,9 @@ const updateValuation = useCallback(() => {
       // Verify timing — must be within 20 minute window
       const now = new Date();
       const meetingTime = new Date(meeting.meeting_scheduled_at);
-      const diffMin = (now - meetingTime) / 1000 / 60;
+      // TESTING ONLY — remove after testing and uncomment the line below
+      const diffMin = 5;
+      // const diffMin = (now - meetingTime) / 1000 / 60;
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
 
       const investors = await Investor.filter({ id: meeting.investor_id });
@@ -1376,21 +1390,30 @@ if (showToS) {
 
                           {/* [ADDED] Angel meeting scheduled — show details, Dismiss only */}
                           {/* [ADDED] angel_meeting_scheduled — Join button active only during meeting window */}
+                          {/* [ADDED] angel_meeting_scheduled — Join button disabled until meeting time */}
                           {isAngelMeetingScheduled && (() => {
-                            // Fetch timing from investor_meetings via runScreeningCheck — meeting_scheduled_at is the source of truth
-                            // Button state is evaluated client-side on render
                             const now = new Date();
-                            // Parse meeting time from message content as fallback — actual check happens in handleJoinAngelMeeting
-                            const isActive = false; // placeholder — real check is inside handleJoinAngelMeeting
+                            const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1;
+                            const isActive = diffMin >= 0 && diffMin <= 20;
+                            const meetingTimeStr = angelScheduledAt
+                              ? angelScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                              : '';
                             return (
                               <div className="mt-4 space-y-2">
                                 <p className="text-xs text-gray-500">
-                                  ⏰ The Join button becomes active at your scheduled meeting time and stays open for 20 minutes.
+                                  {isActive
+                                    ? '🟢 Your meeting is live! You have 20 minutes to join.'
+                                    : `⏰ Join button becomes active at ${meetingTimeStr}`
+                                  }
                                 </p>
                                 <div className="flex gap-2">
                                   <Button
                                     onClick={handleJoinAngelMeeting}
-                                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                                    disabled={!isActive}
+                                    className={isActive
+                                      ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    }
                                   >
                                     <Rocket className="w-4 h-4 mr-2" /> Join Meeting
                                   </Button>
