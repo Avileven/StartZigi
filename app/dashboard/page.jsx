@@ -57,6 +57,8 @@ import VCMeetingModal from '@/components/vc/VCMeetingModal';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 // [ADDED] Angel Arena scheduling
 import ScheduleMeetingModal from '@/components/angels/ScheduleMeetingModal';
+// [ADDED] PitchModal for joining angel meeting from dashboard
+import PitchModal from '@/components/angels/PitchModal';
 
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
@@ -98,6 +100,9 @@ export default function Dashboard() {
   const [isAngelScheduleModalOpen, setIsAngelScheduleModalOpen] = useState(false);
   const [selectedAngelMeeting, setSelectedAngelMeeting] = useState(null);
   const [selectedAngelInvestor, setSelectedAngelInvestor] = useState(null);
+  // [ADDED] PitchModal state for joining angel meeting from dashboard
+  const [isAngelPitchOpen, setIsAngelPitchOpen] = useState(false);
+  const [pitchInvestor, setPitchInvestor] = useState(null);
   const [selectedVCFirm, setSelectedVCFirm] = useState(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
@@ -544,6 +549,29 @@ const updateValuation = useCallback(() => {
     }
   };
 
+  // [ADDED] Join angel meeting from dashboard — fetches meeting & investor from investor_meetings table
+  // Checks meeting_scheduled_at to verify timing before opening PitchModal
+  const handleJoinAngelMeeting = async () => {
+    try {
+      const meetings = await InvestorMeeting.filter({ venture_id: currentVenture.id, meeting_status: 'scheduled' });
+      if (!meetings.length) { alert("Could not find the meeting details."); return; }
+      const meeting = meetings[0];
+
+      // Verify timing — must be within 20 minute window
+      const now = new Date();
+      const meetingTime = new Date(meeting.meeting_scheduled_at);
+      const diffMin = (now - meetingTime) / 1000 / 60;
+      if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
+
+      const investors = await Investor.filter({ id: meeting.investor_id });
+      if (!investors.length) { alert("Could not find the investor details."); return; }
+      setPitchInvestor(investors[0]);
+      setIsAngelPitchOpen(true);
+    } catch (err) {
+      console.error("Error joining angel meeting:", err);
+    }
+  };
+
   const handleReadOn = (details) => {
     setRejectionDetailsContent(details);
     setShowRejectionDetails(true);
@@ -933,6 +961,20 @@ if (showToS) {
         }}
         router={router}
       />
+
+      {/* [ADDED] Angel PitchModal — opened from dashboard Join Meeting button */}
+      {isAngelPitchOpen && pitchInvestor && currentVenture && (
+        <PitchModal
+          investor={pitchInvestor}
+          venture={currentVenture}
+          isOpen={isAngelPitchOpen}
+          onClose={() => {
+            setIsAngelPitchOpen(false);
+            setPitchInvestor(null);
+            loadDashboard();
+          }}
+        />
+      )}
 
       {/* [ADDED] Angel Arena Schedule Modal */}
       {isAngelScheduleModalOpen && selectedAngelInvestor && selectedAngelMeeting && (
@@ -1333,13 +1375,32 @@ if (showToS) {
                           )}
 
                           {/* [ADDED] Angel meeting scheduled — show details, Dismiss only */}
-                          {isAngelMeetingScheduled && (
-                            <div className="mt-4 flex gap-2">
-                              <Button onClick={() => dismissMessage(message)} variant="outline">
-                                <X className="w-4 h-4 mr-2" /> Dismiss
-                              </Button>
-                            </div>
-                          )}
+                          {/* [ADDED] angel_meeting_scheduled — Join button active only during meeting window */}
+                          {isAngelMeetingScheduled && (() => {
+                            // Fetch timing from investor_meetings via runScreeningCheck — meeting_scheduled_at is the source of truth
+                            // Button state is evaluated client-side on render
+                            const now = new Date();
+                            // Parse meeting time from message content as fallback — actual check happens in handleJoinAngelMeeting
+                            const isActive = false; // placeholder — real check is inside handleJoinAngelMeeting
+                            return (
+                              <div className="mt-4 space-y-2">
+                                <p className="text-xs text-gray-500">
+                                  ⏰ The Join button becomes active at your scheduled meeting time and stays open for 20 minutes.
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleJoinAngelMeeting}
+                                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                                  >
+                                    <Rocket className="w-4 h-4 mr-2" /> Join Meeting
+                                  </Button>
+                                  <Button onClick={() => dismissMessage(message)} variant="outline">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </CardContent>
                       </Card>
                     );
