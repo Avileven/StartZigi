@@ -215,9 +215,9 @@ export default function AngelArena() {
               const statusConfig = STATUSES[investor.status];
               const isAvailable = investor.status === 'AVAILABLE';
               const meeting = meetings.find(m => m.investor_id === investor.id);
+              const mStatus = getInvestorMeetingStatus(investor.id, meetings);
               // [CHANGED] color driven by meeting status, not random gradient
               const meetingColor = getMeetingColor(mStatus, meeting?.meeting_scheduled_at);
-              const mStatus = getInvestorMeetingStatus(investor.id, meetings);
 
               return (
                 <div
