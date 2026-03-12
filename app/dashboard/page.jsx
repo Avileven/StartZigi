@@ -1,4 +1,4 @@
-//dashboard 110326 
+//dashboard 120326 
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -158,8 +158,8 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-      //  if (hoursElapsed < 36) continue;
-      if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
+      if (hoursElapsed < 36) continue;
+      //if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
 
         const investors = await Investor.filter({ id: meeting.investor_id });
         if (!investors.length) continue;
@@ -167,6 +167,9 @@ const updateValuation = useCallback(() => {
 
         let passed = true;
         let rejectReason = '';
+        const fundingEvents = await FundingEvent.filter({ venture_id: venture.id });
+        const hasAngelInvestment = fundingEvents.some(e => e.investment_type === 'angel');
+        if (hasAngelInvestment) { passed = false; rejectReason = `Unfortunately, I have to pass. Your venture looks promising, but I don't co-invest alongside other angel investors. Best of luck!`; }
 
         if (investor.investor_type === 'no_go') {
           passed = false;
@@ -454,7 +457,7 @@ const updateValuation = useCallback(() => {
           venture_tagline: currentVenture.description,
           venture_landing_page_url: currentVenture.landing_page_url,
           investor_name: message.vc_firm_name,
-          investment_type: 'VC',
+          investment_type: message.investment_type || 'VC',
           amount: message.investment_offer_checksize
         });
 
@@ -573,8 +576,8 @@ const updateValuation = useCallback(() => {
       const now = new Date();
       const meetingTime = new Date(meeting.meeting_scheduled_at);
       // TESTING ONLY — remove after testing and uncomment the line below
-      const diffMin = 5;
-      // const diffMin = (now - meetingTime) / 1000 / 60;
+     // const diffMin = 5;
+      const diffMin = (now - meetingTime) / 1000 / 60;
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
 
       const investors = await Investor.filter({ id: meeting.investor_id });
