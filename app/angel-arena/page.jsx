@@ -1,4 +1,4 @@
-// 100326 updated model
+// 120326 updated model
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -23,24 +23,14 @@ const STATUSES = {
   IN_MEETING: { color: 'bg-yellow-500', label: 'In Meeting', icon: Clock, ringColor: 'ring-yellow-400' },
 };
 
-const GRADIENTS = [
-  'bg-gradient-to-br from-purple-500 to-indigo-600',
-  'bg-gradient-to-br from-pink-500 to-rose-600',
-  'bg-gradient-to-br from-blue-500 to-cyan-600',
-  'bg-gradient-to-br from-green-500 to-emerald-600',
-  'bg-gradient-to-br from-orange-500 to-red-600',
-  'bg-gradient-to-br from-indigo-500 to-purple-700',
-  'bg-gradient-to-br from-teal-500 to-green-600',
-  'bg-gradient-to-br from-fuchsia-500 to-pink-600',
-  'bg-gradient-to-br from-amber-500 to-orange-600',
-  'bg-gradient-to-br from-violet-500 to-purple-600',
-  'bg-gradient-to-br from-sky-500 to-blue-600',
-  'bg-gradient-to-br from-rose-500 to-pink-600',
-];
-
-const getGradientForInvestor = (name) => {
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return GRADIENTS[hash % GRADIENTS.length];
+// [CHANGED] Investor card color is now determined by meeting status, not random gradient
+const getMeetingColor = (mStatus, meetingScheduledAt) => {
+  if (!mStatus) return 'bg-green-500';                                               // no contact yet — green
+  if (mStatus === 'pending_screening') return 'bg-yellow-400';                       // awaiting — yellow
+  if (mStatus === 'screening_rejected') return 'bg-red-500';                         // rejected — red
+  if (mStatus === 'screening_passed' && !meetingScheduledAt) return 'bg-purple-300'; // interested, no meeting yet — light purple
+  if (mStatus === 'screening_passed' && meetingScheduledAt) return 'bg-purple-600';  // meeting scheduled — purple
+  return 'bg-green-500';
 };
 
 // Returns the status of this investor for this venture based on existing meetings
@@ -224,7 +214,9 @@ export default function AngelArena() {
             {investors.map((investor, index) => {
               const statusConfig = STATUSES[investor.status];
               const isAvailable = investor.status === 'AVAILABLE';
-              const gradientClass = getGradientForInvestor(investor.name);
+              const meeting = meetings.find(m => m.investor_id === investor.id);
+              // [CHANGED] color driven by meeting status, not random gradient
+              const meetingColor = getMeetingColor(mStatus, meeting?.meeting_scheduled_at);
               const mStatus = getInvestorMeetingStatus(investor.id, meetings);
 
               return (
@@ -244,7 +236,7 @@ export default function AngelArena() {
                       relative w-32 h-32 rounded-full flex items-center justify-center
                       transition-all duration-300 shadow-lg
                       ${isAvailable ? 'cursor-pointer hover:scale-110 hover:shadow-2xl' : 'cursor-not-allowed opacity-60'}
-                      ${gradientClass}
+                      ${meetingColor}
                     `}
                   >
                     <span
@@ -317,7 +309,7 @@ export default function AngelArena() {
                 <X className="w-5 h-5" />
               </button>
               <div className="flex items-start gap-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getGradientForInvestor(selectedInvestor.name)}`}>
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${getMeetingColor(meetings.find(m => m.investor_id === selectedInvestor.id)?.status, meetings.find(m => m.investor_id === selectedInvestor.id)?.meeting_scheduled_at)}`}>
                   <UserCircle className="w-10 h-10 text-white" />
                 </div>
                 <div>
