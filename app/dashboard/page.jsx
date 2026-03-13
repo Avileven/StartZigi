@@ -695,14 +695,11 @@ const updateValuation = useCallback(() => {
       if (!meetings.length) { alert("Could not find the meeting details."); return; }
       const meeting = meetings[0];
 
-      // Verify timing — must be within 20 minute window
       const now = new Date();
-      const meetingTime = new Date(meeting.meeting_scheduled_at);
-      // TESTING ONLY — remove after testing and uncomment the line below
-     // const diffMin = 5;
-      const diffMin = (now - meetingTime) / 1000 / 60;
-      if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
-
+const meetingTime = new Date(meeting.meeting_scheduled_at);
+const diffMin = 5;
+// const diffMin = (now - meetingTime) / 1000 / 60;
+if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
       const investors = await Investor.filter({ id: meeting.investor_id });
       if (!investors.length) { alert("Could not find the investor details."); return; }
       setPitchInvestor(investors[0]);
