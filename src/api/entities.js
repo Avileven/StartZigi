@@ -1,4 +1,4 @@
-// TEST 15126
+// 130326
 import { supabase } from '@/lib/supabase'
 
 // Base Entity Class
@@ -12,7 +12,7 @@ class Entity {
       .from(this.tableName)
       .insert([{
         ...data,
-        id: crypto.randomUUID(),
+        id: globalThis.crypto?.randomUUID() || `${Date.now()}-${Math.random().toString(36)}`,
         created_date: new Date().toISOString(),
         updated_date: new Date().toISOString(),
       }])
@@ -26,13 +26,15 @@ class Entity {
   async filter(conditions = {}, orderBy = null) {
     let query = supabase.from(this.tableName).select('*')
 
+    // ✅ CHANGE: support "founder_user_id" filter for ventures (JSONB array contains)
+    // Usage: Venture.filter({ founder_user_id: currentUser.id }, "-created_date")
+    if (this.tableName === 'ventures' && conditions?.founder_user_id) {
+      query = query.filter('founder_user_ids', 'cs', JSON.stringify([String(conditions.founder_user_id)]))
+      delete conditions.founder_user_id
+    }
+
     Object.entries(conditions).forEach(([key, value]) => {
-      // אם הערך הוא אובייקט עם $in, השתמש בפונקציית .in של Supabase
-      if (value && typeof value === 'object' && value.$in) {
-        query = query.in(key, value.$in)
-      } else {
-        query = query.eq(key, value)
-      }
+      query = query.eq(key, value)
     })
 
     if (orderBy) {
@@ -45,6 +47,7 @@ class Entity {
     if (error) throw error
     return data || []
   }
+
   async get(id) {
     const { data, error } = await supabase
       .from(this.tableName)
@@ -108,26 +111,35 @@ class UserEntity extends Entity {
   }
 
   async me() {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error) throw error
-    if (!user) throw new Error('Not authenticated')
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError && profileError.code !== 'PGRST116') throw profileError
-
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.user_metadata?.role || 'user',
-      ...profile,
+  // ✅ אם אין סשן – פשוט לא מחובר, לא קריסה
+  if (error) {
+    // Supabase לפעמים מחזיר AuthSessionMissingError כשאין cookie/session
+    if (String(error?.name || '').includes('AuthSessionMissing') || String(error?.message || '').includes('Auth session missing')) {
+      return null;
     }
+    throw error;
   }
+
+  if (!user) return null;
+
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError && profileError.code !== 'PGRST116') throw profileError;
+
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.user_metadata?.role || 'user',
+    ...profile,
+  };
+}
+
 }
 
 export const Venture = new Entity('ventures')
@@ -146,3 +158,5 @@ export const ProductFeedback = new Entity('product_feedback')
 export const PromotionCampaign = new Entity('promotion_campaigns')
 export const SuggestedFeature = new Entity('suggested_features')
 export const VCFirm = new Entity('vc_firms')
+export const InvestorMeeting = new Entity('investor_meetings')
+export const VCMeeting = new Entity('vc_meetings')

@@ -1,4 +1,4 @@
-//dashboard 120326 
+//dashboard 130326 WITH vc upgrade
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -14,6 +14,8 @@ import { FundingEvent } from '@/api/entities';
 // [ADDED] Angel Arena screening flow
 import { InvestorMeeting } from '@/api/entities';
 import { Investor } from '@/api/entities';
+// [ADDED] VC Marketplace screening flow
+import { VCMeeting } from '@/api/entities';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -57,6 +59,8 @@ import VCMeetingModal from '@/components/vc/VCMeetingModal';
 import VCAdvancedMeetingModal from '@/components/vc/VCAdvancedMeetingModal';
 // [ADDED] Angel Arena scheduling
 import ScheduleMeetingModal from '@/components/angels/ScheduleMeetingModal';
+// [ADDED] VC Marketplace scheduling
+import VCScheduleMeetingModal from '@/components/vc/VCScheduleMeetingModal';
 // [ADDED] PitchModal for joining angel meeting from dashboard
 import PitchModal from '@/components/angels/PitchModal';
 
@@ -105,6 +109,10 @@ export default function Dashboard() {
   const [pitchInvestor, setPitchInvestor] = useState(null);
   // [ADDED] Scheduled meeting time — loaded on dashboard load for button state
   const [angelScheduledAt, setAngelScheduledAt] = useState(null);
+  // [ADDED] VC Marketplace schedule modal
+  const [isVCScheduleModalOpen, setIsVCScheduleModalOpen] = useState(false);
+  const [selectedVCMeeting, setSelectedVCMeeting] = useState(null);
+  const [vcScheduledAt, setVcScheduledAt] = useState(null);
   const [selectedVCFirm, setSelectedVCFirm] = useState(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
@@ -152,7 +160,7 @@ const updateValuation = useCallback(() => {
   // Silent fail — never crashes the dashboard.
   const runScreeningCheck = async (venture) => {
     try {
-      // ── Pending screenings ──
+      // ── Angel: Pending screenings ──
       const pendingMeetings = await InvestorMeeting.filter({ venture_id: venture.id, status: 'pending_screening' });
       const now = new Date();
 
@@ -207,7 +215,7 @@ const updateValuation = useCallback(() => {
         }
       }
 
-      // ── Missed meetings (scheduled but 20min window passed) ──
+      // ── Angel: Missed meetings (scheduled but 20min window passed) ──
       const scheduledMeetings = await InvestorMeeting.filter({ venture_id: venture.id, meeting_status: 'scheduled' });
       for (const meeting of scheduledMeetings) {
         if (!meeting.meeting_scheduled_at) continue;
@@ -229,6 +237,97 @@ const updateValuation = useCallback(() => {
       }
     } catch (err) {
       console.error('Angel screening check error:', err);
+    }
+
+    // ── VC: Pending screenings ──
+    try {
+      const pendingVCMeetings = await VCMeeting.filter({ venture_id: venture.id, status: 'pending_screening' });
+      const now = new Date();
+
+      for (const meeting of pendingVCMeetings) {
+        const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
+        if (hoursElapsed < 36) continue;
+        // if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
+
+        const firms = await VCFirm.filter({ id: meeting.vc_firm_id });
+        if (!firms.length) continue;
+        const firm = firms[0];
+
+        let passed = true;
+        let rejectReason = '';
+        const params = firm.screening_parameters || {};
+
+        // Block if already has VC investment from this firm
+        const fundingEvents = await FundingEvent.filter({ venture_id: venture.id });
+        const hasVCInvestment = fundingEvents.some(e => e.investment_type === 'VC' && e.investor_name === firm.name);
+        if (hasVCInvestment) {
+          passed = false;
+          rejectReason = `Thank you for your continued interest. We have already invested in your venture and are not able to make an additional investment at this time.`;
+        } else if (params.freeze_investment) {
+          passed = false;
+          rejectReason = params.rejection_messages?.freeze || `Thank you for the time you've invested in this process. We have made the difficult decision to pause all new investments at this time.`;
+        } else if (params.team_focus && (venture.founders_count || 1) < 2) {
+          passed = false;
+          rejectReason = params.rejection_messages?.team || `Your venture's potential is clear, but we have a strong preference for teams with multiple co-founders.`;
+        } else if (params.sector_focus && firm.focus_areas?.length > 0 && venture.sector && !firm.focus_areas.includes(venture.sector)) {
+          passed = false;
+          rejectReason = params.rejection_messages?.sector || `Thank you for sharing your work with us. It doesn't align with our current investment thesis.`;
+        } else if (params.phase_focus && !['mlp', 'growth', 'ma'].includes(venture.phase)) {
+          passed = false;
+          rejectReason = params.rejection_messages?.phase || `We typically invest in companies with more established traction. We encourage you to re-apply once you've reached the MLP phase.`;
+        }
+
+        if (passed) {
+          await VCMeeting.update(meeting.id, { status: 'screening_passed', screening_result: 'passed', screening_result_sent_at: now.toISOString() });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'vc_screening_passed',
+            title: `🎉 ${firm.name} wants to meet you!`,
+            content: `Great news! ${firm.name} reviewed your application and is interested in learning more. Schedule your meeting from the VC Marketplace.`,
+            phase: venture.phase,
+            priority: 4,
+            vc_firm_id: firm.id,
+            vc_firm_name: firm.name,
+            is_dismissed: false,
+          });
+        } else {
+          await VCMeeting.update(meeting.id, { status: 'screening_rejected', screening_result: 'rejected', screening_result_sent_at: now.toISOString() });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'system',
+            title: `📋 Update from ${firm.name}`,
+            content: rejectReason,
+            phase: venture.phase,
+            priority: 2,
+            vc_firm_id: firm.id,
+            vc_firm_name: firm.name,
+            is_dismissed: false,
+          });
+        }
+      }
+
+      // ── VC: Missed meetings (scheduled but 20min window passed) ──
+      const scheduledVCMeetings = await VCMeeting.filter({ venture_id: venture.id, meeting_status: 'scheduled' });
+      for (const meeting of scheduledVCMeetings) {
+        if (!meeting.meeting_scheduled_at) continue;
+        const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60;
+        if (minutesSince <= 20) continue;
+
+        await VCMeeting.update(meeting.id, { meeting_status: 'missed', status: 'screening_rejected' });
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'system',
+          title: `😔 Missed Meeting with ${meeting.vc_firm_name}`,
+          content: `You missed your scheduled meeting with ${meeting.vc_firm_name}. The firm has moved on. You can try contacting them again from the VC Marketplace.`,
+          phase: venture.phase,
+          priority: 3,
+          vc_firm_id: meeting.vc_firm_id,
+          vc_firm_name: meeting.vc_firm_name,
+          is_dismissed: false,
+        });
+      }
+    } catch (err) {
+      console.error('VC screening check error:', err);
     }
   };
 
@@ -330,6 +429,18 @@ const updateValuation = useCallback(() => {
               setAngelScheduledAt(null);
             }
           } catch (e) { setAngelScheduledAt(null); }
+
+          // [ADDED] Load scheduled VC meeting time for Join button state
+          try {
+            const scheduledVCMeetings = await VCMeeting.filter({ venture_id: activeVenture.id, meeting_status: 'scheduled' });
+            if (scheduledVCMeetings.length > 0) {
+              setVcScheduledAt(new Date(scheduledVCMeetings[0].meeting_scheduled_at));
+              setSelectedVCMeeting(scheduledVCMeetings[0]);
+            } else {
+              setVcScheduledAt(null);
+              setSelectedVCMeeting(null);
+            }
+          } catch (e) { setVcScheduledAt(null); }
 
           setCurrentVenture(activeVenture);
 
@@ -564,6 +675,18 @@ const updateValuation = useCallback(() => {
     }
   };
 
+  // [ADDED] VC Marketplace — open schedule modal from dashboard message
+  const handleVCSchedule = async (message) => {
+    try {
+      const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, status: 'screening_passed' });
+      if (!meetings.length) { alert("Could not find the VC meeting details."); return; }
+      setSelectedVCMeeting(meetings[0]);
+      setIsVCScheduleModalOpen(true);
+    } catch (err) {
+      console.error("Error opening VC schedule:", err);
+    }
+  };
+
   // [ADDED] Join angel meeting from dashboard — fetches meeting & investor from investor_meetings table
   // Checks meeting_scheduled_at to verify timing before opening PitchModal
   const handleJoinAngelMeeting = async () => {
@@ -586,6 +709,28 @@ const updateValuation = useCallback(() => {
       setIsAngelPitchOpen(true);
     } catch (err) {
       console.error("Error joining angel meeting:", err);
+    }
+  };
+
+  // [ADDED] Join VC meeting from dashboard — checks 20min window, opens VCMeetingModal
+  const handleJoinVCScheduledMeeting = async () => {
+    try {
+      const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, meeting_status: 'scheduled' });
+      if (!meetings.length) { alert("Could not find the VC meeting details."); return; }
+      const meeting = meetings[0];
+
+      const now = new Date();
+      const meetingTime = new Date(meeting.meeting_scheduled_at);
+      const diffMin = (now - meetingTime) / 1000 / 60;
+      if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
+
+      const firms = await VCFirm.filter({ id: meeting.vc_firm_id });
+      if (!firms.length) { alert("Could not find the VC firm details."); return; }
+      setSelectedVCFirm(firms[0]);
+      setSelectedMessageId(null); // no original message to dismiss — meeting is tracked in vc_meetings
+      setIsMeetingModalOpen(true);
+    } catch (err) {
+      console.error("Error joining VC scheduled meeting:", err);
     }
   };
 
@@ -1007,6 +1152,19 @@ if (showToS) {
         />
       )}
 
+      {/* [ADDED] VC Marketplace Schedule Modal */}
+      {isVCScheduleModalOpen && selectedVCMeeting && currentVenture && (
+        <VCScheduleMeetingModal
+          vcMeeting={selectedVCMeeting}
+          venture={currentVenture}
+          onClose={() => {
+            setIsVCScheduleModalOpen(false);
+            setSelectedVCMeeting(null);
+            loadDashboard();
+          }}
+        />
+      )}
+
       <div className="min-h-screen bg-gray-50 flex">
         <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
           <div>
@@ -1193,6 +1351,9 @@ if (showToS) {
                     // [ADDED] Angel Arena messages
                     const isAngelScreeningPassed = message.message_type === 'angel_screening_passed';
                     const isAngelMeetingScheduled = message.message_type === 'angel_meeting_scheduled';
+                    // [ADDED] VC Marketplace messages
+                    const isVCScreeningPassed = message.message_type === 'vc_screening_passed';
+                    const isVCMeetingScheduled = message.message_type === 'vc_meeting_scheduled';
 
                     let cardClass = 'bg-white border-l-4';
                     let icon = MessageSquare;
@@ -1223,6 +1384,14 @@ if (showToS) {
                       icon = CheckCircle;
                       iconClass = 'text-emerald-600';
                     } else if (isAngelMeetingScheduled) {
+                      cardClass = 'bg-indigo-50 border-l-4 border-indigo-400';
+                      icon = Calendar;
+                      iconClass = 'text-indigo-600';
+                    } else if (isVCScreeningPassed) {
+                      cardClass = 'bg-emerald-50 border-l-4 border-emerald-500';
+                      icon = CheckCircle;
+                      iconClass = 'text-emerald-600';
+                    } else if (isVCMeetingScheduled) {
                       cardClass = 'bg-indigo-50 border-l-4 border-indigo-400';
                       icon = Calendar;
                       iconClass = 'text-indigo-600';
@@ -1391,9 +1560,22 @@ if (showToS) {
                             </div>
                           )}
 
-                          {/* [ADDED] Angel meeting scheduled — show details, Dismiss only */}
-                          {/* [ADDED] angel_meeting_scheduled — Join button active only during meeting window */}
-                          {/* [ADDED] angel_meeting_scheduled — Join button disabled until meeting time */}
+                          {/* [ADDED] VC screening passed — open VC schedule modal */}
+                          {isVCScreeningPassed && (
+                            <div className="mt-4 flex gap-2">
+                              <Button
+                                onClick={() => handleVCSchedule(message)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                <CalendarClock className="w-4 h-4 mr-2" /> Schedule Meeting
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* [ADDED] Angel meeting scheduled — Join button active only during meeting window */}
                           {isAngelMeetingScheduled && (() => {
                             const now = new Date();
                             const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1;
@@ -1419,6 +1601,41 @@ if (showToS) {
                                     }
                                   >
                                     <Rocket className="w-4 h-4 mr-2" /> Join Meeting
+                                  </Button>
+                                  <Button onClick={() => dismissMessage(message)} variant="outline">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* [ADDED] VC meeting scheduled — Join button active only during meeting window */}
+                          {isVCMeetingScheduled && (() => {
+                            const now = new Date();
+                            const diffMin = vcScheduledAt ? (now - vcScheduledAt) / 1000 / 60 : -1;
+                            const isActive = diffMin >= 0 && diffMin <= 20;
+                            const meetingTimeStr = vcScheduledAt
+                              ? vcScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                              : '';
+                            return (
+                              <div className="mt-4 space-y-2">
+                                <p className="text-xs text-gray-500">
+                                  {isActive
+                                    ? '🟢 Your VC meeting is live! You have 20 minutes to join.'
+                                    : `⏰ Join button becomes active at ${meetingTimeStr}`
+                                  }
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleJoinVCScheduledMeeting}
+                                    disabled={!isActive}
+                                    className={isActive
+                                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+                                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    }
+                                  >
+                                    <Rocket className="w-4 h-4 mr-2" /> Join VC Meeting
                                   </Button>
                                   <Button onClick={() => dismissMessage(message)} variant="outline">
                                     <X className="w-4 h-4 mr-2" /> Dismiss
