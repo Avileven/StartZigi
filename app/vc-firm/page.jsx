@@ -25,6 +25,7 @@ const VCFirmContactModal = ({ firm, venture, canApply }) => {
     if (!venture) { alert("No active venture found."); return; }
     setIsSending(true);
     try {
+      console.log('venture:', venture.id, 'firm:', firm.id)
       await VCMeeting.create({
         venture_id: venture.id,
         vc_firm_id: firm.id,
