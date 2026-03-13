@@ -1,3 +1,4 @@
+// api\entities.js
 import { supabase } from '@/lib/supabase'
 
 // Base Entity Class
@@ -11,7 +12,6 @@ class Entity {
       .from(this.tableName)
       .insert([{
         ...data,
-        id: globalThis.crypto?.randomUUID() || `${Date.now()}-${Math.random().toString(36)}`,
         created_date: new Date().toISOString(),
         updated_date: new Date().toISOString(),
       }])
@@ -158,4 +158,3 @@ export const PromotionCampaign = new Entity('promotion_campaigns')
 export const SuggestedFeature = new Entity('suggested_features')
 export const VCFirm = new Entity('vc_firms')
 export const InvestorMeeting = new Entity('investor_meetings')
-export const VCMeeting = new Entity('vc_meetings')
