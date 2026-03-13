@@ -1,10 +1,11 @@
-// vc-firm 270126
+// vc-firm 130326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { VCFirm } from '@/api/entities';
 import { Venture } from '@/api/entities';
 import { VentureMessage } from '@/api/entities';
+import { VCMeeting } from '@/api/entities';
 import { User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,57 +22,17 @@ const VCFirmContactModal = ({ firm, venture, canApply }) => {
   const router = useRouter();
 
   const handleApply = async () => {
-    if (!venture) {
-      alert("No active venture found.");
-      return;
-    }
+    if (!venture) { alert("No active venture found."); return; }
     setIsSending(true);
-
-    const params = firm.screening_parameters || {};
-    let rejectionReason = null;
-    let rejectionDetails = null;
-
-    // Stage 1: Automated Screening
-    if (params.freeze_investment) {
-      rejectionReason = params.rejection_messages?.freeze || "Thank you for the time you've invested in this process. While we were very impressed by your presentation, we have made the difficult decision to pause all new investments at this time. This is not a reflection of your venture's potential, but rather a temporary shift in our fund's strategy.";
-    } else if (params.team_focus && (venture.founders_count || 1) < 2) {
-      rejectionReason = params.rejection_messages?.team || "Your venture's potential is clear, but we've found that our most successful partnerships are with teams that have multiple co-founders. We strongly believe that a diverse founding team is a key indicator of future success. We encourage you to seek out a co-founder who can help you build your vision.";
-    } else if (params.sector_focus && !firm.focus_areas?.includes(venture.sector)) {
-      rejectionReason = params.rejection_messages?.sector || "Thank you for sharing your innovative work with us. While your vision is compelling, it doesn't align with our current investment thesis. We wish you the best of luck in finding the right partner to help you grow.";
-    } else if (params.phase_focus && !['mlp', 'growth', 'ma'].includes(venture.phase)) {
-       rejectionReason = params.rejection_messages?.phase || "We typically invest in companies with more established traction. We encourage you to re-apply once you've reached the MLP phase or beyond.";
-    }
-
     try {
-      if (rejectionReason) {
-        // Create rejection message
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: 'system',
-          title: `Update from ${firm.name}`,
-          content: rejectionReason,
-          phase: venture.phase,
-          priority: 2,
-          vc_firm_id: firm.id,
-          vc_stage: 'stage_1_rejected'
-        });
-      } else {
-        // Create invitation message for Stage 2
-        await VentureMessage.create({
-          venture_id: venture.id,
-          message_type: 'system',
-          title: `Invitation to Meeting: ${firm.name}`,
-          content: `Congratulations! You've passed the initial screening with ${firm.name}. Click 'Join Meeting' to begin the automated evaluation process.`,
-          phase: venture.phase,
-          priority: 4,
-          vc_firm_id: firm.id,
-          vc_stage: 'stage_2_ready'
-        });
-      }
-      
-      // ✅ תיקון: החלפתי navigate ל-router.push
+      await VCMeeting.create({
+        venture_id: venture.id,
+        vc_firm_id: firm.id,
+        vc_firm_name: firm.name,
+        status: 'pending_screening',
+        screening_submitted_at: new Date().toISOString(),
+      });
       router.push(createPageUrl('Dashboard'));
-
     } catch (error) {
       console.error("Failed to send application:", error);
       alert("There was an error processing your application. Please try again.");
