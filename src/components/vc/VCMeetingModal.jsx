@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
+import { VCMeeting } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
@@ -195,17 +196,29 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
                 vc_stage: 'stage_2_passed'  // Advanced Meeting
               });
             } else if (ventureScreeningScore >= 7.0 && ventureScreeningScore < 8.5) {
-              // Medium score - Follow-Up needed
+              // Medium score - Follow-Up needed — schedule via vc_meetings (same flow as initial meeting)
+              // Find the vc_meeting record and update it to followup_scheduling
+              try {
+                const vcMeetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirm.id });
+                if (vcMeetings.length > 0) {
+                  await VCMeeting.update(vcMeetings[0].id, {
+                    status: 'followup_scheduling',
+                    meeting_status: null,
+                    meeting_scheduled_at: null,
+                  });
+                }
+              } catch (e) { console.error('Error updating vc_meeting for followup:', e); }
+
               await VentureMessage.create({
                 venture_id: venture.id,
-                message_type: 'system',
-                title: `Follow-Up Needed with ${vcFirm.name}`,
-                content: `Thank you for the initial meeting. Your venture screening score was ${ventureScreeningScore.toFixed(1)}/10. We're interested but need more information before proceeding. Please schedule a follow-up call to discuss further.`,
+                message_type: 'vc_followup_scheduling', // triggers Schedule button in dashboard
+                title: `Follow-Up Meeting with ${vcFirm.name}`,
+                content: `Good news! ${vcFirm.name} is interested but would like a follow-up call before making a decision. Please schedule your follow-up meeting from your dashboard.`,
                 phase: venture.phase,
                 priority: 3,
                 vc_firm_id: vcFirm.id,
                 vc_firm_name: vcFirm.name,
-                vc_stage: 'stage_2_followup'  // Follow-Up
+                vc_stage: 'stage_2_followup'
               });
             } else {
               // Low score - Rejected

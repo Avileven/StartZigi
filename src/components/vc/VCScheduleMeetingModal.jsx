@@ -29,7 +29,8 @@ const getDaysAhead = (n) => {
   return days;
 };
 
-export default function VCScheduleMeetingModal({ vcMeeting, venture, onClose }) {
+// isFollowup: true when scheduling a follow-up meeting (score 7.0-8.4), false for initial meeting
+export default function VCScheduleMeetingModal({ vcMeeting, venture, onClose, isFollowup = false }) {
   const [selectedSlot, setSelectedSlot] = useState(null); // { day: Date, hour: number }
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -45,13 +46,15 @@ export default function VCScheduleMeetingModal({ vcMeeting, venture, onClose }) 
       await VCMeeting.update(vcMeeting.id, {
         meeting_scheduled_at: meetingTime.toISOString(),
         meeting_status: 'scheduled',
-        status: 'meeting_scheduled',
+        // isFollowup: keeps status as 'followup_scheduling' so dashboard knows to open PressureChallenge
+        // initial meeting: status becomes 'meeting_scheduled'
+        status: isFollowup ? 'followup_scheduling' : 'meeting_scheduled',
       });
 
       await VentureMessage.create({
         venture_id: venture.id,
-        message_type: 'vc_meeting_scheduled',
-        title: `📅 Meeting Scheduled with ${vcMeeting.vc_firm_name}`,
+        message_type: isFollowup ? 'vc_followup_scheduled' : 'vc_meeting_scheduled',
+        title: isFollowup ? `📅 Follow-Up Scheduled with ${vcMeeting.vc_firm_name}` : `📅 Meeting Scheduled with ${vcMeeting.vc_firm_name}`,
         content: `Your meeting with ${vcMeeting.vc_firm_name} is confirmed for ${meetingTime.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}. The Join button will be active for 20 minutes starting at that time.`,
         phase: venture.phase,
         priority: 4,

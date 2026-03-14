@@ -1,4 +1,4 @@
-//dashboard 140326 WITH vc upgrade
+//dashboard 140326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [isVCScheduleModalOpen, setIsVCScheduleModalOpen] = useState(false);
   const [selectedVCMeeting, setSelectedVCMeeting] = useState(null);
   const [vcScheduledAt, setVcScheduledAt] = useState(null);
+  const [isVCFollowup, setIsVCFollowup] = useState(false); // true when scheduling follow-up meeting
   const [selectedVCFirm, setSelectedVCFirm] = useState(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
@@ -684,9 +685,23 @@ const updateValuation = useCallback(() => {
       const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, status: 'screening_passed' });
       if (!meetings.length) { alert("Could not find the VC meeting details."); return; }
       setSelectedVCMeeting(meetings[0]);
+      setIsVCFollowup(false); // mark as initial meeting
       setIsVCScheduleModalOpen(true);
     } catch (err) {
       console.error("Error opening VC schedule:", err);
+    }
+  };
+
+  // [ADDED] VC followup — open schedule modal for follow-up meeting
+  const handleVCFollowupSchedule = async (message) => {
+    try {
+      const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, status: 'followup_scheduling' });
+      if (!meetings.length) { alert("Could not find the follow-up meeting details."); return; }
+      setSelectedVCMeeting(meetings[0]);
+      setIsVCFollowup(true); // mark as follow-up
+      setIsVCScheduleModalOpen(true);
+    } catch (err) {
+      console.error("Error opening VC followup schedule:", err);
     }
   };
 
@@ -709,6 +724,25 @@ const diffMin = 5; // TESTING: always active
       setIsAngelPitchOpen(true);
     } catch (err) {
       console.error("Error joining angel meeting:", err);
+    }
+  };
+
+  // [ADDED] Join VC follow-up meeting — checks 20min window, opens PressureChallenge
+  const handleJoinVCFollowupMeeting = async () => {
+    try {
+      const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, status: 'followup_scheduling' });
+      if (!meetings.length) { alert("Could not find the follow-up meeting details."); return; }
+      const meeting = meetings[0];
+
+      const now = new Date();
+      const meetingTime = new Date(meeting.meeting_scheduled_at);
+      const diffMin = 5; // TESTING: always active
+      // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
+      if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
+
+      router.push(createPageUrl('PressureChallenge') + `?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
+    } catch (err) {
+      console.error("Error joining VC followup meeting:", err);
     }
   };
 
@@ -1158,9 +1192,11 @@ if (showToS) {
         <VCScheduleMeetingModal
           vcMeeting={selectedVCMeeting}
           venture={currentVenture}
+          isFollowup={isVCFollowup}
           onClose={() => {
             setIsVCScheduleModalOpen(false);
             setSelectedVCMeeting(null);
+            setIsVCFollowup(false);
             loadDashboard();
           }}
         />
@@ -1355,6 +1391,8 @@ if (showToS) {
                     // [ADDED] VC Marketplace messages
                     const isVCScreeningPassed = message.message_type === 'vc_screening_passed';
                     const isVCMeetingScheduled = message.message_type === 'vc_meeting_scheduled';
+                    const isVCFollowupScheduling = message.message_type === 'vc_followup_scheduling';
+                    const isVCFollowupScheduled = message.message_type === 'vc_followup_scheduled';
 
                     let cardClass = 'bg-white border-l-4';
                     let icon = MessageSquare;
@@ -1396,6 +1434,10 @@ if (showToS) {
                       cardClass = 'bg-indigo-50 border-l-4 border-indigo-400';
                       icon = Calendar;
                       iconClass = 'text-indigo-600';
+                    } else if (isVCFollowupScheduling || isVCFollowupScheduled) {
+                      cardClass = 'bg-amber-50 border-l-4 border-amber-400';
+                      icon = Calendar;
+                      iconClass = 'text-amber-600';
                     } else if (isSystem) {
                        cardClass = 'bg-gray-100 border-l-4 border-gray-400';
                        icon = Code;
@@ -1603,6 +1645,57 @@ if (showToS) {
                                     }
                                   >
                                     <Rocket className="w-4 h-4 mr-2" /> Join Meeting
+                                  </Button>
+                                  <Button onClick={() => dismissMessage(message)} variant="outline">
+                                    <X className="w-4 h-4 mr-2" /> Dismiss
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* [ADDED] VC followup scheduling — Schedule button */}
+                          {isVCFollowupScheduling && (
+                            <div className="mt-4 flex gap-2">
+                              <Button
+                                onClick={() => handleVCFollowupSchedule(message)}
+                                className="bg-amber-500 hover:bg-amber-600 text-white"
+                              >
+                                <CalendarClock className="w-4 h-4 mr-2" /> Schedule Follow-Up
+                              </Button>
+                              <Button onClick={() => dismissMessage(message)} variant="outline">
+                                <X className="w-4 h-4 mr-2" /> Dismiss
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* [ADDED] VC followup scheduled — Join button */}
+                          {isVCFollowupScheduled && (() => {
+                            const now = new Date();
+                            const isActive = true; // TESTING: always active
+                            // const diffMin = vcScheduledAt ? (now - vcScheduledAt) / 1000 / 60 : -1; // PRODUCTION
+                            // const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION
+                            const meetingTimeStr = vcScheduledAt
+                              ? vcScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                              : '';
+                            return (
+                              <div className="mt-4 space-y-2">
+                                <p className="text-xs text-gray-500">
+                                  {isActive
+                                    ? '🟢 Your follow-up meeting is live! You have 20 minutes to join.'
+                                    : `⏰ Join button becomes active at ${meetingTimeStr}`
+                                  }
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleJoinVCFollowupMeeting}
+                                    disabled={!isActive}
+                                    className={isActive
+                                      ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    }
+                                  >
+                                    <Rocket className="w-4 h-4 mr-2" /> Join Follow-Up
                                   </Button>
                                   <Button onClick={() => dismissMessage(message)} variant="outline">
                                     <X className="w-4 h-4 mr-2" /> Dismiss
