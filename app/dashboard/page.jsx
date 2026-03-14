@@ -258,12 +258,13 @@ const updateValuation = useCallback(() => {
         let rejectReason = '';
         const params = firm.screening_parameters || {};
 
-        // Block if already has VC investment from this firm
+        // Block if venture already has ANY VC investment (same policy as Angel Arena)
         const fundingEvents = await FundingEvent.filter({ venture_id: venture.id });
-        const hasVCInvestment = fundingEvents.some(e => e.investment_type === 'VC' && e.investor_name === firm.name);
+        const hasVCInvestment = fundingEvents.some(e => e.investment_type === 'VC');
+        // To block only same firm use: fundingEvents.some(e => e.investment_type === 'VC' && e.investor_name === firm.name)
         if (hasVCInvestment) {
           passed = false;
-          rejectReason = `Thank you for your continued interest. We have already invested in your venture and are not able to make an additional investment at this time.`;
+          rejectReason = `Thank you for reaching out. Unfortunately, it is our firm's policy not to invest in ventures that have already secured VC funding. We wish you all the best.`;
         } else if (params.freeze_investment) {
           passed = false;
           rejectReason = params.rejection_messages?.freeze || `Thank you for the time you've invested in this process. We have made the difficult decision to pause all new investments at this time.`;
