@@ -1530,9 +1530,6 @@ if (showToS) {
                               <Button onClick={() => handleJoinVCAdvancedMeeting(message)} className="bg-purple-600 hover:bg-purple-700 text-white">
                                 <Zap className="w-4 h-4 mr-2" /> Advanced VC Meeting
                               </Button>
-                              <Button onClick={() => handleFollowUpCall(message)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Repeat className="w-4 h-4 mr-2" /> Schedule Follow-Up
-                              </Button>
                               <Button onClick={() => dismissMessage(message)} variant="outline">
                                 <X className="w-4 h-4 mr-2" /> Dismiss
                               </Button>
