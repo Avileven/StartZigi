@@ -1580,7 +1580,7 @@ if (showToS) {
                             </div>
                           )}
 
-                          {isSystem && !isRejection && (
+                          {isSystem && !isRejection && !isVCAdvancedMeeting && !isVCMeeting && (
                             <div className="mt-4">
                                 <Button onClick={() => dismissMessage(message)} variant="outline">
                                     <X className="w-4 h-4 mr-2" /> Dismiss
