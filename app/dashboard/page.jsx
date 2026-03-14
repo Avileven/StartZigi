@@ -1611,7 +1611,8 @@ if (showToS) {
                           {isVCMeetingScheduled && (() => {
                             const now = new Date();
                             const diffMin = vcScheduledAt ? (now - vcScheduledAt) / 1000 / 60 : -1;
-                            const isActive = diffMin >= 0 && diffMin <= 20;
+                           // const isActive = diffMin >= 0 && diffMin <= 20;
+                           const isActive = true;// זמני לבדיקה
                             const meetingTimeStr = vcScheduledAt
                               ? vcScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                               : '';
