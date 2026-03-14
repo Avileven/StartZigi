@@ -1,4 +1,4 @@
-//dashboard 130326 WITH vc upgrade
+//dashboard 140326 WITH vc upgrade
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -166,8 +166,8 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-      //if (hoursElapsed < 36) continue;
-      if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
+      if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
+      // if (hoursElapsed < 36) continue; // PRODUCTION
 
         const investors = await Investor.filter({ id: meeting.investor_id });
         if (!investors.length) continue;
@@ -219,7 +219,8 @@ const updateValuation = useCallback(() => {
       const scheduledMeetings = await InvestorMeeting.filter({ venture_id: venture.id, meeting_status: 'scheduled' });
       for (const meeting of scheduledMeetings) {
         if (!meeting.meeting_scheduled_at) continue;
-        const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60;
+        const minutesSince = 5; // TESTING: always within window
+        // const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60; // PRODUCTION
         if (minutesSince <= 20) continue;
 
         const investors = await Investor.filter({ id: meeting.investor_id });
@@ -246,8 +247,8 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingVCMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-        //if (hoursElapsed < 36) continue;
-         if (hoursElapsed < 0.033) continue; // 2 דקות — לבדיקה בלבד
+        if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
+        // if (hoursElapsed < 36) continue; // PRODUCTION
 
         const firms = await VCFirm.filter({ id: meeting.vc_firm_id });
         if (!firms.length) continue;
@@ -310,7 +311,8 @@ const updateValuation = useCallback(() => {
       const scheduledVCMeetings = await VCMeeting.filter({ venture_id: venture.id, meeting_status: 'scheduled' });
       for (const meeting of scheduledVCMeetings) {
         if (!meeting.meeting_scheduled_at) continue;
-        const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60;
+        const minutesSince = 5; // TESTING: always within window
+        // const minutesSince = (now - new Date(meeting.meeting_scheduled_at)) / 1000 / 60; // PRODUCTION
         if (minutesSince <= 20) continue;
 
         await VCMeeting.update(meeting.id, { meeting_status: 'missed', status: 'screening_rejected' });
@@ -697,9 +699,9 @@ const updateValuation = useCallback(() => {
 
       const now = new Date();
 const meetingTime = new Date(meeting.meeting_scheduled_at);
-const diffMin = 5;
-// const diffMin = (now - meetingTime) / 1000 / 60;
-if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
+const diffMin = 5; // TESTING: always active
+      // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
+      if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
       const investors = await Investor.filter({ id: meeting.investor_id });
       if (!investors.length) { alert("Could not find the investor details."); return; }
       setPitchInvestor(investors[0]);
@@ -718,7 +720,8 @@ if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time
 
       const now = new Date();
       const meetingTime = new Date(meeting.meeting_scheduled_at);
-      const diffMin = (now - meetingTime) / 1000 / 60;
+      const diffMin = 5; // TESTING: always active
+      // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
 
       const firms = await VCFirm.filter({ id: meeting.vc_firm_id });
@@ -1575,8 +1578,9 @@ if (showToS) {
                           {/* [ADDED] Angel meeting scheduled — Join button active only during meeting window */}
                           {isAngelMeetingScheduled && (() => {
                             const now = new Date();
-                            const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1;
-                            const isActive = diffMin >= 0 && diffMin <= 20;
+                            const isActive = true; // TESTING: always active
+                            // const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1; // PRODUCTION
+                            // const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION
                             const meetingTimeStr = angelScheduledAt
                               ? angelScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                               : '';
@@ -1610,9 +1614,9 @@ if (showToS) {
                           {/* [ADDED] VC meeting scheduled — Join button active only during meeting window */}
                           {isVCMeetingScheduled && (() => {
                             const now = new Date();
-                            const diffMin = vcScheduledAt ? (now - vcScheduledAt) / 1000 / 60 : -1;
-                           // const isActive = diffMin >= 0 && diffMin <= 20;
-                           const isActive = true;// זמני לבדיקה
+                            const isActive = true; // TESTING: always active
+                            // const diffMin = vcScheduledAt ? (now - vcScheduledAt) / 1000 / 60 : -1; // PRODUCTION
+                            // const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION
                             const meetingTimeStr = vcScheduledAt
                               ? vcScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                               : '';
