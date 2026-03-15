@@ -1687,7 +1687,7 @@ if (showToS) {
                                 </p>
                                 <div className="flex gap-2">
                                   <Button
-                                    onClick={handleJoinVCFollowupMeeting}
+                                    onClick={() => handleJoinVCFollowupMeeting(message)}
                                     disabled={!isActive}
                                     className={isActive
                                       ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
