@@ -1,4 +1,4 @@
-//dashboard 140326 follow meeting
+//dashboard 150326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -740,6 +740,8 @@ const diffMin = 5; // TESTING: always active
       // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
 
+      // Mark meeting as entered — prevents re-joining
+      await VCMeeting.update(meeting.id, { status: 'meeting_completed', meeting_status: 'completed' });
       router.push(`/pressure-challenge?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
     } catch (err) {
       console.error("Error joining VC followup meeting:", err);

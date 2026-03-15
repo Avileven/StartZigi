@@ -1,3 +1,4 @@
+// 150326
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Venture, VentureMessage, User } from '@/api/entities.js';
@@ -213,8 +214,6 @@ export default function PressureChallenge() {
     setConversation(prev => [...prev, { type: 'user', text: userAnswer }]);
 
     setTimeout(() => {
-      setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your response. Let me evaluate your answer..." }]);
-
       setTimeout(async () => {
         try {
           const evaluationPrompt = `${EVALUATION_PROMPT}\n\nVENTURE CONTEXT:\nName: ${venture.name}\nDescription: ${venture.description}\nProblem: ${venture.problem}\nSolution: ${venture.solution}\n\nENTREPRENEUR'S RESPONSE:\n"${userAnswer}"`;
@@ -243,7 +242,7 @@ export default function PressureChallenge() {
                 vc_firm_name: vcFirmName,
                 vc_stage: 'stage_2_passed'
               });
-              setConversation(prev => [...prev, { type: 'bot', text: "Your response was sufficient. We will be in touch via your dashboard." }]);
+              setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We'll notify you of our decision in the coming days." }]);
             } else {
               await VentureMessage.create({
                 venture_id: venture.id,
@@ -256,7 +255,7 @@ export default function PressureChallenge() {
                 vc_firm_name: vcFirmName,
                 vc_stage: 'stage_3_rejected'
               });
-              setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We will send our final decision to your dashboard." }]);
+              setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We'll notify you of our decision in the coming days." }]);
             }
 
             if (followUpParams.messageId) {
@@ -272,7 +271,7 @@ export default function PressureChallenge() {
             });
             setConversation(prev => [...prev, {
               type: 'bot',
-              text: `I've completed my evaluation. Your score was ${finalScore}/10.`
+              text: "Thank you for your time. We'll notify you of our decision in the coming days."
             }]);
           }
 
