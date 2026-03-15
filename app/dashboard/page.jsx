@@ -630,7 +630,7 @@ const updateValuation = useCallback(() => {
  
   const handleFollowUpCall = (message) => {
     // Path `PressureChallenge` will be converted to `pressurechallenge` by createPageUrl
-    router.push(createPageUrl(`PressureChallenge?vcFollowUp=true&messageId=${message.id}&firmId=${message.vc_firm_id}`));
+    router.push(`/pressure-challenge?vcFollowUp=true&messageId=${message.id}&firmId=${message.vc_firm_id}`);
   };
 
   const handleJoinVCAdvancedMeeting = async (message) => {
@@ -740,7 +740,7 @@ const diffMin = 5; // TESTING: always active
       // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
 
-      router.push(createPageUrl('PressureChallenge') + `?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
+      router.push(`/pressure-challenge?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
     } catch (err) {
       console.error("Error joining VC followup meeting:", err);
     }
