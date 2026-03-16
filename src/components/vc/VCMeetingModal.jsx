@@ -203,8 +203,6 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
                 if (vcMeetings.length > 0) {
                   await VCMeeting.update(vcMeetings[0].id, {
                     status: 'followup_scheduling',
-                    meeting_status: null,
-                    meeting_scheduled_at: null,
                   });
                 }
               } catch (e) { console.error('Error updating vc_meeting for followup:', e); }
