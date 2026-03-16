@@ -1,4 +1,4 @@
-//dashboard 160326 follow meeting
+//dashboard 150326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -653,20 +653,16 @@ const updateValuation = useCallback(() => {
 
   const handleJoinVCMeeting = async (message) => {
     if (!message.vc_firm_id) {
-      // Using a custom message box instead of alert
       alert("Error: VC Firm ID is missing from the message.");
       return;
     }
     try {
-      const firms = await VCFirm.filter({ id: message.vc_firm_id });
-      if (firms.length > 0) {
-        setSelectedVCFirm(firms[0]);
-        setSelectedMessageId(message.id);
-        setIsMeetingModalOpen(true);
-      } else {
-        // Using a custom message box instead of alert
-        alert("Could not find the VC Firm details. The firm may have been deleted.");
-      }
+      // vc_firm_id is TEXT (not UUID) — load firm data from vc_meetings instead of VCFirm.filter
+      const meetings = await VCMeeting.filter({ venture_id: currentVenture.id, vc_firm_id: message.vc_firm_id });
+      const firmData = meetings.length > 0 ? { id: meetings[0].vc_firm_id, name: meetings[0].vc_firm_name } : { id: message.vc_firm_id, name: message.vc_firm_name };
+      setSelectedVCFirm(firmData);
+      setSelectedMessageId(message.id);
+      setIsMeetingModalOpen(true);
     } catch (error) {
       console.error("Error fetching VC Firm for meeting:", error);
       // Using a custom message box instead of alert
@@ -692,18 +688,13 @@ const updateValuation = useCallback(() => {
     }
 
     try {
-      const firms = await VCFirm.filter({ id: message.vc_firm_id });
-      if (firms.length > 0) {
-        setSelectedVCFirm(firms[0]);
-        setSelectedMessageId(message.id);
-        setIsAdvancedMeetingModalOpen(true);
-      } else {
-        // Using a custom message box instead of alert
-        alert("Could not find the VC Firm details for advanced meeting.");
-      }
+      // vc_firm_id is TEXT (not UUID) — build firm object from message directly
+      const firmData = { id: message.vc_firm_id, name: message.vc_firm_name };
+      setSelectedVCFirm(firmData);
+      setSelectedMessageId(message.id);
+      setIsAdvancedMeetingModalOpen(true);
     } catch (error) {
-      console.error("Error fetching VC Firm for advanced meeting:", error);
-      // Using a custom message box instead of alert
+      console.error("Error preparing advanced meeting:", error);
       alert("An error occurred while preparing the advanced meeting.");
     }
   };
