@@ -1,7 +1,7 @@
 // 150326
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Venture, VentureMessage, User } from '@/api/entities.js';
+import { Venture, VentureMessage, User, VCMeeting } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -229,38 +229,26 @@ export default function PressureChallenge() {
             const vcFirmId = followUpParams.firmId || followUpParams.vcFirmId;
             const vcFirmName = followUpParams.vcFirmName || 'the VC firm';
             const passThreshold = 4.0;
+            const passed = finalScore >= passThreshold;
 
-            if (finalScore >= passThreshold) {
-              await VentureMessage.create({
-                venture_id: venture.id,
-                message_type: 'system',
-                title: `✅ Follow-Up Passed — ${vcFirmName}`,
-                content: `Your response gave us the confidence to move forward. Please check your dashboard for the next step.`,
-                phase: venture.phase,
-                priority: 4,
-                vc_firm_id: vcFirmId,
-                vc_firm_name: vcFirmName,
-                vc_stage: 'stage_2_passed'
-              });
-              setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We'll notify you of our decision in the coming days." }]);
-            } else {
-              await VentureMessage.create({
-                venture_id: venture.id,
-                message_type: 'system',
-                title: `Investment Decision from ${vcFirmName}`,
-                content: `Thank you for your time. After final consideration, we've decided that this isn't the right fit for us at the moment.`,
-                phase: venture.phase,
-                priority: 2,
-                vc_firm_id: vcFirmId,
-                vc_firm_name: vcFirmName,
-                vc_stage: 'stage_3_rejected'
-              });
-              setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We'll notify you of our decision in the coming days." }]);
-            }
+            // Save result to vc_meetings — runScreeningCheck in dashboard will
+            // send VentureMessage after 5 days (TESTING: immediate)
+            try {
+              const meetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirmId });
+              if (meetings.length > 0) {
+                await VCMeeting.update(meetings[0].id, {
+                  status: 'followup_evaluated',
+                  followup_evaluated_at: new Date().toISOString(),
+                  followup_passed: passed,
+                });
+              }
+            } catch (e) { console.error('Error saving followup result to vc_meetings:', e); }
 
             if (followUpParams.messageId) {
               await VentureMessage.update(followUpParams.messageId, { is_dismissed: true });
             }
+
+            setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We'll notify you of our decision in the coming days." }]);
             setTimeout(() => router.push('/dashboard'), 3000);
 
           } else {

@@ -1,4 +1,4 @@
-//dashboard 150326 follow meeting
+//dashboard 160326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -332,6 +332,52 @@ const updateValuation = useCallback(() => {
       }
     } catch (err) {
       console.error('VC screening check error:', err);
+    }
+
+    // ── VC: Followup evaluated (PressureChallenge result) ──
+    // runScreeningCheck sends VentureMessage after 5 days (TESTING: immediate)
+    try {
+      const evaluatedMeetings = await VCMeeting.filter({ venture_id: venture.id, status: 'followup_evaluated' });
+      const now = new Date();
+
+      for (const meeting of evaluatedMeetings) {
+        if (!meeting.followup_evaluated_at) continue;
+        const daysElapsed = (now - new Date(meeting.followup_evaluated_at)) / 1000 / 60 / 60 / 24;
+        if (daysElapsed < 0) continue; // TESTING: immediate
+        // if (daysElapsed < 5) continue; // PRODUCTION: 5 days
+
+        if (meeting.followup_passed) {
+          await VCMeeting.update(meeting.id, { status: 'followup_result_sent' });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'system',
+            title: `✅ Follow-Up Passed — ${meeting.vc_firm_name}`,
+            content: `Your follow-up response gave us the confidence to move forward. Please join the advanced meeting to finalize the terms.`,
+            phase: venture.phase,
+            priority: 4,
+            vc_firm_id: meeting.vc_firm_id,
+            vc_firm_name: meeting.vc_firm_name,
+            vc_stage: 'stage_2_passed',
+            is_dismissed: false,
+          });
+        } else {
+          await VCMeeting.update(meeting.id, { status: 'followup_result_sent' });
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'system',
+            title: `Investment Decision from ${meeting.vc_firm_name}`,
+            content: `Thank you for your time. After final consideration, we have decided not to move forward at this time.`,
+            phase: venture.phase,
+            priority: 2,
+            vc_firm_id: meeting.vc_firm_id,
+            vc_firm_name: meeting.vc_firm_name,
+            vc_stage: 'stage_3_rejected',
+            is_dismissed: false,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('VC followup evaluated check error:', err);
     }
   };
 
