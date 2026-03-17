@@ -1,4 +1,4 @@
-
+// 170326
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { VCMeeting } from '@/api/entities.js';
@@ -265,8 +265,8 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
           {conversation.map((msg, index) => (
             <div key={index} className={`flex items-start gap-3 ${msg.type === 'user' ? 'justify-end' : ''}`}>
               {msg.type === 'bot' && (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-white"/>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                  {vcFirm?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                 </div>
               )}
               <div className={`max-w-md p-3 rounded-lg shadow-sm ${msg.type === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'}`}>

@@ -444,8 +444,8 @@ Overall AI Score: [weighted score 0.0-10.0]`;
           {conversation.map((msg, index) => (
             <div key={index} className={`flex items-start gap-3 ${msg.type === 'user' ? 'justify-end' : ''}`}>
               {msg.type === 'bot' && (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-white"/>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                  {vcFirm?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                 </div>
               )}
               <div className={`max-w-md p-3 rounded-lg shadow-sm ${msg.type === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'}`}>
@@ -466,10 +466,9 @@ Overall AI Score: [weighted score 0.0-10.0]`;
           )}
 
           {isFinished && (
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-green-600" />
-              <p className="text-green-800 font-medium">Processing investment decision...</p>
-              <p className="text-green-600 text-sm mt-1">You'll receive the final decision on your dashboard shortly.</p>
+            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+              <p className="text-blue-800 font-medium">Thank you for meeting with us. Please wait while we process your application.</p>
             </div>
           )}
 
@@ -478,24 +477,55 @@ Overall AI Score: [weighted score 0.0-10.0]`;
 
         {!isFinished && (
           <div className="p-4 border-t bg-gray-50">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <Textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Type your answer..."
-                className="flex-1 resize-none min-h-[40px]"
-                disabled={isAnswering}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-              />
-              <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+            {currentQuestionIndex === 0 ? (
+              // Q1: Amount selector
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500">Select the amount you would like to raise:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {['$250K', '$500K', '$750K', '$1M', '$1.5M', '$2M', '$3M', '$5M', '$10M'].map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => setUserInput(amount)}
+                      disabled={isAnswering}
+                      className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                        userInput === amount
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
+                      }`}
+                    >
+                      {amount}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  onClick={(e) => { e.preventDefault(); if (userInput) handleSendMessage({ preventDefault: () => {} }); }}
+                  disabled={!userInput || isAnswering}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  Confirm Amount
+                </Button>
+              </div>
+            ) : (
+              // Q2: Free text
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Textarea
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Type your answer..."
+                  className="flex-1 resize-none min-h-[40px]"
+                  disabled={isAnswering}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                />
+                <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
         )}
       </div>
