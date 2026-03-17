@@ -1,4 +1,4 @@
-// src\api\integrations.js 260226 WITH CREDIT
+// src\api\integrations.js 170326 UPDATE CREDIT
 import { supabase } from '@/lib/supabase'
 
 
@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase'
 //   mentor       → gemini-2.5-flash (fast, cheap)
 //   studio_basic → gemini-2.5-pro   (higher quality)
 //   studio_boost → gemini-2.5-pro   (higher quality)
-export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
+export async function InvokeLLM({ prompt, creditType = 'sys' }) {
   try {
 
 
@@ -47,7 +47,7 @@ export async function InvokeLLM({ prompt, creditType = 'mentor' }) {
 
 
           // [CREDITS] עלות לפי סוג פעולה
-          const costs = { mentor: 1, studio_basic: 5, studio_boost: 10 };
+          const costs = { mentor: 1, studio_basic: 5, studio_boost: 10, sys: 0 };
           const cost = costs[creditType] || 1;
 
 
