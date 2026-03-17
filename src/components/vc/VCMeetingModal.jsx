@@ -106,7 +106,7 @@ export default function VCMeetingModal({ isOpen, onClose, vcFirm, venture, messa
         }, 1500);
       } else {
         setIsFinished(true);
-        setConversation(prev => [...prev, { type: 'bot', text: 'Thank you for your answers. I have what I need to make a decision. You will be notified on your dashboard shortly.' }]);
+        setConversation(prev => [...prev, { type: 'bot', text: "Thank you for your time. We will discuss the opportunity to invest in you and notify you of our decision within a few days." }]);
         
         // Process the evaluation with scoring
         setTimeout(async () => {
@@ -182,6 +182,16 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
               venture_screening_score: ventureScreeningScore 
             });
 
+            // Update vc_meetings status to reflect meeting outcome
+            try {
+              const vcMeetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirm.id });
+              if (vcMeetings.length > 0) {
+                const newStatus = ventureScreeningScore >= 8.5 ? 'meeting_completed' :
+                                  ventureScreeningScore >= 7.0 ? 'followup_scheduling' : 'screening_rejected';
+                await VCMeeting.update(vcMeetings[0].id, { status: newStatus, meeting_status: 'completed' });
+              }
+            } catch (e) { console.error('Error updating vc_meetings after meeting:', e); }
+
             if (ventureScreeningScore >= 8.5) {
               // High score - Direct to Advanced Meeting
               await VentureMessage.create({
@@ -197,16 +207,6 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
               });
             } else if (ventureScreeningScore >= 7.0 && ventureScreeningScore < 8.5) {
               // Medium score - Follow-Up needed — schedule via vc_meetings (same flow as initial meeting)
-              // Find the vc_meeting record and update it to followup_scheduling
-              try {
-                const vcMeetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirm.id });
-                if (vcMeetings.length > 0) {
-                  await VCMeeting.update(vcMeetings[0].id, {
-                    status: 'followup_scheduling',
-                  });
-                }
-              } catch (e) { console.error('Error updating vc_meeting for followup:', e); }
-
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'vc_followup_scheduling', // triggers Schedule button in dashboard
@@ -224,7 +224,7 @@ Reasoning: [2-3 sentences about their overall performance in answering questions
                 venture_id: venture.id,
                 message_type: 'system',
                 title: `Update from ${vcFirm.name}`,
-                content: `Thank you for taking the time to meet with us. After careful consideration of our discussion, we have decided not to move forward at this time.\n\nYour venture screening score was ${ventureScreeningScore.toFixed(1)}/10.`,
+                content: `Thank you for taking the time to meet with us. After careful consideration of our discussion, we have decided not to move forward at this time.`,
                 phase: venture.phase,
                 priority: 2,
                 vc_firm_id: vcFirm.id,
