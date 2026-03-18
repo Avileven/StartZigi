@@ -1,4 +1,4 @@
-// 130326
+// 180326
 "use client";
 import React, { useState, useEffect } from 'react';
 import { VCFirm } from '@/api/entities';
@@ -19,10 +19,10 @@ const getFirmColor = (firmId, vcMeetings) => {
   const meeting = vcMeetings?.find(m => m.vc_firm_id === firmId);
   if (!meeting) return 'bg-gradient-to-br from-blue-500 to-indigo-600';
   if (meeting.status === 'pending_screening') return 'bg-yellow-400';
-  if (['screening_rejected', 'missed', 'stage_2_rejected', 'followup_result_sent'].includes(meeting.status) && !meeting.followup_passed) return 'bg-red-500';
+  if (meeting.status === 'screening_rejected') return 'bg-red-500';
   if (meeting.status === 'screening_passed' && !meeting.meeting_scheduled_at) return 'bg-purple-300';
-  if (['meeting_scheduled', 'followup_scheduling', 'followup_evaluated', 'followup_result_sent'].includes(meeting.status) || (meeting.status === 'screening_passed' && meeting.meeting_scheduled_at)) return 'bg-purple-600';
-  if (meeting.status === 'meeting_completed') return 'bg-purple-600';
+  if (['meeting_scheduled', 'meeting_completed', 'followup_scheduling', 'followup_evaluated'].includes(meeting.status)) return 'bg-purple-600';
+  if (meeting.status === 'screening_passed' && meeting.meeting_scheduled_at) return 'bg-purple-600';
   return 'bg-gradient-to-br from-blue-500 to-indigo-600';
 };
 
@@ -32,7 +32,7 @@ const VCFirmContactModal = ({ firm, venture, vcMeetings }) => {
   const router = useRouter();
   const canApply = venture && venture.pitch_created && venture.funding_plan_completed;
   const existingMeeting = vcMeetings?.find(m => m.vc_firm_id === firm.id);
-  const alreadyApplied = existingMeeting && ['pending_screening', 'screening_passed', 'meeting_scheduled', 'meeting_completed', 'followup_scheduling', 'followup_evaluated', 'followup_result_sent'].includes(existingMeeting.status);
+  const alreadyApplied = existingMeeting && ['pending_screening', 'screening_passed', 'meeting_scheduled', 'meeting_completed', 'followup_scheduling', 'followup_evaluated', 'screening_rejected'].includes(existingMeeting.status);
 
   const handleApply = async () => {
     if (!venture) { alert("No active venture found."); return; }

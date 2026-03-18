@@ -1,4 +1,4 @@
-// 150326
+// 180326
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Venture, VentureMessage, User, VCMeeting } from '@/api/entities.js';
@@ -81,6 +81,13 @@ export default function PressureChallenge() {
       try {
         const vcFirmId = followUpParams.firmId || followUpParams.vcFirmId;
         const vcFirmName = followUpParams.vcFirmName || 'the VC firm';
+        // Update vc_meetings to screening_rejected on timeout
+        try {
+          const meetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirmId });
+          if (meetings.length > 0) {
+            await VCMeeting.update(meetings[0].id, { status: 'screening_rejected' });
+          }
+        } catch (e) { console.error('Error updating vc_meetings on timeout:', e); }
         await VentureMessage.create({
           venture_id: venture.id,
           message_type: 'system',

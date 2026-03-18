@@ -1,4 +1,4 @@
-//dashboard 150326 follow meeting
+//dashboard 180326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -347,7 +347,7 @@ const updateValuation = useCallback(() => {
         // if (daysElapsed < 5) continue; // PRODUCTION: 5 days
 
         if (meeting.followup_passed) {
-          await VCMeeting.update(meeting.id, { status: 'followup_result_sent' });
+          await VCMeeting.update(meeting.id, { status: 'meeting_completed' }); // passed followup → same as advanced meeting ready
           await VentureMessage.create({
             venture_id: venture.id,
             message_type: 'system',
@@ -361,7 +361,7 @@ const updateValuation = useCallback(() => {
             is_dismissed: false,
           });
         } else {
-          await VCMeeting.update(meeting.id, { status: 'followup_result_sent' });
+          await VCMeeting.update(meeting.id, { status: 'screening_rejected' }); // TESTING: immediate — PRODUCTION: same
           await VentureMessage.create({
             venture_id: venture.id,
             message_type: 'system',

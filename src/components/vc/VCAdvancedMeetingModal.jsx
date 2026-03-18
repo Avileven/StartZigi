@@ -1,7 +1,8 @@
-// update 150326 — new scoring model: 60% AI (revenue model Q) + 40% budget
+// update 180326 — new scoring model: 60% AI (revenue model Q) + 40% budget
 // Investment Amount = founder's requested amount (not total budget)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
+import { VCMeeting } from '@/api/entities.js';
 import { Budget } from '@/api/entities.js';
 import { FundingEvent } from '@/api/entities.js';
 import { Venture } from '@/api/entities.js';
@@ -384,6 +385,15 @@ Overall AI Score: [weighted score 0.0-10.0]`;
             console.groupEnd();
 
             const shouldInvest = finalScore >= 6.0;
+
+            // Update vc_meetings status to reflect advanced meeting outcome
+            try {
+              const vcMeetings = await VCMeeting.filter({ venture_id: venture.id, vc_firm_id: vcFirm.id });
+              if (vcMeetings.length > 0) {
+                const newStatus = shouldInvest ? 'meeting_completed' : 'screening_rejected';
+                await VCMeeting.update(vcMeetings[0].id, { status: newStatus });
+              }
+            } catch (e) { console.error('Error updating vc_meetings after advanced meeting:', e); }
 
             if (shouldInvest) {
               const proposal = formatInvestmentProposal(terms, ventureScreeningScore, budgetScore);
