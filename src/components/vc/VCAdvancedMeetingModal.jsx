@@ -1,5 +1,7 @@
-// update 180326 — new scoring model: 60% AI (revenue model Q) + 40% budget
-// Investment Amount = founder's requested amount (not total budget)
+// update 190326 — updated scoring model v2
+// Advanced Meeting Score: 20% budget ratios + 20% funding ask ratio + 60% AI
+// Final Score = avg(venture_screening_score, advanced_meeting_score)
+// Valuation base by sector: AI/Cyber/Climate/Bio=$5M, Fintech/Health/EdTech=$4M, else=$3M
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { VCMeeting } from '@/api/entities.js';
@@ -13,47 +15,44 @@ import { Textarea } from '@/components/ui/textarea';
 
 /*
  * ============================================================
- * SCORING MODEL OVERVIEW
+ * SCORING MODEL OVERVIEW — v2
  * ============================================================
  *
- * FINAL SCORE = (ai_score × 0.60) + (budget_score/100 × 10 × 0.40)
- * INVESTMENT DECISION: final_score >= 6.0 → Invest
+ * ADVANCED MEETING SCORE (0–10):
+ *   20% = Budget Structure Score (ratio-based, no absolute minimums)
+ *          - Salaries 35–65% → good | outside → penalty
+ *          - Marketing 10–30% → good | outside → penalty
+ *          - Operations 5–20% → good | outside → penalty
+ *   20% = Funding Ask Ratio Score
+ *          - fundingAsk / totalBudget: 1.5x–3x = 10pts, 1.0–1.5x = 6pts
+ *            3.0–4.0x = 5pts, >4.0x = 2pts, <1.0x = 1pt
+ *   60% = AI Score (Revenue Model — Question 2)
+ *          - Clarity 40%, Alignment 35%, Realism 25%
  *
- * --- AI SCORE (Question 2 — Revenue Model) ---
- * Question: "I see you're looking to raise $X and your 2-year budget is $Y.
- *            Can you walk me through your revenue model during this period
- *            and what revenue projections you're targeting?"
+ * INVESTMENT DECISION:
+ *   advanced_meeting_score >= 6.0 → qualifies
+ *   final_score = (venture_screening_score + advanced_meeting_score) / 2
+ *   final_score determines valuation multiplier
  *
- * Evaluated on 3 dimensions:
- *   - Revenue Model Clarity  40%  (Is the revenue model specific and clear?)
- *   - Budget Alignment       35%  (Does the ask connect to concrete growth steps?)
- *   - Realism                25%  (Are projections realistic for the raise amount?)
+ * VALUATION:
+ *   Base by sector:
+ *     AI, cybersecurity, climate_tech, biotech → $5M
+ *     fintech, healthtech, edtech → $4M
+ *     everything else → $3M
+ *   Pre-Money = sectorBase × ventureMultiplier(final_score)
+ *   Investment Amount = fundingAsk
+ *   Post-Money = Pre-Money + fundingAsk
+ *   VC Equity % = fundingAsk / Post-Money × 100
  *
- * ai_score = (Clarity × 0.40) + (Alignment × 0.35) + (Realism × 0.25)
- * Range: 0–10. Pass threshold: ai_score >= 6.0 considered strong.
- *
- * --- BUDGET SCORE (40% of final) ---
- * Calculated from Budget entity (salaries, marketing, ops).
- * Max 100 points. See calculateBudgetScore() for full breakdown.
- * Budget score does NOT have its own pass threshold —
- * only the combined final_score >= 6.0 is required.
- *
- * --- INVESTMENT TERMS (if approved) ---
- * Investment Amount   = fundingAsk (what founder requested in Q1)
- * Pre-Money Valuation = $3M × ventureMultiplier × budgetMultiplier
- * Post-Money          = Pre-Money + Investment Amount
- * VC Equity %         = Investment Amount / Post-Money × 100
- *
- * ventureMultiplier (from venture_screening_score):
+ * ventureMultiplier (from final_score):
  *   >= 9.6 → 2.0x | >= 9.0 → 1.5x | >= 8.0 → 1.2x | >= 7.0 → 1.0x
- *
- * budgetMultiplier (from budget_score):
- *   >= 95 → 1.3x | >= 85 → 1.1x | >= 75 → 1.0x | < 75 → 1.0x
  *
  * ============================================================
  */
 
-const calculateBudgetScore = (budget) => {
+// calculateBudgetStructureScore — ratio-based only, no absolute minimums (0–10)
+// Lean budgets are not penalized as long as ratios are logical
+const calculateBudgetStructureScore = (budget) => {
   const salaries = budget.salaries || [];
   const marketing = budget.marketing_costs || [];
   const operational = budget.operational_costs || [];
@@ -73,55 +72,40 @@ const calculateBudgetScore = (budget) => {
     operationalPercentage: totalBudget > 0 ? (totalOperational / totalBudget * 100) : 0
   };
 
-  let score = 0;
-  let details = {
-    coreViabilityPoints: 0,
-    salariesMinPoints: 0,
-    salariesPercentPoints: 0,
-    marketingMinPoints: 0,
-    marketingPercentPoints: 0,
-    operationalMinPoints: 0,
-    operationalPercentPoints: 0
-  };
+  // Score each category: good range = full points, acceptable = partial, bad = 0
+  let salariesScore = 0;
+  const sPct = breakdown.salariesPercentage;
+  if (sPct >= 35 && sPct <= 65) salariesScore = 10;
+  else if ((sPct >= 25 && sPct < 35) || (sPct > 65 && sPct <= 75)) salariesScore = 6;
+  else if (sPct > 0) salariesScore = 2;
 
-  // Core Viability Check (20 points)
-  if (totalBudget >= 730000) { score += 20; details.coreViabilityPoints = 20; }
+  let marketingScore = 0;
+  const mPct = breakdown.marketingPercentage;
+  if (mPct >= 10 && mPct <= 30) marketingScore = 10;
+  else if ((mPct >= 5 && mPct < 10) || (mPct > 30 && mPct <= 40)) marketingScore = 6;
+  else if (mPct > 0) marketingScore = 2;
 
-  // Salaries scoring
-  const salariesMinRatio = totalSalaries / 500000;
-  if (salariesMinRatio >= 1.0) { score += 17; details.salariesMinPoints = 17; }
-  else if (salariesMinRatio >= 0.9) { score += 12; details.salariesMinPoints = 12; }
-  else if (salariesMinRatio >= 0.8) { score += 8; details.salariesMinPoints = 8; }
+  let opsScore = 0;
+  const oPct = breakdown.operationalPercentage;
+  if (oPct >= 5 && oPct <= 20) opsScore = 10;
+  else if ((oPct >= 2 && oPct < 5) || (oPct > 20 && oPct <= 30)) opsScore = 6;
+  else if (oPct > 0) opsScore = 2;
 
-  const salariesPct = breakdown.salariesPercentage;
-  if (salariesPct >= 40 && salariesPct <= 60) { score += 26; details.salariesPercentPoints = 26; }
-  else if ((salariesPct >= 35 && salariesPct < 40) || (salariesPct > 60 && salariesPct <= 65)) { score += 20; details.salariesPercentPoints = 20; }
-  else if ((salariesPct >= 25 && salariesPct < 35) || (salariesPct > 65 && salariesPct <= 75)) { score += 13; details.salariesPercentPoints = 13; }
+  // Weighted: salaries most important
+  const structureScore = (salariesScore * 0.5) + (marketingScore * 0.3) + (opsScore * 0.2);
 
-  // Marketing scoring
-  const marketingMinRatio = totalMarketing / 150000;
-  if (marketingMinRatio >= 1.0) { score += 12; details.marketingMinPoints = 12; }
-  else if (marketingMinRatio >= 0.9) { score += 9; details.marketingMinPoints = 9; }
-  else if (marketingMinRatio >= 0.8) { score += 6; details.marketingMinPoints = 6; }
+  return { score: structureScore, breakdown, salariesScore, marketingScore, opsScore };
+};
 
-  const marketingPct = breakdown.marketingPercentage;
-  if (marketingPct >= 15 && marketingPct <= 25) { score += 20; details.marketingPercentPoints = 20; }
-  else if ((marketingPct >= 12 && marketingPct < 15) || (marketingPct > 25 && marketingPct <= 28)) { score += 15; details.marketingPercentPoints = 15; }
-  else if ((marketingPct >= 9 && marketingPct < 12) || (marketingPct > 28 && marketingPct <= 31)) { score += 10; details.marketingPercentPoints = 10; }
-
-  // Operational scoring
-  const opsMinRatio = totalOperational / 80000;
-  if (opsMinRatio >= 1.0) { score += 2; details.operationalMinPoints = 2; }
-  else if (opsMinRatio >= 0.9) { score += 1.5; details.operationalMinPoints = 1.5; }
-  else if (opsMinRatio >= 0.8) { score += 1; details.operationalMinPoints = 1; }
-
-  const opsPct = breakdown.operationalPercentage;
-  if (opsPct >= 5 && opsPct <= 10) { score += 3; details.operationalPercentPoints = 3; }
-  else if ((opsPct >= 3 && opsPct < 5) || (opsPct > 10 && opsPct <= 12)) { score += 2; details.operationalPercentPoints = 2; }
-  else if ((opsPct >= 1 && opsPct < 3) || (opsPct > 12 && opsPct <= 15)) { score += 1; details.operationalPercentPoints = 1; }
-
-  const decision = score >= 70 ? 'Invest' : 'Not to Invest';
-  return { score: Math.round(score), breakdown, details, decision };
+// calculateFundingAskScore — ratio of fundingAsk to totalBudget (0–10)
+const calculateFundingAskScore = (fundingAsk, totalBudget) => {
+  if (!totalBudget || totalBudget === 0 || !fundingAsk || fundingAsk === 0) return 5;
+  const ratio = fundingAsk / totalBudget;
+  if (ratio >= 1.5 && ratio <= 3.0) return 10;
+  if (ratio >= 1.0 && ratio < 1.5) return 6;
+  if (ratio > 3.0 && ratio <= 4.0) return 5;
+  if (ratio > 4.0) return 2;
+  return 1; // ratio < 1.0 — underfunded
 };
 
 const parseFundingAsk = (answer) => {
@@ -134,65 +118,72 @@ const parseFundingAsk = (answer) => {
   return isNaN(amount) || amount <= 0 ? 0 : amount;
 };
 
-const calculateInvestmentTerms = (ventureScreeningScore, budgetScore, fundingAsk) => {
+// getSectorBase — base valuation by venture sector
+const getSectorBase = (sector) => {
+  const s = (sector || '').toLowerCase().replace(/[- ]/g, '_');
+  const premium = ['ai', 'artificial_intelligence', 'cybersecurity', 'cyber', 'climate_tech', 'climate', 'cleantech', 'biotech', 'biotechnology'];
+  const mid = ['fintech', 'financial_technology', 'healthtech', 'health_tech', 'digital_health', 'edtech', 'education_technology'];
+  if (premium.some(k => s.includes(k))) return 5000000;
+  if (mid.some(k => s.includes(k))) return 4000000;
+  return 3000000;
+};
+
+const calculateInvestmentTerms = (finalScore, fundingAsk, ventureSector) => {
   /*
-   * Investment Amount = fundingAsk (what founder requested in Q1)
-   * Pre-Money = $3M × ventureMultiplier × budgetMultiplier
+   * Pre-Money = sectorBase × ventureMultiplier(finalScore)
+   * Investment Amount = fundingAsk
    * Post-Money = Pre-Money + fundingAsk
    * VC Equity % = fundingAsk / Post-Money × 100
+   *
+   * finalScore = avg(venture_screening_score, advanced_meeting_score)
    */
   const investmentAmount = fundingAsk;
+  const sectorBase = getSectorBase(ventureSector);
 
   let ventureMultiplier = 1.0;
-  if (ventureScreeningScore >= 9.6) ventureMultiplier = 2.0;
-  else if (ventureScreeningScore >= 9.0) ventureMultiplier = 1.5;
-  else if (ventureScreeningScore >= 8.0) ventureMultiplier = 1.2;
+  if (finalScore >= 9.6) ventureMultiplier = 2.0;
+  else if (finalScore >= 9.0) ventureMultiplier = 1.5;
+  else if (finalScore >= 8.0) ventureMultiplier = 1.2;
 
-  let budgetMultiplier = 1.0;
-  if (budgetScore >= 95) budgetMultiplier = 1.3;
-  else if (budgetScore >= 85) budgetMultiplier = 1.1;
-
-  const preMoneyValuation = 3000000 * ventureMultiplier * budgetMultiplier;
+  const preMoneyValuation = sectorBase * ventureMultiplier;
   const postMoneyValuation = preMoneyValuation + investmentAmount;
   const vcEquityPercentage = (investmentAmount / postMoneyValuation) * 100;
 
-  return { investmentAmount, preMoneyValuation, postMoneyValuation, vcEquityPercentage, ventureMultiplier, budgetMultiplier };
+  return { investmentAmount, preMoneyValuation, postMoneyValuation, vcEquityPercentage, ventureMultiplier, sectorBase };
 };
 
-const formatCalculationBreakdown = (evaluation, aiScore, finalScore, fundingAsk) => {
-  const { breakdown, details, score } = evaluation;
+const formatCalculationBreakdown = (budgetEval, fundingAskScore, aiScore, advancedScore, ventureScore, finalScore, fundingAsk) => {
+  const { breakdown, salariesScore, marketingScore, opsScore } = budgetEval;
   return `
 
 --- SCORING BREAKDOWN ---
 
-BUDGET SCORE (40% of final): ${score}/100
-  Total 2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
-  - Salaries: $${breakdown.totalSalaries.toLocaleString()} (${breakdown.salariesPercentage.toFixed(1)}%)
-  - Marketing: $${breakdown.totalMarketing.toLocaleString()} (${breakdown.marketingPercentage.toFixed(1)}%)
-  - Operations: $${breakdown.totalOperational.toLocaleString()} (${breakdown.operationalPercentage.toFixed(1)}%)
+2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
+  - Salaries: $${breakdown.totalSalaries.toLocaleString()} (${breakdown.salariesPercentage.toFixed(1)}%) → ${salariesScore.toFixed(1)}/10
+  - Marketing: $${breakdown.totalMarketing.toLocaleString()} (${breakdown.marketingPercentage.toFixed(1)}%) → ${marketingScore.toFixed(1)}/10
+  - Operations: $${breakdown.totalOperational.toLocaleString()} (${breakdown.operationalPercentage.toFixed(1)}%) → ${opsScore.toFixed(1)}/10
 
-  1. Core Viability (20pts max): ${details.coreViabilityPoints}/20
-  2. Salaries (43pts max): ${details.salariesMinPoints + details.salariesPercentPoints}/43
-  3. Marketing (32pts max): ${details.marketingMinPoints + details.marketingPercentPoints}/32
-  4. Operations (5pts max): ${details.operationalMinPoints + details.operationalPercentPoints}/5
+ADVANCED MEETING SCORE: ${advancedScore ? advancedScore.toFixed(1) : 'N/A'}/10
+  Budget Structure (20%): ${budgetEval.score.toFixed(1)}/10
+  Funding Ask Ratio (20%): ${fundingAskScore.toFixed(1)}/10 (Ask: $${fundingAsk.toLocaleString()})
+  Revenue Model AI (60%): ${aiScore ? aiScore.toFixed(1) : 'N/A'}/10
 
-AI SCORE — Revenue Model (60% of final): ${aiScore ? aiScore.toFixed(1) : 'N/A'}/10
-  Funding Ask: $${fundingAsk.toLocaleString()}
-
-FINAL SCORE: ${finalScore ? finalScore.toFixed(1) : 'N/A'}/10
+VENTURE SCREENING SCORE: ${ventureScore.toFixed(1)}/10
+FINAL SCORE (average): ${finalScore ? finalScore.toFixed(1) : 'N/A'}/10
 THRESHOLD: 6.0 required for investment`;
 };
 
-const formatInvestmentProposal = (terms, ventureScreeningScore, budgetScore) => {
+const formatInvestmentProposal = (terms, finalScore, ventureSector) => {
   return `
 
 --- INVESTMENT PROPOSAL ---
 
-Venture Screening Score: ${ventureScreeningScore.toFixed(1)}/10
-Budget Score: ${budgetScore}/100
+Final Score: ${finalScore.toFixed(1)}/10
+Sector: ${ventureSector || 'General'}
 
+Valuation Base: $${terms.sectorBase.toLocaleString()} (sector-based)
+Venture Multiplier: ${terms.ventureMultiplier}x (based on final score)
 Pre-Money Valuation: $${terms.preMoneyValuation.toLocaleString()}
-  Base: $3,000,000 × ${terms.ventureMultiplier}x (venture) × ${terms.budgetMultiplier}x (budget)
 Investment Amount: $${terms.investmentAmount.toLocaleString()}
 Post-Money Valuation: $${terms.postMoneyValuation.toLocaleString()}
 
@@ -327,13 +318,10 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
 
             const budget = budgets[0];
             const evaluation = calculateBudgetScore(budget);
-            const budgetScore = evaluation.score;
-
             if (messageId) {
               await VentureMessage.update(messageId, { is_dismissed: true });
             }
 
-            const ventureScreeningScore = venture.venture_screening_score || 7.0;
             const fundingAsk = parseFundingAsk(updatedAnswers[0] || "0");
 
             // AI evaluation of Q2 (revenue model answer)
@@ -371,20 +359,30 @@ Overall AI Score: [weighted score 0.0-10.0]`;
               console.error("AI evaluation error, using fallback score:", e);
             }
 
-            // Final score: 60% AI + 40% budget
-            const finalScore = (aiScore * 0.60) + (budgetScore / 100 * 10 * 0.40);
+            // Advanced meeting score: 20% budget structure + 20% funding ask + 60% AI
+            const budgetEval = calculateBudgetStructureScore(budget);
+            const fundingAskScore = calculateFundingAskScore(fundingAsk, budgetEval.breakdown.totalBudget);
+            const advancedMeetingScore = (budgetEval.score * 0.20) + (fundingAskScore * 0.20) + (aiScore * 0.60);
 
-            const terms = calculateInvestmentTerms(ventureScreeningScore, budgetScore, fundingAsk);
-            const breakdown = formatCalculationBreakdown(evaluation, aiScore, finalScore, fundingAsk);
+            // Final score = average of venture screening + advanced meeting
+            const ventureScreeningScore = venture.venture_screening_score || 7.0;
+            const finalScore = (ventureScreeningScore + advancedMeetingScore) / 2;
+
+            const terms = calculateInvestmentTerms(finalScore, fundingAsk, venture.sector);
+            const breakdown = formatCalculationBreakdown(budgetEval, fundingAskScore, aiScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk);
 
             console.group('💼 VC INVESTMENT DECISION');
-            console.log('Budget Score:', budgetScore + '/100');
+            console.log('Budget Structure Score:', budgetEval.score.toFixed(1) + '/10');
+            console.log('Funding Ask Score:', fundingAskScore.toFixed(1) + '/10');
             console.log('AI Score (revenue model):', aiScore.toFixed(1) + '/10');
-            console.log('Final Score:', finalScore.toFixed(2) + '/10');
-            console.log('Decision:', finalScore >= 6.0 ? '✅ INVEST' : '❌ REJECT');
+            console.log('Advanced Meeting Score:', advancedMeetingScore.toFixed(2) + '/10');
+            console.log('Venture Screening Score:', ventureScreeningScore + '/10');
+            console.log('Final Score (average):', finalScore.toFixed(2) + '/10');
+            console.log('Sector Base:', '$' + (terms.sectorBase / 1000000) + 'M');
+            console.log('Decision:', advancedMeetingScore >= 6.0 ? '✅ INVEST' : '❌ REJECT (advanced score too low)');
             console.groupEnd();
 
-            const shouldInvest = finalScore >= 6.0;
+            const shouldInvest = advancedMeetingScore >= 6.0;
 
             // Update vc_meetings status to reflect advanced meeting outcome
             try {
@@ -396,7 +394,7 @@ Overall AI Score: [weighted score 0.0-10.0]`;
             } catch (e) { console.error('Error updating vc_meetings after advanced meeting:', e); }
 
             if (shouldInvest) {
-              const proposal = formatInvestmentProposal(terms, ventureScreeningScore, budgetScore);
+              const proposal = formatInvestmentProposal(terms, finalScore, venture.sector);
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'investment_offer',
