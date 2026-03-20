@@ -134,6 +134,41 @@ const parseFundingAsk = (answer) => {
   return isNaN(amount) || amount <= 0 ? 0 : amount;
 };
 
+
+// calculateBudgetStructureScore — ratio-based only, no absolute minimums (0–10)
+const calculateBudgetStructureScore = (breakdown) => {
+  let salariesScore = 0;
+  const sPct = breakdown.salariesPercentage;
+  if (sPct >= 35 && sPct <= 65) salariesScore = 10;
+  else if ((sPct >= 25 && sPct < 35) || (sPct > 65 && sPct <= 75)) salariesScore = 6;
+  else if (sPct > 0) salariesScore = 2;
+
+  let marketingScore = 0;
+  const mPct = breakdown.marketingPercentage;
+  if (mPct >= 10 && mPct <= 30) marketingScore = 10;
+  else if ((mPct >= 5 && mPct < 10) || (mPct > 30 && mPct <= 40)) marketingScore = 6;
+  else if (mPct > 0) marketingScore = 2;
+
+  let opsScore = 0;
+  const oPct = breakdown.operationalPercentage;
+  if (oPct >= 5 && oPct <= 20) opsScore = 10;
+  else if ((oPct >= 2 && oPct < 5) || (oPct > 20 && oPct <= 30)) opsScore = 6;
+  else if (oPct > 0) opsScore = 2;
+
+  return (salariesScore * 0.5) + (marketingScore * 0.3) + (opsScore * 0.2);
+};
+
+// calculateFundingAskScore — ratio of fundingAsk to totalBudget (0–10)
+const calculateFundingAskScore = (fundingAsk, totalBudget) => {
+  if (!totalBudget || !fundingAsk) return 5;
+  const ratio = fundingAsk / totalBudget;
+  if (ratio >= 1.5 && ratio <= 3.0) return 10;
+  if (ratio >= 1.0 && ratio < 1.5) return 6;
+  if (ratio > 3.0 && ratio <= 4.0) return 5;
+  if (ratio > 4.0) return 2;
+  return 1;
+};
+
 // getSectorBase — base valuation by venture sector
 const getSectorBase = (sector) => {
   const s = (sector || '').toLowerCase().replace(/[- ]/g, '_');
@@ -314,7 +349,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
         setIsFinished(true);
         setConversation(prev => [...prev, {
           type: 'bot',
-          text: 'We want to thank you again for meeting with us. We will discuss your opportunity further in our investment board and contact you with our final decision.'
+          text: 'Thank you for your time. We will review the information and get back to you within a week with our final decision.'
         }]);
 
         setTimeout(async () => {
@@ -382,8 +417,10 @@ Overall AI Score: [weighted score 0.0-10.0]`;
               console.error("AI evaluation error, using fallback score:", e);
             }
 
-            // Advanced meeting score: 60% AI + 40% budget
-            const advancedMeetingScore = (aiScore * 0.60) + (budgetScore / 100 * 10 * 0.40);
+            // Advanced meeting score: 20% budget structure + 20% funding ask + 60% AI
+            const budgetStructureScore = calculateBudgetStructureScore(evaluation.breakdown);
+            const fundingAskScore = calculateFundingAskScore(fundingAsk, evaluation.breakdown.totalBudget);
+            const advancedMeetingScore = (budgetStructureScore * 0.20) + (fundingAskScore * 0.20) + (aiScore * 0.60);
             // Final score: average of initial meeting + advanced meeting
             const finalScore = (ventureScreeningScore + advancedMeetingScore) / 2;
 
@@ -502,24 +539,38 @@ Overall AI Score: [weighted score 0.0-10.0]`;
           <div className="p-4 border-t bg-gray-50">
             {currentQuestionIndex === 0 ? (
               // Q1: Amount selector
-              <div className="space-y-3">
-                <p className="text-xs text-gray-500">Select the amount you would like to raise:</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {['$250K', '$500K', '$750K', '$1M', '$1.5M', '$2M', '$3M', '$5M', '$10M'].map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => setUserInput(amount)}
-                      disabled={isAnswering}
-                      className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
-                        userInput === amount
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
-                      }`}
-                    >
-                      {amount}
-                    </button>
-                  ))}
-                </div>
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">Drag to select the amount you would like to raise:</p>
+                {(() => {
+                  const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10];
+                  const sliderVal = userInput ? steps.indexOf(parseFloat(userInput.replace('$','').replace('M',''))) : 0;
+                  const displayVal = userInput || '$1M';
+                  return (
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <span className="text-2xl font-bold text-indigo-600">{displayVal}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={steps.length - 1}
+                        step={1}
+                        value={sliderVal < 0 ? 0 : sliderVal}
+                        disabled={isAnswering}
+                        onChange={(e) => {
+                          const val = steps[parseInt(e.target.value)];
+                          setUserInput(`$${val}M`);
+                        }}
+                        className="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      />
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>$1M</span>
+                        <span>$5M</span>
+                        <span>$10M</span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <Button
                   onClick={(e) => { e.preventDefault(); if (userInput) handleSendMessage({ preventDefault: () => {} }); }}
                   disabled={!userInput || isAnswering}
