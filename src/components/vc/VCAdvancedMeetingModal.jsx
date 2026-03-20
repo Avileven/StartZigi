@@ -1,4 +1,4 @@
-// update 180326 — new scoring model: 60% AI (revenue model Q) + 40% budget
+// update 200326 — new scoring model: 60% AI (revenue model Q) + 40% budget
 // Investment Amount = founder's requested amount (not total budget)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
