@@ -32,23 +32,17 @@ import { Textarea } from '@/components/ui/textarea';
  * ai_score = (Clarity × 0.40) + (Alignment × 0.35) + (Realism × 0.25)
  * Range: 0–10. Pass threshold: ai_score >= 6.0 considered strong.
  *
- * --- BUDGET SCORE (40% of final) ---
- * Calculated from Budget entity (salaries, marketing, ops).
- * Max 100 points. See calculateBudgetScore() for full breakdown.
- * Budget score does NOT have its own pass threshold —
- * only the combined final_score >= 6.0 is required.
+ * --- BUDGET STRUCTURE (20% of advanced score) ---
+ * Ratio-based only. See calculateBudgetStructureScore().
  *
  * --- INVESTMENT TERMS (if approved) ---
  * Investment Amount   = fundingAsk (what founder requested in Q1)
- * Pre-Money Valuation = $3M × ventureMultiplier × budgetMultiplier
+ * Pre-Money Valuation = sectorBase × ventureMultiplier(finalScore)
  * Post-Money          = Pre-Money + Investment Amount
  * VC Equity %         = Investment Amount / Post-Money × 100
  *
- * ventureMultiplier (from venture_screening_score):
+ * ventureMultiplier (from finalScore = avg of both meetings):
  *   >= 9.6 → 2.0x | >= 9.0 → 1.5x | >= 8.0 → 1.2x | >= 7.0 → 1.0x
- *
- * budgetMultiplier (from budget_score):
- *   >= 95 → 1.3x | >= 85 → 1.1x | >= 75 → 1.0x | < 75 → 1.0x
  *
  * ============================================================
  */
@@ -84,8 +78,8 @@ const calculateBudgetScore = (budget) => {
     operationalPercentPoints: 0
   };
 
-  // Core Viability Check (20 points)
-  if (totalBudget >= 730000) { score += 20; details.coreViabilityPoints = 20; }
+  // Core Viability Check removed — ratio-based model only
+  details.coreViabilityPoints = 0;
 
   // Salaries scoring
   const salariesMinRatio = totalSalaries / 500000;
@@ -179,66 +173,58 @@ const getSectorBase = (sector) => {
   return 3000000;
 };
 
-const calculateInvestmentTerms = (ventureScreeningScore, budgetScore, fundingAsk, ventureSector) => {
+const calculateInvestmentTerms = (finalScore, fundingAsk, ventureSector) => {
   /*
    * Investment Amount = fundingAsk (what founder requested in Q1)
-   * Pre-Money = $3M × ventureMultiplier × budgetMultiplier
+   * Pre-Money = sectorBase × ventureMultiplier(finalScore)
    * Post-Money = Pre-Money + fundingAsk
    * VC Equity % = fundingAsk / Post-Money × 100
    */
   const investmentAmount = fundingAsk;
 
   let ventureMultiplier = 1.0;
-  if (ventureScreeningScore >= 9.6) ventureMultiplier = 2.0;
-  else if (ventureScreeningScore >= 9.0) ventureMultiplier = 1.5;
-  else if (ventureScreeningScore >= 8.0) ventureMultiplier = 1.2;
-
-  let budgetMultiplier = 1.0;
-  if (budgetScore >= 95) budgetMultiplier = 1.3;
-  else if (budgetScore >= 85) budgetMultiplier = 1.1;
+  if (finalScore >= 9.6) ventureMultiplier = 2.0;
+  else if (finalScore >= 9.0) ventureMultiplier = 1.5;
+  else if (finalScore >= 8.0) ventureMultiplier = 1.2;
 
   const sectorBase = getSectorBase(ventureSector);
-  const preMoneyValuation = sectorBase * ventureMultiplier * budgetMultiplier;
+  const preMoneyValuation = sectorBase * ventureMultiplier;
   const postMoneyValuation = preMoneyValuation + investmentAmount;
   const vcEquityPercentage = (investmentAmount / postMoneyValuation) * 100;
 
-  return { investmentAmount, preMoneyValuation, postMoneyValuation, vcEquityPercentage, ventureMultiplier, budgetMultiplier, sectorBase };
+  return { investmentAmount, preMoneyValuation, postMoneyValuation, vcEquityPercentage, ventureMultiplier, sectorBase };
 };
 
-const formatCalculationBreakdown = (evaluation, aiScore, finalScore, fundingAsk) => {
-  const { breakdown, details, score } = evaluation;
+const formatCalculationBreakdown = (evaluation, budgetStructureScore, fundingAskScore, aiScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk) => {
+  const { breakdown } = evaluation;
   return `
 
 --- SCORING BREAKDOWN ---
 
-BUDGET SCORE (40% of final): ${score}/100
-  Total 2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
+2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
   - Salaries: $${breakdown.totalSalaries.toLocaleString()} (${breakdown.salariesPercentage.toFixed(1)}%)
   - Marketing: $${breakdown.totalMarketing.toLocaleString()} (${breakdown.marketingPercentage.toFixed(1)}%)
   - Operations: $${breakdown.totalOperational.toLocaleString()} (${breakdown.operationalPercentage.toFixed(1)}%)
 
-  1. Core Viability (20pts max): ${details.coreViabilityPoints}/20
-  2. Salaries (43pts max): ${details.salariesMinPoints + details.salariesPercentPoints}/43
-  3. Marketing (32pts max): ${details.marketingMinPoints + details.marketingPercentPoints}/32
-  4. Operations (5pts max): ${details.operationalMinPoints + details.operationalPercentPoints}/5
+ADVANCED MEETING SCORE: ${advancedMeetingScore ? advancedMeetingScore.toFixed(1) : 'N/A'}/10
+  Budget Structure (20%): ${budgetStructureScore.toFixed(1)}/10
+  Funding Ask Ratio (20%): ${fundingAskScore.toFixed(1)}/10
+  Revenue Model AI (60%): ${aiScore ? aiScore.toFixed(1) : 'N/A'}/10
 
-AI SCORE — Revenue Model (60% of final): ${aiScore ? aiScore.toFixed(1) : 'N/A'}/10
-  Funding Ask: $${fundingAsk.toLocaleString()}
-
-FINAL SCORE: ${finalScore ? finalScore.toFixed(1) : 'N/A'}/10
+VENTURE SCREENING SCORE: ${ventureScreeningScore.toFixed(1)}/10
+FINAL SCORE (average): ${finalScore ? finalScore.toFixed(1) : 'N/A'}/10
 THRESHOLD: 6.0 required for investment`;
 };
 
-const formatInvestmentProposal = (terms, ventureScreeningScore, budgetScore) => {
+const formatInvestmentProposal = (terms, finalScore) => {
   return `
 
 --- INVESTMENT PROPOSAL ---
 
-Venture Screening Score: ${ventureScreeningScore.toFixed(1)}/10
-Budget Score: ${budgetScore}/100
+Final Score: ${finalScore.toFixed(1)}/10
 
 Pre-Money Valuation: $${terms.preMoneyValuation.toLocaleString()}
-  Base: $${terms.sectorBase.toLocaleString()} × ${terms.ventureMultiplier}x (venture) × ${terms.budgetMultiplier}x (budget)
+  Base: $${terms.sectorBase.toLocaleString()} × ${terms.ventureMultiplier}x (based on final score)
 Investment Amount: $${terms.investmentAmount.toLocaleString()}
 Post-Money Valuation: $${terms.postMoneyValuation.toLocaleString()}
 
@@ -373,8 +359,6 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
 
             const budget = budgets[0];
             const evaluation = calculateBudgetScore(budget);
-            const budgetScore = evaluation.score;
-
             if (messageId) {
               await VentureMessage.update(messageId, { is_dismissed: true });
             }
@@ -424,14 +408,16 @@ Overall AI Score: [weighted score 0.0-10.0]`;
             // Final score: average of initial meeting + advanced meeting
             const finalScore = (ventureScreeningScore + advancedMeetingScore) / 2;
 
-            const terms = calculateInvestmentTerms(ventureScreeningScore, budgetScore, fundingAsk, venture.sector);
-            const breakdown = formatCalculationBreakdown(evaluation, aiScore, finalScore, fundingAsk);
+            const terms = calculateInvestmentTerms(finalScore, fundingAsk, venture.sector);
+            const breakdown = formatCalculationBreakdown(evaluation, budgetStructureScore, fundingAskScore, aiScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk);
 
             console.group('💼 VC INVESTMENT DECISION');
-            console.log('Budget Score:', budgetScore + '/100');
+            console.log('Budget Structure Score:', budgetStructureScore.toFixed(1) + '/10');
+            console.log('Funding Ask Score:', fundingAskScore.toFixed(1) + '/10');
             console.log('AI Score (revenue model):', aiScore.toFixed(1) + '/10');
             console.log('Final Score:', finalScore.toFixed(2) + '/10');
-            console.log('Decision:', finalScore >= 6.0 ? '✅ INVEST' : '❌ REJECT');
+            console.log('Advanced Meeting Score:', advancedMeetingScore.toFixed(2) + '/10');
+            console.log('Decision:', advancedMeetingScore >= 6.0 ? '✅ INVEST' : '❌ REJECT');
             console.groupEnd();
 
             const shouldInvest = advancedMeetingScore >= 6.0;
@@ -446,7 +432,7 @@ Overall AI Score: [weighted score 0.0-10.0]`;
             } catch (e) { console.error('Error updating vc_meetings after advanced meeting:', e); }
 
             if (shouldInvest) {
-              const proposal = formatInvestmentProposal(terms, ventureScreeningScore, budgetScore);
+              const proposal = formatInvestmentProposal(terms, finalScore);
               await VentureMessage.create({
                 venture_id: venture.id,
                 message_type: 'investment_offer',
