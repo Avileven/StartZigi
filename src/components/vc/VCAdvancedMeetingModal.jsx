@@ -1,5 +1,5 @@
-// update 220326 — scoring model v3: 20% budget structure + 40% team Q + 40% revenue Q
-// Threshold: advancedMeetingScore >= 5.0. Final = avg(screening + advanced)
+// update 200326 — new scoring model: 60% AI (revenue model Q) + 40% budget
+// Investment Amount = founder's requested amount (not total budget)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { VentureMessage } from '@/api/entities.js';
 import { VCMeeting } from '@/api/entities.js';
@@ -46,6 +46,26 @@ import { Textarea } from '@/components/ui/textarea';
  *
  * ============================================================
  */
+
+const calculateBudgetScore = (budget) => {
+  const salaries = budget.salaries || [];
+  const marketing = budget.marketing_costs || [];
+  const operational = budget.operational_costs || [];
+
+  const totalSalaries = salaries.reduce((sum, item) => sum + (item.avg_salary * item.count * (item.percentage || 100) / 100 * 24), 0);
+  const totalMarketing = marketing.reduce((sum, item) => sum + (item.cost * 24), 0);
+  const totalOperational = operational.reduce((sum, item) => sum + (item.cost * 24), 0);
+  const totalBudget = totalSalaries + totalMarketing + totalOperational;
+
+  const breakdown = {
+    totalBudget,
+    totalSalaries,
+    totalMarketing,
+    totalOperational,
+    salariesPercentage: totalBudget > 0 ? (totalSalaries / totalBudget * 100) : 0,
+    marketingPercentage: totalBudget > 0 ? (totalMarketing / totalBudget * 100) : 0,
+    operationalPercentage: totalBudget > 0 ? (totalOperational / totalBudget * 100) : 0
+  };
 
   let score = 0;
   let details = {
@@ -94,6 +114,9 @@ import { Textarea } from '@/components/ui/textarea';
   else if ((opsPct >= 3 && opsPct < 5) || (opsPct > 10 && opsPct <= 12)) { score += 2; details.operationalPercentPoints = 2; }
   else if ((opsPct >= 1 && opsPct < 3) || (opsPct > 12 && opsPct <= 15)) { score += 1; details.operationalPercentPoints = 1; }
 
+  const decision = score >= 70 ? 'Invest' : 'Not to Invest';
+  return { score: Math.round(score), breakdown, details, decision };
+};
 
 const parseFundingAsk = (answer) => {
   // Parses "$1.2M", "1200000", "500k", etc. Returns number or 0
@@ -129,6 +152,27 @@ const calculateBudgetStructureScore = (breakdown) => {
   return (salariesScore * 0.5) + (marketingScore * 0.3) + (opsScore * 0.2);
 };
 
+// calculateFundingAskScore — ratio of fundingAsk to totalBudget (0–10)
+const calculateFundingAskScore = (fundingAsk, totalBudget) => {
+  if (!totalBudget || !fundingAsk) return 5;
+  const ratio = fundingAsk / totalBudget;
+  if (ratio >= 1.5 && ratio <= 3.0) return 10;
+  if (ratio >= 1.0 && ratio < 1.5) return 6;
+  if (ratio > 3.0 && ratio <= 4.0) return 5;
+  if (ratio > 4.0) return 2;
+  return 1;
+};
+
+// getSectorBase — base valuation by venture sector
+const getSectorBase = (sector) => {
+  const s = (sector || '').toLowerCase().replace(/[- ]/g, '_');
+  const premium = ['ai', 'artificial_intelligence', 'cybersecurity', 'cyber', 'climate_tech', 'climate', 'cleantech', 'biotech', 'biotechnology'];
+  const mid = ['fintech', 'financial_technology', 'healthtech', 'health_tech', 'digital_health', 'edtech', 'education_technology'];
+  if (premium.some(k => s.includes(k))) return 5000000;
+  if (mid.some(k => s.includes(k))) return 4000000;
+  return 3000000;
+};
+
 const calculateInvestmentTerms = (finalScore, fundingAsk, ventureSector) => {
   /*
    * Investment Amount = fundingAsk (what founder requested in Q1)
@@ -151,22 +195,25 @@ const calculateInvestmentTerms = (finalScore, fundingAsk, ventureSector) => {
   return { investmentAmount, preMoneyValuation, postMoneyValuation, vcEquityPercentage, ventureMultiplier, sectorBase };
 };
 
-const formatCalculationBreakdown = (budgetStructureScore, teamScore, revenueScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk, budgetTotal) => {
+const formatCalculationBreakdown = (evaluation, budgetStructureScore, fundingAskScore, aiScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk) => {
+  const { breakdown } = evaluation;
   return `
 
 --- SCORING BREAKDOWN ---
 
-Funding Ask: $${fundingAsk.toLocaleString()}
-2-Year Budget: $${budgetTotal.toLocaleString()}
+2-Year Budget: $${breakdown.totalBudget.toLocaleString()}
+  - Salaries: $${breakdown.totalSalaries.toLocaleString()} (${breakdown.salariesPercentage.toFixed(1)}%)
+  - Marketing: $${breakdown.totalMarketing.toLocaleString()} (${breakdown.marketingPercentage.toFixed(1)}%)
+  - Operations: $${breakdown.totalOperational.toLocaleString()} (${breakdown.operationalPercentage.toFixed(1)}%)
 
 ADVANCED MEETING SCORE: ${advancedMeetingScore ? advancedMeetingScore.toFixed(1) : 'N/A'}/10
   Budget Structure (20%): ${budgetStructureScore.toFixed(1)}/10
-  Team Question (40%): ${teamScore.toFixed(1)}/10
-  Revenue Model (40%): ${revenueScore.toFixed(1)}/10
+  Funding Ask Ratio (20%): ${fundingAskScore.toFixed(1)}/10
+  Revenue Model AI (60%): ${aiScore ? aiScore.toFixed(1) : 'N/A'}/10
 
 VENTURE SCREENING SCORE: ${ventureScreeningScore.toFixed(1)}/10
 FINAL SCORE (average): ${finalScore ? finalScore.toFixed(1) : 'N/A'}/10
-THRESHOLD: 5.0 required for investment`;
+THRESHOLD: 6.0 required for investment`;
 };
 
 const formatInvestmentProposal = (terms, finalScore) => {
@@ -209,11 +256,14 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
       setUserAnswers([]);
 
       const startMeeting = async () => {
-        // Q1: funding ask — free text
+        // Q1: funding ask
         const q1 = "Could you tell us how much money you would like to raise now?";
-        // Q2: team question — dynamic based on budget salaries
-        // Q3: revenue model — dynamic based on Q1 + budget
-        setQuestions([q1, "TEAM_QUESTION", "REVENUE_MODEL_QUESTION"]);
+
+        // Q2: revenue model — dynamic, uses funding ask + budget total
+        // Will be generated after Q1 answer is received
+        const q2 = "REVENUE_MODEL_QUESTION";
+
+        setQuestions([q1, q2]);
         setConversation([{
           type: 'bot',
           text: `Nice to see you again. We have reviewed all of your venture's data, especially the funding plan. ${q1}`
@@ -250,56 +300,24 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
         setTimeout(async () => {
           let nextQuestion = questions[nextIndex];
 
-          if (nextQuestion === "TEAM_QUESTION") {
-            // Build team question based on budget salary roles
-            let hasSalesOrBiz = false;
-            try {
-              const budgets = await Budget.filter({ venture_id: venture.id });
-              if (budgets.length > 0) {
-                const salaries = budgets[0].salaries || [];
-                const salesKeywords = ['sales', 'business', 'biz dev', 'account', 'revenue', 'growth', 'commercial', 'partnerships'];
-                hasSalesOrBiz = salaries.some(s =>
-                  salesKeywords.some(kw => (s.role || s.title || s.name || '').toLowerCase().includes(kw))
-                );
-              }
-            } catch (e) { console.error('Error loading budget for team question:', e); }
-
-            nextQuestion = hasSalesOrBiz
-              ? "Looking at your team, you have sales and business talent. How do you plan to coordinate between product development and go-to-market — what's your approach to prioritizing between them?"
-              : "Looking at your budget, we don't see a dedicated sales or business development role. Customer acquisition is often a startup's biggest challenge — how do you plan to drive growth without a dedicated sales function?";
-
-            setQuestions(prev => {
-              const updated = [...prev];
-              updated[nextIndex] = nextQuestion;
-              return updated;
-            });
-          } else if (nextQuestion === "REVENUE_MODEL_QUESTION") {
+          if (nextQuestion === "REVENUE_MODEL_QUESTION") {
             // Build dynamic question using Q1 answer + budget total
-            // If Q1 answer was unclear, ask again
-            const fundingAsk = parseFundingAsk(updatedAnswers[0] || "");
+            const fundingAsk = parseFundingAsk(userAnswer);
             let budgetTotal = 0;
             try {
               const budgets = await Budget.filter({ venture_id: venture.id });
               if (budgets.length > 0) {
-                const salaries = budgets[0].salaries || [];
-                const marketing = budgets[0].marketing_costs || [];
-                const operational = budgets[0].operational_costs || [];
-                const totalSalaries = salaries.reduce((sum, item) => sum + (item.avg_salary * item.count * (item.percentage || 100) / 100 * 24), 0);
-                const totalMarketing = marketing.reduce((sum, item) => sum + (item.cost * 24), 0);
-                const totalOperational = operational.reduce((sum, item) => sum + (item.cost * 24), 0);
-                budgetTotal = totalSalaries + totalMarketing + totalOperational;
+                const ev = calculateBudgetScore(budgets[0]);
+                budgetTotal = ev.breakdown.totalBudget;
               }
-            } catch (e) { console.error('Error loading budget for Q3:', e); }
+            } catch (e) { console.error('Error loading budget for Q2:', e); }
 
-            if (fundingAsk === 0) {
-              // Amount was unclear — ask again before revenue question
-              nextQuestion = "I want to make sure I understood correctly — could you please specify the exact amount you're looking to raise? For example, $1.5M or $2,000,000.";
-            } else {
-              const askStr = `$${fundingAsk.toLocaleString()}`;
-              const budgetStr = budgetTotal > 0 ? `$${budgetTotal.toLocaleString()}` : 'your stated budget';
-              nextQuestion = `I see you're looking to raise ${askStr} and your 2-year budget is ${budgetStr}. Can you walk me through your revenue model during this period and what revenue projections you're targeting?`;
-            }
+            const askStr = fundingAsk > 0 ? `$${fundingAsk.toLocaleString()}` : 'the amount you mentioned';
+            const budgetStr = budgetTotal > 0 ? `$${budgetTotal.toLocaleString()}` : 'your stated budget';
 
+            nextQuestion = `I see you're looking to raise ${askStr} and your 2-year budget is ${budgetStr}. Can you walk me through your revenue model during this period and what revenue projections you're targeting?`;
+
+            // Update questions state with the real question
             setQuestions(prev => {
               const updated = [...prev];
               updated[nextIndex] = nextQuestion;
@@ -340,6 +358,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
             }
 
             const budget = budgets[0];
+            const evaluation = calculateBudgetScore(budget);
             if (messageId) {
               await VentureMessage.update(messageId, { is_dismissed: true });
             }
@@ -347,88 +366,61 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
             const ventureScreeningScore = venture.venture_screening_score || 7.0;
             const fundingAsk = parseFundingAsk(updatedAnswers[0] || "0");
 
-            // Calculate budget structure score (20% of advanced meeting)
-            const salaries = budget.salaries || [];
-            const marketing = budget.marketing_costs || [];
-            const operational = budget.operational_costs || [];
-            const totalSalaries = salaries.reduce((sum, item) => sum + (item.avg_salary * item.count * (item.percentage || 100) / 100 * 24), 0);
-            const totalMarketing = marketing.reduce((sum, item) => sum + (item.cost * 24), 0);
-            const totalOperational = operational.reduce((sum, item) => sum + (item.cost * 24), 0);
-            const budgetTotal = totalSalaries + totalMarketing + totalOperational;
-            const budgetBreakdown = {
-              totalBudget: budgetTotal,
-              totalSalaries, totalMarketing, totalOperational,
-              salariesPercentage: budgetTotal > 0 ? (totalSalaries / budgetTotal * 100) : 0,
-              marketingPercentage: budgetTotal > 0 ? (totalMarketing / budgetTotal * 100) : 0,
-              operationalPercentage: budgetTotal > 0 ? (totalOperational / budgetTotal * 100) : 0,
-            };
-            const budgetStructureScore = calculateBudgetStructureScore(budgetBreakdown);
-
-            // AI evaluation of Q2 (team question)
-            let teamScore = 5.0;
+            // AI evaluation of Q2 (revenue model answer)
+            let aiScore = 6.0; // fallback
             try {
-              const teamAnswer = updatedAnswers[1] || "";
-              const teamPrompt = `You are a VC partner evaluating a founder's answer about their team and go-to-market capability.
-
-FOUNDER'S ANSWER:
-"${teamAnswer}"
-
-Score this answer 0–10. A score of 5 is passing.
-- 8–10: Specific, credible plan with named strategies or hires
-- 5–7: Reasonable answer but lacking specificity  
-- 0–4: Vague, evasive, or no real plan
-
-Respond with only: Overall Score: [0.0-10.0]`;
-              const teamResult = await InvokeLLM({ prompt: teamPrompt });
-              const teamText = teamResult.response || "";
-              const teamMatch = teamText.match(/Overall Score:\s*(\d+(?:\.\d+)?)/);
-              if (teamMatch) teamScore = parseFloat(teamMatch[1]);
-              console.log("AI Team Evaluation:", teamText);
-            } catch (e) { console.error("Team AI evaluation error:", e); }
-
-            // AI evaluation of Q3 (revenue model)
-            let revenueScore = 5.0;
-            try {
-              const revenueAnswer = updatedAnswers[2] || "";
-              const revenuePrompt = `You are a VC partner evaluating a founder's answer about their revenue model.
+              const revenueAnswer = updatedAnswers[1] || "";
+              const prompt = `You are a VC partner evaluating a founder's answer about their revenue model and projections.
 
 CONTEXT:
 - Funding ask: $${fundingAsk.toLocaleString()}
-- 2-year budget: $${budgetTotal.toLocaleString()}
+- 2-year budget: $${evaluation.breakdown.totalBudget.toLocaleString()}
+- Venture screening score: ${ventureScreeningScore}/10
 
 FOUNDER'S ANSWER:
 "${revenueAnswer}"
 
-Score this answer 0–10. A score of 5 is passing.
-- 8–10: Specific ARR targets, clear pricing, realistic projections tied to the raise
-- 5–7: Good direction but missing specifics
-- 0–4: Vague, unrealistic, or no clear revenue model
+EVALUATION TASK:
+Score the answer on 3 dimensions (1-10 each):
+1. Revenue Model Clarity (40% weight) — Is the revenue model specific and well-defined?
+2. Budget Alignment (35% weight) — Does the answer connect the funding ask to concrete growth milestones?
+3. Realism (25% weight) — Are the revenue projections realistic given the raise amount and budget?
 
-Respond with only: Overall Score: [0.0-10.0]`;
-              const revenueResult = await InvokeLLM({ prompt: revenuePrompt });
-              const revenueText = revenueResult.response || "";
-              const revenueMatch = revenueText.match(/Overall Score:\s*(\d+(?:\.\d+)?)/);
-              if (revenueMatch) revenueScore = parseFloat(revenueMatch[1]);
-              console.log("AI Revenue Evaluation:", revenueText);
-            } catch (e) { console.error("Revenue AI evaluation error:", e); }
+Respond in this exact format:
+Revenue Model Clarity: [score]/10
+Budget Alignment: [score]/10
+Realism: [score]/10
+Overall AI Score: [weighted score 0.0-10.0]`;
 
-            // Advanced meeting score: 20% budget + 40% team + 40% revenue
-            const advancedMeetingScore = (budgetStructureScore * 0.20) + (teamScore * 0.40) + (revenueScore * 0.40);
+              const result = await InvokeLLM({ prompt });
+              const text = result.response || "";
+              const match = text.match(/Overall AI Score:\s*(\d+(?:\.\d+)?)/);
+              if (match) aiScore = parseFloat(match[1]);
+              console.log("AI Revenue Model Evaluation:", text);
+            } catch (e) {
+              console.error("AI evaluation error, using fallback score:", e);
+            }
+
+            // Advanced meeting score: 20% budget structure + 20% funding ask + 60% AI
+            const budgetStructureScore = calculateBudgetStructureScore(evaluation.breakdown);
+            const fundingAskScore = calculateFundingAskScore(fundingAsk, evaluation.breakdown.totalBudget);
+            const advancedMeetingScore = (budgetStructureScore * 0.20) + (fundingAskScore * 0.20) + (aiScore * 0.60);
+            // Final score: average of initial meeting + advanced meeting
             const finalScore = (ventureScreeningScore + advancedMeetingScore) / 2;
 
             const terms = calculateInvestmentTerms(finalScore, fundingAsk, venture.sector);
-            const breakdown = formatCalculationBreakdown(budgetStructureScore, teamScore, revenueScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk, budgetTotal);
+            const breakdown = formatCalculationBreakdown(evaluation, budgetStructureScore, fundingAskScore, aiScore, advancedMeetingScore, ventureScreeningScore, finalScore, fundingAsk);
 
             console.group('💼 VC INVESTMENT DECISION');
-            console.log('Budget Structure:', budgetStructureScore.toFixed(1) + '/10');
-            console.log('Team Score:', teamScore.toFixed(1) + '/10');
-            console.log('Revenue Score:', revenueScore.toFixed(1) + '/10');
+            console.log('Budget Structure Score:', budgetStructureScore.toFixed(1) + '/10');
+            console.log('Funding Ask Score:', fundingAskScore.toFixed(1) + '/10');
+            console.log('AI Score (revenue model):', aiScore.toFixed(1) + '/10');
+            console.log('Final Score:', finalScore.toFixed(2) + '/10');
             console.log('Advanced Meeting Score:', advancedMeetingScore.toFixed(2) + '/10');
-            console.log('Final Score (avg):', finalScore.toFixed(2) + '/10');
-            console.log('Decision:', advancedMeetingScore >= 5.0 ? '✅ INVEST' : '❌ REJECT');
+            console.log('Decision:', advancedMeetingScore >= 6.0 ? '✅ INVEST' : '❌ REJECT');
             console.groupEnd();
 
-            const shouldInvest = advancedMeetingScore >= 5.0;
+            const shouldInvest = advancedMeetingScore >= 6.0;
 
             // Update vc_meetings status to reflect advanced meeting outcome
             try {
@@ -531,24 +523,69 @@ Respond with only: Overall Score: [0.0-10.0]`;
 
         {!isFinished && (
           <div className="p-4 border-t bg-gray-50">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <Textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder={currentQuestionIndex === 0 ? "e.g. $1.5M or $2,000,000" : "Type your answer..."}
-                className="flex-1 resize-none min-h-[40px]"
-                disabled={isAnswering}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-              />
-              <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+            {currentQuestionIndex === 0 ? (
+              // Q1: Amount selector
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">Drag to select the amount you would like to raise:</p>
+                {(() => {
+                  const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10];
+                  const sliderVal = userInput ? steps.indexOf(parseFloat(userInput.replace('$','').replace('M',''))) : 0;
+                  const displayVal = userInput || '$1M';
+                  return (
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <span className="text-2xl font-bold text-indigo-600">{displayVal}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={steps.length - 1}
+                        step={1}
+                        value={sliderVal < 0 ? 0 : sliderVal}
+                        disabled={isAnswering}
+                        onChange={(e) => {
+                          const val = steps[parseInt(e.target.value)];
+                          setUserInput(`$${val}M`);
+                        }}
+                        className="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      />
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>$1M</span>
+                        <span>$5M</span>
+                        <span>$10M</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <Button
+                  onClick={(e) => { e.preventDefault(); if (userInput) handleSendMessage({ preventDefault: () => {} }); }}
+                  disabled={!userInput || isAnswering}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  Confirm Amount
+                </Button>
+              </div>
+            ) : (
+              // Q2: Free text
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Textarea
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Type your answer..."
+                  className="flex-1 resize-none min-h-[40px]"
+                  disabled={isAnswering}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                />
+                <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
         )}
       </div>
