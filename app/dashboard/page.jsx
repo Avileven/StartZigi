@@ -1,4 +1,4 @@
-//dashboard 180326 follow meeting
+//dashboard 220326 
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -238,7 +238,6 @@ const updateValuation = useCallback(() => {
         });
       }
     } catch (err) {
-      console.error('Angel screening check error:', err);
     }
 
     // ── VC: Pending screenings ──
@@ -331,7 +330,6 @@ const updateValuation = useCallback(() => {
         });
       }
     } catch (err) {
-      console.error('VC screening check error:', err);
     }
 
     // ── VC: Followup evaluated (PressureChallenge result) ──
@@ -377,7 +375,6 @@ const updateValuation = useCallback(() => {
         }
       }
     } catch (err) {
-      console.error('VC followup evaluated check error:', err);
     }
   };
 
@@ -505,7 +502,6 @@ const updateValuation = useCallback(() => {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Error loading dashboard:", error);
       router.push('/login');
       setIsLoading(false);
     }
@@ -544,7 +540,6 @@ const updateValuation = useCallback(() => {
     // Reloading data after accepting ToS
     loadDashboard();
   } catch (error) {
-    console.error('Error accepting ToS:', error);
     // Using a custom message box instead of alert, but keeping as alert for minimal change
     // for this one instance as it's a non-critical simulation logic.
     alert('Failed to accept terms. Please try again.');
@@ -561,7 +556,6 @@ const updateValuation = useCallback(() => {
           await PromotionCampaign.update(campaign.id, { views: (campaign.views || 0) + 1 });
         }
       } catch (error) {
-        console.error("Error tracking view:", error);
       }
     }
     setMessages(prev => prev.filter(msg => msg.id !== message.id));
@@ -582,7 +576,6 @@ const updateValuation = useCallback(() => {
                     });
                 }
             } catch (error) {
-                console.error("Error tracking click:", error);
             }
         }
         await VentureMessage.update(message.id, { is_dismissed: true });
@@ -664,7 +657,6 @@ const updateValuation = useCallback(() => {
       setSelectedMessageId(message.id);
       setIsMeetingModalOpen(true);
     } catch (error) {
-      console.error("Error fetching VC Firm for meeting:", error);
       // Using a custom message box instead of alert
       alert("An error occurred while preparing the meeting.");
     }
@@ -694,7 +686,6 @@ const updateValuation = useCallback(() => {
       setSelectedMessageId(message.id);
       setIsAdvancedMeetingModalOpen(true);
     } catch (error) {
-      console.error("Error preparing advanced meeting:", error);
       alert("An error occurred while preparing the advanced meeting.");
     }
   };
@@ -712,7 +703,6 @@ const updateValuation = useCallback(() => {
       setSelectedAngelInvestor(investors[0]);
       setIsAngelScheduleModalOpen(true);
     } catch (err) {
-      console.error("Error opening angel schedule:", err);
     }
   };
 
@@ -725,7 +715,6 @@ const updateValuation = useCallback(() => {
       setIsVCFollowup(false); // mark as initial meeting
       setIsVCScheduleModalOpen(true);
     } catch (err) {
-      console.error("Error opening VC schedule:", err);
     }
   };
 
@@ -738,7 +727,6 @@ const updateValuation = useCallback(() => {
       setIsVCFollowup(true); // mark as follow-up
       setIsVCScheduleModalOpen(true);
     } catch (err) {
-      console.error("Error opening VC followup schedule:", err);
     }
   };
 
@@ -760,7 +748,6 @@ const diffMin = 5; // TESTING: always active
       setPitchInvestor(investors[0]);
       setIsAngelPitchOpen(true);
     } catch (err) {
-      console.error("Error joining angel meeting:", err);
     }
   };
 
@@ -781,7 +768,6 @@ const diffMin = 5; // TESTING: always active
       await VCMeeting.update(meeting.id, { status: 'meeting_completed', meeting_status: 'completed' });
       router.push(`/pressure-challenge?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
     } catch (err) {
-      console.error("Error joining VC followup meeting:", err);
     }
   };
 
@@ -804,7 +790,6 @@ const diffMin = 5; // TESTING: always active
       setSelectedMessageId(null); // no original message to dismiss — meeting is tracked in vc_meetings
       setIsMeetingModalOpen(true);
     } catch (err) {
-      console.error("Error joining VC scheduled meeting:", err);
     }
   };
 
@@ -1415,7 +1400,6 @@ if (showToS) {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => {
-                    console.log("Check message:", message);
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
                     const isVCMeeting = (message.message_type === 'vc_meeting_request' || message.vc_stage === 'stage_2_ready') && message.vc_stage !== 'stage_2_passed';
