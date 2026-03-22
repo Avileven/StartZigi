@@ -67,13 +67,18 @@ const calculateInvestmentTerms = (finalScore, fundingAsk, ventureSector) => {
 };
 
 // ─── HELPER: parseFundingAsk ──────────────────────────────────────────────────
-// Parses free text "$1.5M", "2000000", "500k" → returns number (dollars) or 0.
+// Parses free text "$1.5M", "2000000", "500k", "1.5" → returns number (dollars) or 0.
+// FIX: if amount < 1000 and no unit specified, assume millions (e.g. "1.5" → $1,500,000)
 const parseFundingAsk = (answer) => {
   const clean = (answer || '').replace(/[,$]/g, '').toLowerCase().trim();
   let amount = 0;
   if (clean.includes('m')) amount = parseFloat(clean) * 1000000;
   else if (clean.includes('k')) amount = parseFloat(clean) * 1000;
-  else amount = parseFloat(clean);
+  else {
+    amount = parseFloat(clean);
+    // If no unit and amount < 1000, assume user meant millions (e.g. "1.5" → $1,500,000)
+    if (!isNaN(amount) && amount > 0 && amount < 1000) amount = amount * 1000000;
+  }
   return isNaN(amount) || amount <= 0 ? 0 : amount;
 };
 
@@ -344,7 +349,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
           {isFinished && (
             <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-              <p className="text-blue-800 font-medium">Thank you for meeting with us. Please wait while we process your application.</p>
+              <p className="text-blue-800 font-medium">Great meeting! we will be in touch.</p>
             </div>
           )}
           <div ref={chatEndRef} />
