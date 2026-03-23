@@ -1,4 +1,4 @@
-// ClientLayout 230226 plus credits
+// ClientLayout 230326 plus credits
 "use client";
 
 import { supabase } from '@/lib/supabase';
@@ -79,6 +79,8 @@ url: createPageUrl("vc-marketplace"),
 
   return allItems.filter((item) => {
     if (item.alwaysActive) return true;
+    // [ADDED] Hide VC Marketplace from nav once venture has received VC investment
+    if (item.feature === 'vc_marketplace' && venture?.vc_funded) return false;
     if (item.feature && venture) return canAccessFeature(venture, item.feature);
     if (item.phases && venture) return item.phases.includes(currentPhase);
     return false;

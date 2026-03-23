@@ -1,4 +1,4 @@
-//dashboard 220326 
+//dashboard 230326 follow meeting
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -10,6 +10,7 @@ import { PromotionCampaign } from "@/api/entities";
 import { BetaTester } from "@/api/entities";
 // תיקון: הוסרה סיומת .js מיותרת
 import { VCFirm } from '@/api/entities';
+import { Budget } from '@/api/entities';
 import { FundingEvent } from '@/api/entities';
 // [ADDED] Angel Arena screening flow
 import { InvestorMeeting } from '@/api/entities';
@@ -238,6 +239,7 @@ const updateValuation = useCallback(() => {
         });
       }
     } catch (err) {
+      console.error('Angel screening check error:', err);
     }
 
     // ── VC: Pending screenings ──
@@ -330,6 +332,7 @@ const updateValuation = useCallback(() => {
         });
       }
     } catch (err) {
+      console.error('VC screening check error:', err);
     }
 
     // ── VC: Followup evaluated (PressureChallenge result) ──
@@ -375,6 +378,7 @@ const updateValuation = useCallback(() => {
         }
       }
     } catch (err) {
+      console.error('VC followup evaluated check error:', err);
     }
   };
 
@@ -502,6 +506,7 @@ const updateValuation = useCallback(() => {
         setIsLoading(false);
       }
     } catch (error) {
+      console.error("Error loading dashboard:", error);
       router.push('/login');
       setIsLoading(false);
     }
@@ -540,6 +545,7 @@ const updateValuation = useCallback(() => {
     // Reloading data after accepting ToS
     loadDashboard();
   } catch (error) {
+    console.error('Error accepting ToS:', error);
     // Using a custom message box instead of alert, but keeping as alert for minimal change
     // for this one instance as it's a non-critical simulation logic.
     alert('Failed to accept terms. Please try again.');
@@ -556,6 +562,7 @@ const updateValuation = useCallback(() => {
           await PromotionCampaign.update(campaign.id, { views: (campaign.views || 0) + 1 });
         }
       } catch (error) {
+        console.error("Error tracking view:", error);
       }
     }
     setMessages(prev => prev.filter(msg => msg.id !== message.id));
@@ -576,6 +583,7 @@ const updateValuation = useCallback(() => {
                     });
                 }
             } catch (error) {
+                console.error("Error tracking click:", error);
             }
         }
         await VentureMessage.update(message.id, { is_dismissed: true });
@@ -593,16 +601,39 @@ const updateValuation = useCallback(() => {
   };
 
   const handleInvestmentDecision = async (message, decision) => {
+    // FIX: Prevent double-accept — exit immediately if already processed
+    if (message.investment_offer_status !== 'pending') return;
+
     if (decision === 'accepted') {
         const newCapital = (currentVenture.virtual_capital || 0) + message.investment_offer_checksize;
+
+        // Calculate new monthly burn rate from budget (total 2-year budget ÷ 24)
+        let newMonthlyBurn = currentVenture.monthly_burn_rate || 5000;
+        try {
+          const budgets = await Budget.filter({ venture_id: currentVenture.id });
+          if (budgets.length > 0 && budgets[0].is_complete) {
+            const b = budgets[0];
+            const tSal = (b.salaries || []).reduce((s, i) => s + (i.avg_salary * i.count * (i.percentage || 100) / 100 * 24), 0);
+            const tMkt = (b.marketing_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
+            const tOps = (b.operational_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
+            const budgetTotal = tSal + tMkt + tOps;
+            if (budgetTotal > 0) newMonthlyBurn = Math.round(budgetTotal / 24);
+          }
+        } catch (e) { console.error('Error calculating burn rate from budget:', e); }
+
+        // Update venture: capital, valuation, vc_funded flag, new burn rate
         await Venture.update(currentVenture.id, {
             virtual_capital: newCapital,
-            valuation: message.investment_offer_valuation
+            valuation: message.investment_offer_valuation,
+            vc_funded: true,
+            monthly_burn_rate: newMonthlyBurn,
         });
         setCurrentVenture(prev => ({
           ...prev,
           virtual_capital: newCapital,
-          valuation: message.investment_offer_valuation
+          valuation: message.investment_offer_valuation,
+          vc_funded: true,
+          monthly_burn_rate: newMonthlyBurn,
         }));
 
         await FundingEvent.create({
@@ -618,8 +649,8 @@ const updateValuation = useCallback(() => {
         await VentureMessage.create({
           venture_id: currentVenture.id,
           message_type: 'system',
-          title: `🎉 Congratulations on your investment!`,
-          content: `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${message.vc_firm_name}. The funds have been added to your virtual capital, and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}. This achievement will be featured on our home page. Keep building and growing!`,
+          title: `🎉 Congratulations on your VC investment!`,
+          content: `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${message.vc_firm_name}. The funds have been added to your virtual capital, and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}. Your new monthly burn rate is $${newMonthlyBurn.toLocaleString()} based on your approved budget. Keep building and growing!`,
           phase: currentVenture.phase,
           priority: 4
         });
@@ -657,6 +688,7 @@ const updateValuation = useCallback(() => {
       setSelectedMessageId(message.id);
       setIsMeetingModalOpen(true);
     } catch (error) {
+      console.error("Error fetching VC Firm for meeting:", error);
       // Using a custom message box instead of alert
       alert("An error occurred while preparing the meeting.");
     }
@@ -686,6 +718,7 @@ const updateValuation = useCallback(() => {
       setSelectedMessageId(message.id);
       setIsAdvancedMeetingModalOpen(true);
     } catch (error) {
+      console.error("Error preparing advanced meeting:", error);
       alert("An error occurred while preparing the advanced meeting.");
     }
   };
@@ -703,6 +736,7 @@ const updateValuation = useCallback(() => {
       setSelectedAngelInvestor(investors[0]);
       setIsAngelScheduleModalOpen(true);
     } catch (err) {
+      console.error("Error opening angel schedule:", err);
     }
   };
 
@@ -715,6 +749,7 @@ const updateValuation = useCallback(() => {
       setIsVCFollowup(false); // mark as initial meeting
       setIsVCScheduleModalOpen(true);
     } catch (err) {
+      console.error("Error opening VC schedule:", err);
     }
   };
 
@@ -727,6 +762,7 @@ const updateValuation = useCallback(() => {
       setIsVCFollowup(true); // mark as follow-up
       setIsVCScheduleModalOpen(true);
     } catch (err) {
+      console.error("Error opening VC followup schedule:", err);
     }
   };
 
@@ -748,6 +784,7 @@ const diffMin = 5; // TESTING: always active
       setPitchInvestor(investors[0]);
       setIsAngelPitchOpen(true);
     } catch (err) {
+      console.error("Error joining angel meeting:", err);
     }
   };
 
@@ -768,6 +805,7 @@ const diffMin = 5; // TESTING: always active
       await VCMeeting.update(meeting.id, { status: 'meeting_completed', meeting_status: 'completed' });
       router.push(`/pressure-challenge?vcFollowUp=true&vcFirmId=${meeting.vc_firm_id}&vcFirmName=${encodeURIComponent(meeting.vc_firm_name)}`);
     } catch (err) {
+      console.error("Error joining VC followup meeting:", err);
     }
   };
 
@@ -790,6 +828,7 @@ const diffMin = 5; // TESTING: always active
       setSelectedMessageId(null); // no original message to dismiss — meeting is tracked in vc_meetings
       setIsMeetingModalOpen(true);
     } catch (err) {
+      console.error("Error joining VC scheduled meeting:", err);
     }
   };
 
@@ -1400,6 +1439,7 @@ if (showToS) {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => {
+                    console.log("Check message:", message);
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
                     const isVCMeeting = (message.message_type === 'vc_meeting_request' || message.vc_stage === 'stage_2_ready') && message.vc_stage !== 'stage_2_passed';
