@@ -129,6 +129,7 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
   const [isFinished, setIsFinished] = useState(false);
   const [userAnswers, setUserAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [amountError, setAmountError] = useState(''); // [ADDED] Q1 validation error
   const chatEndRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
@@ -155,10 +156,12 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
   // ─── SEND MESSAGE: collect answer → build next question → or process decision ─
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!userInput.trim() || isAnswering || isFinished) return;
+    // [ADDED] _overrideInput: used by Q1 Confirm button to bypass state timing
+    const overrideInput = e._overrideInput;
+    if (!overrideInput && (!userInput.trim() || isAnswering || isFinished)) return;
 
     setIsAnswering(true);
-    const userAnswer = userInput.trim();
+    const userAnswer = overrideInput || userInput.trim();
     setUserInput('');
     const updatedAnswers = [...userAnswers, userAnswer];
     setUserAnswers(updatedAnswers);
@@ -355,22 +358,67 @@ export default function VCAdvancedMeetingModal({ isOpen, onClose, vcFirm, ventur
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input — textarea for all questions, placeholder changes for Q1 */}
+        {/* Input — Q1 uses structured dollar field, Q2/Q3 use textarea */}
         {!isFinished && (
           <div className="p-4 border-t bg-gray-50">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <Textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder={currentQuestionIndex === 0 ? 'e.g. $1.5M or $2,000,000' : 'Type your answer...'}
-                className="flex-1 resize-none min-h-[40px]"
-                disabled={isAnswering}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
-              />
-              <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+            {currentQuestionIndex === 0 ? (
+              // [UPDATED] Q1: Full dollar amount input — $ prefix fixed, no units.
+              // Default: $1,500,000. Valid range: $1,000,000–$8,000,000 (validation only, not shown to user).
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700 font-semibold text-lg">$</span>
+                  <input
+                    type="number"
+                    min="1000000"
+                    max="8000000"
+                    step="100000"
+                    value={userInput || '1500000'}
+                    onChange={(e) => {
+                      setUserInput(e.target.value);
+                      setAmountError('');
+                    }}
+                    className="flex-1 border rounded-md px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    disabled={isAnswering}
+                  />
+                  <Button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const val = parseInt(userInput || '1500000');
+                      // [VALIDATION] Amount must be between $1M and $8M
+                      if (isNaN(val) || val < 1000000) {
+                        setAmountError('The minimum raise amount is $1,000,000.');
+                        return;
+                      }
+                      if (val > 8000000) {
+                        setAmountError('The maximum raise amount is $8,000,000.');
+                        return;
+                      }
+                      handleSendMessage({ preventDefault: () => {}, _overrideInput: `$${val}` });
+                    }}
+                    disabled={isAnswering}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4"
+                  >
+                    Confirm
+                  </Button>
+                </div>
+                {amountError && <p className="text-red-500 text-sm">{amountError}</p>}
+              </div>
+            ) : (
+              // Q2 & Q3: Free text textarea
+              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Textarea
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Type your answer..."
+                  className="flex-1 resize-none min-h-[40px]"
+                  disabled={isAnswering}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
+                />
+                <Button type="submit" disabled={!userInput.trim() || isAnswering} size="icon">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
         )}
       </div>
