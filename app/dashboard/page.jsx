@@ -605,7 +605,12 @@ const updateValuation = useCallback(() => {
     if (message.investment_offer_status !== 'pending') return;
 
     if (decision === 'accepted') {
-        const newCapital = (currentVenture.virtual_capital || 0) + message.investment_offer_checksize;
+        // [FIX] Fetch virtual_capital fresh from DB instead of using the live frontend state.
+// The frontend value ticks down in real time, so using it would cause the investment
+// amount to be added on top of an already-burned-down value, creating a wrong balance.
+const freshVenture = await Venture.filter({ id: currentVenture.id });
+const freshCapital = freshVenture[0]?.virtual_capital || 0;
+const newCapital = freshCapital + message.investment_offer_checksize;
 
         // Calculate new monthly burn rate from budget (total 2-year budget ÷ 24)
         let newMonthlyBurn = currentVenture.monthly_burn_rate || 5000;
@@ -627,6 +632,9 @@ const updateValuation = useCallback(() => {
             valuation: message.investment_offer_valuation,
             vc_funded: true,
             monthly_burn_rate: newMonthlyBurn,
+            // [FIX] Reset burn_rate_start to now so the new burn rate ($8,000/month)
+    // is calculated forward from this moment, not backward from the old start date.
+    burn_rate_start: new Date().toISOString(),
         });
         setCurrentVenture(prev => ({
           ...prev,
@@ -634,6 +642,8 @@ const updateValuation = useCallback(() => {
           valuation: message.investment_offer_valuation,
           vc_funded: true,
           monthly_burn_rate: newMonthlyBurn,
+          // [FIX] Keep frontend state in sync with the DB update above.
+  burn_rate_start: new Date().toISOString(),
         }));
 
         await FundingEvent.create({
