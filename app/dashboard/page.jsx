@@ -637,14 +637,17 @@ const updateValuation = useCallback(() => {
         }));
 
         await FundingEvent.create({
-          venture_id: currentVenture.id,
-          venture_name: currentVenture.name,
-          venture_tagline: currentVenture.description,
-          venture_landing_page_url: currentVenture.landing_page_url,
-          investor_name: message.vc_firm_name,
-          investment_type: message.investment_type || 'VC',
-          amount: message.investment_offer_checksize
-        });
+  venture_id: currentVenture.id,
+  venture_name: currentVenture.name,
+  venture_tagline: currentVenture.description,
+  venture_landing_page_url: currentVenture.landing_page_url,
+  investor_name: message.vc_firm_name,
+  investment_type: message.investment_type || 'VC',
+  amount: message.investment_offer_checksize,
+  // [ADDED] שומר את שווי החברה בזמן ההשקעה הספציפית הזו.
+  // fallback לוואלואציה הנוכחית אם הערך חסר, כדי שלא יקרוס.
+  valuation_at_time: message.investment_offer_valuation || currentVenture.valuation || 0,
+});
 
         await VentureMessage.create({
           venture_id: currentVenture.id,
