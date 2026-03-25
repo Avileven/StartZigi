@@ -3,7 +3,7 @@
 // Receives token and ventureId from URL params.
 // After successful registration, links the new user to the venture
 // by adding their user_id to founder_user_ids — before the dashboard ever loads.
-// Safety: if any step fails, user is redirected to /dashboard anyway.
+// Safety: if any step fails, user is still redirected to /dashboard.
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -27,7 +27,7 @@ function RegisterCoFounderForm() {
   const [loading, setLoading] = useState(false);
   const [ventureName, setVentureName] = useState("");
 
-  // [ADDED] Load venture name to show a personalized welcome message.
+  // Load venture name for personalized welcome message.
   // Safety: if venture not found, page still works normally.
   useEffect(() => {
     const loadVentureName = async () => {
@@ -46,8 +46,7 @@ function RegisterCoFounderForm() {
     loadVentureName();
   }, [ventureId]);
 
-  // [ADDED] If token or ventureId are missing, redirect to regular register.
-  // This prevents the page from being used as a generic registration page.
+  // If token or ventureId are missing, redirect to regular register.
   useEffect(() => {
     if (!token || !ventureId) {
       router.replace("/register");
@@ -72,7 +71,7 @@ function RegisterCoFounderForm() {
     }
 
     try {
-      // Step 1: Register the user
+      // Step 1: Register the user via Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
 
       if (signUpError) {
@@ -99,77 +98,38 @@ function RegisterCoFounderForm() {
         // Non-fatal — continue anyway
       }
 
-      // Step 3: Validate the invitation token
-      // [ADDED] Checks that the token exists and belongs to this venture.
-      // Safety: if token is invalid, user still gets registered and redirected to dashboard.
-      const { data: invitation, error: inviteError } = await supabase
-        .from("co_founder_invitations")
-        .select("id, status")
-        .eq("invitation_token", token)
-        .eq("venture_id", ventureId)
-        .single();
+      // [FIX] Steps 3-5 (link to venture, update invitation, notify founder) are handled
+      // via a server-side API route /api/link-cofounder that uses the service role key.
+      //
+      // WHY: right after signUp, the user has no active Supabase session yet.
+      // The regular client cannot write to the DB without a session — so all DB updates
+      // would fail silently if done here on the client.
+      // The API route runs server-side with the service role key, bypassing auth entirely.
+      //
+      // Safety: if the API call fails, user still gets signed in and redirected to dashboard.
+      try {
+        await fetch("/api/link-cofounder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, token, ventureId, username }),
+        });
+      } catch (e) {
+        console.error("Could not link co-founder to venture:", e);
+        // Non-fatal — continue to sign-in anyway
+      }
 
-      if (inviteError || !invitation) {
-        console.error("Invalid invitation token:", inviteError);
-        // Non-fatal — redirect to dashboard anyway
-        router.replace("/dashboard");
+      // [FIX] Auto sign-in immediately after registration — skips email confirmation.
+      // Co-founders are invited and trusted, so email confirmation is not required.
+      // Safety: if sign-in fails, redirect to login page as fallback.
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        console.error("Auto sign-in failed:", signInError);
+        router.push("/login");
         return;
       }
 
-      // Step 4: Add user_id to founder_user_ids on the venture
-      // [ADDED] Uses Supabase jsonb append to add co-founder's user_id to the array.
-      // Safety: wrapped in try/catch — if this fails, user still lands on dashboard.
-      try {
-        const { data: ventureData } = await supabase
-          .from("ventures")
-          .select("founder_user_ids, founders_count")
-          .eq("id", ventureId)
-          .single();
-
-        const currentIds = ventureData?.founder_user_ids || [];
-        const updatedIds = [...currentIds, userId];
-
-        await supabase
-          .from("ventures")
-          .update({
-            founder_user_ids: updatedIds,
-            founders_count: (ventureData?.founders_count || 1) + 1,
-          })
-          .eq("id", ventureId);
-      } catch (ventureUpdateError) {
-        console.error("Could not link user to venture:", ventureUpdateError);
-        // Non-fatal — redirect to dashboard anyway
-      }
-
-      // Step 5: Mark invitation as accepted
-      // [ADDED] Updates invitation status so the original founder can see it was accepted.
-      // Safety: non-fatal if this fails.
-      try {
-        await supabase
-          .from("co_founder_invitations")
-          .update({ status: "accepted" })
-          .eq("invitation_token", token)
-          .eq("venture_id", ventureId);
-      } catch (e) {
-        console.error("Could not update invitation status:", e);
-      }
-
-      // Step 6: Notify the original founder
-      try {
-        await supabase.from("venture_messages").insert({
-          venture_id: ventureId,
-          message_type: "co_founder_joined",
-          title: "🚀 New Co-Founder Joined!",
-          content: `${username} has officially joined your venture as a co-founder.`,
-          priority: 4,
-          is_dismissed: false,
-        });
-      } catch (e) {
-        console.error("Could not create co-founder message:", e);
-      }
-
-      alert("Registration successful! Please check your email to confirm your account.");
-      router.push("/login");
+      // Redirect directly to dashboard — user is now linked to the venture.
+      router.push("/dashboard");
 
     } catch (err) {
       console.error("Registration error:", err);
@@ -181,7 +141,6 @@ function RegisterCoFounderForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg">
-        {/* [ADDED] Personalized header showing which venture they're joining */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold">Join as Co-Founder</h2>
           {ventureName && (
@@ -245,7 +204,7 @@ function RegisterCoFounderForm() {
         </form>
         <p className="text-sm text-center mt-4">
           Already have an account?{" "}
-          <Link href="/login" className="text-indigo-600 hover:underline">
+          <Link href="/login" className="text-indide-600 hover:underline">
             Sign in
           </Link>
         </p>
