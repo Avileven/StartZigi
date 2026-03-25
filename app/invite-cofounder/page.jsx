@@ -1,4 +1,4 @@
-// invite-cofounder1726
+// invite-cofounder25036
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -30,8 +30,13 @@ export default function InviteCoFounder() {
 
   const loadData = async () => {
     try {
-      await User.me(); 
-      const userVentures = await Venture.list("-created_date");
+      const user = await User.me();
+      
+      // [FIX] Previously used Venture.list() which returns ALL ventures in the system.
+      // Now filtering only by the current user's email so we always get the correct venture.
+      // Safety: if filter fails or returns empty, venture stays null and UI shows "No Venture Found".
+      const userVentures = await Venture.filter({ created_by: user.email }, "-created_date");
+      
       if (userVentures?.length > 0) {
         const currentVenture = userVentures[0];
         setVenture(currentVenture);
@@ -71,7 +76,6 @@ export default function InviteCoFounder() {
       const user = await User.me();
       const invitationToken = Math.random().toString(36).substring(2, 15);
 
-      // יצירת ההזמנה בבסיס הנתונים בסטטוס pending [cite: 70, 77]
       const invitation = await CoFounderInvitation.create({
         venture_id: venture.id,
         inviter_email: user.email,
@@ -84,7 +88,6 @@ export default function InviteCoFounder() {
         created_by: user.email, 
       });
 
-      // תיקון: שליחת ה-venture_id והטוקן ל-API כדי לבנות לינק לדף הפרופיל 
       const emailResponse = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,7 +96,6 @@ export default function InviteCoFounder() {
           ventureName: venture.name,
           inviterName: user.full_name || user.name || user.email,
           invitationToken: invitation?.invitation_token || invitationToken,
-          // הוספת ה-ventureId כדי שהמייל יפנה לדף ה-Venture Profile הנכון
           ventureId: venture.id 
         }),
       });
@@ -101,7 +103,6 @@ export default function InviteCoFounder() {
       if (emailResponse.ok) {
         const tokenToUpdate = invitation?.invitation_token || invitationToken;
 
-        // עדכון סטטוס ל-"sent" רק לאחר הצלחה בשליחת המייל [cite: 93, 97]
         const { error: updateErr } = await supabase
           .from("co_founder_invitations")
           .update({ status: "sent" })
@@ -117,16 +118,15 @@ export default function InviteCoFounder() {
         alert("Invitation created but email sending failed.");
       }
 
-      // הוספת הודעה ללוח המיזם על שליחת ההזמנה
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: "co_founder_invite",
         title: "👥 Co-Founder Invited!",
         content: `Invitation sent to ${inviteForm.name}. Link points to Venture Profile.`,
         priority: 2,
-        is_dismissed: false,      // מבטיח שההודעה תעלה כפעילה
-        created_by: user.email,   // מוסיף את האימייל לעמודה המתאימה
-        created_by_id: user.id    // משייך את ההודעה ל-ID שלך כדי שהדשבורד יאפשר לך למחוק אותה
+        is_dismissed: false,
+        created_by: user.email,
+        created_by_id: user.id
       });
 
       setInviteForm({ email: "", name: "", message: "" });
@@ -139,7 +139,6 @@ export default function InviteCoFounder() {
     }
   };
 
-  // פונקציות עזר לעיצוב הסטטוס [cite: 130, 144]
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending": return <Clock className="w-4 h-4 text-yellow-500" />;
@@ -150,7 +149,7 @@ export default function InviteCoFounder() {
     }
   };
 
- const getStatusColor = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "pending": return "bg-yellow-100 text-yellow-800";
       case "sent": return "bg-blue-100 text-blue-800";
@@ -164,7 +163,6 @@ export default function InviteCoFounder() {
 
   if (!venture) return <div className="p-8 text-center"><h1>No Venture Found</h1></div>;
 
-  // הערה: השארנו את המשתנה הזה למקרה שתרצה להשתמש בו לחישובים אחרים, אבל הוא כבר לא חוסם את הטופס
   const hasAcceptedCoFounder = invitations.some((inv) => inv.status === "accepted");
 
   return (
@@ -180,7 +178,6 @@ export default function InviteCoFounder() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {/* תיקון: הסרנו את התנאי שבדק אם כבר יש שותף. הטופס מוצג כעת תמיד */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -210,7 +207,6 @@ export default function InviteCoFounder() {
                 </form>
               </CardContent>
             </Card>
-            {/* סוף תיקון: הכרטיס הירוק הוסר כדי לפנות מקום להזמנות נוספות */}
           </div>
 
           <div>

@@ -1,9 +1,8 @@
-// venture-profile/[id]/page.js 812603
+// venture-profile/[id]/page.js 250326
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import {
   Target,
   Lightbulb,
@@ -67,35 +66,10 @@ export default async function VentureProfilePoC({ params, searchParams }) {
     .eq("venture_id", id)
     .single();
 
-  // 4. Server Action להצטרפות
-  async function handleAccept() {
-    "use server";
-    const admin = createSupabaseAdmin();
-    await admin
-      .from("co_founder_invitations")
-      .update({ status: "accepted" })
-      .eq("venture_id", id)
-      .eq("invitation_token", token);
-
-    await admin
-      .from("ventures")
-      .update({ founders_count: (ventureData?.founders_count || 1) + 1 })
-      .eq("id", id);
-
-      // --- כאן ה"דחיפה" של הקוד החדש ---
-  // 3. יצירת הודעה ליזם - בדיוק כמו ב-Invite, רק עם סוג הודעה של הצטרפות
-  await admin.from("venture_messages").insert({
-    venture_id: id,
-    message_type: "co_founder_joined", // סוג הודעה שתוכל לזהות בדשבורד
-    title: "🚀 New Co-Founder Joined!",
-    content: `A partner has officially joined ${ventureName}.`,
-    priority: 1
-  });
-
-  
-
-    revalidatePath(`/venture-profile/${id}`);
-  }
+  // [REMOVED] handleAccept server action removed.
+  // The "Accept & Join" button now redirects to /register-cofounder instead.
+  // This ensures the co-founder is linked to the venture during registration,
+  // preventing duplicate identity issues.
 
   // פונקציית עזר לעיצוב אחיד של כרטיסיות
   const InfoCard = ({ title, content, icon: Icon, colorClass, fullWidth = false }) => (
@@ -143,11 +117,17 @@ export default async function VentureProfilePoC({ params, searchParams }) {
               <h3 className="text-2xl font-black mb-1 italic">Join the founding team</h3>
               <p className="text-blue-100 text-sm opacity-90">Become a co-founder of {ventureName} today.</p>
             </div>
-            <form action={handleAccept}>
-              <button type="submit" className="bg-white text-blue-600 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg">
-                ACCEPT & JOIN
-              </button>
-            </form>
+
+            {/* [CHANGED] Replaced server action form with a direct link to /register-cofounder.
+                The token and venture id are passed as URL params so the registration page
+                can link the new user to the correct venture immediately after sign up.
+                Safety: if token is missing, fallback to /register. */}
+            <a
+              href={token ? `/register-cofounder?token=${token}&venture=${id}` : '/register'}
+              className="bg-white text-blue-600 hover:bg-slate-50 px-10 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg inline-block"
+            >
+              ACCEPT & JOIN
+            </a>
           </div>
         )}
 
@@ -198,7 +178,6 @@ export default async function VentureProfilePoC({ params, searchParams }) {
             fullWidth={true}
           />
 
-          {/* Founder DNA עכשיו באותו עיצוב בדיוק */}
           <InfoCard 
             title="Founder DNA" 
             content={plan?.entrepreneur_background} 

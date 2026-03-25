@@ -409,9 +409,25 @@ const updateValuation = useCallback(() => {
             localStorage.removeItem('admin_selected_venture_id');
           }
         } else {
-          userVentures = await Venture.filter( { founder_user_id: currentUser.id }, "-created_date"
-          );
-        }
+  userVentures = await Venture.filter({ founder_user_id: currentUser.id }, "-created_date");
+}
+
+// [ADDED] If no venture found via founder_user_id, check if user is a co-founder
+// by looking up their user_id inside the founder_user_ids jsonb array.
+// Safety: wrapped in try/catch — if this fails, existing flow continues unchanged.
+if (userVentures.length === 0) {
+  try {
+    const { data: coFounderVentures } = await supabase
+      .from('ventures')
+      .select('*')
+      .contains('founder_user_ids', [currentUser.id]);
+    if (coFounderVentures?.length > 0) {
+      userVentures = coFounderVentures;
+    }
+  } catch (e) {
+    console.error('Co-founder venture lookup failed:', e);
+  }
+}
        
         setVentures(userVentures);
         if (userVentures.length > 0) {
