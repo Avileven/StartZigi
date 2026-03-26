@@ -1559,7 +1559,8 @@ if (showToS) {
                         <CardContent className="pt-2">
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
 {/* כפתור מחיקה להזמנת שותף */}
-{message.message_type === 'co_founder_invite' && (
+{/* [CHANGED] Added co_founder_joined to show Dismiss button for both invite and joined notifications */}
+{(message.message_type === 'co_founder_invite' || message.message_type === 'co_founder_joined') && (
   <Button
     variant="outline"
     size="sm"
