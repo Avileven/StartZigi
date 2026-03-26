@@ -1,9 +1,10 @@
 // register-cofounder
 // [NEW FILE] Dedicated registration page for invited co-founders.
 // Receives token and ventureId from URL params.
-// After successful registration, links the new user to the venture
-// by adding their user_id to founder_user_ids — before the dashboard ever loads.
-// Safety: if any step fails, user is still redirected to /dashboard.
+// After successful registration:
+// 1. Calls /api/link-cofounder to link user to venture and confirm their email server-side
+// 2. Uses the session returned by signUp directly — no separate login needed
+// Safety: if any step fails, user is redirected to /dashboard anyway.
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -27,8 +28,6 @@ function RegisterCoFounderForm() {
   const [loading, setLoading] = useState(false);
   const [ventureName, setVentureName] = useState("");
 
-  // Load venture name for personalized welcome message.
-  // Safety: if venture not found, page still works normally.
   useEffect(() => {
     const loadVentureName = async () => {
       if (!ventureId) return;
@@ -46,7 +45,6 @@ function RegisterCoFounderForm() {
     loadVentureName();
   }, [ventureId]);
 
-  // If token or ventureId are missing, redirect to regular register.
   useEffect(() => {
     if (!token || !ventureId) {
       router.replace("/register");
@@ -71,7 +69,7 @@ function RegisterCoFounderForm() {
     }
 
     try {
-      // Step 1: Register the user via Supabase Auth
+      // Step 1: Register the user
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
 
       if (signUpError) {
@@ -88,25 +86,18 @@ function RegisterCoFounderForm() {
 
       const userId = data.user.id;
 
-      // Step 2: Save username to user_profiles
-      const { error: profileError } = await supabase
+      // Step 2: Save username
+      await supabase
         .from("user_profiles")
         .upsert({ id: userId, username: username.trim() });
 
-      if (profileError) {
-        console.error("Profile save error:", profileError);
-        // Non-fatal — continue anyway
-      }
-
-      // [FIX] Steps 3-5 (link to venture, update invitation, notify founder) are handled
-      // via a server-side API route /api/link-cofounder that uses the service role key.
-      //
-      // WHY: right after signUp, the user has no active Supabase session yet.
-      // The regular client cannot write to the DB without a session — so all DB updates
-      // would fail silently if done here on the client.
-      // The API route runs server-side with the service role key, bypassing auth entirely.
-      //
-      // Safety: if the API call fails, user still gets signed in and redirected to dashboard.
+      // Step 3: Call server-side API to:
+      // - Confirm the user's email (so no confirmation email is needed)
+      // - Link user to venture via founder_user_ids
+      // - Mark invitation as accepted
+      // - Notify the original founder
+      // [FIX] Done server-side because right after signUp there is no active session,
+      // so client-side DB writes would fail silently.
       try {
         await fetch("/api/link-cofounder", {
           method: "POST",
@@ -114,21 +105,22 @@ function RegisterCoFounderForm() {
           body: JSON.stringify({ userId, token, ventureId, username }),
         });
       } catch (e) {
-        console.error("Could not link co-founder to venture:", e);
-        // Non-fatal — continue to sign-in anyway
+        console.error("link-cofounder API failed:", e);
+        // Non-fatal — continue anyway
       }
 
-      // [FIX] Auto sign-in immediately after registration — skips email confirmation.
-      // Co-founders are invited and trusted, so email confirmation is not required.
-      // Safety: if sign-in fails, redirect to login page as fallback.
+      // Step 4: Sign in using the confirmed session
+      // [FIX] After the API route confirms the email server-side,
+      // signInWithPassword works immediately — no need to wait for email confirmation.
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
-        console.error("Auto sign-in failed:", signInError);
+        console.error("Sign-in failed:", signInError);
+        // Fallback: redirect to login
         router.push("/login");
         return;
       }
 
-      // Redirect directly to dashboard — user is now linked to the venture.
+      // Step 5: Go directly to dashboard — user is now linked to the venture
       router.push("/dashboard");
 
     } catch (err) {
@@ -204,7 +196,7 @@ function RegisterCoFounderForm() {
         </form>
         <p className="text-sm text-center mt-4">
           Already have an account?{" "}
-          <Link href="/login" className="text-indide-600 hover:underline">
+          <Link href="/login" className="text-indigo-600 hover:underline">
             Sign in
           </Link>
         </p>

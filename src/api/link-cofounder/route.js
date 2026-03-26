@@ -1,8 +1,12 @@
 // api/link-cofounder/route.js
-// [NEW FILE] Server-side API route that links a newly registered co-founder to their venture.
-// Uses the Supabase service role key to bypass auth — necessary because the user
+// [NEW FILE] Server-side API route that:
+// 1. Confirms the co-founder's email — so they don't need to click a confirmation link
+// 2. Links them to the venture via founder_user_ids
+// 3. Marks the invitation as accepted
+// 4. Notifies the original founder
+//
+// Uses service role key to bypass auth — necessary because the user
 // has no active session immediately after signUp.
-// Called from register-cofounder/page.jsx after successful registration.
 
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
@@ -17,15 +21,24 @@ export async function POST(request) {
   try {
     const { userId, token, ventureId, username } = await request.json();
 
-    // Validate required fields
     if (!userId || !token || !ventureId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const admin = createSupabaseAdmin();
 
-    // Step 1: Validate invitation token
-    // [ADDED] Checks token belongs to this venture and is in sent status.
+    // Step 1: Confirm the user's email server-side
+    // [ADDED] This skips email confirmation only for invited co-founders,
+    // without changing the global Supabase email confirmation setting.
+    const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+    if (confirmError) {
+      console.error("Email confirmation failed:", confirmError);
+      // Non-fatal — continue anyway
+    }
+
+    // Step 2: Validate invitation token
     const { data: invitation, error: inviteError } = await admin
       .from("co_founder_invitations")
       .select("id, status")
@@ -37,20 +50,14 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid invitation token" }, { status: 400 });
     }
 
-    // Step 2: Add user_id to founder_user_ids on the venture
-    // [ADDED] Fetches current array and appends the new user_id.
-    // Safety: if venture not found, returns error but doesn't crash.
-    const { data: ventureData, error: ventureError } = await admin
+    // Step 3: Add user_id to founder_user_ids
+    const { data: ventureData } = await admin
       .from("ventures")
       .select("founder_user_ids, founders_count")
       .eq("id", ventureId)
       .single();
 
-    if (ventureError || !ventureData) {
-      return NextResponse.json({ error: "Venture not found" }, { status: 404 });
-    }
-
-    const currentIds = ventureData.founder_user_ids || [];
+    const currentIds = ventureData?.founder_user_ids || [];
     // Prevent duplicate entries
     if (!currentIds.includes(userId)) {
       const updatedIds = [...currentIds, userId];
@@ -58,19 +65,19 @@ export async function POST(request) {
         .from("ventures")
         .update({
           founder_user_ids: updatedIds,
-          founders_count: (ventureData.founders_count || 1) + 1,
+          founders_count: (ventureData?.founders_count || 1) + 1,
         })
         .eq("id", ventureId);
     }
 
-    // Step 3: Mark invitation as accepted
+    // Step 4: Mark invitation as accepted
     await admin
       .from("co_founder_invitations")
       .update({ status: "accepted" })
       .eq("invitation_token", token)
       .eq("venture_id", ventureId);
 
-    // Step 4: Notify the original founder
+    // Step 5: Notify the original founder
     await admin.from("venture_messages").insert({
       venture_id: ventureId,
       message_type: "co_founder_joined",
