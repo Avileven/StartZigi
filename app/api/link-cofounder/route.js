@@ -1,4 +1,4 @@
-// api/link-cofounder/route.js
+// 260326 api/link-cofounder/route.js
 // [NEW FILE] Server-side API route that:
 // 1. Confirms the co-founder's email — so they don't need to click a confirmation link
 // 2. Links them to the venture via founder_user_ids
@@ -78,11 +78,20 @@ export async function POST(request) {
       .eq("venture_id", ventureId);
 
     // Step 5: Notify the original founder
+    // [CHANGED] Fetch username from user_profiles to ensure we always show the real name.
+    // Falls back to the username passed from the form, then to a generic message.
+    const { data: userProfile } = await admin
+      .from("user_profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
+    const displayName = userProfile?.username || username || "A new co-founder";
+
     await admin.from("venture_messages").insert({
       venture_id: ventureId,
       message_type: "co_founder_joined",
       title: "🚀 New Co-Founder Joined!",
-      content: `${username || "A new co-founder"} has officially joined your venture.`,
+      content: `${displayName} has officially joined your venture.`,
       priority: 4,
       is_dismissed: false,
     });

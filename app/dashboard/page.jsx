@@ -1,4 +1,4 @@
-//dashboard 230326 follow meeting
+//dashboard 260326 INVIATE FOUNDER
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -1426,9 +1426,10 @@ if (showToS) {
                     <MessageSquare className="w-4 h-4" />
                     {messages.length} messages
                   </span>
+                  {/* [CHANGED] Replaced likes with founders count — supports multiple founders */}
                   <span className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    {currentVenture.likes_count || 0} likes
+                    <Users className="w-4 h-4" />
+                    {(currentVenture.founder_user_ids || []).length} founders
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
