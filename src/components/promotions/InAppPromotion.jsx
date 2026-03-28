@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from "lucide-react";
 
+// [CHANGED] Updated package sizes and costs per new pricing
 const PACKAGES = [
-  { size: 50, cost: 500 },
-  { size: 100, cost: 900 },
-  { size: 250, cost: 2000 },
-  { size: 500, cost: 3500 },
+  { size: 20, cost: 1000 },
+  { size: 50, cost: 1500 },
+  { size: 100, cost: 2000 },
 ];
 
 const MAX_MESSAGES_PER_VENTURE_PER_WEEK = 3;
@@ -147,6 +147,16 @@ export default function InAppPromotion({ goBack }) {
         messageContent = `${tagline}\n\nCheck out what they're building!`;
       }
 
+      // [CHANGED] Build the correct feedback URL based on venture phase.
+      // MVP/MLP → /venture-feedback?id=X&from=TARGET_ID (dedicated feedback page, no auth conflict)
+      // Beta/Growth → /beta-testing?id=X (separate public beta sign-up page)
+      const getFeedbackUrl = (targetVentureId) => {
+        if (venture.phase === "mvp" || venture.phase === "mlp") {
+          return `/venture-feedback?id=${venture.id}&from=${targetVentureId}`;
+        }
+        return `/beta-testing?id=${venture.id}`;
+      };
+
       for (const target of selectedTargets) {
         await VentureMessage.create({
           venture_id: target.id,
@@ -155,21 +165,29 @@ export default function InAppPromotion({ goBack }) {
           content: messageContent,
           from_venture_id: venture.id,
           from_venture_name: venture.name,
-          from_venture_landing_page_url: venture.landing_page_url,
+          // [CHANGED] Use correct feedback URL instead of raw landing_page_url
+          from_venture_landing_page_url: getFeedbackUrl(target.id),
           campaign_id: campaign.id,
           phase: target.phase,
           priority: 1,
-
-          // ✅ [2026-01-11] FIX: set created_by fields so messages behave like others (dismiss etc.)
           created_by: user?.email || null,
           created_by_id: user?.id || null,
           is_dismissed: false,
         });
       }
 
-      await Venture.update(venture.id, {
-        virtual_capital: (venture.virtual_capital || 0) - selectedPackage.cost,
-      });
+      // [FIX] Fetch fresh virtual_capital from DB before deducting.
+      // Using frontend state value could cause wrong balance if time has passed.
+      const { data: freshVenture } = await supabase
+        .from("ventures")
+        .select("virtual_capital")
+        .eq("id", venture.id)
+        .single();
+      const freshCapital = freshVenture?.virtual_capital || 0;
+      await supabase
+        .from("ventures")
+        .update({ virtual_capital: freshCapital - selectedPackage.cost })
+        .eq("id", venture.id);
 
       await VentureMessage.create({
         venture_id: venture.id,
@@ -236,7 +254,7 @@ export default function InAppPromotion({ goBack }) {
             <div className="space-y-6">
               <div>
                 <h3 className="font-semibold text-lg mb-4">Select Your Package</h3>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   {PACKAGES.map((pkg) => (
                     <Card
                       key={pkg.size}
