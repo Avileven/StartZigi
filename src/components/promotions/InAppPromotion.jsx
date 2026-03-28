@@ -123,13 +123,25 @@ export default function InAppPromotion({ goBack }) {
       const shuffled = [...eligibleVentures].sort(() => 0.5 - Math.random());
       const selectedTargets = shuffled.slice(0, actualAudienceSize);
 
-      const campaign = await PromotionCampaign.create({
-        venture_id: venture.id,
-        campaign_type: "in-app",
-        audience_size: actualAudienceSize,
-        cost: selectedPackage.cost,
-        tagline: tagline,
-      });
+      // [FIX] Use supabase directly with a generated id — PromotionCampaign.create()
+// does not auto-generate id, causing not-null constraint violation.
+const campaignId = crypto.randomUUID();
+const { data: campaign, error: campaignErr } = await supabase
+  .from("promotion_campaigns")
+  .insert({
+    id: campaignId,
+    venture_id: venture.id,
+    campaign_type: "in-app",
+    audience_size: actualAudienceSize,
+    cost: selectedPackage.cost,
+    tagline: tagline,
+    status: "active",
+    created_by: user?.email || null,
+    created_by_id: user?.id || null,
+  })
+  .select()
+  .single();
+if (campaignErr) throw campaignErr;
 
       let messageTitle = "";
       let messageContent = "";
