@@ -345,7 +345,7 @@ export default function VentureLanding() {
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5">
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
-                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">Our Lovable Product</h1>
+                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">{venture.name}</h1>
                 <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
               </div>
 
