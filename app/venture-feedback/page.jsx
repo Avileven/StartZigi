@@ -114,6 +114,9 @@ export default function VentureLanding() {
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
+  // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
+  // This identifies which venture gave the feedback, for tracking inter-venture interactions.
+  const [reviewerVenture, setReviewerVenture] = useState(null);
 
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
@@ -242,6 +245,26 @@ export default function VentureLanding() {
     // [CHANGED] No auth at all — load venture publicly by ?id= param only.
     // currentUser stays null — this page is fully public, no session needed.
     loadVenture(null);
+
+    // [ADDED] Load reviewer venture from ?from= param in URL.
+    // This identifies the venture that was invited to give feedback.
+    // Safety: if param is missing or venture not found, reviewerVenture stays null.
+    const loadReviewer = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromId = urlParams.get("from");
+      if (!fromId) return;
+      try {
+        const { data } = await supabase
+          .from("ventures")
+          .select("id, name")
+          .eq("id", fromId)
+          .single();
+        if (data) setReviewerVenture(data);
+      } catch (e) {
+        console.error("Could not load reviewer venture:", e);
+      }
+    };
+    loadReviewer();
   }, [loadVenture]);
 
   const handleLike = async () => {
@@ -282,11 +305,21 @@ export default function VentureLanding() {
     if (!mlpFeedbackText.trim() || !venture) return;
     setIsSubmittingMlpFeedback(true);
     try {
-      await ProductFeedbackEntity.create({
+      // [CHANGED] Using supabase directly instead of ProductFeedbackEntity.create()
+      // because this page has no auth session — the Entity class would fail with 400.
+      // [ADDED] reviewer_venture_id and reviewer_venture_name saved from ?from= param
+      // to track which venture gave the feedback.
+      const { error } = await supabase.from("product_feedback").insert({
         venture_id: venture.id,
         feedback_text: mlpFeedbackText.trim(),
         feedback_type: "other",
+        created_by: null,
+        created_by_id: null,
+        // [ADDED] Reviewer identity — null if not invited via in-app promotion
+        reviewer_venture_id: reviewerVenture?.id || null,
+        reviewer_venture_name: reviewerVenture?.name || null,
       });
+      if (error) throw error;
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
     } catch (err) {
@@ -424,6 +457,12 @@ export default function VentureLanding() {
                     </div>
                   ) : (
                     <form onSubmit={handleMlpFeedbackSubmit} className="space-y-4">
+                      {/* [ADDED] Show reviewer venture name so user can confirm their identity is correct */}
+                      {reviewerVenture && (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 text-sm text-indigo-700">
+                          Giving feedback as: <strong>{reviewerVenture.name}</strong>
+                        </div>
+                      )}
                       <div>
                         <Label htmlFor="mlp-feedback">What do you think about this product?</Label>
                         <Textarea id="mlp-feedback" value={mlpFeedbackText}
