@@ -1,4 +1,4 @@
-// app/venture-feedback/page.jsx
+// 290326 app/venture-feedback/page.jsx
 // [NEW] Public feedback page — no auth, loads venture by ?id= only.
 "use client";
 
@@ -117,6 +117,9 @@ export default function VentureLanding() {
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
   // This identifies which venture gave the feedback, for tracking inter-venture interactions.
   const [reviewerVenture, setReviewerVenture] = useState(null);
+  // [ADDED] Authorization state — user must be logged in AND have a valid ?from= venture.
+  // null = still checking, true = authorized, false = not authorized.
+  const [isAuthorized, setIsAuthorized] = useState(null);
 
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
@@ -242,29 +245,54 @@ export default function VentureLanding() {
   }, [currentUser, invitationToken, loadVenture]);
 
   useEffect(() => {
-    // [CHANGED] No auth at all — load venture publicly by ?id= param only.
-    // currentUser stays null — this page is fully public, no session needed.
-    loadVenture(null);
-
-    // [ADDED] Load reviewer venture from ?from= param in URL.
-    // This identifies the venture that was invited to give feedback.
-    // Safety: if param is missing or venture not found, reviewerVenture stays null.
-    const loadReviewer = async () => {
+    const init = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const fromId = urlParams.get("from");
-      if (!fromId) return;
+
+      // [ADDED] Check if user is logged in.
+      // If not — redirect to login page.
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        return;
+      }
+
+      // [ADDED] Check if ?from= param exists and matches a real venture.
+      // Only ventures that were invited (have a valid from= param) can see this page.
+      // Safety: if from is missing or venture not found — show unauthorized message, do not load content.
+      if (!fromId) {
+        setIsAuthorized(false);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const { data } = await supabase
+        const { data: reviewerData } = await supabase
           .from("ventures")
           .select("id, name")
           .eq("id", fromId)
           .single();
-        if (data) setReviewerVenture(data);
+
+        if (!reviewerData) {
+          // from= param exists but venture not found — not authorized
+          setIsAuthorized(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // All checks passed — authorized
+        setReviewerVenture(reviewerData);
+        setIsAuthorized(true);
+
+        // Load the venture content
+        loadVenture(null);
       } catch (e) {
-        console.error("Could not load reviewer venture:", e);
+        console.error("Authorization check failed:", e);
+        setIsAuthorized(false);
+        setIsLoading(false);
       }
     };
-    loadReviewer();
+    init();
   }, [loadVenture]);
 
   const handleLike = async () => {
@@ -339,10 +367,26 @@ export default function VentureLanding() {
     return labels[sector] || sector;
   };
 
-  if (isLoading) {
+  if (isLoading || isAuthorized === null) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  // [ADDED] Show unauthorized message if user is not logged in or does not have a valid ?from= venture.
+  // This prevents bots and unauthorized users from accessing the feedback page.
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🔒</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Access Restricted</h1>
+          <p className="text-gray-600">This page is only available to ventures that have been invited to give feedback. If you received an invitation, please make sure you are logged in.</p>
+        </div>
       </div>
     );
   }
