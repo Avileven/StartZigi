@@ -1,5 +1,5 @@
 
-// C:\STRARTZIG\src\components\promotions\InAppPromotion
+// InAppPromotion 290326
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -205,7 +205,8 @@ if (campaignErr) throw campaignErr;
         venture_id: venture.id,
         message_type: "system",
         title: "📣 Campaign Launched!",
-        content: `Your in-app promotion campaign has been launched to ${actualAudienceSize} ventures. Track results in your Promotion Reports.`,
+        // [CHANGED] Removed audience size from message — number of ventures is small and not meaningful to show
+        content: `Your in-app promotion campaign has been launched successfully. Track results in your Promotion Reports.`,
         phase: venture.phase,
         priority: 2,
         created_by: user?.email || null,
@@ -213,7 +214,8 @@ if (campaignErr) throw campaignErr;
         is_dismissed: false,
       });
 
-      alert(`Campaign launched successfully to ${actualAudienceSize} ventures!`);
+      // [CHANGED] Removed audience size from alert — not meaningful to show
+      alert("Campaign launched successfully! Track results in your Promotion Reports.");
       goBack();
     } catch (error) {
       console.error("Error launching campaign:", error);

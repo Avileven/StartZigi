@@ -1,7 +1,9 @@
+// 290326
 import React, { useState, useMemo } from 'react';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
-import { Venture } from '@/api/entities.js';
+// [REMOVED] Venture import removed — we no longer update mvp_feedback_count on the venture
+// because the reviewer may not have permission to update another venture (RLS).
 import { User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
@@ -9,7 +11,10 @@ import { Input } from '@/components/ui/input.jsx';
 import { Slider } from '@/components/ui/slider';
 import { MessageSquare, Loader2, CheckCircle, Plus } from 'lucide-react';
 
-export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }) {
+// [CHANGED] Added reviewerVenture prop — the venture that is giving the feedback.
+// This is passed from venture-feedback/page.jsx via the ?from= URL param.
+// Used to identify the reviewer in the DB and save reviewer_venture_id/name.
+export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, reviewerVenture }) {
   const [feedbackData, setFeedbackData] = useState({});
   const [newFeatureName, setNewFeatureName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,19 +106,22 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
         console.log(`Submitting feedback for feature ${feature.id} (${feature.featureName}): rating=${rating}`);
         if (rating !== undefined && rating !== null) {
           return MVPFeatureFeedback.create({
-            // שדות חובה חדשים
             id: newId, 
             created_date: now,
             updated_date: now,
             created_by: createdByEmail,
             created_by_id: createdById,
-            // שדות קיימים
             venture_id: venture.id,
             feature_id: feature.id,
             feature_name: feature.featureName || "Unnamed Feature",
             rating: rating,
             submission_id: submissionId,
             user_email: createdByEmail,
+            // [ADDED] Reviewer identity — identifies which venture gave this feedback.
+            // Comes from ?from= param in the URL, passed as prop from venture-feedback/page.jsx.
+            // null-safe: if reviewerVenture is missing, fields stay null (no crash).
+            reviewer_venture_id: reviewerVenture?.id || null,
+            reviewer_venture_name: reviewerVenture?.name || null,
           });
         }
         return Promise.resolve();
@@ -121,9 +129,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted }
 
       await Promise.all(feedbackPromises);
 
-      const newFeedbackCount = (venture.mvp_feedback_count || 0) + 1;
-      await Venture.update(venture.id, { mvp_feedback_count: newFeedbackCount });
-
+      // [REMOVED] Venture.update({ mvp_feedback_count }) removed.
+      // Reason: the reviewer does not have RLS permission to update another venture.
+      // Feedback count is now calculated directly from mvp_feature_feedback table when needed.
       setIsSubmitted(true);
       if (onFeedbackSubmitted) {
         onFeedbackSubmitted();

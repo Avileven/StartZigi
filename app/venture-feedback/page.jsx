@@ -607,7 +607,8 @@ export default function VentureLanding() {
 
               {hasSelectedFeaturesForMVPFeedback && (
                 <div className="mb-12">
-                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
+                  {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
+                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} />
                 </div>
               )}
 
