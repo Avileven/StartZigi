@@ -1,5 +1,5 @@
 
-// InAppPromotion 300326
+// C:\STRARTZIG\InAppPromotion 300326
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -161,12 +161,13 @@ if (campaignErr) throw campaignErr;
 
       // [CHANGED] Build the correct feedback URL based on venture phase.
       // MVP/MLP → /venture-feedback?id=X&from=TARGET_ID (dedicated feedback page, no auth conflict)
-      // Beta/Growth → /beta-testing?id=X (separate public beta sign-up page)
+      // Beta/Growth → /beta-testing?id=X&campaign=CAMPAIGN_ID (public beta sign-up page)
+      // [ADDED] campaign param in beta URL — lets beta-testing page save campaign_id with each sign-up
       const getFeedbackUrl = (targetVentureId) => {
         if (venture.phase === "mvp" || venture.phase === "mlp") {
           return `/venture-feedback?id=${venture.id}&from=${targetVentureId}`;
         }
-        return `/beta-testing?id=${venture.id}`;
+        return `/beta-testing?id=${venture.id}&campaign=${campaign.id}`;
       };
 
       for (const target of selectedTargets) {

@@ -1,5 +1,5 @@
 
-// promotion-center/page.jsx 300326 with IN APP PROMOTION
+// app/promotion-center/ 1300326 with INAPP
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -363,22 +363,36 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
               Campaign Results
             </h2>
             <div className="space-y-4">
-              {campaigns.map((campaign) => (
+              {campaigns.map((campaign) => {
+                // [ADDED] Determine if campaign is still active (less than 7 days old)
+                const isActive = campaign.created_date
+                  ? (Date.now() - new Date(campaign.created_date)) / 86400000 < 7
+                  : true;
+
+                return (
                 <Card key={campaign.id} className="bg-white">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div>
-                        {/* [CHANGED] Campaign title now shows the campaign name (tagline) directly.
-                            Removed "In-App Promotion" label — not meaningful to the user. */}
-                        <CardTitle className="text-lg">
-                          {campaign.campaign_type === "in-app"
-                            ? (campaign.tagline || "Campaign")
-                            : (campaign.sender_name ? `From: ${campaign.sender_name}` : "Email Campaign")}
-                        </CardTitle>
-                        <CardDescription>
-                          {campaign.campaign_type === "in-app" && "In-App Campaign"}
-                          {campaign.campaign_type === "email" && "Email Campaign"}
-                        </CardDescription>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          {/* [CHANGED] Shows campaign name (tagline) as title — no type label */}
+                          <CardTitle className="text-lg">
+                            {campaign.campaign_type === "in-app"
+                              ? (campaign.tagline || "Campaign")
+                              : (campaign.sender_name ? `From: ${campaign.sender_name}` : "Email Campaign")}
+                          </CardTitle>
+                          <CardDescription>
+                            {campaign.campaign_type === "email" && "Email Campaign"}
+                          </CardDescription>
+                        </div>
+                        {/* [ADDED] Active/Ended badge — green if less than 7 days old, gray otherwise */}
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          isActive
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {isActive ? "Active" : "Ended"}
+                        </span>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Cost</p>
@@ -389,37 +403,31 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {/* [CHANGED] Renamed metrics to clearer terms:
+                        Invites Sent = how many messages were sent
+                        Exposure = how many opened/viewed the message  
+                        Clicks = how many clicked the feedback link */}
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-blue-50 rounded-lg">
                         <BarChart3 className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-blue-600">
                           {campaign.audience_size || 0}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          {campaign.campaign_type === "in-app"
-                            ? "Invites Sent"
-                            : "Emails Sent"}
-                        </p>
+                        <p className="text-xs text-gray-600">Invites Sent</p>
                       </div>
                       <div className="text-center p-4 bg-purple-50 rounded-lg">
                         <Eye className="w-6 h-6 text-purple-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-purple-600">
                           {campaign.views || 0}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          {campaign.campaign_type === "in-app"
-                            ? "Invites Viewed"
-                            : "Emails Opened"}
-                        </p>
+                        <p className="text-xs text-gray-600">Exposure</p>
                       </div>
                       <div className="text-center p-4 bg-green-50 rounded-lg">
                         <MousePointerClick className="w-6 h-6 text-green-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-green-600">
                           {campaign.clicks || 0}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          Landing Page Clicks
-                        </p>
+                        <p className="text-xs text-gray-600">Clicks</p>
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t">
@@ -432,7 +440,8 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-// app\beta-testing\page.jsx 
+// beta-testing\300326
 // FIXED 180226: Made page PUBLIC - no authentication required
 // 
 // HOW IT WORKS:
@@ -53,6 +53,10 @@ export default function BetaTesting() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const ventureId = urlParams.get('id');
+        // [ADDED] Read campaign_id from URL — passed when user comes via In-App promotion.
+        // Stored with the beta tester record to track which campaign drove the sign-up.
+        // null if user arrived directly (manual share or email invite).
+        const campaignId = urlParams.get('campaign') || null;
         
         if (ventureId) {
           // PUBLIC ACCESS: Fetch venture data without authentication
@@ -132,13 +136,17 @@ export default function BetaTesting() {
         id: newId,
         created_date: now,
         updated_date: now,
-        created_by: formData.email, // Using tester's email as created_by
-        created_by_id: null, // Public signup - no authenticated user
+        created_by: formData.email,
+        created_by_id: null,
         // Venture and tester data
         venture_id: venture.id,
         full_name: formData.fullName,
         email: formData.email,
         interest_reason: formData.interest || null,
+        // [ADDED] campaign_id — links this sign-up to the promotion campaign that brought the user here.
+        // null if user arrived directly (not via In-App campaign).
+        // Used in promotion-report to count beta sign-ups per campaign.
+        campaign_id: campaignId,
       });
       setSubmitted(true);
       
