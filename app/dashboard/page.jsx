@@ -1,4 +1,4 @@
-//dashboard 260326 INVIATE FOUNDER
+//dashboard 300326 INVIATE FOUNDER
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -515,7 +515,18 @@ if (userVentures.length === 0) {
             { venture_id: activeVenture.id, is_dismissed: false },
             "-created_date"
           );
-          setMessages(ventureMessages);
+
+          // [ADDED] Filter out expired feedback_request messages — valid for 7 days only.
+          // This is the simplest approach: filter client-side without any DB changes.
+          // Other message types are not affected.
+          const filteredMessages = ventureMessages.filter(msg => {
+            if (msg.message_type === 'feedback_request') {
+              const daysSince = (Date.now() - new Date(msg.created_date)) / 86400000;
+              return daysSince < 7;
+            }
+            return true;
+          });
+          setMessages(filteredMessages);
 
           // updateBurnRate removed - using updateBalance instead
         }

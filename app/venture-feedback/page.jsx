@@ -665,24 +665,7 @@ export default function VentureLanding() {
                 </div>
               )}
 
-              <Card className="shadow-lg mb-12">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-red-500" />
-                    Support This Venture
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">Show your support for {venture.name} by liking this venture!</p>
-                  <Button onClick={handleLike}
-                    disabled={hasLiked || (currentUser && venture.created_by === currentUser.email)}
-                    className={hasLiked ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}>
-                    <Heart className={`w-4 h-4 mr-2 ${hasLiked ? "fill-current" : ""}`} />
-                    {hasLiked ? "Liked!" : "Like This Venture"}
-                  </Button>
-                  {hasLiked && <p className="text-sm text-green-600 mt-2">Thank you for your support!</p>}
-                </CardContent>
-              </Card>
+              {/* [REMOVED] Like button removed — no longer relevant for the feedback flow */}
             </>
           )}
 

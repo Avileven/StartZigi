@@ -1,5 +1,5 @@
 
-// InAppPromotion 290326
+// InAppPromotion 300326
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -205,8 +205,9 @@ if (campaignErr) throw campaignErr;
         venture_id: venture.id,
         message_type: "system",
         title: "📣 Campaign Launched!",
-        // [CHANGED] Removed audience size from message — number of ventures is small and not meaningful to show
-        content: `Your in-app promotion campaign has been launched successfully. Track results in your Promotion Reports.`,
+        // [CHANGED] Now shows the campaign name (tagline) in the message
+        // and points to Promotion Center instead of "Promotion Reports"
+        content: `Your campaign "${tagline}" has been launched successfully. Track results in the Promotion Center.`,
         phase: venture.phase,
         priority: 2,
         created_by: user?.email || null,
@@ -214,8 +215,8 @@ if (campaignErr) throw campaignErr;
         is_dismissed: false,
       });
 
-      // [CHANGED] Removed audience size from alert — not meaningful to show
-      alert("Campaign launched successfully! Track results in your Promotion Reports.");
+      // [CHANGED] Alert now shows campaign name
+      alert(`Campaign "${tagline}" launched successfully! Track results in the Promotion Center.`);
       goBack();
     } catch (error) {
       console.error("Error launching campaign:", error);
@@ -266,6 +267,18 @@ if (campaignErr) throw campaignErr;
 
           <CardContent className="p-8">
             <div className="space-y-6">
+
+              {/* [ADDED] How It Works — moved to top so user understands the flow before selecting a package */}
+              <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl">
+                <h4 className="font-semibold text-blue-900 mb-3">How It Works:</h4>
+                <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5">
+                  <li>Select a promotion package — the cost will be deducted from your balance</li>
+                  <li>Give your campaign a name (tagline)</li>
+                  <li>Launch the campaign and track its performance in the Promotion Center</li>
+                  <li>The campaign is active for 7 days — after that, invitations expire automatically</li>
+                </ol>
+              </div>
+
               <div>
                 <h3 className="font-semibold text-lg mb-4">Select Your Package</h3>
                 <div className="grid sm:grid-cols-3 gap-4">
@@ -289,25 +302,16 @@ if (campaignErr) throw campaignErr;
                 </div>
               </div>
 
+              {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
               <div>
-                <Label htmlFor="tagline">Campaign Tagline *</Label>
+                <Label htmlFor="tagline">Campaign Name *</Label>
                 <Textarea
                   id="tagline"
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
-                  placeholder="Write a compelling tagline that will appear in the notification..."
+                  placeholder="Give your campaign a name — this will appear in the invitation message..."
                   className="mt-2 min-h-[100px]"
                 />
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">How It Works:</h4>
-                <ul className="text-sm text-blue-800 space-y-1 list-disc pl-5">
-                  <li>Your message appears on other entrepreneurs' dashboards</li>
-                  <li>Users can click to visit your landing page</li>
-                  <li>Track clicks and views in Promotion Reports</li>
-                  <li>Each venture receives max {MAX_MESSAGES_PER_VENTURE_PER_WEEK} promos per week</li>
-                </ul>
               </div>
 
               {selectedPackage && (
@@ -329,6 +333,9 @@ if (campaignErr) throw campaignErr;
                 </div>
               )}
 
+              {/* [CHANGED] Button is green and active only when all steps are complete:
+                  1. Package selected 2. Campaign name filled 3. Sufficient balance
+                  When disabled, shows gray to indicate steps are missing */}
               <Button
                 onClick={handleLaunchCampaign}
                 disabled={
@@ -337,7 +344,11 @@ if (campaignErr) throw campaignErr;
                   isSubmitting ||
                   (venture.virtual_capital || 0) < (selectedPackage?.cost || 0)
                 }
-                className="w-full"
+                className={`w-full transition-all ${
+                  selectedPackage && tagline.trim() && (venture.virtual_capital || 0) >= (selectedPackage?.cost || 0)
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
                 size="lg"
               >
                 {isSubmitting ? (

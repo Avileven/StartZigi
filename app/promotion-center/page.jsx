@@ -1,5 +1,5 @@
 
-// app/promotion-center/page.jsx 300326 with IN APP
+// promotion-center/page.jsx 300326 with IN APP PROMOTION
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -368,18 +368,16 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
+                        {/* [CHANGED] Campaign title now shows the campaign name (tagline) directly.
+                            Removed "In-App Promotion" label — not meaningful to the user. */}
                         <CardTitle className="text-lg">
                           {campaign.campaign_type === "in-app"
-                            ? "In-App Promotion"
-                            : "Email Campaign"}
+                            ? (campaign.tagline || "Campaign")
+                            : (campaign.sender_name ? `From: ${campaign.sender_name}` : "Email Campaign")}
                         </CardTitle>
                         <CardDescription>
-                          {campaign.campaign_type === "in-app" &&
-                            campaign.tagline &&
-                            `"${campaign.tagline}"`}
-                          {campaign.campaign_type === "email" &&
-                            campaign.sender_name &&
-                            `From: ${campaign.sender_name}`}
+                          {campaign.campaign_type === "in-app" && "In-App Campaign"}
+                          {campaign.campaign_type === "email" && "Email Campaign"}
                         </CardDescription>
                       </div>
                       <div className="text-right">
