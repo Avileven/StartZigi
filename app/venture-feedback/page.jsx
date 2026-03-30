@@ -1,4 +1,4 @@
-// 290326 app/venture-feedback/page.jsx
+// 300326 app/venture-feedback/page.jsx
 // [NEW] Public feedback page — no auth, loads venture by ?id= only.
 "use client";
 
@@ -326,7 +326,33 @@ export default function VentureLanding() {
     }
   };
 
-  const handleInteractiveFeedbackSubmitted = async () => { await loadVenture(currentUser); };
+  // [CHANGED] After MVP feedback is submitted:
+  // 1. Notify the venture owner that they received feedback
+  // 2. Auto-close the page after 3 seconds (redirect to dashboard)
+  // [REMOVED] loadVenture call — was resetting the form before the Thank You screen appeared
+  const handleInteractiveFeedbackSubmitted = async () => {
+    try {
+      // [ADDED] Notify the venture owner that feedback was received
+      if (venture?.id && reviewerVenture?.name) {
+        await supabase.from("venture_messages").insert({
+          venture_id: venture.id,
+          message_type: "system",
+          title: "📝 New MVP Feedback Received!",
+          content: `${reviewerVenture.name} has reviewed your MVP and submitted feedback. Check your feedback reports for details.`,
+          phase: venture.phase,
+          priority: 3,
+          is_dismissed: false,
+        });
+      }
+    } catch (e) {
+      console.error("Could not send feedback notification:", e);
+      // Non-fatal — Thank You screen still shows
+    }
+    // [ADDED] Auto-redirect to dashboard after 3 seconds
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 3000);
+  };
 
   const handleMlpFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -348,8 +374,33 @@ export default function VentureLanding() {
         reviewer_venture_name: reviewerVenture?.name || null,
       });
       if (error) throw error;
+      
+      // [ADDED] Notify the venture owner that MLP feedback was received
+      try {
+        if (venture?.id && reviewerVenture?.name) {
+          await supabase.from("venture_messages").insert({
+            venture_id: venture.id,
+            message_type: "system",
+            title: "📝 New MLP Feedback Received!",
+            content: `${reviewerVenture.name} has reviewed your MLP and submitted feedback. Check your feedback reports for details.`,
+            phase: venture.phase,
+            priority: 3,
+            is_dismissed: false,
+          });
+        }
+      } catch (e) {
+        console.error("Could not send MLP feedback notification:", e);
+        // Non-fatal — Thank You screen still shows
+      }
+
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
+
+      // [ADDED] Auto-redirect to dashboard after 3 seconds
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 3000);
+
     } catch (err) {
       console.error("Error submitting MLP feedback:", err);
       alert("There was an error submitting your feedback. Please try again.");
@@ -494,10 +545,12 @@ export default function VentureLanding() {
                 </CardHeader>
                 <CardContent>
                   {mlpFeedbackSubmitted ? (
+                    // [CHANGED] Added auto-redirect message so user knows the page will close
                     <div className="text-center py-6">
                       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                       <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
                       <p className="text-gray-500 text-sm mt-1">Your response helps the team improve their product.</p>
+                      <p className="text-gray-400 text-xs mt-3">Redirecting you back to your dashboard in a few seconds...</p>
                     </div>
                   ) : (
                     <form onSubmit={handleMlpFeedbackSubmit} className="space-y-4">

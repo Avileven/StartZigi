@@ -1,4 +1,4 @@
-// 290326
+// 300326
 import React, { useState, useMemo } from 'react';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
@@ -163,6 +163,8 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
             Thank You!
           </h3>
           <p className="text-lg text-gray-600">Your feedback has been submitted and will help improve this venture.</p>
+          {/* [ADDED] Auto-redirect message — parent page handles the actual redirect via setTimeout */}
+          <p className="text-gray-400 text-sm mt-3">Redirecting you back to your dashboard in a few seconds...</p>
         </CardContent>
       </Card>
     );
