@@ -1,5 +1,5 @@
 
-// app/promotion-center/page.jsx 190226 with beta
+// app/promotion-center/page.jsx 300326 with IN APP
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -64,8 +64,46 @@ export default function PromotionCenter() {
 
   const router = useRouter();
 
-  // Check if venture is in BETA phase
-  const isBetaPhase = venture?.phase === 'beta';
+  // [CHANGED] Phase detection — drives all UI text and routing logic in this page.
+  // isBetaPhase: true for beta and growth phases (both use beta testing flow).
+  // isFeedbackPhase: true for mvp and mlp phases (both use feedback flow).
+  // isEarlyPhase: true for idea and business_plan — promotion not available yet.
+  const isBetaPhase = venture?.phase === 'beta' || venture?.phase === 'growth';
+  const isFeedbackPhase = venture?.phase === 'mvp' || venture?.phase === 'mlp';
+
+  // [ADDED] Phase-based intro message — shown at top of page to explain what the user is sending.
+  const getPhaseIntro = () => {
+    if (venture?.phase === 'mvp') return {
+      title: "You're in the MVP Phase",
+      description: "Invite other founders on the platform to review your MVP and give you structured feedback. You can also invite external contacts via email.",
+      badge: "MVP",
+      color: "bg-blue-50 border-blue-200 text-blue-800",
+      badgeColor: "bg-blue-600"
+    };
+    if (venture?.phase === 'mlp') return {
+      title: "You're in the MLP Phase",
+      description: "Invite other founders on the platform to review your MLP and give you feedback. You can also invite external contacts via email.",
+      badge: "MLP",
+      color: "bg-purple-50 border-purple-200 text-purple-800",
+      badgeColor: "bg-purple-600"
+    };
+    if (venture?.phase === 'beta') return {
+      title: "You're in the Beta Phase",
+      description: "Invite founders and external users to sign up as beta testers for your product. Build your beta community before launch.",
+      badge: "Beta",
+      color: "bg-green-50 border-green-200 text-green-800",
+      badgeColor: "bg-green-600"
+    };
+    if (venture?.phase === 'growth') return {
+      title: "You're in the Growth Phase",
+      description: "Keep growing your beta testing community. Invite more users to try your product and provide valuable feedback.",
+      badge: "Growth",
+      color: "bg-emerald-50 border-emerald-200 text-emerald-800",
+      badgeColor: "bg-emerald-600"
+    };
+    return null;
+  };
+  const phaseIntro = getPhaseIntro();
   
 
 console.log('🔍 Promotion Center DEBUG:', { 
@@ -449,51 +487,70 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
           )}
         </div>
 
-        {/* Launch new campaign */}
-        <div className="mb-4">
+        {/* [CHANGED] Launch section — phase-aware header and intro message */}
+        <div className="mb-6">
+          {/* [ADDED] Phase intro banner — explains to the user what they are sending based on their current phase */}
+          {phaseIntro && (
+            <div className={`rounded-xl border p-5 mb-6 ${phaseIntro.color}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`text-white text-xs font-bold px-2 py-1 rounded-full ${phaseIntro.badgeColor}`}>
+                  {phaseIntro.badge}
+                </span>
+                <h2 className="text-xl font-bold">{phaseIntro.title}</h2>
+              </div>
+              <p className="text-sm">{phaseIntro.description}</p>
+            </div>
+          )}
+
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            {/* [CHANGED] Title changes based on phase */}
             {isBetaPhase ? "Invite to Beta Testing" : "Launch New Campaign"}
           </h2>
         </div>
 
-        <div className={`grid ${isBetaPhase ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2'} gap-6`}>
-          {/* In-App package - HIDE in BETA phase */}
-          {!isBetaPhase && (
-            <Card
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(createPageUrl("Promotion?type=in-app"))}
-            >
-              <CardHeader>
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-indigo-600" />
-                </div>
-                <CardTitle>In-App Promotion Package</CardTitle>
-                <CardDescription>
-                  Reach registered platform users with targeted invitations to visit
-                  your landing page and provide feedback.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                    Target platform community
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-green-500" />
-                    Choose audience size (50-500 users)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-yellow-500" />
-                    Costs virtual currency
-                  </li>
-                </ul>
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                  Select In-App Package
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+        {/* [CHANGED] In-App package now shown for ALL phases including beta/growth.
+            Previously hidden for beta — now visible because beta also benefits from in-app promotion.
+            The InAppPromotion component handles the correct URL routing based on phase. */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => router.push(createPageUrl("Promotion?type=in-app"))}
+          >
+            <CardHeader>
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-indigo-600" />
+              </div>
+              {/* [CHANGED] Title and description change based on phase */}
+              <CardTitle>
+                {isBetaPhase ? "In-App Beta Invitations" : "In-App Promotion Package"}
+              </CardTitle>
+              <CardDescription>
+                {isBetaPhase
+                  ? "Invite other founders on the platform to sign up as beta testers for your product."
+                  : "Reach registered platform users with targeted invitations to visit your landing page and provide feedback."
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 mb-4">
+                <li className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  Target platform community
+                </li>
+                <li className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-500" />
+                  Choose audience size (20-100 users)
+                </li>
+                <li className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-yellow-500" />
+                  Costs virtual currency
+                </li>
+              </ul>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                {isBetaPhase ? "Select Beta Invitation Package" : "Select In-App Package"}
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* [2026-01-10] FIX: Email invite – same flow as InviteCoFounder, but external_feedback type */}
           {/* UPDATED: Different text for BETA phase vs regular feedback */}
