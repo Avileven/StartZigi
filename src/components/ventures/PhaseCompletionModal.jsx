@@ -316,7 +316,7 @@ export default function PhaseCompletionModal({
   // [CHANGED] Use real venture valuation from DB instead of static PHASE_CONTENT value.
   // Falls back to static value if venture data is not available.
   const realValuation = venture?.valuation || content.valuation.after;
-  const realCapital = venture?.virtual_capital || 0;
+  const realCapital = liveBalance || venture?.virtual_capital || 0;
   const realFoundersCount = venture?.founders_count || 1;
 
   // [ADDED] Check if there was an investment in the recent funding events

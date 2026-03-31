@@ -1267,6 +1267,7 @@ if (showToS) {
           completedPhase={phaseModalData.phase}
           venture={currentVenture}
           fundingEvents={phaseModalData.fundingEvents}
+          liveBalance={liveBalance}
         />
       )}
 
