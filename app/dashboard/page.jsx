@@ -1,4 +1,4 @@
-//dashboard 310326 INVIATE FOUNDER
+//dashboard 310326 message new
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -65,7 +65,8 @@ import VCScheduleMeetingModal from '@/components/vc/VCScheduleMeetingModal';
 // [ADDED] PitchModal for joining angel meeting from dashboard
 import PitchModal from '@/components/angels/PitchModal';
 // [ADDED] Phase completion modal — shown automatically when a phase_complete message is detected
-import PhaseCompletionModal from '@/components/PhaseCompletionModal';
+// [FIXED] Correct path to PhaseCompletionModal
+import PhaseCompletionModal from '@/components/ventures/PhaseCompletionModal';
 
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
@@ -1467,7 +1468,7 @@ if (showToS) {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-lg font-bold">{currentVenture.name}</CardTitle>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <MessageSquare className="w-4 h-4" />
                     {messages.length} messages
