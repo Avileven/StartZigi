@@ -291,7 +291,8 @@ export default function PhaseCompletionModal({
   onClose, 
   completedPhase,
   venture,
-  fundingEvents = []
+  fundingEvents = [],
+  liveBalance
 }) {
   const [valuationAnimated, setValuationAnimated] = useState(false);
 
@@ -316,6 +317,7 @@ export default function PhaseCompletionModal({
   // [CHANGED] Use real venture valuation from DB instead of static PHASE_CONTENT value.
   // Falls back to static value if venture data is not available.
   const realValuation = venture?.valuation || content.valuation.after;
+  // [CHANGED] Use liveBalance (real-time) if available, fallback to DB value
   const realCapital = liveBalance || venture?.virtual_capital || 0;
   const realFoundersCount = venture?.founders_count || 1;
 
