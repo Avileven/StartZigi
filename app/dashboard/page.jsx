@@ -1,4 +1,4 @@
-//dashboard 300326 INVIATE FOUNDER
+//dashboard 310326 INVIATE FOUNDER
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -64,6 +64,8 @@ import ScheduleMeetingModal from '@/components/angels/ScheduleMeetingModal';
 import VCScheduleMeetingModal from '@/components/vc/VCScheduleMeetingModal';
 // [ADDED] PitchModal for joining angel meeting from dashboard
 import PitchModal from '@/components/angels/PitchModal';
+// [ADDED] Phase completion modal — shown automatically when a phase_complete message is detected
+import PhaseCompletionModal from '@/components/PhaseCompletionModal';
 
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
@@ -120,6 +122,9 @@ export default function Dashboard() {
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
+  // [ADDED] Phase completion modal state
+  const [showPhaseModal, setShowPhaseModal] = useState(false);
+  const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents }
   const [liveBalance, setLiveBalance] = useState(0);
   //new valuation
   const [currentValuation, setCurrentValuation] = useState(0);
@@ -517,8 +522,6 @@ if (userVentures.length === 0) {
           );
 
           // [ADDED] Filter out expired feedback_request messages — valid for 7 days only.
-          // This is the simplest approach: filter client-side without any DB changes.
-          // Other message types are not affected.
           const filteredMessages = ventureMessages.filter(msg => {
             if (msg.message_type === 'feedback_request') {
               const daysSince = (Date.now() - new Date(msg.created_date)) / 86400000;
@@ -527,6 +530,27 @@ if (userVentures.length === 0) {
             return true;
           });
           setMessages(filteredMessages);
+
+          // [ADDED] Detect phase_complete message and open PhaseCompletionModal automatically.
+          // Only opens if there's a recent phase_complete message (within last 24 hours).
+          // This ensures the modal shows right after a phase transition, not on every login.
+          const recentPhaseComplete = filteredMessages.find(msg => {
+            if (msg.message_type !== 'phase_complete') return false;
+            const hoursSince = (Date.now() - new Date(msg.created_date)) / 3600000;
+            return hoursSince < 24;
+          });
+          if (recentPhaseComplete) {
+            // Load funding events to show investment data in modal
+            try {
+              const events = await FundingEvent.filter({ venture_id: activeVenture.id }, "-created_date");
+              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: events });
+              setShowPhaseModal(true);
+            } catch (e) {
+              console.error('Could not load funding events for phase modal:', e);
+              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: [] });
+              setShowPhaseModal(true);
+            }
+          }
 
           // updateBurnRate removed - using updateBalance instead
         }
@@ -1233,6 +1257,17 @@ if (showToS) {
         onClose={() => setShowRejectionDetails(false)}
         details={rejectionDetailsContent}
       />
+
+      {/* [ADDED] Phase Completion Modal — opens automatically when a phase_complete message is detected */}
+      {showPhaseModal && phaseModalData && (
+        <PhaseCompletionModal
+          isOpen={showPhaseModal}
+          onClose={() => setShowPhaseModal(false)}
+          completedPhase={phaseModalData.phase}
+          venture={currentVenture}
+          fundingEvents={phaseModalData.fundingEvents}
+        />
+      )}
 
       <VCMeetingModal
         isOpen={isMeetingModalOpen}

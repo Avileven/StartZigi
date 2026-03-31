@@ -1,3 +1,4 @@
+// 310326
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
@@ -281,10 +282,16 @@ const PHASE_CONTENT = {
   }
 };
 
+// [CHANGED] Added venture and fundingEvents props to show real venture data.
+// venture — the current venture object from DB (valuation, virtual_capital, founders_count)
+// fundingEvents — list of investments received (to show in achievements)
+// Safety: all real data access uses optional chaining so missing data never crashes the modal.
 export default function PhaseCompletionModal({ 
   isOpen, 
   onClose, 
-  completedPhase 
+  completedPhase,
+  venture,
+  fundingEvents = []
 }) {
   const [valuationAnimated, setValuationAnimated] = useState(false);
 
@@ -306,8 +313,17 @@ export default function PhaseCompletionModal({
   const content = PHASE_CONTENT[completedPhase];
   if (!content) return null;
 
+  // [CHANGED] Use real venture valuation from DB instead of static PHASE_CONTENT value.
+  // Falls back to static value if venture data is not available.
+  const realValuation = venture?.valuation || content.valuation.after;
+  const realCapital = venture?.virtual_capital || 0;
+  const realFoundersCount = venture?.founders_count || 1;
+
+  // [ADDED] Check if there was an investment in the recent funding events
+  const recentInvestment = fundingEvents?.[0] || null;
+
   const calculateStakeValue = () => {
-    return (content.valuation.after * content.valuation.equity) / 100;
+    return realValuation; // 100% equity until investment
   };
 
   return (
@@ -425,12 +441,14 @@ export default function PhaseCompletionModal({
             </div>
 
             {/* Valuation */}
+            {/* [CHANGED] Using real venture data — valuation and capital from DB */}
             <ValuationCounter
               before={content.valuation.before}
-              after={content.valuation.after}
+              after={realValuation}
               equity={content.valuation.equity}
-              stakeValue={calculateStakeValue()}
+              stakeValue={realCapital}
               animate={valuationAnimated}
+              capitalLabel="Current Balance"
             />
           </div>
 
@@ -464,6 +482,36 @@ export default function PhaseCompletionModal({
                   )}
                 </div>
               ))}
+
+              {/* [ADDED] Real dynamic achievements from venture data */}
+
+              {/* Investment received */}
+              {recentInvestment && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg animate-in slide-in-from-right duration-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">💰 Investment Received</h3>
+                      <p className="text-xs text-gray-600 mt-1">From {recentInvestment.investor_name}</p>
+                    </div>
+                    <div className="text-sm font-bold text-yellow-700">
+                      ${(recentInvestment.amount || 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Co-founder joined */}
+              {realFoundersCount > 1 && (
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg animate-in slide-in-from-right duration-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">🤝 Team Growing</h3>
+                      <p className="text-xs text-gray-600 mt-1">Your venture now has {realFoundersCount} founders</p>
+                    </div>
+                    <div className="text-2xl">👥</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -496,7 +544,7 @@ export default function PhaseCompletionModal({
 }
 
 // Valuation Counter Component
-function ValuationCounter({ before, after, equity, stakeValue, animate }) {
+function ValuationCounter({ before, after, equity, stakeValue, animate, capitalLabel }) {
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentStake, setCurrentStake] = useState(0);
 
@@ -561,8 +609,9 @@ function ValuationCounter({ before, after, equity, stakeValue, animate }) {
             <span className="text-gray-600">Your Equity:</span>
             <span className="font-bold text-gray-800">{equity}%</span>
           </div>
+          {/* [CHANGED] Shows current balance instead of stake value */}
           <div className="flex items-center justify-between text-sm mt-2">
-            <span className="text-gray-600">Your Stake Value:</span>
+            <span className="text-gray-600">{capitalLabel || "Your Balance"}:</span>
             <span className="font-bold text-green-600">{formatValue(currentStake)}</span>
           </div>
         </div>
