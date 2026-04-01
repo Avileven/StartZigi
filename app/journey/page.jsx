@@ -20,7 +20,7 @@ const PHASE_CONTENT = {
       before: 0,
       after: 250000,
       equity: 100,
-      capitalInjection: 15000
+      capitalInjection: 0
     },
     
     achievements: [
@@ -50,11 +50,6 @@ const PHASE_CONTENT = {
         id: 2,
         title: "Funding Plan & Budget",
         description: ""
-      },
-      {
-        id: 3,
-        title: "Financial Launch",
-        description: "$15,000 added to your venture account. From now on, your monthly burn rate is $5,000"
       }
     ]
   },
@@ -75,7 +70,8 @@ const PHASE_CONTENT = {
       before: 250000,
       after: 500000,
       equity: 100,
-      capitalInjection: 0
+      // [CHANGED] Capital injection moved here from idea phase — $15,000 is received after completing the business plan
+      capitalInjection: 15000
     },
     
     achievements: [
@@ -92,6 +88,13 @@ const PHASE_CONTENT = {
         description: "Revenue projections validated",
         icon: "💰",
         value: "Complete"
+      },
+      {
+        id: 3,
+        title: "💰 Capital Injection",
+        description: "$15,000 added to your venture account. Monthly burn rate is now $5,000",
+        icon: "💵",
+        value: "$15,000"
       }
     ],
     
@@ -127,9 +130,10 @@ const PHASE_CONTENT = {
     
     valuation: {
       before: 500000,
+      // [CHANGED] After angel investment from Nia Sharma ($120K), valuation reflects the new equity structure
       after: 1000000,
       equity: 100,
-      capitalInjection: 0
+      capitalInjection: 120000
     },
     
     achievements: [
@@ -146,6 +150,14 @@ const PHASE_CONTENT = {
         description: "Built initial application prototype",
         icon: "🛠️",
         value: "Complete"
+      },
+      {
+        // [ADDED] Angel investment example — Nia Sharma invested $120,000
+        id: 3,
+        title: "💰 Angel Investment",
+        description: "Nia Sharma (Angel Investor) invested in your venture",
+        icon: "🤝",
+        value: "$120,000"
       }
     ],
     
@@ -260,6 +272,14 @@ const PHASE_CONTENT = {
         description: "Active beta testing community",
         icon: "👥",
         value: "Active"
+      },
+      {
+        // [ADDED] Co-founder joined at beta phase
+        id: 3,
+        title: "🤝 Co-Founder Joined",
+        description: "A co-founder joined your venture — your team is growing",
+        icon: "👥",
+        value: "2 Founders"
       }
     ],
     
@@ -291,13 +311,24 @@ const PHASE_CONTENT = {
     isSuccessMessage: true,
     
     valuation: {
+      // [CHANGED] Pre-money valuation $3M + VC investment $1.5M = post-money $4.5M
+      // Velocity Wave Partners invested $1.5M at $3M pre-money valuation
       before: 5000000,
-      after: 10000000,
-      equity: 100,
-      capitalInjection: 0
+      after: 4500000,
+      equity: 67, // founder retains ~67% after VC takes 33% ($1.5M / $4.5M)
+      capitalInjection: 1500000
     },
     
-    achievements: [],
+    // [ADDED] VC investment achievement
+    achievements: [
+      {
+        id: 1,
+        title: "🏦 VC Investment Secured",
+        description: "Velocity Wave Partners invested at $3M pre-money valuation",
+        icon: "💼",
+        value: "$1,500,000"
+      }
+    ],
     challenges: [],
     
     successMessage: {
@@ -326,7 +357,24 @@ const phaseColors = {
   growth: 'text-green-500'
 };
 
+// [ADDED] Demo data for the intro slide — simulates a user filling in their venture details
+const DEMO_VENTURE = {
+  name: "MentalPlus",
+  sector: "Digital Health / Biotech",
+  description: "An AI-powered mental wellness platform that helps users track, understand and improve their emotional health"
+};
+
 export default function PhaseCompletionDemo() {
+  // [ADDED] showIntro controls whether we show the intro slide or the phase slides
+  // Starts true, auto-advances to phase slides after typing animation completes (~5 seconds)
+  const [showIntro, setShowIntro] = useState(true);
+  
+  // [ADDED] Typing animation state — each field types character by character
+  const [typedName, setTypedName] = useState("");
+  const [typedSector, setTypedSector] = useState("");
+  const [typedDescription, setTypedDescription] = useState("");
+  const [introStep, setIntroStep] = useState(0); // 0=typing name, 1=typing sector, 2=typing description, 3=done
+
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [contentVisible, setContentVisible] = useState(false);
   const [currentValuation, setCurrentValuation] = useState(0);
@@ -335,6 +383,44 @@ export default function PhaseCompletionDemo() {
 
   const currentPhase = PHASES[currentPhaseIndex];
   const content = PHASE_CONTENT[currentPhase];
+
+  // [ADDED] Typing animation effect — runs on mount, types each field then advances to phase slides
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const typeText = (text, setter, onDone, speed = 40) => {
+      let i = 0;
+      setter("");
+      const interval = setInterval(() => {
+        setter(text.slice(0, i + 1));
+        i++;
+        if (i >= text.length) {
+          clearInterval(interval);
+          setTimeout(onDone, 300);
+        }
+      }, speed);
+      return interval;
+    };
+
+    // Step 1: type name
+    const t1 = setTimeout(() => {
+      typeText(DEMO_VENTURE.name, setTypedName, () => {
+        setIntroStep(1);
+        // Step 2: type sector
+        typeText(DEMO_VENTURE.sector, setTypedSector, () => {
+          setIntroStep(2);
+          // Step 3: type description
+          typeText(DEMO_VENTURE.description, setTypedDescription, () => {
+            setIntroStep(3);
+            // Step 4: after short pause, move to phase slides
+            setTimeout(() => setShowIntro(false), 800);
+          }, 20);
+        }, 60);
+      });
+    }, 600);
+
+    return () => clearTimeout(t1);
+  }, [showIntro]);
 
   useEffect(() => {
     const timer1 = setTimeout(() => setContentVisible(true), 500);
@@ -463,6 +549,100 @@ export default function PhaseCompletionDemo() {
   }
 
   // Regular phase rendering
+  // [ADDED] Intro slide — shown before phase slides, simulates user filling in venture details
+  if (showIntro) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">💡</span>
+            </div>
+            <h1 className="text-3xl font-black text-white mb-2">Start Your Venture</h1>
+            <p className="text-purple-200 text-sm">Every great startup begins with an idea. Tell us about yours.</p>
+          </div>
+
+          {/* Form card */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
+
+            {/* Venture Name */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Venture Name</label>
+              <div className="relative">
+                <input
+                  readOnly
+                  value={typedName}
+                  className="w-full border-2 border-indigo-200 rounded-lg px-4 py-3 text-lg font-semibold text-indigo-800 bg-indigo-50 focus:outline-none"
+                  placeholder="e.g. MentalPlus, EcoWaste AI..."
+                />
+                {introStep === 0 && typedName.length > 0 && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-600 animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            {/* Sector */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Sector</label>
+              <div className="relative">
+                <input
+                  readOnly
+                  value={typedSector}
+                  className="w-full border-2 border-purple-200 rounded-lg px-4 py-3 text-gray-800 bg-purple-50 focus:outline-none"
+                  placeholder="Select your industry..."
+                />
+                {introStep === 1 && typedSector.length > 0 && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-purple-600 animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">What does your venture do?</label>
+              <div className="relative">
+                <textarea
+                  readOnly
+                  value={typedDescription}
+                  rows={3}
+                  className="w-full border-2 border-pink-200 rounded-lg px-4 py-3 text-gray-800 bg-pink-50 focus:outline-none resize-none text-sm"
+                  placeholder="Describe your venture in one sentence..."
+                />
+                {introStep === 2 && typedDescription.length > 0 && (
+                  <span className="absolute right-4 bottom-4 w-0.5 h-4 bg-pink-600 animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            {/* Launch button — activates when all fields are typed */}
+            <button
+              disabled={introStep < 3}
+              onClick={() => setShowIntro(false)}
+              className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all duration-500 ${
+                introStep >= 3
+                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl hover:scale-105 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              {introStep >= 3 ? "🚀 Launch My Venture →" : "Filling in details..."}
+            </button>
+          </div>
+
+          {/* Progress dots */}
+          <div className="flex justify-center gap-2 mt-6">
+            {["Name", "Sector", "Description"].map((label, i) => (
+              <div key={i} className={`flex items-center gap-1 text-xs transition-all duration-300 ${introStep > i ? "text-green-400" : "text-white/40"}`}>
+                <span>{introStep > i ? "✓" : "○"}</span>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 flex items-center justify-center p-4">
       <div className="max-w-6xl w-full">
