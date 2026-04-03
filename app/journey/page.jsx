@@ -399,6 +399,8 @@ export default function PhaseCompletionDemo() {
 
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [contentVisible, setContentVisible] = useState(false);
+  // [ADDED] showClockOnly — when true, shows only the clock for 3 seconds before the slide content appears
+  const [showClockOnly, setShowClockOnly] = useState(false);
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentEquity, setCurrentEquity] = useState(100);
   const [currentProgress, setCurrentProgress] = useState(0);
@@ -478,8 +480,11 @@ export default function PhaseCompletionDemo() {
   const handleNext = () => {
     if (currentPhaseIndex < PHASES.length - 1) {
       setContentVisible(false);
+      // [CHANGED] Show clock only for 3 seconds before advancing to next slide
       setTimeout(() => {
         setCurrentPhaseIndex(currentPhaseIndex + 1);
+        setShowClockOnly(true);
+        setTimeout(() => setShowClockOnly(false), 3000);
       }, 300);
     }
   };
@@ -487,8 +492,11 @@ export default function PhaseCompletionDemo() {
   const handlePrev = () => {
     if (currentPhaseIndex > 0) {
       setContentVisible(false);
+      // [CHANGED] Show clock only for 3 seconds before going to previous slide
       setTimeout(() => {
         setCurrentPhaseIndex(currentPhaseIndex - 1);
+        setShowClockOnly(true);
+        setTimeout(() => setShowClockOnly(false), 3000);
       }, 300);
     }
   };
@@ -623,6 +631,38 @@ export default function PhaseCompletionDemo() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // [ADDED] Fullscreen clock shown for 3 seconds when transitioning between phases
+  if (showClockOnly) {
+    const seg = 879/6;
+    const phaseIdx = PHASES.indexOf(currentPhase);
+    const arcOffset = 879 - seg * (phaseIdx + 1);
+    const activeColor = currentPhase === 'idea' || currentPhase === 'growth' ? '#10b981' : '#f97316';
+    return (
+      <div style={{minHeight:'100vh',background:'rgba(15,10,40,0.97)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <div style={{textAlign:'center'}}>
+          <svg width="380" height="380" viewBox="0 0 320 320">
+            <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
+            <circle cx="160" cy="160" r="140" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round"
+              strokeDasharray="879" strokeDashoffset={arcOffset}
+              style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px',transition:'stroke-dashoffset 1s ease'}}/>
+            <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
+            <text x="160" y="64"  fontSize="12" fill={currentPhase==='idea'?'#10b981':'white'} textAnchor="middle" fontWeight={currentPhase==='idea'?'800':'700'}>IDEA</text>
+            <text x="247" y="112" fontSize="11" fill={currentPhase==='business_plan'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='business_plan'?'800':'700'}>PLAN</text>
+            <text x="247" y="216" fontSize="11" fill={currentPhase==='mvp'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='mvp'?'800':'700'}>MVP</text>
+            <text x="160" y="260" fontSize="11" fill={currentPhase==='mlp'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='mlp'?'800':'700'}>MLP</text>
+            <text x="73"  y="216" fontSize="11" fill={currentPhase==='beta'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='beta'?'800':'700'}>BETA</text>
+            <text x="73"  y="112" fontSize="10" fill={currentPhase==='growth'?'#10b981':'white'} textAnchor="middle" fontWeight={currentPhase==='growth'?'800':'700'}>GROWTH</text>
+            <path fill="rgba(200,190,255,0.85)" d="M158 160 L162 160 L162 75 L158 75 Z"
+              style={{transform:`rotate(${content.clockRotation}deg)`,transformOrigin:'160px 160px',transition:'transform 1s cubic-bezier(0.4,0,0.2,1)'}}/>
+            <circle cx="160" cy="160" r="6" fill="#8b5cf6"/>
+          </svg>
+          <div style={{color:activeColor,fontSize:'22px',fontWeight:'700',marginTop:'12px'}}>{content.title}</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:'14px',marginTop:'4px'}}>{content.subtitle}</div>
         </div>
       </div>
     );
