@@ -1,4 +1,3 @@
-// journey 010426 
 "use client"
 import React, { useState, useEffect } from 'react';
 
@@ -214,6 +213,22 @@ const PHASE_CONTENT = {
         description: "Your updated demo version was loaded to your landing page",
         icon: null,
         value: null
+      },
+      {
+        // [ADDED] Co-founder joined at MLP phase (moved from beta)
+        id: 3,
+        title: "🤝 Co-Founder Joined",
+        description: "A co-founder joined your venture — your team is growing",
+        icon: "👥",
+        value: "2 Founders"
+      },
+      {
+        // [ADDED] 10+ feedback responses required to complete MLP phase
+        id: 4,
+        title: "📝 Community Feedback",
+        description: "Received 10+ feedback responses from the platform community",
+        icon: "📊",
+        value: "10+ Responses"
       }
     ],
     
@@ -275,12 +290,11 @@ const PHASE_CONTENT = {
         value: "Active"
       },
       {
-        // [ADDED] Co-founder joined at beta phase
         id: 3,
-        title: "🤝 Co-Founder Joined",
-        description: "A co-founder joined your venture — your team is growing",
-        icon: "👥",
-        value: "2 Founders"
+        title: "🧪 10 Beta Testers",
+        description: "Reached 10 beta sign-ups — milestone required to enter Growth phase",
+        icon: "🎯",
+        value: "10 Testers"
       }
     ],
     
@@ -314,13 +328,13 @@ const PHASE_CONTENT = {
     valuation: {
       // [CHANGED] Pre-money valuation $3M + VC investment $1.5M = post-money $4.5M
       // Velocity Wave Partners invested $1.5M at $3M pre-money valuation
+      // equity: founder retains ~67% ($3M / $4.5M post-money)
       before: 5000000,
       after: 4500000,
-      equity: 67, // founder retains ~67% after VC takes 33% ($1.5M / $4.5M)
+      equity: 67,
       capitalInjection: 1500000
     },
     
-    // [ADDED] VC investment achievement
     achievements: [
       {
         id: 1,
@@ -328,9 +342,34 @@ const PHASE_CONTENT = {
         description: "Velocity Wave Partners invested at $3M pre-money valuation",
         icon: "💼",
         value: "$1,500,000"
+      },
+      {
+        id: 2,
+        title: "👥 200 Beta Users",
+        description: "Scaled beta community to 200 active users",
+        icon: "🚀",
+        value: "200 Users"
+      },
+      {
+        id: 3,
+        title: "✨ New Features Shipped",
+        description: "Product enhanced based on user feedback and market demand",
+        icon: "🛠️",
+        value: "Live"
       }
     ],
-    challenges: [],
+    challenges: [
+      {
+        id: 1,
+        title: "Scale User Acquisition",
+        description: "Keep growing your user base and expanding into new markets"
+      },
+      {
+        id: 2,
+        title: "Negotiate Exit",
+        description: "Engage with strategic buyers and negotiate an acquisition opportunity"
+      }
+    ],
     
     successMessage: {
       title: "Congratulations!",
@@ -366,15 +405,12 @@ const DEMO_VENTURE = {
 };
 
 export default function PhaseCompletionDemo() {
-  // [ADDED] showIntro controls whether we show the intro slide or the phase slides
-  // Starts true, auto-advances to phase slides after typing animation completes (~5 seconds)
+  // [ADDED] Intro slide state
   const [showIntro, setShowIntro] = useState(true);
-  
-  // [ADDED] Typing animation state — each field types character by character
   const [typedName, setTypedName] = useState("");
   const [typedSector, setTypedSector] = useState("");
   const [typedDescription, setTypedDescription] = useState("");
-  const [introStep, setIntroStep] = useState(0); // 0=typing name, 1=typing sector, 2=typing description, 3=done
+  const [introStep, setIntroStep] = useState(0);
 
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [contentVisible, setContentVisible] = useState(false);
@@ -385,10 +421,9 @@ export default function PhaseCompletionDemo() {
   const currentPhase = PHASES[currentPhaseIndex];
   const content = PHASE_CONTENT[currentPhase];
 
-  // [ADDED] Typing animation effect — runs on mount, types each field then advances to phase slides
+  // [ADDED] Typing animation — runs on mount, types each field then advances to phase slides after ~5 seconds
   useEffect(() => {
     if (!showIntro) return;
-
     const typeText = (text, setter, onDone, speed = 40) => {
       let i = 0;
       setter("");
@@ -402,24 +437,18 @@ export default function PhaseCompletionDemo() {
       }, speed);
       return interval;
     };
-
-    // Step 1: type name
     const t1 = setTimeout(() => {
       typeText(DEMO_VENTURE.name, setTypedName, () => {
         setIntroStep(1);
-        // Step 2: type sector
         typeText(DEMO_VENTURE.sector, setTypedSector, () => {
           setIntroStep(2);
-          // Step 3: type description
           typeText(DEMO_VENTURE.description, setTypedDescription, () => {
             setIntroStep(3);
-            // Step 4: after short pause, move to phase slides
             setTimeout(() => setShowIntro(false), 800);
           }, 20);
         }, 60);
       });
     }, 600);
-
     return () => clearTimeout(t1);
   }, [showIntro]);
 
@@ -550,12 +579,11 @@ export default function PhaseCompletionDemo() {
   }
 
   // Regular phase rendering
-  // [ADDED] Intro slide — shown before phase slides, simulates user filling in venture details
+  // [ADDED] Intro slide — shown before phase slides, auto-advances after ~5 seconds
   if (showIntro) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
         <div className="max-w-lg w-full">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">💡</span>
@@ -563,75 +591,46 @@ export default function PhaseCompletionDemo() {
             <h1 className="text-3xl font-black text-white mb-2">Start Your Venture</h1>
             <p className="text-purple-200 text-sm">Every great startup begins with an idea. Tell us about yours.</p>
           </div>
-
-          {/* Form card */}
           <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
-
-            {/* Venture Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Venture Name</label>
               <div className="relative">
-                <input
-                  readOnly
-                  value={typedName}
+                <input readOnly value={typedName}
                   className="w-full border-2 border-indigo-200 rounded-lg px-4 py-3 text-lg font-semibold text-indigo-800 bg-indigo-50 focus:outline-none"
-                  placeholder="e.g. MentalPlus, EcoWaste AI..."
-                />
-                {introStep === 0 && typedName.length > 0 && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-600 animate-pulse" />
-                )}
+                  placeholder="e.g. MentalPlus, EcoWaste AI..." />
+                {introStep === 0 && typedName.length > 0 && <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-600 animate-pulse" />}
               </div>
             </div>
-
-            {/* Sector */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Sector</label>
               <div className="relative">
-                <input
-                  readOnly
-                  value={typedSector}
+                <input readOnly value={typedSector}
                   className="w-full border-2 border-purple-200 rounded-lg px-4 py-3 text-gray-800 bg-purple-50 focus:outline-none"
-                  placeholder="Select your industry..."
-                />
-                {introStep === 1 && typedSector.length > 0 && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-purple-600 animate-pulse" />
-                )}
+                  placeholder="Select your industry..." />
+                {introStep === 1 && typedSector.length > 0 && <span className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-purple-600 animate-pulse" />}
               </div>
             </div>
-
-            {/* Description */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">What does your venture do?</label>
               <div className="relative">
-                <textarea
-                  readOnly
-                  value={typedDescription}
-                  rows={3}
+                <textarea readOnly value={typedDescription} rows={3}
                   className="w-full border-2 border-pink-200 rounded-lg px-4 py-3 text-gray-800 bg-pink-50 focus:outline-none resize-none text-sm"
-                  placeholder="Describe your venture in one sentence..."
-                />
-                {introStep === 2 && typedDescription.length > 0 && (
-                  <span className="absolute right-4 bottom-4 w-0.5 h-4 bg-pink-600 animate-pulse" />
-                )}
+                  placeholder="Describe your venture in one sentence..." />
+                {introStep === 2 && typedDescription.length > 0 && <span className="absolute right-4 bottom-4 w-0.5 h-4 bg-pink-600 animate-pulse" />}
               </div>
             </div>
-
-            {/* Launch button — activates when all fields are typed */}
             <button
               disabled={introStep < 3}
               onClick={() => setShowIntro(false)}
               className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all duration-500 ${
                 introStep >= 3
                   ? "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl hover:scale-105 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
-            >
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}>
               {introStep >= 3 ? "🚀 Launch My Venture →" : "Filling in details..."}
             </button>
           </div>
-
-          {/* Progress dots */}
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-4 mt-6">
             {["Name", "Sector", "Description"].map((label, i) => (
               <div key={i} className={`flex items-center gap-1 text-xs transition-all duration-300 ${introStep > i ? "text-green-400" : "text-white/40"}`}>
                 <span>{introStep > i ? "✓" : "○"}</span>
@@ -662,16 +661,8 @@ export default function PhaseCompletionDemo() {
                   </h1>
                 </div>
 
-                {/* 3 Indicators */}
-                <div className="grid grid-cols-3 gap-3 md:gap-8">
-                  {/* EQUITY */}
-                  <div className="text-center">
-                    <div className="text-[10px] md:text-xs font-bold text-gray-300 mb-1 uppercase tracking-wider">Equity</div>
-                    <div className="text-2xl md:text-4xl font-black text-gray-100">
-                      {currentEquity}%
-                    </div>
-                  </div>
-
+                {/* 2 Indicators — Equity removed */}
+                <div className="grid grid-cols-2 gap-3 md:gap-8">
                   {/* VALUATION */}
                   <div className="text-center">
                     <div className="text-[10px] md:text-xs font-bold text-yellow-300 mb-1 uppercase tracking-wider">Valuation</div>
