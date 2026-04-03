@@ -1,3 +1,4 @@
+// 030426
 "use client"
 import React, { useState, useEffect } from 'react';
 
@@ -11,7 +12,7 @@ const PHASE_CONTENT = {
     emoji: "💡",
     nextPhase: "PLAN",
     progressPercent: 20,
-    clockRotation: 0,
+    clockRotation: 0,  // IDEA at top (0°)
     timeInPhase: "Completed",
     estimatedTime: "2-3 weeks",
     badge: "Idea Validated",
@@ -60,7 +61,7 @@ const PHASE_CONTENT = {
     emoji: "📊",
     nextPhase: "MVP",
     progressPercent: 40,
-    clockRotation: 72,
+    clockRotation: 60, // PLAN at 60°
     timeInPhase: "Completed",
     estimatedTime: "3-4 weeks",
     badge: "Business Strategist",
@@ -123,7 +124,7 @@ const PHASE_CONTENT = {
     emoji: "🛠️",
     nextPhase: "MLP",
     progressPercent: 60,
-    clockRotation: 144,
+    clockRotation: 120, // MVP at 120°
     timeInPhase: "Completed",
     estimatedTime: "4-6 weeks",
     badge: "Builder",
@@ -186,7 +187,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: "BETA",
     progressPercent: 80,
-    clockRotation: 216,
+    clockRotation: 180, // MLP at 180°
     timeInPhase: "Completed",
     estimatedTime: "6-8 weeks",
     badge: "Market Ready",
@@ -262,7 +263,7 @@ const PHASE_CONTENT = {
     emoji: "🎯",
     nextPhase: "GROWTH",
     progressPercent: 100,
-    clockRotation: 288,
+    clockRotation: 240, // BETA at 240°
     timeInPhase: "Completed",
     estimatedTime: "8-12 weeks",
     badge: "Scale Master",
@@ -319,7 +320,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: null,
     progressPercent: 100,
-    clockRotation: 360,
+    clockRotation: 300, // GROWTH at 300°
     timeInPhase: "Active",
     estimatedTime: "Ongoing",
     badge: "Growth Stage",
@@ -685,11 +686,12 @@ export default function PhaseCompletionDemo() {
                     }}
                   />
                   <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                  <text x="100" y="30" className="text-xs font-bold" fill={currentPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
-                  <text x="160" y="80" className="text-xs font-bold" fill={currentPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
-                  <text x="140" y="155" className="text-xs font-bold" fill={currentPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
-                  <text x="60" y="155" className="text-xs font-bold" fill={currentPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
-                  <text x="40" y="80" className="text-xs font-bold" fill={currentPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
+                  <text x="100" y="14" className="text-xs font-bold" fill={currentPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
+                  <text x="172" y="58" className="text-xs font-bold" fill={currentPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
+                  <text x="172" y="148" className="text-xs font-bold" fill={currentPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
+                  <text x="100" y="192" className="text-xs font-bold" fill={currentPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
+                  <text x="28" y="148" className="text-xs font-bold" fill={currentPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
+                  <text x="28" y="58" className="text-xs font-bold" fill={currentPhase === 'growth' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">GROWTH</text>
                   <path 
                     fill="rgba(156, 163, 175, 0.6)"
                     d="M98 100 L102 100 L102 35 L98 35 Z"

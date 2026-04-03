@@ -70,11 +70,12 @@ export default function JourneyPreview() {
                     }}
                   />
                   <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                  <text x="100" y="30" className="text-xs font-bold" fill="#16a34a" textAnchor="middle">IDEA</text>
-                  <text x="160" y="80" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">PLAN</text>
-                  <text x="140" y="155" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MVP</text>
-                  <text x="60" y="155" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MLP</text>
-                  <text x="40" y="80" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">BETA</text>
+                  <text x="100" y="14" className="text-xs font-bold" fill="#16a34a" textAnchor="middle">IDEA</text>
+                  <text x="172" y="58" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">PLAN</text>
+                  <text x="172" y="148" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MVP</text>
+                  <text x="100" y="192" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MLP</text>
+                  <text x="28" y="148" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">BETA</text>
+                  <text x="28" y="58" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">GROWTH</text>
                   <path 
                     fill="rgba(156, 163, 175, 0.6)"
                     d="M98 100 L102 100 L102 35 L98 35 Z"
@@ -139,7 +140,7 @@ export default function JourneyPreview() {
             Watch the Complete StartZig Journey
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            From IDEA to BETA - See how entrepreneurs progress through each phase
+            From IDEA to GROWTH - See how entrepreneurs progress through each phase
           </p>
         </div>
       </Link>
