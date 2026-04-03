@@ -323,14 +323,13 @@ const PHASE_CONTENT = {
     timeInPhase: "Active",
     estimatedTime: "Ongoing",
     badge: "Growth Stage",
-    isSuccessMessage: true,
     
     valuation: {
       // [CHANGED] Pre-money valuation $3M + VC investment $1.5M = post-money $4.5M
       // Velocity Wave Partners invested $1.5M at $3M pre-money valuation
       // equity: founder retains ~67% ($3M / $4.5M post-money)
       before: 5000000,
-      after: 4500000,
+      after: 10000000,
       equity: 67,
       capitalInjection: 1500000
     },
@@ -371,20 +370,6 @@ const PHASE_CONTENT = {
       }
     ],
     
-    successMessage: {
-      title: "Congratulations!",
-      content: `Your StartZig has evolved from an idea to a thriving business with real users and proven traction.
-
-You've entered the Growth phase—where the market takes notice. Your venture continues registering users and increasing marketing spend to accelerate growth.
-
-**What's happening now:**
-Industry leaders are actively scouting for innovative companies like yours. Your progress has positioned you as a potential acquisition target, and market leaders in your sector may approach you with exit opportunities.
-
-**Explore your options:**
-Visit the **Exit Path** to learn about companies interested in acquiring promising StartZigs in the Growth phase. This could be your opportunity for a life-changing exit.
-
-Keep building, keep growing—the best is yet to come.`
-    }
   }
 };
 

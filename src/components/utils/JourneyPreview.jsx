@@ -1,10 +1,11 @@
+// 030426
 "use client"
 import React from 'react';
 import Link from 'next/link';
 
 export default function JourneyPreview() {
   return (
-    <div className="max-w-4xl mx-auto my-12 px-4">
+    <div className="max-w-4xl mx-auto my-8 px-4 sm:px-6">
       
       
       <Link href="/journey" className="block relative group cursor-pointer">
@@ -24,36 +25,28 @@ export default function JourneyPreview() {
             <div className="grid grid-cols-4 gap-8 items-start">
               
               {/* Left 3 columns: Title + 3 Indicators */}
-              <div className="col-span-3">
+              <div className="col-span-3 min-w-0">
                 {/* Title */}
                 <div className="text-center mb-2">
-                  <h1 className="text-lg font-bold text-orange-400">
-                    MVP Phase Complete!
+                  <h1 className="text-sm md:text-lg font-bold text-orange-400">
+                    Idea Phase Complete!
                   </h1>
                 </div>
 
-                <div className="grid grid-cols-3 gap-8">
-                  {/* EQUITY */}
-                  <div className="text-center">
-                    <div className="text-xs font-bold text-gray-300 mb-1 uppercase tracking-wider">Equity</div>
-                    <div className="text-4xl font-black text-gray-100">
-                      90%
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-2 gap-8">
                   {/* VALUATION */}
                   <div className="text-center">
                     <div className="text-xs font-bold text-yellow-300 mb-1 uppercase tracking-wider">Valuation</div>
-                    <div className="text-4xl font-black text-yellow-400">
-                      $1M
+                    <div className="text-2xl md:text-4xl font-black text-yellow-400">
+                      $250K
                     </div>
                   </div>
 
                   {/* PROGRESS */}
                   <div className="text-center">
                     <div className="text-xs font-bold text-green-300 mb-1 uppercase tracking-wider">Progress</div>
-                    <div className="text-4xl font-black text-green-400">
-                      60%
+                    <div className="text-2xl md:text-4xl font-black text-green-400">
+                      20%
                     </div>
                   </div>
                 </div>
@@ -61,32 +54,32 @@ export default function JourneyPreview() {
 
               {/* Right column: CLOCK */}
               <div className="flex justify-center items-center">
-                <svg viewBox="0 0 200 200" className="w-36 h-36">
+                <svg viewBox="0 0 200 200" className="w-20 h-20 md:w-36 md:h-36">
                   <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
                   <circle 
                     cx="100" cy="100" r="90" 
                     fill="none" 
-                    stroke="#fb923c"
+                    stroke="#16a34a"
                     strokeWidth="8" 
                     strokeLinecap="round"
                     strokeDasharray="565"
-                    strokeDashoffset={565 * (1 - 60 / 100)}
+                    strokeDashoffset={565 * (1 - 20 / 100)}
                     style={{
                       transform: 'rotate(-90deg)',
                       transformOrigin: '100px 100px'
                     }}
                   />
                   <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                  <text x="100" y="30" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">IDEA</text>
+                  <text x="100" y="30" className="text-xs font-bold" fill="#16a34a" textAnchor="middle">IDEA</text>
                   <text x="160" y="80" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">PLAN</text>
-                  <text x="140" y="155" className="text-xs font-bold" fill="#f97316" textAnchor="middle">MVP</text>
+                  <text x="140" y="155" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MVP</text>
                   <text x="60" y="155" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">MLP</text>
                   <text x="40" y="80" className="text-xs font-bold" fill="rgba(255,255,255,0.5)" textAnchor="middle">BETA</text>
                   <path 
                     fill="rgba(156, 163, 175, 0.6)"
                     d="M98 100 L102 100 L102 35 L98 35 Z"
                     style={{
-                      transform: 'rotate(144deg)',
+                      transform: 'rotate(0deg)',
                       transformOrigin: '100px 100px'
                     }}
                   />
