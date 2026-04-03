@@ -1,3 +1,4 @@
+// 030426
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -753,10 +754,10 @@ export default function PhaseCompletionDemo() {
           
           {/* Hero Section - RESPONSIVE */}
           <div className="px-4 md:px-8 py-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8 items-start">
+            <div className="flex flex-col items-center">
               
               {/* Left: Title + 3 Indicators */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="w-full text-center">
                 {/* Title */}
                 <div className="text-center mb-3">
                   <h1 className={`text-base md:text-lg font-bold ${phaseColors[currentPhase]} transition-colors duration-500`}>
@@ -784,7 +785,7 @@ export default function PhaseCompletionDemo() {
                 </div>
               </div>
 
-              {/* [REMOVED] Small clock removed from phase slides */}
+
             </div>
           </div>
 
