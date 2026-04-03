@@ -60,7 +60,7 @@ const PHASE_CONTENT = {
     emoji: "📊",
     nextPhase: "MVP",
     progressPercent: 40,
-    clockRotation: 72,
+    clockRotation: 60,
     timeInPhase: "Completed",
     estimatedTime: "3-4 weeks",
     badge: "Business Strategist",
@@ -123,7 +123,7 @@ const PHASE_CONTENT = {
     emoji: "🛠️",
     nextPhase: "MLP",
     progressPercent: 60,
-    clockRotation: 144,
+    clockRotation: 120,
     timeInPhase: "Completed",
     estimatedTime: "4-6 weeks",
     badge: "Builder",
@@ -186,7 +186,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: "BETA",
     progressPercent: 80,
-    clockRotation: 216,
+    clockRotation: 180,
     timeInPhase: "Completed",
     estimatedTime: "6-8 weeks",
     badge: "Market Ready",
@@ -262,7 +262,7 @@ const PHASE_CONTENT = {
     emoji: "🎯",
     nextPhase: "GROWTH",
     progressPercent: 100,
-    clockRotation: 288,
+    clockRotation: 240,
     timeInPhase: "Completed",
     estimatedTime: "8-12 weeks",
     badge: "Scale Master",
@@ -319,7 +319,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: null,
     progressPercent: 100,
-    clockRotation: 324,
+    clockRotation: 300,
     timeInPhase: "Active",
     estimatedTime: "Ongoing",
     badge: "Growth Stage",
@@ -399,8 +399,13 @@ export default function PhaseCompletionDemo() {
 
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [contentVisible, setContentVisible] = useState(false);
-  // [ADDED] showClockOnly — when true, shows only the clock for 3 seconds before the slide content appears
-  const [showClockOnly, setShowClockOnly] = useState(false);
+  // [ADDED] showClockOnly — starts true so clock shows on first load (IDEA phase), then 3s before each transition
+  const [showClockOnly, setShowClockOnly] = useState(true);
+  // Auto-hide clock after 3 seconds on first load
+  useEffect(() => {
+    const t = setTimeout(() => setShowClockOnly(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentEquity, setCurrentEquity] = useState(100);
   const [currentProgress, setCurrentProgress] = useState(0);
@@ -706,43 +711,7 @@ export default function PhaseCompletionDemo() {
                 </div>
               </div>
 
-              {/* Right: CLOCK - hidden on mobile */}
-              <div className="hidden md:flex justify-center items-center">
-                <svg viewBox="0 0 200 200" className="w-36 h-36">
-                  <circle cx="100" cy="100" r="90" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth="8" />
-                  <circle 
-                    cx="100" cy="100" r="90" 
-                    fill="none" 
-                    stroke="#fb923c"
-                    strokeWidth="8" 
-                    strokeLinecap="round"
-                    strokeDasharray="565"
-                    strokeDashoffset={565 * (1 - currentProgress / 100)}
-                    style={{
-                      transform: 'rotate(-90deg)',
-                      transformOrigin: '100px 100px',
-                      transition: 'none'
-                    }}
-                  />
-                  <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                  <text x="100" y="30" className="text-xs font-bold" fill={currentPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
-                  <text x="160" y="80" className="text-xs font-bold" fill={currentPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
-                  <text x="140" y="155" className="text-xs font-bold" fill={currentPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
-                  <text x="60" y="155" className="text-xs font-bold" fill={currentPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
-                  <text x="40" y="80" className="text-xs font-bold" fill={currentPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
-                  <text x="40" y="42" className="text-xs font-bold" fill={currentPhase === 'growth' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">GROWTH</text>
-                  <path 
-                    fill="rgba(156, 163, 175, 0.6)"
-                    d="M98 100 L102 100 L102 35 L98 35 Z"
-                    style={{
-                      transform: `rotate(${content.clockRotation}deg)`,
-                      transformOrigin: '100px 100px',
-                      transition: 'transform 5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                    }}
-                  />
-                  <circle cx="100" cy="100" r="4" fill="rgba(156, 163, 175, 0.8)" />
-                </svg>
-              </div>
+              {/* [REMOVED] Small clock removed from phase slides */}
             </div>
           </div>
 
