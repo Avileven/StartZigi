@@ -401,14 +401,42 @@ export default function PhaseCompletionDemo() {
   const [contentVisible, setContentVisible] = useState(false);
   // [ADDED] showClockOnly — starts true so clock shows on first load (IDEA phase), then 3s before each transition
   const [showClockOnly, setShowClockOnly] = useState(false);
-  // [FIXED] Show clock for 3 seconds after intro ends (when showIntro becomes false)
+  // [ADDED] Animated arc — starts at 879 (empty) then animates to target value
+  const [animatedArcOffset, setAnimatedArcOffset] = useState(879);
+  const [animatedRotation, setAnimatedRotation] = useState(0);
+
+  // [FIXED] Show clock for 3 seconds after intro ends, with animation
   useEffect(() => {
     if (!showIntro) {
       setShowClockOnly(true);
-      const t = setTimeout(() => setShowClockOnly(false), 3000);
-      return () => clearTimeout(t);
+      // Start from empty then animate to correct position
+      setAnimatedArcOffset(879);
+      setAnimatedRotation(0);
+      const t1 = setTimeout(() => {
+        const seg = 879/6;
+        const phaseIdx = PHASES.indexOf(PHASES[0]);
+        setAnimatedArcOffset(879 - seg * (phaseIdx + 1));
+        setAnimatedRotation(PHASE_CONTENT[PHASES[0]].clockRotation);
+      }, 100);
+      const t2 = setTimeout(() => setShowClockOnly(false), 3000);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [showIntro]);
+
+  // [ADDED] When phase changes during clock display, animate to new position
+  useEffect(() => {
+    if (showClockOnly) {
+      setAnimatedArcOffset(879);
+      setAnimatedRotation(0);
+      const seg = 879/6;
+      const phaseIdx = PHASES.indexOf(currentPhase);
+      const t = setTimeout(() => {
+        setAnimatedArcOffset(879 - seg * (phaseIdx + 1));
+        setAnimatedRotation(content.clockRotation);
+      }, 100);
+      return () => clearTimeout(t);
+    }
+  }, [currentPhase, showClockOnly]);
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentEquity, setCurrentEquity] = useState(100);
   const [currentProgress, setCurrentProgress] = useState(0);
@@ -646,6 +674,8 @@ export default function PhaseCompletionDemo() {
 
   // [ADDED] Fullscreen clock shown for 3 seconds when transitioning between phases
   if (showClockOnly) {
+    // [FIXED] Arc and hand are fully dynamic — animate from 879 (empty) to correct offset
+    // Each phase = 879/6 segments. arcOffset goes from 879 (no arc) down to 0 (full circle)
     const seg = 879/6;
     const phaseIdx = PHASES.indexOf(currentPhase);
     const arcOffset = 879 - seg * (phaseIdx + 1);
@@ -655,9 +685,14 @@ export default function PhaseCompletionDemo() {
         <div style={{textAlign:'center'}}>
           <svg width="380" height="380" viewBox="0 0 320 320">
             <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
+            {/* [FIXED] Arc animates smoothly — transition on strokeDashoffset */}
             <circle cx="160" cy="160" r="140" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round"
-              strokeDasharray="879" strokeDashoffset={arcOffset}
-              style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px',transition:'stroke-dashoffset 1s ease'}}/>
+              strokeDasharray="879" strokeDashoffset={animatedArcOffset}
+              style={{
+                transform:'rotate(-90deg)',
+                transformOrigin:'160px 160px',
+                transition:'stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)'
+              }}/>
             <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
             <text x="160" y="64"  fontSize="12" fill={currentPhase==='idea'?'#10b981':'white'} textAnchor="middle" fontWeight={currentPhase==='idea'?'800':'700'}>IDEA</text>
             <text x="247" y="112" fontSize="11" fill={currentPhase==='business_plan'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='business_plan'?'800':'700'}>PLAN</text>
@@ -665,8 +700,13 @@ export default function PhaseCompletionDemo() {
             <text x="160" y="260" fontSize="11" fill={currentPhase==='mlp'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='mlp'?'800':'700'}>MLP</text>
             <text x="73"  y="216" fontSize="11" fill={currentPhase==='beta'?'#f97316':'white'} textAnchor="middle" fontWeight={currentPhase==='beta'?'800':'700'}>BETA</text>
             <text x="73"  y="112" fontSize="10" fill={currentPhase==='growth'?'#10b981':'white'} textAnchor="middle" fontWeight={currentPhase==='growth'?'800':'700'}>GROWTH</text>
+            {/* [FIXED] Hand rotates smoothly via CSS transition on transform */}
             <path fill="rgba(200,190,255,0.85)" d="M158 160 L162 160 L162 75 L158 75 Z"
-              style={{transform:`rotate(${content.clockRotation}deg)`,transformOrigin:'160px 160px',transition:'transform 1s cubic-bezier(0.4,0,0.2,1)'}}/>
+              style={{
+                transform:`rotate(${animatedRotation}deg)`,
+                transformOrigin:'160px 160px',
+                transition:'transform 1.5s cubic-bezier(0.4,0,0.2,1)'
+              }}/>
             <circle cx="160" cy="160" r="6" fill="#8b5cf6"/>
           </svg>
           <div style={{color:activeColor,fontSize:'22px',fontWeight:'700',marginTop:'12px'}}>{content.title}</div>
