@@ -400,12 +400,15 @@ export default function PhaseCompletionDemo() {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [contentVisible, setContentVisible] = useState(false);
   // [ADDED] showClockOnly — starts true so clock shows on first load (IDEA phase), then 3s before each transition
-  const [showClockOnly, setShowClockOnly] = useState(true);
-  // Auto-hide clock after 3 seconds on first load
+  const [showClockOnly, setShowClockOnly] = useState(false);
+  // [FIXED] Show clock for 3 seconds after intro ends (when showIntro becomes false)
   useEffect(() => {
-    const t = setTimeout(() => setShowClockOnly(false), 3000);
-    return () => clearTimeout(t);
-  }, []);
+    if (!showIntro) {
+      setShowClockOnly(true);
+      const t = setTimeout(() => setShowClockOnly(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [showIntro]);
   const [currentValuation, setCurrentValuation] = useState(0);
   const [currentEquity, setCurrentEquity] = useState(100);
   const [currentProgress, setCurrentProgress] = useState(0);
