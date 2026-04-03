@@ -1,4 +1,3 @@
-// 030426
 "use client"
 import React, { useState, useEffect } from 'react';
 
@@ -686,12 +685,12 @@ export default function PhaseCompletionDemo() {
                     }}
                   />
                   <circle cx="100" cy="100" r="70" fill="rgba(147,51,234,0.3)" />
-                  <text x="100" y="14" className="text-xs font-bold" fill={currentPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
-                  <text x="172" y="58" className="text-xs font-bold" fill={currentPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
-                  <text x="172" y="148" className="text-xs font-bold" fill={currentPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
-                  <text x="100" y="192" className="text-xs font-bold" fill={currentPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
-                  <text x="28" y="148" className="text-xs font-bold" fill={currentPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
-                  <text x="28" y="58" className="text-xs font-bold" fill={currentPhase === 'growth' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">GROWTH</text>
+                  <text x="100" y="25" fontSize="8" fill={currentPhase === 'idea' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">IDEA</text>
+                  <text x="165" y="62" fontSize="8" fill={currentPhase === 'business_plan' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">PLAN</text>
+                  <text x="165" y="138" fontSize="8" fill={currentPhase === 'mvp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MVP</text>
+                  <text x="100" y="175" fontSize="8" fill={currentPhase === 'mlp' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">MLP</text>
+                  <text x="35" y="138" fontSize="8" fill={currentPhase === 'beta' ? '#f97316' : 'rgba(255,255,255,0.5)'} textAnchor="middle">BETA</text>
+                  <text x="35" y="62" fontSize="8" fill={currentPhase === 'growth' ? '#10b981' : 'rgba(255,255,255,0.5)'} textAnchor="middle">GROWTH</text>
                   <path 
                     fill="rgba(156, 163, 175, 0.6)"
                     d="M98 100 L102 100 L102 35 L98 35 Z"
