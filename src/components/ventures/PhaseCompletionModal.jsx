@@ -67,7 +67,7 @@ const PHASE_CONTENT = {
     emoji: "📋",
     nextPhase: "MVP",
     progressPercent: 40,
-    clockRotation: 72, // PLAN at 1 o'clock (72 degrees)
+    clockRotation: 60,
     timeInPhase: "Completed",
     
     valuation: {
@@ -122,7 +122,7 @@ const PHASE_CONTENT = {
     emoji: "🚀",
     nextPhase: "MLP",
     progressPercent: 60,
-    clockRotation: 144, // MVP at 4 o'clock (144 degrees)
+    clockRotation: 120,
     timeInPhase: "Completed",
     
     valuation: {
@@ -177,7 +177,7 @@ const PHASE_CONTENT = {
     emoji: "💝",
     nextPhase: "BETA",
     progressPercent: 75,
-    clockRotation: 216, // MLP at 7 o'clock (216 degrees)
+    clockRotation: 180,
     timeInPhase: "Completed",
     
     valuation: {
@@ -237,7 +237,7 @@ const PHASE_CONTENT = {
     emoji: "🎯",
     nextPhase: "GROWTH",
     progressPercent: 90,
-    clockRotation: 288, // BETA at 10 o'clock (288 degrees)
+    clockRotation: 240,
     timeInPhase: "Completed",
     
     valuation: {
