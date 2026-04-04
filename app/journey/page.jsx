@@ -383,6 +383,16 @@ const phaseColors = {
   growth: 'text-green-500'
 };
 
+// Unique color per phase — used for clock arc, hand, and active label
+const PHASE_HEX_COLORS = {
+  idea:          '#10b981',
+  business_plan: '#f97316',
+  mvp:           '#3b82f6',
+  mlp:           '#a855f7',
+  beta:          '#ec4899',
+  growth:        '#eab308',
+};
+
 
 // [ADDED] Separate component so DOM persists and CSS transitions work correctly
 
@@ -482,37 +492,35 @@ export default function PhaseCompletionDemo() {
     return () => clearTimeout(t1);
   }, [showIntro]);
 
+  // Runs after clock disappears so animation is visible
   useEffect(() => {
-    const timer1 = setTimeout(() => setContentVisible(true), 500);
-    
-    const duration = 3000;
-    const steps = 60;
-    const interval = duration / steps;
+    if (showClockOnly) return;
 
+    setContentVisible(false);
+    setCurrentValuation(content.valuation.before);
+    setCurrentProgress(0);
+
+    const timer1 = setTimeout(() => setContentVisible(true), 200);
+    const duration = 2000;
+    const steps = 60;
+    const intervalMs = duration / steps;
     const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
     let step = 0;
     const timer2 = setInterval(() => {
       step++;
-      const progress = step / steps;
-      const easedProgress = easeOut(progress);
-
+      const easedProgress = easeOut(step / steps);
       setCurrentValuation(Math.floor(content.valuation.before + (content.valuation.after - content.valuation.before) * easedProgress));
-      setCurrentEquity(Math.floor(content.valuation.equity));
       setCurrentProgress(Math.floor(content.progressPercent * easedProgress));
-
       if (step >= steps) {
         clearInterval(timer2);
         setCurrentValuation(content.valuation.after);
         setCurrentProgress(content.progressPercent);
       }
-    }, interval);
+    }, intervalMs);
 
-    return () => {
-      clearTimeout(timer1);
-      clearInterval(timer2);
-    };
-  }, [currentPhaseIndex]);
+    return () => { clearTimeout(timer1); clearInterval(timer2); };
+  }, [showClockOnly, currentPhaseIndex]);
 
   const formatValue = (val) => {
     if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
@@ -612,11 +620,11 @@ export default function PhaseCompletionDemo() {
   // [FIXED] Fullscreen clock — uses animatedArcOffset + animatedRotation from state
   // so CSS transitions actually fire (previously used static computed values which skip animation)
   if (showClockOnly) {
-    const activeColor = currentPhase === 'idea' || currentPhase === 'growth' ? '#10b981' : '#f97316';
+    const activeColor = PHASE_HEX_COLORS[currentPhase];
     const phases = ['idea','business_plan','mvp','mlp','beta','growth'];
     const labels = ['IDEA','PLAN','MVP','MLP','BETA','GROWTH'];
     const positions = [{x:160,y:64},{x:247,y:112},{x:247,y:216},{x:160,y:260},{x:73,y:216},{x:73,y:112}];
-    const colors = ['#10b981','#f97316','#f97316','#f97316','#f97316','#10b981'];
+    const colors = phases.map(p => PHASE_HEX_COLORS[p]);
     return (
       <div style={{minHeight:'100vh',background:'rgba(15,10,40,0.97)',display:'flex',alignItems:'center',justifyContent:'center'}}>
         <div style={{textAlign:'center'}}>
