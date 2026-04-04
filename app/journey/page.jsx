@@ -1,6 +1,6 @@
 // 030426
 "use client"
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // All 6 phases data
 const PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
@@ -679,7 +679,44 @@ export default function PhaseCompletionDemo() {
   // [ADDED] Fullscreen clock shown for 3 seconds when transitioning between phases
   if (showClockOnly) {
     const activeColor = currentPhase === 'idea' || currentPhase === 'growth' ? '#10b981' : '#f97316';
-    return <PhaseClockFullscreen phase={currentPhase} content={content} activeColor={activeColor} />;
+    const seg = 879 / 6;
+    const phaseIdx = PHASES.indexOf(currentPhase);
+    const targetOffset = 879 - seg * (phaseIdx + 1);
+    const phases = ['idea','business_plan','mvp','mlp','beta','growth'];
+    const labels = ['IDEA','PLAN','MVP','MLP','BETA','GROWTH'];
+    const positions = [{x:160,y:64},{x:247,y:112},{x:247,y:216},{x:160,y:260},{x:73,y:216},{x:73,y:112}];
+    const colors = ['#10b981','#f97316','#f97316','#f97316','#f97316','#10b981'];
+    return (
+      <div style={{minHeight:'100vh',background:'rgba(15,10,40,0.97)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <div style={{textAlign:'center'}}>
+          <svg width="380" height="380" viewBox="0 0 320 320">
+            <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
+            <circle cx="160" cy="160" r="140" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round"
+              strokeDasharray="879" strokeDashoffset={targetOffset}
+              style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px',transition:'stroke-dashoffset 1.5s ease'}}/>
+            <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
+            {labels.map((label, i) => (
+              <text key={i} x={positions[i].x} y={positions[i].y}
+                fontSize={i===5?'10':'11'}
+                fill={phases[i]===currentPhase ? colors[i] : 'white'}
+                textAnchor="middle"
+                fontWeight={phases[i]===currentPhase?'800':'700'}>
+                {label}
+              </text>
+            ))}
+            <path fill="rgba(200,190,255,0.85)" d="M158 160 L162 160 L162 75 L158 75 Z"
+              style={{
+                transform:`rotate(${content.clockRotation}deg)`,
+                transformOrigin:'160px 160px',
+                transition:'transform 1.5s ease'
+              }}/>
+            <circle cx="160" cy="160" r="6" fill="#8b5cf6"/>
+          </svg>
+          <div style={{color:activeColor,fontSize:'22px',fontWeight:'700',marginTop:'12px'}}>{content.title}</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:'14px',marginTop:'4px'}}>{content.subtitle}</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -809,70 +846,3 @@ export default function PhaseCompletionDemo() {
     </div>
   );
 }
-
-function PhaseClockFullscreen({ phase, content, activeColor }) {
-  const arcRef = useRef(null);
-  const handRef = useRef(null);
-  const seg = 879 / 6;
-  const phaseIdx = ['idea','business_plan','mvp','mlp','beta','growth'].indexOf(phase);
-  const targetOffset = 879 - seg * (phaseIdx + 1);
-  const targetRotation = content.clockRotation;
-
-  useEffect(() => {
-    // Start from empty, then animate to target after 50ms
-    if (arcRef.current) {
-      arcRef.current.style.transition = 'none';
-      arcRef.current.style.strokeDashoffset = '879';
-    }
-    if (handRef.current) {
-      handRef.current.style.transition = 'none';
-      handRef.current.style.transform = 'rotate(0deg)';
-    }
-    const t = setTimeout(() => {
-      if (arcRef.current) {
-        arcRef.current.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)';
-        arcRef.current.style.strokeDashoffset = String(targetOffset);
-      }
-      if (handRef.current) {
-        handRef.current.style.transition = 'transform 1.5s cubic-bezier(0.4,0,0.2,1)';
-        handRef.current.style.transformOrigin = '160px 160px';
-        handRef.current.style.transform = `rotate(${targetRotation}deg)`;
-      }
-    }, 50);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  const phases = ['idea','business_plan','mvp','mlp','beta','growth'];
-  const labels = ['IDEA','PLAN','MVP','MLP','BETA','GROWTH'];
-  const positions = [{x:160,y:64},{x:247,y:112},{x:247,y:216},{x:160,y:260},{x:73,y:216},{x:73,y:112}];
-  const colors = ['#10b981','#f97316','#f97316','#f97316','#f97316','#10b981'];
-
-  return (
-    <div style={{minHeight:'100vh',background:'rgba(15,10,40,0.97)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{textAlign:'center'}}>
-        <svg width="380" height="380" viewBox="0 0 320 320">
-          <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
-          <circle ref={arcRef} cx="160" cy="160" r="140" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round"
-            strokeDasharray="879" strokeDashoffset="879"
-            style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px'}}/>
-          <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
-          {labels.map((label, i) => (
-            <text key={i} x={positions[i].x} y={positions[i].y}
-              fontSize={i===5?'10':'11'}
-              fill={phases[i]===phase ? colors[i] : 'white'}
-              textAnchor="middle"
-              fontWeight={phases[i]===phase?'800':'700'}>
-              {label}
-            </text>
-          ))}
-          <path ref={handRef} fill="rgba(200,190,255,0.85)" d="M158 160 L162 160 L162 75 L158 75 Z"
-            style={{transformOrigin:'160px 160px'}}/>
-          <circle cx="160" cy="160" r="6" fill="#8b5cf6"/>
-        </svg>
-        <div style={{color:activeColor,fontSize:'22px',fontWeight:'700',marginTop:'12px'}}>{content.title}</div>
-        <div style={{color:'rgba(255,255,255,0.5)',fontSize:'14px',marginTop:'4px'}}>{content.subtitle}</div>
-      </div>
-    </div>
-  );
-}
-
