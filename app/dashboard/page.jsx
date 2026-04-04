@@ -542,6 +542,17 @@ if (userVentures.length === 0) {
           });
           if (recentPhaseComplete) {
             // Load funding events to show investment data in modal
+            // [FIXED] Calculate liveBalance from activeVenture directly so modal gets correct value immediately
+            const startingCapital = activeVenture.virtual_capital || 0;
+            const monthlyBurn = activeVenture.monthly_burn_rate || 5000;
+            let modalBalance = startingCapital;
+            if (activeVenture.burn_rate_start) {
+              const startTime = new Date(activeVenture.burn_rate_start).getTime();
+              const secondsElapsed = (Date.now() - startTime) / 1000;
+              const burnPerSecond = monthlyBurn / (30 * 24 * 60 * 60);
+              modalBalance = Math.floor(Math.max(0, startingCapital - (secondsElapsed * burnPerSecond)));
+            }
+            setLiveBalance(modalBalance);
             try {
               const events = await FundingEvent.filter({ venture_id: activeVenture.id }, "-created_date");
               setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: events });
