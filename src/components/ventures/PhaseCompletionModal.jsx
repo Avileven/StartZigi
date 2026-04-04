@@ -1,4 +1,4 @@
-// 040426
+// 310326
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
@@ -306,24 +306,24 @@ export default function PhaseCompletionModal({
 }) {
   const [valuationAnimated, setValuationAnimated] = useState(false);
   const [showClockOnly, setShowClockOnly] = useState(false);
-  const [animatedArcOffset, setAnimatedArcOffset] = useState(565);
+  const [animatedArcOffset, setAnimatedArcOffset] = useState(879);
   const [animatedRotation, setAnimatedRotation] = useState(0);
 
   const content = completedPhase ? PHASE_CONTENT[completedPhase] : null;
 
+  // Exact same logic as page.jsx
   useEffect(() => {
     if (isOpen && content) {
-      // Show clock first, then modal content after 3 seconds
       setShowClockOnly(true);
       setValuationAnimated(false);
-      setAnimatedArcOffset(565);
+      setAnimatedArcOffset(879);
       setAnimatedRotation(0);
 
+      const PHASES = ['idea','business_plan','mvp','mlp','beta','growth'];
       const t1 = setTimeout(() => {
-        const seg = 565 / 5;
-        const phases = ['idea','business_plan','mvp','mlp','beta'];
-        const phaseIdx = phases.indexOf(completedPhase);
-        setAnimatedArcOffset(565 - seg * (phaseIdx + 1));
+        const seg = 879 / 6;
+        const phaseIdx = PHASES.indexOf(completedPhase);
+        setAnimatedArcOffset(879 - seg * (phaseIdx + 1));
         setAnimatedRotation(content.clockRotation);
       }, 100);
 
@@ -353,25 +353,26 @@ export default function PhaseCompletionModal({
     return realValuation; // 100% equity until investment
   };
 
-  // Full-screen clock shown for 3 seconds before modal content
+  // Exact copy from page.jsx — proven working clock
   if (showClockOnly) {
-    const activeColor = PHASE_HEX_COLORS[completedPhase] || '#8b5cf6';
-    const phases = ['idea','business_plan','mvp','mlp','beta'];
-    const labels = ['IDEA','PLAN','MVP','MLP','BETA'];
-    const positions = [{x:160,y:44},{x:258,y:105},{x:258,y:215},{x:160,y:276},{x:62,y:215}];
+    const activeColor = PHASE_HEX_COLORS[completedPhase];
+    const phases = ['idea','business_plan','mvp','mlp','beta','growth'];
+    const labels = ['IDEA','PLAN','MVP','MLP','BETA','GROWTH'];
+    const positions = [{x:160,y:64},{x:247,y:112},{x:247,y:216},{x:160,y:260},{x:73,y:216},{x:73,y:112}];
+    const colors = phases.map(p => PHASE_HEX_COLORS[p]);
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(15,10,40,0.97)'}}>
         <div style={{textAlign:'center'}}>
           <svg width="380" height="380" viewBox="0 0 320 320">
             <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
             <circle cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
-              strokeDasharray="565" strokeDashoffset={animatedArcOffset}
+              strokeDasharray="879" strokeDashoffset={animatedArcOffset}
               style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px',transition:'stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)'}}/>
             <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
             {labels.map((label, i) => (
               <text key={i} x={positions[i].x} y={positions[i].y}
                 fontSize={phases[i]===completedPhase?'12':'10'}
-                fill={phases[i]===completedPhase ? PHASE_HEX_COLORS[phases[i]] : 'rgba(255,255,255,0.5)'}
+                fill={phases[i]===completedPhase ? colors[i] : 'rgba(255,255,255,0.5)'}
                 textAnchor="middle"
                 fontWeight={phases[i]===completedPhase?'800':'600'}>
                 {label}
