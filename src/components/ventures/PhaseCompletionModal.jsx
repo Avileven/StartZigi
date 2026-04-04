@@ -317,7 +317,7 @@ export default function PhaseCompletionModal({
   // Falls back to static value if venture data is not available.
   const realValuation = venture?.valuation || content.valuation.after;
   // [CHANGED] Use liveBalance (real-time) if available, fallback to DB value
-  const realCapital = liveBalance || venture?.virtual_capital || 0;
+  const realCapital = (liveBalance != null && liveBalance > 0) ? liveBalance : (venture?.virtual_capital ?? 0);
   const realFoundersCount = venture?.founders_count || 1;
 
   // [ADDED] Check if there was an investment in the recent funding events
