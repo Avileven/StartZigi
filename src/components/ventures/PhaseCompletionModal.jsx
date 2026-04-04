@@ -525,6 +525,18 @@ export default function PhaseCompletionModal({
           </div>
         </div>
 
+        {/* Valuation — full width below grid */}
+        <div className="px-8 pb-6">
+          <ValuationCounter
+            before={content.valuation.before}
+            after={realValuation}
+            equity={content.valuation.equity}
+            stakeValue={realCapital}
+            animate={valuationAnimated}
+            capitalLabel="Current Balance"
+          />
+        </div>
+
         {/* Footer */}
         <div className="bg-gray-50 px-8 py-6 flex items-center justify-between border-t">
           <div className="text-sm text-gray-600">
