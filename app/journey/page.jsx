@@ -409,6 +409,10 @@ export default function PhaseCompletionDemo() {
   const [animatedArcOffset, setAnimatedArcOffset] = useState(879);
   const [animatedRotation, setAnimatedRotation] = useState(0);
 
+  // [MOVED UP] These must be declared before useEffects that reference them
+  const currentPhase = PHASES[currentPhaseIndex];
+  const content = PHASE_CONTENT[currentPhase];
+
   // [FIXED] Show clock for 3 seconds after intro ends, with animation
   useEffect(() => {
     if (!showIntro) {
@@ -445,8 +449,7 @@ export default function PhaseCompletionDemo() {
   const [currentEquity, setCurrentEquity] = useState(100);
   const [currentProgress, setCurrentProgress] = useState(0);
 
-  const currentPhase = PHASES[currentPhaseIndex];
-  const content = PHASE_CONTENT[currentPhase];
+  // (currentPhase and content declared above useEffects)
 
   // [ADDED] Typing animation — runs on mount, types each field then advances to phase slides after ~5 seconds
   useEffect(() => {
@@ -540,76 +543,6 @@ export default function PhaseCompletionDemo() {
       }, 300);
     }
   };
-
-  // Special rendering for GROWTH phase
-  if (content.isSuccessMessage) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-900 to-teal-900 flex items-center justify-center p-4">
-        <div className="max-w-3xl w-full">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center">
-            <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-              {content.title}
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">{content.subtitle}</p>
-            
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 mb-8 text-left">
-              <div className="prose prose-lg max-w-none">
-                {content.successMessage.content.split('\n\n').map((paragraph, index) => {
-                  if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                    return (
-                      <h3 key={index} className="text-xl font-bold text-gray-900 mt-6 mb-3">
-                        {paragraph.replace(/\*\*/g, '')}
-                      </h3>
-                    );
-                  }
-                  return (
-                    <p key={index} className="text-gray-700 leading-relaxed mb-4">
-                      {paragraph.split('**').map((part, i) => 
-                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                      )}
-                    </p>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={handlePrev}
-                className="px-8 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl transition-colors"
-              >
-                ← Previous Phase
-              </button>
-              <a
-                href="/ma"
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-colors"
-              >
-                Visit Exit Path →
-              </a>
-            </div>
-          </div>
-
-          {/* Phase Navigator */}
-          <div className="flex justify-center gap-2 mt-6">
-            {PHASES.map((phase, index) => (
-              <button
-                key={phase}
-                onClick={() => {
-                  setContentVisible(false);
-                  setTimeout(() => setCurrentPhaseIndex(index), 300);
-                }}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  index === currentPhaseIndex
-                    ? 'bg-white w-8'
-                    : 'bg-white/30 hover:bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Regular phase rendering
   // [ADDED] Intro slide — shown before phase slides, auto-advances after ~5 seconds
