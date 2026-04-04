@@ -1,4 +1,4 @@
-// 310326
+// 040426
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
@@ -282,6 +282,16 @@ const PHASE_CONTENT = {
   }
 };
 
+// Unique color per phase — used for clock arc, hand, and active label
+const PHASE_HEX_COLORS = {
+  idea:          '#10b981',
+  business_plan: '#f97316',
+  mvp:           '#3b82f6',
+  mlp:           '#a855f7',
+  beta:          '#ec4899',
+  growth:        '#eab308',
+};
+
 // [CHANGED] Added venture and fundingEvents props to show real venture data.
 // venture — the current venture object from DB (valuation, virtual_capital, founders_count)
 // fundingEvents — list of investments received (to show in achievements)
@@ -295,23 +305,38 @@ export default function PhaseCompletionModal({
   liveBalance
 }) {
   const [valuationAnimated, setValuationAnimated] = useState(false);
+  const [showClockOnly, setShowClockOnly] = useState(false);
+  const [animatedArcOffset, setAnimatedArcOffset] = useState(565);
+  const [animatedRotation, setAnimatedRotation] = useState(0);
 
-  // Removed auto-close - modal stays until user clicks Close
+  const content = completedPhase ? PHASE_CONTENT[completedPhase] : null;
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && content) {
+      // Show clock first, then modal content after 3 seconds
+      setShowClockOnly(true);
       setValuationAnimated(false);
-      
-      // Start valuation animation after delay
-      setTimeout(() => {
-        setValuationAnimated(true);
-      }, 800);
+      setAnimatedArcOffset(565);
+      setAnimatedRotation(0);
+
+      const t1 = setTimeout(() => {
+        const seg = 565 / 5;
+        const phases = ['idea','business_plan','mvp','mlp','beta'];
+        const phaseIdx = phases.indexOf(completedPhase);
+        setAnimatedArcOffset(565 - seg * (phaseIdx + 1));
+        setAnimatedRotation(content.clockRotation);
+      }, 100);
+
+      const t2 = setTimeout(() => {
+        setShowClockOnly(false);
+        setTimeout(() => setValuationAnimated(true), 800);
+      }, 3000);
+
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-  }, [isOpen]);
+  }, [isOpen, completedPhase]);
 
   if (!isOpen || !completedPhase) return null;
-
-  const content = PHASE_CONTENT[completedPhase];
   if (!content) return null;
 
   // [CHANGED] Use real venture valuation from DB instead of static PHASE_CONTENT value.
@@ -327,6 +352,45 @@ export default function PhaseCompletionModal({
   const calculateStakeValue = () => {
     return realValuation; // 100% equity until investment
   };
+
+  // Full-screen clock shown for 3 seconds before modal content
+  if (showClockOnly) {
+    const activeColor = PHASE_HEX_COLORS[completedPhase] || '#8b5cf6';
+    const phases = ['idea','business_plan','mvp','mlp','beta'];
+    const labels = ['IDEA','PLAN','MVP','MLP','BETA'];
+    const positions = [{x:160,y:44},{x:258,y:105},{x:258,y:215},{x:160,y:276},{x:62,y:215}];
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:'rgba(15,10,40,0.97)'}}>
+        <div style={{textAlign:'center'}}>
+          <svg width="380" height="380" viewBox="0 0 320 320">
+            <circle cx="160" cy="160" r="140" fill="rgba(99,66,220,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
+            <circle cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
+              strokeDasharray="565" strokeDashoffset={animatedArcOffset}
+              style={{transform:'rotate(-90deg)',transformOrigin:'160px 160px',transition:'stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)'}}/>
+            <circle cx="160" cy="160" r="60" fill="rgba(60,40,160,0.45)"/>
+            {labels.map((label, i) => (
+              <text key={i} x={positions[i].x} y={positions[i].y}
+                fontSize={phases[i]===completedPhase?'12':'10'}
+                fill={phases[i]===completedPhase ? PHASE_HEX_COLORS[phases[i]] : 'rgba(255,255,255,0.5)'}
+                textAnchor="middle"
+                fontWeight={phases[i]===completedPhase?'800':'600'}>
+                {label}
+              </text>
+            ))}
+            <path fill="rgba(200,190,255,0.85)" d="M158 160 L162 160 L162 75 L158 75 Z"
+              style={{
+                transform:`rotate(${animatedRotation}deg)`,
+                transformOrigin:'160px 160px',
+                transition:'transform 1.5s cubic-bezier(0.4,0,0.2,1)'
+              }}/>
+            <circle cx="160" cy="160" r="6" fill="#8b5cf6"/>
+          </svg>
+          <div style={{color:activeColor,fontSize:'22px',fontWeight:'700',marginTop:'12px'}}>{content.title}</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:'14px',marginTop:'4px'}}>{content.subtitle}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -357,7 +421,7 @@ export default function PhaseCompletionModal({
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-3 gap-8 p-8">
+        <div className="grid grid-cols-2 gap-8 p-8">
           
           {/* Left: Next Challenges */}
           <div className="space-y-4">
@@ -394,64 +458,6 @@ export default function PhaseCompletionModal({
                 <span className="font-medium">Estimated: {content.estimatedTime}</span>
               </div>
             </div>
-          </div>
-
-          {/* Center: Clock + Valuation */}
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="rounded-full p-2 bg-white shadow-lg">
-              <svg viewBox="0 0 200 200" className="w-56 h-56">
-                <circle cx="100" cy="100" r="90" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="12" />
-                <circle 
-                  cx="100" cy="100" r="90" 
-                  fill="none" 
-                  stroke="#8b5cf6" 
-                  strokeWidth="12" 
-                  strokeLinecap="round"
-                  strokeDasharray="565"
-                  strokeDashoffset={565 * (1 - content.progressPercent / 100)}
-                  style={{
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: '100px 100px',
-                    transition: 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                  }}
-                />
-                <circle cx="100" cy="100" r="70" fill="white" />
-                <text x="100" y="30" className="text-xs font-bold" fill={completedPhase === 'idea' ? '#16a34a' : '#9ca3af'} textAnchor="middle">IDEA</text>
-                <text x="160" y="80" className="text-xs font-bold" fill={completedPhase === 'business_plan' ? '#f97316' : '#9ca3af'} textAnchor="middle">PLAN</text>
-                <text x="140" y="155" className="text-xs font-bold" fill={completedPhase === 'mvp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MVP</text>
-                <text x="60" y="155" className="text-xs font-bold" fill={completedPhase === 'mlp' ? '#f97316' : '#9ca3af'} textAnchor="middle">MLP</text>
-                <text x="40" y="80" className="text-xs font-bold" fill={completedPhase === 'beta' ? '#f97316' : '#9ca3af'} textAnchor="middle">BETA</text>
-                <path 
-                  fill="#6b7280" 
-                  opacity="0.7"
-                  d="M97 100 L103 100 L103 30 L97 30 Z"
-                  style={{
-                    transform: `rotate(${content.clockRotation}deg)`,
-                    transformOrigin: '100px 100px',
-                    transition: 'transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1)'
-                  }}
-                />
-                <circle cx="100" cy="100" r="5" fill="#8b5cf6" />
-              </svg>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                {content.progressPercent}%
-              </div>
-              <div className="text-sm text-gray-500 font-medium mt-1">Overall Progress</div>
-            </div>
-
-            {/* Valuation */}
-            {/* [CHANGED] Using real venture data — valuation and capital from DB */}
-            <ValuationCounter
-              before={content.valuation.before}
-              after={realValuation}
-              equity={content.valuation.equity}
-              stakeValue={realCapital}
-              animate={valuationAnimated}
-              capitalLabel="Current Balance"
-            />
           </div>
 
           {/* Right: Achievements */}
