@@ -312,7 +312,6 @@ export default function PhaseCompletionModal({
   useEffect(() => {
     if (isOpen && content) {
       setShowClockOnly(true);
-      setValuationAnimated(false);
       setAnimatedArcOffset(879);
       setAnimatedRotation(0);
       const PHASES = ['idea','business_plan','mvp','mlp','beta','growth'];
