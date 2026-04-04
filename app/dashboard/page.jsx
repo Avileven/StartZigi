@@ -125,7 +125,7 @@ export default function Dashboard() {
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
   // [ADDED] Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
-  const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents }
+  const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents, venture }
   const [liveBalance, setLiveBalance] = useState(0);
   //new valuation
   const [currentValuation, setCurrentValuation] = useState(0);
@@ -555,11 +555,11 @@ if (userVentures.length === 0) {
             setLiveBalance(modalBalance);
             try {
               const events = await FundingEvent.filter({ venture_id: activeVenture.id }, "-created_date");
-              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: events });
+              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: events, venture: activeVenture });
               setShowPhaseModal(true);
             } catch (e) {
               console.error('Could not load funding events for phase modal:', e);
-              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: [] });
+              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: [], venture: activeVenture });
               setShowPhaseModal(true);
             }
           }
@@ -1276,7 +1276,7 @@ if (showToS) {
           isOpen={showPhaseModal}
           onClose={() => setShowPhaseModal(false)}
           completedPhase={phaseModalData.phase}
-          venture={currentVenture}
+          venture={phaseModalData.venture || currentVenture}
           fundingEvents={phaseModalData.fundingEvents}
           liveBalance={liveBalance}
         />
@@ -1314,7 +1314,7 @@ if (showToS) {
       {isAngelPitchOpen && pitchInvestor && currentVenture && (
         <PitchModal
           investor={pitchInvestor}
-          venture={currentVenture}
+          venture={phaseModalData.venture || currentVenture}
           isOpen={isAngelPitchOpen}
           onClose={() => {
             setIsAngelPitchOpen(false);
@@ -1342,7 +1342,7 @@ if (showToS) {
       {isVCScheduleModalOpen && selectedVCMeeting && currentVenture && (
         <VCScheduleMeetingModal
           vcMeeting={selectedVCMeeting}
-          venture={currentVenture}
+          venture={phaseModalData.venture || currentVenture}
           isFollowup={isVCFollowup}
           onClose={() => {
             setIsVCScheduleModalOpen(false);
