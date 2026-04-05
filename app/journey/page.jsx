@@ -171,7 +171,7 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Build Your MLP",
-        description: "Create your Minimum Lovable Product"
+        description: "Create your Minimum Lovable Product and Received 10 feedbacks from the community"
       },
       {
         id: 3,
@@ -242,7 +242,7 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Beta registration",
-        description: "Invite users to sign into your beta"
+        description: "Invite at least 50 users to sign into your beta"
       },
       {
         id: 3,
@@ -339,7 +339,7 @@ const PHASE_CONTENT = {
       {
         id: 1,
         title: "🏦 VC Investment Secured",
-        description: "Velocity Wave Partners invested at $3M pre-money valuation",
+        description: "Velocity Wave Partners invested $5M at $5M pre-money valuation",
         icon: "💼",
         value: "$1,500,000"
       },

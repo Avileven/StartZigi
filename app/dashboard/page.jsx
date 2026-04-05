@@ -446,7 +446,7 @@ if (userVentures.length === 0) {
           // Auto-check: if in beta phase and enough testers, move to growth
           if (activeVenture.phase === 'beta') {
             const betaTesters = await BetaTester.filter({ venture_id: activeVenture.id });
-            if (betaTesters.length >= 10) {
+            if (betaTesters.length >= 50) {
               await Venture.update(activeVenture.id, { phase: 'growth' });
               await VentureMessage.create({
                 venture_id: activeVenture.id,
