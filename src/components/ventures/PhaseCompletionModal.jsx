@@ -1,3 +1,4 @@
+// 050426
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
@@ -157,7 +158,7 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Build Your MLP",
-        description: "Create your Minimum Lovable Product"
+        description: "Create your Minimum Lovable Product and Received 10 feedbacks from the community"
       },
       {
         id: 3,
@@ -212,7 +213,7 @@ const PHASE_CONTENT = {
       {
         id: 2,
         title: "Beta registration",
-        description: "Invite users to sign into your beta"
+        description: "Invite at least 50 users to sign into your beta"
       },
       {
         id: 3,
