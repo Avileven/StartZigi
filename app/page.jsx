@@ -1,4 +1,4 @@
-// Home page - static version, no expand/collapse
+// Home page - static version v2
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -17,39 +17,38 @@ function BenefitsSection() {
             </span>
           </h3>
           <p className="text-lg text-white/70 max-w-3xl mx-auto">
-            Taking an idea to market is one of the loneliest and most complex journeys a founder can take. It demands professional knowledge, community support, constant pressure, tough decisions — and often multiple rounds of funding. StartZig was built for exactly this.
+            Taking an idea to market is one of the loneliest and most complex journeys a founder can take. It demands professional knowledge, community support, constant pressure, tough decisions, and often multiple rounds of funding. StartZig was built for exactly this.
           </p>
-          <p className="text-base text-white/50 mt-4">Here is a partial list of what the platform gives you:</p>
         </div>
 
         <div className="space-y-10">
 
-          <div className="border-t border-white/10 pt-8">
-            <h4 className="text-xl font-bold text-white mb-4">Advanced Tools for Building Your Venture</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-4">From planning to product — we provide the tools founders need at every stage of their venture's development.</p>
-            <div className="space-y-3 pl-6">
-              <p className="text-white/70 text-base leading-relaxed">Business planning tools to structure your strategy and financial model</p>
-              <p className="text-white/70 text-base leading-relaxed">Product development tools at different stages of your product — including a dedicated studio for building prototypes and mockups</p>
-              <p className="text-white/70 text-base leading-relaxed">Marketing tools — run campaigns, build your landing page, and promote your venture to early users</p>
-              <p className="text-white/70 text-base leading-relaxed">A built-in AI mentor that accompanies you through every section and task — providing guidance, feedback, and professional support at every step</p>
+          <div>
+            <h4 className="text-xl font-bold text-white mb-3">Advanced Tools for Building Your Venture</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-3">From planning to product, we provide the tools founders need at every stage of their venture's development.</p>
+            <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• Business planning tools to structure your strategy and financial model</p>
+              <p className="text-white/70 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
+              <p className="text-white/70 text-base leading-relaxed">• Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
+              <p className="text-white/70 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-8">
-            <h4 className="text-xl font-bold text-white mb-4">Fundraising</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-4">A wide range of virtual private and institutional investors you can approach and pitch to.</p>
-            <div className="space-y-3 pl-6">
-              <p className="text-white/70 text-base leading-relaxed">A real simulation of raising capital — from angel investors to venture capital firms</p>
-              <p className="text-white/70 text-base leading-relaxed">Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
+          <div>
+            <h4 className="text-xl font-bold text-white mb-3">Fundraising</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-3">A wide range of virtual private and institutional investors you can approach and pitch to.</p>
+            <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• A real simulation of raising capital, from angel investors to venture capital firms</p>
+              <p className="text-white/70 text-base leading-relaxed">• Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-8">
-            <h4 className="text-xl font-bold text-white mb-4">Community & Users</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-4">Get structured feedback on your product from real community members.</p>
-            <div className="space-y-3 pl-6">
-              <p className="text-white/70 text-base leading-relaxed">Run a beta testing program — invite users to sign up and test your product at different stages</p>
-              <p className="text-white/70 text-base leading-relaxed">Invite a co-founder to join your venture and build your team</p>
+          <div>
+            <h4 className="text-xl font-bold text-white mb-3">Community & Users</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-3">Get structured feedback on your product from real community members.</p>
+            <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• Run a beta testing program, invite users to sign up and test your product at different stages</p>
+              <p className="text-white/70 text-base leading-relaxed">• Invite a co-founder to join your venture and build your team</p>
             </div>
           </div>
 
@@ -70,28 +69,28 @@ function WhoSection() {
             </span>
           </h2>
           <p className="text-lg text-white/70 max-w-2xl mx-auto">
-            StartZig is built for learning, testing, and momentum — whether you're exploring, building, or teaching.
+            StartZig is built for learning, testing, and momentum, whether you're exploring, building, or teaching.
           </p>
         </div>
 
         <div className="space-y-8">
 
-          <div className="border-t border-white/10 pt-6">
+          <div>
             <h3 className="text-xl font-bold text-white mb-3">Experience the Startup World</h3>
             <p className="text-white/80 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round?</p>
-            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">StartZig puts you in the founder's seat — from your first product idea all the way to scaling your company and landing an exit.</p>
+            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">StartZig puts you in the founder's seat, from your first product idea all the way to scaling your company and landing an exit.</p>
           </div>
 
-          <div className="border-t border-white/10 pt-6">
+          <div>
             <h3 className="text-xl font-bold text-white mb-3">Entrepreneurs with an Idea</h3>
-            <p className="text-white/80 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture — with a dedicated AI mentor by your side.</p>
-            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine — helping you grow a viral community of founders and early adopters around your product.</p>
+            <p className="text-white/80 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture, with a dedicated AI mentor by your side.</p>
+            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine, helping you grow a viral community of founders and early adopters around your product.</p>
           </div>
 
-          <div className="border-t border-white/10 pt-6">
+          <div>
             <h3 className="text-xl font-bold text-white mb-3">Students, Learners & Educators</h3>
             <p className="text-white/80 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge.</p>
-            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">StartZig gives students hands-on experience of the full startup journey — from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
+            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">StartZig gives students hands-on experience of the full startup journey, from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
           </div>
 
         </div>
