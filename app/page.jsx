@@ -379,9 +379,9 @@ export default function Home() {
         </div>
       </div>
 
-      <DashboardMockup />
-      <BenefitsSection />
       <JourneyPreview />
+      <BenefitsSection />
+      <DashboardMockup />
       <WhoSection />
     </div>
   );
