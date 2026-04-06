@@ -55,7 +55,7 @@ const PHASES = [
 
 const NAV_ITEMS = ["Home", "Dashboard", "Exit Path", "Landing Page", "Beta Page", "Angel Arena", "VC Marketplace", "My Account"];
 
-export default function DashboardMockup() {
+function DashboardMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [visibleMsgs, setVisibleMsgs] = useState([]);
   const [toolCount, setToolCount] = useState(4);
