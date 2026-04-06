@@ -1,4 +1,4 @@
-// Home page - static version v3
+// Home page - static version v4
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -10,14 +10,14 @@ function BenefitsSection() {
   return (
     <div className="py-24 sm:py-32 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h3 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="mb-12">
+          <h3 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
               Everything You Need to Build a Startup
             </span>
           </h3>
-          <p className="text-lg text-white/70 max-w-3xl mx-auto">
-            We often hear about the big exits and the overnight success stories — but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story — these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
+          <p className="text-lg text-white/70 max-w-3xl">
+            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
           </p>
         </div>
 
@@ -35,8 +35,8 @@ function BenefitsSection() {
 
           <div>
             <h4 className="text-xl font-bold text-white mb-3">Fundraising</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-3">A wide range of virtual private and institutional investors you can approach and pitch to.</p>
             <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• A wide range of virtual private and institutional investors you can approach and pitch to</p>
               <p className="text-white/70 text-base leading-relaxed">• A real simulation of raising capital, from angel investors to venture capital firms</p>
               <p className="text-white/70 text-base leading-relaxed">• Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
             </div>
@@ -44,8 +44,8 @@ function BenefitsSection() {
 
           <div>
             <h4 className="text-xl font-bold text-white mb-3">Community & Users</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-3">Get structured feedback on your product from real community members.</p>
             <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• Get structured feedback on your product from real community members</p>
               <p className="text-white/70 text-base leading-relaxed">• Run a beta testing program, invite users to sign up and test your product at different stages</p>
               <p className="text-white/70 text-base leading-relaxed">• Invite a co-founder to join your venture and build your team</p>
             </div>
@@ -61,15 +61,12 @@ function WhoSection() {
   return (
     <div className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
+        <div className="mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
               Who can benefit from StartZig?
             </span>
           </h2>
-          <p className="text-lg text-white/70 max-w-2xl mx-auto">
-            StartZig is built for learning, testing, and momentum, whether you're exploring, building, or teaching.
-          </p>
         </div>
 
         <div className="space-y-8">
