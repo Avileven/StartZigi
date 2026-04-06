@@ -1,4 +1,4 @@
-// Home page - No cards, dark blue-purple background, with footer
+// Home page - static version, no expand/collapse
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -6,63 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import JourneyPreview from "@/components/utils/JourneyPreview";
 
-const BENEFITS = [
-  {
-    key: "tools",
-    title: "Advanced Tools for Building Your Venture",
-    intro: "From planning to product — we provide the tools founders need at every stage of their venture's development.",
-    items: [
-      "Business planning tools to structure your strategy and financial model",
-      "Product development tools at different stages of your product — including a dedicated studio for building prototypes and mockups",
-      "Marketing tools — run campaigns, build your landing page, and promote your venture to early users",
-      "A built-in AI mentor that accompanies you through every section and task — providing guidance, feedback, and professional support at every step",
-    ],
-  },
-  {
-    key: "fundraising",
-    title: "Fundraising",
-    intro: "A wide range of virtual private and institutional investors you can approach and pitch to.",
-    items: [
-      "A real simulation of raising capital — from angel investors to venture capital firms",
-      "Practice your pitch, choose the right investor for your stage, and negotiate your terms",
-    ],
-  },
-  {
-    key: "community",
-    title: "Community & Users",
-    intro: "Get structured feedback on your product from real community members.",
-    items: [
-      "Run a beta testing program — invite users to sign up and test your product at different stages",
-      "Invite a co-founder to join your venture and build your team",
-    ],
-  },
-];
-
-const WHO = [
-  {
-    key: "world",
-    title: "Experience the Startup World",
-    intro: "Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round?",
-    rest: "StartZig puts you in the founder's seat — from your first product idea all the way to scaling your company and landing an exit.",
-  },
-  {
-    key: "entrepreneurs",
-    title: "Entrepreneurs with an Idea",
-    intro: "Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture — with a dedicated AI mentor by your side.",
-    rest: "You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine — helping you grow a viral community of founders and early adopters around your product.",
-  },
-  {
-    key: "students",
-    title: "Students, Learners & Educators",
-    intro: "The gap between theory and real-world entrepreneurship has never been harder to bridge.",
-    rest: "StartZig gives students hands-on experience of the full startup journey — from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.",
-  },
-];
-
 function BenefitsSection() {
-  const [expanded, setExpanded] = useState({});
-  const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-
   return (
     <div className="py-24 sm:py-32 px-6">
       <div className="max-w-4xl mx-auto">
@@ -79,27 +23,36 @@ function BenefitsSection() {
         </div>
 
         <div className="space-y-10">
-          {BENEFITS.map((section) => (
-            <div key={section.key} className="border-t border-white/10 pt-8">
-              <h4 className="text-xl font-bold text-white mb-4">{section.title}</h4>
-              <p className="text-white/80 text-base leading-relaxed mb-3">→ {section.intro}</p>
-              {expanded[section.key] && (
-                <ul className="space-y-3 mt-3">
-                  {section.items.map((item, i) => (
-                    <li key={i} className="text-white/70 text-base leading-relaxed pl-4 border-l border-pink-400/30">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button
-                onClick={() => toggle(section.key)}
-                className="mt-4 text-pink-300 text-sm font-semibold hover:text-pink-200 transition-colors"
-              >
-                {expanded[section.key] ? "− Show less" : "+ Show more"}
-              </button>
+
+          <div className="border-t border-white/10 pt-8">
+            <h4 className="text-xl font-bold text-white mb-4">Advanced Tools for Building Your Venture</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-4">From planning to product — we provide the tools founders need at every stage of their venture's development.</p>
+            <div className="space-y-3 pl-6">
+              <p className="text-white/70 text-base leading-relaxed">Business planning tools to structure your strategy and financial model</p>
+              <p className="text-white/70 text-base leading-relaxed">Product development tools at different stages of your product — including a dedicated studio for building prototypes and mockups</p>
+              <p className="text-white/70 text-base leading-relaxed">Marketing tools — run campaigns, build your landing page, and promote your venture to early users</p>
+              <p className="text-white/70 text-base leading-relaxed">A built-in AI mentor that accompanies you through every section and task — providing guidance, feedback, and professional support at every step</p>
             </div>
-          ))}
+          </div>
+
+          <div className="border-t border-white/10 pt-8">
+            <h4 className="text-xl font-bold text-white mb-4">Fundraising</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-4">A wide range of virtual private and institutional investors you can approach and pitch to.</p>
+            <div className="space-y-3 pl-6">
+              <p className="text-white/70 text-base leading-relaxed">A real simulation of raising capital — from angel investors to venture capital firms</p>
+              <p className="text-white/70 text-base leading-relaxed">Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-8">
+            <h4 className="text-xl font-bold text-white mb-4">Community & Users</h4>
+            <p className="text-white/80 text-base leading-relaxed mb-4">Get structured feedback on your product from real community members.</p>
+            <div className="space-y-3 pl-6">
+              <p className="text-white/70 text-base leading-relaxed">Run a beta testing program — invite users to sign up and test your product at different stages</p>
+              <p className="text-white/70 text-base leading-relaxed">Invite a co-founder to join your venture and build your team</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -107,9 +60,6 @@ function BenefitsSection() {
 }
 
 function WhoSection() {
-  const [expanded, setExpanded] = useState({});
-  const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-
   return (
     <div className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
@@ -125,21 +75,25 @@ function WhoSection() {
         </div>
 
         <div className="space-y-8">
-          {WHO.map((section) => (
-            <div key={section.key} className="border-t border-white/10 pt-6">
-              <h3 className="text-xl font-bold text-white mb-3">{section.title}</h3>
-              <p className="text-white/80 text-base leading-relaxed">{section.intro}</p>
-              {expanded[section.key] && (
-                <p className="text-white/70 text-base leading-relaxed mt-3">{section.rest}</p>
-              )}
-              <button
-                onClick={() => toggle(section.key)}
-                className="mt-3 text-pink-300 text-sm font-semibold hover:text-pink-200 transition-colors"
-              >
-                {expanded[section.key] ? "− Show less" : "+ Read more"}
-              </button>
-            </div>
-          ))}
+
+          <div className="border-t border-white/10 pt-6">
+            <h3 className="text-xl font-bold text-white mb-3">Experience the Startup World</h3>
+            <p className="text-white/80 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round?</p>
+            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">StartZig puts you in the founder's seat — from your first product idea all the way to scaling your company and landing an exit.</p>
+          </div>
+
+          <div className="border-t border-white/10 pt-6">
+            <h3 className="text-xl font-bold text-white mb-3">Entrepreneurs with an Idea</h3>
+            <p className="text-white/80 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture — with a dedicated AI mentor by your side.</p>
+            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine — helping you grow a viral community of founders and early adopters around your product.</p>
+          </div>
+
+          <div className="border-t border-white/10 pt-6">
+            <h3 className="text-xl font-bold text-white mb-3">Students, Learners & Educators</h3>
+            <p className="text-white/80 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge.</p>
+            <p className="text-white/70 text-base leading-relaxed mt-3 pl-6">StartZig gives students hands-on experience of the full startup journey — from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
+          </div>
+
         </div>
       </div>
     </div>
@@ -240,19 +194,13 @@ export default function Home() {
             {user ? (
               hasVenture ? (
                 <Link href="/dashboard" className="w-full max-w-sm">
-                  <Button
-                    size="lg"
-                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full"
-                  >
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full">
                     Go to dashboard
                   </Button>
                 </Link>
               ) : (
                 <Link href="/createventure" className="w-full max-w-sm">
-                  <Button
-                    size="lg"
-                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full"
-                  >
+                  <Button size="lg" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 w-full">
                     Create Your Venture
                   </Button>
                 </Link>
