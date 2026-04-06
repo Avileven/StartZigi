@@ -1,4 +1,4 @@
-// Home page - static version v2
+// Home page - static version v3
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -17,7 +17,7 @@ function BenefitsSection() {
             </span>
           </h3>
           <p className="text-lg text-white/70 max-w-3xl mx-auto">
-            Taking an idea to market is one of the loneliest and most complex journeys a founder can take. It demands professional knowledge, community support, constant pressure, tough decisions, and often multiple rounds of funding. StartZig was built for exactly this.
+            We often hear about the big exits and the overnight success stories — but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story — these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
           </p>
         </div>
 
@@ -25,7 +25,6 @@ function BenefitsSection() {
 
           <div>
             <h4 className="text-xl font-bold text-white mb-3">Advanced Tools for Building Your Venture</h4>
-            <p className="text-white/80 text-base leading-relaxed mb-3">From planning to product, we provide the tools founders need at every stage of their venture's development.</p>
             <div className="space-y-2 pl-4">
               <p className="text-white/70 text-base leading-relaxed">• Business planning tools to structure your strategy and financial model</p>
               <p className="text-white/70 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
@@ -77,20 +76,17 @@ function WhoSection() {
 
           <div>
             <h3 className="text-xl font-bold text-white mb-3">Experience the Startup World</h3>
-            <p className="text-white/80 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round?</p>
-            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">StartZig puts you in the founder's seat, from your first product idea all the way to scaling your company and landing an exit.</p>
+            <p className="text-white/80 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round? StartZig puts you in the founder's seat, from your first product idea all the way to scaling your company and landing an exit.</p>
           </div>
 
           <div>
             <h3 className="text-xl font-bold text-white mb-3">Entrepreneurs with an Idea</h3>
-            <p className="text-white/80 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture, with a dedicated AI mentor by your side.</p>
-            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine, helping you grow a viral community of founders and early adopters around your product.</p>
+            <p className="text-white/80 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture, with a dedicated AI mentor by your side. You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine, helping you grow a viral community of founders and early adopters around your product.</p>
           </div>
 
           <div>
             <h3 className="text-xl font-bold text-white mb-3">Students, Learners & Educators</h3>
-            <p className="text-white/80 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge.</p>
-            <p className="text-white/70 text-base leading-relaxed mt-2 pl-4">StartZig gives students hands-on experience of the full startup journey, from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
+            <p className="text-white/80 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge. StartZig gives students hands-on experience of the full startup journey, from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
           </div>
 
         </div>
@@ -163,8 +159,8 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative min-h-screen flex items-center justify-center px-6 pt-20">
-        <div className="relative z-10 text-center max-w-4xl mx-auto mt-8">
+      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
+        <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
             <span
