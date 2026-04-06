@@ -77,9 +77,9 @@ function DashboardMockup() {
 
     // Animate messages in from bottom to top
     const msgs = [...phase.messages];
-    msgs.reverse().forEach((msg, i) => {
+    msgs.forEach((msg, i) => {
       setTimeout(() => {
-        setVisibleMsgs(prev => [msg, ...prev]);
+        setVisibleMsgs(prev => [...prev, msg]);
       }, 600 + i * 1000);
     });
 
@@ -379,8 +379,8 @@ export default function Home() {
         </div>
       </div>
 
-      <BenefitsSection />
       <DashboardMockup />
+      <BenefitsSection />
       <JourneyPreview />
       <WhoSection />
     </div>
