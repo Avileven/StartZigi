@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import JourneyPreview from "@/components/utils/JourneyPreview";
 import MentorMockup from "@/components/utils/MentorMockup";
+import VCMockup from "@/components/utils/VCMockup";
 
 
 
@@ -398,6 +399,7 @@ export default function Home() {
         </div>
         <DashboardMockup />
       </div>
+      <VCMockup />
     </div>
   );
 }
