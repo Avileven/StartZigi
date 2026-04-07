@@ -1,10 +1,11 @@
-// Home page - static version v4
+// Home page - static version v5 070426
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import JourneyPreview from "@/components/utils/JourneyPreview";
+import MentorMockup from "@/components/utils/MentorMockup";
 
 
 
@@ -383,6 +384,7 @@ export default function Home() {
       <BenefitsSection />
       <DashboardMockup />
       <WhoSection />
+      <MentorMockup />
     </div>
   );
 }
