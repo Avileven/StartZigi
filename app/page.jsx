@@ -1,4 +1,4 @@
-// Home page - static version v5 070426
+// Home page - static version v4
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -196,10 +196,10 @@ function BenefitsSection() {
           <div>
             <h4 className="text-xl font-bold text-white mb-3">Advanced Tools for Building Your Venture</h4>
             <div className="space-y-2 pl-4">
+              <p className="text-white/70 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step — <a href="#mentor-mockup" className="text-purple-300 hover:text-purple-200 underline underline-offset-2 transition-colors">see it in action ↓</a></p>
               <p className="text-white/70 text-base leading-relaxed">• Business planning tools to structure your strategy and financial model</p>
               <p className="text-white/70 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
               <p className="text-white/70 text-base leading-relaxed">• Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
-              <p className="text-white/70 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
             </div>
           </div>
 
@@ -384,7 +384,9 @@ export default function Home() {
       <BenefitsSection />
       <DashboardMockup />
       <WhoSection />
-      <MentorMockup />
+      <div id="mentor-mockup" className="flex justify-center">
+        <MentorMockup />
+      </div>
     </div>
   );
 }
