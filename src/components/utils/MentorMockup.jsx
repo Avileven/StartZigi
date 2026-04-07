@@ -122,9 +122,6 @@ export default function MentorMockup() {
               A Mentor Companion at Every Step
             </span>
           </h2>
-          <p className="text-white/80 text-base leading-relaxed max-w-2xl">
-            Get real-time AI feedback on every section of your business plan. Strategic analysis, actionable hints, and challenge questions — exactly when you need them.
-          </p>
         </div>
 
         {/* חלון המנטור */}
