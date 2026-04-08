@@ -7,6 +7,7 @@ import Link from "next/link";
 import JourneyPreview from "@/components/utils/JourneyPreview";
 import MentorMockup from "@/components/utils/MentorMockup";
 import VCMockup from "@/components/utils/VCMockup";
+import StudioMockup from "@/components/utils/StudioMockup";
 
 
 
@@ -400,6 +401,19 @@ export default function Home() {
         <DashboardMockup />
       </div>
       <VCMockup />
+      <div className="py-24 px-6">
+        <div className="max-w-4xl mx-auto mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              A dedicated AI studio for building app demos and mockups in a few clicks
+            </span>
+          </h2>
+          <p className="text-white/70 text-base leading-relaxed">
+            Helping you shape your product and collect real feedback while you plan and build.
+          </p>
+        </div>
+        <StudioMockup />
+      </div>
     </div>
   );
 }
