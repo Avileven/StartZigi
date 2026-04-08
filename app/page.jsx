@@ -9,6 +9,7 @@ import MentorMockup from "@/components/utils/MentorMockup";
 import VCMockup from "@/components/utils/VCMockup";
 import StudioMockup from "@/components/utils/StudioMockup";
 import VCSimulationMockup from "@/components/utils/VCSimulationMockup";
+import FeedbackMockup from "@/components/utils/FeedbackMockup";
 
 
 
@@ -424,6 +425,16 @@ export default function Home() {
           </h2>
         </div>
         <VCSimulationMockup />
+      </div>
+      <div className="py-24 px-6">
+        <div className="max-w-4xl mx-auto mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              Real feedback from real users — collected and analyzed through a dedicated feedback system at every stage of your product.
+            </span>
+          </h2>
+        </div>
+        <FeedbackMockup />
       </div>
     </div>
   );
