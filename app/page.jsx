@@ -38,8 +38,8 @@ function BenefitsSection() {
           <div>
             <h4 className="text-xl font-bold text-white mb-3">Advanced Tools for Building Your Venture</h4>
             <div className="space-y-2 pl-4">
-              <p className="text-white/70 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step — <a href="#mentor-mockup" className="text-purple-300 hover:text-purple-200 underline underline-offset-2 transition-colors">see it in action ↓</a></p>
-              <p className="text-white/70 text-base leading-relaxed">• A professional management dashboard and business planning tools to structure your strategy and financial model — <a href="#dashboard-mockup" className="text-purple-300 hover:text-purple-200 underline underline-offset-2 transition-colors">see it in action ↓</a></p>
+              <p className="text-white/70 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
+              <p className="text-white/70 text-base leading-relaxed">• A professional management dashboard and business planning tools to structure your strategy and financial model</p>
               <p className="text-white/70 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
               <p className="text-white/70 text-base leading-relaxed">• Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
             </div>
@@ -223,67 +223,120 @@ export default function Home() {
       </div>
 
       <JourneyPreview />
-      <BenefitsSection />
-      <WhoSection />
-      <div id="mentor-mockup" className="flex justify-center">
-        <MentorMockup />
-      </div>
-      <div id="dashboard-mockup">
-        <div className="py-24 px-6">
-          <div className="max-w-4xl mx-auto mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-                A Professional Management Dashboard
-              </span>
-            </h2>
-          </div>
+
+      {/* ── MOCKUPS ── */}
+
+      {/* 1. Dashboard */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              A Professional Management Dashboard
+            </span>
+          </h2>
+          <p className="text-white/55 text-sm">Manage your venture, track progress, and stay on top of every stage — all in one place.</p>
         </div>
         <DashboardMockup />
       </div>
-      <VCMockup />
-      <div className="py-24 px-6">
-        <div className="max-w-4xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+
+      {/* 2. Mentor */}
+      <div className="py-16 px-6" id="mentor-mockup">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              A dedicated AI studio for building app demos and mockups in a few clicks
+              A Mentor Companion at Every Step
             </span>
           </h2>
-          <p className="text-white/70 text-base leading-relaxed">
-            Helping you shape your product and collect real feedback while you plan and build.
-          </p>
+          <p className="text-white/55 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
+        </div>
+        <div className="flex justify-center">
+          <MentorMockup />
+        </div>
+      </div>
+
+      {/* 3. VC Marketplace */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              VC Marketplace
+            </span>
+          </h2>
+          <p className="text-white/55 text-sm">Connect with top-tier venture capital firms and approach the right investors for your stage.</p>
+        </div>
+        <VCMockup />
+      </div>
+
+      {/* 4. ZigForge Studio */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              A Dedicated AI Studio for Building App Demos
+            </span>
+          </h2>
+          <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
         </div>
         <StudioMockup />
       </div>
-      <div className="py-24 px-6">
-        <div className="max-w-4xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+
+      {/* 5. VC Simulation */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              A real fundraising simulation, driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.
+              A Real Fundraising Simulation
             </span>
           </h2>
+          <p className="text-white/55 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
         </div>
         <VCSimulationMockup />
       </div>
-      <div className="py-24 px-6">
-        <div className="max-w-4xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+
+      {/* 6. Feedback */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              Real feedback from real users — collected and analyzed through a dedicated feedback system at every stage of your product.
+              Real Feedback from Real Users
             </span>
           </h2>
+          <p className="text-white/55 text-sm">Collected and analyzed through a dedicated feedback system at every stage of your product.</p>
         </div>
         <FeedbackMockup />
       </div>
-      <div className="py-24 px-6">
-        <div className="max-w-4xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+
+      {/* 7. Beta */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              A dedicated beta sign-up page — share it, collect testers, and grow your first user base.
+              A Dedicated Beta Sign-Up Page
             </span>
           </h2>
+          <p className="text-white/55 text-sm">Share it, collect testers, and grow your first user base.</p>
         </div>
         <BetaMockup />
       </div>
+
+      {/* ── See all features ── */}
+      <div className="py-16 px-6 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            Everything You Need to Build a Startup
+          </span>
+        </h2>
+        <p className="text-white/55 text-sm mb-8">See the full list of features and capabilities.</p>
+        <a href="#features" className="inline-block border border-white/30 text-white/80 hover:text-white hover:border-white/60 text-sm font-medium px-8 py-3 rounded-full transition-colors">
+          See all features ↓
+        </a>
+      </div>
+
+      {/* ── Full Features List ── */}
+      <div id="features">
+        <BenefitsSection />
+      </div>
+      <WhoSection />
     </div>
   );
 }
