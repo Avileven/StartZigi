@@ -22,17 +22,6 @@ function BenefitsSection() {
   return (
     <div className="py-24 sm:py-32 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-12">
-          <h3 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              Everything You Need to Build a Startup
-            </span>
-          </h3>
-          <p className="text-lg text-white/70 max-w-3xl">
-            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
-          </p>
-        </div>
-
         <div className="space-y-10">
 
           <div>
@@ -224,6 +213,20 @@ export default function Home() {
 
       <JourneyPreview />
 
+      {/* ── Everything You Need ── */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              Everything You Need to Build a Startup
+            </span>
+          </h2>
+          <p className="text-lg text-white/70 max-w-3xl">
+            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
+          </p>
+        </div>
+      </div>
+
       {/* ── MOCKUPS ── */}
 
       {/* 1. Dashboard */}
@@ -319,24 +322,19 @@ export default function Home() {
         <BetaMockup />
       </div>
 
-      {/* ── See all features ── */}
+      {/* ── See full feature list ── */}
       <div className="py-16 px-6 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-            Everything You Need to Build a Startup
-          </span>
-        </h2>
-        <p className="text-white/55 text-sm mb-8">See the full list of features and capabilities.</p>
         <a href="#features" className="inline-block border border-white/30 text-white/80 hover:text-white hover:border-white/60 text-sm font-medium px-8 py-3 rounded-full transition-colors">
-          See all features ↓
+          See the full feature list ↓
         </a>
       </div>
+
+      <WhoSection />
 
       {/* ── Full Features List ── */}
       <div id="features">
         <BenefitsSection />
       </div>
-      <WhoSection />
     </div>
   );
 }
