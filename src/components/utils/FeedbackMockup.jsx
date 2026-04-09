@@ -123,8 +123,8 @@ export default function FeedbackMockup() {
     activeRef.current = false;
     setIsDone(false);
     setPhaseIdx(0);
-    setIsStarted(false);
-    setTimeout(() => setIsStarted(true), 100);
+    activeRef.current = true;
+    runLoop();
   }
 
   async function runLoop() {
