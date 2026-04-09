@@ -118,11 +118,13 @@ export default function DashboardMockup() {
       clearInterval(toolInterval);
       clearTimeout(nextPhase);
     };
-  }, [phaseIdx]);
+  }, [phaseIdx, isStarted]);
 
   return (
     <div ref={wrapRef} style={{ padding: "24px 12px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", background: "#f0f0f5", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ minWidth: 600, background: "#f0f0f5" }}>
 
         {/* Topbar */}
         <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -195,10 +197,12 @@ export default function DashboardMockup() {
           </div>
         </div>
       </div>
+        </div>
+      </div>
 
       {isDone && (
         <div style={{ textAlign: "center", marginTop: 20 }}>
-          <button onClick={replay} style={{ background: "rgba(108,71,255,0.15)", border: "1px solid rgba(108,71,255,0.4)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          <button type="button" onClick={replay} style={{ background: "rgba(108,71,255,0.15)", border: "1px solid rgba(108,71,255,0.4)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
         </div>
       )}
       <style>{`@keyframes dashSlideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }`}</style>
