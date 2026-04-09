@@ -1,3 +1,4 @@
+// STUDIO 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -24,39 +25,39 @@ export default function StudioMockup() {
   const activeRef = useRef(true);
 
   const wrapRef = useRef(null);
-  const hasStarted = useRef(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
-          activeRef.current = true;
-          setIsDone(false);
-          runLoop();
+        if (entry.isIntersecting && !isStarted) {
+          setIsStarted(true);
         }
       },
       { threshold: 0.2 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
-  }, []);
+  }, [isStarted]);
+
+  useEffect(() => {
+    if (!isStarted) return;
+    activeRef.current = true;
+    setIsDone(false);
+    runLoop();
+  }, [isStarted]);
 
   function replay() {
     activeRef.current = false;
-    hasStarted.current = false;
     setIsDone(false);
     setPhase("studio");
     setTitle(""); setDesc("");
     setFeats(FEATURES.map(() => false));
     setBtnBlue(false); setBtnScale(false);
     setModal(false);
-    setTimeout(() => {
-      hasStarted.current = true;
-      activeRef.current = true;
-      runLoop();
-    }, 100);
+    setIsStarted(false);
+    setTimeout(() => setIsStarted(true), 100);
   }
 
   async function typeText(setter, text, speed = 45) {

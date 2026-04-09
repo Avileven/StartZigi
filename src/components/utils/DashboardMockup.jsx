@@ -1,3 +1,4 @@
+// DASHBOARD 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -55,15 +56,15 @@ export default function DashboardMockup() {
   const phase = PHASES[phaseIdx];
 
   const wrapRef = useRef(null);
-  const hasStarted = useRef(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const phaseCountRef = useRef(0);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
+        if (entry.isIntersecting && !isStarted) {
+          setIsStarted(true);
           setPhaseIdx(0);
           phaseCountRef.current = 0;
           setIsDone(false);
@@ -73,18 +74,18 @@ export default function DashboardMockup() {
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [isStarted]);
 
   function replay() {
-    hasStarted.current = false;
     setIsDone(false);
     setPhaseIdx(0);
     phaseCountRef.current = 0;
-    setTimeout(() => { hasStarted.current = true; }, 50);
+    setIsStarted(false);
+    setTimeout(() => setIsStarted(true), 100);
   }
 
   useEffect(() => {
-    if (!hasStarted.current) return;
+    if (!isStarted) return;
     setVisibleMsgs([]);
     setToolCount(4);
 
@@ -120,7 +121,7 @@ export default function DashboardMockup() {
   }, [phaseIdx]);
 
   return (
-    <div ref={wrapRef} style={{ padding: "48px 24px" }}>
+    <div ref={wrapRef} style={{ padding: "24px 12px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", background: "#f0f0f5", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
 
         {/* Topbar */}
@@ -136,7 +137,7 @@ export default function DashboardMockup() {
         </div>
 
         {/* Body */}
-        <div style={{ display: "grid", gridTemplateColumns: "160px 170px 1fr" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "160px 170px 1fr", overflowX: "auto" }}>
 
           {/* Nav */}
           <div style={{ background: "#fff", borderRight: "0.5px solid #eee", padding: "12px 0", display: "flex", flexDirection: "column" }}>

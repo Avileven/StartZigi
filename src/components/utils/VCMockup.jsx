@@ -1,3 +1,4 @@
+// VC 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -35,37 +36,37 @@ export default function VCMockup() {
   const [activeIdx, setActiveIdx] = useState(null);
   const [clickingIdx, setClickingIdx] = useState(null);
   const [isDone, setIsDone] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const activeRef = useRef(false);
   const wrapRef = useRef(null);
-  const hasStarted = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
-          activeRef.current = true;
-          setIsDone(false);
-          runLoop();
+        if (entry.isIntersecting && !isStarted) {
+          setIsStarted(true);
         }
       },
       { threshold: 0.2 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
-  }, []);
+  }, [isStarted]);
+
+  useEffect(() => {
+    if (!isStarted) return;
+    activeRef.current = true;
+    setIsDone(false);
+    runLoop();
+  }, [isStarted]);
 
   function replay() {
     activeRef.current = false;
-    hasStarted.current = false;
     setIsDone(false);
     setActiveIdx(null);
     setClickingIdx(null);
-    setTimeout(() => {
-      hasStarted.current = true;
-      activeRef.current = true;
-      runLoop();
-    }, 100);
+    setIsStarted(false);
+    setTimeout(() => setIsStarted(true), 100);
   }
 
   async function runLoop() {
@@ -91,7 +92,7 @@ export default function VCMockup() {
   const activeFirm = activeIdx !== null ? FIRMS[activeIdx] : null;
 
   return (
-    <div ref={wrapRef} className="py-24 px-6">
+    <div ref={wrapRef} className="px-6">
       <div className="max-w-4xl mx-auto">
         {/* מוקאפ */}
         <div
@@ -210,14 +211,12 @@ export default function VCMockup() {
             </div>
           )}
         </div>
+        {isDone && (
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          </div>
+        )}
       </div>
-
-
-      {isDone && (
-        <div style={{ textAlign: "center", marginTop: 20 }}>
-          <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
-        </div>
-      )}
 
       <style>{`
         @keyframes vcFadeUp {

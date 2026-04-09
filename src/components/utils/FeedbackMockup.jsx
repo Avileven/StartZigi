@@ -1,3 +1,4 @@
+// FEEDBACK 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -92,15 +93,15 @@ const BADGE_COLORS = {
 export default function FeedbackMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const wrapRef = useRef(null);
-  const hasStarted = useRef(false);
   const countRef = useRef(0);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
+        if (entry.isIntersecting && !isStarted) {
+          setIsStarted(true);
           countRef.current = 0;
           setPhaseIdx(0);
           setIsDone(false);
@@ -110,10 +111,10 @@ export default function FeedbackMockup() {
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [isStarted]);
 
   useEffect(() => {
-    if (!hasStarted.current) return;
+    if (!isStarted) return;
     const timer = setTimeout(() => {
       countRef.current += 1;
       if (countRef.current < PHASES.length) {
@@ -123,14 +124,14 @@ export default function FeedbackMockup() {
       }
     }, 6000);
     return () => clearTimeout(timer);
-  }, [phaseIdx]);
+  }, [phaseIdx, isStarted]);
 
   function replay() {
-    hasStarted.current = false;
     setIsDone(false);
     setPhaseIdx(0);
     countRef.current = 0;
-    setTimeout(() => { hasStarted.current = true; }, 50);
+    setIsStarted(false);
+    setTimeout(() => setIsStarted(true), 100);
   }
 
   const p = PHASES[phaseIdx];
@@ -153,7 +154,7 @@ export default function FeedbackMockup() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
           {p.stats.map((s, i) => (
             <div key={i} style={{ padding: "14px 10px", textAlign: "center", borderRight: i < 3 ? "1px solid #f0f0f0" : "none" }}>
               <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
@@ -258,13 +259,12 @@ export default function FeedbackMockup() {
             </div>
           )}
         </div>
+        {isDone && (
+          <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <button onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          </div>
+        )}
       </div>
-
-      {isDone && (
-        <div style={{ textAlign: "center", padding: "16px 0" }}>
-          <button onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
-        </div>
-      )}
     </div>
   );
 }

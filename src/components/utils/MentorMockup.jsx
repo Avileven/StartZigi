@@ -1,3 +1,4 @@
+//MENTOR 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -145,7 +146,7 @@ export default function MentorMockup() {
   const btnScale = btnClicking ? "scale(0.96)" : "scale(1)";
 
   return (
-    <div ref={wrapRef} className="py-24 px-6">
+    <div ref={wrapRef} className="px-6">
       <div className="max-w-4xl mx-auto">
         {/* חלון המנטור */}
         <div
@@ -155,6 +156,7 @@ export default function MentorMockup() {
             border: "0.5px solid rgba(255,255,255,0.12)",
             overflow: "hidden",
             maxWidth: 620,
+            width: "100%",
           }}
         >
           {/* Header */}
@@ -335,14 +337,12 @@ export default function MentorMockup() {
             </button>
           </div>
         </div>
+        {isDone && (
+          <div style={{ textAlign: "center", marginTop: 16 }}>
+            <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          </div>
+        )}
       </div>
-
-
-      {isDone && (
-        <div style={{ textAlign: "center", marginTop: 16 }}>
-          <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
-        </div>
-      )}
 
       <style>{`
         @keyframes mentorDot {

@@ -1,3 +1,4 @@
+//BETA 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -117,7 +118,7 @@ export default function BetaMockup() {
       <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
 
         {/* Hero */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, padding: "32px 28px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "min(50%, 340px) 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center", flexWrap: "wrap" }}>
           <div>
             <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
@@ -165,7 +166,7 @@ export default function BetaMockup() {
         {/* Benefits */}
         <div style={{ padding: "20px 28px", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#111", textAlign: "center", marginBottom: 14 }}>Why Should You Join?</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {[["🚀","First Access","Try new features before anyone else."],["🤖","AI That Learns","Personalized to your triggers and habits."],["👥","Community","Join a private group of beta testers."],["💡","Shape the App","Your feedback influences what gets built."]].map(([icon,name,desc]) => (
               <div key={name} style={{ textAlign: "center", padding: "10px 6px", background: "#f9fafb", borderRadius: 10 }}>
                 <div style={{ fontSize: 18, marginBottom: 5 }}>{icon}</div>
@@ -212,14 +213,12 @@ export default function BetaMockup() {
             )}
           </div>
         </div>
+        {isDone && (
+          <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <button onClick={replay} style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(79,70,229,0.3)", color: "#4f46e5", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          </div>
+        )}
       </div>
-
-
-      {isDone && (
-        <div style={{ textAlign: "center", padding: "16px 0" }}>
-          <button onClick={replay} style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(79,70,229,0.3)", color: "#4f46e5", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
-        </div>
-      )}
 
       <style>{`
         @keyframes betaFadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
