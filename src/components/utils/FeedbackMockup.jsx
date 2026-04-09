@@ -95,36 +95,36 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 export default function FeedbackMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
-  const [isStarted, setIsStarted] = useState(false);
   const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
   const activeRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !isStarted) {
-          setIsStarted(true);
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          setIsDone(false);
+          runLoop();
         }
       },
       { threshold: 0.2 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => observer.disconnect();
-  }, [isStarted]);
-
-  useEffect(() => {
-    if (!isStarted) return;
-    activeRef.current = true;
-    setIsDone(false);
-    runLoop();
-  }, [isStarted]);
+    return () => { observer.disconnect(); activeRef.current = false; };
+  }, []);
 
   function replay() {
     activeRef.current = false;
+    hasStarted.current = false;
     setIsDone(false);
     setPhaseIdx(0);
-    activeRef.current = true;
-    runLoop();
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runLoop();
+    }, 100);
   }
 
   async function runLoop() {
