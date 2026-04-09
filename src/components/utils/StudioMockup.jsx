@@ -130,12 +130,9 @@ export default function StudioMockup() {
   const styles       = [["modern","🔷 Modern"],["business","💼 Business"],["playful","🎮 Playful"],["elegant","💎 Elegant"]];
 
   return (
-    <div className="py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* כותרת — מוכנסת מדף הבית */}
-
-        <div className="flex justify-center">
-          <div style={{ background: "#f8f7ff", borderRadius: 14, maxWidth: 460, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
+    <div ref={wrapRef} className="px-4 md:px-6">
+      <div className="flex justify-center">
+        <div style={{ background: "#f8f7ff", borderRadius: 14, maxWidth: 460, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
 
             {/* Nav */}
             <div style={{ background: "#1a1a2e", padding: "12px 18px", display: "flex", alignItems: "center", gap: 16 }}>
@@ -281,12 +278,10 @@ export default function StudioMockup() {
             )}
           </div>
         </div>
-      </div>
-
 
       {isDone && (
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <button onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+          <button type="button" onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
         </div>
       )}
 
