@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const PHASES = [
   {
@@ -54,7 +54,37 @@ export default function DashboardMockup() {
 
   const phase = PHASES[phaseIdx];
 
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const [isDone, setIsDone] = useState(false);
+  const phaseCountRef = useRef(0);
+
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          setPhaseIdx(0);
+          phaseCountRef.current = 0;
+          setIsDone(false);
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  function replay() {
+    hasStarted.current = false;
+    setIsDone(false);
+    setPhaseIdx(0);
+    phaseCountRef.current = 0;
+    setTimeout(() => { hasStarted.current = true; }, 50);
+  }
+
+  useEffect(() => {
+    if (!hasStarted.current) return;
     setVisibleMsgs([]);
     setToolCount(4);
 
@@ -75,7 +105,12 @@ export default function DashboardMockup() {
 
     const totalTime = 600 + msgs.length * 1000 + 3000;
     const nextPhase = setTimeout(() => {
-      setPhaseIdx(prev => (prev + 1) % PHASES.length);
+      phaseCountRef.current += 1;
+      if (phaseCountRef.current < PHASES.length) {
+        setPhaseIdx(prev => (prev + 1) % PHASES.length);
+      } else {
+        setIsDone(true);
+      }
     }, totalTime);
 
     return () => {
@@ -85,7 +120,7 @@ export default function DashboardMockup() {
   }, [phaseIdx]);
 
   return (
-    <div style={{ padding: "48px 24px" }}>
+    <div ref={wrapRef} style={{ padding: "48px 24px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", background: "#f0f0f5", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
 
         {/* Topbar */}
@@ -159,6 +194,12 @@ export default function DashboardMockup() {
           </div>
         </div>
       </div>
+
+      {isDone && (
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={replay} style={{ background: "rgba(108,71,255,0.15)", border: "1px solid rgba(108,71,255,0.4)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
       <style>{`@keyframes dashSlideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }`}</style>
     </div>
   );

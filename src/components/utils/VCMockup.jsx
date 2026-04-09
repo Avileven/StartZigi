@@ -34,18 +34,44 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 export default function VCMockup() {
   const [activeIdx, setActiveIdx] = useState(null);
   const [clickingIdx, setClickingIdx] = useState(null);
-  const activeRef = useRef(true);
+  const [isDone, setIsDone] = useState(false);
+  const activeRef = useRef(false);
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
 
   useEffect(() => {
-    activeRef.current = true;
-    runLoop();
-    return () => { activeRef.current = false; };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          setIsDone(false);
+          runLoop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
 
+  function replay() {
+    activeRef.current = false;
+    hasStarted.current = false;
+    setIsDone(false);
+    setActiveIdx(null);
+    setClickingIdx(null);
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runLoop();
+    }, 100);
+  }
+
   async function runLoop() {
-    let idx = 0;
-    while (activeRef.current) {
-      const i = ORDER[idx % ORDER.length];
+    for (let idx = 0; idx < ORDER.length; idx++) {
+      if (!activeRef.current) return;
+      const i = ORDER[idx];
 
       setClickingIdx(i);
       await sleep(220);
@@ -58,26 +84,15 @@ export default function VCMockup() {
       if (!activeRef.current) return;
       setActiveIdx(null);
       await sleep(500);
-
-      idx++;
     }
+    setIsDone(true);
   }
 
   const activeFirm = activeIdx !== null ? FIRMS[activeIdx] : null;
 
   return (
-    <div className="py-24 px-6">
+    <div ref={wrapRef} className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* כותרת */}
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              VC Marketplace
-            </span>
-          </h2>
-          <p className="text-white/70 text-base">Connect with top-tier venture capital firms</p>
-        </div>
-
         {/* מוקאפ */}
         <div
           style={{
@@ -196,6 +211,13 @@ export default function VCMockup() {
           )}
         </div>
       </div>
+
+
+      {isDone && (
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
 
       <style>{`
         @keyframes vcFadeUp {

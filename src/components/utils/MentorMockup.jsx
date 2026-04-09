@@ -39,15 +39,43 @@ export default function MentorMockup() {
   const [challengeText, setChallengeText] = useState("");
   const [btnClicking, setBtnClicking] = useState(false);
   const runRef = useRef(0);
-  const activeRef = useRef(true);
+  const activeRef = useRef(false);
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
-    activeRef.current = true;
-    runLoop();
-    return () => {
-      activeRef.current = false;
-    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          runRef.current = 0;
+          setIsDone(false);
+          runLoop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
+
+  function replay() {
+    activeRef.current = false;
+    hasStarted.current = false;
+    setIsDone(false);
+    setPhase("typing");
+    setFeedback(null);
+    setDraftText("");
+    setAnalysisText(""); setHintsText(""); setChallengeText("");
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runRef.current = 0;
+      runLoop();
+    }, 100);
+  }
 
   async function typeText(text, speed = 18) {
     setDraftText("");
@@ -106,6 +134,10 @@ export default function MentorMockup() {
       await sleep(3500);
 
       runRef.current = (runRef.current + 1) % RUNS.length;
+      if (runRef.current === 0) {
+        setIsDone(true);
+        return;
+      }
     }
   }
 
@@ -113,17 +145,8 @@ export default function MentorMockup() {
   const btnScale = btnClicking ? "scale(0.96)" : "scale(1)";
 
   return (
-    <div className="py-24 px-6">
+    <div ref={wrapRef} className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* כותרת */}
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-              A Mentor Companion at Every Step
-            </span>
-          </h2>
-        </div>
-
         {/* חלון המנטור */}
         <div
           style={{
@@ -313,6 +336,13 @@ export default function MentorMockup() {
           </div>
         </div>
       </div>
+
+
+      {isDone && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
 
       <style>{`
         @keyframes mentorDot {

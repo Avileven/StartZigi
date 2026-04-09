@@ -15,11 +15,40 @@ export default function VCSimulationMockup() {
   const chatRef = useRef(null);
   const activeRef = useRef(true);
 
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const [isDone, setIsDone] = useState(false);
+
   useEffect(() => {
-    activeRef.current = true;
-    runLoop();
-    return () => { activeRef.current = false; };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          setIsDone(false);
+          runLoop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
+
+  function replay() {
+    activeRef.current = false;
+    hasStarted.current = false;
+    setIsDone(false);
+    setPhase("screening");
+    setMessages([]);
+    setInputText(""); setInputTyping(false);
+    setShowOffer(false);
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runLoop();
+    }, 100);
+  }
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -89,15 +118,15 @@ export default function VCSimulationMockup() {
   }
 
   async function runLoop() {
-    while (activeRef.current) {
-      await runScreening();
-      if (!activeRef.current) return;
-      await runAdvanced();
-      if (!activeRef.current) return;
-      setPhase("dashboard");
-      setShowOffer(true);
-      await sleep(6000);
-    }
+    if (!activeRef.current) return;
+    await runScreening();
+    if (!activeRef.current) return;
+    await runAdvanced();
+    if (!activeRef.current) return;
+    setPhase("dashboard");
+    setShowOffer(true);
+    await sleep(6000);
+    setIsDone(true);
   }
 
   const modalTitle = phase === "screening"
@@ -108,7 +137,7 @@ export default function VCSimulationMockup() {
     : "Investment Discussion · NovaMed";
 
   return (
-    <div className="py-24 px-6">
+    <div ref={wrapRef} className="py-24 px-6">
       <div className="max-w-4xl mx-auto">
 
         {/* Chat phases */}
@@ -262,6 +291,13 @@ export default function VCSimulationMockup() {
           </div>
         )}
       </div>
+
+
+      {isDone && (
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
 
       <style>{`
         @keyframes vcDot { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }

@@ -91,20 +91,53 @@ const BADGE_COLORS = {
 
 export default function FeedbackMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
-  const timerRef = useRef(null);
+  const [isDone, setIsDone] = useState(false);
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const countRef = useRef(0);
 
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setPhaseIdx(prev => (prev + 1) % PHASES.length);
-    }, 6000);
-    return () => clearInterval(timerRef.current);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          countRef.current = 0;
+          setPhaseIdx(0);
+          setIsDone(false);
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!hasStarted.current) return;
+    const timer = setTimeout(() => {
+      countRef.current += 1;
+      if (countRef.current < PHASES.length) {
+        setPhaseIdx(prev => (prev + 1) % PHASES.length);
+      } else {
+        setIsDone(true);
+      }
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [phaseIdx]);
+
+  function replay() {
+    hasStarted.current = false;
+    setIsDone(false);
+    setPhaseIdx(0);
+    countRef.current = 0;
+    setTimeout(() => { hasStarted.current = true; }, 50);
+  }
 
   const p = PHASES[phaseIdx];
   const badge = BADGE_COLORS[p.key];
 
   return (
-    <div className="flex justify-center px-6">
+    <div ref={wrapRef} className="flex justify-center px-6">
       <div style={{ background: "#f8f9fb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
 
         {/* Header */}
@@ -226,6 +259,12 @@ export default function FeedbackMockup() {
           )}
         </div>
       </div>
+
+      {isDone && (
+        <div style={{ textAlign: "center", padding: "16px 0" }}>
+          <button onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
     </div>
   );
 }

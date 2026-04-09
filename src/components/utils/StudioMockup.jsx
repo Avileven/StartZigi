@@ -23,11 +23,41 @@ export default function StudioMockup() {
   const [phase, setPhase]         = useState("studio"); // studio | demo
   const activeRef = useRef(true);
 
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const [isDone, setIsDone] = useState(false);
+
   useEffect(() => {
-    activeRef.current = true;
-    runLoop();
-    return () => { activeRef.current = false; };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          setIsDone(false);
+          runLoop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
+
+  function replay() {
+    activeRef.current = false;
+    hasStarted.current = false;
+    setIsDone(false);
+    setPhase("studio");
+    setTitle(""); setDesc("");
+    setFeats(FEATURES.map(() => false));
+    setBtnBlue(false); setBtnScale(false);
+    setModal(false);
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runLoop();
+    }, 100);
+  }
 
   async function typeText(setter, text, speed = 45) {
     setter("");
@@ -39,7 +69,8 @@ export default function StudioMockup() {
   }
 
   async function runLoop() {
-    while (activeRef.current) {
+    if (!activeRef.current) return;
+    {
       // reset
       setPhase("studio");
       setTitle(""); setDesc("");
@@ -83,6 +114,8 @@ export default function StudioMockup() {
       await sleep(300);
       setPhase("demo");
       await sleep(5000);
+      setIsDone(true);
+      return;
     }
   }
 
@@ -248,6 +281,13 @@ export default function StudioMockup() {
           </div>
         </div>
       </div>
+
+
+      {isDone && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button onClick={replay} style={{ background: "rgba(108,71,255,0.1)", border: "1px solid rgba(108,71,255,0.3)", color: "#6c47ff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
 
       <style>{`
         @keyframes studioBlinkCursor { 0%,100%{opacity:1} 50%{opacity:0} }

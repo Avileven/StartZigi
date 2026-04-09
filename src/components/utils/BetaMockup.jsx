@@ -23,12 +23,43 @@ export default function BetaMockup() {
   const activeRef = useRef(true);
   const msgIdxRef = useRef(0);
 
+  const wrapRef = useRef(null);
+  const hasStarted = useRef(false);
+  const [isDone, setIsDone] = useState(false);
+
   useEffect(() => {
-    activeRef.current = true;
-    runPhoneLoop();
-    runFormLoop();
-    return () => { activeRef.current = false; };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted.current) {
+          hasStarted.current = true;
+          activeRef.current = true;
+          setIsDone(false);
+          runPhoneLoop();
+          runFormLoop();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
+
+  function replay() {
+    activeRef.current = false;
+    hasStarted.current = false;
+    setIsDone(false);
+    setSubmitted(false);
+    setFieldName(""); setFieldEmail(""); setFieldReason("");
+    setDays(0); setSaved(0); setCrav(0); setProgPct(0);
+    setCoachText("");
+    msgIdxRef.current = 0;
+    setTimeout(() => {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runPhoneLoop();
+      runFormLoop();
+    }, 100);
+  }
 
   async function typeText(setter, text, speed = 40) {
     setter("");
@@ -52,7 +83,8 @@ export default function BetaMockup() {
 
   async function runPhoneLoop() {
     await animateStats();
-    while (activeRef.current) {
+    for (let i = 0; i < COACH_MSGS.length; i++) {
+      if (!activeRef.current) return;
       const msg = COACH_MSGS[msgIdxRef.current % COACH_MSGS.length];
       await typeText(setCoachText, msg, 22);
       msgIdxRef.current++;
@@ -61,27 +93,27 @@ export default function BetaMockup() {
   }
 
   async function runFormLoop() {
-    while (activeRef.current) {
-      setSubmitted(false);
-      setFieldName(""); setFieldEmail(""); setFieldReason("");
-      await sleep(800);
-      await typeText(setFieldName, "Amy Lawson", 45);
-      await sleep(300);
-      await typeText(setFieldEmail, "amy.lawson@gmail.com", 32);
-      await sleep(300);
-      await typeText(setFieldReason, "I've tried 4 apps. An AI that actually learns my triggers sounds different.", 20);
-      await sleep(600);
-      setBtnClicking(true);
-      await sleep(220);
-      setBtnClicking(false);
-      await sleep(300);
-      setSubmitted(true);
-      await sleep(4500);
-    }
+    if (!activeRef.current) return;
+    setSubmitted(false);
+    setFieldName(""); setFieldEmail(""); setFieldReason("");
+    await sleep(800);
+    await typeText(setFieldName, "Amy Lawson", 45);
+    await sleep(300);
+    await typeText(setFieldEmail, "amy.lawson@gmail.com", 32);
+    await sleep(300);
+    await typeText(setFieldReason, "I've tried 4 apps. An AI that actually learns my triggers sounds different.", 20);
+    await sleep(600);
+    setBtnClicking(true);
+    await sleep(220);
+    setBtnClicking(false);
+    await sleep(300);
+    setSubmitted(true);
+    await sleep(1000);
+    setIsDone(true);
   }
 
   return (
-    <div className="flex justify-center px-6">
+    <div ref={wrapRef} className="flex justify-center px-6">
       <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
 
         {/* Hero */}
@@ -181,6 +213,13 @@ export default function BetaMockup() {
           </div>
         </div>
       </div>
+
+
+      {isDone && (
+        <div style={{ textAlign: "center", padding: "16px 0" }}>
+          <button onClick={replay} style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(79,70,229,0.3)", color: "#4f46e5", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+        </div>
+      )}
 
       <style>{`
         @keyframes betaFadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
