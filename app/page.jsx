@@ -321,7 +321,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Share it, collect testers, and grow your first user base.</p>
         </div>
-        <BetaMockup />
+        <div style={{ minHeight: 820 }}>
+          <BetaMockup />
+        </div>
       </div>
 
       {/* ── See full feature list ── */}

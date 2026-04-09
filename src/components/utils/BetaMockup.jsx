@@ -39,13 +39,15 @@ export default function BetaMockup() {
           runFormLoop();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
 
-  function replay() {
+  function replay(e) {
+    e.preventDefault();
+    e.stopPropagation();
     activeRef.current = false;
     hasStarted.current = false;
     setIsDone(false);
@@ -215,7 +217,7 @@ export default function BetaMockup() {
         </div>
         {isDone && (
           <div style={{ textAlign: "center", padding: "16px 0" }}>
-            <button onClick={replay} style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(79,70,229,0.3)", color: "#4f46e5", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+            <button type="button" onClick={replay} style={{ background: "rgba(79,70,229,0.1)", border: "1px solid rgba(79,70,229,0.3)", color: "#4f46e5", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
           </div>
         )}
       </div>

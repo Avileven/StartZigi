@@ -109,7 +109,7 @@ export default function FeedbackMockup() {
           runLoop();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
