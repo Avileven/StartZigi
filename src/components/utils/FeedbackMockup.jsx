@@ -124,14 +124,15 @@ export default function FeedbackMockup() {
       }
     }, 6000);
     return () => clearTimeout(timer);
-  }, [phaseIdx, isStarted]);
+  }, [phaseIdx, isStarted, replayCount]);
+
+  const [replayCount, setReplayCount] = useState(0);
 
   function replay() {
+    countRef.current = 0;
     setIsDone(false);
     setPhaseIdx(0);
-    countRef.current = 0;
-    setIsStarted(false);
-    setTimeout(() => setIsStarted(true), 100);
+    setReplayCount(c => c + 1);
   }
 
   const p = PHASES[phaseIdx];
