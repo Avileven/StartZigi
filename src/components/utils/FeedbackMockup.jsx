@@ -90,22 +90,20 @@ const BADGE_COLORS = {
   beta: { bg: "#d1fae5", color: "#065f46" },
 };
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 export default function FeedbackMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
-  const [replayCount, setReplayCount] = useState(0);
   const wrapRef = useRef(null);
-  const countRef = useRef(0);
+  const activeRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !isStarted) {
           setIsStarted(true);
-          countRef.current = 0;
-          setPhaseIdx(0);
-          setIsDone(false);
         }
       },
       { threshold: 0.2 }
@@ -116,22 +114,26 @@ export default function FeedbackMockup() {
 
   useEffect(() => {
     if (!isStarted) return;
-    const timer = setTimeout(() => {
-      countRef.current += 1;
-      if (countRef.current < PHASES.length) {
-        setPhaseIdx(prev => (prev + 1) % PHASES.length);
-      } else {
-        setIsDone(true);
-      }
-    }, 6000);
-    return () => clearTimeout(timer);
-  }, [phaseIdx, isStarted, replayCount]);
+    activeRef.current = true;
+    setIsDone(false);
+    runLoop();
+  }, [isStarted]);
 
   function replay() {
-    countRef.current = 0;
+    activeRef.current = false;
     setIsDone(false);
     setPhaseIdx(0);
-    setReplayCount(c => c + 1);
+    setIsStarted(false);
+    setTimeout(() => setIsStarted(true), 100);
+  }
+
+  async function runLoop() {
+    for (let i = 0; i < PHASES.length; i++) {
+      if (!activeRef.current) return;
+      setPhaseIdx(i);
+      await sleep(6000);
+    }
+    if (activeRef.current) setIsDone(true);
   }
 
   const p = PHASES[phaseIdx];
