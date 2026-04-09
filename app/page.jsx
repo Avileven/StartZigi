@@ -306,7 +306,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Collected and analyzed through a dedicated feedback system at every stage of your product.</p>
         </div>
-        <FeedbackMockup />
+        <div style={{ minHeight: 900 }}>
+          <FeedbackMockup />
+        </div>
       </div>
 
       {/* 7. Beta */}

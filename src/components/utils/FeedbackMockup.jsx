@@ -115,7 +115,9 @@ export default function FeedbackMockup() {
     return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
 
-  function replay() {
+  function replay(e) {
+    e.preventDefault();
+    e.stopPropagation();
     activeRef.current = false;
     hasStarted.current = false;
     setIsDone(false);
