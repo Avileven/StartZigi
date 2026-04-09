@@ -56,13 +56,14 @@ export default function MentorMockup() {
           runLoop();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
   }, []);
 
-  function replay() {
+  function replay(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     activeRef.current = false;
     hasStarted.current = false;
     setIsDone(false);
@@ -339,7 +340,7 @@ export default function MentorMockup() {
         </div>
         {isDone && (
           <div style={{ textAlign: "center", marginTop: 16 }}>
-            <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+            <button type="button" onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
           </div>
         )}
       </div>

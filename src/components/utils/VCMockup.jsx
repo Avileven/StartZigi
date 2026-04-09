@@ -47,7 +47,7 @@ export default function VCMockup() {
           setIsStarted(true);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
@@ -60,7 +60,8 @@ export default function VCMockup() {
     runLoop();
   }, [isStarted]);
 
-  function replay() {
+  function replay(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     activeRef.current = false;
     setIsDone(false);
     setActiveIdx(null);
@@ -213,7 +214,7 @@ export default function VCMockup() {
         </div>
         {isDone && (
           <div style={{ textAlign: "center", marginTop: 20 }}>
-            <button onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
+            <button type="button" onClick={replay} style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 20, cursor: "pointer" }}>↺ Replay</button>
           </div>
         )}
       </div>

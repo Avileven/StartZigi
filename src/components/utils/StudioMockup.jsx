@@ -35,7 +35,7 @@ export default function StudioMockup() {
           setIsStarted(true);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => { observer.disconnect(); activeRef.current = false; };
@@ -48,7 +48,8 @@ export default function StudioMockup() {
     runLoop();
   }, [isStarted]);
 
-  function replay() {
+  function replay(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     activeRef.current = false;
     setIsDone(false);
     setPhase("studio");

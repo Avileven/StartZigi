@@ -239,7 +239,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Manage your venture, track progress, and stay on top of every stage — all in one place.</p>
         </div>
-        <DashboardMockup />
+        <div style={{ minHeight: 600 }}>
+          <DashboardMockup />
+        </div>
       </div>
 
       {/* 2. Mentor */}
@@ -253,7 +255,9 @@ export default function Home() {
           <p className="text-white/55 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
         </div>
         <div className="flex justify-center">
+          <div style={{ minHeight: 700 }}>
           <MentorMockup />
+        </div>
         </div>
       </div>
 
@@ -267,7 +271,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Connect with top-tier venture capital firms and approach the right investors for your stage.</p>
         </div>
-        <VCMockup />
+        <div style={{ minHeight: 900 }}>
+          <VCMockup />
+        </div>
       </div>
 
       {/* 4. ZigForge Studio */}
@@ -280,7 +286,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
         </div>
-        <StudioMockup />
+        <div style={{ minHeight: 700 }}>
+          <StudioMockup />
+        </div>
       </div>
 
       {/* 5. VC Simulation */}
@@ -293,7 +301,9 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
         </div>
-        <VCSimulationMockup />
+        <div style={{ minHeight: 700 }}>
+          <VCSimulationMockup />
+        </div>
       </div>
 
       {/* 6. Feedback */}

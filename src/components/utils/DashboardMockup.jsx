@@ -70,13 +70,14 @@ export default function DashboardMockup() {
           setIsDone(false);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
     if (wrapRef.current) observer.observe(wrapRef.current);
     return () => observer.disconnect();
   }, [isStarted]);
 
-  function replay() {
+  function replay(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     setIsDone(false);
     setPhaseIdx(0);
     phaseCountRef.current = 0;
