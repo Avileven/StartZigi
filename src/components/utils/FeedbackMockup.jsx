@@ -94,6 +94,7 @@ export default function FeedbackMockup() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
+  const [replayCount, setReplayCount] = useState(0);
   const wrapRef = useRef(null);
   const countRef = useRef(0);
 
@@ -125,8 +126,6 @@ export default function FeedbackMockup() {
     }, 6000);
     return () => clearTimeout(timer);
   }, [phaseIdx, isStarted, replayCount]);
-
-  const [replayCount, setReplayCount] = useState(0);
 
   function replay() {
     countRef.current = 0;
