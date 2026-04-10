@@ -1,6 +1,7 @@
 //MENTOR 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const RUNS = [
   {
@@ -31,7 +32,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export default function MentorMockup() {
+export default function MentorMockup({ autoStart = false }) {
   const [draftText, setDraftText] = useState("");
   const [phase, setPhase] = useState("typing"); // typing | clicking | loading | feedback
   const [feedback, setFeedback] = useState(null);
@@ -41,26 +42,47 @@ export default function MentorMockup() {
   const [btnClicking, setBtnClicking] = useState(false);
   const runRef = useRef(0);
   const activeRef = useRef(false);
-  const wrapRef = useRef(null);
   const hasStarted = useRef(false);
   const [isDone, setIsDone] = useState(false);
+  if (!autoStart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/mentor-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
+            <div className="max-w-4xl mx-auto">
+              <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", overflow: "hidden", maxWidth: 620, width: "100%" }}>
+                <div style={{ background: "rgba(255,255,255,0.06)", padding: "18px 22px", borderBottom: "0.5px solid rgba(255,255,255,0.1)" }}>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: "#a5b4fc" }}>Mentor: Solution Overview</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>AI-driven strategic guidance for your venture.</div>
+                </div>
+                <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>Your Draft:</div>
+                  <div style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "10px 12px", minHeight: 90, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Start typing your solution overview...</div>
+                  <div style={{ width: "100%", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 500, textAlign: "center" }}>Get Mentor Feedback</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
-          activeRef.current = true;
-          runRef.current = 0;
-          setIsDone(false);
-          runLoop();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => { observer.disconnect(); activeRef.current = false; };
-  }, []);
+    if (autoStart && !hasStarted.current) {
+      hasStarted.current = true;
+      activeRef.current = true;
+      runRef.current = 0;
+      setIsDone(false);
+      runLoop();
+    }
+  }, [autoStart]);
 
   function replay(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -147,7 +169,7 @@ export default function MentorMockup() {
   const btnScale = btnClicking ? "scale(0.96)" : "scale(1)";
 
   return (
-    <div ref={wrapRef} className="px-6">
+    <div className="px-6">
       <div className="max-w-4xl mx-auto">
         {/* חלון המנטור */}
         <div

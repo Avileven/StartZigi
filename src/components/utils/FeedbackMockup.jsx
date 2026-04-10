@@ -1,6 +1,7 @@
 // FEEDBACK 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const PHASES = [
   {
@@ -92,28 +93,54 @@ const BADGE_COLORS = {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-export default function FeedbackMockup() {
+export default function FeedbackMockup({ autoStart = false }) {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
-  const wrapRef = useRef(null);
+  if (!autoStart) {
+    const p = PHASES[0];
+    const badge = BADGE_COLORS[p.key];
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/feedback-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }} className="flex justify-center px-6">
+            <div style={{ background: "#f8f9fb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+              <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
+                <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+                {p.stats.map((s, i) => (
+                  <div key={i} style={{ padding: "14px 10px", textAlign: "center" }}>
+                    <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
+                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
   const hasStarted = useRef(false);
   const activeRef = useRef(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
-          activeRef.current = true;
-          setIsDone(false);
-          runLoop();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => { observer.disconnect(); activeRef.current = false; };
-  }, []);
+    if (autoStart && !hasStarted.current) {
+      hasStarted.current = true;
+      activeRef.current = true;
+      setIsDone(false);
+      runLoop();
+    }
+  }, [autoStart]);
 
   function replay(e) {
     e.preventDefault();
@@ -140,7 +167,7 @@ export default function FeedbackMockup() {
   const badge = BADGE_COLORS[p.key];
 
   return (
-    <div ref={wrapRef} className="flex justify-center px-6">
+    <div className="flex justify-center px-6">
       <div style={{ background: "#f8f9fb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
 
         {/* Header */}

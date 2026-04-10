@@ -1,6 +1,7 @@
 //BETA 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const COACH_MSGS = [
   "Good morning! You're on day 14. Friday evenings are tough for you — I've scheduled a check-in at 6pm.",
@@ -10,7 +11,7 @@ const COACH_MSGS = [
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-export default function BetaMockup() {
+export default function BetaMockup({ autoStart = false }) {
   const [days, setDays]         = useState(0);
   const [saved, setSaved]       = useState(0);
   const [crav, setCrav]         = useState(0);
@@ -24,26 +25,66 @@ export default function BetaMockup() {
   const activeRef = useRef(true);
   const msgIdxRef = useRef(0);
 
-  const wrapRef = useRef(null);
   const hasStarted = useRef(false);
   const [isDone, setIsDone] = useState(false);
+  if (!autoStart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/beta-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }}>
+            <div className="flex justify-center px-6">
+              <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "min(50%, 340px) 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+                  <div>
+                    <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
+                    <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, marginBottom: 14 }}>Be the first to experience QuitAI. Join our exclusive beta.</div>
+                    <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 140 }}>
+                      <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+                        <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
+                        </div>
+                        <div style={{ padding: 8 }}>
+                          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                            {[["0","Days free"],["$0","Saved"],["0","Cravings"]].map(([n,l]) => (
+                              <div key={l} style={{ flex: 1, background: "#f5f3ff", borderRadius: 6, padding: "4px 2px", textAlign: "center" }}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: "#6c47ff" }}>{n}</div>
+                                <div style={{ fontSize: 6, color: "#9ca3af" }}>{l}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasStarted.current) {
-          hasStarted.current = true;
-          activeRef.current = true;
-          setIsDone(false);
-          runPhoneLoop();
-          runFormLoop();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => { observer.disconnect(); activeRef.current = false; };
-  }, []);
+    if (autoStart && !hasStarted.current) {
+      hasStarted.current = true;
+      activeRef.current = true;
+      setIsDone(false);
+      runPhoneLoop();
+      runFormLoop();
+    }
+  }, [autoStart]);
 
   function replay(e) {
     e.preventDefault();
@@ -116,7 +157,7 @@ export default function BetaMockup() {
   }
 
   return (
-    <div ref={wrapRef} className="flex justify-center px-6">
+    <div className="flex justify-center px-6">
       <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
 
         {/* Hero */}

@@ -1,6 +1,7 @@
 // STUDIO 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const FEATURES = [
   { icon: "📊", name: "Progress Tracker",    desc: "Daily smoke-free streak and milestones" },
@@ -11,7 +12,7 @@ const FEATURES = [
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-export default function StudioMockup() {
+export default function StudioMockup({ autoStart = false }) {
   const [title, setTitle]         = useState("");
   const [desc, setDesc]           = useState("");
   const [feats, setFeats]         = useState(FEATURES.map(() => false));
@@ -24,22 +25,54 @@ export default function StudioMockup() {
   const [phase, setPhase]         = useState("studio"); // studio | demo
   const activeRef = useRef(true);
 
-  const wrapRef = useRef(null);
   const [isStarted, setIsStarted] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  if (!autoStart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/studio-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-4 md:px-6">
+            <div className="flex justify-center">
+              <div style={{ background: "#f8f7ff", borderRadius: 14, maxWidth: 460, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+                <div style={{ background: "#1a1a2e", padding: "12px 18px", display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#ec4899" }}>ZigForge</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>How it works</div>
+                  <div style={{ fontSize: 11, color: "#fff", borderBottom: "2px solid #7c3aed", paddingBottom: 2 }}>Builder</div>
+                </div>
+                <div style={{ padding: 16 }}>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginBottom: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                    <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>App Name</div>
+                    <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "8px 10px", fontSize: 12, color: "#9ca3af" }}>Enter your app name...</div>
+                  </div>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", marginBottom: 10 }}>📱 Features</div>
+                    {[["📊","Progress Tracker"],["🤖","AI Daily Coach"],["🗣","Community Support"],["⚠️","Craving Alerts"]].map(([icon,name]) => (
+                      <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 8px", border: "1px solid #e5e7eb", borderRadius: 7, marginBottom: 5 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 600, color: "#1f2937" }}><span>{icon}</span>{name}</div>
+                        <div style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "#f3f4f6", color: "#9ca3af" }}>Disabled</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isStarted) {
-          setIsStarted(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => { observer.disconnect(); activeRef.current = false; };
-  }, [isStarted]);
+    if (autoStart) {
+      setIsStarted(true);
+    }
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isStarted) return;
@@ -131,7 +164,7 @@ export default function StudioMockup() {
   const styles       = [["modern","🔷 Modern"],["business","💼 Business"],["playful","🎮 Playful"],["elegant","💎 Elegant"]];
 
   return (
-    <div ref={wrapRef} className="px-4 md:px-6">
+    <div className="px-4 md:px-6">
       <div className="flex justify-center">
         <div style={{ background: "#f8f7ff", borderRadius: 14, maxWidth: 460, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
 

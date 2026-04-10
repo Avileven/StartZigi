@@ -1,6 +1,7 @@
 // VC 090426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const STATUS_COLORS = {
   none:     "linear-gradient(135deg,#3b82f6,#6366f1)",
@@ -32,26 +33,52 @@ const TAG_COLORS = ["tb","tg","tp"];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-export default function VCMockup() {
+export default function VCMockup({ autoStart = false }) {
   const [activeIdx, setActiveIdx] = useState(null);
   const [clickingIdx, setClickingIdx] = useState(null);
   const [isDone, setIsDone] = useState(false);
+  if (!autoStart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/vc-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
+            <div className="max-w-4xl mx-auto">
+              <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px" }}>
+                <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+                  {[["#3b82f6","Not contacted"],["#facc15","Pending"],["#c084fc","Interested"],["#7c3aed","Meeting"],["#ef4444","Passed"]].map(([c,l]) => (
+                    <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />{l}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14 }}>
+                  {[["$380M","#3b82f6",100],["$290M","#7c3aed",80],["$520M","#facc15",115],["$415M","#3b82f6",90],["$350M","#ef4444",85],["$480M","#c084fc",105],["$270M","#3b82f6",75],["$600M","#3b82f6",120]].map(([f,c,s]) => (
+                    <div key={f} style={{ width: s*0.65, height: s*0.65, borderRadius: "50%", background: c, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 3 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
   const [isStarted, setIsStarted] = useState(false);
   const activeRef = useRef(false);
-  const wrapRef = useRef(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isStarted) {
-          setIsStarted(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (wrapRef.current) observer.observe(wrapRef.current);
-    return () => { observer.disconnect(); activeRef.current = false; };
-  }, [isStarted]);
+    if (autoStart) {
+      setIsStarted(true);
+    }
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isStarted) return;
@@ -93,7 +120,7 @@ export default function VCMockup() {
   const activeFirm = activeIdx !== null ? FIRMS[activeIdx] : null;
 
   return (
-    <div ref={wrapRef} className="px-6">
+    <div className="px-6">
       <div className="max-w-4xl mx-auto">
         {/* מוקאפ */}
         <div
