@@ -101,24 +101,37 @@ export default function FeedbackMockup({ autoStart = false }) {
     const badge = BADGE_COLORS[p.key];
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 480, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/feedback-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none" }} className="flex justify-center px-6">
-            <div style={{ background: "#f8f9fb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
-              <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
-                <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
-                {p.stats.map((s, i) => (
-                  <div key={i} style={{ padding: "14px 10px", textAlign: "center" }}>
-                    <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
-                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{s.label}</div>
+        <Link href="/feedback-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
+              <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+              {p.stats.map((s, i) => (
+                <div key={i} style={{ padding: "14px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
+                  <div style={{ fontSize: 10, color: "#9ca3af" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10 }}>MVP Feature Ratings</div>
+              {p.features.map((f, i) => (
+                <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "10px 14px", border: "1px solid #e5e7eb", marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 600, color: "#111" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.color }} />{f.name}
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: f.tagBg, color: f.tagColor }}>{f.tag}</span>
                   </div>
-                ))}
-              </div>
+                  <div style={{ height: 6, background: "#f3f4f6", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${f.barPct}%`, background: f.barColor, borderRadius: 4 }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -127,7 +140,6 @@ export default function FeedbackMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
-        </div>
       </div>
     );
   }
