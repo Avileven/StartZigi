@@ -30,35 +30,30 @@ export default function BetaMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 500, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/beta-mockup" className="block relative group cursor-pointer">
-          <div style={{ transform: "scale(0.65)", transformOrigin: "top center", pointerEvents: "none", userSelect: "none", marginBottom: "-18%" }}>
-            <div className="flex justify-center px-6">
-              <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "min(50%, 340px) 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
-                  <div>
-                    <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
-                    <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, marginBottom: 14 }}>Be the first to experience QuitAI. Join our exclusive beta.</div>
-                    <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 140 }}>
-                      <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
-                        <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
-                          <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
-                        </div>
-                        <div style={{ padding: 8 }}>
-                          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-                            {[["0","Days free"],["$0","Saved"],["0","Cravings"]].map(([n,l]) => (
-                              <div key={l} style={{ flex: 1, background: "#f5f3ff", borderRadius: 6, padding: "4px 2px", textAlign: "center" }}>
-                                <div style={{ fontSize: 12, fontWeight: 800, color: "#6c47ff" }}>{n}</div>
-                                <div style={{ fontSize: 6, color: "#9ca3af" }}>{l}</div>
-                              </div>
-                            ))}
+        <Link href="/beta-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none", background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+              <div>
+                <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
+                <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, marginBottom: 14 }}>Be the first to experience QuitAI. Join our exclusive beta.</div>
+                <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 160 }}>
+                  <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+                    <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
+                      <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
+                    </div>
+                    <div style={{ padding: 8 }}>
+                      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                        {[["0","Days free"],["$0","Saved"],["0","Cravings"]].map(([n,l]) => (
+                          <div key={l} style={{ flex: 1, background: "#f5f3ff", borderRadius: 6, padding: "4px 2px", textAlign: "center" }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: "#6c47ff" }}>{n}</div>
+                            <div style={{ fontSize: 7, color: "#9ca3af" }}>{l}</div>
                           </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -72,7 +67,6 @@ export default function BetaMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
-        </div>
       </div>
     );
   }
