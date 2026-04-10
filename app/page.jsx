@@ -1,4 +1,4 @@
-// Home page - static version v4
+// Home page - static version v5
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -239,13 +239,11 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Manage your venture, track progress, and stay on top of every stage — all in one place.</p>
         </div>
-        <div style={{ minHeight: 600 }}>
-          <DashboardMockup />
-        </div>
+        <DashboardMockup />
       </div>
 
       {/* 2. Mentor */}
-      <div className="py-16 px-6" id="mentor-mockup">
+      <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
@@ -254,11 +252,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
         </div>
-        <div className="flex justify-center">
-          <div style={{ minHeight: 700 }}>
-          <MentorMockup />
-        </div>
-        </div>
+        <MentorMockup />
       </div>
 
       {/* 3. VC Marketplace */}
@@ -271,9 +265,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Connect with top-tier venture capital firms and approach the right investors for your stage.</p>
         </div>
-        <div style={{ minHeight: 900 }}>
-          <VCMockup />
-        </div>
+        <VCMockup />
       </div>
 
       {/* 4. ZigForge Studio */}
@@ -286,9 +278,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
         </div>
-        <div style={{ minHeight: 700 }}>
-          <StudioMockup />
-        </div>
+        <StudioMockup />
       </div>
 
       {/* 5. VC Simulation */}
@@ -301,9 +291,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
         </div>
-        <div style={{ minHeight: 700 }}>
-          <VCSimulationMockup />
-        </div>
+        <VCSimulationMockup />
       </div>
 
       {/* 6. Feedback */}
@@ -316,9 +304,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Collected and analyzed through a dedicated feedback system at every stage of your product.</p>
         </div>
-        <div style={{ minHeight: 900 }}>
-          <FeedbackMockup />
-        </div>
+        <FeedbackMockup />
       </div>
 
       {/* 7. Beta */}
@@ -331,9 +317,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Share it, collect testers, and grow your first user base.</p>
         </div>
-        <div style={{ minHeight: 820 }}>
-          <BetaMockup />
-        </div>
+        <BetaMockup />
       </div>
 
       {/* ── See full feature list ── */}
