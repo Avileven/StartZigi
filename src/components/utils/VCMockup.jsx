@@ -40,7 +40,7 @@ export default function VCMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+        <div style={{ height: 420, overflow: "hidden", borderRadius: 16, position: "relative" }}>
           <Link href="/vc-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
             <div className="max-w-4xl mx-auto">

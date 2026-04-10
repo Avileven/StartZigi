@@ -30,7 +30,7 @@ export default function StudioMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+        <div style={{ height: "clamp(200px, 45vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
           <Link href="/studio-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-4 md:px-6">
             <div className="flex justify-center">

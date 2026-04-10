@@ -47,7 +47,7 @@ export default function MentorMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 400, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+        <div style={{ height: 520, overflow: "hidden", borderRadius: 16, position: "relative" }}>
           <Link href="/mentor-mockup" className="block relative group cursor-pointer">
             <div style={{ pointerEvents: "none", userSelect: "none" }}>
               <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", overflow: "hidden" }}>
