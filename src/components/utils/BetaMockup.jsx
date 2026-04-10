@@ -32,13 +32,33 @@ export default function BetaMockup({ autoStart = false }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/beta-mockup" className="block relative group cursor-pointer">
 
-          {/* Mobile: play button only */}
-          <div className="flex sm:hidden items-center justify-center" style={{ height: 180, background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+          {/* Mobile: scaled preview */}
+          <div className="sm:hidden" style={{ height: 220, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+            <div style={{ transform: "scale(0.5)", transformOrigin: "top center", marginBottom: "-50%", pointerEvents: "none", userSelect: "none" }}>
+              <div style={{ background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+                  <div>
+                    <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
+                    <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 160 }}>
+                      <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+                        <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
+                          <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Tap to watch</div>
+            </div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
             </div>
           </div>
 
