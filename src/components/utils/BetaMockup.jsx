@@ -33,7 +33,7 @@ export default function BetaMockup({ autoStart = false }) {
         <Link href="/beta-mockup" className="block relative group cursor-pointer">
 
           {/* Mobile: scaled preview */}
-          <div className="sm:hidden" style={{ height: 220, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <div className="sm:hidden" style={{ height: 220, width: 220, overflow: "hidden", borderRadius: 16, position: "relative", margin: "0 auto" }}>
             <div style={{ transform: "scale(0.5)", transformOrigin: "top center", marginBottom: "-50%", pointerEvents: "none", userSelect: "none" }}>
               <div style={{ background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
