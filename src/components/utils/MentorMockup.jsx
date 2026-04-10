@@ -46,10 +46,9 @@ export default function MentorMockup({ autoStart = false }) {
   const [isDone, setIsDone] = useState(false);
   if (!autoStart) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: "clamp(200px, 45vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/mentor-mockup" className="block relative group cursor-pointer">
-          <div style={{ transform: "scale(0.65)", transformOrigin: "top center", pointerEvents: "none", userSelect: "none", marginBottom: "-18%" }} className="px-6">
+      <div style={{ maxWidth: 620, margin: "0 auto", height: 380, overflow: "hidden", borderRadius: 16, position: "relative" }} className="px-4 sm:px-6">
+        <Link href="/mentor-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
             <div className="max-w-4xl mx-auto">
               <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", overflow: "hidden", maxWidth: 620, width: "100%" }}>
                 <div style={{ background: "rgba(255,255,255,0.06)", padding: "18px 22px", borderBottom: "0.5px solid rgba(255,255,255,0.1)" }}>
@@ -70,7 +69,6 @@ export default function MentorMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
-        </div>
       </div>
     );
   }
