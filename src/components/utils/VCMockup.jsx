@@ -29,7 +29,6 @@ const FIRMS = [
 
 const SIZES = [100,115,125,105,95,110,90,130,100,88,108,120,95];
 const ORDER = [1, 5, 2, 8, 10, 0, 4, 6];
-const TAG_COLORS = ["tb","tg","tp"];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -37,49 +36,11 @@ export default function VCMockup({ autoStart = false }) {
   const [activeIdx, setActiveIdx] = useState(null);
   const [clickingIdx, setClickingIdx] = useState(null);
   const [isDone, setIsDone] = useState(false);
-  if (!autoStart) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 420, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/vc-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
-            <div className="max-w-4xl mx-auto">
-              <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px" }}>
-                <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-                  {[["#3b82f6","Not contacted"],["#facc15","Pending"],["#c084fc","Interested"],["#7c3aed","Meeting"],["#ef4444","Passed"]].map(([c,l]) => (
-                    <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
-                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />{l}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14 }}>
-                  {[["$380M","#3b82f6",100],["$290M","#7c3aed",80],["$520M","#facc15",115],["$415M","#3b82f6",90],["$350M","#ef4444",85],["$480M","#c084fc",105],["$270M","#3b82f6",75],["$600M","#3b82f6",120]].map(([f,c,s]) => (
-                    <div key={f} style={{ width: s*0.65, height: s*0.65, borderRadius: "50%", background: c, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 3 }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
-              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
-            </div>
-          </div>
-        </Link>
-        </div>
-      </div>
-    );
-  }
-
   const [isStarted, setIsStarted] = useState(false);
   const activeRef = useRef(false);
 
   useEffect(() => {
-    if (autoStart) {
-      setIsStarted(true);
-    }
+    if (autoStart) setIsStarted(true);
   }, [autoStart]);
 
   useEffect(() => {
@@ -103,15 +64,12 @@ export default function VCMockup({ autoStart = false }) {
     for (let idx = 0; idx < ORDER.length; idx++) {
       if (!activeRef.current) return;
       const i = ORDER[idx];
-
       setClickingIdx(i);
       await sleep(220);
       setClickingIdx(null);
       await sleep(150);
-
       setActiveIdx(i);
       await sleep(4200);
-
       if (!activeRef.current) return;
       setActiveIdx(null);
       await sleep(500);
@@ -121,35 +79,54 @@ export default function VCMockup({ autoStart = false }) {
 
   const activeFirm = activeIdx !== null ? FIRMS[activeIdx] : null;
 
+  if (!autoStart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <Link href="/vc-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+              {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
+                <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: c, flexShrink: 0 }} />{l}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
+              {FIRMS.map((firm, i) => {
+                const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
+                return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 4 }}>{firm.fund}</span>
+                    </div>
+                    <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", textAlign: "center", maxWidth: 60 }}>{firm.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="px-6">
       <div className="max-w-4xl mx-auto">
-        {/* מוקאפ */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 16,
-            border: "0.5px solid rgba(255,255,255,0.12)",
-            padding: "28px 24px",
-          }}
-        >
-          {/* לגנדה */}
+        <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "28px 24px" }}>
           <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 14, marginBottom: 24 }}>
-            {[
-              { label: "Not contacted",    color: "linear-gradient(135deg,#3b82f6,#6366f1)" },
-              { label: "Pending review",   color: "#facc15" },
-              { label: "Interested",       color: "#c084fc" },
-              { label: "Meeting scheduled",color: "#7c3aed" },
-              { label: "Passed",           color: "#ef4444" },
-            ].map((item) => (
+            {[{ label: "Not contacted", color: "linear-gradient(135deg,#3b82f6,#6366f1)" },{ label: "Pending review", color: "#facc15" },{ label: "Interested", color: "#c084fc" },{ label: "Meeting scheduled", color: "#7c3aed" },{ label: "Passed", color: "#ef4444" }].map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
                 <div style={{ width: 12, height: 12, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
                 {item.label}
               </div>
             ))}
           </div>
-
-          {/* עיגולים */}
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 18, marginBottom: activeFirm ? 24 : 0 }}>
             {FIRMS.map((firm, i) => {
               const sz = SIZES[i % SIZES.length];
@@ -157,45 +134,16 @@ export default function VCMockup({ autoStart = false }) {
               const isClicking = clickingIdx === i;
               return (
                 <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
-                  <div
-                    style={{
-                      width: sz,
-                      height: sz,
-                      borderRadius: "50%",
-                      background: bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transform: isClicking ? "scale(0.88)" : "scale(1)",
-                      filter: isClicking ? "brightness(1.3)" : "none",
-                      transition: "transform 0.15s",
-                    }}
-                  >
-                    <span style={{ fontSize: sz > 110 ? 12 : 10, fontWeight: 700, color: "#fff", textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.35)", padding: 6, lineHeight: 1.2 }}>
-                      {firm.fund}
-                    </span>
+                  <div style={{ width: sz, height: sz, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", transform: isClicking ? "scale(0.88)" : "scale(1)", filter: isClicking ? "brightness(1.3)" : "none", transition: "transform 0.15s" }}>
+                    <span style={{ fontSize: sz > 110 ? 12 : 10, fontWeight: 700, color: "#fff", textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.35)", padding: 6, lineHeight: 1.2 }}>{firm.fund}</span>
                   </div>
-                  <div style={{ fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.55)", textAlign: "center", maxWidth: 90 }}>
-                    {firm.name}
-                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.55)", textAlign: "center", maxWidth: 90 }}>{firm.name}</div>
                 </div>
               );
             })}
           </div>
-
-          {/* פרופיל */}
           {activeFirm && (
-            <div
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "0.5px solid rgba(255,255,255,0.12)",
-                borderRadius: 14,
-                padding: 20,
-                maxWidth: 500,
-                margin: "0 auto",
-                animation: "vcFadeUp 0.4s ease forwards",
-              }}
-            >
+            <div style={{ background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20, maxWidth: 500, margin: "0 auto", animation: "vcFadeUp 0.4s ease forwards" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14, borderBottom: "0.5px solid rgba(255,255,255,0.1)", paddingBottom: 14 }}>
                 <div style={{ width: 48, height: 48, borderRadius: "50%", background: STATUS_COLORS[activeFirm.status], display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center" }}>{activeFirm.fund}</span>
@@ -205,39 +153,8 @@ export default function VCMockup({ autoStart = false }) {
                   <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{activeFirm.founded}</div>
                 </div>
               </div>
-
-              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>About</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{activeFirm.about}</div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
-                {[{ label: "Fund Size", val: activeFirm.fund }, { label: "Check Size", val: activeFirm.check }].map((m) => (
-                  <div key={m.label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 12px" }}>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>{m.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>{m.val}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".08em", marginTop: 12, marginBottom: 5 }}>Investment Stages</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {activeFirm.stages.map((s, j) => (
-                  <span key={s} style={{ fontSize: 10, padding: "2px 9px", borderRadius: 20, fontWeight: 500, background: j % 3 === 0 ? "rgba(59,130,246,0.2)" : j % 3 === 1 ? "rgba(34,197,94,0.2)" : "rgba(168,85,247,0.2)", color: j % 3 === 0 ? "#93c5fd" : j % 3 === 1 ? "#86efac" : "#d8b4fe" }}>
-                    {s}
-                  </span>
-                ))}
-              </div>
-
-              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".08em", marginTop: 12, marginBottom: 8 }}>Portfolio</div>
-              {activeFirm.portfolio.slice(0, 3).map((p) => (
-                <div key={p.name} style={{ borderLeft: "2px solid #6366f1", paddingLeft: 10, marginBottom: 7 }}>
-                  <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.8)" }}>{p.name}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{p.description}</div>
-                </div>
-              ))}
-
-              <button style={{ width: "100%", marginTop: 14, background: "linear-gradient(to right,#3b82f6,#6366f1)", color: "#fff", border: "none", borderRadius: 8, padding: 9, fontSize: 12, fontWeight: 500, cursor: "default" }}>
-                Contact Firm
-              </button>
+              <button style={{ width: "100%", marginTop: 14, background: "linear-gradient(to right,#3b82f6,#6366f1)", color: "#fff", border: "none", borderRadius: 8, padding: 9, fontSize: 12, fontWeight: 500, cursor: "default" }}>Contact Firm</button>
             </div>
           )}
         </div>
@@ -247,13 +164,7 @@ export default function VCMockup({ autoStart = false }) {
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes vcFadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      <style>{`@keyframes vcFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 }
