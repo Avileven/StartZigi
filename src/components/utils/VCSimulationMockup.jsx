@@ -22,7 +22,8 @@ export default function VCSimulationMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/vcsimulation-mockup" className="block relative group cursor-pointer">
+        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <Link href="/vcsimulation-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
             <div className="max-w-4xl mx-auto">
               <div style={{ background: "#fff", borderRadius: 14, maxWidth: 520, margin: "0 auto", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
@@ -52,6 +53,7 @@ export default function VCSimulationMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
+        </div>
       </div>
     );
   }

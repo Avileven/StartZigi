@@ -118,12 +118,13 @@ export default function DashboardMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/dashboard-mockup" className="block relative group cursor-pointer">
+        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <Link href="/dashboard-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }}>
             <div style={{ padding: "24px 12px" }}>
               <div style={{ maxWidth: 900, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
                 <div style={{ overflowX: "auto" }}>
-                <div style={{ minWidth: 600, background: "#f0f0f5" }}>
+                <div style={{ background: "#f0f0f5" }}>
                 <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>Good morning, Sarah!</div>
@@ -186,6 +187,7 @@ export default function DashboardMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
+        </div>
       </div>
     );
   }

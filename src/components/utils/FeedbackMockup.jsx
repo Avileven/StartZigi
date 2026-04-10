@@ -101,7 +101,8 @@ export default function FeedbackMockup({ autoStart = false }) {
     const badge = BADGE_COLORS[p.key];
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/feedback-mockup" className="block relative group cursor-pointer">
+        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <Link href="/feedback-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }} className="flex justify-center px-6">
             <div style={{ background: "#f8f9fb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
               <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
@@ -126,6 +127,7 @@ export default function FeedbackMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
+        </div>
       </div>
     );
   }

@@ -30,7 +30,8 @@ export default function StudioMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/studio-mockup" className="block relative group cursor-pointer">
+        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <Link href="/studio-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-4 md:px-6">
             <div className="flex justify-center">
               <div style={{ background: "#f8f7ff", borderRadius: 14, maxWidth: 460, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
@@ -63,6 +64,7 @@ export default function StudioMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
+        </div>
       </div>
     );
   }

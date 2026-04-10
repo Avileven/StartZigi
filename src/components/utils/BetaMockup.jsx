@@ -30,7 +30,8 @@ export default function BetaMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/beta-mockup" className="block relative group cursor-pointer">
+        <div style={{ height: "clamp(260px, 50vw, 400px)", overflow: "hidden", borderRadius: 16, position: "relative" }}>
+          <Link href="/beta-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none" }}>
             <div className="flex justify-center px-6">
               <div style={{ background: "#f9fafb", borderRadius: 14, maxWidth: 720, width: "100%", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
@@ -71,6 +72,7 @@ export default function BetaMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
+        </div>
       </div>
     );
   }
