@@ -117,22 +117,6 @@ export default function FeedbackMockup({ autoStart = false }) {
                 </div>
               ))}
             </div>
-            <div style={{ padding: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10 }}>MVP Feature Ratings</div>
-              {p.features.map((f, i) => (
-                <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "10px 14px", border: "1px solid #e5e7eb", marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 600, color: "#111" }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.color }} />{f.name}
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: f.tagBg, color: f.tagColor }}>{f.tag}</span>
-                  </div>
-                  <div style={{ height: 6, background: "#f3f4f6", borderRadius: 4, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${f.barPct}%`, background: f.barColor, borderRadius: 4 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
