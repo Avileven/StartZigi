@@ -31,8 +31,20 @@ export default function BetaMockup({ autoStart = false }) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/beta-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none", background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+
+          {/* Mobile: play button only */}
+          <div className="flex sm:hidden items-center justify-center" style={{ height: 180, background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Tap to watch</div>
+            </div>
+          </div>
+
+          {/* Desktop: full preview */}
+          <div className="hidden sm:block relative" style={{ pointerEvents: "none", userSelect: "none", background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "min(50%, 340px) 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
               <div>
                 <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
@@ -71,12 +83,13 @@ export default function BetaMockup({ autoStart = false }) {
                 ))}
               </div>
             </div>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
-              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
             </div>
           </div>
+
         </Link>
       </div>
     );
