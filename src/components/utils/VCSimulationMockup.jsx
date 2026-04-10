@@ -22,29 +22,24 @@ export default function VCSimulationMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 480, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/vcsimulation-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none" }} className="px-6">
-            <div className="max-w-4xl mx-auto">
-              <div style={{ background: "#fff", borderRadius: 14, maxWidth: 520, margin: "0 auto", overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
-                <div style={{ background: "#f8fafc", padding: "14px 18px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937" }}>Meeting with Meridian Stone Capital</div>
-                    <div style={{ fontSize: 10, color: "#6b7280", marginTop: 1 }}>Screening Interview · NovaMed</div>
-                  </div>
-                  <div style={{ fontSize: 13, color: "#9ca3af" }}>✕</div>
-                </div>
-                <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10, minHeight: 120 }}>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>MS</div>
-                    <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "9px 12px", fontSize: 12, color: "#1f2937", maxWidth: "75%" }}>Hello from Meridian Stone Capital. I've reviewed your materials for NovaMed.</div>
-                  </div>
-                </div>
-                <div style={{ padding: "10px 14px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 8, alignItems: "center" }}>
-                  <div style={{ flex: 1, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 10px", fontSize: 12, color: "#9ca3af" }}>Type your answer...</div>
-                  <div style={{ background: "#6366f1", color: "#fff", borderRadius: 8, padding: "7px 12px", fontSize: 11, fontWeight: 600 }}>Send</div>
-                </div>
+        <Link href="/vcsimulation-mockup" className="block relative group cursor-pointer">
+          <div style={{ pointerEvents: "none", userSelect: "none", background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ background: "#f8fafc", padding: "14px 18px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937" }}>Meeting with Meridian Stone Capital</div>
+                <div style={{ fontSize: 10, color: "#6b7280", marginTop: 1 }}>Screening Interview · NovaMed</div>
               </div>
+              <div style={{ fontSize: 13, color: "#9ca3af" }}>✕</div>
+            </div>
+            <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10, minHeight: 200 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>MS</div>
+                <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "9px 12px", fontSize: 12, color: "#1f2937", maxWidth: "75%" }}>Hello from Meridian Stone Capital. I've reviewed your materials for NovaMed and have a few questions.</div>
+              </div>
+            </div>
+            <div style={{ padding: "10px 14px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ flex: 1, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 10px", fontSize: 12, color: "#9ca3af" }}>Type your answer...</div>
+              <div style={{ background: "#6366f1", color: "#fff", borderRadius: 8, padding: "7px 12px", fontSize: 11, fontWeight: 600 }}>Send</div>
             </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -53,7 +48,6 @@ export default function VCSimulationMockup({ autoStart = false }) {
             </div>
           </div>
         </Link>
-        </div>
       </div>
     );
   }
