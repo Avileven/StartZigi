@@ -32,7 +32,7 @@ export default function BetaMockup({ autoStart = false }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/beta-mockup" className="block relative group cursor-pointer">
           <div style={{ pointerEvents: "none", userSelect: "none", background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "min(50%, 340px) 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
               <div>
                 <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
@@ -47,7 +47,7 @@ export default function BetaMockup({ autoStart = false }) {
                       <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
                     </div>
                     <div style={{ padding: 8 }}>
-                      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                      <div style={{ display: "flex", gap: 4 }}>
                         {[["0","Days free"],["$0","Saved"],["0","Cravings"]].map(([n,l]) => (
                           <div key={l} style={{ flex: 1, background: "#f5f3ff", borderRadius: 6, padding: "4px 2px", textAlign: "center" }}>
                             <div style={{ fontSize: 12, fontWeight: 800, color: "#6c47ff" }}>{n}</div>
@@ -58,6 +58,17 @@ export default function BetaMockup({ autoStart = false }) {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+            <div style={{ padding: "20px 28px", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#111", textAlign: "center", marginBottom: 14 }}>Why Should You Join?</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+                {[["🚀","First Access"],["🤖","AI That Learns"],["👥","Community"],["💡","Shape the App"]].map(([icon,name]) => (
+                  <div key={name} style={{ textAlign: "center", padding: "10px 6px", background: "#f9fafb", borderRadius: 10 }}>
+                    <div style={{ fontSize: 18, marginBottom: 5 }}>{icon}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#111" }}>{name}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
