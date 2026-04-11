@@ -1,4 +1,4 @@
-// Home page - static version v5
+// Home page - 110426
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -177,7 +177,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto animate-slideUp"
             style={{ animationDelay: "0.2s" }}
           >
-            A complete startup ecosystem for growing ideas, backed by AI guidance and community wisdom.
+            A complete startup ecosystem combining AI guidance, real user feedback, and structured venture building tools.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
@@ -207,6 +207,23 @@ export default function Home() {
               </Button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* ── Why StartZig ── */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              Why StartZig?
+            </span>
+          </h2>
+          <p className="text-lg text-white/70 max-w-3xl mb-4">
+            StartZig helps you develop startup ideas through AI mentorship, simulation tools, and real community feedback.
+          </p>
+          <p className="text-lg text-white/70 max-w-3xl">
+            It supports both early-stage founders and people exploring the startup world.
+          </p>
         </div>
       </div>
 
