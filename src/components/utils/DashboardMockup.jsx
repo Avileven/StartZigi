@@ -1,4 +1,4 @@
-// DASHBOARD 090426
+// DASHBOARD 110426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -130,20 +130,14 @@ export default function DashboardMockup({ autoStart = false }) {
                   </div>
                   <span style={{ background: "#fff3e0", color: "#d97706", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>PLAN</span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "120px 130px 1fr" }}>
-                  <div style={{ background: "#fff", borderRight: "0.5px solid #eee", padding: "10px 0" }}>
-                    <div style={{ fontSize: 8, color: "#ccc", textTransform: "uppercase", padding: "0 10px 6px" }}>Navigation</div>
-                    {NAV_ITEMS.slice(0,4).map((item) => (
-                      <div key={item} style={{ padding: "5px 10px", fontSize: 10, color: item === "Dashboard" ? "#6c47ff" : "#666", fontWeight: item === "Dashboard" ? 600 : 400, background: item === "Dashboard" ? "#f3f0ff" : "transparent" }}>{item}</div>
-                    ))}
-                  </div>
+                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr" }}>
                   <div style={{ background: "#fafafa", borderRight: "0.5px solid #eee", padding: 10 }}>
                     <div style={{ fontSize: 8, color: "#bbb", textTransform: "uppercase", marginBottom: 4 }}>Toolbox</div>
                     {PHASES[0].tools.slice(0,3).map((t) => (
                       <div key={t} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 5, padding: "5px 8px", fontSize: 9, color: "#444", marginBottom: 4 }}>{t}</div>
                     ))}
                   </div>
-                  <div style={{ padding: 10 }}>
+                  <div style={{ padding: 10, minWidth: 0 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: "#111", marginBottom: 6 }}>Board</div>
                     {PHASES[0].messages.map((msg) => (
                       <div key={msg.id} style={{ background: msg.highlight ? "#f0fdf4" : "#fff", border: `0.5px solid ${msg.highlight ? "#22c55e" : "#e8e8e8"}`, borderRadius: 6, padding: "6px 8px", marginBottom: 4 }}>
