@@ -126,7 +126,7 @@ export default function VCMockup({ autoStart = false }) {
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
+              <div className="blur-sm" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
                 {FIRMS.map((firm, i) => {
                   const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
                   return (
