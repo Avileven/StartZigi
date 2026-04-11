@@ -96,6 +96,8 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 export default function FeedbackMockup({ autoStart = false }) {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
+  const p = PHASES[0];
+  const badge = BADGE_COLORS[p.key];
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -189,8 +191,8 @@ export default function FeedbackMockup({ autoStart = false }) {
     if (activeRef.current) setIsDone(true);
   }
 
-  const p = PHASES[phaseIdx];
-  const badge = BADGE_COLORS[p.key];
+  const pCurrent = PHASES[phaseIdx];
+  const badgeCurrent = BADGE_COLORS[pCurrent.key];
 
   return (
     <div className="flex justify-center px-6">
@@ -198,8 +200,8 @@ export default function FeedbackMockup({ autoStart = false }) {
 
         {/* Header */}
         <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
-          <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>
-            {p.label}
+          <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badgeCurrent.bg, color: badgeCurrent.color }}>
+            {pCurrent.label}
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
           <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
@@ -210,7 +212,7 @@ export default function FeedbackMockup({ autoStart = false }) {
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
-          {p.stats.map((s, i) => (
+          {pCurrent.stats.map((s, i) => (
             <div key={i} style={{ padding: "14px 10px", textAlign: "center", borderRight: i < 3 ? "1px solid #f0f0f0" : "none" }}>
               <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
@@ -225,7 +227,7 @@ export default function FeedbackMockup({ autoStart = false }) {
           {/* Feature Ratings */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10 }}>MVP Feature Ratings</div>
-            {p.features.map((f, i) => (
+            {pCurrent.features.map((f, i) => (
               <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid #e5e7eb", marginBottom: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: "#111" }}>
@@ -256,10 +258,10 @@ export default function FeedbackMockup({ autoStart = false }) {
           {/* Feedback */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-              {p.feedbackTitle}
-              <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{p.feedbacks.length}</span>
+              {pCurrent.feedbackTitle}
+              <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{pCurrent.feedbacks.length}</span>
             </div>
-            {p.feedbacks.map((f, i) => (
+            {pCurrent.feedbacks.map((f, i) => (
               <div key={i} style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid #e5e7eb", marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
                   <div style={{ width: 26, height: 26, borderRadius: "50%", background: f.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{f.initials}</div>
@@ -277,11 +279,11 @@ export default function FeedbackMockup({ autoStart = false }) {
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
               Suggested Features
-              <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{p.suggested.length}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{pCurrent.suggested.length}</span>
             </div>
             <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid #e5e7eb" }}>
-              {p.suggested.map((s, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < p.suggested.length - 1 ? "1px solid #f3f4f6" : "none" }}>
+              {pCurrent.suggested.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < pCurrent.suggested.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                   <span style={{ fontSize: 16 }}>💡</span>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "#111" }}>{s.name}</div>
@@ -293,15 +295,15 @@ export default function FeedbackMockup({ autoStart = false }) {
           </div>
 
           {/* Beta Testers */}
-          {p.testers && (
+          {pCurrent.testers && (
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#111", paddingLeft: 10, borderLeft: "3px solid #6c47ff", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
                 Beta Sign-ups
-                <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{p.stats[3].num}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#6c47ff", padding: "2px 8px", borderRadius: 12 }}>{pCurrent.stats[3].num}</span>
               </div>
               <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid #e5e7eb" }}>
-                {p.testers.map((t, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: i < p.testers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
+                {pCurrent.testers.map((t, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: i < pCurrent.testers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                     <div style={{ width: 26, height: 26, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{t.initials}</div>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#111" }}>{t.name}</div>
