@@ -23,7 +23,10 @@ export default function VCSimulationMockup({ autoStart = false }) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/vcsimulation-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none", background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+
+          {/* Mobile: cropped preview */}
+          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#fff", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ background: "#f8fafc", padding: "14px 18px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937" }}>Meeting with Meridian Stone Capital</div>
@@ -42,11 +45,41 @@ export default function VCSimulationMockup({ autoStart = false }) {
               <div style={{ background: "#6366f1", color: "#fff", borderRadius: 8, padding: "7px 12px", fontSize: 11, fontWeight: 600 }}>Send</div>
             </div>
           </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
-              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
             </div>
           </div>
+
+          {/* Desktop: full preview */}
+          <div className="hidden sm:block relative">
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ background: "#f8fafc", padding: "14px 18px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937" }}>Meeting with Meridian Stone Capital</div>
+                <div style={{ fontSize: 10, color: "#6b7280", marginTop: 1 }}>Screening Interview · NovaMed</div>
+              </div>
+              <div style={{ fontSize: 13, color: "#9ca3af" }}>✕</div>
+            </div>
+            <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10, minHeight: 200 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>MS</div>
+                <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "9px 12px", fontSize: 12, color: "#1f2937", maxWidth: "75%" }}>Hello from Meridian Stone Capital. I've reviewed your materials for NovaMed and have a few questions.</div>
+              </div>
+            </div>
+            <div style={{ padding: "10px 14px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ flex: 1, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 10px", fontSize: 12, color: "#9ca3af" }}>Type your answer...</div>
+              <div style={{ background: "#6366f1", color: "#fff", borderRadius: 8, padding: "7px 12px", fontSize: 11, fontWeight: 600 }}>Send</div>
+            </div>
+          </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
+            </div>
+          </div>
+
         </Link>
       </div>
     );

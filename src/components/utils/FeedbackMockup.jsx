@@ -97,12 +97,13 @@ export default function FeedbackMockup({ autoStart = false }) {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [isDone, setIsDone] = useState(false);
   if (!autoStart) {
-    const p = PHASES[0];
-    const badge = BADGE_COLORS[p.key];
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/feedback-mockup" className="block relative group cursor-pointer">
-          <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, overflow: "hidden" }}>
+
+          {/* Mobile: cropped preview */}
+          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
               <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
@@ -118,11 +119,38 @@ export default function FeedbackMockup({ autoStart = false }) {
               ))}
             </div>
           </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
-              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
             </div>
           </div>
+
+          {/* Desktop: full preview */}
+          <div className="hidden sm:block relative">
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
+              <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+              {p.stats.map((s, i) => (
+                <div key={i} style={{ padding: "14px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
+                  <div style={{ fontSize: 10, color: "#9ca3af" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
+            </div>
+          </div>
+
         </Link>
       </div>
     );

@@ -47,9 +47,33 @@ export default function MentorMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div style={{ height: 520, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-          <Link href="/mentor-mockup" className="block relative group cursor-pointer">
+        <Link href="/mentor-mockup" className="block relative group cursor-pointer">
+
+          {/* Mobile: cropped preview */}
+          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
             <div style={{ pointerEvents: "none", userSelect: "none" }}>
+              <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.06)", padding: "18px 22px", borderBottom: "0.5px solid rgba(255,255,255,0.1)" }}>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: "#a5b4fc" }}>Mentor: Solution Overview</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>AI-driven strategic guidance for your venture.</div>
+                </div>
+                <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>Your Draft:</div>
+                  <div style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "10px 12px", minHeight: 90, fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Start typing your solution overview...</div>
+                  <div style={{ width: "100%", background: "#4f46e5", color: "#fff", borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 500, textAlign: "center" }}>Get Mentor Feedback</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: full preview */}
+          <div className="hidden sm:block relative">
+<div style={{ pointerEvents: "none", userSelect: "none" }}>
               <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", overflow: "hidden" }}>
                 <div style={{ background: "rgba(255,255,255,0.06)", padding: "18px 22px", borderBottom: "0.5px solid rgba(255,255,255,0.1)" }}>
                   <div style={{ fontSize: 17, fontWeight: 600, color: "#a5b4fc" }}>Mentor: Solution Overview</div>
@@ -67,8 +91,9 @@ export default function MentorMockup({ autoStart = false }) {
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
               </div>
             </div>
-          </Link>
-        </div>
+          </div>
+
+        </Link>
       </div>
     );
   }
