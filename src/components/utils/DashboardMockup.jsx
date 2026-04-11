@@ -121,70 +121,41 @@ export default function DashboardMockup({ autoStart = false }) {
         <Link href="/dashboard-mockup" className="block relative group cursor-pointer">
 
           {/* Mobile: cropped preview */}
-          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-            <div style={{ pointerEvents: "none", userSelect: "none" }}>
-            <div style={{ padding: "24px 12px" }}>
-              <div style={{ maxWidth: 900, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
-                <div style={{ overflowX: "auto" }}>
-                <div style={{ background: "#f0f0f5" }}>
-                <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative", border: "0.5px solid #ddd" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f0f0f5" }}>
+                <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>Good morning, Sarah!</div>
-                    <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>Monday, April 6, 2026</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#111" }}>Good morning, Sarah!</div>
+                    <div style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>Monday, April 6, 2026</div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 11, color: "#aaa" }}>Current Phase</span>
-                    <span style={{ background: "#fff3e0", color: "#d97706", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>PLAN</span>
-                  </div>
+                  <span style={{ background: "#fff3e0", color: "#d97706", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>PLAN</span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "160px 170px 1fr" }}>
-                  <div style={{ background: "#fff", borderRight: "0.5px solid #eee", padding: "12px 0" }}>
-                    <div style={{ fontSize: 9, color: "#ccc", textTransform: "uppercase", letterSpacing: "0.1em", padding: "0 14px 8px" }}>Navigation</div>
-                    {NAV_ITEMS.map((item) => (
-                      <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", fontSize: 12, color: item === "Dashboard" ? "#6c47ff" : "#666", fontWeight: item === "Dashboard" ? 600 : 400, background: item === "Dashboard" ? "#f3f0ff" : "transparent" }}>
-                        <div style={{ width: 8, height: 8, borderRadius: 2, background: item === "Dashboard" ? "#6c47ff22" : "#f0f0f0", flexShrink: 0 }} />
-                        {item}
-                      </div>
+                <div style={{ display: "grid", gridTemplateColumns: "120px 130px 1fr" }}>
+                  <div style={{ background: "#fff", borderRight: "0.5px solid #eee", padding: "10px 0" }}>
+                    <div style={{ fontSize: 8, color: "#ccc", textTransform: "uppercase", padding: "0 10px 6px" }}>Navigation</div>
+                    {NAV_ITEMS.slice(0,4).map((item) => (
+                      <div key={item} style={{ padding: "5px 10px", fontSize: 10, color: item === "Dashboard" ? "#6c47ff" : "#666", fontWeight: item === "Dashboard" ? 600 : 400, background: item === "Dashboard" ? "#f3f0ff" : "transparent" }}>{item}</div>
                     ))}
                   </div>
-                  <div style={{ background: "#fafafa", borderRight: "0.5px solid #eee", padding: 12, display: "flex", flexDirection: "column", gap: 5 }}>
-                    <div style={{ fontSize: 9, color: "#bbb", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Toolbox</div>
-                    {PHASES[0].tools.map((t) => (
-                      <div key={t} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 7, padding: "7px 10px", fontSize: 11, color: "#444" }}>{t}</div>
+                  <div style={{ background: "#fafafa", borderRight: "0.5px solid #eee", padding: 10 }}>
+                    <div style={{ fontSize: 8, color: "#bbb", textTransform: "uppercase", marginBottom: 4 }}>Toolbox</div>
+                    {PHASES[0].tools.slice(0,3).map((t) => (
+                      <div key={t} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 5, padding: "5px 8px", fontSize: 9, color: "#444", marginBottom: 4 }}>{t}</div>
                     ))}
                   </div>
-                  <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 5 }}>NovaMed</div>
-                      <div style={{ display: "flex", gap: 6, fontSize: 10, color: "#999", flexWrap: "wrap" }}>
-                        <span>8 messages</span><span>·</span><span>Balance: $15,000</span><span>·</span><span>Val: $250K</span>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>Board</div>
+                  <div style={{ padding: 10 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#111", marginBottom: 6 }}>Board</div>
                     {PHASES[0].messages.map((msg) => (
-                      <div key={msg.id} style={{ background: msg.highlight ? "#f0fdf4" : "#fff", border: `0.5px solid ${msg.highlight ? "#22c55e" : "#e8e8e8"}`, borderRadius: 8, padding: "8px 10px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3, gap: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: "#111" }}>
-                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: msg.dot, flexShrink: 0 }} />
-                            {msg.title}
-                          </div>
-                          <div style={{ textAlign: "right", flexShrink: 0 }}>
-                            <div style={{ fontSize: 8, color: "#bbb", textTransform: "uppercase" }}>{msg.tag}</div>
-                            <div style={{ fontSize: 8, color: "#ccc" }}>{msg.date}</div>
-                          </div>
-                        </div>
-                        <div style={{ fontSize: 10, color: "#777", lineHeight: 1.4 }}>{msg.body}</div>
+                      <div key={msg.id} style={{ background: msg.highlight ? "#f0fdf4" : "#fff", border: `0.5px solid ${msg.highlight ? "#22c55e" : "#e8e8e8"}`, borderRadius: 6, padding: "6px 8px", marginBottom: 4 }}>
+                        <div style={{ fontSize: 9, fontWeight: 600, color: "#111", marginBottom: 2 }}>{msg.title}</div>
+                        <div style={{ fontSize: 8, color: "#777" }}>{msg.body}</div>
                       </div>
                     ))}
                   </div>
                 </div>
-                </div>
-                </div>
-              </div>
             </div>
-          </div>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(108,71,255,0.5)" }}>
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
               </div>
             </div>
