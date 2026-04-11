@@ -126,11 +126,11 @@ export default function VCMockup({ autoStart = false }) {
                   </div>
                 ))}
               </div>
-              <div className="blur-sm" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
                 {FIRMS.map((firm, i) => {
                   const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
                   return (
-                    <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                    <div key={i} className={i >= 8 ? "blur-sm" : ""} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
                       <div style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 4 }}>{firm.fund}</span>
                       </div>
