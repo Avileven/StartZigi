@@ -219,10 +219,10 @@ export default function Home() {
             </span>
           </h2>
           <p className="text-lg text-white/70 max-w-3xl mb-4">
-            StartZig helps you develop startup ideas through AI mentorship, simulation tools, and real community feedback.
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent font-semibold">Entrepreneurs</span> with an idea get a full suite of AI-powered tools to validate, build, and grow their venture — with a dedicated mentor and real community feedback at every step.
           </p>
           <p className="text-lg text-white/70 max-w-3xl">
-            It supports both early-stage founders and people exploring the startup world.
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent font-semibold">Not a founder yet?</span> StartZig lets you experience the full startup journey through real simulation and challenges — and even if you don't have an idea, our idea bank lets you pick one and jump straight into the adventure.
           </p>
         </div>
       </div>
