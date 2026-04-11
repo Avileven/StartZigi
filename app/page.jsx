@@ -239,7 +239,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Manage your venture, track progress, and stay on top of every stage — all in one place.</p>
         </div>
-        <DashboardMockup />
+        <DashboardMockup autoStart={false} />
       </div>
 
       {/* 2. Mentor */}
@@ -252,7 +252,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
         </div>
-        <MentorMockup />
+        <MentorMockup autoStart={false} />
       </div>
 
       {/* 3. VC Marketplace */}
@@ -265,7 +265,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Connect with top-tier venture capital firms and approach the right investors for your stage.</p>
         </div>
-        <VCMockup />
+        <VCMockup autoStart={false} />
       </div>
 
       {/* 4. ZigForge Studio */}
@@ -278,7 +278,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
         </div>
-        <StudioMockup />
+        <StudioMockup autoStart={false} />
       </div>
 
       {/* 5. VC Simulation */}
@@ -291,7 +291,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
         </div>
-        <VCSimulationMockup />
+        <VCSimulationMockup autoStart={false} />
       </div>
 
       {/* 6. Feedback */}
@@ -304,7 +304,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Collected and analyzed through a dedicated feedback system at every stage of your product.</p>
         </div>
-        <FeedbackMockup />
+        <FeedbackMockup autoStart={false} />
       </div>
 
       {/* 7. Beta */}
@@ -317,7 +317,7 @@ export default function Home() {
           </h2>
           <p className="text-white/55 text-sm">Share it, collect testers, and grow your first user base.</p>
         </div>
-        <BetaMockup />
+        <BetaMockup autoStart={false} />
       </div>
 
       {/* ── See full feature list ── */}
