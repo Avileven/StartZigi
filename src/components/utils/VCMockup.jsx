@@ -118,28 +118,30 @@ export default function VCMockup({ autoStart = false }) {
 
           {/* Desktop: full preview */}
           <div className="hidden sm:block relative">
-<div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden" }}>
-            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-              {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
-                <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: c, flexShrink: 0 }} />{l}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
-              {FIRMS.map((firm, i) => {
-                const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
-                return (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                    <div style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 4 }}>{firm.fund}</span>
-                    </div>
-                    <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", textAlign: "center", maxWidth: 60 }}>{firm.name}</div>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+                {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: c, flexShrink: 0 }} />{l}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
+                {FIRMS.map((firm, i) => {
+                  const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
+                  return (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                      <div style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 4 }}>{firm.fund}</span>
+                      </div>
+                      <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", textAlign: "center", maxWidth: 60 }}>{firm.name}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Blur overlay on bottom third */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", background: "linear-gradient(to bottom, transparent, rgba(10,8,30,0.85))", borderRadius: "0 0 16px 16px", pointerEvents: "none" }} />
             </div>
-          </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
