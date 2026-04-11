@@ -123,26 +123,26 @@ export default function DashboardMockup({ autoStart = false }) {
           {/* Mobile: cropped preview */}
           <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative", border: "0.5px solid #ddd" }}>
             <div style={{ pointerEvents: "none", userSelect: "none", background: "#f0f0f5" }}>
-                <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#111" }}>Good morning, Sarah!</div>
-                    <div style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>Monday, April 6, 2026</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#111" }}>Good morning, Sarah!</div>
+                    <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Monday, April 6, 2026</div>
                   </div>
-                  <span style={{ background: "#fff3e0", color: "#d97706", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>PLAN</span>
+                  <span style={{ background: "#fff3e0", color: "#d97706", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>PLAN</span>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "110px 1fr" }}>
-                  <div style={{ background: "#fafafa", borderRight: "0.5px solid #eee", padding: 10 }}>
-                    <div style={{ fontSize: 8, color: "#bbb", textTransform: "uppercase", marginBottom: 4 }}>Toolbox</div>
+                  <div style={{ background: "#fafafa", borderRight: "0.5px solid #eee", padding: 12 }}>
+                    <div style={{ fontSize: 10, color: "#bbb", textTransform: "uppercase", marginBottom: 6 }}>Toolbox</div>
                     {PHASES[0].tools.slice(0,3).map((t) => (
-                      <div key={t} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 5, padding: "5px 8px", fontSize: 9, color: "#444", marginBottom: 4 }}>{t}</div>
+                      <div key={t} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 5, padding: "7px 10px", fontSize: 12, color: "#444", marginBottom: 6 }}>{t}</div>
                     ))}
                   </div>
-                  <div style={{ padding: 10, minWidth: 0 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#111", marginBottom: 6 }}>Board</div>
+                  <div style={{ padding: 12, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 8 }}>Board</div>
                     {PHASES[0].messages.map((msg) => (
-                      <div key={msg.id} style={{ background: msg.highlight ? "#f0fdf4" : "#fff", border: `0.5px solid ${msg.highlight ? "#22c55e" : "#e8e8e8"}`, borderRadius: 6, padding: "6px 8px", marginBottom: 4 }}>
-                        <div style={{ fontSize: 9, fontWeight: 600, color: "#111", marginBottom: 2 }}>{msg.title}</div>
-                        <div style={{ fontSize: 8, color: "#777" }}>{msg.body}</div>
+                      <div key={msg.id} style={{ background: msg.highlight ? "#f0fdf4" : "#fff", border: `0.5px solid ${msg.highlight ? "#22c55e" : "#e8e8e8"}`, borderRadius: 6, padding: "8px 10px", marginBottom: 6 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "#111", marginBottom: 3 }}>{msg.title}</div>
+                        <div style={{ fontSize: 11, color: "#777" }}>{msg.body}</div>
                       </div>
                     ))}
                   </div>
