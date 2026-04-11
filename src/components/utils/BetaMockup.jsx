@@ -32,22 +32,30 @@ export default function BetaMockup({ autoStart = false }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/beta-mockup" className="block relative group cursor-pointer">
 
-          {/* Mobile: scaled preview */}
-          <div className="sm:hidden" style={{ height: 220, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-            <div style={{ transform: "scale(0.5)", transformOrigin: "top center", marginBottom: "-50%", pointerEvents: "none", userSelect: "none" }}>
-              <div style={{ background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
-                  <div>
-                    <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
-                    <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 160 }}>
-                      <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
-                        <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
-                          <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
+          {/* Mobile: full width preview cropped at 300px */}
+          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f9fafb", borderRadius: 16, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "24px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", alignItems: "center" }}>
+                <div>
+                  <div style={{ display: "inline-block", background: "#e0e7ff", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>QuitAI Beta Program</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#111", lineHeight: 1.3, marginBottom: 8 }}>The AI coach that helps you quit smoking — for good.</div>
+                  <div style={{ display: "inline-block", background: "#4f46e5", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8 }}>Join the Beta</div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <div style={{ background: "#1a1a2e", borderRadius: 24, padding: 10, width: 130 }}>
+                    <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+                      <div style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", padding: "12px 10px", textAlign: "center" }}>
+                        <div style={{ fontSize: 20, marginBottom: 2 }}>🚭</div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>QuitAI</div>
+                      </div>
+                      <div style={{ padding: 8 }}>
+                        <div style={{ display: "flex", gap: 3 }}>
+                          {[["0","Days"],["$0","Saved"],["0","Cravings"]].map(([n,l]) => (
+                            <div key={l} style={{ flex: 1, background: "#f5f3ff", borderRadius: 5, padding: "3px 2px", textAlign: "center" }}>
+                              <div style={{ fontSize: 11, fontWeight: 800, color: "#6c47ff" }}>{n}</div>
+                              <div style={{ fontSize: 6, color: "#9ca3af" }}>{l}</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -56,7 +64,7 @@ export default function BetaMockup({ autoStart = false }) {
               </div>
             </div>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(108,71,255,0.5)" }}>
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
               </div>
             </div>
