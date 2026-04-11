@@ -118,7 +118,7 @@ export default function VCMockup({ autoStart = false }) {
 
           {/* Desktop: full preview */}
           <div className="hidden sm:block relative">
-            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden", position: "relative" }}>
               <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
                 {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
                   <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
