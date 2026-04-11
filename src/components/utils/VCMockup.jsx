@@ -84,29 +84,33 @@ export default function VCMockup({ autoStart = false }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/vc-mockup" className="block relative group cursor-pointer">
 
-          {/* Mobile: cropped preview */}
+          {/* Mobile: VC profile preview */}
           <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-                {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />{l}
-                  </div>
-                ))}
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14, borderBottom: "0.5px solid rgba(255,255,255,0.1)", paddingBottom: 14 }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center" }}>$290M</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>Meridian Stone Capital</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Founded 2018</div>
+                </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 10 }}>
-                {FIRMS.map((firm, i) => {
-                  const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
-                  return (
-                    <div key={i} style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: 7, fontWeight: 700, color: "#fff", textAlign: "center", padding: 3 }}>{firm.fund}</span>
-                    </div>
-                  );
-                })}
+              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 5 }}>About</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, marginBottom: 12 }}>Strategic investment partner focused on transformative technologies shaping tomorrow's economy.</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 12px" }}>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>Fund Size</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>$290M</div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 12px" }}>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>Check Size</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>$4M–$30M</div>
+                </div>
               </div>
             </div>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(108,71,255,0.5)" }}>
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[17px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
               </div>
             </div>
