@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import JourneyPreview from "@/components/utils/JourneyPreview";
 import DashboardMockup from "@/components/utils/DashboardMockup";
 import MentorMockup from "@/components/utils/MentorMockup";
 import VCMockup from "@/components/utils/VCMockup";
@@ -211,8 +210,6 @@ export default function Home() {
         </div>
       </div>
 
-      <JourneyPreview />
-
       {/* ── Everything You Need ── */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
@@ -323,7 +320,7 @@ export default function Home() {
       {/* ── See full feature list ── */}
       <div className="py-16 px-6 text-center">
         <a href="#features" className="inline-block border border-white/30 text-white/80 hover:text-white hover:border-white/60 text-sm font-medium px-8 py-3 rounded-full transition-colors">
-          See the full feature list ↓
+          See More Features ↓
         </a>
       </div>
 
@@ -331,6 +328,15 @@ export default function Home() {
 
       {/* ── Full Features List ── */}
       <div id="features">
+        <div className="pt-16 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold mb-2">
+              <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+                StartZig Features
+              </span>
+            </h2>
+          </div>
+        </div>
         <BenefitsSection />
       </div>
     </div>
