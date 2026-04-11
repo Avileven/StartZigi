@@ -106,17 +106,17 @@ export default function FeedbackMockup({ autoStart = false }) {
           {/* Mobile: cropped preview */}
           <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
             <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, overflow: "hidden" }}>
-            <div style={{ background: "#fff", padding: "20px 24px 16px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
-              <div style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 20, marginBottom: 8, background: badge.bg, color: badge.color }}>{p.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 2 }}>Venture Feedback Hub</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
+            <div style={{ background: "#fff", padding: "10px 16px 8px", textAlign: "center", borderBottom: "1px solid #e5e7eb" }}>
+              <div style={{ display: "inline-block", fontSize: 9, fontWeight: 700, padding: "2px 10px", borderRadius: 20, marginBottom: 4, background: badge.bg, color: badge.color }}>{p.label}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#111", marginBottom: 1 }}>Venture Feedback Hub</div>
+              <div style={{ fontSize: 9, color: "#6b7280" }}>QuitAI · All feedback collected across your startup journey</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
               {p.stats.map((s, i) => (
-                <div key={i} style={{ padding: "14px 10px", textAlign: "center" }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "#111" }}>{s.num}</div>
-                  <div style={{ fontSize: 10, color: "#9ca3af" }}>{s.label}</div>
+                <div key={i} style={{ padding: "8px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 14, marginBottom: 2 }}>{s.icon}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>{s.num}</div>
+                  <div style={{ fontSize: 9, color: "#9ca3af" }}>{s.label}</div>
                 </div>
               ))}
             </div>
