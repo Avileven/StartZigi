@@ -1,4 +1,4 @@
-// Home page - 110426
+// Home page - 120426
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -236,7 +236,10 @@ export default function Home() {
             </span>
           </h2>
           <p className="text-lg text-white/70 max-w-3xl">
-            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced. StartZig is a complete startup ecosystem where AI guidance and community wisdom come together to help you close that gap.
+            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced.
+          </p>
+          <p className="text-lg text-white/70 max-w-3xl mt-4">
+            StartZig's objective is to close that gap.
           </p>
         </div>
       </div>
@@ -247,7 +250,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               A Professional Management Dashboard
             </span>
           </h2>
@@ -260,7 +263,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               A Mentor Companion at Every Step
             </span>
           </h2>
@@ -273,7 +276,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               VC Marketplace
             </span>
           </h2>
@@ -286,7 +289,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               A Dedicated AI Studio for Building App Demos
             </span>
           </h2>
@@ -299,7 +302,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               A Real Fundraising Simulation
             </span>
           </h2>
@@ -312,7 +315,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               Real Feedback from Real Users
             </span>
           </h2>
@@ -325,20 +328,13 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+            <span className="text-white">
               A Dedicated Beta Sign-Up Page
             </span>
           </h2>
           <p className="text-white/55 text-sm">Share it, collect testers, and grow your first user base.</p>
         </div>
         <BetaMockup autoStart={false} />
-      </div>
-
-      {/* ── See full feature list ── */}
-      <div className="py-16 px-6 text-center">
-        <a href="#features" className="inline-block border border-white/30 text-white/80 hover:text-white hover:border-white/60 text-sm font-medium px-8 py-3 rounded-full transition-colors">
-          See More Features ↓
-        </a>
       </div>
 
       <WhoSection />
