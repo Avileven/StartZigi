@@ -272,33 +272,20 @@ export default function Home() {
         <MentorMockup autoStart={false} />
       </div>
 
-      {/* 3. VC Marketplace */}
+      {/* 3. Investor Marketplace */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
             <span className="text-white">
-              VC Marketplace
+              Investor Marketplace
             </span>
           </h2>
-          <p className="text-white/55 text-sm">Connect with top-tier venture capital firms and approach the right investors for your stage.</p>
+          <p className="text-white/55 text-sm">Discover virtual angels and VC firms, each with their own focus and criteria, and choose who to pitch.</p>
         </div>
         <VCMockup autoStart={false} />
       </div>
 
-      {/* 4. ZigForge Studio */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-white">
-              A Dedicated AI Studio for Building App Demos
-            </span>
-          </h2>
-          <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
-        </div>
-        <StudioMockup autoStart={false} />
-      </div>
-
-      {/* 5. VC Simulation */}
+      {/* 4. VC Simulation */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
@@ -309,6 +296,19 @@ export default function Home() {
           <p className="text-white/55 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
         </div>
         <VCSimulationMockup autoStart={false} />
+      </div>
+
+      {/* 5. ZigForge Studio */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="text-white">
+              A Dedicated AI Studio for Building App Demos
+            </span>
+          </h2>
+          <p className="text-white/55 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
+        </div>
+        <StudioMockup autoStart={false} />
       </div>
 
       {/* 6. Feedback */}
