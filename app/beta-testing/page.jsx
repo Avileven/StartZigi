@@ -39,6 +39,7 @@ const benefitIcons = {
 
 export default function BetaTesting() {
   const [venture, setVenture] = useState(null);
+  const [founderPlan, setFounderPlan] = useState(null);
   const [testerCount, setTesterCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +87,16 @@ export default function BetaTesting() {
           if (ventureData) {
             setVenture(ventureData);
             setTesterCount(testersData?.length || 0);
+
+            // Fetch founder's plan to determine if Pro badge should show
+            if (ventureData.created_by_id) {
+              const { data: founderProfile } = await supabase
+                .from('user_profiles')
+                .select('plan')
+                .eq('id', ventureData.created_by_id)
+                .single();
+              if (founderProfile) setFounderPlan(founderProfile.plan);
+            }
             
             const featuredDemo = ventureData.beta_data?.featured_demo;
             if (featuredDemo) {
@@ -227,6 +238,11 @@ export default function BetaTesting() {
             <span className="inline-block bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1 rounded-full mb-4">
               {venture.name} Beta Program
             </span>
+            {['pro_founder', 'unicorn'].includes(founderPlan) && (
+              <span className="inline-block bg-purple-100 text-purple-700 text-sm font-semibold px-3 py-1 rounded-full mb-4 ml-2">
+                Pro Founder
+              </span>
+            )}
             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
               {betaHeadline}
             </h1>
