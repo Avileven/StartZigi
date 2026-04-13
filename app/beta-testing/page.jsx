@@ -233,16 +233,16 @@ export default function BetaTesting() {
   return (
     <div className="bg-gray-50 font-sans">
       <div className="container mx-auto px-4 py-16 md:py-24">
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+        <div className="relative grid md:grid-cols-2 gap-12 items-center mb-16">
           <div className="text-center md:text-left">
+            {['pro_founder', 'unicorn'].includes(founderPlan) && (
+              <div className="absolute top-4 right-4 flex items-center gap-2 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                Verified on StartZig · Pro Founder
+              </div>
+            )}
             <span className="inline-block bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1 rounded-full mb-4">
               {venture.name} Beta Program
             </span>
-            {['pro_founder', 'unicorn'].includes(founderPlan) && (
-              <span className="inline-block bg-purple-100 text-purple-700 text-sm font-semibold px-3 py-1 rounded-full mb-4 ml-2">
-                Pro Founder
-              </span>
-            )}
             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
               {betaHeadline}
             </h1>
