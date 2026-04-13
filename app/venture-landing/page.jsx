@@ -110,6 +110,7 @@ export default function VentureLanding() {
   const [joinError, setJoinError] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [invitationToken, setInvitationToken] = useState(null);
+  const [founderPlan, setFounderPlan] = useState(null);
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
@@ -171,6 +172,10 @@ export default function VentureLanding() {
         if (ventures && ventures.length > 0) {
           const v = ventures[0];
           setVenture(v);
+          if (v.created_by_id) {
+            const { data: fp } = await supabase.from('user_profiles').select('plan').eq('id', v.created_by_id).single();
+            if (fp) setFounderPlan(fp.plan);
+          }
           if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
           if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
           if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
@@ -187,6 +192,10 @@ export default function VentureLanding() {
         if (ventures && ventures.length > 0) {
           const v = ventures[0];
           setVenture(v);
+          if (v.created_by_id) {
+            const { data: fp } = await supabase.from('user_profiles').select('plan').eq('id', v.created_by_id).single();
+            if (fp) setFounderPlan(fp.plan);
+          }
           if (user) {
             setHasLiked(v.liked_by_users?.includes(user.id) || user.liked_venture_ids?.includes(v.id) || false);
           }
@@ -465,7 +474,15 @@ export default function VentureLanding() {
               <Card className="shadow-xl mb-8">
                 <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
                   <div>
-                    <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
+                    <div className="flex items-center gap-3 mb-2">
+                      <CardTitle className="text-3xl font-bold text-gray-900">{venture.name}</CardTitle>
+                      {['pro_founder', 'unicorn'].includes(founderPlan) && (
+                        <span className="flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-semibold px-3 py-1 rounded-full">
+                          <span className="text-[9px] text-purple-400 uppercase tracking-widest">StartZig</span>
+                          <span className="text-xs">Pro Founder</span>
+                        </span>
+                      )}
+                    </div>
                     <p className="text-gray-600 text-lg">{venture.description}</p>
                     <div className="flex items-center gap-4 mt-4">
                       <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
