@@ -1,6 +1,7 @@
-// 060326
+// 130426
 "use client";
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Venture } from '@/api/entities.js';
 import { MVPFeatureFeedback } from '@/api/entities.js';
 import { SuggestedFeature } from '@/api/entities.js';
@@ -19,6 +20,7 @@ export default function ProductFeedbackPage() {
   const [featureFeedback, setFeatureFeedback] = useState([]);
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
   const [betaTesters, setBetaTesters] = useState([]);
+  const [userPlan, setUserPlan] = useState(null);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
@@ -31,6 +33,14 @@ export default function ProductFeedbackPage() {
       try {
         const user = await User.me();
         console.log('[FeedbackHub] user:', user?.email);
+
+        // Fetch user plan for Export button visibility
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('plan')
+          .eq('id', user.id)
+          .single();
+        if (profile) setUserPlan(profile.plan);
 
         const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
         console.log('[FeedbackHub] ventures found:', ventures.length);
@@ -312,12 +322,43 @@ export default function ProductFeedbackPage() {
         )}
 
         {/* Beta Sign-ups */}
-        {betaTesters.length > 0 && (
+        {betaTesters.length > 0 && (() => {
+          const exportCSV = () => {
+            const rows = [
+              ['Full Name', 'Email', 'Date', 'Interest Reason'],
+              ...betaTesters.map(t => [
+                t.full_name || '',
+                t.email || '',
+                new Date(t.created_date).toLocaleDateString('en-US'),
+                t.interest_reason || ''
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'beta-testers.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+          };
+
+          return (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-1 h-7 bg-purple-500 rounded-full" />
               <h2 className="text-2xl font-bold text-gray-900">Beta Sign-ups</h2>
               <Badge className="bg-purple-100 text-purple-800 ml-2">{betaTesters.length}</Badge>
+              {userPlan === 'unicorn' && (
+                <Button
+                  onClick={exportCSV}
+                  size="sm"
+                  variant="outline"
+                  className="ml-auto border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  Export CSV
+                </Button>
+              )}
             </div>
             <div className="space-y-3">
               {betaTesters
@@ -344,7 +385,8 @@ export default function ProductFeedbackPage() {
                 ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* MLP User Feedback */}
         {productFeedbacks.length > 0 && (
