@@ -236,8 +236,9 @@ export default function BetaTesting() {
         <div className="relative grid md:grid-cols-2 gap-12 items-center mb-16">
           <div className="text-center md:text-left">
             {['pro_founder', 'unicorn'].includes(founderPlan) && (
-              <div className="absolute top-4 right-4 flex items-center gap-2 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full">
-                Verified on StartZig · Pro Founder
+              <div className="absolute top-4 left-4 flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-semibold px-3 py-1.5 rounded-full">
+                <span className="text-[9px] text-purple-400 uppercase tracking-widest">StartZig</span>
+                <span className="text-xs">Pro Founder</span>
               </div>
             )}
             <span className="inline-block bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1 rounded-full mb-4">
