@@ -10,10 +10,17 @@ import { Button } from '@/components/ui/button';
 
 // [MY ACCOUNT] מיפוי תכניות לקרדיטים
 const PLAN_CREDITS = {
-  free: 5,
-  vision: 25,
-  impact: 100,
+  explorer: 5,
+  builder: 100,
+  pro_founder: 300,
   unicorn: 500,
+};
+
+const PLAN_PRICES = {
+  explorer: '$0/month',
+  builder: '$9/month',
+  pro_founder: '$18/month',
+  unicorn: '$28/month',
 };
 
 export default function MyAccount() {
@@ -92,7 +99,7 @@ export default function MyAccount() {
         <CardContent className="space-y-2">
           <p className="text-3xl font-bold text-gray-900 capitalize">{plan}</p>
           <p className="text-gray-500 text-sm">
-            {plan === 'free' ? '$0/month' : plan === 'vision' ? '$5/month' : plan === 'impact' ? '$9.6/month' : '$28/month'}
+            {PLAN_PRICES[plan] || '$0/month'}
           </p>
         </CardContent>
       </Card>
