@@ -33,8 +33,6 @@ export default function Pricing() {
       await supabase.from('user_profiles').update({
         plan: planKey,
         credits_limit: PLAN_CREDITS[planKey],
-        credits_used: 0,
-        credits_reset_date: new Date().toISOString()
       }).eq('id', user.id);
 
       alert(`Plan updated! Redirecting to dashboard...`);
@@ -121,15 +119,6 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white font-sans">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between bg-[#0F172A]">
-        <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xl">S</span>
-          </div>
-          StartZig
-        </Link>
-      </nav>
-
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
         <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
           Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
@@ -148,10 +137,10 @@ export default function Pricing() {
                   : 'bg-[#1E293B]/50 border-white/10'
               }`}
             >
-              <div className="flex justify-between items-start mb-2 text-left">
-                <h3 className="text-xl font-bold">{tier.emoji}  {tier.name}</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-bold text-left">{tier.name}</h3>
                 {tier.featured && (
-                  <span className="bg-indigo-500 text-[10px] uppercase px-2 py-1 rounded-full font-bold">Most Popular</span>
+                  <span className="bg-indigo-500 text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Most Popular</span>
                 )}
               </div>
 
