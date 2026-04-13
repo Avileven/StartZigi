@@ -1,4 +1,4 @@
-// 220226 WITH CREDIT
+// pricing page - updated
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -6,23 +6,20 @@ import { Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
-// [CREDITS] מיפוי תכניות לקרדיטים
+// [CREDITS] credit limits per plan
 const PLAN_CREDITS = {
-  free: 5,
-  vision: 25,
-  impact: 100,
+  explorer: 5,
+  builder: 100,
+  pro_founder: 300,
   unicorn: 500,
 };
 
 export default function Pricing() {
-  const [isAnnual, setIsAnnual] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const router = useRouter();
 
-  // [CREDITS] עדכון תכנית המשתמש בDB
-  const handleSelectPlan = async (planName) => {
-    const plan = planName.toLowerCase();
-    if (plan === 'free') {
+  const handleSelectPlan = async (planKey) => {
+    if (planKey === 'explorer') {
       router.push('/dashboard');
       return;
     }
@@ -34,14 +31,13 @@ export default function Pricing() {
         return;
       }
       await supabase.from('user_profiles').update({
-        plan,
-        credits_limit: PLAN_CREDITS[plan],
+        plan: planKey,
+        credits_limit: PLAN_CREDITS[planKey],
         credits_used: 0,
         credits_reset_date: new Date().toISOString()
       }).eq('id', user.id);
 
-      // TODO: כאן יתווסף Stripe בעתיד
-      alert(`Plan updated to ${planName}! Redirecting to dashboard...`);
+      alert(`Plan updated! Redirecting to dashboard...`);
       router.push('/dashboard');
     } catch (error) {
       console.error('Plan update error:', error);
@@ -52,61 +48,71 @@ export default function Pricing() {
 
   const tiers = [
     {
-      name: 'Free',
+      key: 'explorer',
+      name: 'Explorer',
+      emoji: '🧭',
       price: '$0',
-      description: 'Access all of StartZig’s core features at no cost and see what it can do.',
+      priceNote: 'forever',
+      subtitle: 'Just looking around',
+      description: 'StartZig is free to explore forever. No credit card, no pressure. Use the simulator, play with ideas, learn how startups work.',
       features: [
-        'Free access to grow your idea',
-        'Free access to the virtual investment marketplace',
-        'Basic community tools',
-        '5 Mentor interactions'
+        'Full startup journey',
+        'Community & investment marketplace browsing',
+        'AI: 5 free credits for Mentor only',
+        'Beta — simulation tools',
       ],
       cta: 'Start Free',
       featured: false,
     },
     {
-      name: 'Vision',
-      // נשאר 5 דולר תמיד
-      price: '$5',
-      description: 'Take your idea to the next level with more help from our mentor and basic AI tools.',
+      key: 'builder',
+      name: 'Builder',
+      emoji: '🔨',
+      price: '$9',
+      priceNote: '/ month',
+      subtitle: 'For users starting to seriously validate ideas',
+      description: 'When you\'re ready to get serious, we give you the tools to think, plan, and move like a real founder — without bureaucracy or upfront costs.',
       features: [
-        'Free access to grow your idea',
-        'Free access to the virtual investment marketplace',
-        'Basic community tools',
-        '25 Mentor interactions',
-        'zigforge Studio- basic AI'
+        'Full startup journey',
+        'Community & investment marketplace browsing',
+        'AI: 100 credits for Mentor & Demo Builder (StartZig Studio)',
+        'Beta — simulation tools',
       ],
-      cta: 'Get Vision',
+      cta: 'Get Builder',
       featured: false,
     },
     {
-      name: 'Impact',
-      // 12 חודשי, 9.6 שנתי (20% הנחה)
-      price: isAnnual ? '$9.6' : '$12',
-      description: 'Access advanced tools and scale up your mentor support.',
+      key: 'pro_founder',
+      name: 'Pro Founder',
+      emoji: '🚀',
+      price: '$18',
+      priceNote: '/ month',
+      subtitle: 'Designed for continuous building with AI support',
+      description: 'Built for users who rely on the mentor regularly and are serious about growing a real venture.',
       features: [
-        'Free access to grow your idea',
-        'Free access to the virtual investment marketplace',
-        'Basic community tools',
-        '100 Mentor interactions',
-        'zigforge Studio- Boost AI',
-        'Basic Social & media tools'
+        'Full startup journey',
+        'Community & investment marketplace browsing',
+        'AI: 300 credits for Mentor & Demo Builder (StartZig Studio)',
+        'Beta — simulation tools',
+        'Founder badge — visible to community and invited guests',
       ],
-      cta: 'Get Impact',
+      cta: 'Get Pro Founder',
       featured: true,
     },
     {
+      key: 'unicorn',
       name: 'Unicorn',
-      // 35 חודשי, 28 שנתי (20% הנחה)
-      price: isAnnual ? '$28' : '$35',
-      description: 'Boost your venture guidance with top mentor credits and advanced social tools.',
+      emoji: '🦄',
+      price: '$28',
+      priceNote: '/ month',
+      subtitle: 'For high-usage users running advanced simulations and testing at scale',
+      description: 'Maximum AI power, advanced beta tools, and full platform visibility for founders scaling to the top.',
       features: [
-        'Free access to grow your idea',
-        'Free access to the virtual investment marketplace',
-        'Advanced community tools',
-        '500 Mentor interactions',
-        'zigforge Studio- Boost AI',
-        'Advanced Social & media tools'
+        'Full startup journey',
+        'Community & investment marketplace browsing',
+        'AI: 500 credits for Mentor & Demo Builder (StartZig Studio)',
+        'Founder badge — visible to community and invited guests',
+        'Beta — advanced tools for real beta management (tester list, export & more)',
       ],
       cta: 'Get Unicorn',
       featured: false,
@@ -126,47 +132,38 @@ export default function Pricing() {
 
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
         <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
-  Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
-</h1>
-        
-        {/* Toggle - Default is Annual */}
-        <div className="flex justify-center items-center gap-4 mb-16">
-          <span className={`text-sm ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
-          <button 
-            onClick={() => setIsAnnual(!isAnnual)}
-            className="w-12 h-6 bg-indigo-500/20 rounded-full relative p-1 transition-all"
-          >
-            <div className={`w-4 h-4 bg-indigo-500 rounded-full transition-all ${isAnnual ? 'translate-x-6' : 'translate-x-0'}`} />
-          </button>
-          <span className={`text-sm ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
-            Annually <span className="text-indigo-400 font-bold text-xs ml-1">(Save 20%)</span>
-          </span>
-        </div>
+          Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
+        </h1>
+        <p className="text-gray-400 text-sm mb-4">
+          All plans include monthly credits. Need more? Top up anytime.
+        </p>
 
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-4 gap-6 mt-12">
           {tiers.map((tier) => (
             <div
-              key={tier.name}
+              key={tier.key}
               className={`relative flex flex-col p-8 rounded-3xl border transition-all ${
-                tier.featured 
-                ? 'bg-[#1E293B] border-indigo-500 shadow-xl scale-105 z-10' 
-                : 'bg-[#1E293B]/50 border-white/10'
+                tier.featured
+                  ? 'bg-[#1E293B] border-indigo-500 shadow-xl scale-105 z-10'
+                  : 'bg-[#1E293B]/50 border-white/10'
               }`}
             >
-              <div className="flex justify-between items-start mb-4 text-left">
-                <h3 className="text-xl font-bold">{tier.name}</h3>
+              <div className="flex justify-between items-start mb-2 text-left">
+                <h3 className="text-xl font-bold">{tier.emoji}  {tier.name}</h3>
                 {tier.featured && (
                   <span className="bg-indigo-500 text-[10px] uppercase px-2 py-1 rounded-full font-bold">Most Popular</span>
                 )}
               </div>
 
-              <p className="text-sm text-gray-400 text-left mb-6 min-h-[40px]">
+              <p className="text-xs text-indigo-300 italic text-left mb-4">{tier.subtitle}</p>
+
+              <p className="text-sm text-gray-400 text-left mb-6 min-h-[48px]">
                 {tier.description}
               </p>
 
               <div className="flex items-baseline gap-1 mb-8">
                 <span className="text-4xl font-bold">{tier.price}</span>
-                <span className="text-gray-400 text-sm">/month</span>
+                <span className="text-gray-400 text-sm">{tier.priceNote}</span>
               </div>
 
               <div className="flex-1">
@@ -183,13 +180,13 @@ export default function Pricing() {
                 </ul>
               </div>
 
-              {/* [CREDITS] כפתור בחירת תכנית - מעדכן user_profiles בDB */}
               <button
-                onClick={() => handleSelectPlan(tier.name)}
+                onClick={() => handleSelectPlan(tier.key)}
                 disabled={isUpdating}
                 className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
-                tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
-              } disabled:opacity-50`}>
+                  tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
+                } disabled:opacity-50`}
+              >
                 {isUpdating ? 'Updating...' : tier.cta}
               </button>
             </div>
