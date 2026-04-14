@@ -40,6 +40,7 @@ const benefitIcons = {
 export default function BetaTesting() {
   const [venture, setVenture] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
+  const [campaignId, setCampaignId] = useState(null);
   const [testerCount, setTesterCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +59,7 @@ export default function BetaTesting() {
         // Stored with the beta tester record to track which campaign drove the sign-up.
         // null if user arrived directly (manual share or email invite).
         const campaignId = urlParams.get('campaign') || null;
+        setCampaignId(campaignId);
         
         if (ventureId) {
           // PUBLIC ACCESS: Fetch venture data without authentication
