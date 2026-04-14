@@ -1,4 +1,7 @@
 // 130426
+// [140426] CHANGES:
+//   - Export CSV button: now always visible, disabled with tooltip for non-Unicorn users
+//   - Added comments throughout Unicorn-only section for clarity
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -323,6 +326,8 @@ export default function ProductFeedbackPage() {
 
         {/* Beta Sign-ups */}
         {betaTesters.length > 0 && (() => {
+          // [UNICORN ONLY] exportCSV — generates and downloads a CSV of all beta testers.
+          // Only called when userPlan === 'unicorn'. Button is disabled for all other plans.
           const exportCSV = () => {
             const rows = [
               ['Full Name', 'Email', 'Date', 'Interest Reason'],
@@ -349,16 +354,28 @@ export default function ProductFeedbackPage() {
               <div className="w-1 h-7 bg-purple-500 rounded-full" />
               <h2 className="text-2xl font-bold text-gray-900">Beta Sign-ups</h2>
               <Badge className="bg-purple-100 text-purple-800 ml-2">{betaTesters.length}</Badge>
-              {userPlan === 'unicorn' && (
+              {/* [UNICORN ONLY] Export CSV button — visible to all, active only for Unicorn plan.
+                  Non-Unicorn users see a disabled button with an upgrade note. */}
+              <div className="ml-auto flex items-center gap-2">
+                {userPlan !== 'unicorn' && (
+                  <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
+                    Unicorn only
+                  </span>
+                )}
                 <Button
                   onClick={exportCSV}
                   size="sm"
                   variant="outline"
-                  className="ml-auto border-purple-300 text-purple-700 hover:bg-purple-50"
+                  disabled={userPlan !== 'unicorn'}
+                  className={userPlan === 'unicorn'
+                    ? "border-purple-300 text-purple-700 hover:bg-purple-50"
+                    : "border-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+                  }
+                  title={userPlan !== 'unicorn' ? 'Available on Unicorn plan only' : ''}
                 >
                   Export CSV
                 </Button>
-              )}
+              </div>
             </div>
             <div className="space-y-3">
               {betaTesters
