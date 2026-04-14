@@ -293,32 +293,36 @@ export default function BetaTesting() {
             {/* Social links — only shown if founder filled them in */}
             {venture.beta_data?.social_links && Object.values(venture.beta_data.social_links).some(v => v) && (
               <div className="w-full max-w-md bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Follow our journey</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Stay connected</p>
                 <div className="flex flex-wrap gap-2">
                   {venture.beta_data.social_links.linkedin && (
                     <a href={venture.beta_data.social_links.linkedin} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors"
+                      style={{background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE'}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                       LinkedIn
                     </a>
                   )}
                   {venture.beta_data.social_links.twitter && (
                     <a href={venture.beta_data.social_links.twitter} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors"
+                      style={{background: '#F1F5F9', color: '#0F172A', border: '1px solid #CBD5E1'}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                       X
                     </a>
                   )}
                   {venture.beta_data.social_links.instagram && (
                     <a href={venture.beta_data.social_links.instagram} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors"
+                      style={{background: '#FDF2F8', color: '#9D174D', border: '1px solid #FBCFE8'}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
                       Instagram
                     </a>
                   )}
                   {venture.beta_data.social_links.website && (
                     <a href={venture.beta_data.social_links.website} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors"
+                      style={{background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0'}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                       Website
                     </a>
