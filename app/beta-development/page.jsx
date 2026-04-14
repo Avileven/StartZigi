@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js'; // Keep for potential future use if phase transition is re-added
 import { User } from '@/api/entities.js';
+import { supabase } from '@/lib/supabase';
 import { UploadFile } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
@@ -48,9 +49,17 @@ export default function BetaDevelopment() {
             { icon: 'Sparkles', title: '', description: '' },
         ],
         featured_demo: null,
-        user_acquisition_strategy: '', // New field
-        feedback_collection_strategy: '' // New field
+        user_acquisition_strategy: '',
+        feedback_collection_strategy: '',
+        social_links: {
+            linkedin: '',
+            twitter: '',
+            instagram: '',
+            website: '',
+        },
+        logo_url: '',
     });
+    const [userPlan, setUserPlan] = useState(null);
 
     const [toast, setToast] = useState(null);
 
@@ -76,6 +85,8 @@ export default function BetaDevelopment() {
         setIsLoading(true);
         try {
             const user = await User.me();
+            const { data: profile } = await supabase.from('user_profiles').select('plan').eq('id', user.id).single();
+            if (profile) setUserPlan(profile.plan);
             const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
             if (ventures.length > 0) {
                 const currentVenture = ventures[0];
@@ -382,6 +393,14 @@ export default function BetaDevelopment() {
                             <TabsTrigger value="content" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Page Content</TabsTrigger>
                             <TabsTrigger value="benefits" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Benefits</TabsTrigger>
                             <TabsTrigger value="demo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Featured Demo</TabsTrigger>
+                            <TabsTrigger
+                              value="brand"
+                              disabled={userPlan !== 'unicorn'}
+                              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                              title={userPlan !== 'unicorn' ? 'Available on Unicorn plan only' : ''}
+                            >
+                              Brand & Social {userPlan !== 'unicorn' && <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Unicorn</span>}
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="content" className="space-y-6">
@@ -677,6 +696,62 @@ export default function BetaDevelopment() {
                                             </div>
                                         </div>
                                     )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="brand" className="space-y-6">
+                            <Card>
+                                <CardContent className="p-6 space-y-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Unicorn only</span>
+                                        <p className="text-sm text-gray-500">These will appear on your public beta page.</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Logo URL</label>
+                                        <Input
+                                            placeholder="https://yourdomain.com/logo.png"
+                                            value={betaData.logo_url || ''}
+                                            onChange={e => setBetaData(prev => ({ ...prev, logo_url: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">LinkedIn</label>
+                                        <Input
+                                            placeholder="https://linkedin.com/company/yourventure"
+                                            value={betaData.social_links?.linkedin || ''}
+                                            onChange={e => setBetaData(prev => ({ ...prev, social_links: { ...prev.social_links, linkedin: e.target.value } }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Twitter / X</label>
+                                        <Input
+                                            placeholder="https://twitter.com/yourventure"
+                                            value={betaData.social_links?.twitter || ''}
+                                            onChange={e => setBetaData(prev => ({ ...prev, social_links: { ...prev.social_links, twitter: e.target.value } }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Instagram</label>
+                                        <Input
+                                            placeholder="https://instagram.com/yourventure"
+                                            value={betaData.social_links?.instagram || ''}
+                                            onChange={e => setBetaData(prev => ({ ...prev, social_links: { ...prev.social_links, instagram: e.target.value } }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Website</label>
+                                        <Input
+                                            placeholder="https://yourventure.com"
+                                            value={betaData.social_links?.website || ''}
+                                            onChange={e => setBetaData(prev => ({ ...prev, social_links: { ...prev.social_links, website: e.target.value } }))}
+                                        />
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
