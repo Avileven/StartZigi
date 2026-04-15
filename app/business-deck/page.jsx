@@ -755,7 +755,7 @@ ${allFieldsAsText}`;
     </div>
   );
 
-  const filledCount = deckData ? SECTION_META.filter(s => deckData[s.key]?.trim()).length : 0;
+  const filledCount = deckData ? SECTION_META.filter(s => typeof deckData[s.key] === 'string' && deckData[s.key].trim()).length : 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
