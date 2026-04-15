@@ -199,7 +199,8 @@ function MentorFeedback({ feedback }) {
 
 // ─── Section Card ─────────────────────────────────────────────────────────────
 
-function SectionCard({ sectionKey, title, icon, text, conflicts, ventureInfo, onTextChange }) {
+function SectionCard({ sectionKey, title, icon, text: rawText, conflicts, ventureInfo, onTextChange }) {
+  const text = typeof rawText === 'string' ? rawText : rawText ? JSON.stringify(rawText) : '';
   const [mentorLoading, setMentorLoading] = useState(false);
   const [mentorFeedback, setMentorFeedback] = useState(null);
   const [mentorError, setMentorError] = useState(null);
