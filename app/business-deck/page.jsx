@@ -437,8 +437,8 @@ export default function BusinessDeckPage() {
       setCustomization(prev => ({ ...prev, company_name: prev.company_name || ventureData.name || '' }));
 
       const [bpRes, budgetRes, betaRes, feedbackRes, featureRes, suggestRes] = await Promise.all([
-        supabase.from('business_plans').select('*').eq('venture_id', ventureData.id).single(),
-        supabase.from('budgets').select('*').eq('venture_id', ventureData.id).single(),
+        supabase.from('business_plans').select('*').eq('venture_id', ventureData.id).maybeSingle(),
+        supabase.from('budgets').select('*').eq('venture_id', ventureData.id).maybeSingle(),
         supabase.from('beta_testers').select('full_name, email, interest_reason').eq('venture_id', ventureData.id),
         supabase.from('product_feedback').select('feedback_text, visitor_name, feedback_type').eq('venture_id', ventureData.id),
         supabase.from('mvp_feature_feedback').select('feature_name, rating').eq('venture_id', ventureData.id),
@@ -465,7 +465,7 @@ export default function BusinessDeckPage() {
         .eq('venture_id', ventureData.id)
         .order('version', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existingDeck?.deck_data) {
         setDeckData(existingDeck.deck_data);
@@ -516,7 +516,18 @@ ${allFieldsAsText}`;
       let parsed;
       try {
         const cleaned = rawText.replace(/```json|```/g, '').trim();
-        parsed = JSON.parse(cleaned);
+        // Try direct parse first
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch {
+          // Try to extract JSON object from the response
+          const match = cleaned.match(/\{[\s\S]*\}/);
+          if (match) {
+            parsed = JSON.parse(match[0]);
+          } else {
+            throw new Error('no JSON found');
+          }
+        }
       } catch {
         throw new Error('AI returned invalid JSON. Please try again.');
       }
