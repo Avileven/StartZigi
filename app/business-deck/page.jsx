@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { InvokeLLM } from '@/api/integrations';
-import MentorModal from '@/components/MentorModal';
+import MentorModal from "@/components/mentor/MentorModal";
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileText, Sparkles, RefreshCw, Lock } from 'lucide-react';
 
