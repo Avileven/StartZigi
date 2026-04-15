@@ -30,31 +30,31 @@ const SECTION_META = [
   { key: 'the_ask',           title: 'The Ask',            icon: '🎯' },
 ];
 
-// ─── Build prompt data ────────────────────────────────────────────────────────
+// ─── Build prompt ─────────────────────────────────────────────────────────────
 
 function buildAllFieldsAsText(data) {
   const { venture, businessPlan, budgets, betaTesters, productFeedback, mvpFeatureFeedback, suggestedFeatures } = data;
-  const v   = venture      || {};
+  const v   = venture || {};
   const bp  = businessPlan || {};
-  const mvp = v.mvp_data   || {};
-  const mlp = v.mlp_data   || {};
+  const mvp = v.mvp_data || {};
+  const mlp = v.mlp_data || {};
   const pit = v.pitch_data || {};
   const rev = v.revenue_model_data || {};
-  const bet = v.beta_data  || {};
+  const phase = (v.phase || '').toLowerCase();
+  const isLateStage = ['beta', 'growth', 'scale'].includes(phase);
   const lines = [];
 
-  lines.push('=== STAGE 1 — IDEA ===');
-  if (v.problem)  lines.push(`Problem (Idea): ${v.problem}`);
-  if (v.solution) lines.push(`Solution (Idea): ${v.solution}`);
+  lines.push('=== VENTURE ===');
+  if (v.name)        lines.push(`Name: ${v.name}`);
+  if (v.description) lines.push(`Description: ${v.description}`);
+  if (v.sector)      lines.push(`Sector: ${v.sector}`);
+  if (v.phase)       lines.push(`Phase: ${v.phase}`);
 
-  lines.push('\n=== STAGE 2 — BUSINESS PLAN ===');
-  if (bp.mission)                 lines.push(`Mission: ${bp.mission}`);
-  if (bp.problem)                 lines.push(`Problem (Business Plan): ${bp.problem}`);
-  if (bp.solution)                lines.push(`Solution (Business Plan): ${bp.solution}`);
-  if (bp.product_details)         lines.push(`Product Details: ${bp.product_details}`);
+  lines.push('\n=== BUSINESS PLAN ===');
+  if (bp.product_details)         lines.push(`Product: ${bp.product_details}`);
   if (bp.market_size)             lines.push(`Market Size: ${bp.market_size}`);
   if (bp.target_customers)        lines.push(`Target Customers: ${bp.target_customers}`);
-  if (bp.competition)             lines.push(`Competitive Landscape: ${bp.competition}`);
+  if (bp.competition)             lines.push(`Competition: ${bp.competition}`);
   if (bp.entrepreneur_background) lines.push(`Founder Background: ${bp.entrepreneur_background}`);
   if (bp.revenue_model)           lines.push(`Revenue Model: ${bp.revenue_model}`);
   if (bp.funding_requirements)    lines.push(`Funding Requirements: ${bp.funding_requirements}`);
@@ -62,41 +62,32 @@ function buildAllFieldsAsText(data) {
   if (budgets) {
     lines.push('\n=== BUDGET ===');
     if (budgets.salaries)          lines.push(`Salaries: ${JSON.stringify(budgets.salaries)}`);
-    if (budgets.marketing_costs)   lines.push(`Marketing Costs: ${JSON.stringify(budgets.marketing_costs)}`);
-    if (budgets.operational_costs) lines.push(`Operational Costs: ${JSON.stringify(budgets.operational_costs)}`);
+    if (budgets.marketing_costs)   lines.push(`Marketing: ${JSON.stringify(budgets.marketing_costs)}`);
+    if (budgets.operational_costs) lines.push(`Operations: ${JSON.stringify(budgets.operational_costs)}`);
   }
 
-  lines.push('\n=== STAGE 3 — MVP ===');
-  if (mvp.product_definition) lines.push(`MVP Product Definition: ${mvp.product_definition}`);
-  if (mvp.technical_specs)    lines.push(`Technical Specs: ${mvp.technical_specs}`);
-  if (mvp.user_testing)       lines.push(`User Testing: ${mvp.user_testing}`);
-  if (mvp.feature_matrix)     lines.push(`Feature Matrix: ${JSON.stringify(mvp.feature_matrix)}`);
+  lines.push('\n=== REVENUE MODEL ===');
+  if (rev.businessModel)        lines.push(`Model type: ${rev.businessModel}`);
+  if (rev.tier1Price)           lines.push(`Free tier: ${rev.tier1Price}`);
+  if (rev.tier2Price)           lines.push(`Premium price: ${rev.tier2Price}`);
+  if (rev.acquisitionCost)      lines.push(`CAC: ${rev.acquisitionCost}`);
+  if (rev.freeToPaidConversion) lines.push(`Free-to-paid conversion: ${rev.freeToPaidConversion}%`);
+  if (rev.churnRisk)            lines.push(`Monthly churn: ${rev.churnRisk}%`);
+  if (rev.monthlyMarketingBudget) lines.push(`Monthly marketing spend: ${rev.monthlyMarketingBudget}`);
+  if (rev.initialUsers)         lines.push(`Initial users: ${rev.initialUsers}`);
 
-  lines.push('\n=== STAGE 4 — REVENUE MODEL ===');
-  if (rev.businessModel)          lines.push(`Business Model Type: ${rev.businessModel}`);
-  if (rev.tier1Price)             lines.push(`Free Tier Price: ${rev.tier1Price}`);
-  if (rev.tier2Price)             lines.push(`Premium Price: ${rev.tier2Price}`);
-  if (rev.monthlyMarketingBudget) lines.push(`Monthly Marketing Budget: ${rev.monthlyMarketingBudget}`);
-  if (rev.acquisitionCost)        lines.push(`CAC: ${rev.acquisitionCost}`);
-  if (rev.initialUsers)           lines.push(`Initial Users: ${rev.initialUsers}`);
-  if (rev.churnRisk)              lines.push(`Monthly Churn: ${rev.churnRisk}`);
-  if (rev.freeToPaidConversion)   lines.push(`Free to Paid Conversion: ${rev.freeToPaidConversion}`);
-  if (rev.targetMarketFactor)     lines.push(`Target Market Factor: ${rev.targetMarketFactor}`);
+  lines.push('\n=== TECHNOLOGY ===');
+  if (mvp.technical_specs)      lines.push(`Tech stack: ${mvp.technical_specs}`);
+  if (mlp.technical_excellence) lines.push(`Performance: ${mlp.technical_excellence}`);
 
-  lines.push('\n=== STAGE 5 — MLP ===');
-  if (mlp.feedback_analysis)    lines.push(`MVP Feedback Analysis: ${mlp.feedback_analysis}`);
-  if (mlp.enhancement_strategy) lines.push(`Enhancement Strategy: ${mlp.enhancement_strategy}`);
-  if (mlp.wow_moments)          lines.push(`Wow Moments: ${mlp.wow_moments}`);
-  if (mlp.user_journey)         lines.push(`User Journey: ${mlp.user_journey}`);
-  if (mlp.technical_excellence) lines.push(`Technical Excellence: ${mlp.technical_excellence}`);
+  if (!isLateStage) {
+    if (mlp.enhancement_strategy) lines.push(`Product improvements: ${mlp.enhancement_strategy}`);
+  }
 
-  lines.push('\n=== STAGE 6 — BETA ===');
-  if (bet.headline)    lines.push(`Beta Headline: ${bet.headline}`);
-  if (bet.description) lines.push(`Beta Description: ${bet.description}`);
-  if (bet.user_acquisition_strategy) lines.push(`User Acquisition Strategy: ${bet.user_acquisition_strategy}`);
-
-  lines.push('\n=== STAGE 7 — PRODUCT FEEDBACK ===');
-  if (betaTesters?.length) lines.push(`Beta Testers: ${betaTesters.length} sign-ups`);
+  lines.push('\n=== TRACTION ===');
+  if (betaTesters?.length) lines.push(`Beta sign-ups: ${betaTesters.length}`);
+  if (mlp.feedback_analysis) lines.push(`User feedback summary: ${mlp.feedback_analysis}`);
+  if (mlp.wow_moments)       lines.push(`Key engagement moments: ${mlp.wow_moments}`);
 
   if (mvpFeatureFeedback?.length) {
     const grouped = {};
@@ -104,42 +95,38 @@ function buildAllFieldsAsText(data) {
       if (!grouped[f.feature_name]) grouped[f.feature_name] = [];
       grouped[f.feature_name].push(f.rating);
     });
-    lines.push('Feature Ratings:');
-    Object.entries(grouped).forEach(([name, ratings]) => {
-      const avg = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-      lines.push(`  ${name}: ${avg}/10 average (${ratings.length} responses)`);
-    });
+    const top = Object.entries(grouped)
+      .map(([name, ratings]) => ({ name, avg: ratings.reduce((a, b) => a + b, 0) / ratings.length }))
+      .sort((a, b) => b.avg - a.avg).slice(0, 3);
+    if (top.length) lines.push(`Top-rated features: ${top.map(f => `${f.name} (${f.avg.toFixed(1)}/10)`).join(', ')}`);
+  }
+
+  const meaningful = (productFeedback || []).filter(f => f.feedback_text && f.feedback_text.length >= 15);
+  if (meaningful.length) {
+    lines.push(`User feedback (${meaningful.length} responses):`);
+    meaningful.slice(0, 5).forEach(f => lines.push(`  - "${f.feedback_text}"`));
   }
 
   if (suggestedFeatures?.length) {
-    lines.push('Most Requested Features:');
-    suggestedFeatures.slice(0, 10).forEach(f => lines.push(`  - ${f.feature_name}`));
+    lines.push(`Most requested features: ${suggestedFeatures.slice(0, 5).map(f => f.feature_name).join(', ')}`);
   }
 
-  if (productFeedback?.length) {
-    const meaningful = productFeedback.filter(f => f.feedback_text && f.feedback_text.length >= 10);
-    if (meaningful.length) {
-      lines.push(`Free-text Feedback (${meaningful.length} meaningful responses):`);
-      meaningful.slice(0, 10).forEach(f => lines.push(`  - "${f.feedback_text}"`));
-    }
-  }
-
-  lines.push('\n=== STAGE 8 — PITCH (AUTHORITATIVE) ===');
+  lines.push('\n=== PITCH — USE THESE VERSIONS ===');
   if (pit.tagline)  lines.push(`Tagline: ${pit.tagline}`);
-  if (pit.problem)  lines.push(`Problem (USE THIS VERSION — most refined): ${pit.problem}`);
-  if (pit.solution) lines.push(`Solution (USE THIS VERSION — most refined): ${pit.solution}`);
-  if (pit.market)   lines.push(`Market (USE THIS VERSION — most refined): ${pit.market}`);
-  if (pit.team)     lines.push(`Team (USE THIS VERSION): ${pit.team}`);
+  if (pit.problem)  lines.push(`Problem: ${pit.problem}`);
+  if (pit.solution) lines.push(`Solution: ${pit.solution}`);
+  if (pit.market)   lines.push(`Market: ${pit.market}`);
+  if (pit.team)     lines.push(`Team: ${pit.team}`);
   if (pit.vision)   lines.push(`Vision: ${pit.vision}`);
-  if (pit.the_ask)  lines.push(`The Ask (USE THIS VERSION): ${pit.the_ask}`);
+  if (pit.the_ask)  lines.push(`The Ask: ${pit.the_ask}`);
 
   return lines.join('\n');
 }
 
 function detectConflicts(data) {
-  const v   = data.venture      || {};
+  const v   = data.venture || {};
   const bp  = data.businessPlan || {};
-  const pit = v.pitch_data      || {};
+  const pit = v.pitch_data || {};
   const rev = v.revenue_model_data || {};
   const conflicts = { problem: [], solution: [], market: [], the_ask: [] };
 
@@ -162,16 +149,6 @@ function detectConflicts(data) {
     conflicts.the_ask.push({ stage: 'Business Plan stage', text: bp.funding_requirements });
 
   return conflicts;
-}
-
-function buildAppendix(data) {
-  const mvp = data.venture?.mvp_data || {};
-  const rev = data.venture?.revenue_model_data || {};
-  return {
-    budget: data.budgets || null,
-    feature_matrix: mvp.feature_matrix || null,
-    revenue_params: Object.keys(rev).length ? rev : null,
-  };
 }
 
 // ─── Mentor Feedback ──────────────────────────────────────────────────────────
@@ -207,7 +184,7 @@ function SectionCard({ sectionKey, title, icon, text: rawText, conflicts, ventur
   const [showConflicts, setShowConflicts] = useState(false);
 
   async function handleMentor() {
-    if (!text?.trim()) return;
+    if (!text.trim()) return;
     setMentorLoading(true);
     setMentorFeedback(null);
     setMentorError(null);
@@ -240,9 +217,11 @@ Language: English.`;
         <h2 className="font-bold text-gray-800 flex items-center gap-2"><span>{icon}</span>{title}</h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 hidden sm:block">Click Mentor for expert feedback (1 credit)</span>
-          <Button variant="outline" size="sm" onClick={handleMentor} disabled={mentorLoading || !text?.trim()}
+          <Button variant="outline" size="sm" onClick={handleMentor} disabled={mentorLoading || !text.trim()}
             className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 text-xs font-semibold gap-1.5">
-            {mentorLoading ? <><Loader2 className="animate-spin w-3 h-3" />Reviewing...</> : <><MessageSquare className="w-3 h-3" />Mentor</>}
+            {mentorLoading
+              ? <><Loader2 className="animate-spin w-3 h-3" />Reviewing...</>
+              : <><MessageSquare className="w-3 h-3" />Mentor</>}
           </Button>
         </div>
       </div>
@@ -253,7 +232,9 @@ Language: English.`;
         ) : (
           <p className="text-gray-400 italic text-sm">No data found for this section. Complete the relevant stages to populate it.</p>
         )}
-        {mentorError && <p className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">{mentorError}</p>}
+        {mentorError && (
+          <p className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">{mentorError}</p>
+        )}
         <MentorFeedback feedback={mentorFeedback} />
         {conflicts?.length > 0 && (
           <div className="mt-4">
@@ -279,15 +260,16 @@ Language: English.`;
   );
 }
 
-// ─── Appendix Card ────────────────────────────────────────────────────────────
+// ─── Appendix — budget table only ────────────────────────────────────────────
 
-function AppendixCard({ appendix }) {
-  if (!appendix) return null;
-  const { budget, feature_matrix, revenue_params } = appendix;
-  const hasBudget   = budget && (budget.salaries?.length || budget.marketing_costs?.length || budget.operational_costs?.length);
-  const hasFeatures = feature_matrix && (Array.isArray(feature_matrix) ? feature_matrix.length : Object.keys(feature_matrix).length);
-  const hasRev      = revenue_params && Object.keys(revenue_params).length;
-  if (!hasBudget && !hasFeatures && !hasRev) return null;
+function AppendixCard({ budgets }) {
+  if (!budgets) return null;
+  const allRows = [
+    ...(budgets.salaries || []).map(s => ({ item: s.role || s.name || '', type: 'Salary', cost: s.monthly_cost || s.amount || s.salary || '' })),
+    ...(budgets.marketing_costs || []).map(m => ({ item: m.channel || m.name || '', type: 'Marketing', cost: m.monthly_cost || m.amount || '' })),
+    ...(budgets.operational_costs || []).map(o => ({ item: o.item || o.name || '', type: 'Operations', cost: o.monthly_cost || o.amount || '' })),
+  ];
+  if (!allRows.length) return null;
 
   const thClass = "text-left px-3 py-2 border border-slate-200 font-semibold bg-slate-50 text-xs";
   const tdClass = "px-3 py-2 border border-slate-200 text-xs";
@@ -295,89 +277,27 @@ function AppendixCard({ appendix }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
-        <h2 className="font-bold text-gray-800">📎 Appendix</h2>
+        <h2 className="font-bold text-gray-800">📎 Appendix — Monthly Budget Breakdown</h2>
       </div>
-      <div className="px-6 py-5 space-y-8">
-
-        {hasBudget && (
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-3 text-sm">A. Monthly Budget Breakdown</h3>
-            <table className="w-full text-xs border-collapse">
-              <thead><tr>
-                <th className={thClass}>Item</th>
-                <th className={thClass}>Type</th>
-                <th className={thClass}>Monthly Cost</th>
-              </tr></thead>
-              <tbody>
-                {(budget.salaries || []).map((s, i) => (
-                  <tr key={`s${i}`}>
-                    <td className={tdClass}>{s.role || s.name || JSON.stringify(s)}</td>
-                    <td className={tdClass}>Salary</td>
-                    <td className={tdClass}>{s.monthly_cost || s.amount || s.salary || '—'}</td>
-                  </tr>
-                ))}
-                {(budget.marketing_costs || []).map((m, i) => (
-                  <tr key={`m${i}`}>
-                    <td className={tdClass}>{m.channel || m.name || JSON.stringify(m)}</td>
-                    <td className={tdClass}>Marketing</td>
-                    <td className={tdClass}>{m.monthly_cost || m.amount || '—'}</td>
-                  </tr>
-                ))}
-                {(budget.operational_costs || []).map((o, i) => (
-                  <tr key={`o${i}`}>
-                    <td className={tdClass}>{o.item || o.name || JSON.stringify(o)}</td>
-                    <td className={tdClass}>Operations</td>
-                    <td className={tdClass}>{o.monthly_cost || o.amount || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {hasFeatures && (
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-3 text-sm">B. Feature Priority Matrix</h3>
-            <table className="w-full text-xs border-collapse">
-              <thead><tr>
-                <th className={thClass}>Feature</th>
-                <th className={thClass}>User Priority</th>
-                <th className={thClass}>Impl. Ease</th>
-                <th className={thClass}>Score</th>
-              </tr></thead>
-              <tbody>
-                {(Array.isArray(feature_matrix) ? feature_matrix : Object.entries(feature_matrix).map(([k, v]) => ({ name: k, ...v }))).map((f, i) => (
-                  <tr key={i}>
-                    <td className={tdClass}>{f.name || f.feature || JSON.stringify(f)}</td>
-                    <td className={tdClass}>{f.user_priority || f.priority || '—'}</td>
-                    <td className={tdClass}>{f.impl_ease || f.ease || '—'}</td>
-                    <td className={tdClass}>{f.score || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {hasRev && (
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-3 text-sm">C. Revenue Model Parameters</h3>
-            <table className="w-full text-xs border-collapse">
-              <thead><tr>
-                <th className={thClass}>Parameter</th>
-                <th className={thClass}>Value</th>
-              </tr></thead>
-              <tbody>
-                {Object.entries(revenue_params).map(([k, v]) => (
-                  <tr key={k}>
-                    <td className={tdClass + ' font-medium'}>{k}</td>
-                    <td className={tdClass}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="px-6 py-5">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className={thClass}>Item</th>
+              <th className={thClass}>Type</th>
+              <th className={thClass}>Monthly Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allRows.map((r, i) => (
+              <tr key={i}>
+                <td className={tdClass}>{String(r.item)}</td>
+                <td className={tdClass}>{r.type}</td>
+                <td className={tdClass}>{String(r.cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -396,9 +316,8 @@ export default function BusinessDeckPage() {
   const [isEligible, setIsEligible]   = useState(false);
   const [venture, setVenture]         = useState(null);
   const [sourceData, setSourceData]   = useState(null);
-  const [deckData, setDeckData]       = useState(null);  // { executive_summary, problem, ... }
+  const [deckData, setDeckData]       = useState(null);
   const [conflicts, setConflicts]     = useState({});
-  const [appendix, setAppendix]       = useState(null);
   const [deckRecord, setDeckRecord]   = useState(null);
 
   const [customization, setCustomization] = useState({
@@ -457,9 +376,7 @@ export default function BusinessDeckPage() {
       };
       setSourceData(sd);
       setConflicts(detectConflicts(sd));
-      setAppendix(buildAppendix(sd));
 
-      // Load saved deck if exists
       const { data: existingDeck } = await supabase
         .from('business_decks')
         .select('*')
@@ -469,7 +386,12 @@ export default function BusinessDeckPage() {
         .maybeSingle();
 
       if (existingDeck?.deck_data) {
-        setDeckData(existingDeck.deck_data);
+        const normalized = {};
+        SECTION_META.forEach(({ key }) => {
+          const val = existingDeck.deck_data[key];
+          normalized[key] = typeof val === 'string' ? val : val ? JSON.stringify(val) : '';
+        });
+        setDeckData(normalized);
         setDeckRecord(existingDeck);
         if (existingDeck.customization) setCustomization(prev => ({ ...prev, ...existingDeck.customization }));
       }
@@ -481,31 +403,30 @@ export default function BusinessDeckPage() {
     setLoading(false);
   }
 
-  // ── Generate (one AI call, creditType: 'sys', free) ───────────────────────
-
   async function handleGenerate() {
     if (!venture || !sourceData) return;
     setGenerating(true);
     setError(null);
     try {
       const allFieldsAsText = buildAllFieldsAsText(sourceData);
-      const prompt = `You are an expert startup advisor writing a professional investor business plan.
+      const prompt = `You are an expert startup advisor writing a concise, professional investor business plan.
 
 Venture: "${venture.name}" — ${venture.description}
 Sector: ${venture.sector} | Phase: ${venture.phase}
 
-Below is all the data this founder collected throughout their startup journey across all stages.
-Your job: synthesize this data into a professional investor business plan.
-Rules:
-- Use ONLY the data provided. Do not invent anything not in the data.
-- For fields that appear in multiple stages (problem, solution, market, the_ask) — use the PITCH stage version marked as AUTHORITATIVE.
-- Write in clear, confident English. No markdown formatting.
-- The "product" section must include: overview, current status with phase and key metrics, technology stack, and what users say.
-- The "business_model" section must include: revenue streams description AND a unit economics summary with all available numbers.
-- The "traction" section must include: all available milestones, metrics, beta sign-ups, feedback analysis, and wow moments.
-- Keep each section concise and investor-ready.
+RULES:
+- Use ONLY the data provided below. Do not invent anything.
+- Use the PITCH section versions for problem, solution, market, team, the_ask — they are the most refined.
+- Write in investor language: confident, concise, forward-looking.
+- Every section must have clear investor value. No raw data dumps.
+- business_model: include revenue streams, pricing, unit economics (CAC, churn, conversion), and a projected breakeven or revenue target if data allows.
+- traction: summarize progress as milestones. Current users, retention, NPS, key validation signals. No raw feedback quotes.
+- product: describe what it is, current status, tech stack. One paragraph max per sub-topic.
+- executive_summary: 2 paragraphs max. Current state + what you are raising and why.
+- the_ask: how much, allocation breakdown, runway, key milestones to hit.
+- Do NOT use markdown. Plain text only.
 
-Return ONLY a valid JSON object with exactly these keys (no other text before or after):
+Return ONLY a valid JSON object — no text before or after — with exactly these keys:
 executive_summary, problem, solution, product, market, business_model, traction, team, the_ask
 
 DATA:
@@ -517,33 +438,31 @@ ${allFieldsAsText}`;
       let parsed;
       try {
         const cleaned = rawText.replace(/```json|```/g, '').trim();
-        // Try direct parse first
         try {
           parsed = JSON.parse(cleaned);
         } catch {
-          // Try to extract JSON object from the response
           const match = cleaned.match(/\{[\s\S]*\}/);
-          if (match) {
-            parsed = JSON.parse(match[0]);
-          } else {
-            throw new Error('no JSON found');
-          }
+          if (match) parsed = JSON.parse(match[0]);
+          else throw new Error('no JSON');
         }
       } catch {
         throw new Error('AI returned invalid JSON. Please try again.');
       }
 
-      // Ensure all keys exist
-      SECTION_META.forEach(({ key }) => { if (!parsed[key]) parsed[key] = ''; });
+      // Normalize all values to strings
+      const normalized = {};
+      SECTION_META.forEach(({ key }) => {
+        const val = parsed[key];
+        normalized[key] = typeof val === 'string' ? val : val ? JSON.stringify(val) : '';
+      });
 
       const now = new Date().toISOString();
-      const newVersion = (deckRecord?.version || 0) + 1;
       const payload = {
         venture_id: venture.id,
         user_email: user.email,
         plan: userPlan,
-        version: newVersion,
-        deck_data: parsed,
+        version: (deckRecord?.version || 0) + 1,
+        deck_data: normalized,
         customization,
         generated_at: deckRecord?.generated_at || now,
         updated_at: now,
@@ -558,7 +477,7 @@ ${allFieldsAsText}`;
         saved = data;
       }
 
-      setDeckData(parsed);
+      setDeckData(normalized);
       if (saved) setDeckRecord(saved);
 
     } catch (err) {
@@ -568,18 +487,15 @@ ${allFieldsAsText}`;
     setGenerating(false);
   }
 
-  function handleTextChange(sectionKey, newText) {
-    setDeckData(prev => ({ ...prev, [sectionKey]: newText }));
+  function handleTextChange(key, val) {
+    setDeckData(prev => ({ ...prev, [key]: val }));
   }
 
   async function handleSave() {
-    if (!deckData || !venture || !user) return;
-    const now = new Date().toISOString();
-    const payload = { deck_data: deckData, customization, updated_at: now };
-    if (deckRecord?.id) {
-      const { data } = await supabase.from('business_decks').update(payload).eq('id', deckRecord.id).select().single();
-      if (data) setDeckRecord(data);
-    }
+    if (!deckData || !deckRecord?.id) return;
+    await supabase.from('business_decks')
+      .update({ deck_data: deckData, customization, updated_at: new Date().toISOString() })
+      .eq('id', deckRecord.id);
   }
 
   function updateCustomization(field, value) {
@@ -590,14 +506,11 @@ ${allFieldsAsText}`;
     }
   }
 
-  // ── Download .docx ─────────────────────────────────────────────────────────
-
   async function handleDownload() {
     if (!deckData) return;
     setDownloading(true);
     try {
-      const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType } = await import('docx');
-
+      const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType, Table, TableRow, TableCell, WidthType } = await import('docx');
       const fontSizeMap = { small: 20, medium: 24, large: 28 };
       const headSizeMap = { small: 28, medium: 32, large: 38 };
       const bodySize = fontSizeMap[customization.font_size] || 24;
@@ -636,7 +549,7 @@ ${allFieldsAsText}`;
         makeDivider(),
       ];
 
-      // 9 sections — no conflict notes
+      // 9 sections
       SECTION_META.forEach(({ key, title }) => {
         const text = deckData[key] || '';
         if (!text.trim()) return;
@@ -645,43 +558,31 @@ ${allFieldsAsText}`;
         children.push(makeDivider());
       });
 
-      // Appendix
-      if (appendix) {
-        children.push(makeHeading('Appendix'));
-
-        // A. Budget
-        if (appendix.budget) {
-          children.push(new Paragraph({ children: [new TextRun({ text: 'A. Monthly Budget Breakdown', bold: true, size: bodySize, font: 'Arial' })], spacing: { before: 200, after: 120 } }));
-          const allRows = [
-            ...(appendix.budget.salaries || []).map(s => [s.role || s.name || '', 'Salary', String(s.monthly_cost || s.amount || s.salary || '')]),
-            ...(appendix.budget.marketing_costs || []).map(m => [m.channel || m.name || '', 'Marketing', String(m.monthly_cost || m.amount || '')]),
-            ...(appendix.budget.operational_costs || []).map(o => [o.item || o.name || '', 'Operations', String(o.monthly_cost || o.amount || '')]),
-          ];
-          if (allRows.length) {
-            const border = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
-            const borders = { top: border, bottom: border, left: border, right: border };
-            const makeCell = (text, bold = false) => new TableCell({
-              borders, width: { size: 3120, type: WidthType.DXA },
-              margins: { top: 80, bottom: 80, left: 120, right: 120 },
-              children: [new Paragraph({ children: [new TextRun({ text, size: 20, font: 'Arial', bold })] })],
-            });
-            children.push(new Table({
-              width: { size: 9360, type: WidthType.DXA },
-              columnWidths: [3120, 3120, 3120],
-              rows: [
-                new TableRow({ children: [makeCell('Item', true), makeCell('Type', true), makeCell('Monthly Cost', true)] }),
-                ...allRows.map(r => new TableRow({ children: r.map(c => makeCell(c)) })),
-              ],
-            }));
-          }
-        }
-
-        // C. Revenue Model
-        if (appendix.revenue_params) {
-          children.push(new Paragraph({ children: [new TextRun({ text: 'C. Revenue Model Parameters', bold: true, size: bodySize, font: 'Arial' })], spacing: { before: 200, after: 120 } }));
-          Object.entries(appendix.revenue_params).forEach(([k, v]) => {
-            children.push(new Paragraph({ children: [new TextRun({ text: `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`, size: 20, font: 'Arial' })], spacing: { after: 80 } }));
+      // Appendix — budget table only
+      const budgets = sourceData?.budgets;
+      if (budgets) {
+        const allRows = [
+          ...(budgets.salaries || []).map(s => [s.role || s.name || '', 'Salary', String(s.monthly_cost || s.amount || s.salary || '')]),
+          ...(budgets.marketing_costs || []).map(m => [m.channel || m.name || '', 'Marketing', String(m.monthly_cost || m.amount || '')]),
+          ...(budgets.operational_costs || []).map(o => [o.item || o.name || '', 'Operations', String(o.monthly_cost || o.amount || '')]),
+        ];
+        if (allRows.length) {
+          children.push(makeHeading('Appendix — Monthly Budget Breakdown'));
+          const border = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
+          const borders = { top: border, bottom: border, left: border, right: border };
+          const makeCell = (text, bold = false) => new TableCell({
+            borders, width: { size: 3120, type: WidthType.DXA },
+            margins: { top: 80, bottom: 80, left: 120, right: 120 },
+            children: [new Paragraph({ children: [new TextRun({ text, size: 20, font: 'Arial', bold })] })],
           });
+          children.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [3120, 3120, 3120],
+            rows: [
+              new TableRow({ children: [makeCell('Item', true), makeCell('Type', true), makeCell('Monthly Cost', true)] }),
+              ...allRows.map(r => new TableRow({ children: r.map(c => makeCell(c)) })),
+            ],
+          }));
         }
       }
 
@@ -742,7 +643,7 @@ ${allFieldsAsText}`;
           <p className="text-sm text-gray-600">✓ AI-generated investor-ready business plan from your data</p>
           <p className="text-sm text-gray-600">✓ Editable sections with Mentor feedback per section</p>
           <p className="text-sm text-gray-600">✓ Conflict detection across stages</p>
-          <p className="text-sm text-gray-600">✓ Download as Word (.docx) with appendices</p>
+          <p className="text-sm text-gray-600">✓ Download as Word (.docx) with budget appendix</p>
         </div>
         <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12 text-base font-semibold">Upgrade Plan</Button>
         <p className="text-xs text-gray-400">Current plan: {userPlan || 'explorer'}</p>
@@ -756,7 +657,9 @@ ${allFieldsAsText}`;
     </div>
   );
 
-  const filledCount = deckData ? SECTION_META.filter(s => typeof deckData[s.key] === 'string' && deckData[s.key].trim()).length : 0;
+  const filledCount = deckData
+    ? SECTION_META.filter(s => typeof deckData[s.key] === 'string' && deckData[s.key].trim()).length
+    : 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -801,9 +704,9 @@ ${allFieldsAsText}`;
           <h2 className="font-bold text-indigo-900 text-base mb-4">How the Business Deck works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { n: '1️⃣', title: 'Generate your plan', desc: 'Click "Generate Business Plan". StartZig sends all your data to AI, which synthesizes it into 9 professional sections. Free on first generation.' },
-              { n: '2️⃣', title: 'Edit and improve', desc: 'Each section is fully editable. Use the Mentor button for expert feedback, a score, and strategic hints. Edit, then ask the Mentor again.' },
-              { n: '3️⃣', title: 'Download for investors', desc: 'Customize the look and download a professional Word document with appendices, ready to share with investors.' },
+              { n: '1️⃣', title: 'Generate your plan', desc: 'Click "Generate Business Plan". StartZig sends all your data to AI, which synthesizes it into 9 professional investor-ready sections. Free on first generation.' },
+              { n: '2️⃣', title: 'Edit and improve', desc: 'Each section is fully editable. Use the Mentor button for expert feedback, a score, and strategic hints — then edit and ask again.' },
+              { n: '3️⃣', title: 'Download for investors', desc: 'Customize the look and download a professional Word document with a budget appendix, ready to share with investors.' },
             ].map(({ n, title, desc }) => (
               <div key={n} className="bg-white rounded-xl p-4 border border-indigo-100">
                 <div className="text-2xl mb-2">{n}</div>
@@ -834,7 +737,7 @@ ${allFieldsAsText}`;
             </div>
             <h2 className="text-xl font-bold text-gray-900">Generate your Business Plan</h2>
             <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
-              StartZig will synthesize all your work across all stages into a 9-section investor-ready business plan. Free on first generation.
+              StartZig will synthesize all your work into a 9-section investor-ready business plan. Free on first generation.
             </p>
             <Button onClick={handleGenerate} disabled={generating}
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 h-12 text-base gap-2">
@@ -859,7 +762,7 @@ ${allFieldsAsText}`;
           </div>
         )}
 
-        {/* 9 Section cards */}
+        {/* 9 sections */}
         {deckData && !generating && SECTION_META.map(({ key, title, icon }) => (
           <SectionCard
             key={key}
@@ -874,7 +777,7 @@ ${allFieldsAsText}`;
         ))}
 
         {/* Appendix */}
-        {deckData && !generating && <AppendixCard appendix={appendix} />}
+        {deckData && !generating && <AppendixCard budgets={sourceData?.budgets} />}
 
         {/* Customization + Download */}
         {deckData && !generating && (
@@ -927,7 +830,9 @@ ${allFieldsAsText}`;
             <div className="flex gap-3 pt-2">
               <Button onClick={handleDownload} disabled={downloading}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 h-11">
-                {downloading ? <><Loader2 className="animate-spin w-4 h-4 mr-2" />Preparing...</> : <><Download className="w-4 h-4 mr-2" />Download Word (.docx)</>}
+                {downloading
+                  ? <><Loader2 className="animate-spin w-4 h-4 mr-2" />Preparing...</>
+                  : <><Download className="w-4 h-4 mr-2" />Download Word (.docx)</>}
               </Button>
               <Button disabled variant="outline" className="text-gray-400 border-gray-200 cursor-not-allowed h-11 px-6">
                 <Download className="w-4 h-4 mr-2" />Download PDF
