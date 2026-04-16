@@ -126,11 +126,11 @@ function calculateFundingAsk(budgets, forecast) {
   if (!budgets || !forecast) return null;
 
   const allRows = [
-    ...(budgets.salaries || []).map(s => s.avg_salary || s.monthly_cost || 0),
-    ...(budgets.marketing_costs || []).map(m => m.cost || m.monthly_cost || 0),
-    ...(budgets.operational_costs || []).map(o => o.cost || o.monthly_cost || 0),
+    ...(budgets.salaries || []).map(s => (parseFloat(s.avg_salary || s.monthly_cost || 0)) * (parseInt(s.count) || 1)),
+    ...(budgets.marketing_costs || []).map(m => parseFloat(m.cost || m.monthly_cost || 0)),
+    ...(budgets.operational_costs || []).map(o => parseFloat(o.cost || o.monthly_cost || 0)),
   ];
-  const monthlyBurn = allRows.reduce((sum, c) => sum + (parseFloat(String(c).replace(/[^0-9.]/g, '')) || 0), 0);
+  const monthlyBurn = allRows.reduce((sum, c) => sum + (c || 0), 0);
   if (!monthlyBurn) return null;
 
   const totalCosts = monthlyBurn * 24;
@@ -150,7 +150,7 @@ function calculateFundingAsk(budgets, forecast) {
     ask,
     surplus,
     isUnrealistic,
-    askFormatted: ask > 0 ? fmt(ask) : null,
+    askFormatted: ask > 0 ? fmt(ask) : fmt(monthlyBurn * 24),
     surplusFormatted: surplus > 0 ? fmt(surplus) : null,
     monthlyBurnFormatted: fmt(monthlyBurn),
   };
@@ -182,7 +182,8 @@ function buildPromptData(data, forecast, fundingAsk) {
 
   lines.push('\n=== REVENUE MODEL DATA (use these numbers — not text descriptions) ===');
   if (rev.businessModel)          lines.push(`Model type: ${rev.businessModel}`);
-  if (rev.tier1Price !== undefined) lines.push(`Free tier price: $${rev.tier1Price}`);
+  if (rev.tier1Price !== undefined && rev.tier1Price > 0) lines.push(`Free tier price: $${rev.tier1Price}/month`);
+  if (rev.tier1Price === 0) lines.push(`Free tier: available at no cost`);
   if (rev.tier2Price)             lines.push(`Premium price: $${rev.tier2Price}/month`);
   if (rev.acquisitionCost)        lines.push(`CAC: $${rev.acquisitionCost}`);
   if (rev.freeToPaidConversion)   lines.push(`Free to paid conversion: ${rev.freeToPaidConversion}%`);
@@ -269,10 +270,100 @@ function detectConflicts(data) {
 function buildBudgetRows(budgets) {
   if (!budgets) return [];
   return [
-    ...(budgets.salaries || []).map(s => ({ item: s.role || s.name || '', type: 'Salary', cost: s.avg_salary || s.monthly_cost || s.amount || '' })),
-    ...(budgets.marketing_costs || []).map(m => ({ item: m.channel || m.name || '', type: 'Marketing', cost: m.cost || m.monthly_cost || m.amount || '' })),
-    ...(budgets.operational_costs || []).map(o => ({ item: o.item || o.name || '', type: 'Operations', cost: o.cost || o.monthly_cost || o.amount || '' })),
+    ...(budgets.salaries || []).map(s => {
+      const count = parseInt(s.count) || 1;
+      const monthlyCost = (parseFloat(s.avg_salary || s.monthly_cost || s.amount || 0)) * count;
+      const label = count > 1 ? `${s.role || s.name || ''} (×${count})` : (s.role || s.name || '');
+      return { item: label, type: 'Salary', monthly: monthlyCost, annual: monthlyCost * 12 };
+    }),
+    ...(budgets.marketing_costs || []).map(m => {
+      const monthly = parseFloat(m.cost || m.monthly_cost || m.amount || 0);
+      return { item: m.channel || m.name || '', type: 'Marketing', monthly, annual: monthly * 12 };
+    }),
+    ...(budgets.operational_costs || []).map(o => {
+      const monthly = parseFloat(o.cost || o.monthly_cost || o.amount || 0);
+      return { item: o.item || o.name || '', type: 'Operations', monthly, annual: monthly * 12 };
+    }),
   ];
+}
+
+function calculateBreakeven(budgets, revenueModelData) {
+  if (!budgets || !revenueModelData) return null;
+  const rows = buildBudgetRows(budgets);
+  const monthlyBurn = rows.reduce((sum, r) => sum + (r.monthly || 0), 0);
+  if (!monthlyBurn) return null;
+
+  // Run forecast month by month to find break-even
+  const MONTHS = 24;
+  const ORGANIC_K_FACTOR = 0.65;
+  const TARGET_MARKET_SCALING = 10000000;
+  const {
+    businessModel = 'freemium', tier1Price = 0, tier2Price = 0,
+    tier2ConversionSplit = 0, adRevenuePer1000 = 0,
+    initialUsers = 0, churnRisk = 0, targetMarketFactor = 0,
+    freeToPaidConversion = 0, monthlyMarketingBudget = 0, acquisitionCost = 0.01,
+  } = revenueModelData;
+
+  const targetMarketSize = targetMarketFactor * TARGET_MARKET_SCALING;
+  let totalUsers = initialUsers;
+  let payingUsers = businessModel === 'transactional' ? totalUsers : 0;
+  const churnRateDecimal = churnRisk / 100;
+  const tier2SplitDecimal = tier2ConversionSplit / 100;
+  const conversionRateDecimal = freeToPaidConversion / 100;
+  const effectiveCAC = Math.max(0.01, acquisitionCost);
+  const fmt = n => n >= 1000000 ? '$' + (n/1000000).toFixed(1) + 'M' : n >= 1000 ? '$' + (n/1000).toFixed(0) + 'K' : '$' + Math.round(n);
+  const fmtN = n => n >= 1000 ? (n/1000).toFixed(0) + 'K' : String(Math.round(n));
+
+  const data = [];
+  let breakevenMonth = null;
+  let cumulativeCosts = 0;
+  let cumulativeRevenue = 0;
+
+  for (let month = 1; month <= MONTHS; month++) {
+    const mktSat = targetMarketSize > 0 ? (1 - totalUsers / targetMarketSize) : 1;
+    const newPaid = Math.floor(monthlyMarketingBudget / effectiveCAC);
+    const newOrganic = Math.floor(totalUsers * 0.15 * ORGANIC_K_FACTOR * mktSat);
+    const newUsers = newPaid + newOrganic;
+    const churned = Math.floor(totalUsers * churnRateDecimal);
+    totalUsers = Math.max(initialUsers, totalUsers + newUsers - churned);
+    let freeUsers = totalUsers - payingUsers;
+
+    if (businessModel === 'freemium' || businessModel === 'subscription') {
+      const newlyPaid = Math.floor(freeUsers * conversionRateDecimal);
+      const churnedPaid = Math.floor(payingUsers * churnRateDecimal);
+      payingUsers = Math.max(0, payingUsers + newlyPaid - churnedPaid);
+      freeUsers = totalUsers - payingUsers;
+    } else if (businessModel === 'ad-driven') {
+      payingUsers = 0; freeUsers = totalUsers;
+    }
+
+    const paidForRev = (businessModel === 'subscription' || businessModel === 'freemium') ? payingUsers : 0;
+    const t2Users = Math.floor(paidForRev * tier2SplitDecimal);
+    const t1Users = paidForRev - t2Users;
+    const monthRev = t1Users * tier1Price + t2Users * tier2Price +
+      ((businessModel === 'ad-driven' || businessModel === 'freemium') ? (freeUsers / 1000) * adRevenuePer1000 : 0);
+
+    cumulativeCosts += monthlyBurn;
+    cumulativeRevenue += monthRev;
+
+    if (breakevenMonth === null && monthRev >= monthlyBurn) {
+      breakevenMonth = month;
+    }
+
+    data.push({
+      month,
+      expenses: monthlyBurn,
+      revenue: Math.round(monthRev),
+      cumulativeCosts: Math.round(cumulativeCosts),
+      cumulativeRevenue: Math.round(cumulativeRevenue),
+      gap: Math.round(cumulativeRevenue - cumulativeCosts),
+      expensesFormatted: fmt(monthlyBurn),
+      revenueFormatted: fmt(monthRev),
+      gapFormatted: fmt(cumulativeRevenue - cumulativeCosts),
+    });
+  }
+
+  return { data, breakevenMonth, monthlyBurn, monthlyBurnFormatted: fmt(monthlyBurn) };
 }
 
 function buildRevenueParamsRows(rev) {
@@ -319,6 +410,13 @@ export default function BusinessDeckPage() {
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
     logo_url: '',
   });
+
+  const [appendixConfig, setAppendixConfig] = useState({
+    budget: true,
+    revenueParams: true,
+    breakeven: true,
+  });
+  const [breakevenData, setBreakevenData] = useState(null);
 
   const sectionRefs = useRef({});
 
@@ -373,6 +471,12 @@ export default function BusinessDeckPage() {
       };
       setSourceData(sd);
       setConflicts(detectConflicts(sd));
+
+      // Calculate break-even
+      if (budgetRes.data && ventureData.revenue_model_data) {
+        const be = calculateBreakeven(budgetRes.data, ventureData.revenue_model_data);
+        setBreakevenData(be);
+      }
 
       const fa = calculateFundingAsk(budgetRes.data, fc);
       setFundingAsk(fa);
@@ -465,13 +569,13 @@ If any field is empty — omit that paragraph.
 business_model:
 Write exactly 3 sub-sections, each label on its own line:
 
-Revenue Streams:
+Model:
 [Use ONLY revenue_model_data fields — do NOT use business_plans.revenue_model text. Describe: model type (businessModel). Free tier price if tier1Price > 0. Premium price from tier2Price. Write as one professional paragraph. Example format: "The company operates on a freemium model, with a free tier and a premium subscription at $X/month."]
 
 Revenue Forecast:
 [Write exactly: "Based on a [businessModel] model at $[tier2Price]/month premium pricing, the company projects [year1TotalUsers] total users by end of Year 1 with revenues of [year1Revenue], growing to [year2TotalUsers] total users by end of Year 2 with cumulative revenues of [year2CumulativeRevenue]."]
 
-Unit Economics:
+Traction:
 [Write 3 sentences using ONLY revenue_model_data numbers: (1) CAC vs tier2Price — payback period implication. (2) freeToPaidConversion + churnRisk — what they mean together for LTV. (3) One forward-looking scalability statement.]
 
 traction:
@@ -674,7 +778,7 @@ Language: English.`;
         const lines = text.split('\n').filter(Boolean);
         lines.forEach(line => {
           const trimmed = line.trim();
-          if (/^(Overview|Current Status|Technology|Revenue Streams|Revenue Forecast|Unit Economics):$/.test(trimmed)) {
+          if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction):$/.test(trimmed)) {
             children.push(makeH2(trimmed.replace(':', '')));
           } else {
             children.push(makeBody(trimmed));
@@ -717,6 +821,7 @@ Language: English.`;
       }
 
       // Appendix B
+      if (appendixConfig.revenueParams) {
       const revRows = buildRevenueParamsRows(venture?.revenue_model_data);
       if (revRows.length) {
         children.push(makeH1('Appendix B — Revenue Model Assumptions'));
@@ -728,6 +833,33 @@ Language: English.`;
             ...revRows.map(r => new TableRow({ children: [makeCell(r.param), makeCell(r.value)] })),
           ],
         }));
+      }
+      } // end appendixConfig.revenueParams
+
+      // Appendix C — Break-even
+      if (appendixConfig.breakeven && breakevenData) {
+        children.push(makeH1('Appendix C — Break-even Analysis'));
+        if (breakevenData.breakevenMonth) {
+          children.push(makeBody(`Based on current projections, the company reaches break-even at month ${breakevenData.breakevenMonth}.`));
+        } else {
+          children.push(makeBody('Based on current projections, the company does not reach break-even within 24 months.'));
+        }
+        children.push(new Table({
+          width: { size: 9360, type: WidthType.DXA },
+          columnWidths: [1560, 2600, 2600, 2600],
+          rows: [
+            new TableRow({ children: [makeCell('Month', true, true), makeCell('Monthly Expenses', true, true), makeCell('Monthly Revenue', true, true), makeCell('Cumulative Gap', true, true)] }),
+            ...breakevenData.data
+              .filter((_, i) => i % 3 === 0 || breakevenData.data[i].month === breakevenData.breakevenMonth)
+              .map(r => new TableRow({ children: [
+                makeCell(r.month === breakevenData.breakevenMonth ? `Month ${r.month} ✓` : `Month ${r.month}`),
+                makeCell(r.expensesFormatted),
+                makeCell(r.revenueFormatted),
+                makeCell(r.gapFormatted),
+              ]})),
+          ],
+        }));
+        children.push(makeDivider());
       }
 
       const doc = new Document({
@@ -873,7 +1005,7 @@ Language: English.`;
                 The business plan you see here is a starting point — not a final document. Investors may challenge your numbers, suggest a different funding amount, or push you to expand certain areas. What matters most is that you understand your own data and can explain your thinking clearly in a meeting.
               </p>
               <p className="text-sm text-indigo-600 font-medium">
-                ✏️ Click on any text in the preview below to edit it directly. Use Mentor Review to get expert feedback on the full document. Sections marked with * were analyzed and synthesized by StartZig from your data.
+                ✏️ Click on any text in the preview below to edit it directly. Use Mentor Review to get expert feedback on the full document. See details in appendix
               </p>
             </div>
           </div>
@@ -1006,7 +1138,7 @@ Language: English.`;
                         {index + 1}. {SECTION_TITLES[key]}
                       </h2>
                       {isAISynthesized && (
-                        <span className="text-xs text-gray-400 font-normal">*</span>
+                        <span className="text-xs text-gray-400 font-normal">See details in appendix</span>
                       )}
                     </div>
 
@@ -1022,7 +1154,7 @@ Language: English.`;
                         const trimmed = line.trim();
                         if (!trimmed) return <br key={i} />;
                         // Sub-section headers
-                        if (/^(Overview|Current Status|Technology|Revenue Streams|Revenue Forecast|Unit Economics):$/.test(trimmed)) {
+                        if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction):$/.test(trimmed)) {
                           return <div key={i} className="font-semibold text-gray-800 mt-3 mb-1">{trimmed}</div>;
                         }
                         return <div key={i}>{trimmed}</div>;
@@ -1064,7 +1196,7 @@ Language: English.`;
               {(() => {
                 const rows = buildBudgetRows(sourceData?.budgets);
                 if (!rows.length) return null;
-                const total = rows.reduce((sum, r) => sum + (parseFloat(String(r.cost).replace(/[^0-9.]/g, '')) || 0), 0);
+                const total = rows.reduce((sum, r) => sum + (r.monthly || 0), 0);
                 return (
                   <div className="space-y-3 pt-4 border-t border-slate-100">
                     <h2 className="text-xl font-bold text-indigo-600">Appendix A — Monthly Budget Breakdown</h2>
@@ -1073,7 +1205,8 @@ Language: English.`;
                         <tr className="bg-slate-50">
                           <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Item</th>
                           <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Type</th>
-                          <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Monthly Cost</th>
+                          <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Monthly</th>
+                          <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Annual</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1081,13 +1214,15 @@ Language: English.`;
                           <tr key={i} className={i % 2 === 0 ? '' : 'bg-slate-50'}>
                             <td className="px-4 py-2 border border-slate-200">{r.item}</td>
                             <td className="px-4 py-2 border border-slate-200">{r.type}</td>
-                            <td className="px-4 py-2 border border-slate-200">{r.cost}</td>
+                            <td className="px-4 py-2 border border-slate-200">${(r.monthly || 0).toLocaleString()}</td>
+                            <td className="px-4 py-2 border border-slate-200">${(r.annual || 0).toLocaleString()}</td>
                           </tr>
                         ))}
                         <tr className="bg-slate-100 font-semibold">
-                          <td className="px-4 py-2 border border-slate-200">Total monthly burn</td>
+                          <td className="px-4 py-2 border border-slate-200">Total burn</td>
                           <td className="px-4 py-2 border border-slate-200"></td>
                           <td className="px-4 py-2 border border-slate-200 text-indigo-600">${total.toLocaleString()}</td>
+                          <td className="px-4 py-2 border border-slate-200 text-indigo-600">${(total * 12).toLocaleString()}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -1122,9 +1257,46 @@ Language: English.`;
                 );
               })()}
 
+              {/* Appendix C — Break-even */}
+              {appendixConfig.breakeven && breakevenData && (
+                <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <h2 className="text-xl font-bold text-indigo-600">Appendix C — Break-even Analysis</h2>
+                  {breakevenData.breakevenMonth ? (
+                    <p className="text-sm text-green-700 font-medium bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                      ✓ Based on current projections, the company reaches break-even at month {breakevenData.breakevenMonth}.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+                      ⚠️ Based on current projections, the company does not reach break-even within 24 months.
+                    </p>
+                  )}
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Month</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Monthly Expenses</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Monthly Revenue</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Cumulative Gap</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {breakevenData.data.filter((_, i) => i % 3 === 0 || breakevenData.data[i].month === breakevenData.breakevenMonth).map((r) => (
+                        <tr key={r.month}
+                          className={r.month === breakevenData.breakevenMonth ? 'bg-green-50 font-semibold' : r.month % 2 === 0 ? 'bg-slate-50' : ''}>
+                          <td className="px-4 py-2 border border-slate-200">{r.month === breakevenData.breakevenMonth ? `Month ${r.month} ✓` : `Month ${r.month}`}</td>
+                          <td className="px-4 py-2 border border-slate-200">{r.expensesFormatted}</td>
+                          <td className="px-4 py-2 border border-slate-200">{r.revenueFormatted}</td>
+                          <td className={"px-4 py-2 border border-slate-200 " + (r.gap >= 0 ? 'text-green-600' : 'text-red-500')}>{r.gapFormatted}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {/* AI synthesis note */}
               <p className="text-xs text-gray-400 italic pt-2 border-t border-slate-100">
-                * Sections marked with an asterisk were analyzed and synthesized by StartZig based on your data.
+                See details in appendix
               </p>
 
             </div>
@@ -1180,6 +1352,25 @@ Language: English.`;
                 </div>
               )}
             </div>
+            {/* Appendix selection */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-sm font-medium text-gray-700">Include in download:</p>
+              <div className="flex flex-col gap-2">
+                {[
+                  { key: 'budget', label: 'Appendix A — Monthly Budget Breakdown' },
+                  { key: 'revenueParams', label: 'Appendix B — Revenue Model Assumptions' },
+                  { key: 'breakeven', label: 'Appendix C — Break-even Analysis' },
+                ].map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={appendixConfig[key]}
+                      onChange={e => setAppendixConfig(prev => ({ ...prev, [key]: e.target.checked }))}
+                      className="w-4 h-4 text-indigo-600 rounded" />
+                    <span className="text-sm text-gray-600">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-2">
               <Button onClick={handleDownload} disabled={downloading}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 h-11">
