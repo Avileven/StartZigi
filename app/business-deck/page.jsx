@@ -32,6 +32,24 @@ const SECTION_TITLES = {
 // Sections where AI synthesizes data (show asterisk)
 const AI_SYNTHESIZED_SECTIONS = ['executive_summary', 'product', 'market', 'business_model', 'traction', 'the_ask'];
 
+const COLOR_PALETTE = [
+  { label: 'Indigo', value: '#4F46E5' },
+  { label: 'Blue',   value: '#2563EB' },
+  { label: 'Teal',   value: '#0D9488' },
+  { label: 'Green',  value: '#16A34A' },
+  { label: 'Purple', value: '#7C3AED' },
+  { label: 'Black',  value: '#111827' },
+];
+
+// Fix AI returning object instead of string for a section
+function normalizeSection(val) {
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && val !== null) {
+    return Object.entries(val).map(([k, v]) => k + ':\n' + v).join('\n\n');
+  }
+  return '';
+}
+
 // ─── Revenue forecast (same formula as Revenue Model page) ───────────────────
 
 function calculateForecast(rev) {
@@ -117,8 +135,10 @@ function calculateFundingAsk(budgets, forecast) {
 
   const totalCosts = monthlyBurn * 24;
   const totalRevenue = forecast.year1Revenue + forecast.year2Revenue;
-  const gap = Math.max(0, totalCosts - totalRevenue);
-  const ask = Math.round(gap * FUNDING_BUFFER / 1000) * 1000; // round to nearest 1000
+  const gap = totalCosts - totalRevenue;
+  const ask = gap > 0 ? Math.round(gap * FUNDING_BUFFER / 1000) * 1000 : 0;
+  const surplus = gap < 0 ? Math.abs(gap) : 0;
+  const isUnrealistic = totalRevenue > totalCosts * 10;
 
   const fmt = n => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : `$${(n/1000).toFixed(0)}K`;
 
@@ -128,7 +148,10 @@ function calculateFundingAsk(budgets, forecast) {
     totalRevenue,
     gap,
     ask,
-    askFormatted: fmt(ask),
+    surplus,
+    isUnrealistic,
+    askFormatted: ask > 0 ? fmt(ask) : null,
+    surplusFormatted: surplus > 0 ? fmt(surplus) : null,
     monthlyBurnFormatted: fmt(monthlyBurn),
   };
 }
@@ -223,17 +246,20 @@ function buildPromptData(data, forecast, fundingAsk) {
 function detectConflicts(data) {
   const v   = data.venture || {};
   const bp  = data.businessPlan || {};
-  const rev = v.revenue_model_data || {};
   const conflicts = {};
 
-  if (v.problem && bp.problem && v.problem !== bp.problem)
+  const isMeaningful = text => {
+    if (!text || text.length < 20) return false;
+    const lower = text.toLowerCase();
+    if (lower.includes('not sure') || lower.includes('will follow') || lower.includes('tbd') || lower.includes('todo')) return false;
+    return true;
+  };
+
+  if (isMeaningful(v.problem) && isMeaningful(bp.problem) && v.problem !== bp.problem)
     conflicts.problem = [{ stage: 'Idea stage', text: v.problem }, { stage: 'Business Plan stage', text: bp.problem }];
 
-  if (v.solution && bp.solution && v.solution !== bp.solution)
+  if (isMeaningful(v.solution) && isMeaningful(bp.solution) && v.solution !== bp.solution)
     conflicts.solution = [{ stage: 'Idea stage', text: v.solution }, { stage: 'Business Plan stage', text: bp.solution }];
-
-  if (bp.market_size && rev.targetMarketFactor)
-    conflicts.market = [{ stage: 'Revenue Model (targetMarketFactor)', text: `${rev.targetMarketFactor}` }];
 
   return conflicts;
 }
@@ -286,6 +312,14 @@ export default function BusinessDeckPage() {
   const [conflicts, setConflicts]       = useState({});
   const [deckRecord, setDeckRecord]     = useState(null);
 
+  const [customization, setCustomization] = useState({
+    heading_color: '#4F46E5',
+    font_size: 'medium',
+    company_name: '',
+    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
+    logo_url: '',
+  });
+
   const sectionRefs = useRef({});
 
   useEffect(() => { loadPage(); }, []);
@@ -314,6 +348,7 @@ export default function BusinessDeckPage() {
 
       if (!ventureData) { setError('no_venture'); setLoading(false); return; }
       setVenture(ventureData);
+      setCustomization(prev => ({ ...prev, company_name: prev.company_name || ventureData.name || '' }));
 
       const fc = calculateForecast(ventureData.revenue_model_data);
       setForecast(fc);
@@ -353,11 +388,13 @@ export default function BusinessDeckPage() {
       if (existingDeck?.deck_data) {
         const normalized = {};
         SECTION_KEYS.forEach(k => {
-          const val = existingDeck.deck_data[k];
-          normalized[k] = typeof val === 'string' ? val : val ? JSON.stringify(val) : '';
+          normalized[k] = normalizeSection(existingDeck.deck_data[k]);
         });
         setDeckData(normalized);
         setDeckRecord(existingDeck);
+        if (existingDeck.customization) {
+          setCustomization(prev => ({ ...prev, ...existingDeck.customization }));
+        }
       }
 
     } catch (err) {
@@ -476,8 +513,7 @@ ${allFields}`;
 
       const normalized = {};
       SECTION_KEYS.forEach(k => {
-        const val = parsed[k];
-        normalized[k] = typeof val === 'string' ? val : val ? JSON.stringify(val) : '';
+        normalized[k] = normalizeSection(parsed[k]);
       });
 
       const now = new Date().toISOString();
@@ -487,7 +523,7 @@ ${allFields}`;
         plan: userPlan,
         version: (deckRecord?.version || 0) + 1,
         deck_data: normalized,
-        customization: {},
+        customization: customization,
         generated_at: deckRecord?.generated_at || now,
         updated_at: now,
       };
@@ -579,17 +615,21 @@ Language: English.`;
       const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType,
               Table, TableRow, TableCell, WidthType, ShadingType } = await import('docx');
 
-      const hexColor = '2563EB';
+      const fontSizeMap = { small: 20, medium: 24, large: 28 };
+      const headSizeMap = { small: 28, medium: 32, large: 38 };
+      const bodySize = fontSizeMap[customization.font_size] || 24;
+      const headSize = headSizeMap[customization.font_size] || 32;
+      const hexColor = (customization.heading_color || '#4F46E5').replace('#', '');
       const makeH1 = text => new Paragraph({
-        children: [new TextRun({ text, bold: true, size: 32, color: hexColor, font: 'Arial' })],
+        children: [new TextRun({ text, bold: true, size: headSize, color: hexColor, font: 'Arial' })],
         spacing: { before: 400, after: 160 },
       });
       const makeH2 = text => new Paragraph({
-        children: [new TextRun({ text, bold: true, size: 24, color: '374151', font: 'Arial' })],
+        children: [new TextRun({ text, bold: true, size: Math.round(headSize * 0.75), color: '374151', font: 'Arial' })],
         spacing: { before: 240, after: 100 },
       });
       const makeBody = text => new Paragraph({
-        children: [new TextRun({ text, size: 22, font: 'Arial' })],
+        children: [new TextRun({ text, size: bodySize, font: 'Arial' })],
         spacing: { after: 100 },
       });
       const makeDivider = () => new Paragraph({
@@ -609,7 +649,7 @@ Language: English.`;
 
       const children = [
         new Paragraph({
-          children: [new TextRun({ text: venture?.name || '', bold: true, size: 56, color: hexColor, font: 'Arial' })],
+          children: [new TextRun({ text: customization.company_name || venture?.name || '', bold: true, size: 56, color: hexColor, font: 'Arial' })],
           alignment: AlignmentType.CENTER, spacing: { before: 800, after: 200 },
         }),
         new Paragraph({
@@ -617,7 +657,7 @@ Language: English.`;
           alignment: AlignmentType.CENTER, spacing: { after: 120 },
         }),
         new Paragraph({
-          children: [new TextRun({ text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), size: 22, color: '9CA3AF', font: 'Arial' })],
+          children: [new TextRun({ text: customization.date || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), size: 22, color: '9CA3AF', font: 'Arial' })],
           alignment: AlignmentType.CENTER, spacing: { after: 120 },
         }),
         new Paragraph({
@@ -865,12 +905,26 @@ Language: English.`;
 
         {/* Funding ask note */}
         {fundingAsk && deckData && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="text-xs font-semibold text-blue-700 mb-1">💡 Funding ask calculation (screen only)</p>
-            <p className="text-xs text-blue-600">
-              Monthly burn ({fundingAsk.monthlyBurnFormatted}) × 24 months − projected revenue = gap × 1.3 buffer = <strong>{fundingAsk.askFormatted}</strong>.
-              You can edit this amount directly in the document.
-            </p>
+          <div className={"border rounded-xl p-4 " + (fundingAsk.ask > 0 ? "bg-blue-50 border-blue-200" : "bg-amber-50 border-amber-200")}>
+            {fundingAsk.ask > 0 ? (
+              <>
+                <p className="text-xs font-semibold text-blue-700 mb-1">💡 Funding ask calculation (screen only)</p>
+                <p className="text-xs text-blue-600">
+                  Monthly burn ({fundingAsk.monthlyBurnFormatted}) × 24 months − projected revenue = gap × 1.3 buffer = <strong>{fundingAsk.askFormatted}</strong>.
+                  You can edit this amount directly in the document.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-amber-700 mb-1">⚠️ Funding ask calculation (screen only)</p>
+                <p className="text-xs text-amber-700">
+                  Your revenue forecast shows projected income exceeding 24-month operating costs by <strong>{fundingAsk.surplusFormatted}</strong>.
+                  This suggests external funding may not be required based on current projections.
+                  We recommend reviewing your sales forecast and/or budget parameters before presenting to investors.
+                  {fundingAsk.isUnrealistic && " Your revenue projections appear significantly higher than your costs — please verify your revenue model parameters."}
+                </p>
+              </>
+            )}
           </div>
         )}
 
@@ -1073,6 +1127,70 @@ Language: English.`;
                 * Sections marked with an asterisk were analyzed and synthesized by StartZig based on your data.
               </p>
 
+            </div>
+          </div>
+        )}
+
+        {/* Customization panel */}
+        {deckData && !generating && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+            <h3 className="font-bold text-gray-800 text-base">Customize & Download</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Company name in header</label>
+                <input type="text" value={customization.company_name}
+                  onChange={e => setCustomization(prev => ({ ...prev, company_name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Date</label>
+                <input type="text" value={customization.date}
+                  onChange={e => setCustomization(prev => ({ ...prev, date: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Heading color</label>
+                <div className="flex gap-2 flex-wrap">
+                  {COLOR_PALETTE.map(c => (
+                    <button key={c.value} title={c.label}
+                      onClick={() => setCustomization(prev => ({ ...prev, heading_color: c.value }))}
+                      className={"w-8 h-8 rounded-full border-2 transition-all " + (customization.heading_color === c.value ? 'border-gray-900 scale-110' : 'border-transparent')}
+                      style={{ backgroundColor: c.value }} />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">Font size</label>
+                <div className="flex gap-2">
+                  {['small', 'medium', 'large'].map(size => (
+                    <button key={size} onClick={() => setCustomization(prev => ({ ...prev, font_size: size }))}
+                      className={"px-4 py-1.5 rounded-lg text-sm font-medium border capitalize transition-all " + (customization.font_size === size ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-300')}>
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {userPlan === 'unicorn' && (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">Logo URL <span className="text-xs text-amber-600 ml-1">Unicorn plan</span></label>
+                  <input type="url" value={customization.logo_url}
+                    onChange={e => setCustomization(prev => ({ ...prev, logo_url: e.target.value }))}
+                    placeholder="https://..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button onClick={handleDownload} disabled={downloading}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 h-11">
+                {downloading
+                  ? <><Loader2 className="animate-spin w-4 h-4 mr-2" />Preparing...</>
+                  : <><Download className="w-4 h-4 mr-2" />Download Word (.docx)</>}
+              </Button>
+              <Button disabled variant="outline" className="text-gray-400 border-gray-200 cursor-not-allowed h-11 px-6">
+                <Download className="w-4 h-4 mr-2" />Download PDF
+                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Soon</span>
+              </Button>
             </div>
           </div>
         )}
