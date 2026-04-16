@@ -13,6 +13,7 @@ const ELIGIBLE_PLANS = ['pro_founder', 'unicorn'];
 const MONTHS = 24;
 const ORGANIC_K_FACTOR = 0.65;
 const TARGET_MARKET_SCALING = 10000000;
+const FUNDING_BUFFER = 1.3; // 30% overhead on top of funding gap
 
 const SECTION_KEYS = ['executive_summary', 'problem', 'solution', 'product', 'market', 'business_model', 'traction', 'team', 'the_ask'];
 
@@ -27,6 +28,9 @@ const SECTION_TITLES = {
   team: 'Team',
   the_ask: 'The Ask',
 };
+
+// Sections where AI synthesizes data (show asterisk)
+const AI_SYNTHESIZED_SECTIONS = ['executive_summary', 'product', 'market', 'business_model', 'traction', 'the_ask'];
 
 // ─── Revenue forecast (same formula as Revenue Model page) ───────────────────
 
@@ -71,20 +75,21 @@ function calculateForecast(rev) {
     const paidForRev = (businessModel === 'subscription' || businessModel === 'freemium') ? payingUsers : 0;
     const t2Users = Math.floor(paidForRev * tier2SplitDecimal);
     const t1Users = paidForRev - t2Users;
-    const rev = t1Users * tier1Price + t2Users * tier2Price +
+    const monthRev = t1Users * tier1Price + t2Users * tier2Price +
       ((businessModel === 'ad-driven' || businessModel === 'freemium') ? (freeUsers / 1000) * adRevenuePer1000 : 0);
 
     if (month <= 12) {
-      year1Revenue += rev;
+      year1Revenue += monthRev;
       if (month === 12) { year1TotalUsers = totalUsers; year1PayingUsers = payingUsers; }
-    } else { year2Revenue += rev; }
+    } else { year2Revenue += monthRev; }
   }
 
   const fmt = n => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${Math.round(n)}`;
-  const fmtN = n => n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n);
+  const fmtN = n => n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(Math.round(n));
 
   return {
     year1Revenue: Math.round(year1Revenue),
+    year2Revenue: Math.round(year2Revenue),
     year2CumulativeRevenue: Math.round(year1Revenue + year2Revenue),
     year1TotalUsers, year1PayingUsers,
     year2TotalUsers: totalUsers, year2PayingUsers: payingUsers,
@@ -97,18 +102,46 @@ function calculateForecast(rev) {
   };
 }
 
-// ─── Build allFieldsAsText for AI prompt ─────────────────────────────────────
+// ─── Calculate funding ask ────────────────────────────────────────────────────
 
-function buildPromptData(data, forecast) {
+function calculateFundingAsk(budgets, forecast) {
+  if (!budgets || !forecast) return null;
+
+  const allRows = [
+    ...(budgets.salaries || []).map(s => s.avg_salary || s.monthly_cost || 0),
+    ...(budgets.marketing_costs || []).map(m => m.cost || m.monthly_cost || 0),
+    ...(budgets.operational_costs || []).map(o => o.cost || o.monthly_cost || 0),
+  ];
+  const monthlyBurn = allRows.reduce((sum, c) => sum + (parseFloat(String(c).replace(/[^0-9.]/g, '')) || 0), 0);
+  if (!monthlyBurn) return null;
+
+  const totalCosts = monthlyBurn * 24;
+  const totalRevenue = forecast.year1Revenue + forecast.year2Revenue;
+  const gap = Math.max(0, totalCosts - totalRevenue);
+  const ask = Math.round(gap * FUNDING_BUFFER / 1000) * 1000; // round to nearest 1000
+
+  const fmt = n => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : `$${(n/1000).toFixed(0)}K`;
+
+  return {
+    monthlyBurn,
+    totalCosts,
+    totalRevenue,
+    gap,
+    ask,
+    askFormatted: fmt(ask),
+    monthlyBurnFormatted: fmt(monthlyBurn),
+  };
+}
+
+// ─── Build prompt data ────────────────────────────────────────────────────────
+
+function buildPromptData(data, forecast, fundingAsk) {
   const { venture, businessPlan, budgets, betaTesters, productFeedback, mvpFeatureFeedback, suggestedFeatures } = data;
   const v   = venture || {};
   const bp  = businessPlan || {};
   const mvp = v.mvp_data || {};
   const mlp = v.mlp_data || {};
-  const pit = v.pitch_data || {};
   const rev = v.revenue_model_data || {};
-  const phase = (v.phase || '').toLowerCase();
-  const isLateStage = ['beta', 'growth', 'scale'].includes(phase);
   const lines = [];
 
   lines.push('=== VENTURE ===');
@@ -123,12 +156,10 @@ function buildPromptData(data, forecast) {
   if (bp.target_customers)        lines.push(`Target Customers: ${bp.target_customers}`);
   if (bp.competition)             lines.push(`Competition: ${bp.competition}`);
   if (bp.entrepreneur_background) lines.push(`Founder Background: ${bp.entrepreneur_background}`);
-  if (bp.revenue_model)           lines.push(`Revenue Model: ${bp.revenue_model}`);
-  if (bp.funding_requirements)    lines.push(`Funding Requirements: ${bp.funding_requirements}`);
 
-  lines.push('\n=== REVENUE MODEL ===');
+  lines.push('\n=== REVENUE MODEL DATA (use these numbers — not text descriptions) ===');
   if (rev.businessModel)          lines.push(`Model type: ${rev.businessModel}`);
-  if (rev.tier1Price)             lines.push(`Free tier price: ${rev.tier1Price}`);
+  if (rev.tier1Price !== undefined) lines.push(`Free tier price: $${rev.tier1Price}`);
   if (rev.tier2Price)             lines.push(`Premium price: $${rev.tier2Price}/month`);
   if (rev.acquisitionCost)        lines.push(`CAC: $${rev.acquisitionCost}`);
   if (rev.freeToPaidConversion)   lines.push(`Free to paid conversion: ${rev.freeToPaidConversion}%`);
@@ -137,7 +168,7 @@ function buildPromptData(data, forecast) {
   if (rev.initialUsers)           lines.push(`Initial users: ${rev.initialUsers}`);
 
   if (forecast) {
-    lines.push('\n=== REVENUE FORECAST (pre-calculated) ===');
+    lines.push('\n=== REVENUE FORECAST (pre-calculated — use these exact numbers) ===');
     lines.push(`Year 1 total users: ${forecast.year1TotalFormatted}`);
     lines.push(`Year 1 paying users: ${forecast.year1PayingFormatted}`);
     lines.push(`Year 1 revenue: ${forecast.year1RevenueFormatted}`);
@@ -146,45 +177,34 @@ function buildPromptData(data, forecast) {
     lines.push(`Year 2 cumulative revenue: ${forecast.year2CumulativeFormatted}`);
   }
 
+  if (fundingAsk) {
+    lines.push('\n=== FUNDING ASK (pre-calculated) ===');
+    lines.push(`Monthly burn rate: ${fundingAsk.monthlyBurnFormatted}`);
+    lines.push(`Funding ask (24-month gap + 30% buffer): ${fundingAsk.askFormatted}`);
+  }
+
   lines.push('\n=== TECHNOLOGY ===');
   if (mvp.technical_specs)      lines.push(`Tech stack: ${mvp.technical_specs}`);
   if (mlp.technical_excellence) lines.push(`Performance: ${mlp.technical_excellence}`);
+  if (mlp.enhancement_strategy) lines.push(`Product improvements: ${mlp.enhancement_strategy}`);
 
-  if (!isLateStage && mlp.enhancement_strategy) {
-    lines.push(`Product improvements: ${mlp.enhancement_strategy}`);
-  } else if (isLateStage && mlp.enhancement_strategy) {
-    lines.push(`Product improvements: ${mlp.enhancement_strategy}`);
-  }
-
-  // Selected features from feature_matrix
+  // Selected features
   if (mvp.feature_matrix) {
     const selected = (Array.isArray(mvp.feature_matrix) ? mvp.feature_matrix : [])
       .filter(f => f.isSelected)
       .map(f => f.featureName || f.name)
       .filter(Boolean);
-    if (selected.length) lines.push(`Current focused features: ${selected.join(', ')}`);
+    if (selected.length) lines.push(`Selected features: ${selected.join(', ')}`);
   }
 
   lines.push('\n=== TRACTION ===');
   if (betaTesters?.length) lines.push(`Beta sign-ups: ${betaTesters.length}`);
-  if (mlp.feedback_analysis) lines.push(`User feedback summary: ${mlp.feedback_analysis}`);
-  if (mlp.wow_moments)       lines.push(`Key engagement moments: ${mlp.wow_moments}`);
+  if (mlp.wow_moments)     lines.push(`Organic growth moments: ${mlp.wow_moments}`);
 
-  if (mvpFeatureFeedback?.length) {
-    const grouped = {};
-    mvpFeatureFeedback.forEach(f => {
-      if (!grouped[f.feature_name]) grouped[f.feature_name] = [];
-      grouped[f.feature_name].push(f.rating);
-    });
-    const top = Object.entries(grouped)
-      .map(([name, ratings]) => ({ name, avg: ratings.reduce((a, b) => a + b, 0) / ratings.length }))
-      .sort((a, b) => b.avg - a.avg).slice(0, 3);
-    if (top.length) lines.push(`Top rated features: ${top.map(f => `${f.name} (${f.avg.toFixed(1)}/10)`).join(', ')}`);
-  }
-
+  // Only meaningful product feedback
   const meaningful = (productFeedback || []).filter(f => f.feedback_text && f.feedback_text.length >= 15);
   if (meaningful.length) {
-    lines.push(`User feedback (${meaningful.length} responses):`);
+    lines.push(`User feedback (${meaningful.length} meaningful responses):`);
     meaningful.slice(0, 5).forEach(f => lines.push(`  - "${f.feedback_text}"`));
   }
 
@@ -192,14 +212,8 @@ function buildPromptData(data, forecast) {
     lines.push(`Most requested features: ${suggestedFeatures.slice(0, 5).map(f => f.feature_name).join(', ')}`);
   }
 
-  lines.push('\n=== PITCH — USE THESE VERSIONS (most refined) ===');
-  if (pit.tagline)  lines.push(`Tagline: ${pit.tagline}`);
-  if (pit.problem)  lines.push(`Problem: ${pit.problem}`);
-  if (pit.solution) lines.push(`Solution: ${pit.solution}`);
-  if (pit.market)   lines.push(`Market: ${pit.market}`);
-  if (pit.team)     lines.push(`Team: ${pit.team}`);
-  if (pit.vision)   lines.push(`Vision: ${pit.vision}`);
-  if (pit.the_ask)  lines.push(`The Ask: ${pit.the_ask}`);
+  lines.push('\n=== FOUNDER BACKGROUND ===');
+  if (bp.entrepreneur_background) lines.push(`Team: ${bp.entrepreneur_background}`);
 
   return lines.join('\n');
 }
@@ -209,46 +223,36 @@ function buildPromptData(data, forecast) {
 function detectConflicts(data) {
   const v   = data.venture || {};
   const bp  = data.businessPlan || {};
-  const pit = v.pitch_data || {};
   const rev = v.revenue_model_data || {};
   const conflicts = {};
 
-  if (v.problem && pit.problem && v.problem !== pit.problem)
-    conflicts.problem = [{ stage: 'Idea stage', text: v.problem }];
-  if (bp.problem && pit.problem && bp.problem !== pit.problem)
-    conflicts.problem = [...(conflicts.problem || []), { stage: 'Business Plan stage', text: bp.problem }];
+  if (v.problem && bp.problem && v.problem !== bp.problem)
+    conflicts.problem = [{ stage: 'Idea stage', text: v.problem }, { stage: 'Business Plan stage', text: bp.problem }];
 
-  if (v.solution && pit.solution && v.solution !== pit.solution)
-    conflicts.solution = [{ stage: 'Idea stage', text: v.solution }];
-  if (bp.solution && pit.solution && bp.solution !== pit.solution)
-    conflicts.solution = [...(conflicts.solution || []), { stage: 'Business Plan stage', text: bp.solution }];
+  if (v.solution && bp.solution && v.solution !== bp.solution)
+    conflicts.solution = [{ stage: 'Idea stage', text: v.solution }, { stage: 'Business Plan stage', text: bp.solution }];
 
-  if (bp.market_size && pit.market && bp.market_size !== pit.market)
-    conflicts.market = [{ stage: 'Business Plan stage', text: bp.market_size }];
-  if (rev.targetMarketFactor)
-    conflicts.market = [...(conflicts.market || []), { stage: 'Revenue Model', text: `targetMarketFactor: ${rev.targetMarketFactor}` }];
-
-  if (bp.funding_requirements && pit.the_ask && bp.funding_requirements !== pit.the_ask)
-    conflicts.the_ask = [{ stage: 'Business Plan stage', text: bp.funding_requirements }];
+  if (bp.market_size && rev.targetMarketFactor)
+    conflicts.market = [{ stage: 'Revenue Model (targetMarketFactor)', text: `${rev.targetMarketFactor}` }];
 
   return conflicts;
 }
 
-// ─── Build appendix tables ────────────────────────────────────────────────────
+// ─── Budget rows ──────────────────────────────────────────────────────────────
 
 function buildBudgetRows(budgets) {
   if (!budgets) return [];
   return [
-    ...(budgets.salaries || []).map(s => ({ item: s.role || s.name || '', type: 'Salary', cost: s.monthly_cost || s.amount || s.salary || '' })),
-    ...(budgets.marketing_costs || []).map(m => ({ item: m.channel || m.name || '', type: 'Marketing', cost: m.monthly_cost || m.amount || '' })),
-    ...(budgets.operational_costs || []).map(o => ({ item: o.item || o.name || '', type: 'Operations', cost: o.monthly_cost || o.amount || '' })),
+    ...(budgets.salaries || []).map(s => ({ item: s.role || s.name || '', type: 'Salary', cost: s.avg_salary || s.monthly_cost || s.amount || '' })),
+    ...(budgets.marketing_costs || []).map(m => ({ item: m.channel || m.name || '', type: 'Marketing', cost: m.cost || m.monthly_cost || m.amount || '' })),
+    ...(budgets.operational_costs || []).map(o => ({ item: o.item || o.name || '', type: 'Operations', cost: o.cost || o.monthly_cost || o.amount || '' })),
   ];
 }
 
 function buildRevenueParamsRows(rev) {
   if (!rev) return [];
   const labels = {
-    businessModel: 'Business model', tier2Price: 'Premium price (Tier 2)', tier1Price: 'Free tier price',
+    businessModel: 'Business model', tier2Price: 'Premium price (Tier 2)',
     freeToPaidConversion: 'Free to paid conversion (%)', churnRisk: 'Monthly churn (%)',
     acquisitionCost: 'CAC (blended)', initialUsers: 'Initial users at launch',
     monthlyMarketingBudget: 'Monthly marketing budget', targetMarketFactor: 'Target market factor',
@@ -262,26 +266,26 @@ function buildRevenueParamsRows(rev) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function BusinessDeckPage() {
-  const [loading, setLoading]         = useState(true);
-  const [generating, setGenerating]   = useState(false);
-  const [saving, setSaving]           = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [generating, setGenerating]     = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [downloading, setDownloading]   = useState(false);
   const [mentorLoading, setMentorLoading] = useState(false);
-  const [error, setError]             = useState(null);
+  const [error, setError]               = useState(null);
   const [mentorFeedback, setMentorFeedback] = useState(null);
-  const [mentorError, setMentorError] = useState(null);
+  const [mentorError, setMentorError]   = useState(null);
 
-  const [user, setUser]               = useState(null);
-  const [userPlan, setUserPlan]       = useState(null);
-  const [isEligible, setIsEligible]   = useState(false);
-  const [venture, setVenture]         = useState(null);
-  const [sourceData, setSourceData]   = useState(null);
-  const [forecast, setForecast]       = useState(null);
-  const [deckData, setDeckData]       = useState(null);
-  const [conflicts, setConflicts]     = useState({});
-  const [deckRecord, setDeckRecord]   = useState(null);
+  const [user, setUser]                 = useState(null);
+  const [userPlan, setUserPlan]         = useState(null);
+  const [isEligible, setIsEligible]     = useState(false);
+  const [venture, setVenture]           = useState(null);
+  const [sourceData, setSourceData]     = useState(null);
+  const [forecast, setForecast]         = useState(null);
+  const [fundingAsk, setFundingAsk]     = useState(null);
+  const [deckData, setDeckData]         = useState(null);
+  const [conflicts, setConflicts]       = useState({});
+  const [deckRecord, setDeckRecord]     = useState(null);
 
-  // Refs for contentEditable sections
   const sectionRefs = useRef({});
 
   useEffect(() => { loadPage(); }, []);
@@ -335,6 +339,9 @@ export default function BusinessDeckPage() {
       setSourceData(sd);
       setConflicts(detectConflicts(sd));
 
+      const fa = calculateFundingAsk(budgetRes.data, fc);
+      setFundingAsk(fa);
+
       const { data: existingDeck } = await supabase
         .from('business_decks')
         .select('*')
@@ -368,8 +375,7 @@ export default function BusinessDeckPage() {
     setError(null);
     setMentorFeedback(null);
     try {
-      const allFields = buildPromptData(sourceData, forecast);
-      const rev = venture.revenue_model_data || {};
+      const allFields = buildPromptData(sourceData, forecast, fundingAsk);
 
       const prompt = `You are an expert startup advisor writing a concise, professional investor business plan.
 
@@ -378,36 +384,75 @@ Sector: ${venture.sector} | Phase: ${venture.phase}
 
 RULES:
 - Use ONLY the data provided below. Never invent information not in the data.
-- For problem, solution, market, team, the_ask: use the PITCH section versions — they are the most refined.
-- If the PITCH version is empty, use Business Plan version. If both empty, write: "Complete the relevant stage to populate this section."
-- Write in investor language: confident, concise, forward-looking. No markdown. No bullet points. Plain text paragraphs only.
-- Do NOT use the words "Certainly", "Sure", "Of course", "I'll" or any AI preamble.
+- Do NOT use pitch_data at all — it is not provided.
+- Write in investor language: confident, concise, forward-looking.
+- No markdown formatting. No bold text. No bullet points. Plain text paragraphs only.
+- Sub-section labels (Overview, Current Status, etc.) should appear on their own line followed by a colon, then a new line with the content.
+- Do NOT use the words "Certainly", "Sure", "Of course" or any AI preamble.
+- If a field is empty or missing, write: "Complete the relevant stage to populate this section."
 
 SECTION-SPECIFIC INSTRUCTIONS:
 
-executive_summary: 2 paragraphs. Para 1: what the company does + target audience (synthesize tagline + solution). Para 2: current phase + sign-up count + raise amount + 18-month goal.
+executive_summary:
+Write 2 paragraphs.
+Paragraph 1: what the company does and who it serves — synthesize from venture description + sector.
+Paragraph 2: current phase + beta sign-up count (from TRACTION section) + funding ask amount (from FUNDING ASK section) + 24-month goal.
 
-problem: Use pitch_data.problem with minimal grammar edits only. Preserve the founder's language exactly.
+problem:
+Use business_plans.problem with minimal grammar edits only. Preserve the founder's language.
+If empty — write: "Complete the Business Plan stage to populate this section."
 
-solution: Use pitch_data.solution as base. Add one technical detail from mvp_data.product_definition only if it adds something not already in pitch solution.
+solution:
+Use venture.description as base, expanded with mvp_data product definition if available.
+Write as one clear paragraph describing what the product does and how it solves the problem.
 
-product: Write 3 sub-sections separated by newlines:
-  "Overview:" — product_details from Business Plan, one paragraph.
-  "Current Status:" — current phase, key improvements from enhancement_strategy in 2 sentences, then "The current version focuses on: [list selected features from feature_matrix where isSelected is true]." End with beta sign-up count.
-  "Technology:" — tech stack in one sentence. Performance numbers in one sentence.
+product:
+Write exactly 3 sub-sections, each label on its own line:
 
-market: 3 paragraphs. Para 1: total market size + growth rate. Para 2: beachhead market + specific segment + validated conversion rate. Para 3: competition — name competitors + one sentence on key differentiator.
+Overview:
+[Use business_plans.product_details as-is. One paragraph.]
 
-business_model: Write 3 sub-sections separated by newlines:
-  "Revenue Streams:" — synthesize revenue_model into one paragraph including pricing tiers and revenue mix goal.
-  "Revenue Forecast:" — write exactly this sentence using the pre-calculated forecast numbers: "Based on a [businessModel] model at $[tier2Price]/month premium pricing, the company projects [year1TotalUsers] total users by end of Year 1 with revenues of [year1Revenue], growing to [year2TotalUsers] total users by end of Year 2 with cumulative revenues of [year2CumulativeRevenue]."
-  "Unit Economics:" — 3 sentences: (1) CAC vs price — payback period implication, (2) conversion rate + churn — LTV implication, (3) forward-looking scalability statement.
+Current Status:
+[State current phase. Summarize key improvements from mlp_data.enhancement_strategy in 2 sentences. Then write: "The current version is built around [list selected features from feature_matrix where isSelected is true]." End with beta sign-up count. If product_feedback contains meaningful responses longer than 15 characters — analyze them and add 1 sentence on what users highlighted. If feedback is noise — omit entirely.]
 
-traction: One narrative paragraph covering: MVP milestone (retention + NPS), MLP improvement (most significant metric change), current beta status (sign-ups), organic growth signal from wow_moments. Do NOT quote individual feedback. Do NOT list raw parameters.
+Technology:
+[One sentence on tech stack from mvp_data.technical_specs. One sentence on performance from mlp_data.technical_excellence. If both empty — write: "Technical details will be added as the product matures."]
 
-team: Use pitch_data.team with minimal grammar edits only. Keep advisory board if mentioned.
+market:
+Write 3 paragraphs.
+Paragraph 1: total market size and growth rate from business_plans.market_size.
+Paragraph 2: beachhead market — specific segment from business_plans.target_customers. Add freeToPaidConversion as validation signal.
+Paragraph 3: competition — name competitors from business_plans.competition + one sentence on key differentiator.
+If any field is empty — omit that paragraph.
 
-the_ask: Structure as: raise amount, use of funds with percentages and dollar amounts, runway duration, key milestones.
+business_model:
+Write exactly 3 sub-sections, each label on its own line:
+
+Revenue Streams:
+[Use ONLY revenue_model_data fields — do NOT use business_plans.revenue_model text. Describe: model type (businessModel). Free tier price if tier1Price > 0. Premium price from tier2Price. Write as one professional paragraph. Example format: "The company operates on a freemium model, with a free tier and a premium subscription at $X/month."]
+
+Revenue Forecast:
+[Write exactly: "Based on a [businessModel] model at $[tier2Price]/month premium pricing, the company projects [year1TotalUsers] total users by end of Year 1 with revenues of [year1Revenue], growing to [year2TotalUsers] total users by end of Year 2 with cumulative revenues of [year2CumulativeRevenue]."]
+
+Unit Economics:
+[Write 3 sentences using ONLY revenue_model_data numbers: (1) CAC vs tier2Price — payback period implication. (2) freeToPaidConversion + churnRisk — what they mean together for LTV. (3) One forward-looking scalability statement.]
+
+traction:
+Write based ONLY on actual verifiable data:
+- State beta sign-up count.
+- If mlp_data.wow_moments mentions specific organic behaviors (e.g. users sharing screenshots) — include it as one sentence.
+- If freeToPaidConversion is available — mention it as validation of user intent.
+- Do NOT use mlp_data.feedback_analysis — it may contain sample data.
+- Do NOT fabricate retention rates, NPS scores, or metrics not explicitly provided.
+- If there is no meaningful traction data — write: "The platform is currently in [phase] with [count] sign-ups. Traction metrics will be updated as the beta progresses."
+
+team:
+Use business_plans.entrepreneur_background with minimal grammar edits only.
+If empty — write: "Complete the Business Plan stage to populate this section."
+
+the_ask:
+Write: "Based on the business model, revenue forecast, and venture budget, [venture name] is seeking to raise [askFormatted] to fund the next 24 months of operations."
+Then add one sentence on how the funds will be used (if business_plans.funding_requirements mentions allocation — use it, otherwise write generally: "Funds will be allocated to product development, user acquisition, and operations.").
 
 Return ONLY a valid JSON object — no text before or after — with exactly these keys:
 executive_summary, problem, solution, product, market, business_model, traction, team, the_ask
@@ -471,12 +516,9 @@ ${allFields}`;
   async function handleSave() {
     if (!deckData || !deckRecord?.id) return;
     setSaving(true);
-    // Collect current text from contentEditable refs
     const updated = { ...deckData };
     SECTION_KEYS.forEach(k => {
-      if (sectionRefs.current[k]) {
-        updated[k] = sectionRefs.current[k].innerText || '';
-      }
+      if (sectionRefs.current[k]) updated[k] = sectionRefs.current[k].innerText || '';
     });
     setDeckData(updated);
     await supabase.from('business_decks')
@@ -492,15 +534,13 @@ ${allFields}`;
     setMentorLoading(true);
     setMentorFeedback(null);
     setMentorError(null);
-
-    // Collect current text from contentEditable refs
-    const currentText = {};
-    SECTION_KEYS.forEach(k => {
-      currentText[k] = sectionRefs.current[k]?.innerText || deckData[k] || '';
-    });
-
     try {
+      const currentText = {};
+      SECTION_KEYS.forEach(k => {
+        currentText[k] = sectionRefs.current[k]?.innerText || deckData[k] || '';
+      });
       const fullDoc = SECTION_KEYS.map(k => `${SECTION_TITLES[k]}:\n${currentText[k]}`).join('\n\n');
+
       const prompt = `You are an expert startup mentor reviewing a complete investor business plan.
 
 Venture: "${venture.name}" — ${venture.description}
@@ -510,11 +550,11 @@ ${fullDoc}
 
 Instruction:
 1. Start with the text "Mentor Feedback" exactly.
-2. On the very next line, provide an overall 10-star rating using ★ and ☆ (e.g. ★★★★★☆☆☆☆☆).
-3. Write section "Overall Analysis:" — 2-3 sentences on the overall quality and investor-readiness.
-4. Write section "Sections to Improve:" — for each section that needs work, write the section name followed by a specific note. Be direct. If a section is strong, skip it.
-5. Write section "Missing Information:" — list any critical information an investor would expect that is not present.
-6. Write section "Challenge Question:" — one sharp question the founder should be able to answer before presenting to investors.
+2. On the very next line, provide an overall 10-star rating using ★ and ☆.
+3. Write section "Overall Analysis:" — 2-3 sentences on overall quality and investor-readiness.
+4. Write section "Sections to Improve:" — for each section that needs work, write the section name followed by a specific note. If a section is strong, skip it.
+5. Write section "Missing Information:" — list critical information an investor would expect that is not present.
+6. Write section "Challenge Question:" — one sharp question the founder should be able to answer before meeting investors.
 7. Do NOT use markdown formatting. Plain text only.
 8. Do NOT rewrite any content. Feedback and questions only.
 
@@ -548,14 +588,14 @@ Language: English.`;
         children: [new TextRun({ text, bold: true, size: 24, color: '374151', font: 'Arial' })],
         spacing: { before: 240, after: 100 },
       });
-      const makeBody = text => (text || '').split('\n').filter(Boolean).map(line =>
-        new Paragraph({ children: [new TextRun({ text: line, size: 22, font: 'Arial' })], spacing: { after: 100 } })
-      );
+      const makeBody = text => new Paragraph({
+        children: [new TextRun({ text, size: 22, font: 'Arial' })],
+        spacing: { after: 100 },
+      });
       const makeDivider = () => new Paragraph({
         border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' } },
         spacing: { before: 160, after: 160 }, children: [],
       });
-
       const border = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
       const borders = { top: border, bottom: border, left: border, right: border };
       const makeCell = (text, bold = false, shade = false) => new TableCell({
@@ -565,11 +605,9 @@ Language: English.`;
         children: [new Paragraph({ children: [new TextRun({ text: String(text), size: 20, font: 'Arial', bold })] })],
       });
 
-      // Get current text (from refs or deckData)
       const getText = k => sectionRefs.current[k]?.innerText || deckData[k] || '';
 
       const children = [
-        // Cover
         new Paragraph({
           children: [new TextRun({ text: venture?.name || '', bold: true, size: 56, color: hexColor, font: 'Arial' })],
           alignment: AlignmentType.CENTER, spacing: { before: 800, after: 200 },
@@ -589,32 +627,43 @@ Language: English.`;
         makeDivider(),
       ];
 
-      // 9 sections — no conflict notes
       SECTION_KEYS.forEach((k, i) => {
         const text = getText(k);
         if (!text.trim()) return;
         children.push(makeH1(`${i + 1}. ${SECTION_TITLES[k]}`));
-        // Handle sub-sections (Overview:, Current Status:, etc.)
-        const lines = text.split('\n');
+        const lines = text.split('\n').filter(Boolean);
         lines.forEach(line => {
-          if (!line.trim()) return;
-          if (/^(Overview|Current Status|Technology|Revenue Streams|Revenue Forecast|Unit Economics):/.test(line.trim())) {
-            children.push(makeH2(line.trim().replace(':', '')));
+          const trimmed = line.trim();
+          if (/^(Overview|Current Status|Technology|Revenue Streams|Revenue Forecast|Unit Economics):$/.test(trimmed)) {
+            children.push(makeH2(trimmed.replace(':', '')));
           } else {
-            children.push(...makeBody(line));
+            children.push(makeBody(trimmed));
           }
         });
         children.push(makeDivider());
       });
 
-      // Appendix A — Budget
+      // Forecast table
+      if (forecast) {
+        children.push(makeH2('Key Metrics & Forecast Highlights'));
+        children.push(new Table({
+          width: { size: 9360, type: WidthType.DXA },
+          columnWidths: [4680, 2340, 2340],
+          rows: [
+            new TableRow({ children: [makeCell('Metric', true, true), makeCell('Year 1', true, true), makeCell('Year 2', true, true)] }),
+            new TableRow({ children: [makeCell('Total Users'), makeCell(forecast.year1TotalFormatted), makeCell(forecast.year2TotalFormatted)] }),
+            new TableRow({ children: [makeCell('Paying Users'), makeCell(forecast.year1PayingFormatted), makeCell(forecast.year2PayingFormatted)] }),
+            new TableRow({ children: [makeCell('Revenue', true), makeCell(forecast.year1RevenueFormatted, true), makeCell(forecast.year2CumulativeFormatted, true)] }),
+          ],
+        }));
+        children.push(makeDivider());
+      }
+
+      // Appendix A
       const budgetRows = buildBudgetRows(sourceData?.budgets);
       if (budgetRows.length) {
         children.push(makeH1('Appendix A — Monthly Budget Breakdown'));
-        const total = budgetRows.reduce((sum, r) => {
-          const n = parseFloat(String(r.cost).replace(/[^0-9.]/g, ''));
-          return sum + (isNaN(n) ? 0 : n);
-        }, 0);
+        const total = budgetRows.reduce((sum, r) => sum + (parseFloat(String(r.cost).replace(/[^0-9.]/g, '')) || 0), 0);
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
           columnWidths: [4680, 2340, 2340],
@@ -627,7 +676,7 @@ Language: English.`;
         children.push(makeDivider());
       }
 
-      // Appendix B — Revenue Model Assumptions
+      // Appendix B
       const revRows = buildRevenueParamsRows(venture?.revenue_model_data);
       if (revRows.length) {
         children.push(makeH1('Appendix B — Revenue Model Assumptions'));
@@ -714,12 +763,10 @@ Language: English.`;
     </div>
   );
 
-  // ── Main render ────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -772,7 +819,7 @@ Language: English.`;
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
-        {/* ── Page description ── */}
+        {/* Page description */}
         <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-indigo-600 mt-0.5 shrink-0" />
@@ -780,19 +827,19 @@ Language: English.`;
               <p className="text-sm font-semibold text-indigo-900">About the Business Deck</p>
               <p className="text-sm text-indigo-700 leading-relaxed">
                 This tool assembles all the information you have entered throughout your StartZig journey into a professional investor-ready business plan.
-                It is available exclusively on the <strong>Pro Founder</strong> plan and above.
+                Available exclusively on the <strong>Pro Founder</strong> plan and above.
               </p>
               <p className="text-sm text-indigo-700 leading-relaxed">
-                <strong>How to use it:</strong> Click <em>Generate Business Plan</em> to create your first version. The plan will appear below as a live document — you can click on any text to edit it directly. Use <em>Mentor Review</em> to get expert feedback on the full document. When you are satisfied, download it as a Word file.
+                The business plan you see here is a starting point — not a final document. Investors may challenge your numbers, suggest a different funding amount, or push you to expand certain areas. What matters most is that you understand your own data and can explain your thinking clearly in a meeting.
               </p>
               <p className="text-sm text-indigo-600 font-medium">
-                ✏️ You can edit any part of the text directly in the preview below, or paste in new content. Use Mentor Review to get feedback on your changes.
+                ✏️ Click on any text in the preview below to edit it directly. Use Mentor Review to get expert feedback on the full document. Sections marked with * were analyzed and synthesized by StartZig from your data.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Errors ── */}
+        {/* Errors */}
         {error && !['not_logged_in', 'no_venture'].includes(error) && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
             {error === 'download_failed' ? 'Download failed. Please try again.'
@@ -801,7 +848,7 @@ Language: English.`;
           </div>
         )}
 
-        {/* ── Conflict notes ── */}
+        {/* Conflict notes */}
         {Object.keys(conflicts).length > 0 && deckData && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <p className="text-xs font-semibold text-amber-700 mb-2">⚠️ Earlier versions found — screen only, not included in download:</p>
@@ -816,7 +863,18 @@ Language: English.`;
           </div>
         )}
 
-        {/* ── Mentor feedback ── */}
+        {/* Funding ask note */}
+        {fundingAsk && deckData && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-xs font-semibold text-blue-700 mb-1">💡 Funding ask calculation (screen only)</p>
+            <p className="text-xs text-blue-600">
+              Monthly burn ({fundingAsk.monthlyBurnFormatted}) × 24 months − projected revenue = gap × 1.3 buffer = <strong>{fundingAsk.askFormatted}</strong>.
+              You can edit this amount directly in the document.
+            </p>
+          </div>
+        )}
+
+        {/* Mentor feedback */}
         {mentorError && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">{mentorError}</div>
         )}
@@ -838,7 +896,7 @@ Language: English.`;
           </div>
         )}
 
-        {/* ── Empty state ── */}
+        {/* Empty state */}
         {!deckData && !generating && (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
             <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto">
@@ -855,7 +913,7 @@ Language: English.`;
           </div>
         )}
 
-        {/* ── Generating skeleton ── */}
+        {/* Generating skeleton */}
         {generating && (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 animate-pulse space-y-6">
             {[...Array(6)].map((_, i) => (
@@ -869,10 +927,11 @@ Language: English.`;
           </div>
         )}
 
-        {/* ── Document preview ── */}
+        {/* Document preview */}
         {deckData && !generating && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-            {/* Document header */}
+
+            {/* Document cover */}
             <div className="border-b border-slate-100 px-12 py-8 text-center bg-slate-50 rounded-t-2xl">
               <h1 className="text-4xl font-bold text-indigo-600">{venture?.name}</h1>
               <p className="text-gray-500 mt-2 text-base">Investor Business Plan</p>
@@ -880,33 +939,56 @@ Language: English.`;
               <p className="text-gray-300 text-xs mt-1 italic">Confidential — Not for distribution</p>
             </div>
 
-            {/* Document body — inline editable */}
+            {/* Document body */}
             <div className="px-12 py-8 space-y-8">
+
               {SECTION_KEYS.map((key, index) => {
                 const text = deckData[key] || '';
+                const isAISynthesized = AI_SYNTHESIZED_SECTIONS.includes(key);
                 return (
-                  <div key={key} className="space-y-3">
-                    <h2 className="text-xl font-bold text-indigo-600 border-b border-slate-100 pb-2">
-                      {index + 1}. {SECTION_TITLES[key]}
-                    </h2>
+                  <div key={key} className="space-y-2">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <h2 className="text-xl font-bold text-indigo-600">
+                        {index + 1}. {SECTION_TITLES[key]}
+                      </h2>
+                      {isAISynthesized && (
+                        <span className="text-xs text-gray-400 font-normal">*</span>
+                      )}
+                    </div>
+
+                    {/* Editable content */}
                     <div
                       ref={el => { sectionRefs.current[key] = el; }}
                       contentEditable
                       suppressContentEditableWarning
                       className="text-gray-700 text-sm leading-relaxed outline-none focus:bg-indigo-50 focus:rounded-lg focus:px-3 focus:py-2 transition-all cursor-text whitespace-pre-wrap min-h-[60px]"
                       style={{ caretColor: '#4F46E5' }}
-                      data-placeholder="No content generated for this section."
                     >
-                      {text}
+                      {text.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return <br key={i} />;
+                        // Sub-section headers
+                        if (/^(Overview|Current Status|Technology|Revenue Streams|Revenue Forecast|Unit Economics):$/.test(trimmed)) {
+                          return <div key={i} className="font-semibold text-gray-800 mt-3 mb-1">{trimmed}</div>;
+                        }
+                        return <div key={i}>{trimmed}</div>;
+                      })}
                     </div>
+
+                    {/* The Ask note */}
+                    {key === 'the_ask' && fundingAsk && (
+                      <p className="text-xs text-blue-500 italic mt-1">
+                        💡 This amount was calculated based on your 24-month budget and revenue forecast. You can edit it directly.
+                      </p>
+                    )}
                   </div>
                 );
               })}
 
               {/* Forecast table */}
               {forecast && (
-                <div className="space-y-3">
-                  <h3 className="text-base font-bold text-gray-700">Key Metrics & Forecast Highlights</h3>
+                <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <h3 className="text-base font-bold text-gray-700">Key Metrics & Forecast Highlights *</h3>
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-slate-50">
@@ -928,10 +1010,7 @@ Language: English.`;
               {(() => {
                 const rows = buildBudgetRows(sourceData?.budgets);
                 if (!rows.length) return null;
-                const total = rows.reduce((sum, r) => {
-                  const n = parseFloat(String(r.cost).replace(/[^0-9.]/g, ''));
-                  return sum + (isNaN(n) ? 0 : n);
-                }, 0);
+                const total = rows.reduce((sum, r) => sum + (parseFloat(String(r.cost).replace(/[^0-9.]/g, '')) || 0), 0);
                 return (
                   <div className="space-y-3 pt-4 border-t border-slate-100">
                     <h2 className="text-xl font-bold text-indigo-600">Appendix A — Monthly Budget Breakdown</h2>
@@ -988,6 +1067,12 @@ Language: English.`;
                   </div>
                 );
               })()}
+
+              {/* AI synthesis note */}
+              <p className="text-xs text-gray-400 italic pt-2 border-t border-slate-100">
+                * Sections marked with an asterisk were analyzed and synthesized by StartZig based on your data.
+              </p>
+
             </div>
           </div>
         )}
