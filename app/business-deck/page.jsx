@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { InvokeLLM } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
-import { Loader2, Download, FileText, Lock, MessageSquare, Sparkles, RefreshCw, Info, Save } from 'lucide-react';
+import { Loader2, Download, FileText, Lock, MessageSquare, Sparkles, RefreshCw, Info } from 'lucide-react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ const ORGANIC_K_FACTOR = 0.65;
 const TARGET_MARKET_SCALING = 10000000;
 const FUNDING_BUFFER = 1.3; // 30% overhead on top of funding gap
 
-const SECTION_KEYS = ['executive_summary', 'problem', 'solution', 'product', 'market', 'business_model', 'traction', 'team', 'the_ask'];
+const SECTION_KEYS = ['executive_summary', 'problem', 'solution', 'product', 'market', 'business_model', 'team', 'the_ask'];
 
 const SECTION_TITLES = {
   executive_summary: 'Executive Summary',
@@ -24,13 +24,12 @@ const SECTION_TITLES = {
   product: 'Product',
   market: 'Market Opportunity',
   business_model: 'Business Model',
-  traction: 'Traction',
   team: 'Team',
-  the_ask: 'The Ask',
+  the_ask: 'The Ask *',
 };
 
 // Sections where AI synthesizes data (show asterisk)
-const AI_SYNTHESIZED_SECTIONS = ['executive_summary', 'product', 'market', 'business_model', 'traction', 'the_ask'];
+const AI_SYNTHESIZED_SECTIONS = ['executive_summary', 'product', 'market', 'business_model', 'the_ask'];
 
 const COLOR_PALETTE = [
   { label: 'Indigo', value: '#4F46E5' },
@@ -182,8 +181,7 @@ function buildPromptData(data, forecast, fundingAsk) {
 
   lines.push('\n=== REVENUE MODEL DATA (use these numbers — not text descriptions) ===');
   if (rev.businessModel)          lines.push(`Model type: ${rev.businessModel}`);
-  if (rev.tier1Price !== undefined && rev.tier1Price > 0) lines.push(`Free tier price: $${rev.tier1Price}/month`);
-  if (rev.tier1Price === 0) lines.push(`Free tier: available at no cost`);
+  // tier1Price intentionally excluded from prompt to avoid misinterpretation
   if (rev.tier2Price)             lines.push(`Premium price: $${rev.tier2Price}/month`);
   if (rev.acquisitionCost)        lines.push(`CAC: $${rev.acquisitionCost}`);
   if (rev.freeToPaidConversion)   lines.push(`Free to paid conversion: ${rev.freeToPaidConversion}%`);
@@ -385,7 +383,7 @@ function buildRevenueParamsRows(rev) {
 export default function BusinessDeckPage() {
   const [loading, setLoading]           = useState(true);
   const [generating, setGenerating]     = useState(false);
-  const [saving, setSaving]             = useState(false);
+  const autoSaveTimer = useRef(null);
   const [downloading, setDownloading]   = useState(false);
   const [mentorLoading, setMentorLoading] = useState(false);
   const [error, setError]               = useState(null);
@@ -530,7 +528,7 @@ RULES:
 - No markdown formatting. No bold text. No bullet points. Plain text paragraphs only.
 - Sub-section labels (Overview, Current Status, etc.) should appear on their own line followed by a colon, then a new line with the content.
 - Do NOT use the words "Certainly", "Sure", "Of course" or any AI preamble.
-- If a field is empty or missing, write: "Complete the relevant stage to populate this section."
+- If a field is empty or missing, write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."
 
 SECTION-SPECIFIC INSTRUCTIONS:
 
@@ -541,7 +539,7 @@ Paragraph 2: current phase + beta sign-up count (from TRACTION section) + fundin
 
 problem:
 Use business_plans.problem with minimal grammar edits only. Preserve the founder's language.
-If empty — write: "Complete the Business Plan stage to populate this section."
+If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."
 
 solution:
 Use venture.description as base, expanded with mvp_data product definition if available.
@@ -570,7 +568,7 @@ business_model:
 Write exactly 3 sub-sections, each label on its own line:
 
 Model:
-[Use ONLY revenue_model_data fields — do NOT use business_plans.revenue_model text. Describe: model type (businessModel). Free tier price if tier1Price > 0. Premium price from tier2Price. Write as one professional paragraph. Example format: "The company operates on a freemium model, with a free tier and a premium subscription at $X/month."]
+[Use ONLY revenue_model_data fields — do NOT use business_plans.revenue_model text. Do NOT mention tier1Price. Describe: model type (businessModel) and premium price (tier2Price) only. Write as one professional paragraph. Example: "The company operates on a subscription model with a premium tier at $X/month."]
 
 Revenue Forecast:
 [Write exactly: "Based on a [businessModel] model at $[tier2Price]/month premium pricing, the company projects [year1TotalUsers] total users by end of Year 1 with revenues of [year1Revenue], growing to [year2TotalUsers] total users by end of Year 2 with cumulative revenues of [year2CumulativeRevenue]."]
@@ -589,14 +587,14 @@ Write based ONLY on actual verifiable data:
 
 team:
 Use business_plans.entrepreneur_background with minimal grammar edits only.
-If empty — write: "Complete the Business Plan stage to populate this section."
+If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."
 
 the_ask:
 Write: "Based on the business model, revenue forecast, and venture budget, [venture name] is seeking to raise [askFormatted] to fund the next 24 months of operations."
 Then add one sentence on how the funds will be used (if business_plans.funding_requirements mentions allocation — use it, otherwise write generally: "Funds will be allocated to product development, user acquisition, and operations.").
 
 Return ONLY a valid JSON object — no text before or after — with exactly these keys:
-executive_summary, problem, solution, product, market, business_model, traction, team, the_ask
+executive_summary, problem, solution, product, market, business_model, team, the_ask
 
 DATA:
 ${allFields}`;
@@ -651,20 +649,21 @@ ${allFields}`;
     setGenerating(false);
   }
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+  // ── Auto-save ──────────────────────────────────────────────────────────────
 
-  async function handleSave() {
-    if (!deckData || !deckRecord?.id) return;
-    setSaving(true);
-    const updated = { ...deckData };
-    SECTION_KEYS.forEach(k => {
-      if (sectionRefs.current[k]) updated[k] = sectionRefs.current[k].innerText || '';
-    });
-    setDeckData(updated);
-    await supabase.from('business_decks')
-      .update({ deck_data: updated, updated_at: new Date().toISOString() })
-      .eq('id', deckRecord.id);
-    setSaving(false);
+  function triggerAutoSave() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      if (!deckRecord?.id) return;
+      const updated = { ...deckData };
+      SECTION_KEYS.forEach(k => {
+        if (sectionRefs.current[k]) updated[k] = sectionRefs.current[k].innerText || '';
+      });
+      setDeckData(updated);
+      await supabase.from('business_decks')
+        .update({ deck_data: updated, updated_at: new Date().toISOString() })
+        .eq('id', deckRecord.id);
+    }, 3000);
   }
 
   // ── Mentor ─────────────────────────────────────────────────────────────────
@@ -778,7 +777,7 @@ Language: English.`;
         const lines = text.split('\n').filter(Boolean);
         lines.forEach(line => {
           const trimmed = line.trim();
-          if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction):$/.test(trimmed)) {
+          if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction|Market Size & Opportunity|Target Customers|Competitive Landscape):$/.test(trimmed)) {
             children.push(makeH2(trimmed.replace(':', '')));
           } else {
             children.push(makeBody(trimmed));
@@ -954,13 +953,7 @@ Language: English.`;
                 Generated: {new Date(deckRecord.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             )}
-            {deckData && (
-              <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}
-                className="text-gray-600 border-gray-300 text-xs gap-1.5">
-                {saving ? <Loader2 className="animate-spin w-3 h-3" /> : <Save className="w-3 h-3" />}
-                Save
-              </Button>
-            )}
+
             {deckData && (
               <Button variant="outline" size="sm" onClick={handleMentor} disabled={mentorLoading}
                 className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 text-xs font-semibold gap-1.5">
@@ -1035,30 +1028,7 @@ Language: English.`;
           </div>
         )}
 
-        {/* Funding ask note */}
-        {fundingAsk && deckData && (
-          <div className={"border rounded-xl p-4 " + (fundingAsk.ask > 0 ? "bg-blue-50 border-blue-200" : "bg-amber-50 border-amber-200")}>
-            {fundingAsk.ask > 0 ? (
-              <>
-                <p className="text-xs font-semibold text-blue-700 mb-1">💡 Funding ask calculation (screen only)</p>
-                <p className="text-xs text-blue-600">
-                  Monthly burn ({fundingAsk.monthlyBurnFormatted}) × 24 months − projected revenue = gap × 1.3 buffer = <strong>{fundingAsk.askFormatted}</strong>.
-                  You can edit this amount directly in the document.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold text-amber-700 mb-1">⚠️ Funding ask calculation (screen only)</p>
-                <p className="text-xs text-amber-700">
-                  Your revenue forecast shows projected income exceeding 24-month operating costs by <strong>{fundingAsk.surplusFormatted}</strong>.
-                  This suggests external funding may not be required based on current projections.
-                  We recommend reviewing your sales forecast and/or budget parameters before presenting to investors.
-                  {fundingAsk.isUnrealistic && " Your revenue projections appear significantly higher than your costs — please verify your revenue model parameters."}
-                </p>
-              </>
-            )}
-          </div>
-        )}
+
 
         {/* Mentor feedback */}
         {mentorError && (
@@ -1147,6 +1117,7 @@ Language: English.`;
                       ref={el => { sectionRefs.current[key] = el; }}
                       contentEditable
                       suppressContentEditableWarning
+                      onInput={triggerAutoSave}
                       className="text-gray-700 text-sm leading-relaxed outline-none focus:bg-indigo-50 focus:rounded-lg focus:px-3 focus:py-2 transition-all cursor-text whitespace-pre-wrap min-h-[60px]"
                       style={{ caretColor: '#4F46E5' }}
                     >
@@ -1154,7 +1125,7 @@ Language: English.`;
                         const trimmed = line.trim();
                         if (!trimmed) return <br key={i} />;
                         // Sub-section headers
-                        if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction):$/.test(trimmed)) {
+                        if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction|Market Size & Opportunity|Target Customers|Competitive Landscape):$/.test(trimmed)) {
                           return <div key={i} className="font-semibold text-gray-800 mt-3 mb-1">{trimmed}</div>;
                         }
                         return <div key={i}>{trimmed}</div>;
@@ -1294,10 +1265,19 @@ Language: English.`;
                 </div>
               )}
 
-              {/* AI synthesis note */}
-              <p className="text-xs text-gray-400 italic pt-2 border-t border-slate-100">
-                See details in appendix
-              </p>
+              {/* Bottom notes */}
+              <div className="pt-4 border-t border-slate-100 space-y-2">
+                <p className="text-xs text-gray-400 italic">See details in appendix</p>
+                {fundingAsk && (
+                  <div className={"text-xs rounded-lg px-4 py-2 " + (fundingAsk.ask > 0 ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700")}>
+                    {fundingAsk.ask > 0 ? (
+                      <span>* The Ask amount was calculated as follows: monthly burn ({fundingAsk.monthlyBurnFormatted}) × 24 months − projected revenue = gap × 1.3 buffer = <strong>{fundingAsk.askFormatted}</strong>. You can edit this amount directly in the document.</span>
+                    ) : (
+                      <span>* Your revenue forecast shows projected income exceeding 24-month operating costs by <strong>{fundingAsk.surplusFormatted}</strong>. This suggests external funding may not be required. We recommend reviewing your revenue model parameters before presenting to investors.{fundingAsk.isUnrealistic && " Your revenue projections appear significantly higher than your costs."}</span>
+                    )}
+                  </div>
+                )}
+              </div>
 
             </div>
           </div>
