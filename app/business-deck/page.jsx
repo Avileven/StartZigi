@@ -566,7 +566,7 @@ Overview:
 [Use business_plans.product_details as-is. If empty — use ventures.solution as-is. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
 
 Current Status:
-[State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
+[Always start with: "The platform is currently in [ventures.phase] phase." Then: if mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If empty — skip. Then write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with: "[ventures.name] currently has [beta_testers count] beta sign-ups." If product_feedback has meaningful responses (>15 chars) — add 1 sentence. If not — omit.]
 
 Technology:
 [This sub-section is built by the system — leave it empty in your response. Write nothing here.]
@@ -649,12 +649,14 @@ ${allFields}`;
 
       // Inject Technology into product section
       if (normalized.product) {
-        normalized.product = normalized.product.replace(
-          /Technology:\n\[This sub-section is built by the system.*?\]/s,
-          'Technology:\n' + techText
-        );
-        // If Technology line exists but is empty, append it
-        if (!normalized.product.includes('Technology:')) {
+        // Always append/replace Technology section
+        if (normalized.product.includes('Technology:')) {
+          // Replace everything after Technology: label
+          normalized.product = normalized.product.replace(
+            /Technology:[\s\S]*$/,
+            'Technology:\n' + techText
+          );
+        } else {
           normalized.product += '\n\nTechnology:\n' + techText;
         }
       }
@@ -681,11 +683,14 @@ No markdown. Plain text only.
 SECTIONS:
 ${sectionsText}`;
 
-        const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'sys' });
-        normalized.executive_summary = execResult?.response?.trim() || '';
+        const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'mentor' });
+        const execText = execResult?.response?.trim() || '';
+        // Clean any JSON fences if present
+        normalized.executive_summary = execText.replace(/```json|```/g, '').trim();
       } catch (e) {
         console.error('Executive summary generation failed:', e);
-        normalized.executive_summary = '';
+        // Fallback: simple summary from venture data
+        normalized.executive_summary = `${venture.name} is ${venture.description || 'a platform in development'}. The company is currently in ${venture.phase} phase and is seeking ${fundingAsk?.askFormatted || 'funding'} to achieve its 24-month goals.`;
       }
 
       const now = new Date().toISOString();
