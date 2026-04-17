@@ -840,8 +840,7 @@ Language: English.`;
         spacing: { after: 100 },
       });
       const makeDivider = () => new Paragraph({
-        border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' } },
-        spacing: { before: 160, after: 160 }, children: [],
+        spacing: { before: 320, after: 0 }, children: [],
       });
       const border = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
       const borders = { top: border, bottom: border, left: border, right: border };
@@ -878,7 +877,7 @@ Language: English.`;
               ...(contactInfo.email && contactInfo.website ? [new TextRun({ text: '  |  ', size: 20, color: 'D1D5DB', font: 'Arial' })] : []),
               ...(contactInfo.website ? [new TextRun({ text: contactInfo.website, size: 20, color: '6B7280', font: 'Arial' })] : []),
             ],
-            alignment: AlignmentType.RIGHT, spacing: { after: 800 },
+            alignment: AlignmentType.CENTER, spacing: { after: 800 },
           }),
         ] : []),
         makeDivider(),
