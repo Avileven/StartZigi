@@ -547,10 +547,7 @@ RULES:
 SECTION-SPECIFIC INSTRUCTIONS:
 
 executive_summary:
-Write 2 paragraphs as a summary of the full business plan that follows.
-Paragraph 1: what the company does, who it serves, and what problem it solves — synthesize from the problem, solution, and product sections.
-Paragraph 2: current traction (phase + sign-up count), funding ask amount (from FUNDING ASK section), and 24-month goal from revenue forecast.
-Base it on the actual content of the other sections, not on raw data fields.
+[Leave this field as an empty string "" — it will be generated separately from the other sections.]
 
 problem:
 Use business_plans.problem with minimal grammar edits only. Preserve the founder's language.
@@ -572,7 +569,7 @@ Current Status:
 [State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
 
 Technology:
-[Write ONLY what is in the DATA section under TECHNOLOGY. If technical_specs is present — copy it exactly. If technical_excellence is present — add it exactly. Do NOT use any other field. Do NOT invent. If both missing — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
+[This sub-section is built by the system — leave it empty in your response. Write nothing here.]
 
 market:
 Write exactly 3 sub-sections, each label on its own line followed by a colon, then content on the next line:
@@ -639,6 +636,57 @@ ${allFields}`;
       SECTION_KEYS.forEach(k => {
         normalized[k] = normalizeSection(parsed[k]);
       });
+
+      // Build Technology sub-section in code (not AI)
+      const mvp = venture.mvp_data || {};
+      const mlp = venture.mlp_data || {};
+      const techParts = [];
+      if (mlp.technical_specs || mvp.technical_specs) techParts.push(mlp.technical_specs || mvp.technical_specs);
+      if (mlp.technical_excellence) techParts.push(mlp.technical_excellence);
+      const techText = techParts.length > 0
+        ? techParts.join('\n')
+        : 'No meaningful data found for this section. Please complete the relevant stage or edit directly.';
+
+      // Inject Technology into product section
+      if (normalized.product) {
+        normalized.product = normalized.product.replace(
+          /Technology:\n\[This sub-section is built by the system.*?\]/s,
+          'Technology:\n' + techText
+        );
+        // If Technology line exists but is empty, append it
+        if (!normalized.product.includes('Technology:')) {
+          normalized.product += '\n\nTechnology:\n' + techText;
+        }
+      }
+
+      // Second AI call — generate Executive Summary from the 8 sections
+      try {
+        const sectionsText = [
+          'Problem: ' + (normalized.problem || ''),
+          'Solution: ' + (normalized.solution || ''),
+          'Product: ' + (normalized.product || ''),
+          'Market: ' + (normalized.market || ''),
+          'Business Model: ' + (normalized.business_model || ''),
+          'Team: ' + (normalized.team || ''),
+          'The Ask: ' + (normalized.the_ask || ''),
+        ].filter(s => !s.includes('No meaningful data')).join('\n\n');
+
+        const execPrompt = `You are writing the Executive Summary for an investor business plan.
+Based ONLY on the sections below — do not invent anything not present.
+Write exactly 2 paragraphs:
+Paragraph 1: what the company does, who it serves, and what problem it solves.
+Paragraph 2: current status (phase and sign-ups: ${betaTesters?.length || 0} sign-ups in ${venture.phase} phase), funding ask (${fundingAsk?.askFormatted || ''}), and 24-month revenue goal (${forecast?.year2CumulativeFormatted || ''}).
+No markdown. Plain text only.
+
+SECTIONS:
+${sectionsText}`;
+
+        const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'sys' });
+        normalized.executive_summary = execResult?.response?.trim() || '';
+      } catch (e) {
+        console.error('Executive summary generation failed:', e);
+        normalized.executive_summary = '';
+      }
 
       const now = new Date().toISOString();
       const payload = {
@@ -808,9 +856,15 @@ Language: English.`;
         children.push(makeDivider());
       });
 
+      // Appendices section header
+      children.push(new Paragraph({ children: [new PageBreak()] }));
+      children.push(new Paragraph({
+        children: [new TextRun({ text: 'Appendices', bold: true, size: 40, color: hexColor, font: 'Arial' })],
+        spacing: { before: 200, after: 400 },
+      }));
+
       // Appendix A — Key Metrics & Forecast Highlights
       if (appendixConfig.forecast && forecast) {
-        children.push(new Paragraph({ children: [new PageBreak()] }));
         children.push(makeH1('Appendix A — Key Metrics & Forecast Highlights'));
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
@@ -846,7 +900,7 @@ Language: English.`;
       if (appendixConfig.revenueParams) {
       const revRows = buildRevenueParamsRows(venture?.revenue_model_data);
       if (revRows.length) {
-        children.push(new Paragraph({ children: [new PageBreak()] }));
+        children.push(new Paragraph({ spacing: { before: 600 }, children: [] }));
         children.push(makeH1('Appendix C — Revenue Model Assumptions'));
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
@@ -861,7 +915,7 @@ Language: English.`;
 
       // Appendix C — Break-even
       if (appendixConfig.breakeven && breakevenData) {
-        children.push(new Paragraph({ children: [new PageBreak()] }));
+        children.push(new Paragraph({ spacing: { before: 600 }, children: [] }));
         children.push(makeH1('Appendix D — Break-even Analysis'));
         if (breakevenData.breakevenMonth) {
           children.push(makeBody(`Based on current projections, the company reaches break-even at month ${breakevenData.breakevenMonth}.`));
@@ -1161,9 +1215,14 @@ Language: English.`;
 
 
 
-              {/* Appendix D — Key Metrics & Forecast */}
+              {/* Appendices header */}
+              <div className="pt-6 border-t-2 border-slate-300 mt-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Appendices</h2>
+              </div>
+
+              {/* Appendix A — Key Metrics & Forecast */}
               {appendixConfig.forecast && forecast && (
-                <div className="space-y-3 pt-4 border-t border-slate-100">
+                <div className="space-y-3 pt-8">
                   <h2 className="text-xl font-bold text-indigo-600">Appendix A — Key Metrics & Forecast Highlights</h2>
                   <table className="w-full border-collapse text-sm">
                     <thead>
@@ -1188,7 +1247,7 @@ Language: English.`;
                 if (!rows.length) return null;
                 const total = rows.reduce((sum, r) => sum + (r.monthly || 0), 0);
                 return (
-                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <div className="space-y-3 pt-8">
                     <h2 className="text-xl font-bold text-indigo-600">Appendix B — Monthly Budget Breakdown</h2>
                     <table className="w-full border-collapse text-sm">
                       <thead>
@@ -1225,7 +1284,7 @@ Language: English.`;
                 const rows = buildRevenueParamsRows(venture?.revenue_model_data);
                 if (!rows.length) return null;
                 return (
-                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <div className="space-y-3 pt-8">
                     <h2 className="text-xl font-bold text-indigo-600">Appendix C — Revenue Model Assumptions</h2>
                     <table className="w-full border-collapse text-sm">
                       <thead>
@@ -1249,7 +1308,7 @@ Language: English.`;
 
               {/* Appendix C — Break-even */}
               {appendixConfig.breakeven && breakevenData && (
-                <div className="space-y-3 pt-4 border-t border-slate-100">
+                <div className="space-y-3 pt-8">
                   <h2 className="text-xl font-bold text-indigo-600">Appendix D — Break-even Analysis</h2>
                   {breakevenData.breakevenMonth ? (
                     <p className="text-sm text-green-700 font-medium bg-green-50 border border-green-200 rounded-lg px-4 py-2">
