@@ -1084,6 +1084,14 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
         page: 'venture-pitch' // createPageUrl will convert to /venturepitch
       });
     }
+    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
+    assets.push({
+      id: 'business_deck',
+      title: 'Business Deck',
+      icon: FileText,
+      page: 'business-deck'
+    });
+  }
 
     return assets;
   };
