@@ -852,11 +852,7 @@ Language: English.`;
         children: [new Paragraph({ children: [new TextRun({ text: String(text), size: 20, font: 'Arial', bold })] })],
       });
 
-      const getText = k => {
-        const raw = sectionRefs.current[k]?.innerText || deckData[k] || '';
-        // Strip source labels from docx output
-        return raw.split('\n').filter(line => !line.trim().startsWith('Source:')).join('\n');
-      };
+      const getText = k => deckData[k] || '';
 
       const children = [
         new Paragraph({
