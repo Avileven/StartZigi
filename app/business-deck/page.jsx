@@ -557,20 +557,22 @@ Use business_plans.problem with minimal grammar edits only. Preserve the founder
 If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."
 
 solution:
-Use venture.description as base, expanded with mvp_data product definition if available.
-Write as one clear paragraph describing what the product does and how it solves the problem.
+Copy exact text from ventures.solution only — no paraphrasing, no expansion.
+If ventures.solution is empty — copy ventures.description exactly.
+If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."
+Do NOT add any information not in the source field.
 
 product:
 Write exactly 3 sub-sections, each label on its own line:
 
 Overview:
-[Use business_plans.product_details as-is. One paragraph.]
+[Use business_plans.product_details as-is. If empty — use ventures.solution as-is. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
 
 Current Status:
 [State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
 
 Technology:
-[Copy exact text from mvp_data.technical_specs only — no paraphrasing. Copy exact text from mlp_data.technical_excellence only. If both fields are empty or missing — write EXACTLY: "No meaningful data found for this section. Please complete the relevant stage or edit directly." Do NOT write anything else. Do NOT use any other field as source for technology information.]
+[Write ONLY what is in the DATA section under TECHNOLOGY. If technical_specs is present — copy it exactly. If technical_excellence is present — add it exactly. Do NOT use any other field. Do NOT invent. If both missing — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
 
 market:
 Write exactly 3 sub-sections, each label on its own line followed by a colon, then content on the next line:
@@ -806,7 +808,24 @@ Language: English.`;
         children.push(makeDivider());
       });
 
-      // Appendix A
+      // Appendix A — Key Metrics & Forecast Highlights
+      if (appendixConfig.forecast && forecast) {
+        children.push(new Paragraph({ children: [new PageBreak()] }));
+        children.push(makeH1('Appendix A — Key Metrics & Forecast Highlights'));
+        children.push(new Table({
+          width: { size: 9360, type: WidthType.DXA },
+          columnWidths: [4680, 2340, 2340],
+          rows: [
+            new TableRow({ children: [makeCell('Metric', true, true), makeCell('Year 1', true, true), makeCell('Year 2', true, true)] }),
+            new TableRow({ children: [makeCell('Total Users'), makeCell(forecast.year1TotalFormatted), makeCell(forecast.year2TotalFormatted)] }),
+            new TableRow({ children: [makeCell('Paying Users'), makeCell(forecast.year1PayingFormatted), makeCell(forecast.year2PayingFormatted)] }),
+            new TableRow({ children: [makeCell('Revenue', true), makeCell(forecast.year1RevenueFormatted, true), makeCell(forecast.year2CumulativeFormatted, true)] }),
+          ],
+        }));
+        children.push(makeDivider());
+      }
+
+      // Appendix B
       const budgetRows = buildBudgetRows(sourceData?.budgets);
       if (budgetRows.length) {
         children.push(makeH1('Appendix B — Monthly Budget Breakdown'));
