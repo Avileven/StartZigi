@@ -410,6 +410,7 @@ export default function BusinessDeckPage() {
   });
 
   const [appendixConfig, setAppendixConfig] = useState({
+    forecast: true,
     budget: true,
     revenueParams: true,
     breakeven: true,
@@ -786,34 +787,18 @@ Language: English.`;
         children.push(makeDivider());
       });
 
-      // Forecast table
-      if (forecast) {
-        children.push(makeH2('Key Metrics & Forecast Highlights'));
-        children.push(new Table({
-          width: { size: 9360, type: WidthType.DXA },
-          columnWidths: [4680, 2340, 2340],
-          rows: [
-            new TableRow({ children: [makeCell('Metric', true, true), makeCell('Year 1', true, true), makeCell('Year 2', true, true)] }),
-            new TableRow({ children: [makeCell('Total Users'), makeCell(forecast.year1TotalFormatted), makeCell(forecast.year2TotalFormatted)] }),
-            new TableRow({ children: [makeCell('Paying Users'), makeCell(forecast.year1PayingFormatted), makeCell(forecast.year2PayingFormatted)] }),
-            new TableRow({ children: [makeCell('Revenue', true), makeCell(forecast.year1RevenueFormatted, true), makeCell(forecast.year2CumulativeFormatted, true)] }),
-          ],
-        }));
-        children.push(makeDivider());
-      }
-
       // Appendix A
       const budgetRows = buildBudgetRows(sourceData?.budgets);
       if (budgetRows.length) {
         children.push(makeH1('Appendix A — Monthly Budget Breakdown'));
-        const total = budgetRows.reduce((sum, r) => sum + (parseFloat(String(r.cost).replace(/[^0-9.]/g, '')) || 0), 0);
+        const total = budgetRows.reduce((sum, r) => sum + (r.monthly || 0), 0);
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
-          columnWidths: [4680, 2340, 2340],
+          columnWidths: [3120, 1560, 2340, 2340],
           rows: [
-            new TableRow({ children: [makeCell('Item', true, true), makeCell('Type', true, true), makeCell('Monthly Cost', true, true)] }),
-            ...budgetRows.map(r => new TableRow({ children: [makeCell(r.item), makeCell(r.type), makeCell(r.cost)] })),
-            new TableRow({ children: [makeCell('Total monthly burn', true, true), makeCell('', false, true), makeCell(`$${total.toLocaleString()}`, true, true)] }),
+            new TableRow({ children: [makeCell('Item', true, true), makeCell('Type', true, true), makeCell('Monthly', true, true), makeCell('Annual', true, true)] }),
+            ...budgetRows.map(r => new TableRow({ children: [makeCell(String(r.item||'')), makeCell(String(r.type||'')), makeCell('$' + Number(r.monthly||0).toLocaleString()), makeCell('$' + Number(r.annual||0).toLocaleString())] })),
+            new TableRow({ children: [makeCell('Total burn', true, true), makeCell('', false, true), makeCell('$' + total.toLocaleString(), true, true), makeCell('$' + (total*12).toLocaleString(), true, true)] }),
           ],
         }));
         children.push(makeDivider());
@@ -1142,16 +1127,18 @@ Language: English.`;
                 );
               })}
 
-              {/* Forecast table */}
-              {forecast && (
+
+
+              {/* Appendix D — Key Metrics & Forecast */}
+              {appendixConfig.forecast && forecast && (
                 <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <h3 className="text-base font-bold text-gray-700">Key Metrics & Forecast Highlights *</h3>
+                  <h2 className="text-xl font-bold text-indigo-600">Appendix D — Key Metrics & Forecast Highlights</h2>
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-slate-50">
-                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold text-gray-700">Metric</th>
-                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold text-gray-700">Year 1</th>
-                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold text-gray-700">Year 2</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Metric</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Year 1</th>
+                        <th className="text-left px-4 py-2 border border-slate-200 font-semibold">Year 2</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1337,6 +1324,7 @@ Language: English.`;
               <p className="text-sm font-medium text-gray-700">Include in download:</p>
               <div className="flex flex-col gap-2">
                 {[
+                  { key: 'forecast', label: 'Appendix D — Key Metrics & Forecast Highlights' },
                   { key: 'budget', label: 'Appendix A — Monthly Budget Breakdown' },
                   { key: 'revenueParams', label: 'Appendix B — Revenue Model Assumptions' },
                   { key: 'breakeven', label: 'Appendix C — Break-even Analysis' },
@@ -1358,10 +1346,7 @@ Language: English.`;
                   ? <><Loader2 className="animate-spin w-4 h-4 mr-2" />Preparing...</>
                   : <><Download className="w-4 h-4 mr-2" />Download Word (.docx)</>}
               </Button>
-              <Button disabled variant="outline" className="text-gray-400 border-gray-200 cursor-not-allowed h-11 px-6">
-                <Download className="w-4 h-4 mr-2" />Download PDF
-                <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Soon</span>
-              </Button>
+
             </div>
           </div>
         )}
