@@ -556,14 +556,19 @@ Current Status:
 [State current phase. Summarize key improvements from mlp_data.enhancement_strategy in 2 sentences. Then write: "The current version is built around [list selected features from feature_matrix where isSelected is true]." End with beta sign-up count. If product_feedback contains meaningful responses longer than 15 characters — analyze them and add 1 sentence on what users highlighted. If feedback is noise — omit entirely.]
 
 Technology:
-[One sentence on tech stack from mvp_data.technical_specs. One sentence on performance from mlp_data.technical_excellence. If both empty — write: "Technical details will be added as the product matures."]
+[One sentence on tech stack from mvp_data.technical_specs. One sentence on performance from mlp_data.technical_excellence. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly." Do NOT invent or synthesize tech details from other fields.]
 
 market:
-Write 3 paragraphs.
-Paragraph 1: total market size and growth rate from business_plans.market_size.
-Paragraph 2: beachhead market — specific segment from business_plans.target_customers. Add freeToPaidConversion as validation signal.
-Paragraph 3: competition — name competitors from business_plans.competition + one sentence on key differentiator.
-If any field is empty — omit that paragraph.
+Write exactly 3 sub-sections, each label on its own line followed by a colon, then content on the next line:
+
+Market Size & Opportunity:
+[Use business_plans.market_size. One paragraph on total market size and growth. If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."]
+
+Target Customers:
+[Use business_plans.target_customers. One paragraph on primary, secondary, and tertiary segments. If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."]
+
+Competitive Landscape:
+[Use business_plans.competition. Name main competitors and one sentence on key differentiator. If empty — write: "No meaningful data found for this section. Please complete the Business Plan stage or edit directly."]
 
 business_model:
 Write exactly 3 sub-sections, each label on its own line:
