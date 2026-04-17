@@ -30,14 +30,14 @@ const SECTION_TITLES = {
 
 // Source map — screen only, not in download
 const SECTION_SOURCES = {
-  executive_summary: 'Generated from all sections below',
+  executive_summary: 'Source: Generated from all sections below',
   problem: 'Source: business_plans.problem',
   solution: 'Source: ventures.solution',
-  product: 'Overview: business_plans.product_details → ventures.solution | Current Status: mvp_data.feature_matrix + mlp_data.enhancement_strategy | Technology: mvp_data.technical_specs',
+  product: 'Source: business_plans.product_details → ventures.solution | mvp_data.feature_matrix | mvp_data.technical_specs',
   market: 'Source: business_plans.market_size / target_customers / competition',
-  business_model: 'Model: revenue_model_data | Forecast: calculated from revenue_model_data',
+  business_model: 'Source: revenue_model_data (businessModel, tier2Price, CAC, conversion, churn)',
   team: 'Source: business_plans.entrepreneur_background',
-  the_ask: 'Calculated: (monthly_burn × 24 − projected_revenue) × 1.3',
+  the_ask: 'Source: Calculated from budgets + revenue forecast × 1.3 buffer',
 };
 
 // Sections where AI synthesizes data (show asterisk)
@@ -433,6 +433,12 @@ export default function BusinessDeckPage() {
     company_name: '',
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
     logo_url: '',
+  });
+
+  const [contactInfo, setContactInfo] = useState({
+    enabled: false,
+    email: '',
+    website: '',
   });
 
   const [appendixConfig, setAppendixConfig] = useState({
@@ -846,7 +852,11 @@ Language: English.`;
         children: [new Paragraph({ children: [new TextRun({ text: String(text), size: 20, font: 'Arial', bold })] })],
       });
 
-      const getText = k => sectionRefs.current[k]?.innerText || deckData[k] || '';
+      const getText = k => {
+        const raw = sectionRefs.current[k]?.innerText || deckData[k] || '';
+        // Strip source labels from docx output
+        return raw.split('\n').filter(line => !line.trim().startsWith('Source:')).join('\n');
+      };
 
       const children = [
         new Paragraph({
@@ -863,8 +873,18 @@ Language: English.`;
         }),
         new Paragraph({
           children: [new TextRun({ text: 'Confidential — Not for distribution', size: 20, color: 'D1D5DB', italics: true, font: 'Arial' })],
-          alignment: AlignmentType.CENTER, spacing: { after: 800 },
+          alignment: AlignmentType.CENTER, spacing: { after: contactInfo.enabled ? 200 : 800 },
         }),
+        ...(contactInfo.enabled ? [
+          new Paragraph({
+            children: [
+              ...(contactInfo.email ? [new TextRun({ text: contactInfo.email, size: 20, color: '6B7280', font: 'Arial' })] : []),
+              ...(contactInfo.email && contactInfo.website ? [new TextRun({ text: '  |  ', size: 20, color: 'D1D5DB', font: 'Arial' })] : []),
+              ...(contactInfo.website ? [new TextRun({ text: contactInfo.website, size: 20, color: '6B7280', font: 'Arial' })] : []),
+            ],
+            alignment: AlignmentType.RIGHT, spacing: { after: 800 },
+          }),
+        ] : []),
         makeDivider(),
       ];
 
@@ -1047,14 +1067,14 @@ Language: English.`;
       {/* Top bar */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 py-3">
-          <h1 className="text-xl font-bold text-gray-900 text-center flex items-center justify-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 text-center flex items-center justify-center gap-2">
             <FileText className="w-5 h-5 text-indigo-600" />
             Business Deck — {venture?.name}
           </h1>
           <div className="flex items-center justify-center gap-2 flex-wrap mt-2">
             {deckRecord && (
               <span className="text-xs text-gray-400">
-                Generated: {new Date(deckRecord.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                Last updated: {new Date(deckRecord.updated_at || deckRecord.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             )}
 
@@ -1231,15 +1251,15 @@ Language: English.`;
                         // Sub-section headers
                         if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction|Market Size & Opportunity|Target Customers|Competitive Landscape):$/.test(trimmed)) {
                           const subSources = {
-                            'Overview:': 'business_plans.product_details → ventures.solution',
-                            'Current Status:': 'mvp_data.feature_matrix + mlp_data.enhancement_strategy',
-                            'Technology:': 'mvp_data.technical_specs + mlp_data.technical_excellence',
-                            'Model:': 'revenue_model_data.businessModel + tier2Price',
-                            'Revenue Forecast:': 'Calculated from revenue_model_data',
-                            'Traction:': 'revenue_model_data (CAC, conversion, churn)',
-                            'Market Size & Opportunity:': 'business_plans.market_size',
-                            'Target Customers:': 'business_plans.target_customers',
-                            'Competitive Landscape:': 'business_plans.competition',
+                            'Overview:': 'Source: business_plans.product_details → ventures.solution',
+                            'Current Status:': 'Source: mvp_data.feature_matrix + mlp_data.enhancement_strategy',
+                            'Technology:': 'Source: mvp_data.technical_specs + mlp_data.technical_excellence',
+                            'Model:': 'Source: revenue_model_data.businessModel + tier2Price',
+                            'Revenue Forecast:': 'Source: Calculated from revenue_model_data',
+                            'Traction:': 'Source: revenue_model_data (CAC, conversion, churn)',
+                            'Market Size & Opportunity:': 'Source: business_plans.market_size',
+                            'Target Customers:': 'Source: business_plans.target_customers',
+                            'Competitive Landscape:': 'Source: business_plans.competition',
                           };
                           return (
                             <div key={i} className="mt-3 mb-1">
@@ -1461,6 +1481,34 @@ Language: English.`;
                 </div>
               )}
             </div>
+            {/* Contact details */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={contactInfo.enabled}
+                  onChange={e => setContactInfo(prev => ({ ...prev, enabled: e.target.checked }))}
+                  className="w-4 h-4 text-indigo-600 rounded" />
+                <p className="text-sm font-medium text-gray-700">Include contact details in download</p>
+              </div>
+              {contactInfo.enabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-6">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">Email</label>
+                    <input type="email" value={contactInfo.email}
+                      onChange={e => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="founder@company.com"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">Website</label>
+                    <input type="url" value={contactInfo.website}
+                      onChange={e => setContactInfo(prev => ({ ...prev, website: e.target.value }))}
+                      placeholder="https://company.com"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Appendix selection */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <p className="text-sm font-medium text-gray-700">Include in download:</p>
