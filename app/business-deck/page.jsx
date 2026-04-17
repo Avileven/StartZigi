@@ -624,14 +624,28 @@ ${allFields}`;
 
       let parsed;
       try {
-        const cleaned = rawText.replace(/```json|```/g, '').trim();
+        // Strip markdown fences and trim
+        let cleaned = rawText.replace(/```json|```/g, '').trim();
+        // Remove any text before first { and after last }
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+        // Fix common AI JSON issues: trailing commas
+        cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
         try { parsed = JSON.parse(cleaned); }
         catch {
-          const match = cleaned.match(/\{[\s\S]*\}/);
-          if (match) parsed = JSON.parse(match[0]);
-          else throw new Error('no JSON');
+          // Last resort: extract just the keys we need
+          parsed = {};
+          const keys = ['executive_summary','problem','solution','product','market','business_model','team','the_ask'];
+          keys.forEach(k => {
+            const re = new RegExp('"' + k + '"\\s*:\\s*"([\\s\\S]*?)(?<!\\\\)"');
+            const m = cleaned.match(re);
+            if (m) parsed[k] = m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+          });
         }
-      } catch { throw new Error('AI returned invalid JSON. Please try again.'); }
+      } catch (e) { throw new Error('AI returned invalid JSON. Please try again.'); }
 
       const normalized = {};
       SECTION_KEYS.forEach(k => {
