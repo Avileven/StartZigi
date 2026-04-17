@@ -28,6 +28,18 @@ const SECTION_TITLES = {
   the_ask: 'The Ask *',
 };
 
+// Source map — screen only, not in download
+const SECTION_SOURCES = {
+  executive_summary: 'Generated from all sections below',
+  problem: 'Source: business_plans.problem',
+  solution: 'Source: ventures.solution',
+  product: 'Overview: business_plans.product_details → ventures.solution | Current Status: mvp_data.feature_matrix + mlp_data.enhancement_strategy | Technology: mvp_data.technical_specs',
+  market: 'Source: business_plans.market_size / target_customers / competition',
+  business_model: 'Model: revenue_model_data | Forecast: calculated from revenue_model_data',
+  team: 'Source: business_plans.entrepreneur_background',
+  the_ask: 'Calculated: (monthly_burn × 24 − projected_revenue) × 1.3',
+};
+
 // Sections where AI synthesizes data (show asterisk)
 const AI_SYNTHESIZED_SECTIONS = ['executive_summary', 'product', 'market', 'business_model', 'the_ask'];
 
@@ -1190,12 +1202,17 @@ Language: English.`;
                 const isAISynthesized = AI_SYNTHESIZED_SECTIONS.includes(key);
                 return (
                   <div key={key} className="space-y-2">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                      <h2 className="text-xl font-bold text-indigo-600">
-                        {index + 1}. {SECTION_TITLES[key]}
-                      </h2>
-                      {isAISynthesized && (
-                        <span className="text-xs text-gray-400 font-normal">See details in appendix</span>
+                    <div className="border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-indigo-600">
+                          {index + 1}. {SECTION_TITLES[key]}
+                        </h2>
+                        {isAISynthesized && (
+                          <span className="text-xs text-gray-400 font-normal">See details in appendix</span>
+                        )}
+                      </div>
+                      {SECTION_SOURCES[key] && (
+                        <p className="text-xs text-indigo-400 mt-0.5 italic">{SECTION_SOURCES[key]}</p>
                       )}
                     </div>
 
@@ -1213,7 +1230,25 @@ Language: English.`;
                         if (!trimmed) return <br key={i} />;
                         // Sub-section headers
                         if (/^(Overview|Current Status|Technology|Model|Revenue Forecast|Traction|Market Size & Opportunity|Target Customers|Competitive Landscape):$/.test(trimmed)) {
-                          return <div key={i} className="font-semibold text-gray-800 mt-3 mb-1">{trimmed}</div>;
+                          const subSources = {
+                            'Overview:': 'business_plans.product_details → ventures.solution',
+                            'Current Status:': 'mvp_data.feature_matrix + mlp_data.enhancement_strategy',
+                            'Technology:': 'mvp_data.technical_specs + mlp_data.technical_excellence',
+                            'Model:': 'revenue_model_data.businessModel + tier2Price',
+                            'Revenue Forecast:': 'Calculated from revenue_model_data',
+                            'Traction:': 'revenue_model_data (CAC, conversion, churn)',
+                            'Market Size & Opportunity:': 'business_plans.market_size',
+                            'Target Customers:': 'business_plans.target_customers',
+                            'Competitive Landscape:': 'business_plans.competition',
+                          };
+                          return (
+                            <div key={i} className="mt-3 mb-1">
+                              <span className="font-semibold text-gray-800">{trimmed}</span>
+                              {subSources[trimmed] && (
+                                <span className="ml-2 text-xs text-indigo-300 italic">{subSources[trimmed]}</span>
+                              )}
+                            </div>
+                          );
                         }
                         return <div key={i}>{trimmed}</div>;
                       })}
