@@ -676,7 +676,7 @@ ${allFields}`;
 Based ONLY on the sections below — do not invent anything not present.
 Write exactly 2 paragraphs:
 Paragraph 1: what the company does, who it serves, and what problem it solves.
-Paragraph 2: current status (phase and sign-ups: ${betaTesters?.length || 0} sign-ups in ${venture.phase} phase), funding ask (${fundingAsk?.askFormatted || ''}), and 24-month revenue goal (${forecast?.year2CumulativeFormatted || ''}).
+Paragraph 2: current status (phase and sign-ups: ${sourceData?.betaTesters?.length || 0} sign-ups in ${venture.phase} phase), funding ask (${fundingAsk?.askFormatted || ''}), and 24-month revenue goal (${forecast?.year2CumulativeFormatted || ''}).
 No markdown. Plain text only.
 
 SECTIONS:
