@@ -567,10 +567,10 @@ Overview:
 [Use business_plans.product_details as-is. One paragraph.]
 
 Current Status:
-[State current phase. Summarize key improvements from mlp_data.enhancement_strategy in 2 sentences. Then write: "The current version is built around [list selected features from feature_matrix where isSelected is true]." End with beta sign-up count. If product_feedback contains meaningful responses longer than 15 characters — analyze them and add 1 sentence on what users highlighted. If feedback is noise — omit entirely.]
+[State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
 
 Technology:
-[One sentence on tech stack from mvp_data.technical_specs. One sentence on performance from mlp_data.technical_excellence. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly." Do NOT invent or synthesize tech details from other fields.]
+[Copy exact text from mvp_data.technical_specs only — no paraphrasing. Copy exact text from mlp_data.technical_excellence only. If both fields are empty or missing — write EXACTLY: "No meaningful data found for this section. Please complete the relevant stage or edit directly." Do NOT write anything else. Do NOT use any other field as source for technology information.]
 
 market:
 Write exactly 3 sub-sections, each label on its own line followed by a colon, then content on the next line:
