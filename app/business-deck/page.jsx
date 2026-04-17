@@ -563,7 +563,7 @@ product:
 Write exactly 3 sub-sections, each label on its own line:
 
 Overview:
-[Use business_plans.product_details as-is. If empty — use ventures.solution as-is. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
+[Use business_plans.product_details as-is. If empty or not meaningful — use the EXACT text from ventures.solution field in the DATA section. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
 
 Current Status:
 [State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
@@ -640,8 +640,10 @@ ${allFields}`;
       // Build Technology sub-section in code (not AI)
       const mvpData = venture.mvp_data || {};
       const mlpData = venture.mlp_data || {};
-      const techSpec = mvpData.technical_specs || null;
-      const techExc = mlpData.technical_excellence || null;
+      const techSpecRaw = mvpData.technical_specs || null;
+      const techSpec = (techSpecRaw && isMeaningfulContent(techSpecRaw)) ? techSpecRaw : null;
+      const techExcRaw = mlpData.technical_excellence || null;
+      const techExc = (techExcRaw && isMeaningfulContent(techExcRaw)) ? techExcRaw : null;
       const techParts2 = [techSpec, techExc].filter(Boolean);
       const techText = techParts2.length > 0
         ? techParts2.join('\n')
@@ -680,7 +682,8 @@ SECTIONS:
 ${sectionsText}`;
 
         const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'sys' });
-        normalized.executive_summary = execResult?.response?.trim() || '';
+        const rawExec = execResult?.response?.trim() || '';
+        normalized.executive_summary = rawExec.replace(/```json|```/g, '').trim();
       } catch (e) {
         console.error('Executive summary generation failed:', e);
         normalized.executive_summary = venture.name + ' is seeking ' + (fundingAsk?.askFormatted || 'funding') + ' to fund its next 24 months of operations.';
