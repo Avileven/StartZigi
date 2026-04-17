@@ -155,6 +155,19 @@ function calculateFundingAsk(budgets, forecast) {
   };
 }
 
+
+// Filter out placeholder/meaningless founder text
+function isMeaningfulContent(text) {
+  if (!text || text.trim().length < 15) return false;
+  const lower = text.toLowerCase();
+  const placeholders = ['not sure', 'will follow', 'tbd', 'todo', 'n/a', 'to be', 'coming soon', 'will add', 'will fill'];
+  return !placeholders.some(p => lower.includes(p));
+}
+
+function meaningfulOrFallback(text) {
+  return isMeaningfulContent(text) ? text : null;
+}
+
 // ─── Build prompt data ────────────────────────────────────────────────────────
 
 function buildPromptData(data, forecast, fundingAsk) {
@@ -173,11 +186,11 @@ function buildPromptData(data, forecast, fundingAsk) {
   if (v.phase)       lines.push(`Phase: ${v.phase}`);
 
   lines.push('\n=== BUSINESS PLAN ===');
-  if (bp.product_details)         lines.push(`Product Details: ${bp.product_details}`);
-  if (bp.market_size)             lines.push(`Market Size: ${bp.market_size}`);
-  if (bp.target_customers)        lines.push(`Target Customers: ${bp.target_customers}`);
+  if (meaningfulOrFallback(bp.product_details)) lines.push(`Product Details: ${bp.product_details}`);
+  if (meaningfulOrFallback(bp.market_size)) lines.push(`Market Size: ${bp.market_size}`);
+  if (meaningfulOrFallback(bp.target_customers)) lines.push(`Target Customers: ${bp.target_customers}`);
   if (bp.competition)             lines.push(`Competition: ${bp.competition}`);
-  if (bp.entrepreneur_background) lines.push(`Founder Background: ${bp.entrepreneur_background}`);
+  if (meaningfulOrFallback(bp.entrepreneur_background)) lines.push(`Founder Background: ${bp.entrepreneur_background}`);
 
   lines.push('\n=== REVENUE MODEL DATA (use these numbers — not text descriptions) ===');
   if (rev.businessModel)          lines.push(`Model type: ${rev.businessModel}`);
@@ -534,9 +547,10 @@ RULES:
 SECTION-SPECIFIC INSTRUCTIONS:
 
 executive_summary:
-Write 2 paragraphs.
-Paragraph 1: what the company does and who it serves — synthesize from venture description + sector.
-Paragraph 2: current phase + beta sign-up count (from TRACTION section) + funding ask amount (from FUNDING ASK section) + 24-month goal.
+Write 2 paragraphs as a summary of the full business plan that follows.
+Paragraph 1: what the company does, who it serves, and what problem it solves — synthesize from the problem, solution, and product sections.
+Paragraph 2: current traction (phase + sign-up count), funding ask amount (from FUNDING ASK section), and 24-month goal from revenue forecast.
+Base it on the actual content of the other sections, not on raw data fields.
 
 problem:
 Use business_plans.problem with minimal grammar edits only. Preserve the founder's language.
@@ -605,7 +619,7 @@ executive_summary, problem, solution, product, market, business_model, team, the
 DATA:
 ${allFields}`;
 
-      const result = await InvokeLLM({ prompt, creditType: 'sys' });
+      const result = await InvokeLLM({ prompt, creditType: 'mentor' });
       const rawText = result?.response || '';
 
       let parsed;
@@ -722,7 +736,7 @@ Language: English.`;
     setDownloading(true);
     try {
       const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType,
-              Table, TableRow, TableCell, WidthType, ShadingType } = await import('docx');
+              Table, TableRow, TableCell, WidthType, ShadingType, PageBreak } = await import('docx');
 
       const fontSizeMap = { small: 20, medium: 24, large: 28 };
       const headSizeMap = { small: 28, medium: 32, large: 38 };
@@ -795,7 +809,7 @@ Language: English.`;
       // Appendix A
       const budgetRows = buildBudgetRows(sourceData?.budgets);
       if (budgetRows.length) {
-        children.push(makeH1('Appendix A — Monthly Budget Breakdown'));
+        children.push(makeH1('Appendix B — Monthly Budget Breakdown'));
         const total = budgetRows.reduce((sum, r) => sum + (r.monthly || 0), 0);
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
@@ -813,7 +827,8 @@ Language: English.`;
       if (appendixConfig.revenueParams) {
       const revRows = buildRevenueParamsRows(venture?.revenue_model_data);
       if (revRows.length) {
-        children.push(makeH1('Appendix B — Revenue Model Assumptions'));
+        children.push(new Paragraph({ children: [new PageBreak()] }));
+        children.push(makeH1('Appendix C — Revenue Model Assumptions'));
         children.push(new Table({
           width: { size: 9360, type: WidthType.DXA },
           columnWidths: [5460, 3900],
@@ -827,7 +842,8 @@ Language: English.`;
 
       // Appendix C — Break-even
       if (appendixConfig.breakeven && breakevenData) {
-        children.push(makeH1('Appendix C — Break-even Analysis'));
+        children.push(new Paragraph({ children: [new PageBreak()] }));
+        children.push(makeH1('Appendix D — Break-even Analysis'));
         if (breakevenData.breakevenMonth) {
           children.push(makeBody(`Based on current projections, the company reaches break-even at month ${breakevenData.breakevenMonth}.`));
         } else {
@@ -929,17 +945,14 @@ Language: English.`;
 
       {/* Top bar */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              Business Deck — {venture?.name}
-            </h1>
-            <p className="text-xs text-gray-400 mt-0.5 capitalize">{venture?.phase} phase</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="max-w-5xl mx-auto px-6 py-3">
+          <h1 className="text-xl font-bold text-gray-900 text-center flex items-center justify-center gap-2">
+            <FileText className="w-5 h-5 text-indigo-600" />
+            Business Deck — {venture?.name}
+          </h1>
+          <div className="flex items-center justify-center gap-2 flex-wrap mt-2">
             {deckRecord && (
-              <span className="text-xs text-gray-400 hidden sm:block">
+              <span className="text-xs text-gray-400">
                 Generated: {new Date(deckRecord.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             )}
@@ -949,7 +962,7 @@ Language: English.`;
                 className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 text-xs font-semibold gap-1.5">
                 {mentorLoading
                   ? <><Loader2 className="animate-spin w-3 h-3" />Reviewing...</>
-                  : <><MessageSquare className="w-3 h-3" />Mentor Review (1 credit)</>}
+                  : <><MessageSquare className="w-3 h-3" />Mentor Review</>}
               </Button>
             )}
             <Button onClick={handleGenerate} disabled={generating}
@@ -960,14 +973,7 @@ Language: English.`;
                   ? <><RefreshCw className="w-4 h-4" />Regenerate</>
                   : <><Sparkles className="w-4 h-4" />Generate Business Plan</>}
             </Button>
-            {deckData && (
-              <Button onClick={handleDownload} disabled={downloading}
-                className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 h-9 text-sm gap-1.5">
-                {downloading
-                  ? <><Loader2 className="animate-spin w-4 h-4" />Preparing...</>
-                  : <><Download className="w-4 h-4" />Download .docx</>}
-              </Button>
-            )}
+
           </div>
         </div>
       </div>
@@ -989,6 +995,8 @@ Language: English.`;
               </p>
               <p className="text-sm text-indigo-600 font-medium">
                 ✏️ Click on any text in the preview below to edit it directly. Use Mentor Review to get expert feedback on the full document. See details in appendix
+              </p>
+              <p className="text-xs text-indigo-500 mt-1">Each generation and Mentor Review costs 1 credit.
               </p>
             </div>
           </div>
@@ -1137,7 +1145,7 @@ Language: English.`;
               {/* Appendix D — Key Metrics & Forecast */}
               {appendixConfig.forecast && forecast && (
                 <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <h2 className="text-xl font-bold text-indigo-600">Appendix D — Key Metrics & Forecast Highlights</h2>
+                  <h2 className="text-xl font-bold text-indigo-600">Appendix A — Key Metrics & Forecast Highlights</h2>
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-slate-50">
@@ -1162,7 +1170,7 @@ Language: English.`;
                 const total = rows.reduce((sum, r) => sum + (r.monthly || 0), 0);
                 return (
                   <div className="space-y-3 pt-4 border-t border-slate-100">
-                    <h2 className="text-xl font-bold text-indigo-600">Appendix A — Monthly Budget Breakdown</h2>
+                    <h2 className="text-xl font-bold text-indigo-600">Appendix B — Monthly Budget Breakdown</h2>
                     <table className="w-full border-collapse text-sm">
                       <thead>
                         <tr className="bg-slate-50">
@@ -1199,7 +1207,7 @@ Language: English.`;
                 if (!rows.length) return null;
                 return (
                   <div className="space-y-3 pt-4 border-t border-slate-100">
-                    <h2 className="text-xl font-bold text-indigo-600">Appendix B — Revenue Model Assumptions</h2>
+                    <h2 className="text-xl font-bold text-indigo-600">Appendix C — Revenue Model Assumptions</h2>
                     <table className="w-full border-collapse text-sm">
                       <thead>
                         <tr className="bg-slate-50">
@@ -1223,7 +1231,7 @@ Language: English.`;
               {/* Appendix C — Break-even */}
               {appendixConfig.breakeven && breakevenData && (
                 <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <h2 className="text-xl font-bold text-indigo-600">Appendix C — Break-even Analysis</h2>
+                  <h2 className="text-xl font-bold text-indigo-600">Appendix D — Break-even Analysis</h2>
                   {breakevenData.breakevenMonth ? (
                     <p className="text-sm text-green-700 font-medium bg-green-50 border border-green-200 rounded-lg px-4 py-2">
                       ✓ Based on current projections, the company reaches break-even at month {breakevenData.breakevenMonth}.
@@ -1329,10 +1337,10 @@ Language: English.`;
               <p className="text-sm font-medium text-gray-700">Include in download:</p>
               <div className="flex flex-col gap-2">
                 {[
-                  { key: 'forecast', label: 'Appendix D — Key Metrics & Forecast Highlights' },
-                  { key: 'budget', label: 'Appendix A — Monthly Budget Breakdown' },
-                  { key: 'revenueParams', label: 'Appendix B — Revenue Model Assumptions' },
-                  { key: 'breakeven', label: 'Appendix C — Break-even Analysis' },
+                  { key: 'forecast', label: 'Appendix A — Key Metrics & Forecast Highlights' },
+                  { key: 'budget', label: 'Appendix B — Monthly Budget Breakdown' },
+                  { key: 'revenueParams', label: 'Appendix C — Revenue Model Assumptions' },
+                  { key: 'breakeven', label: 'Appendix D — Break-even Analysis' },
                 ].map(({ key, label }) => (
                   <label key={key} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={appendixConfig[key]}
