@@ -182,6 +182,7 @@ function buildPromptData(data, forecast, fundingAsk) {
   lines.push('=== VENTURE ===');
   if (v.name)        lines.push(`Name: ${v.name}`);
   if (v.description) lines.push(`Description: ${v.description}`);
+  if (v.solution)    lines.push(`Solution (use for Overview if product_details empty): ${v.solution}`);
   if (v.sector)      lines.push(`Sector: ${v.sector}`);
   if (v.phase)       lines.push(`Phase: ${v.phase}`);
 
@@ -669,7 +670,7 @@ ${allFields}`;
           'Business Model: ' + (normalized.business_model || ''),
           'Team: ' + (normalized.team || ''),
           'The Ask: ' + (normalized.the_ask || ''),
-        ].filter(s => !s.includes('No meaningful data')).join('\n\n');
+        ].filter(s => s.trim().length > 10).join('\n\n');
 
         const execPrompt = `You are writing the Executive Summary for an investor business plan.
 Based ONLY on the sections below — do not invent anything not present.
