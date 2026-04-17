@@ -189,7 +189,7 @@ function buildPromptData(data, forecast, fundingAsk) {
   if (meaningfulOrFallback(bp.product_details)) lines.push(`Product Details: ${bp.product_details}`);
   if (meaningfulOrFallback(bp.market_size)) lines.push(`Market Size: ${bp.market_size}`);
   if (meaningfulOrFallback(bp.target_customers)) lines.push(`Target Customers: ${bp.target_customers}`);
-  if (bp.competition)             lines.push(`Competition: ${bp.competition}`);
+  if (meaningfulOrFallback(bp.competition)) lines.push(`Competition: ${bp.competition}`);
   if (meaningfulOrFallback(bp.entrepreneur_background)) lines.push(`Founder Background: ${bp.entrepreneur_background}`);
 
   lines.push('\n=== REVENUE MODEL DATA (use these numbers — not text descriptions) ===');
@@ -248,7 +248,7 @@ function buildPromptData(data, forecast, fundingAsk) {
   }
 
   lines.push('\n=== FOUNDER BACKGROUND ===');
-  if (bp.entrepreneur_background) lines.push(`Team: ${bp.entrepreneur_background}`);
+  if (meaningfulOrFallback(bp.entrepreneur_background)) lines.push(`Team: ${bp.entrepreneur_background}`);
 
   return lines.join('\n');
 }
@@ -566,7 +566,7 @@ Overview:
 [Use business_plans.product_details as-is. If empty — use ventures.solution as-is. If both empty — write: "No meaningful data found for this section. Please complete the relevant stage or edit directly."]
 
 Current Status:
-[Always start with: "The platform is currently in [ventures.phase] phase." Then: if mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If empty — skip. Then write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with: "[ventures.name] currently has [beta_testers count] beta sign-ups." If product_feedback has meaningful responses (>15 chars) — add 1 sentence. If not — omit.]
+[State current phase. If mlp_data.enhancement_strategy exists and is meaningful — summarize key improvements in 2 sentences. If mlp_data.enhancement_strategy is empty or missing — do NOT invent improvements, skip this part entirely. Write: "The current version is built around [list feature names where isSelected is true from feature_matrix]." End with beta sign-up count. If product_feedback has meaningful responses (>15 chars) — add 1 sentence on what users highlighted. If not — omit.]
 
 Technology:
 [This sub-section is built by the system — leave it empty in your response. Write nothing here.]
@@ -638,24 +638,20 @@ ${allFields}`;
       });
 
       // Build Technology sub-section in code (not AI)
-      const mvp = venture.mvp_data || {};
-      const mlp = venture.mlp_data || {};
-      const techParts = [];
-      if (mlp.technical_specs || mvp.technical_specs) techParts.push(mlp.technical_specs || mvp.technical_specs);
-      if (mlp.technical_excellence) techParts.push(mlp.technical_excellence);
-      const techText = techParts.length > 0
-        ? techParts.join('\n')
+      const mvpData = venture.mvp_data || {};
+      const mlpData = venture.mlp_data || {};
+      const techSpec = mvpData.technical_specs || null;
+      const techExc = mlpData.technical_excellence || null;
+      const techParts2 = [techSpec, techExc].filter(Boolean);
+      const techText = techParts2.length > 0
+        ? techParts2.join('\n')
         : 'No meaningful data found for this section. Please complete the relevant stage or edit directly.';
 
-      // Inject Technology into product section
+      // Inject Technology — cut at Technology: label and replace everything after
       if (normalized.product) {
-        // Always append/replace Technology section
-        if (normalized.product.includes('Technology:')) {
-          // Replace everything after Technology: label
-          normalized.product = normalized.product.replace(
-            /Technology:[\s\S]*$/,
-            'Technology:\n' + techText
-          );
+        const techIdx = normalized.product.indexOf('Technology:');
+        if (techIdx !== -1) {
+          normalized.product = normalized.product.substring(0, techIdx) + 'Technology:\n' + techText;
         } else {
           normalized.product += '\n\nTechnology:\n' + techText;
         }
@@ -683,14 +679,11 @@ No markdown. Plain text only.
 SECTIONS:
 ${sectionsText}`;
 
-        const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'mentor' });
-        const execText = execResult?.response?.trim() || '';
-        // Clean any JSON fences if present
-        normalized.executive_summary = execText.replace(/```json|```/g, '').trim();
+        const execResult = await InvokeLLM({ prompt: execPrompt, creditType: 'sys' });
+        normalized.executive_summary = execResult?.response?.trim() || '';
       } catch (e) {
         console.error('Executive summary generation failed:', e);
-        // Fallback: simple summary from venture data
-        normalized.executive_summary = `${venture.name} is ${venture.description || 'a platform in development'}. The company is currently in ${venture.phase} phase and is seeking ${fundingAsk?.askFormatted || 'funding'} to achieve its 24-month goals.`;
+        normalized.executive_summary = venture.name + ' is seeking ' + (fundingAsk?.askFormatted || 'funding') + ' to fund its next 24 months of operations.';
       }
 
       const now = new Date().toISOString();
