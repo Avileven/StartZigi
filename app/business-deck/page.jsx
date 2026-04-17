@@ -1482,31 +1482,30 @@ Language: English.`;
               )}
             </div>
             {/* Contact details */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-2">
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <p className="text-sm font-medium text-gray-700">Contact details in download</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Email</label>
+                  <input type="email" value={contactInfo.email}
+                    onChange={e => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="founder@company.com"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Website</label>
+                  <input type="url" value={contactInfo.website}
+                    onChange={e => setContactInfo(prev => ({ ...prev, website: e.target.value }))}
+                    placeholder="https://company.com"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={contactInfo.enabled}
                   onChange={e => setContactInfo(prev => ({ ...prev, enabled: e.target.checked }))}
                   className="w-4 h-4 text-indigo-600 rounded" />
-                <p className="text-sm font-medium text-gray-700">Include contact details in download</p>
-              </div>
-              {contactInfo.enabled && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-6">
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-500">Email</label>
-                    <input type="email" value={contactInfo.email}
-                      onChange={e => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="founder@company.com"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-500">Website</label>
-                    <input type="url" value={contactInfo.website}
-                      onChange={e => setContactInfo(prev => ({ ...prev, website: e.target.value }))}
-                      placeholder="https://company.com"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </div>
-                </div>
-              )}
+                <span className="text-sm text-gray-600">Include in download</span>
+              </label>
             </div>
 
             {/* Appendix selection */}
