@@ -69,13 +69,11 @@ export default function BusinessDeckMockup({ autoStart = false }) {
       // Download animation
       setShowDownload(true);
       const t1 = setTimeout(() => { if (activeRef.current) setShowTables(true); }, 1200);
-      const t2 = setTimeout(() => { if (activeRef.current) setStep(5); }, 5000);
+      const t2 = setTimeout(() => { if (activeRef.current) setIsDone(true); }, 5000);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     }
 
-    if (step === 5) {
-      setIsDone(true);
-    }
+
   }, [step, isStarted]);
 
   function replay(e) {
@@ -268,7 +266,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
             )}
 
             {/* Step 4: download scroll animation + tables */}
-            {step === 4 && (
+            {(step === 4 || (isDone && step === 4)) && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {/* Scroll animation */}
                 {!showTables && (
