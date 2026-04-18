@@ -60,10 +60,21 @@ export default function BusinessDeckMockup({ autoStart = false }) {
     }
 
     if (step === 3) {
+      // Show customize panel — auto advance after delay
+      const t = setTimeout(() => { if (activeRef.current) setStep(4); }, 2500);
+      return () => clearTimeout(t);
+    }
+
+    if (step === 4) {
+      // Download animation
       setShowDownload(true);
-      const t1 = setTimeout(() => { if (activeRef.current) setShowTables(true); }, 800);
-      const t2 = setTimeout(() => { if (activeRef.current) setIsDone(true); }, 4500);
+      const t1 = setTimeout(() => { if (activeRef.current) setShowTables(true); }, 1200);
+      const t2 = setTimeout(() => { if (activeRef.current) setStep(5); }, 5000);
       return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+
+    if (step === 5) {
+      setIsDone(true);
     }
   }, [step, isStarted]);
 
@@ -155,13 +166,26 @@ export default function BusinessDeckMockup({ autoStart = false }) {
                   {step === 2 ? "GENERATING..." : "READY"}
                 </div>
               )}
-              <div style={{
-                background: step === 1 ? "#e0e0e0" : showDownload ? "#22c55e" : "#6c47ff",
-                color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8,
-                transition: "all 0.4s",
-              }}>
-                {step === 1 ? "Generate Business Plan" : showDownload ? "✓ Downloaded" : "Download .docx"}
-              </div>
+              {step === 1 && (
+                <div style={{ background: "#e0e0e0", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
+                  Generate Business Plan
+                </div>
+              )}
+              {step === 2 && (
+                <div style={{ background: "#f0edff", color: "#6c47ff", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+                  GENERATING...
+                </div>
+              )}
+              {(step === 3 || step === 4) && (
+                <div style={{ background: "#f0fdf4", color: "#16a34a", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+                  READY
+                </div>
+              )}
+              {step === 5 && (
+                <div style={{ background: "#22c55e", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
+                  ✓ Downloaded
+                </div>
+              )}
             </div>
           </div>
 
@@ -204,19 +228,71 @@ export default function BusinessDeckMockup({ autoStart = false }) {
               </div>
             )}
 
-            {/* Step 3: download view with tables */}
+            {/* Step 3: Customize & Download */}
             {step === 3 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ textAlign: "center", paddingBottom: 12, borderBottom: "0.5px solid #eee" }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: "#6c47ff" }}>MindBridge</div>
-                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>Investor Business Plan · April 2026</div>
-                  <div style={{ fontSize: 10, color: "#ccc", fontStyle: "italic" }}>Confidential — Not for distribution</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "deckFadeIn 0.4s ease" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Customize & Download</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>Company name</div>
+                    <div style={{ background: "#fff", border: "0.5px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", fontSize: 11, color: "#374151" }}>MindBridge</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 4 }}>Heading color</div>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      {["#4F46E5","#2563EB","#0D9488","#16A34A","#7C3AED","#111827"].map((c,i) => (
+                        <div key={i} style={{ width: 18, height: 18, borderRadius: "50%", background: c, border: i === 0 ? "2px solid #111" : "2px solid transparent" }} />
+                      ))}
+                    </div>
+                  </div>
                 </div>
+                <div>
+                  <div style={{ fontSize: 10, color: "#6b7280", marginBottom: 6 }}>Include in download:</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {["Appendix A — Key Metrics & Forecast Highlights","Appendix B — Monthly Budget Breakdown","Appendix C — Revenue Model Assumptions","Appendix D — Break-even Analysis"].map((a,i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#374151" }}>
+                        <div style={{ width: 12, height: 12, borderRadius: 3, background: "#6c47ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ width: 6, height: 6, background: "#fff", borderRadius: 1 }} />
+                        </div>
+                        {a}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", paddingTop: 4 }}>
+                  <div style={{ background: "#6c47ff", color: "#fff", fontSize: 12, fontWeight: 600, padding: "8px 24px", borderRadius: 8, cursor: "pointer", animation: "deckPulse 1s ease 1.5s 2" }}>
+                    Download Word (.docx)
+                  </div>
+                </div>
+              </div>
+            )}
 
-                <div style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 8, padding: "10px 14px", animation: "deckFadeIn 0.4s ease" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6c47ff", marginBottom: 4 }}>Executive Summary</div>
-                  <div style={{ fontSize: 10, color: "#555", lineHeight: 1.5 }}>MindBridge is an AI-powered mental wellness platform delivering personalized daily check-ins and evidence-based exercises. The company is in Beta with 47 sign-ups and is raising $1.2M seed to reach 10,000 paying users in 18 months.</div>
-                </div>
+            {/* Step 4: download scroll animation + tables */}
+            {step === 4 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* Scroll animation */}
+                {!showTables && (
+                  <div style={{ overflow: "hidden", height: 200, position: "relative" }}>
+                    <div style={{ animation: "deckScroll 1s ease forwards" }}>
+                      <div style={{ textAlign: "center", paddingBottom: 8, marginBottom: 8, borderBottom: "0.5px solid #eee" }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: "#6c47ff" }}>MindBridge</div>
+                        <div style={{ fontSize: 10, color: "#aaa" }}>Investor Business Plan · April 2026</div>
+                        <div style={{ fontSize: 9, color: "#bbb", fontStyle: "italic" }}>sarah@mindbridge.io  |  mindbridge.io</div>
+                      </div>
+                      {["Executive Summary","The Problem","The Solution","Product","Market Opportunity","Business Model","Team","The Ask"].map((s,i) => (
+                        <div key={i} style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#6c47ff", marginBottom: 3 }}>{i+1}. {s}</div>
+                          <div style={{ height: 7, background: "#f0f0f8", borderRadius: 3, width: "95%", marginBottom: 2 }} />
+                          <div style={{ height: 7, background: "#f0f0f8", borderRadius: 3, width: "80%", marginBottom: 2 }} />
+                          <div style={{ height: 7, background: "#f0f0f8", borderRadius: 3, width: "88%" }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {showTables && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "deckFadeIn 0.5s ease" }}>
 
                 {showTables && (
                   <>
@@ -263,7 +339,9 @@ export default function BusinessDeckMockup({ autoStart = false }) {
                       </table>
                     </div>
                   </>
-                )}
+                  )}
+                </div>
+              )}
               </div>
             )}
           </div>
@@ -280,6 +358,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
         @keyframes deckSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes deckFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes deckPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes deckScroll { from { transform: translateY(0); } to { transform: translateY(-60%); } }
       `}</style>
     </div>
   );
