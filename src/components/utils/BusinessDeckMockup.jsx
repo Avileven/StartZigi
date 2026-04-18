@@ -1,7 +1,6 @@
 // BUSINESS DECK MOCKUP
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 
 const STEPS = [
   {
@@ -130,7 +129,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <Link href="/business-deck" className="block relative group cursor-pointer">
+        <div className="relative group cursor-pointer" onClick={() => { setIsStarted(true); }}>
           {/* Mobile preview */}
           <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative", border: "0.5px solid #ddd" }}>
             <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f7ff" }}>
@@ -157,7 +156,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
 
           {/* Desktop preview */}
           <div className="hidden sm:block relative">
-            <div style={{ pointerEvents: "none", userSelect: "none", padding: "24px 12px" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none" }}>
               <div style={{ maxWidth: 900, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
                 <div style={{ background: "#f8f7ff" }}>
                   {/* Top bar */}
@@ -203,14 +202,14 @@ export default function BusinessDeckMockup({ autoStart = false }) {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
       </div>
     );
   }
 
   // Animated version
   return (
-    <div style={{ padding: "24px 12px" }}>
+    <div className="px-6">
       <div style={{ maxWidth: 900, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <div style={{ minWidth: 600, background: "#f8f7ff" }}>
