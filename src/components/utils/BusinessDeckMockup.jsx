@@ -1,6 +1,7 @@
 // BUSINESS DECK MOCKUP
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 const STEPS = [
   {
@@ -129,7 +130,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="relative group cursor-pointer" onClick={() => { setIsStarted(true); }}>
+        <Link href="/business-deck-mockup" className="block relative group cursor-pointer">
           {/* Mobile preview */}
           <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative", border: "0.5px solid #ddd" }}>
             <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f7ff" }}>
@@ -202,7 +203,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     );
   }
