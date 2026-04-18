@@ -153,19 +153,14 @@ export default function BusinessDeckMockup({ autoStart = false }) {
   return (
     <div className="px-6">
       <div className="max-w-4xl mx-auto">
-        <div style={{ background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd" }}>
+        <div style={{ maxWidth: 520, margin: "0 auto", background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", height: 520, display: "flex", flexDirection: "column" }}>
 
           {/* Top bar */}
           <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>Business Deck — MindBridge</div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {step >= 2 && (
-                <div style={{ background: step === 2 ? "#f0edff" : "#f0fdf4", color: step === 2 ? "#6c47ff" : "#16a34a", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, animation: "deckFadeIn 0.4s ease" }}>
-                  {step === 2 ? "GENERATING..." : "READY"}
-                </div>
-              )}
               {step === 1 && (
-                <div style={{ background: "#e0e0e0", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
+                <div style={{ background: "#6c47ff", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
                   Generate Business Plan
                 </div>
               )}
@@ -175,9 +170,14 @@ export default function BusinessDeckMockup({ autoStart = false }) {
                 </div>
               )}
               {(step === 3 || step === 4) && (
-                <div style={{ background: "#f0fdf4", color: "#16a34a", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
-                  READY
-                </div>
+                <>
+                  <div style={{ background: "#f0fdf4", color: "#16a34a", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+                    READY
+                  </div>
+                  <div style={{ background: "#6c47ff", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
+                    Mentor Review
+                  </div>
+                </>
               )}
               {step === 5 && (
                 <div style={{ background: "#22c55e", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 8 }}>
@@ -188,7 +188,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
           </div>
 
           {/* Body */}
-          <div style={{ padding: 20, minHeight: 300 }}>
+          <div style={{ padding: 20, flex: 1, overflowY: "auto" }}>
 
             {/* Step 1: empty placeholders */}
             {step === 1 && (
@@ -270,8 +270,8 @@ export default function BusinessDeckMockup({ autoStart = false }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {/* Scroll animation */}
                 {!showTables && (
-                  <div style={{ overflow: "hidden", height: 200, position: "relative" }}>
-                    <div style={{ animation: "deckScroll 1s ease forwards" }}>
+                  <div style={{ overflow: "hidden", height: 320, position: "relative" }}>
+                    <div style={{ animation: "deckScroll 1.5s ease forwards" }}>
                       <div style={{ textAlign: "center", paddingBottom: 8, marginBottom: 8, borderBottom: "0.5px solid #eee" }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: "#6c47ff" }}>MindBridge</div>
                         <div style={{ fontSize: 10, color: "#aaa" }}>Investor Business Plan · April 2026</div>
