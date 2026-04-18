@@ -11,6 +11,7 @@ import StudioMockup from "@/components/utils/StudioMockup";
 import VCSimulationMockup from "@/components/utils/VCSimulationMockup";
 import FeedbackMockup from "@/components/utils/FeedbackMockup";
 import BetaMockup from "@/components/utils/BetaMockup";
+import BusinessDeckMockup from "@/components/utils/BusinessDeckMockup";
 
 
 
@@ -336,7 +337,20 @@ export default function Home() {
         </div>
         <BetaMockup autoStart={false} />
       </div>
-
+{/* 8. Business Deck */}
+<div className="py-16 px-6">
+  <div className="max-w-4xl mx-auto mb-8">
+    <h2 className="text-3xl md:text-4xl font-bold mb-2">
+      <span className="text-white">
+        Your Investor Business Plan, Generated
+      </span>
+    </h2>
+    <p className="text-white/55 text-sm">
+      StartZig assembles everything you've built into a professional investor-ready business plan — with AI analysis, revenue forecast, and break-even analysis. Available on Pro Founder and above.
+    </p>
+  </div>
+  <BusinessDeckMockup autoStart={false} />
+</div>
       <WhoSection />
 
       {/* ── Full Features List ── */}
