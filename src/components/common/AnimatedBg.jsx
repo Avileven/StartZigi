@@ -32,7 +32,7 @@ export default function StartupDramaBg() {
             border-radius: 4px;
             font-size: 0.85rem;
             font-weight: 800;
-            top: 60%;
+            top: 50%;
             opacity: 0;
             white-space: nowrap;
             letter-spacing: 1px;
@@ -78,8 +78,8 @@ export default function StartupDramaBg() {
 
         @keyframes crash-down {
             0% { transform: translateY(0) opacity: 0; }
-            10% { opacity: 0.3; color: rgba(255, 255, 255, 0.2); }
-            30% { transform: translateY(-50px); opacity: 0.5; }
+            10% { opacity: 0.2; color: rgba(255, 255, 255, 0.2); }
+            30% { transform: translateY(-50px); opacity: 0.3; }
             100% { transform: translateY(400px) rotate(15deg); opacity: 0; }
         }
 
