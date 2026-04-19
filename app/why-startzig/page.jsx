@@ -34,15 +34,7 @@ export default function WhyStartZig() {
                     </p>
 
                     <p>
-                        Most startup stories are told like a straight line.
-                    </p>
-
-                    <p>
-                        Reality doesn't work like that.
-                    </p>
-
-                    <p>
-                        Startups don't move in straight lines — they move in <span className="text-blue-400 font-bold">Zigs</span>.
+                        Most startup stories are told like a straight line. Reality doesn't work like that. Startups don't move in straight lines, they move in <span className="text-blue-400 font-bold">Zigs</span>.
                     </p>
 
                     <p>
@@ -50,11 +42,7 @@ export default function WhyStartZig() {
                     </p>
 
                     <p>
-                        Most founders experience these moments. Few know how to respond to them. Some ignore them. Some panic. Some pivot too late.
-                    </p>
-
-                    <p>
-                        The best founders do something else: they recognize the Zig and <span className="text-white font-semibold">move with it</span>.
+                        Most founders experience these moments. Few know how to respond to them. Some ignore them. Some panic. Some pivot too late. The best founders do something else: they recognize the Zig and move with it.
                     </p>
 
                     <p>
@@ -66,11 +54,7 @@ export default function WhyStartZig() {
                     </p>
 
                     <p>
-                        A founder builds a product for one clear problem. Then a user says: <span className="italic text-white">"I don't need that. I need something else."</span> That moment is the Zig. Not in the product. In the founder's thinking.
-                    </p>
-
-                    <p>
-                        Ignore it and you waste months. Chase it blindly and you lose direction. Understand it and everything changes.
+                        A founder builds a product for one clear problem. Then a user says: <span className="italic text-white">"I don't need that. I need something else."</span> That moment is the Zig. Not in the product. In the founder's thinking. Ignore it and you waste months. Chase it blindly and you lose direction. Understand it and everything changes.
                     </p>
 
                     <p>
@@ -88,16 +72,13 @@ export default function WhyStartZig() {
                         transition: 'opacity 1.2s ease 0.4s',
                     }}
                 >
-                    <Link href="/register" className="group inline-block">
-                        <p className="text-3xl md:text-5xl font-bold text-white/70 leading-tight">
-                            Startups don't succeed because they followed the plan.
-                        </p>
-                        <p className="text-xl md:text-2xl text-white/40 mt-4 font-normal">
-                            They succeed because they learned when to Zig.
-                        </p>
-                        <p className="text-3xl md:text-5xl font-black text-purple-400 mt-10 group-hover:scale-105 transition-transform duration-300">
-                            StartZig.
-                        </p>
+                    <p className="text-white/40 italic text-2xl mb-12">
+                        Ready to Zig?
+                    </p>
+                    <Link href="/register">
+                        <button className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full border border-white/30 text-lg font-medium transition-all">
+                            Start Your Journey
+                        </button>
                     </Link>
                 </div>
             </main>
