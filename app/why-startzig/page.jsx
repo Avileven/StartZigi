@@ -54,7 +54,7 @@ export default function WhyStartZig() {
                     </p>
 
                     <p>
-                        The best founders do something else: they recognize the Zig — and <span className="text-white font-semibold">move with it</span>.
+                        The best founders do something else: they recognize the Zig and <span className="text-white font-semibold">move with it</span>.
                     </p>
 
                     <p>
@@ -62,24 +62,22 @@ export default function WhyStartZig() {
                     </p>
 
                     <p>
-                        Zigging is not a failure of the plan. <span className="text-white font-semibold">It is the process.</span>
+                        <span className="italic text-white/60">Zigging is not a failure of the plan. It is the process.</span>
                     </p>
 
                     <p>
-                        A founder builds a product for one clear problem. Then a user says: <span className="italic text-white">"I don't need that — I need something else."</span> That moment is the Zig. Not in the product. In the founder's thinking.
+                        A founder builds a product for one clear problem. Then a user says: <span className="italic text-white">"I don't need that. I need something else."</span> That moment is the Zig. Not in the product. In the founder's thinking.
                     </p>
 
                     <p>
-                        Ignore it — and you waste months. Chase it blindly — and you lose direction. Understand it — and everything changes.
+                        Ignore it and you waste months. Chase it blindly and you lose direction. Understand it and everything changes.
                     </p>
 
                     <p>
-                        StartZig exists to help founders experience these moments earlier — before they become expensive. Inside the platform, founders move through the real stages of building a startup, from idea to MVP to product-market fit and beyond. But more importantly — they encounter the Zigs. Moments where assumptions are challenged, decisions must be made, and direction is unclear. And instead of guessing in the real world, they learn how to navigate them.
+                        Inside StartZig, you don't read about the Zig. You experience it. At each stage from idea to exit, the platform challenges your assumptions with real feedback from a live community, an AI mentor, and simulated investors. Three perspectives: the market, the expertise, and the capital. Before you spend a single dollar.
                     </p>
 
-                    <p>
-                        <span className="text-white font-bold">"StartUp"</span> suggests a beginning. <span className="text-purple-400 font-bold">"StartZig"</span> suggests something else: that what defines a startup is not how it starts — but how it changes direction.
-                    </p>
+
 
                 </div>
 
@@ -97,8 +95,7 @@ export default function WhyStartZig() {
                         <p className="text-xl md:text-2xl text-white/40 mt-4 font-normal">
                             They succeed because they learned when to Zig.
                         </p>
-                        <p className="text-2xl md:text-4xl font-bold text-white/60 mt-10">Don't just start.</p>
-                        <p className="text-5xl md:text-8xl font-black text-purple-400 mt-2 group-hover:scale-105 transition-transform duration-300">
+                        <p className="text-3xl md:text-5xl font-black text-purple-400 mt-10 group-hover:scale-105 transition-transform duration-300">
                             StartZig.
                         </p>
                     </Link>
