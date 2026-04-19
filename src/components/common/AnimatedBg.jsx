@@ -78,8 +78,8 @@ export default function StartupDramaBg() {
 
         @keyframes crash-down {
             0% { transform: translateY(0) opacity: 0; }
-            10% { opacity: 0.2; color: rgba(255, 255, 255, 0.2); }
-            30% { transform: translateY(-50px); opacity: 0.3; }
+            10% { opacity: 0.3; color: rgba(255, 255, 255, 0.2); }
+            30% { transform: translateY(-50px); opacity: 0.5; }
             100% { transform: translateY(400px) rotate(15deg); opacity: 0; }
         }
 
