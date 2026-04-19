@@ -2,16 +2,16 @@ import React from 'react';
 
 export default function StartupDramaBg() {
   const ventures = [
-    { name: "FinFlow", status: "fail", speed: 12 },
-    { name: "NeuralLogic", status: "winner", speed: 15 }, 
-    { name: "EcoGrid", status: "fail", speed: 10 },
-    { name: "AI-Core", status: "fail", speed: 13 },
-    { name: "HealthLink", status: "fail", speed: 11 },
-    { name: "SecureNet", status: "winner", speed: 18 }, 
-    { name: "CloudWise", status: "fail", speed: 14 },
-    { name: "BioMatch", status: "fail", speed: 9 },
-    { name: "SmartLog", status: "fail", speed: 12 },
-    { name: "Nexus", status: "winner", speed: 16 }
+    { name: "FinFlow", status: "fail", speed: 8 },
+    { name: "NeuralLogic", status: "winner", speed: 10 }, 
+    { name: "EcoGrid", status: "fail", speed: 7 },
+    { name: "AI-Core", status: "fail", speed: 9 },
+    { name: "HealthLink", status: "fail", speed: 8 },
+    { name: "SecureNet", status: "winner", speed: 13 }, 
+    { name: "CloudWise", status: "fail", speed: 10 },
+    { name: "BioMatch", status: "fail", speed: 6 },
+    { name: "SmartLog", status: "fail", speed: 8 },
+    { name: "Nexus", status: "winner", speed: 11 }
   ];
 
   return (

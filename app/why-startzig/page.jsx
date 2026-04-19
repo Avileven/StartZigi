@@ -16,7 +16,7 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-purple-950 text-white font-sans relative overflow-x-hidden">
 
-            <div className="fixed inset-0 z-0 opacity-35 pointer-events-none">
+            <div className="fixed inset-0 z-0 opacity-55 pointer-events-none">
                 <AnimatedBg />
             </div>
 
