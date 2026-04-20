@@ -1,4 +1,5 @@
 // pricing page - updated
+// UPDATE 200426: Block plan downgrade — user cannot select a plan lower than their current one.
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -13,6 +14,9 @@ const PLAN_CREDITS = {
   pro_founder: 300,
   unicorn: 500,
 };
+
+// [DOWNGRADE] Plan hierarchy — used to block downgrades
+const PLAN_ORDER = { explorer: 0, builder: 1, pro_founder: 2, unicorn: 3 };
 
 export default function Pricing() {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -30,6 +34,20 @@ export default function Pricing() {
         router.push('/login');
         return;
       }
+
+      // [DOWNGRADE] Fetch current plan and block if user tries to select a lower tier
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single();
+
+      if (profile && PLAN_ORDER[planKey] < PLAN_ORDER[profile.plan]) {
+        alert('You cannot downgrade to a lower plan. Please contact support if you need to make changes to your subscription.');
+        setIsUpdating(false);
+        return;
+      }
+
       await supabase.from('user_profiles').update({
         plan: planKey,
         credits_limit: PLAN_CREDITS[planKey],
