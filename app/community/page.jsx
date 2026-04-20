@@ -77,34 +77,6 @@ export default function Community() {
           ))}
         </div>
       </section>
-
-      {/* 2. VC Announcement (NOW AFTER UPDATES) */}
-      <section className="max-w-5xl mx-auto px-6 mb-32">
-        <div className="bg-gradient-to-r from-indigo-900/40 to-slate-800 border border-indigo-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-500/10">
-          <div className="flex items-center gap-6">
-            <div className="bg-indigo-500 p-4 rounded-2xl shrink-0">
-              <Briefcase className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold">New VC Alert: Nexus Capital</h3>
-              <p className="text-indigo-200 opacity-80 mt-1">Official StartZig partner for Early-Stage funding.</p>
-            </div>
-          </div>
-          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors">
-            View VC Profile
-          </button>
-        </div>
-      </section>
-
-      {/* Quote Section */}
-      <section className="py-20 px-6 bg-indigo-600/5 border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-2xl italic text-slate-300 leading-relaxed mb-6 font-serif">
-            "The way to do really great work is to love what you do. In startups, that means loving the Zig."
-          </p>
-          <p className="font-bold text-white uppercase tracking-widest text-sm">— Paul Graham, Y Combinator</p>
-        </div>
-      </section>
     </div>
   );
 }
