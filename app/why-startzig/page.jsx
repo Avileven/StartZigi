@@ -36,6 +36,19 @@ export default function WhyStartZig() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-purple-950 text-white font-sans relative overflow-x-hidden">
 
+            <style>{`
+                @keyframes zigPulse {
+                    0%, 100% { transform: translateX(0); opacity: 1; }
+                    25% { transform: translateX(3px); opacity: 0.7; }
+                    75% { transform: translateX(-3px); opacity: 0.7; }
+                }
+                .zig-word {
+                    display: inline-block;
+                    color: #93c5fd;
+                    font-weight: 600;
+                    animation: zigPulse 1.8s ease-in-out infinite;
+                }
+            `}</style>
             <main className="relative z-10 min-h-screen pt-28 md:pt-36 pb-32 px-6">
                 <div className="max-w-4xl mx-auto w-full">
 
@@ -76,7 +89,7 @@ export default function WhyStartZig() {
                         </p>
 
                         <p>
-                            But in reality, the journey is rarely a straight upward path. It is filled with uncertainties, challenges, and unexpected moments that force both the startup and its founders to Zig — to adapt, adjust, and respond to change. At every stage, something can shift.
+                            But in reality, the journey is rarely a straight upward path. It is filled with uncertainties, challenges, and unexpected moments that force both the startup and its founders to Zig, to adapt, adjust, and respond to change. At every stage, something can shift.
                         </p>
 
                         <p>
@@ -88,11 +101,23 @@ export default function WhyStartZig() {
                         </p>
 
                         <p>
-                            StartZig is built around these moments. It helps founders navigate each stage of their journey — not as a straight line, but as a continuous process of building, learning, and refining. From idea definition, to product shaping, to preparing for investment and beyond — each step is structured, but never final.
+                            <span className="text-blue-400 font-semibold">The idea</span> <span className="zig-word">Zigs</span>. A founder spends months on a concept, convinced there is a market. Then one conversation reveals the real problem is somewhere else entirely. Back to the beginning, not because of failure, but because reality showed up.
                         </p>
 
-                        <p className="italic text-white/50">
-                            Because the goal is not to follow a perfect plan. The goal is to arrive at the market with clarity, focus, and direction — after you've already faced the important questions along the way.
+                        <p>
+                            <span className="text-blue-400 font-semibold">The product</span> <span className="zig-word">Zigs</span>. Built for retail. Launched, pushed, marketed. The market doesn't respond. Then a single enterprise client tries it and sees exactly what they need. The entire direction shifts. New market, new pricing, new pitch. The product didn't change. The understanding did.
+                        </p>
+
+                        <p>
+                            <span className="text-blue-400 font-semibold">Funding</span> <span className="zig-word">Zigs</span>. Forty rejections. Runway shrinking. Then one yes, and a $5M round closes six months later. Or the opposite: a large raise, confidence, scale, and then the realization that the unit economics don't work. A down round. A rebuild.
+                        </p>
+
+                        <p>
+                            <span className="text-blue-400 font-semibold">The exit</span> <span className="zig-word">Zigs</span>. You spend a year preparing for an acquisition that never closes. The strategic buyer walks away, the valuation drops, the timing feels wrong. Then a player you never approached reaches out. They've been watching. They want to integrate what you built into something much bigger. The exit you get is never the one you planned for.
+                        </p>
+
+                        <p>
+                            StartZig is built around these moments. It helps founders navigate each stage of their journey, not as a straight line, but as a continuous process of building, learning, and refining. From idea definition, to product shaping, to preparing for investment and beyond, each step is structured, but never final.
                         </p>
 
                     </div>
