@@ -1,4 +1,6 @@
 // MentorModal 220226
+// UPDATE 180426: When user runs out of credits, show a styled message with an Upgrade Plan button
+//                linking to /pricing instead of plain text error.
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -95,7 +97,8 @@ export default function MentorModal({
     } catch (error) {
       // [CREDITS] טיפול בחסימה כשנגמרו הקרדיטים
       if (error.message === 'NO_CREDITS') {
-        setFeedback("⚠️ You've used all your mentor credits this month. Upgrade your plan to get more.");
+        // [NO_CREDITS] Set a special flag so the UI renders a styled upgrade prompt instead of plain text
+        setFeedback('NO_CREDITS');
       } else {
         setFeedback("Error generating feedback.");
       }
@@ -146,8 +149,18 @@ export default function MentorModal({
               </Button>
 
 
+              {/* [NO_CREDITS] Show upgrade prompt when user has no credits left */}
+              {feedback === 'NO_CREDITS' && (
+                <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-3 animate-in fade-in">
+                  <p className="text-amber-800 font-semibold">You've used all your mentor credits this month.</p>
+                  <a href="/pricing" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">
+                    Upgrade Plan
+                  </a>
+                </div>
+              )}
+
               {/* אזור הפידבק המעוצב */}
-              {feedback && (
+              {feedback && feedback !== 'NO_CREDITS' && (
                 <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
                   <div className="space-y-4 text-left">
                     {feedback.split('\n').map((line, index) => {
