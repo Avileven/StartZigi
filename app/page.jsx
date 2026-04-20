@@ -178,7 +178,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto animate-slideUp"
             style={{ animationDelay: "0.2s" }}
           >
-            A complete startup ecosystem combining AI guidance, real user feedback, and structured venture building tools.
+            A complete startup ecosystem combining AI guidance, real user feedback and structured venture building tools.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
