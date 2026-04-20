@@ -13,6 +13,20 @@ export default function WhyStartZig() {
     const hasRun = useRef(false);
 
     useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.zig-word, .ready-zig').forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+    }, [showText]);
+
+    useEffect(() => {
         window.scrollTo(0, 0);
         if (hasRun.current) return;
         hasRun.current = true;
@@ -46,7 +60,12 @@ export default function WhyStartZig() {
                     display: inline-block;
                     color: #93c5fd;
                     font-weight: 600;
-                    animation: zigPulse 1.8s ease-in-out infinite;
+                }
+                .zig-word.animate {
+                    animation: zigPulse 1.8s ease-in-out 3;
+                }
+                .ready-zig.animate {
+                    animation: zigPulse 1.8s ease-in-out 3;
                 }
             `}</style>
             <main className="relative z-10 min-h-screen pt-28 md:pt-36 pb-32 px-6">
@@ -130,7 +149,7 @@ export default function WhyStartZig() {
                             transition: 'opacity 1.4s ease 0.6s',
                         }}
                     >
-                        <p className="text-white/40 italic text-2xl mb-12">
+                        <p className="text-white/40 italic text-2xl mb-12 ready-zig" id="ready-zig">
                             Ready to Zig?
                         </p>
                         <Link href="/register">
