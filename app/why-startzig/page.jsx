@@ -44,14 +44,16 @@ export default function WhyStartZig() {
                         {STAGES.map((stage, i) => (
                             <span
                                 key={i}
-                                className="text-3xl md:text-5xl font-light italic transition-all duration-700"
+                                className="italic transition-all duration-700"
                                 style={{
+                                    fontSize: `${2 + i * 0.4}rem`,
+                                    fontWeight: [300, 400, 600, 700][i],
                                     color: activeStage === i
-                                        ? 'rgba(255,255,255,0.90)'
+                                        ? 'rgba(255,255,255,0.92)'
                                         : doneStages.includes(i)
                                         ? 'rgba(255,255,255,0.30)'
                                         : 'rgba(255,255,255,0.10)',
-                                    transform: activeStage === i ? 'scale(1.04)' : 'scale(1)',
+                                    transform: activeStage === i ? 'scale(1.05)' : 'scale(1)',
                                     display: 'inline-block',
                                 }}
                             >
@@ -70,23 +72,23 @@ export default function WhyStartZig() {
                         }}
                     >
                         <p>
-                            Those are the stages. And yes, that's the real order. But inside each one — the path zigzags.
+                            Those are the stages. And yes, that's the real order. But inside each one, the path Zigs.
                         </p>
 
                         <p>
-                            <span className="text-white font-semibold">The idea</span> zigzags. A founder spends months on a concept, convinced there's a market. Then one conversation reveals the real problem is somewhere else entirely. Back to the beginning — not because of failure, but because reality showed up.
+                            <span className="text-blue-400 font-semibold">The idea</span> Zigs. A founder spends months on a concept, convinced there's a market. Then one conversation reveals the real problem is somewhere else entirely. Back to the beginning, not because of failure, but because reality showed up.
                         </p>
 
                         <p>
-                            <span className="text-white font-semibold">The product</span> zigzags. Built for retail. Launched, pushed, marketed. The market doesn't respond. Then a single enterprise client tries it and sees exactly what they need. The entire direction shifts. New market, new pricing, new pitch. The product didn't change. The understanding did.
+                            <span className="text-blue-400 font-semibold">The product</span> Zigs. Built for retail. Launched, pushed, marketed. The market doesn't respond. Then a single enterprise client tries it and sees exactly what they need. The entire direction shifts. New market, new pricing, new pitch. The product didn't change. The understanding did.
                         </p>
 
                         <p>
-                            <span className="text-white font-semibold">Funding</span> zigzags. Forty rejections. Runway shrinking. Then one yes — and a $5M round closes six months later. Or the opposite: a large raise, confidence, scale — and then the realization that the unit economics don't work. A down round. A rebuild.
+                            <span className="text-blue-400 font-semibold">Funding</span> Zigs. Forty rejections. Runway shrinking. Then one yes, and a $5M round closes six months later. Or the opposite: a large raise, confidence, scale, and then the realization that the unit economics don't work. A down round. A rebuild.
                         </p>
 
                         <p>
-                            <span className="text-white font-semibold">The exit</span> zigzags. You spend a year preparing for an acquisition that never closes. The strategic buyer walks away, the valuation drops, the timing feels wrong. Then out of nowhere — a player you never approached reaches out. They've been watching. They want to integrate what you built into something much bigger. The exit you get is never the one you planned for.
+                            <span className="text-blue-400 font-semibold">The exit</span> Zigs. You spend a year preparing for an acquisition that never closes. The strategic buyer walks away, the valuation drops, the timing feels wrong. Then out of nowhere. A player you never approached reaches out. They've been watching. They want to integrate what you built into something much bigger. The exit you get is never the one you planned for.
                         </p>
 
                         <p>
