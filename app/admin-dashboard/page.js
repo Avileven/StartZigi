@@ -71,8 +71,12 @@ export default function AdminDashboard() {
         body: JSON.stringify({ to: replyTarget.email, name: replyTarget.name, message: replyMessage }),
       });
       if (!res.ok) throw new Error('Failed to send');
-      // [CRM] Mark as replied in database
-      await supabase.from('crm').update({ status: 'replied' }).eq('id', replyTarget.id);
+      // [CRM] Mark as replied and save reply details to database
+      await supabase.from('crm').update({
+        status: 'replied',
+        replied_at: new Date().toISOString(),
+        reply_message: replyMessage,
+      }).eq('id', replyTarget.id);
       setReplyTarget(null);
       setReplyMessage('');
       fetchContacts();
@@ -280,7 +284,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
-                  <tr><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Message</th><th className="p-4">Date</th><th className="p-4">Status</th><th className="p-4"></th></tr>
+                  <tr><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Message</th><th className="p-4">Date</th><th className="p-4">Status</th><th className="p-4">Replied At</th><th className="p-4"></th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {contacts.map(c => (
@@ -293,6 +297,9 @@ export default function AdminDashboard() {
                         <span className={`px-2 py-1 rounded text-xs font-bold ${c.status === 'new' ? 'bg-indigo-100 text-indigo-700' : c.status === 'replied' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {c.status}
                         </span>
+                      </td>
+                      <td className="p-4 text-gray-400 text-xs">
+                        {c.replied_at ? new Date(c.replied_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="p-4">
                         <button
