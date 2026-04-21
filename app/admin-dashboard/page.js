@@ -1,11 +1,18 @@
 'use client';
+// UPDATE 200426: Added Contact tab — shows all crm submissions with status.
+//                Added Reply button per row — sends email from team@startzig.com and marks status as 'replied'.
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminDashboard() {
   const [report, setReport] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
   
   const [newInvestor, setNewInvestor] = useState({
     name: '', investor_type: 'Angel', focus_sectors: [],
@@ -17,9 +24,15 @@ export default function AdminDashboard() {
   // רשימת תחומים לבחירה מהירה
   const sectorOptions = ['Fintech', 'SaaS', 'AI', 'HealthTech', 'Cyber', 'Consumer', 'DeepTech', 'AgriTech'];
 
+  const fetchContacts = async () => {
+    const { data } = await supabase.from('crm').select('*').order('created_at', { ascending: false });
+    setContacts(data || []);
+  };
+
   const fetchData = () => {
     setLoading(true);
     fetch('/api/admin-stats').then(res => res.json()).then(d => { setReport(d); setLoading(false); });
+    fetchContacts();
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -46,6 +59,28 @@ export default function AdminDashboard() {
       fetchData(); 
     } 
     else { const err = await res.json(); alert(`Error: ${err.error}`); }
+  };
+
+  const sendReply = async () => {
+    if (!replyTarget || !replyMessage.trim()) return;
+    setIsSendingReply(true);
+    try {
+      const res = await fetch('/api/send-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: replyTarget.email, name: replyTarget.name, message: replyMessage }),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+      // [CRM] Mark as replied in database
+      await supabase.from('crm').update({ status: 'replied' }).eq('id', replyTarget.id);
+      setReplyTarget(null);
+      setReplyMessage('');
+      fetchContacts();
+    } catch (err) {
+      alert('Failed to send reply.');
+    } finally {
+      setIsSendingReply(false);
+    }
   };
 
   if (loading) return <div className="p-10 text-gray-400 font-mono">LOADING SYSTEM DATA...</div>;
@@ -75,6 +110,7 @@ export default function AdminDashboard() {
         <Card title="Investors" count={stats.investorsCount} type="investors" />
         <Card title="VC Firms" count={stats.vcCount} type="vc" />
         <Card title="Total Funded" count={`$${stats.totalInvestment.toLocaleString()}`} type="funding" color="text-green-600" />
+        <Card title="Contact" count={contacts.filter(c => c.status === 'new').length} type="contact" color="text-indigo-600" />
       </div>
 
       <div className="space-y-6">
@@ -237,6 +273,76 @@ export default function AdminDashboard() {
             </table>
           </div>
         )}
+        {/* CONTACT TAB */}
+        {activeTab === 'contact' && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Contact Submissions</h2>
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 border-b text-xs text-gray-400 uppercase">
+                  <tr><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Message</th><th className="p-4">Date</th><th className="p-4">Status</th><th className="p-4"></th></tr>
+                </thead>
+                <tbody className="divide-y">
+                  {contacts.map(c => (
+                    <tr key={c.id} className="hover:bg-gray-50">
+                      <td className="p-4 font-bold">{c.name}</td>
+                      <td className="p-4 text-blue-600">{c.email}</td>
+                      <td className="p-4 text-gray-600 max-w-xs truncate">{c.message}</td>
+                      <td className="p-4 text-gray-400 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${c.status === 'new' ? 'bg-indigo-100 text-indigo-700' : c.status === 'replied' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => { setReplyTarget(c); setReplyMessage(''); }}
+                          className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700 transition"
+                        >
+                          Reply
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {contacts.length === 0 && (
+                    <tr><td colSpan={6} className="p-8 text-center text-gray-400">No contact submissions yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* [REPLY MODAL] Send reply email */}
+            {replyTarget && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+                  <h3 className="text-lg font-bold">Reply to {replyTarget.name}</h3>
+                  <p className="text-sm text-gray-500">To: {replyTarget.email}</p>
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 border">
+                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">Original message</p>
+                    {replyTarget.message}
+                  </div>
+                  <textarea
+                    value={replyMessage}
+                    onChange={e => setReplyMessage(e.target.value)}
+                    placeholder="Write your reply..."
+                    className="w-full border rounded-lg p-3 h-32 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <div className="flex gap-3 justify-end">
+                    <button onClick={() => setReplyTarget(null)} className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+                    <button
+                      onClick={sendReply}
+                      disabled={isSendingReply || !replyMessage.trim()}
+                      className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition"
+                    >
+                      {isSendingReply ? 'Sending...' : 'Send Reply'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
