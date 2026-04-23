@@ -1037,7 +1037,14 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
         page: 'product-feedback'
       });
     }
-
+if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
+  assets.push({
+    id: 'zigplan',
+    title: 'ZigPlan',
+    icon: Map,
+    page: 'zigplan'
+  });
+}
     if (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded && !currentVenture.revenue_model_completed) {
       assets.push({
         id: 'revenue_modeling',

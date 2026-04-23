@@ -87,7 +87,7 @@ const buildPrompt = ({ appName, appDescription, features, goal, platform, audien
   if (infraFlags.includes('auth')) infraBlocks.push(`🔐 AUTH: Add 2-4 days to timeline. Recommend Supabase Auth. Flag that auth is infrastructure — it affects every part of the app.`);
   if (infraFlags.includes('payments')) infraBlocks.push(`💳 PAYMENTS: Add 3-5 days to timeline. Recommend Stripe. Flag that webhook handling requires human review — AI cannot be trusted here alone. If goal is Investor Pitch, recommend mocking payments entirely.`);
   if (infraFlags.includes('realtime')) infraBlocks.push(`⚡ REALTIME: Add 2-4 days to timeline. Recommend Supabase Realtime. Flag that AI often generates incorrect subscription logic — expect 2-3 correction rounds.`);
-  if (infraFlags.includes('ai')) infraBlocks.push(`🤖 AI INTEGRATION: Add 2-3 days to timeline. Flag monthly API costs starting immediately ($20-100/month). Flag that prompt engineering requires ongoing human iteration.`);
+  if (infraFlags.includes('ai')) infraBlocks.push(`🤖 AI INTEGRATION: Add 2-3 days to timeline. Note on costs: Gemini offers a free tier up to a certain monthly quota — check current limits at ai.google.dev. Paid plans vary by usage and model. All AI providers update their pricing regularly, so verify the latest rates directly with your chosen provider before budgeting. Prompt engineering requires ongoing human iteration.`);
 
   const scaleInfraWarnings = [];
   if (scaleLimit === 'demo' && infraFlags.includes('payments')) scaleInfraWarnings.push(`⚠️ Payments + Demo: Never use real Stripe in a demo — mock payments only.`);
@@ -180,53 +180,108 @@ Include in the prompt:
 
 Generate a detailed, copy-paste ready prompt. Be specific — not generic.
 
-Also include at the end of this section a simple text diagram of the User Flow, like:
-/auth → [Login] → /home → [Feature] → /detail
-                        ↓
-                  /dashboard
+Also include at the end of this section a structured User Flow diagram organized by logical groups, like:
+
+AUTH
+  /welcome → Sign Up → /onboarding → /home
+           → Log In  → /home
+
+MAIN FLOW
+  /home → [Feature] → /detail
+       → /dashboard
+       → /profile
+
+---
+
+### 5. SUGGESTED FEATURES YOU HAVEN'T CONSIDERED
+Based on the product type, selected features, and chosen goal, suggest 3-5 additional features the founder may not have thought of. For each:
+- Feature name
+- Why it makes sense for this product
+- Complexity: Simple / Medium / Complex
+- Recommended phase: V1 / V2
+
+---
+
+### 6. LAUNCH CHECKLIST
+List everything the founder needs to set up before writing a single line of code. For each item:
+- Service / tool name
+- What it does in this project
+- Free or paid (include current pricing tier or free limit if known)
+
+Cover: hosting, database, auth, domain, email service, AI API, payments (if applicable), analytics, error monitoring.
 
 ---
 
 Keep the tone direct and professional. No fluff. Every recommendation must reference the actual product and features.`;
 };
 
+// ─── Helper: parse inline **bold** within a line ─────────────────────────────
+
+function parseBoldRuns(text, size, TextRun) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.filter(p => p).map(part => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return new TextRun({ text: part.slice(2, -2), bold: true, size, font: 'Arial', color: '1f2937' });
+    }
+    return new TextRun({ text: part, size, font: 'Arial', color: '374151' });
+  });
+}
+
 // ─── Download as DOCX ────────────────────────────────────────────────────────
 
 async function downloadAsDocx(result, appName) {
-  const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType } = await import('docx');
+  const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import('docx');
 
   const lines = result.split('\n');
   const children = [];
 
   for (const line of lines) {
     if (line.startsWith('## ')) {
+      // Section heading — large purple
       children.push(new Paragraph({
-        children: [new TextRun({ text: line.replace('## ', ''), bold: true, size: 32, color: '4c1d95', font: 'Arial' })],
-        spacing: { before: 400, after: 160 },
+        children: [new TextRun({ text: line.replace(/^## /, ''), bold: true, size: 32, color: '4c1d95', font: 'Arial' })],
+        spacing: { before: 480, after: 160 },
+        border: { bottom: { style: 'single', size: 1, color: 'e5e7eb' } },
       }));
     } else if (line.startsWith('### ')) {
+      // Sub-heading — dark gray
       children.push(new Paragraph({
-        children: [new TextRun({ text: line.replace('### ', ''), bold: true, size: 24, color: '374151', font: 'Arial' })],
+        children: [new TextRun({ text: line.replace(/^### /, ''), bold: true, size: 24, color: '374151', font: 'Arial' })],
         spacing: { before: 280, after: 100 },
       }));
-    } else if (line.startsWith('**') && line.endsWith('**')) {
+    } else if (line.startsWith('#### ')) {
+      // Minor heading
       children.push(new Paragraph({
-        children: [new TextRun({ text: line.replace(/\*\*/g, ''), bold: true, size: 20, font: 'Arial' })],
-        spacing: { after: 80 },
+        children: [new TextRun({ text: line.replace(/^#### /, ''), bold: true, size: 22, color: '4c1d95', font: 'Arial' })],
+        spacing: { before: 200, after: 80 },
       }));
     } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      // Bullet — parse inline bold within bullet
+      const text = line.replace(/^[-*] /, '');
+      const runs = parseBoldRuns(text, 20, TextRun);
       children.push(new Paragraph({
-        children: [new TextRun({ text: line.replace(/^[-*] /, ''), size: 20, font: 'Arial' })],
-        indent: { left: 360 },
+        children: runs,
+        indent: { left: 360, hanging: 200 },
+        spacing: { after: 60 },
+      }));
+    } else if (/^\d+\. /.test(line)) {
+      // Numbered list
+      const text = line.replace(/^\d+\. /, '');
+      const runs = parseBoldRuns(text, 20, TextRun);
+      children.push(new Paragraph({
+        children: runs,
+        indent: { left: 360, hanging: 200 },
         spacing: { after: 60 },
       }));
     } else if (line.trim()) {
+      // Regular paragraph — parse inline bold
+      const runs = parseBoldRuns(line.trim(), 20, TextRun);
       children.push(new Paragraph({
-        children: [new TextRun({ text: line, size: 20, font: 'Arial' })],
+        children: runs,
         spacing: { after: 80 },
       }));
     } else {
-      children.push(new Paragraph({ children: [] }));
+      children.push(new Paragraph({ children: [], spacing: { after: 40 } }));
     }
   }
 
@@ -235,14 +290,14 @@ async function downloadAsDocx(result, appName) {
       properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
       children: [
         new Paragraph({
-          children: [new TextRun({ text: appName || 'ZigPlan', bold: true, size: 48, color: '4c1d95', font: 'Arial' })],
+          children: [new TextRun({ text: appName || 'ZigPlan', bold: true, size: 52, color: '4c1d95', font: 'Arial' })],
           alignment: AlignmentType.CENTER,
-          spacing: { before: 400, after: 200 },
+          spacing: { before: 400, after: 160 },
         }),
         new Paragraph({
           children: [new TextRun({ text: 'Development Plan', size: 26, color: '6B7280', font: 'Arial' })],
           alignment: AlignmentType.CENTER,
-          spacing: { after: 120 },
+          spacing: { after: 100 },
         }),
         new Paragraph({
           children: [new TextRun({ text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), size: 20, color: '9CA3AF', font: 'Arial' })],
