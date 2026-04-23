@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { InvokeLLM } from '@/api/integrations';
-import { Lock } from 'lucide-react';
+import { Lock, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -28,9 +28,11 @@ const AUDIENCES = [
 ];
 
 const DEV_APPROACHES = [
-  { val: 'Vibe Coding — directly with AI', desc: 'Cursor, Claude Code, v0' },
+  { val: 'Vibe Coding — with Claude', desc: 'Claude Code, Claude.ai' },
+  { val: 'Vibe Coding — with ChatGPT', desc: 'ChatGPT, Codex' },
+  { val: 'Vibe Coding — with Gemini', desc: 'Gemini, Google AI Studio' },
   { val: 'Vibe Coding — via a platform', desc: 'Lovable, Bolt, and similar' },
-  { val: 'Solo Developer', desc: 'Traditional development' },
+  { val: 'Solo Developer', desc: 'Traditional development without AI' },
 ];
 
 const SCALE_LIMITS = [
@@ -71,7 +73,9 @@ const buildPrompt = ({ appName, appDescription, features, goal, platform, audien
   }[audience] || '';
 
   const devBlock = {
-    'Vibe Coding — directly with AI': `Provide feature-specific AI prompts. Flag which features AI handles poorly and require human review.`,
+    'Vibe Coding — with Claude': `Provide feature-specific prompts optimized for Claude. Flag which features Claude handles poorly and require human review.`,
+    'Vibe Coding — with ChatGPT': `Provide feature-specific prompts optimized for ChatGPT. Flag which features require multiple correction rounds.`,
+    'Vibe Coding — with Gemini': `Provide feature-specific prompts optimized for Gemini. Flag which features require multiple correction rounds.`,
     'Vibe Coding — via a platform': `Flag platform lock-in risk in every section. Warn that virtual databases cannot be upgraded. Recommend only for Investor Pitch goal.`,
     'Solo Developer': `Estimate time without AI assistance. Recommend hiring for complex areas like payments and security.`,
   }[devApproach] || '';
@@ -168,14 +172,103 @@ For each feature:
 - If complex: what is needed and what is the alternative
 
 ### 4. READY-TO-USE AI PROMPT
-A detailed, copy-paste ready prompt for the chosen dev approach.
-Include: product purpose, all included features with exact behavior, UX flow, data models needed, auth and realtime requirements.
-Be specific — not generic.
+Note: Copy and paste this prompt directly into your AI coding tool.
+
+Include in the prompt:
+- Product name and business purpose: ${appName} — ${appDescription}
+- All included features with exact behavior descriptions
+- UX flow between screens
+- Data models needed
+- Auth and realtime requirements
+- Color scheme and style if applicable
+
+Generate a detailed, copy-paste ready prompt. Be specific — not generic.
+
+Also include at the end of this section a simple text diagram of the User Flow, like:
+/auth → [Login] → /home → [Feature] → /detail
+                        ↓
+                  /dashboard
 
 ---
 
 Keep the tone direct and professional. No fluff. Every recommendation must reference the actual product and features.`;
 };
+
+// ─── Download as DOCX ────────────────────────────────────────────────────────
+
+async function downloadAsDocx(result, appName) {
+  const { Document, Packer, Paragraph, TextRun, BorderStyle, AlignmentType } = await import('docx');
+
+  const lines = result.split('\n');
+  const children = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: line.replace('## ', ''), bold: true, size: 32, color: '4c1d95', font: 'Arial' })],
+        spacing: { before: 400, after: 160 },
+      }));
+    } else if (line.startsWith('### ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: line.replace('### ', ''), bold: true, size: 24, color: '374151', font: 'Arial' })],
+        spacing: { before: 280, after: 100 },
+      }));
+    } else if (line.startsWith('**') && line.endsWith('**')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: line.replace(/\*\*/g, ''), bold: true, size: 20, font: 'Arial' })],
+        spacing: { after: 80 },
+      }));
+    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: line.replace(/^[-*] /, ''), size: 20, font: 'Arial' })],
+        indent: { left: 360 },
+        spacing: { after: 60 },
+      }));
+    } else if (line.trim()) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: line, size: 20, font: 'Arial' })],
+        spacing: { after: 80 },
+      }));
+    } else {
+      children.push(new Paragraph({ children: [] }));
+    }
+  }
+
+  const doc = new Document({
+    sections: [{
+      properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: appName || 'ZigPlan', bold: true, size: 48, color: '4c1d95', font: 'Arial' })],
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 400, after: 200 },
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: 'Development Plan', size: 26, color: '6B7280', font: 'Arial' })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 120 },
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), size: 20, color: '9CA3AF', font: 'Arial' })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 600 },
+        }),
+        ...children,
+      ],
+    }],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(appName || 'ZigPlan').replace(/\s+/g, '_')}_DevelopmentPlan_${new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -183,8 +276,9 @@ export default function ZigPlan() {
   const [userPlan, setUserPlan] = useState('');
   const [isEligible, setIsEligible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
-  // Venture data from DB
+  // Venture data
   const [appName, setAppName] = useState('');
   const [appDescription, setAppDescription] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -194,7 +288,7 @@ export default function ZigPlan() {
   const [features, setFeatures] = useState([]);
   const [newFeature, setNewFeature] = useState({ name: '', description: '', priority: 'Must Have' });
 
-  // Choices
+  // Choices — kept in state so they persist after Generate
   const [goal, setGoal] = useState('');
   const [platform, setPlatform] = useState('');
   const [audience, setAudience] = useState('');
@@ -207,8 +301,9 @@ export default function ZigPlan() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showForm, setShowForm] = useState(true);
 
-  // ── Load data ──────────────────────────────────────────────────────────────
+  // ── Load ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
@@ -257,7 +352,6 @@ export default function ZigPlan() {
   };
 
   const removeFeature = (id) => setFeatures(prev => prev.filter(f => f.id !== id));
-
   const updatePriority = (id, priority) => setFeatures(prev => prev.map(f => f.id === id ? { ...f, priority } : f));
 
   const canGenerate = appName.trim() && features.length > 0 && goal && platform && audience && devApproach && scaleLimit;
@@ -267,6 +361,7 @@ export default function ZigPlan() {
     setIsGenerating(true);
     setResult('');
     setError('');
+    setShowForm(false);
     try {
       const data = await InvokeLLM({
         prompt: buildPrompt({ appName, appDescription, features, goal, platform, audience, devApproach, infraFlags, scaleLimit }),
@@ -275,20 +370,29 @@ export default function ZigPlan() {
       setResult(data?.response || '');
     } catch (err) {
       setError(err.message === 'NO_CREDITS' ? 'Not enough credits. Please upgrade your plan.' : 'Something went wrong. Please try again.');
+      setShowForm(true);
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const handleGenerateAgain = () => {
+    setResult('');
+    setError('');
+    setShowForm(true);
+  };
+
   const handleCopy = () => { navigator.clipboard.writeText(result); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
-  const handleDownload = () => {
-    const blob = new Blob([result], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${appName || 'zigplan'}_development_plan.txt`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await downloadAsDocx(result, appName);
+    } catch (e) {
+      console.error('Download error:', e);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const s = (selected) => ({
@@ -301,76 +405,77 @@ export default function ZigPlan() {
   const priorityColor = { 'Must Have': '#7c3aed', 'Nice to Have': '#f59e0b', 'Future': '#9ca3af' };
   const priorityBg = { 'Must Have': '#f5f3ff', 'Nice to Have': '#fffbeb', 'Future': '#f9fafb' };
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // ── States ─────────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
       <p style={{ color: '#9ca3af', fontSize: 15 }}>Loading...</p>
     </div>
   );
 
-  // ── Not eligible ──────────────────────────────────────────────────────────
   if (!isEligible) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 24 }}>
-      <div style={{ background: 'white', borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.10)', padding: 40, maxWidth: 440, width: '100%', textAlign: 'center' }}>
-        <div style={{ width: 56, height: 56, background: '#ede9fe', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-          <Lock size={24} color="#7c3aed" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center space-y-5">
+        <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto">
+          <Lock className="w-8 h-8 text-indigo-600" />
         </div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a3e', marginBottom: 8 }}>Upgrade to Access</h2>
-        <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 20, lineHeight: 1.6 }}>
-          ZigPlan is available on the <strong>Pro Founder</strong> plan and above.
+        <h2 className="text-2xl font-bold text-gray-900">Upgrade to Access</h2>
+        <p className="text-gray-500 leading-relaxed">
+          ZigPlan is available exclusively on the <strong>Pro Founder</strong> plan and above.
         </p>
-        <div style={{ background: '#f9fafb', borderRadius: 12, padding: 16, textAlign: 'left', marginBottom: 24 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Included with Pro Founder:</p>
-          {[
-            'AI-generated development plan based on your product',
-            'Stack recommendations with upgrade path analysis',
-            'Feature complexity breakdown and risk flags',
-            'Ready-to-use prompt for your AI coding tool',
-          ].map(item => (
-            <p key={item} style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>✓ {item}</p>
-          ))}
+        <div className="bg-slate-50 rounded-xl p-4 text-left space-y-2">
+          <p className="text-sm font-semibold text-gray-700">Included with Pro Founder:</p>
+          <p className="text-sm text-gray-600">✓ AI-generated development plan based on your product</p>
+          <p className="text-sm text-gray-600">✓ Stack recommendations with upgrade path analysis</p>
+          <p className="text-sm text-gray-600">✓ Feature complexity breakdown and risk flags</p>
+          <p className="text-sm text-gray-600">✓ Ready-to-use prompt for your AI coding tool</p>
+          <p className="text-sm text-gray-600">✓ Download as Word (.docx)</p>
         </div>
-        <Button style={{ width: '100%', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', fontWeight: 700, padding: '14px', borderRadius: 10, border: 'none', fontSize: 15 }}>
-          Upgrade Plan
-        </Button>
-        <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 12 }}>Current plan: {userPlan || 'explorer'}</p>
+        <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12 text-base font-semibold">Upgrade Plan</Button>
+        <p className="text-xs text-gray-400">Current plan: {userPlan || 'explorer'}</p>
       </div>
     </div>
   );
 
-  // ── Main UI ───────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '32px 16px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
         {/* Header */}
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#1a1a3e', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            ZigPlan
-            <span style={{ fontSize: 12, fontWeight: 700, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', padding: '3px 10px', borderRadius: 20 }}>PRO</span>
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280', marginTop: 6 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#1a1a3e', margin: 0 }}>ZigPlan</h1>
+          <p style={{ fontSize: 13, color: '#7c3aed', fontWeight: 600, marginTop: 2, marginBottom: 10 }}>
+            Available exclusively on the Pro Founder plan and above.
+          </p>
+          <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, margin: 0 }}>
             Ready to turn your mockup into a working prototype? We'll generate a detailed development plan — stack recommendations, risk analysis, feature breakdown, and a prompt ready to use with your AI coding tool.
           </p>
         </div>
 
-        {!result && !isGenerating && (
+        {/* Steps */}
+        <div style={{ background: 'white', borderRadius: 16, padding: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', gap: 16 }}>
+          {[
+            { n: '1', text: 'Confirm your product details and define the features you want to build' },
+            { n: '2', text: 'Answer a few questions about your goal, platform, and development approach' },
+            { n: '3', text: 'Get a detailed development plan with a ready-to-use AI coding prompt' },
+          ].map(({ n, text }) => (
+            <div key={n} style={{ flex: 1, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#7c3aed', color: 'white', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{n}</div>
+              <p style={{ fontSize: 12, color: '#6b7280', margin: 0, lineHeight: 1.5 }}>{text}</p>
+            </div>
+          ))}
+        </div>
+
+        {showForm && (
           <>
             {/* Product Info */}
             <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Product</p>
 
-              {/* Name */}
               <div style={{ marginBottom: 14 }}>
                 <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Venture Name</p>
                 {editingName ? (
-                  <input
-                    value={appName}
-                    onChange={e => setAppName(e.target.value)}
-                    onBlur={() => setEditingName(false)}
-                    autoFocus
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #7c3aed', fontSize: 15, fontWeight: 700, outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <input value={appName} onChange={e => setAppName(e.target.value)} onBlur={() => setEditingName(false)} autoFocus
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #7c3aed', fontSize: 15, fontWeight: 700, outline: 'none', boxSizing: 'border-box' }} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <p style={{ fontSize: 16, fontWeight: 700, color: '#1f2937', margin: 0 }}>{appName || '—'}</p>
@@ -379,18 +484,11 @@ export default function ZigPlan() {
                 )}
               </div>
 
-              {/* Description */}
               <div>
                 <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Product Description</p>
                 {editingDesc ? (
-                  <textarea
-                    value={appDescription}
-                    onChange={e => setAppDescription(e.target.value)}
-                    onBlur={() => setEditingDesc(false)}
-                    autoFocus
-                    rows={3}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #7c3aed', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
-                  />
+                  <textarea value={appDescription} onChange={e => setAppDescription(e.target.value)} onBlur={() => setEditingDesc(false)} autoFocus rows={3}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #7c3aed', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                     <p style={{ fontSize: 14, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>{appDescription || '—'}</p>
@@ -404,7 +502,6 @@ export default function ZigPlan() {
             <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Features for this prototype</p>
               <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 14 }}>Add the features you want to include and set their priority.</p>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
                 {features.map(f => (
                   <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: `2px solid ${priorityColor[f.priority]}`, background: priorityBg[f.priority] }}>
@@ -412,11 +509,8 @@ export default function ZigPlan() {
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#1f2937' }}>{f.name}</div>
                       {f.description && <div style={{ fontSize: 12, color: '#9ca3af' }}>{f.description}</div>}
                     </div>
-                    <select
-                      value={f.priority}
-                      onChange={e => updatePriority(f.id, e.target.value)}
-                      style={{ fontSize: 12, fontWeight: 700, color: priorityColor[f.priority], border: `1px solid ${priorityColor[f.priority]}`, borderRadius: 6, padding: '3px 6px', background: 'white', cursor: 'pointer', outline: 'none' }}
-                    >
+                    <select value={f.priority} onChange={e => updatePriority(f.id, e.target.value)}
+                      style={{ fontSize: 12, fontWeight: 700, color: priorityColor[f.priority], border: `1px solid ${priorityColor[f.priority]}`, borderRadius: 6, padding: '3px 6px', background: 'white', cursor: 'pointer', outline: 'none' }}>
                       <option>Must Have</option>
                       <option>Nice to Have</option>
                       <option>Future</option>
@@ -425,26 +519,13 @@ export default function ZigPlan() {
                   </div>
                 ))}
               </div>
-
               <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={newFeature.name}
-                  onChange={e => setNewFeature(p => ({ ...p, name: e.target.value }))}
-                  onKeyDown={e => e.key === 'Enter' && addFeature()}
-                  placeholder="Feature name..."
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none' }}
-                />
-                <input
-                  value={newFeature.description}
-                  onChange={e => setNewFeature(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Short description (optional)"
-                  style={{ flex: 2, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none' }}
-                />
-                <select
-                  value={newFeature.priority}
-                  onChange={e => setNewFeature(p => ({ ...p, priority: e.target.value }))}
-                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, outline: 'none', cursor: 'pointer' }}
-                >
+                <input value={newFeature.name} onChange={e => setNewFeature(p => ({ ...p, name: e.target.value }))} onKeyDown={e => e.key === 'Enter' && addFeature()} placeholder="Feature name..."
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none' }} />
+                <input value={newFeature.description} onChange={e => setNewFeature(p => ({ ...p, description: e.target.value }))} placeholder="Description (optional)"
+                  style={{ flex: 2, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none' }} />
+                <select value={newFeature.priority} onChange={e => setNewFeature(p => ({ ...p, priority: e.target.value }))}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, outline: 'none', cursor: 'pointer' }}>
                   <option>Must Have</option>
                   <option>Nice to Have</option>
                   <option>Future</option>
@@ -525,8 +606,7 @@ export default function ZigPlan() {
               <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 14 }}>Select all that apply — these affect your stack, timeline, and upgrade path.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {INFRA_FLAGS.map(({ val, label, desc }) => (
-                  <button key={val} onClick={() => toggleInfra(val)}
-                    style={{ ...s(infraFlags.includes(val)), display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button key={val} onClick={() => toggleInfra(val)} style={{ ...s(infraFlags.includes(val)), display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${infraFlags.includes(val) ? '#7c3aed' : '#d1d5db'}`, background: infraFlags.includes(val) ? '#7c3aed' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {infraFlags.includes(val) && <span style={{ color: 'white', fontSize: 11, fontWeight: 900 }}>✓</span>}
                     </div>
@@ -543,10 +623,16 @@ export default function ZigPlan() {
               <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#dc2626', fontWeight: 500 }}>⚠️ {error}</div>
             )}
 
-            <button onClick={handleGenerate} disabled={!canGenerate}
-              style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 800, borderRadius: 14, border: 'none', cursor: canGenerate ? 'pointer' : 'not-allowed', background: canGenerate ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : '#d1d5db', color: 'white', boxShadow: canGenerate ? '0 4px 24px rgba(124,58,237,0.35)' : 'none' }}>
-              Generate Development Plan — 20 credits
-            </button>
+            {/* Credits notice + Generate button */}
+            <div style={{ background: 'white', borderRadius: 16, padding: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', marginBottom: 12 }}>
+                This will use <strong style={{ color: '#7c3aed' }}>20 credits</strong> from your balance.
+              </p>
+              <button onClick={handleGenerate} disabled={!canGenerate}
+                style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 800, borderRadius: 12, border: 'none', cursor: canGenerate ? 'pointer' : 'not-allowed', background: canGenerate ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : '#d1d5db', color: 'white', boxShadow: canGenerate ? '0 4px 24px rgba(124,58,237,0.35)' : 'none' }}>
+                Generate Development Plan
+              </button>
+            </div>
           </>
         )}
 
@@ -564,7 +650,7 @@ export default function ZigPlan() {
           <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', margin: 0 }}>✅ Development Plan Ready</h3>
-              <button onClick={() => { setResult(''); setError(''); }}
+              <button onClick={handleGenerateAgain}
                 style={{ fontSize: 12, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                 Generate again
               </button>
@@ -576,8 +662,10 @@ export default function ZigPlan() {
               <button onClick={handleCopy} style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', cursor: 'pointer', background: '#1f2937', color: 'white' }}>
                 {copied ? '✅ Copied!' : '📋 Copy'}
               </button>
-              <button onClick={handleDownload} style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white' }}>
-                📥 Download
+              <button onClick={handleDownload} disabled={downloading}
+                style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', cursor: downloading ? 'not-allowed' : 'pointer', background: downloading ? '#d1d5db' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Download size={16} />
+                {downloading ? 'Downloading...' : 'Download .docx'}
               </button>
             </div>
           </div>
