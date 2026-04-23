@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { InvokeLLM } from '@/api/integrations';
+import PromptGenerator from '@/components/mentor/PromptGenerator';
 
 
 const defaultFeatureTemplates = [
@@ -1237,6 +1238,13 @@ const App = () => {
               : "Fill in your app details above to enable AI upgrade"}
           </p>
         </div>
+
+        {/* Development Blueprint — Premium Feature */}
+        <PromptGenerator
+          appState={appState}
+          ventureType={ventureType}
+          designPrefs={designPrefs}
+        />
       </div>
       </div>
       )}
