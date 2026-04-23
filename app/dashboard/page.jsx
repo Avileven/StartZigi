@@ -45,6 +45,7 @@ import {
   MessagesSquare,
   Repeat,
   ShieldCheck,
+  MapPin,
   FlaskConical,
   Zap,
   Brain,
@@ -1041,7 +1042,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
   assets.push({
     id: 'zigplan',
     title: 'ZigPlan',
-    icon: Map,
+    icon: MapPin,
     page: 'zigplan'
   });
 }
