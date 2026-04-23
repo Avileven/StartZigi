@@ -28,11 +28,9 @@ const AUDIENCES = [
 ];
 
 const DEV_APPROACHES = [
-  { val: 'Vibe Coding — with Claude', desc: 'Claude Code, Claude.ai' },
-  { val: 'Vibe Coding — with ChatGPT', desc: 'ChatGPT, Codex' },
-  { val: 'Vibe Coding — with Gemini', desc: 'Gemini, Google AI Studio' },
-  { val: 'Vibe Coding — via a platform', desc: 'Lovable, Bolt, and similar' },
-  { val: 'Solo Developer', desc: 'Traditional development without AI' },
+  { val: 'Vibe Coding — directly with AI', desc: 'Claude, ChatGPT, Gemini' },
+  { val: 'Vibe Coding — via a platform', desc: 'Lovable, Base44 and similar' },
+  { val: 'Development Team', desc: 'No AI involvement' },
 ];
 
 const SCALE_LIMITS = [
@@ -73,11 +71,9 @@ const buildPrompt = ({ appName, appDescription, features, goal, platform, audien
   }[audience] || '';
 
   const devBlock = {
-    'Vibe Coding — with Claude': `Provide feature-specific prompts optimized for Claude. Flag which features Claude handles poorly and require human review.`,
-    'Vibe Coding — with ChatGPT': `Provide feature-specific prompts optimized for ChatGPT. Flag which features require multiple correction rounds.`,
-    'Vibe Coding — with Gemini': `Provide feature-specific prompts optimized for Gemini. Flag which features require multiple correction rounds.`,
+    'Vibe Coding — directly with AI': `Provide feature-specific prompts optimized for AI coding tools (Claude, ChatGPT, Gemini). Flag which features AI handles poorly and require human review.`,
     'Vibe Coding — via a platform': `Flag platform lock-in risk in every section. Warn that virtual databases cannot be upgraded. Recommend only for Investor Pitch goal.`,
-    'Solo Developer': `Estimate time without AI assistance. Recommend hiring for complex areas like payments and security.`,
+    'Development Team': `Estimate time for a professional development team without AI assistance. Based on the selected features and infrastructure, recommend the specific developer roles needed. For example: if the app has AI integration recommend an AI engineer; if it has complex backend logic recommend a backend developer; if mobile is selected recommend a mobile developer. Be specific about seniority level where relevant.`,
   }[devApproach] || '';
 
   const scaleBlock = {
@@ -301,7 +297,7 @@ export default function ZigPlan() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [showForm, setShowForm] = useState(true);
+  // NOTE: No showForm state — form is always visible, result appears below
 
   // ── Load ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -361,7 +357,7 @@ export default function ZigPlan() {
     setIsGenerating(true);
     setResult('');
     setError('');
-    setShowForm(false);
+    // NOTE: Form stays visible — result appears below it
     try {
       const data = await InvokeLLM({
         prompt: buildPrompt({ appName, appDescription, features, goal, platform, audience, devApproach, infraFlags, scaleLimit }),
@@ -370,16 +366,15 @@ export default function ZigPlan() {
       setResult(data?.response || '');
     } catch (err) {
       setError(err.message === 'NO_CREDITS' ? 'Not enough credits. Please upgrade your plan.' : 'Something went wrong. Please try again.');
-      setShowForm(true);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleGenerateAgain = () => {
+    // NOTE: Clears result only — all form choices are preserved
     setResult('');
     setError('');
-    setShowForm(true);
   };
 
   const handleCopy = () => { navigator.clipboard.writeText(result); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -465,8 +460,8 @@ export default function ZigPlan() {
           ))}
         </div>
 
-        {showForm && (
-          <>
+        {/* Form — always visible */}
+        <>
             {/* Product Info */}
             <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Product</p>
@@ -634,7 +629,6 @@ export default function ZigPlan() {
               </button>
             </div>
           </>
-        )}
 
         {/* Loading */}
         {isGenerating && (
@@ -645,20 +639,15 @@ export default function ZigPlan() {
           </div>
         )}
 
-        {/* Result */}
+        {/* Result — appears below form */}
         {result && !isGenerating && (
           <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', margin: 0 }}>✅ Development Plan Ready</h3>
-              <button onClick={handleGenerateAgain}
-                style={{ fontSize: 12, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                Generate again
-              </button>
-            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', margin: 0 }}>✅ Development Plan Ready</h3>
             <div style={{ background: '#f9fafb', borderRadius: 12, padding: 20, border: '1px solid #e5e7eb', maxHeight: 500, overflowY: 'auto' }}>
               <pre style={{ fontSize: 12, color: '#374151', whiteSpace: 'pre-wrap', fontFamily: 'monospace', lineHeight: 1.7, margin: 0 }}>{result}</pre>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {/* NOTE: 3 action buttons — Copy, Download, Generate again */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               <button onClick={handleCopy} style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', cursor: 'pointer', background: '#1f2937', color: 'white' }}>
                 {copied ? '✅ Copied!' : '📋 Copy'}
               </button>
@@ -666,6 +655,10 @@ export default function ZigPlan() {
                 style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', cursor: downloading ? 'not-allowed' : 'pointer', background: downloading ? '#d1d5db' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <Download size={16} />
                 {downloading ? 'Downloading...' : 'Download .docx'}
+              </button>
+              <button onClick={handleGenerateAgain}
+                style={{ padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: '2px solid #7c3aed', cursor: 'pointer', background: 'white', color: '#7c3aed' }}>
+                🔄 Generate again
               </button>
             </div>
           </div>
