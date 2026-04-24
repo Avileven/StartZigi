@@ -232,10 +232,6 @@ export default function ZigPlanMockup({ autoStart = false }) {
           <div className="hidden sm:block relative">
             <div style={{ pointerEvents: "none", userSelect: "none", padding: "24px 12px" }}>
               <div style={{ maxWidth: 860, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", background: "#f8fafc" }}>
-                <div style={{ background: "white", borderBottom: "0.5px solid #e8e8e8", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#1a1a3e" }}>ZigPlan</div>
-                  <div style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600 }}>Available exclusively on the Pro Founder plan and above.</div>
-                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
                   <div style={{ padding: 16, borderRight: "0.5px solid #e8e8e8" }}>
                     <div style={{ fontSize: 10, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Product</div>
@@ -280,12 +276,6 @@ export default function ZigPlanMockup({ autoStart = false }) {
   return (
     <div style={{ padding: "24px 12px" }}>
       <div style={{ maxWidth: 860, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", background: "#f8fafc" }}>
-
-        {/* Header */}
-        <div style={{ background: "white", borderBottom: "0.5px solid #e8e8e8", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "#1a1a3e" }}>ZigPlan</div>
-          <div style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600 }}>Available exclusively on the Pro Founder plan and above.</div>
-        </div>
 
         {/* Body */}
         {stage !== "output" ? (

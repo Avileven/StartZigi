@@ -1,4 +1,4 @@
-// Home page - 120426
+// Home page - 240426
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -12,6 +12,8 @@ import VCSimulationMockup from "@/components/utils/VCSimulationMockup";
 import FeedbackMockup from "@/components/utils/FeedbackMockup";
 import BetaMockup from "@/components/utils/BetaMockup";
 import BusinessDeckMockup from "@/components/utils/BusinessDeckMockup";
+import ZigPlanMockup from "@/components/utils/ZigPlanMockup";
+
 
 
 
@@ -351,7 +353,24 @@ export default function Home() {
   </div>
   <BusinessDeckMockup autoStart={false} />
 </div>
+
+{/* 9. ZigPlan */}
+<div className="py-16 px-6">
+  <div className="max-w-4xl mx-auto mb-8">
+    <h2 className="text-3xl md:text-4xl font-bold mb-2">
+      <span className="text-white">
+        ZigPlan — Generate your development plan and AI-ready prompt in minutes
+      </span>
+    </h2>
+    <p className="text-white/55 text-sm">
+      Turn your mockup into an actionable development plan — stack recommendations, risk analysis, feature breakdown, and a prompt ready to use with your AI coding tool. Available on Pro Founder and above.
+    </p>
+  </div>
+  <ZigPlanMockup autoStart={false} />
+</div>
       <WhoSection />
+
+      
 
       {/* ── Full Features List ── */}
       <div id="features">
