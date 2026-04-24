@@ -270,7 +270,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {/* Scroll animation */}
                 {!showTables && (
-                  <div style={{ overflow: "hidden", height: 320, position: "relative" }}>
+                  <div style={{ overflow: "hidden", height: 220, position: "relative" }}>
                     <div style={{ animation: "deckScroll 1.5s ease forwards" }}>
                       <div style={{ textAlign: "center", paddingBottom: 8, marginBottom: 8, borderBottom: "0.5px solid #eee" }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: "#6c47ff" }}>MindBridge</div>
