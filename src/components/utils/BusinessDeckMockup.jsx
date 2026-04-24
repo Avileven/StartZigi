@@ -128,7 +128,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
                     <div style={{ fontSize: 20, fontWeight: 700, color: "#6c47ff" }}>MindBridge</div>
                     <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>Investor Business Plan · April 2026</div>
                   </div>
-                  {SECTIONS.map((s, i) => (
+                  {SECTIONS.slice(0, 3).map((s, i) => (
                     <div key={i} style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 8, padding: "8px 12px", marginBottom: 8 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#6c47ff", marginBottom: 3 }}>{s.title}</div>
                       <div style={{ fontSize: 10, color: "#555", lineHeight: 1.5 }}>{s.text.slice(0, 100)}...</div>
