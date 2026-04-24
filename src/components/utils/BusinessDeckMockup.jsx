@@ -118,7 +118,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
           {/* Desktop */}
           <div className="hidden sm:block relative">
             <div style={{ pointerEvents: "none", userSelect: "none" }}>
-              <div style={{ maxWidth: 700, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", background: "#f8f7ff" }}>
+              <div style={{ maxWidth: 860, margin: "0 auto", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", background: "#f8f7ff" }}>
                 <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>Business Deck — MindBridge</div>
                   <div style={{ background: "#6c47ff", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8 }}>Download .docx</div>
@@ -153,7 +153,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
   return (
     <div className="px-6">
       <div className="max-w-4xl mx-auto">
-        <div style={{ maxWidth: 520, margin: "0 auto", background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", height: 520, display: "flex", flexDirection: "column" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", height: 520, display: "flex", flexDirection: "column" }}>
 
           {/* Top bar */}
           <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
