@@ -359,11 +359,11 @@ export default function Home() {
   <div className="max-w-4xl mx-auto mb-8">
     <h2 className="text-3xl md:text-4xl font-bold mb-2">
       <span className="text-white">
-        ZigPlan — Generate your development plan and AI-ready prompt in minutes
+        Meet ZigPlan, Your Personal Business Analyst
       </span>
     </h2>
     <p className="text-white/55 text-sm">
-      Turn your mockup into an actionable development plan — stack recommendations, risk analysis, feature breakdown, and a prompt ready to use with your AI coding tool. Available on Pro Founder and above.
+      From idea to execution — ZigPlan analyzes your product, features, and goals to generate a concise Product Requirements Document with a ready-to-use AI development prompt. Available on Pro Founder and above.
     </p>
   </div>
   <ZigPlanMockup autoStart={false} />
