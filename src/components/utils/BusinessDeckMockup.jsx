@@ -153,7 +153,7 @@ export default function BusinessDeckMockup({ autoStart = false }) {
   return (
     <div className="px-6">
       <div className="max-w-4xl mx-auto">
-        <div style={{ maxWidth: 860, margin: "0 auto", background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", height: 520, display: "flex", flexDirection: "column" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", background: "#f8f7ff", borderRadius: 14, overflow: "hidden", border: "0.5px solid #ddd", height: 390, display: "flex", flexDirection: "column" }}>
 
           {/* Top bar */}
           <div style={{ background: "#fff", borderBottom: "0.5px solid #e8e8e8", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
