@@ -39,9 +39,12 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href="/">
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">
-                StartZig
-              </span>
+              <div className="flex items-center gap-2 cursor-pointer">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAC2klEQVR4nO2az0sUYRjHv8/zzg/HNUpJUfISXjpIEBIEFRRh0B/QpUMQQRlEpzp1qH8gCDp08iAhCB36H6QgJIkMgoyuguBByUS23Xk7zDq7Wvr0Y2cn4/uBmZ1nZ2b3mQ+87zPz7Ir3HmR3tOwE/nUoyICCDCjIgIIMKMiAggwoyICCDCjIgIIMKMiAggwoyICCDCjIgIIMKMiAggyCMr60DmC9Ja79wjmtiVbQucRLEfQB8CdnJ/I4vL+JcHEJohFUYqg2F5EIqjES7YG6bP/l2gk8/HReOpErh5gBBRlQkAEFGVCQgRT50/NUWvM3X97O4/TSi0ZlipG4Sl6pZq9O4di9o3tWpeG5u3mi1aWz6H2yBJEIiVTgwhiiMUbqfZh5e6qt1a2UMg8AkJalG8Dg3oevHGreOSXL9Z8ftMvbfwOHmAEFGVCQAQUZlDdJ/yYb+hRYaQT9AB40th0Azeb6rXU72TeC9Ix05OF0J4UKGgFwYKMrj+vSA+ezJ/QI3VAfQ3yE58NVDKxvNO5ztjzItnUIACIQAOOBw5HYdURYoTeKu/Ge7Y7/BwoyoCADCjIopcwnO2JJv5nneABpY3ulF5jP3tp2AUOADLQlw5bc9ss/7btmJ/JEk48XMfB4+cd2R7UPMwvtbXdwiBkUOsSmfd3fWXyWx9VH8xAEEA3RrTFEAogEeHPtBobG+ku5U7YoVFDNe3xdfp3H6XSzo+iCZkdxrfcKhsb6i0zlj+EQM6AgAwoyoCCDQifpcVHcenUuj/3BPkgaoKYB1nQzr2LX3RySyQUv4iDiIMheIZrHldXTECggDqPvBBf8KAQBQo0gmn3O4aDS9mtgu8OAQ8yAggwoyICCDEppdwwCcvzzcF4d3JdVhLUEIiFUw8bEHGWxhBCNEGsCddm+wbSnY7num3ZHWXCIGVCQAQUZUJABBRlQkAEFGVCQAQUZUJABBRlQkAEFGVCQwXfUBZGoiU9QnQAAAABJRU5ErkJggg==" alt="StartZig" className="h-9 w-9" />
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                  StartZig
+                </span>
+              </div>
             </Link>
           </div>
 
