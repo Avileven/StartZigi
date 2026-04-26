@@ -1,4 +1,4 @@
-// VC 090426
+// VC 260426
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -79,35 +79,35 @@ export default function VCMockup({ autoStart = false }) {
 
   const activeFirm = activeIdx !== null ? FIRMS[activeIdx] : null;
 
+  const PREVIEW_FIRMS = [
+    { name: "Meridian Stone Capital", initials: "MS", fund: "$290M", check: "$4M–$30M", founded: "Founded 2018", status: "meeting",  statusLabel: "Meeting",   statusBg: "#ede9fe", statusColor: "#7c3aed", cardBg: "#f5f3ff", accentColor: "#6c47ff", tagBg: "#ede9fe", tagColor: "#6c47ff", about: "Strategic investment partner focused on transformative technologies shaping tomorrow's economy.", avatarBg: "linear-gradient(135deg,#7c3aed,#6366f1)" },
+    { name: "Velocity Wave Partners",  initials: "VW", fund: "$520M", check: "$6M–$45M", founded: "Founded 2011", status: "pending",  statusLabel: "Pending",   statusBg: "#fef9c3", statusColor: "#b45309", cardBg: "#fefce8", accentColor: "#b45309", tagBg: "#fef9c3", tagColor: "#b45309", about: "Innovation-driven VC firm backing entrepreneurs building the next generation of market leaders.", avatarBg: "linear-gradient(135deg,#f59e0b,#facc15)" },
+    { name: "Summit Peak Ventures",    initials: "SP", fund: "$480M", check: "$5M–$40M", founded: "Founded 2013", status: "interest", statusLabel: "Interested", statusBg: "#f3e8ff", statusColor: "#7c3aed", cardBg: "#faf5ff", accentColor: "#7c3aed", tagBg: "#f3e8ff", tagColor: "#7c3aed", about: "Premier venture capital firm focused on backing exceptional entrepreneurs across high-growth sectors.", avatarBg: "linear-gradient(135deg,#c084fc,#a855f7)" },
+  ];
+
   if (!autoStart) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <Link href="/vc-mockup" className="block relative group cursor-pointer">
 
-          {/* Mobile: VC profile preview */}
-          <div className="sm:hidden" style={{ height: 300, overflow: "hidden", borderRadius: 16, position: "relative" }}>
-            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14, borderBottom: "0.5px solid rgba(255,255,255,0.1)", paddingBottom: 14 }}>
-                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center" }}>$290M</span>
+          {/* Mobile */}
+          <div className="sm:hidden" style={{ borderRadius: 16, overflow: "hidden", position: "relative" }}>
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              {PREVIEW_FIRMS.slice(0, 2).map((f, i) => (
+                <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: f.avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: "#fff" }}>{f.initials}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>{f.name}</div>
+                    </div>
+                    <span style={{ fontSize: 8, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: f.statusBg, color: f.statusColor }}>● {f.statusLabel}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ background: f.cardBg, borderRadius: 6, padding: "5px 8px", flex: 1 }}><div style={{ fontSize: 7, color: "#9ca3af" }}>Fund</div><div style={{ fontSize: 12, fontWeight: 700, color: f.accentColor }}>{f.fund}</div></div>
+                    <div style={{ background: f.cardBg, borderRadius: 6, padding: "5px 8px", flex: 1 }}><div style={{ fontSize: 7, color: "#9ca3af" }}>Check</div><div style={{ fontSize: 10, fontWeight: 700, color: f.accentColor }}>{f.check}</div></div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>Meridian Stone Capital</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Founded 2018</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 5 }}>About</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, marginBottom: 12 }}>Strategic investment partner focused on transformative technologies shaping tomorrow's economy.</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 12px" }}>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>Fund Size</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>$290M</div>
-                </div>
-                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 12px" }}>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>Check Size</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>$4M–$30M</div>
-                </div>
-              </div>
+              ))}
             </div>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(108,71,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(108,71,255,0.5)" }}>
@@ -116,33 +116,38 @@ export default function VCMockup({ autoStart = false }) {
             </div>
           </div>
 
-          {/* Desktop: full preview */}
+          {/* Desktop */}
           <div className="hidden sm:block relative">
-            <div style={{ pointerEvents: "none", userSelect: "none", background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "0.5px solid rgba(255,255,255,0.12)", padding: "24px", overflow: "hidden", position: "relative" }}>
-              <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-                {[["Not contacted","linear-gradient(135deg,#3b82f6,#6366f1)"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: c, flexShrink: 0 }} />{l}
+            <div style={{ pointerEvents: "none", userSelect: "none", background: "#f8f9fb", borderRadius: 16, padding: 20 }}>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 14 }}>
+                {[["Not contacted","#3b82f6"],["Pending","#facc15"],["Interested","#c084fc"],["Meeting","#7c3aed"],["Passed","#ef4444"]].map(([l,c]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "#6b7280" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />{l}
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 14 }}>
-                {FIRMS.map((firm, i) => {
-                  const sz = Math.round(SIZES[i % SIZES.length] * 0.75);
-                  return (
-                    <div key={i} className={i >= 8 ? "blur-sm" : ""} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: sz, height: sz, borderRadius: "50%", background: STATUS_COLORS[firm.status], display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: 8, fontWeight: 700, color: "#fff", textAlign: "center", padding: 4 }}>{firm.fund}</span>
-                      </div>
-                      <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", textAlign: "center", maxWidth: 60 }}>{firm.name}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                {PREVIEW_FIRMS.map((f, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: f.avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#fff" }}>{f.initials}</div>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: f.statusBg, color: f.statusColor }}>● {f.statusLabel}</span>
                     </div>
-                  );
-                })}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 2 }}>{f.name}</div>
+                    <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 10 }}>{f.founded}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+                      <div style={{ background: f.cardBg, borderRadius: 6, padding: "6px 8px" }}><div style={{ fontSize: 8, color: "#9ca3af", marginBottom: 1 }}>Fund</div><div style={{ fontSize: 13, fontWeight: 700, color: f.accentColor }}>{f.fund}</div></div>
+                      <div style={{ background: f.cardBg, borderRadius: 6, padding: "6px 8px" }}><div style={{ fontSize: 8, color: "#9ca3af", marginBottom: 1 }}>Check</div><div style={{ fontSize: 11, fontWeight: 700, color: f.accentColor }}>{f.check}</div></div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
+                      {["Series A","Series B","Series C"].map(s => <span key={s} style={{ background: f.tagBg, color: f.tagColor, fontSize: 8, fontWeight: 600, padding: "2px 7px", borderRadius: 20 }}>{s}</span>)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#6b7280", lineHeight: 1.5 }}>{f.about}</div>
+                  </div>
+                ))}
               </div>
-              {/* Blur overlay on bottom third */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", background: "linear-gradient(to bottom, transparent, rgba(10,8,30,0.85))", borderRadius: "0 0 16px 16px", pointerEvents: "none" }} />
             </div>
-            <div className="absolute inset-0 flex items-end justify-center" style={{ paddingBottom: "10%" }}>
+            <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110" style={{ background: "rgba(108,71,255,0.9)" }}>
                 <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
               </div>
