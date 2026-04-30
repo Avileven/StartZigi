@@ -177,6 +177,22 @@ function CreateVentureForm() {
 
       if (message2Error) throw message2Error;
 
+      // [ADDED 300426] Send welcome email after venture is created
+      try {
+        await fetch("/api/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            founderName: user.full_name || user.name || "",
+            ventureName: newVenture.name,
+          }),
+        });
+      } catch (emailErr) {
+        // Non-blocking — venture creation already succeeded
+        console.error("Welcome email failed (non-critical):", emailErr);
+      }
+
       router.replace(`/dashboard`);
 
     } catch (error) {
