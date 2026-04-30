@@ -1290,7 +1290,19 @@ if (showToS) {
       {showPhaseModal && phaseModalData && (
         <PhaseCompletionModal
           isOpen={showPhaseModal}
-          onClose={() => setShowPhaseModal(false)}
+          onClose={async () => {
+  setShowPhaseModal(false);
+  if (phaseModalData?.phase) {
+    try {
+      const msg = messages.find(m => 
+        m.message_type === 'phase_complete' && m.phase === phaseModalData.phase
+      );
+      if (msg) await VentureMessage.update(msg.id, { is_dismissed: true });
+    } catch (e) {
+      console.error('Could not dismiss phase modal message:', e);
+    }
+  }
+}}
           completedPhase={phaseModalData.phase}
           venture={phaseModalData.venture || currentVenture}
           fundingEvents={phaseModalData.fundingEvents}
