@@ -19,7 +19,7 @@ const PHASE_CONTENT = {
       before: 0,
       after: 250000,
       equity: 100,
-      capitalInjection: 15000
+      capitalInjection: 0
     },
     
     achievements: [
@@ -61,7 +61,7 @@ const PHASE_CONTENT = {
     badge: "Idea Champion"
   },
   
-  business_plan: {
+  business_plan: { // [UPDATED 300426] capitalInjection moved here from idea
     title: "PLAN Phase Complete!",
     subtitle: "Moving to MVP Development",
     emoji: "📋",
@@ -74,7 +74,7 @@ const PHASE_CONTENT = {
       before: 250000,
       after: 500000,
       equity: 100,
-      capitalInjection: 0
+      capitalInjection: 15000
     },
     
     achievements: [
