@@ -1,4 +1,4 @@
-// financials 24326
+// financials 300426
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -44,8 +44,8 @@ export default function Financials() {
   const updateTick = useCallback(() => {
     if (!venture) return;
 
-  const startingCapital = venture.virtual_capital ?? 0;
-  const monthlyBurn = venture.monthly_burn_rate ?? 0;
+    const startingCapital = venture.virtual_capital ?? 0;
+    const monthlyBurn = venture.monthly_burn_rate ?? 0;
 
     if (!venture.burn_rate_start) {
       setLiveBalance(startingCapital);
@@ -93,7 +93,7 @@ export default function Financials() {
 
   // [ADDED] Initial capital amount — matches the $15,000 injected when entering MVP phase.
   // Shown as a separate row in Investment History since it's not a FundingEvent in the DB.
-  const INITIAL_CAPITAL = 15000;
+  const INITIAL_CAPITAL = (venture.virtual_capital > 0) ? 15000 : 0;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -188,10 +188,8 @@ export default function Financials() {
           </CardHeader>
           <CardContent className="pt-4 max-h-[200px] overflow-y-auto">
 
-            {/* [ADDED] Initial capital row — always shown as the first entry.
-                The $15,000 seed capital is stored on venture.virtual_capital, not as a FundingEvent,
-                so we render it manually here. */}
-            <div className="py-2 border-b">
+            {/* [FIXED] Only show initial capital row if money has been injected */}
+            {venture.virtual_capital > 0 && <div className="py-2 border-b">
               <div className="flex justify-between text-sm">
                 <span className="font-semibold text-gray-800">Initial Capital</span>
                 <span className="font-bold text-green-600">${INITIAL_CAPITAL.toLocaleString()}</span>
@@ -200,7 +198,7 @@ export default function Financials() {
                 <span>Seed funding</span>
                 <span>—</span>
               </div>
-            </div>
+            </div>}
 
             {fundingEvents.length === 0 ? (
               <p className="text-gray-400 text-sm italic py-2">No investments recorded yet.</p>
