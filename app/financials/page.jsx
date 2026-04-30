@@ -44,8 +44,8 @@ export default function Financials() {
   const updateTick = useCallback(() => {
     if (!venture) return;
 
-    const startingCapital = venture.virtual_capital || 15000;
-    const monthlyBurn = venture.monthly_burn_rate || 5000;
+  const startingCapital = venture.virtual_capital ?? 0;
+  const monthlyBurn = venture.monthly_burn_rate ?? 0;
 
     if (!venture.burn_rate_start) {
       setLiveBalance(startingCapital);
