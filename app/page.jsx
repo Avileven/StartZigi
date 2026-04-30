@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 import DashboardMockup from "@/components/utils/DashboardMockup";
 import MentorMockup from "@/components/utils/MentorMockup";
 import VCMockup from "@/components/utils/VCMockup";
@@ -91,6 +92,37 @@ function WhoSection() {
 
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// [ADDED] FAQ accordion component
+function FAQItems() {
+  const [openFaq, setOpenFaq] = useState(null);
+  const FAQS = [
+    { q: "Is this a real startup platform or a simulation?", a: "Both. The journey, tools, and AI guidance are real and built for serious founders. The investment simulations and virtual capital are simulated — designed to help you practice and prepare before facing real investors." },
+    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey simulation and 5 AI mentor credits to get started." },
+    { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
+    { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan — available on Pro Founder and Unicorn." },
+    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using the AI Mentor costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
+    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. Your data is private by default. The only two cases where information becomes visible to others — both your choice — are your beta sign-up page and your venture landing page for community feedback." },
+    { q: "Can I have more than one founder on a venture?", a: "Only one founder can create a venture, but you can invite as many co-founders as you want directly through the platform. Each co-founder receives a private invitation link to join your team." },
+    { q: "Can I join as an investor?", a: "Not at the moment. Investor accounts are not yet available, but we plan to open this up in the future. Stay tuned." },
+  ];
+  return (
+    <div className="space-y-3">
+      {FAQS.map((item, i) => (
+        <div key={i} className="border border-white/10 rounded-xl overflow-hidden">
+          <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-6 py-4 text-left text-white font-semibold text-base hover:bg-white/5 transition-colors">
+            <span>{item.q}</span>
+            <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
+          </button>
+          {openFaq === i && (
+            <div className="px-6 pb-5 text-white/65 text-sm leading-relaxed">{item.a}</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -384,6 +416,17 @@ export default function Home() {
           </div>
         </div>
         <BenefitsSection />
+      </div>
+      {/* [ADDED] FAQ Section */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-10">
+            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+              Frequently Asked Questions
+            </span>
+          </h2>
+          <FAQItems />
+        </div>
       </div>
     </div>
   );
