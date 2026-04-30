@@ -1,4 +1,4 @@
-// financials 300426
+// financials 30426
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -70,7 +70,7 @@ export default function Financials() {
   if (isLoading) return <div className="p-8 text-center font-bold">Loading...</div>;
   if (!venture) return <div className="p-8 text-center">No Venture Found</div>;
 
-  const displayBurnRate = venture.monthly_burn_rate || 5000;
+  const displayBurnRate = venture.monthly_burn_rate ?? 0;
 
   const displayTotalFunding = fundingEvents.reduce((s, e) => s + (e.amount || 0), 0);
 
@@ -91,8 +91,7 @@ export default function Financials() {
 
   const totalPromotionSpending = campaigns.reduce((s, c) => s + (c.cost || 0), 0);
 
-  // [ADDED] Initial capital amount — matches the $15,000 injected when entering MVP phase.
-  // Shown as a separate row in Investment History since it's not a FundingEvent in the DB.
+  // Initial capital only counted if money has actually been injected
   const INITIAL_CAPITAL = (venture.virtual_capital > 0) ? 15000 : 0;
 
   return (
@@ -188,17 +187,18 @@ export default function Financials() {
           </CardHeader>
           <CardContent className="pt-4 max-h-[200px] overflow-y-auto">
 
-            {/* [FIXED] Only show initial capital row if money has been injected */}
-            {venture.virtual_capital > 0 && <div className="py-2 border-b">
-              <div className="flex justify-between text-sm">
-                <span className="font-semibold text-gray-800">Initial Capital</span>
-                <span className="font-bold text-green-600">${INITIAL_CAPITAL.toLocaleString()}</span>
+            {venture.virtual_capital > 0 && (
+              <div className="py-2 border-b">
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-gray-800">Initial Capital</span>
+                  <span className="font-bold text-green-600">$15,000</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-0.5">
+                  <span>Seed funding</span>
+                  <span>—</span>
+                </div>
               </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-0.5">
-                <span>Seed funding</span>
-                <span>—</span>
-              </div>
-            </div>}
+            )}
 
             {fundingEvents.length === 0 ? (
               <p className="text-gray-400 text-sm italic py-2">No investments recorded yet.</p>
