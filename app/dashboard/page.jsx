@@ -1,4 +1,4 @@
-//dashboard 310326 message new
+//dashboard 010526 message new
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -1032,20 +1032,22 @@ const getGreeting = (username) => {
 
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
   assets.push({
-  id: 'zigforge',
-  title: 'ZigForge Studio',
-  icon: Zap,
-  page: 'zigforge'
-});    
+    id: 'zigforge',
+    title: 'ZigForge Studio',
+    icon: Zap,
+    page: 'zigforge',
+    // [HIGHLIGHT] highlight ZigForge in mvp and mlp phases
+    highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp'
+  });
   assets.push({
-        id: 'product_feedback',
-        title: 'Product Feedback',
-        icon: MessageSquare,
-        page: 'product-feedback',
-        // [HIGHLIGHT] highlight Product Feedback in mvp (after upload) and mlp and beta phases
-        highlighted: (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded) || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
-      });
-    }
+    id: 'product_feedback',
+    title: 'Product Feedback',
+    icon: MessageSquare,
+    page: 'product-feedback',
+    // [HIGHLIGHT] highlight Product Feedback in mvp (after upload) and mlp and beta phases
+    highlighted: (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded) || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
+  });
+}
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
   assets.push({
     id: 'zigplan',
@@ -1106,6 +1108,24 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         page: 'venture-pitch', // createPageUrl will convert to /venturepitch
         // [HIGHLIGHT] highlight Venture Pitch when in beta or growth phase
         highlighted: currentVenture.phase === 'beta' || currentVenture.phase === 'growth'
+      });
+
+      assets.push({
+        id: 'promotion_center_beta',
+        title: 'Promotion Center',
+        icon: Megaphone,
+        page: 'promotion-center',
+        // [HIGHLIGHT] highlight Promotion Center in beta phase
+        highlighted: currentVenture.phase === 'beta'
+      });
+
+      assets.push({
+        id: 'zigforge_beta',
+        title: 'ZigForge Studio',
+        icon: Zap,
+        page: 'zigforge',
+        // [HIGHLIGHT] highlight ZigForge in beta phase
+        highlighted: currentVenture.phase === 'beta'
       });
     }
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
@@ -1405,11 +1425,12 @@ if (showToS) {
               {assetsAndTools.map((asset) => {
                 const Icon = asset.icon;
                 // [HIGHLIGHT] highlighted items get a purple border + background to draw attention
+                // [HIGHLIGHT] amber color matches the Co-Founder card below the toolbox
                 const highlightClass = asset.highlighted
-                  ? "border-purple-400 bg-purple-50 shadow-sm"
+                  ? "border-amber-300 bg-amber-50 shadow-sm"
                   : "border-gray-200";
-                const highlightIconClass = asset.highlighted ? "text-purple-600" : "text-gray-600";
-                const highlightTextClass = asset.highlighted ? "text-purple-700 font-semibold" : "";
+                const highlightIconClass = asset.highlighted ? "text-amber-600" : "text-gray-600";
+                const highlightTextClass = asset.highlighted ? "text-amber-700 font-semibold" : "";
                 return (
                   <div key={asset.id}>
                     {asset.openInNewWindow ? (
