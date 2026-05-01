@@ -19,6 +19,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
   const [newFeatureName, setNewFeatureName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [featureAdded, setFeatureAdded] = useState(false);
 
   const selectedFeatures = useMemo(() => {
     if (!venture || !venture.mvp_data || !Array.isArray(venture.mvp_data.feature_matrix)) {
@@ -70,7 +71,8 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
       });
 
       setNewFeatureName('');
-      console.log('Feature suggestion added successfully!'); // הוחלף מ-alert
+      setFeatureAdded(true);
+      setTimeout(() => setFeatureAdded(false), 2500);
     } catch (error) {
       console.error('Error adding suggested feature:', error);
     } finally {
@@ -238,11 +240,12 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                     max={10}
                     min={0}
                     step={1}
-                   className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-1 [&_span:nth-child(2)]:bg-indigo-600 [&_span:nth-child(3)]:bg-gray-700 data-[state=active]:ring-2 data-[state=active]:ring-gray-700/50"
+                   className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-2 [&_span:nth-child(2)]:bg-indigo-500 [&_span:nth-child(3)]:bg-indigo-600 [&_span:nth-child(3)]:w-6 [&_span:nth-child(3)]:h-6 [&_span:nth-child(3)]:border-2 [&_span:nth-child(3)]:border-indigo-700 [&_span:nth-child(3)]:shadow-md"
                   />
-                  <div className="flex justify-between text-sm text-gray-500 mt-3">
-                    <span className="font-semibold">0</span>
-                    <span className="font-semibold">10</span>
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="text-sm font-semibold text-gray-500">0</span>
+                    <span className="text-xs text-gray-400 italic">← Drag to rate →</span>
+                    <span className="text-sm font-semibold text-gray-500">10</span>
                   </div>
                 </div>
               </div>
@@ -267,6 +270,12 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                   Add
                 </Button>
               </div>
+              {featureAdded && (
+                <div className="mt-3 flex items-center gap-2 text-emerald-600 font-semibold text-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  Feature suggestion added!
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -282,7 +291,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                     Submitting...
                   </>
                 ) : (
-                  'Submit'
+                  'Submit All Feedback'
                 )}
               </Button>
             </div>
