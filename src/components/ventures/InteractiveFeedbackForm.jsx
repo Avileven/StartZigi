@@ -1,179 +1,113 @@
-// 300326
+// 300326 - UPDATED 010526: UX improvements
 import React, { useState, useMemo } from 'react';
-import { MVPFeatureFeedback } from '@/api/entities.js';
-import { SuggestedFeature } from '@/api/entities.js';
-// [REMOVED] Venture import removed — we no longer update mvp_feedback_count on the venture
-// because the reviewer may not have permission to update another venture (RLS).
-import { User } from '@/api/entities.js';
+import { MVPFeatureFeedback, SuggestedFeature, User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Slider } from '@/components/ui/slider';
 import { MessageSquare, Loader2, CheckCircle, Plus } from 'lucide-react';
 
-// [CHANGED] Added reviewerVenture prop — the venture that is giving the feedback.
-// This is passed from venture-feedback/page.jsx via the ?from= URL param.
-// Used to identify the reviewer in the DB and save reviewer_venture_id/name.
 export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, reviewerVenture }) {
   const [feedbackData, setFeedbackData] = useState({});
   const [newFeatureName, setNewFeatureName] = useState('');
+  const [pendingFeatures, setPendingFeatures] = useState([]); // [CHANGED] local list before submit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [featureAdded, setFeatureAdded] = useState(false);
 
   const selectedFeatures = useMemo(() => {
-    if (!venture || !venture.mvp_data || !Array.isArray(venture.mvp_data.feature_matrix)) {
-      return [];
-    }
+    if (!venture || !venture.mvp_data || !Array.isArray(venture.mvp_data.feature_matrix)) return [];
     return venture.mvp_data.feature_matrix.filter(f => f.isSelected);
   }, [venture]);
 
-  if (selectedFeatures.length === 0) {
-    return null;
-  }
+  if (selectedFeatures.length === 0) return null;
 
   const handleRatingChange = (featureId, value) => {
-    const ratingValue = value[0]; // Slider returns array, get first value
-    console.log(`Rating change for feature ${featureId}:`, ratingValue);
-    setFeedbackData(prev => ({
-      ...prev,
-      [featureId]: ratingValue
-    }));
+    setFeedbackData(prev => ({ ...prev, [featureId]: value[0] }));
   };
 
-  const handleAddSuggestedFeature = async () => {
+  // [CHANGED] Add to local list only — send to DB on Submit
+  const handleAddSuggestedFeature = () => {
     if (!newFeatureName.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      let currentUser = null;
-      try {
-        currentUser = await User.me();
-      } catch (error) { /* User not logged in */ }
-
-      // יצירת שדות מערכת חובה בהתאם לסכמה
-      const now = new Date().toISOString();
-      const newId = crypto.randomUUID(); 
-      const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
-      const createdById = currentUser ? currentUser.id : null; 
-
-      await SuggestedFeature.create({
-        // שדות חובה חדשים
-        id: newId, 
-        created_date: now,
-        updated_date: now,
-        created_by: createdByEmail,
-        created_by_id: createdById,
-        // שדות קיימים
-        venture_id: venture.id,
-        feature_name: newFeatureName,
-        user_email: createdByEmail
-      });
-
-      setNewFeatureName('');
-      setFeatureAdded(true);
-      setTimeout(() => setFeatureAdded(false), 2500);
-    } catch (error) {
-      console.error('Error adding suggested feature:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setPendingFeatures(prev => [...prev, newFeatureName.trim()]);
+    setNewFeatureName('');
   };
- const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (Object.keys(feedbackData).length === 0) {
-      console.log("Please provide some feedback before submitting."); // הוחלף מ-alert
-      return;
-    }
+    if (Object.keys(feedbackData).length === 0) return;
     setIsSubmitting(true);
 
     try {
       const submissionId = crypto.randomUUID();
       let currentUser = null;
-      try {
-        currentUser = await User.me();
-      } catch (error) { /* User not logged in */ }
+      try { currentUser = await User.me(); } catch (error) {}
 
-      console.log('About to submit feedback data:', feedbackData);
+      const now = new Date().toISOString();
+      const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
+      const createdById = currentUser ? currentUser.id : null;
 
+      // Submit ratings
       const feedbackPromises = selectedFeatures.map(feature => {
         const rating = feedbackData[feature.id];
-        
-        // יצירת שדות מערכת חובה לכל רשומה
-        const now = new Date().toISOString();
-        const newId = crypto.randomUUID(); 
-        const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
-        const createdById = currentUser ? currentUser.id : null; 
-
-        console.log(`Submitting feedback for feature ${feature.id} (${feature.featureName}): rating=${rating}`);
-        if (rating !== undefined && rating !== null) {
-          return MVPFeatureFeedback.create({
-            id: newId, 
-            created_date: now,
-            updated_date: now,
-            created_by: createdByEmail,
-            created_by_id: createdById,
-            venture_id: venture.id,
-            feature_id: feature.id,
-            feature_name: feature.featureName || "Unnamed Feature",
-            rating: rating,
-            submission_id: submissionId,
-            user_email: createdByEmail,
-            // [ADDED] Reviewer identity — identifies which venture gave this feedback.
-            // Comes from ?from= param in the URL, passed as prop from venture-feedback/page.jsx.
-            // null-safe: if reviewerVenture is missing, fields stay null (no crash).
-            reviewer_venture_id: reviewerVenture?.id || null,
-            reviewer_venture_name: reviewerVenture?.name || null,
-          });
-        }
-        return Promise.resolve();
+        if (rating === undefined || rating === null) return Promise.resolve();
+        return MVPFeatureFeedback.create({
+          id: crypto.randomUUID(),
+          created_date: now, updated_date: now,
+          created_by: createdByEmail, created_by_id: createdById,
+          venture_id: venture.id,
+          feature_id: feature.id,
+          feature_name: feature.featureName || "Unnamed Feature",
+          rating,
+          submission_id: submissionId,
+          user_email: createdByEmail,
+          reviewer_venture_id: reviewerVenture?.id || null,
+          reviewer_venture_name: reviewerVenture?.name || null,
+        });
       });
 
-      await Promise.all(feedbackPromises);
+      // [CHANGED] Submit pending feature suggestions together with ratings
+      const suggestionPromises = pendingFeatures.map(name =>
+        SuggestedFeature.create({
+          id: crypto.randomUUID(),
+          created_date: now, updated_date: now,
+          created_by: createdByEmail, created_by_id: createdById,
+          venture_id: venture.id,
+          feature_name: name,
+          user_email: createdByEmail,
+        })
+      );
 
-      // [REMOVED] Venture.update({ mvp_feedback_count }) removed.
-      // Reason: the reviewer does not have RLS permission to update another venture.
-      // Feedback count is now calculated directly from mvp_feature_feedback table when needed.
+      await Promise.all([...feedbackPromises, ...suggestionPromises]);
       setIsSubmitted(true);
-      if (onFeedbackSubmitted) {
-        onFeedbackSubmitted();
-      }
+      if (onFeedbackSubmitted) onFeedbackSubmitted();
 
     } catch (error) {
-      console.error("Error submitting feedback:", error); // הוחלף מ-alert
+      console.error("Error submitting feedback:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const getCategoryFromRating = (rating) => {
-    if (rating >= 0 && rating <= 2) return { label: 'Never use', color: 'text-red-600 bg-red-100' };
-    if (rating >= 3 && rating <= 4) return { label: 'Confusing', color: 'text-yellow-600 bg-yellow-100' };
-    if (rating >= 5 && rating <= 7) return { label: 'Nice To Have', color: 'text-blue-600 bg-blue-100' };
-    if (rating >= 8 && rating <= 10) return { label: 'Essential', color: 'text-green-600 bg-green-100' };
-    return { label: '', color: 'text-gray-600 bg-gray-100' };
+    if (rating <= 2) return { label: 'Never use', color: 'text-red-600 bg-red-100' };
+    if (rating <= 4) return { label: 'Confusing', color: 'text-yellow-600 bg-yellow-100' };
+    if (rating <= 7) return { label: 'Nice To Have', color: 'text-blue-600 bg-blue-100' };
+    return { label: 'Essential', color: 'text-green-600 bg-green-100' };
   };
-
-  if (isSubmitted) {
-    return (
-      <Card className="max-w-4xl mx-auto shadow-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-0">
-        <CardContent className="p-8 text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-white" />
-          </div>
-          <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">
-            Thank You!
-          </h3>
-          <p className="text-lg text-gray-600">Your feedback has been submitted and will help improve this venture.</p>
-          {/* [ADDED] Auto-redirect message — parent page handles the actual redirect via setTimeout */}
-          <p className="text-gray-400 text-sm mt-3">Redirecting you back to your dashboard in a few seconds...</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
+      {/* [ADDED] Thumb color override */}
+      <style>{`
+        .feedback-slider [role="slider"] {
+          background-color: #6366f1 !important;
+          border: 3px solid #4338ca !important;
+          width: 24px !important;
+          height: 24px !important;
+          box-shadow: 0 2px 8px rgba(99,102,241,0.5) !important;
+        }
+      `}</style>
+
       <Card className="shadow-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-0 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
           <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-3">
@@ -190,30 +124,17 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Category Headers */}
             <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg">
-                  Never use
+              {[
+                { label: 'Never use', range: '0-2', from: 'from-red-500', to: 'to-red-600', text: 'text-red-600' },
+                { label: 'Confusing', range: '3-4', from: 'from-yellow-500', to: 'to-yellow-600', text: 'text-yellow-600' },
+                { label: 'Nice To Have', range: '5-7', from: 'from-blue-500', to: 'to-blue-600', text: 'text-blue-600' },
+                { label: 'Essential', range: '8-10', from: 'from-green-500', to: 'to-green-600', text: 'text-green-600' },
+              ].map(c => (
+                <div key={c.label} className="text-center">
+                  <div className={`bg-gradient-to-r ${c.from} ${c.to} text-white px-4 py-3 rounded-xl font-bold shadow-lg`}>{c.label}</div>
+                  <div className={`text-xs ${c.text} mt-2 font-semibold`}>{c.range}</div>
                 </div>
-                <div className="text-xs text-red-600 mt-2 font-semibold">0-2</div>
-              </div>
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg">
-                  Confusing
-                </div>
-                <div className="text-xs text-yellow-600 mt-2 font-semibold">3-4</div>
-              </div>
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg">
-                  Nice To Have
-                </div>
-                <div className="text-xs text-blue-600 mt-2 font-semibold">5-7</div>
-              </div>
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg">
-                  Essential
-                </div>
-                <div className="text-xs text-green-600 mt-2 font-semibold">8-10</div>
-              </div>
+              ))}
             </div>
 
             {/* Features */}
@@ -223,7 +144,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                   <h3 className="text-2xl font-bold text-gray-900">{feature.featureName}</h3>
                   <div className="flex items-center gap-3">
                     <span className="text-3xl font-bold text-indigo-600">
-                      {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : 0}
+                      {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : '—'}
                     </span>
                     {feedbackData[feature.id] !== undefined && (
                       <div className={`px-3 py-1 rounded-full text-sm font-semibold ${getCategoryFromRating(feedbackData[feature.id]).color}`}>
@@ -232,15 +153,12 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                     )}
                   </div>
                 </div>
-                
-                <div className="relative">
+                <div className="relative feedback-slider">
                   <Slider
-                    value={[feedbackData[feature.id] || 0]}
+                    value={[feedbackData[feature.id] ?? 5]}
                     onValueChange={(value) => handleRatingChange(feature.id, value)}
-                    max={10}
-                    min={0}
-                    step={1}
-                   className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-2 [&_span:nth-child(2)]:bg-indigo-500 [&_span:nth-child(3)]:bg-indigo-600 [&_span:nth-child(3)]:w-6 [&_span:nth-child(3)]:h-6 [&_span:nth-child(3)]:border-2 [&_span:nth-child(3)]:border-indigo-700 [&_span:nth-child(3)]:shadow-md"
+                    max={10} min={0} step={1}
+                    className="w-full"
                   />
                   <div className="flex justify-between items-center mt-3">
                     <span className="text-sm font-semibold text-gray-500">0</span>
@@ -258,42 +176,54 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                 <Input
                   value={newFeatureName}
                   onChange={(e) => setNewFeatureName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSuggestedFeature(); }}}
                   placeholder="Describe a feature you'd like to see..."
                   className="flex-1 text-lg py-3 border-2 border-emerald-200 focus:border-emerald-400 rounded-xl"
                 />
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   onClick={handleAddSuggestedFeature}
                   className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-8 py-3 text-lg font-semibold shadow-lg rounded-xl"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add
+                  <Plus className="w-5 h-5 mr-2" /> Add
                 </Button>
               </div>
-              {featureAdded && (
-                <div className="mt-3 flex items-center gap-2 text-emerald-600 font-semibold text-sm">
-                  <CheckCircle className="w-4 h-4" />
-                  Feature suggestion added!
+              {/* [ADDED] Pending features list */}
+              {pendingFeatures.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {pendingFeatures.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-emerald-700 text-sm font-medium">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      {f}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
             {/* Submit Button */}
             <div className="text-center pt-6">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white text-xl px-16 py-4 rounded-full shadow-2xl transform transition hover:scale-105 font-bold"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit All Feedback'
-                )}
-              </Button>
+              {isSubmitted ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-8 py-4 text-green-700 font-bold text-lg">
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                    Thank you! Your feedback has been submitted.
+                  </div>
+                  <p className="text-gray-400 text-sm">Redirecting you back in a few seconds...</p>
+                </div>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || Object.keys(feedbackData).length === 0}
+                  className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white text-xl px-16 py-4 rounded-full shadow-2xl transform transition hover:scale-105 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-6 h-6 mr-3 animate-spin" /> Submitting...</>
+                  ) : (
+                    'Submit All Feedback'
+                  )}
+                </Button>
+              )}
             </div>
           </form>
         </CardContent>
