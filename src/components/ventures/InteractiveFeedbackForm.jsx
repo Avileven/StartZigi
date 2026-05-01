@@ -1,4 +1,4 @@
-// 300326 - UPDATED 010526: UX improvements
+// 010526 - UPDATED UX improvements
 import React, { useState, useMemo } from 'react';
 import { MVPFeatureFeedback, SuggestedFeature, User } from '@/api/entities.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
@@ -142,12 +142,12 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                     )}
                   </div>
                 </div>
-                <div className="relative feedback-slider">
+                <div className="relative">
                   <Slider
-                    value={[feedbackData[feature.id] ?? 5]}
+                    value={[feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : 0]}
                     onValueChange={(value) => handleRatingChange(feature.id, value)}
                     max={10} min={0} step={1}
-                    className="w-full"
+                    className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-1 [&_span:nth-child(2)]:bg-indigo-600 [&_span:nth-child(3)]:bg-gray-700 data-[state=active]:ring-2 data-[state=active]:ring-gray-700/50"
                   />
                   <div className="flex justify-between items-center mt-3">
                     <span className="text-sm font-semibold text-gray-500">0</span>
