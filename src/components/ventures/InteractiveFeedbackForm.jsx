@@ -151,7 +151,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                   />
                   <div className="flex justify-between items-center mt-3">
                     <span className="text-sm font-semibold text-gray-500">0</span>
-                    <span className="text-xs text-gray-400 italic">← Drag to rate →</span>
+                    <span className="text-xs text-gray-400 italic">← Drag or click to rate →</span>
                     <span className="text-sm font-semibold text-gray-500">10</span>
                   </div>
                 </div>
