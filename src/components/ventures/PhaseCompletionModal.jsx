@@ -146,7 +146,14 @@ const PHASE_CONTENT = {
         description: "Built initial application prototype",
         icon: "🛠️",
         value: "Complete"
-      }
+      },
+      {
+  id: 3,
+  title: "Revenue Model Complete",
+  description: "Revenue strategy finalized",
+  icon: "📊",
+  value: "Complete"
+}
     ],
     
     challenges: [
