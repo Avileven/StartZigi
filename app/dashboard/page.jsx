@@ -997,7 +997,9 @@ const getGreeting = (username) => {
         id: 'business_plan',
         title: 'Business Plan',
         icon: FileText,
-        page: 'businessPlan' // createPageUrl will convert to /businessplan
+        page: 'businessPlan', // createPageUrl will convert to /businessplan
+        // [HIGHLIGHT] highlight Business Plan when in business_plan phase
+        highlighted: currentVenture.phase === 'business_plan'
       });
      
       assets.push({
@@ -1011,7 +1013,9 @@ const getGreeting = (username) => {
         id: 'promotion_center',
         title: 'Promotion Center',
         icon: Megaphone,
-        page: 'promotion-center' // createPageUrl will convert to /promotioncenter
+        page: 'promotion-center', // createPageUrl will convert to /promotioncenter
+        // [HIGHLIGHT] highlight Promotion Center in mvp (before revenue done) and mlp phases
+        highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp'
       });
     }
 
@@ -1020,7 +1024,9 @@ const getGreeting = (username) => {
         id: 'mvp_development',
         title: 'MVP Development Center',
         icon: Rocket,
-        page: 'mvp-development' // createPageUrl will convert to /mvpdevelopment
+        page: 'mvp-development', // createPageUrl will convert to /mvpdevelopment
+        // [HIGHLIGHT] highlight MVP Development Center when MVP not yet uploaded
+        highlighted: true
       });
     }
 
@@ -1035,7 +1041,9 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
         id: 'product_feedback',
         title: 'Product Feedback',
         icon: MessageSquare,
-        page: 'product-feedback'
+        page: 'product-feedback',
+        // [HIGHLIGHT] highlight Product Feedback in mvp (after upload) and mlp and beta phases
+        highlighted: (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded) || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
       });
     }
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
@@ -1052,7 +1060,9 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         title: 'Revenue Modeling',
         icon: BarChart3,
         page: 'revenue-modeling-experience', // createPageUrl will convert to /revenuemodeling-experience
-        openInNewWindow: true
+        openInNewWindow: true,
+        // [HIGHLIGHT] highlight Revenue Modeling when MVP uploaded but revenue model not yet complete
+        highlighted: true
       });
     }
 
@@ -1073,7 +1083,9 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         id: 'mlp_development_center',
         title: 'MLP Development Center',
         icon: Heart,
-        page: 'mlp-development-center'
+        page: 'mlp-development-center',
+        // [HIGHLIGHT] highlight MLP Development Center when in mlp phase
+        highlighted: true
       });
     }
 
@@ -1082,14 +1094,18 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         id: 'beta_development',
         title: 'Beta Testing Page',
         icon: FlaskConical,
-        page: 'beta-development' // createPageUrl will convert to /betadevelopment
+        page: 'beta-development', // createPageUrl will convert to /betadevelopment
+        // [HIGHLIGHT] highlight Beta Testing Page when in beta phase
+        highlighted: currentVenture.phase === 'beta'
       });
      
       assets.push({
         id: 'venture_pitch',
         title: 'Venture Pitch',
         icon: TrendingUp,
-        page: 'venture-pitch' // createPageUrl will convert to /venturepitch
+        page: 'venture-pitch', // createPageUrl will convert to /venturepitch
+        // [HIGHLIGHT] highlight Venture Pitch when in beta or growth phase
+        highlighted: currentVenture.phase === 'beta' || currentVenture.phase === 'growth'
       });
     }
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
@@ -1388,29 +1404,35 @@ if (showToS) {
             <div className="space-y-2">
               {assetsAndTools.map((asset) => {
                 const Icon = asset.icon;
+                // [HIGHLIGHT] highlighted items get a purple border + background to draw attention
+                const highlightClass = asset.highlighted
+                  ? "border-purple-400 bg-purple-50 shadow-sm"
+                  : "border-gray-200";
+                const highlightIconClass = asset.highlighted ? "text-purple-600" : "text-gray-600";
+                const highlightTextClass = asset.highlighted ? "text-purple-700 font-semibold" : "";
                 return (
                   <div key={asset.id}>
                     {asset.openInNewWindow ? (
                       <a href={createPageUrl(asset.page)} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
+                        <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                          <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                          <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
                           <ExternalLink className="w-3 h-3 text-gray-400" />
                         </div>
                       </a>
                     ) : asset.external ? (
                       <a href={asset.url} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
+                        <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                          <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                          <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
                           <ExternalLink className="w-3 h-3 text-gray-400" />
                         </div>
                       </a>
                     ) : (
                       <Link href={createPageUrl(asset.page)} className="block">
-                        <div className="flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border">
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="flex-1 text-sm">{asset.title}</span>
+                        <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                          <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                          <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
                         </div>
                       </Link>
                     )}
