@@ -79,7 +79,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
 
       await Promise.all([...feedbackPromises, ...suggestionPromises]);
       setIsSubmitted(true);
-      if (onFeedbackSubmitted) onFeedbackSubmitted();
+      setTimeout(() => { if (onFeedbackSubmitted) onFeedbackSubmitted(); }, 2000);
 
     } catch (error) {
       console.error("Error submitting feedback:", error);
@@ -97,17 +97,6 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* [ADDED] Thumb color override */}
-      <style>{`
-        .feedback-slider [role="slider"] {
-          background-color: #6366f1 !important;
-          border: 3px solid #4338ca !important;
-          width: 24px !important;
-          height: 24px !important;
-          box-shadow: 0 2px 8px rgba(99,102,241,0.5) !important;
-        }
-      `}</style>
-
       <Card className="shadow-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-0 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
           <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-3">
