@@ -35,9 +35,15 @@ export default function RegisterPage() {
 
     
 
+// [FIX — RLS] Pass username as metadata so the DB trigger picks it up.
+// The trigger (handle_new_user) inserts the user_profiles row server-side
+// with SECURITY DEFINER — bypassing RLS. No client-side upsert needed.
 const { data, error } = await supabase.auth.signUp({
   email,
   password,
+  options: {
+    data: { username: username.trim() }
+  }
 });
 
 if (error) {
@@ -53,20 +59,8 @@ if (data?.user?.identities?.length === 0) {
   return;
 }
 
-// ✅ [2026-01-04] SAVE NAME INTO user_profiles.username
-// חשוב: זה רק אחרי signUp הצלחה, ויש לנו data.user.id
-const { error: profileError } = await supabase
-  .from("user_profiles")
-  .upsert({
-    id: data.user.id,
-    username: username.trim(), // אם שינית ל-username, תחליף ל: username.trim()
-  });
-
-if (profileError) {
-  setError(profileError.message);
-  setLoading(false);
-  return;
-}
+// [FIX — RLS] Removed manual upsert to user_profiles.
+// The DB trigger handles the INSERT automatically on signup.
 
 alert("Registration successful! Please check your email to confirm your account.");
 router.push("/login");
