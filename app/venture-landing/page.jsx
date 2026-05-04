@@ -111,6 +111,7 @@ export default function VentureLanding() {
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [invitationToken, setInvitationToken] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
+  const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
@@ -173,8 +174,9 @@ export default function VentureLanding() {
           const v = ventures[0];
           setVenture(v);
           if (v.created_by_id) {
-            const { data: fp } = await supabase.from('user_profiles').select('plan').eq('id', v.created_by_id).single();
-            if (fp) setFounderPlan(fp.plan);
+            const { data: fp } = await supabase.from('user_profiles').select('plan, early_adopter').eq('id', v.created_by_id).single();
+            // [EARLY ADOPTER] load early_adopter flag
+            if (fp) { setFounderPlan(fp.plan); setEarlyAdopter(fp.early_adopter === true); }
           }
           if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
           if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
@@ -193,8 +195,9 @@ export default function VentureLanding() {
           const v = ventures[0];
           setVenture(v);
           if (v.created_by_id) {
-            const { data: fp } = await supabase.from('user_profiles').select('plan').eq('id', v.created_by_id).single();
-            if (fp) setFounderPlan(fp.plan);
+            const { data: fp } = await supabase.from('user_profiles').select('plan, early_adopter').eq('id', v.created_by_id).single();
+            // [EARLY ADOPTER] load early_adopter flag
+            if (fp) { setFounderPlan(fp.plan); setEarlyAdopter(fp.early_adopter === true); }
           }
           if (user) {
             setHasLiked(v.liked_by_users?.includes(user.id) || user.liked_venture_ids?.includes(v.id) || false);
@@ -481,6 +484,28 @@ export default function VentureLanding() {
                           <span className="text-[9px] text-purple-400 uppercase tracking-widest">StartZig</span>
                           <span className="text-xs">Pro Founder</span>
                         </span>
+                      )}
+                      {/* [EARLY ADOPTER] Show gold badge if user is an early adopter */}
+                      {earlyAdopter && (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+                          <defs>
+                            <linearGradient id="gold4" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#FFD700"/>
+                              <stop offset="50%" stopColor="#FFA500"/>
+                              <stop offset="100%" stopColor="#CC8800"/>
+                            </linearGradient>
+                            <linearGradient id="bg4" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#1a1a2e"/>
+                              <stop offset="100%" stopColor="#0f0f1a"/>
+                            </linearGradient>
+                          </defs>
+                          <rect x="1" y="1" width="118" height="38" rx="6" fill="url(#bg4)"/>
+                          <rect x="1" y="1" width="118" height="38" rx="6" fill="none" stroke="url(#gold4)" strokeWidth="1.2"/>
+                          <rect x="5" y="5" width="110" height="30" rx="3" fill="none" stroke="url(#gold4)" strokeWidth="0.5" opacity="0.4"/>
+                          <text x="60" y="16" fontFamily="Arial, serif" fontSize="6" fill="#FFD700" textAnchor="middle" letterSpacing="2" opacity="0.7">STARTZIG</text>
+                          <line x1="12" y1="19" x2="108" y2="19" stroke="#FFD700" strokeWidth="0.5" opacity="0.3"/>
+                          <text x="60" y="32" fontFamily="Arial, serif" fontSize="11" fontWeight="800" fill="#FFA500" textAnchor="middle" letterSpacing="0.5">Early Adopter</text>
+                        </svg>
                       )}
                     </div>
                     <p className="text-gray-600 text-lg">{venture.description}</p>
