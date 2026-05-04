@@ -179,7 +179,7 @@ function CreateVentureForm() {
 
       // [ADDED 300426] Send welcome email after venture is created
       try {
-        await fetch("/api/send-welcome", {
+        await fetch("/api/send-welcome-early-adopter", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
