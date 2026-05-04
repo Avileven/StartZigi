@@ -243,6 +243,30 @@ export default function BetaTesting() {
                 <span className="text-xs">Pro Founder</span>
               </div>
             )}
+            {/* [EARLY ADOPTER] Show gold badge if user is an early adopter */}
+            {earlyAdopter && (
+              <div className="absolute top-4 left-4 flex items-center gap-2 mt-12">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+                  <defs>
+                    <linearGradient id="goldB" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#FFD700"/>
+                      <stop offset="50%" stopColor="#FFA500"/>
+                      <stop offset="100%" stopColor="#CC8800"/>
+                    </linearGradient>
+                    <linearGradient id="bgB" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#1a1a2e"/>
+                      <stop offset="100%" stopColor="#0f0f1a"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="1" y="1" width="118" height="38" rx="6" fill="url(#bgB)"/>
+                  <rect x="1" y="1" width="118" height="38" rx="6" fill="none" stroke="url(#goldB)" strokeWidth="1.2"/>
+                  <rect x="5" y="5" width="110" height="30" rx="3" fill="none" stroke="url(#goldB)" strokeWidth="0.5" opacity="0.4"/>
+                  <text x="60" y="16" fontFamily="Arial, serif" fontSize="6" fill="#FFD700" textAnchor="middle" letterSpacing="2" opacity="0.7">STARTZIG</text>
+                  <line x1="12" y1="19" x2="108" y2="19" stroke="#FFD700" strokeWidth="0.5" opacity="0.3"/>
+                  <text x="60" y="32" fontFamily="Arial, serif" fontSize="11" fontWeight="800" fill="#FFA500" textAnchor="middle" letterSpacing="0.5">Early Adopter</text>
+                </svg>
+              </div>
+            )}
             <span className="inline-block bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1 rounded-full mb-4">
               {venture.name} Beta Program
             </span>
