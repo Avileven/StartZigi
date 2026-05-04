@@ -40,6 +40,7 @@ const benefitIcons = {
 export default function BetaTesting() {
   const [venture, setVenture] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
+  const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [campaignId, setCampaignId] = useState(null);
   const [testerCount, setTesterCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,10 +95,10 @@ export default function BetaTesting() {
             if (ventureData.created_by_id) {
               const { data: founderProfile } = await supabase
                 .from('user_profiles')
-                .select('plan')
+                .select('plan, early_adopter')
                 .eq('id', ventureData.created_by_id)
                 .single();
-              if (founderProfile) setFounderPlan(founderProfile.plan);
+              if (founderProfile) { setFounderPlan(founderProfile.plan); setEarlyAdopter(founderProfile.early_adopter === true); } // [EARLY ADOPTER]
             }
             
             const featuredDemo = ventureData.beta_data?.featured_demo;
