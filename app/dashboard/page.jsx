@@ -1533,7 +1533,7 @@ if (showToS) {
                   </h1>
                   {/* [EARLY ADOPTER] Show small gold badge next to greeting */}
                   {earlyAdopter && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 34" width="100" height="34">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 34" width="110" height="40">
                       <defs>
                         <linearGradient id="goldD" x1="0%" y1="0%" x2="0%" y2="100%">
                           <stop offset="0%" stopColor="#FFD700"/>
