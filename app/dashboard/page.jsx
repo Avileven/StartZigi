@@ -101,6 +101,7 @@ export default function Dashboard() {
   const [currentVenture, setCurrentVenture] = useState(null);
   const [messages, setMessages] = useState([]);
   const [user, setUser] = useState(null);
+  const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [isLoading, setIsLoading] = useState(true);
   const [showToS, setShowToS] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
@@ -399,6 +400,7 @@ const updateValuation = useCallback(() => {
       }
      
       setUser(currentUser);
+      setEarlyAdopter(currentUser?.early_adopter === true); // [EARLY ADOPTER]
 
       if (!currentUser.accepted_tos_date) {
         setShowToS(true);
@@ -1525,10 +1527,33 @@ if (showToS) {
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  {getGreeting(user?.username)}
-                 
-                </h1>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {getGreeting(user?.username)}
+                  </h1>
+                  {/* [EARLY ADOPTER] Show small gold badge next to greeting */}
+                  {earlyAdopter && (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 34" width="100" height="34">
+                      <defs>
+                        <linearGradient id="goldD" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#FFD700"/>
+                          <stop offset="50%" stopColor="#FFA500"/>
+                          <stop offset="100%" stopColor="#CC8800"/>
+                        </linearGradient>
+                        <linearGradient id="bgD" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1a1a2e"/>
+                          <stop offset="100%" stopColor="#0f0f1a"/>
+                        </linearGradient>
+                      </defs>
+                      <rect x="1" y="1" width="98" height="32" rx="5" fill="url(#bgD)"/>
+                      <rect x="1" y="1" width="98" height="32" rx="5" fill="none" stroke="url(#goldD)" strokeWidth="1"/>
+                      <rect x="4" y="4" width="92" height="26" rx="3" fill="none" stroke="url(#goldD)" strokeWidth="0.4" opacity="0.4"/>
+                      <text x="50" y="14" fontFamily="Arial, serif" fontSize="5" fill="#FFD700" textAnchor="middle" letterSpacing="2" opacity="0.7">STARTZIG</text>
+                      <line x1="10" y1="17" x2="90" y2="17" stroke="#FFD700" strokeWidth="0.4" opacity="0.3"/>
+                      <text x="50" y="28" fontFamily="Arial, serif" fontSize="9" fontWeight="800" fill="#FFA500" textAnchor="middle" letterSpacing="0.5">Early Adopter</text>
+                    </svg>
+                  )}
+                </div>
                 <p className="text-sm text-gray-500">
                   {format(new Date(), "EEEE, MMMM d, yyyy")}
                 </p>
