@@ -27,6 +27,17 @@ export default function Pricing() {
       router.push('/dashboard');
       return;
     }
+
+    // [LAUNCH LOCK] During launch period — paid plans are locked
+    if (planKey === 'builder') {
+      alert("You're already on the Builder plan as an Early Adopter — enjoy your free month!");
+      return;
+    }
+    if (planKey === 'pro_founder' || planKey === 'unicorn') {
+      alert('Available after launch. Stay tuned!');
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
