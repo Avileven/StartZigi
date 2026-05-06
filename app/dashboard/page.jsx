@@ -8,6 +8,7 @@ import { VentureMessage } from "@/api/entities";
 import { User } from "@/api/entities";
 import { PromotionCampaign } from "@/api/entities";
 import { BetaTester } from "@/api/entities";
+import { ProductFeedback } from "@/api/entities"; // [MLP→BETA auto-check]
 // תיקון: הוסרה סיומת .js מיותרת
 import { VCFirm } from '@/api/entities';
 import { Budget } from '@/api/entities';
@@ -446,6 +447,29 @@ if (userVentures.length === 0) {
           // This bypassed the 10 product_feedback requirement. Phase transition now happens exclusively in
           // mlp-development-center/page.jsx handleComplete().
          
+          // [MLP→BETA] Auto-check: if mlp completed and 10+ feedbacks, move to beta
+          if (activeVenture.phase === 'mlp' && activeVenture.mlp_completed) {
+            const feedbacks = await ProductFeedback.filter({ venture_id: activeVenture.id });
+            if (feedbacks.length >= 10) {
+              await Venture.update(activeVenture.id, { phase: 'beta' });
+              await VentureMessage.create({
+                venture_id: activeVenture.id,
+                message_type: 'phase_complete',
+                title: '🎉 MLP Phase Complete!',
+                content: `Congratulations! You completed your MLP and collected ${feedbacks.length} feedback responses. You are now entering the Beta phase!`,
+                phase: 'mlp',
+              });
+              await VentureMessage.create({
+                venture_id: activeVenture.id,
+                message_type: 'phase_welcome',
+                title: '🧪 Welcome to Beta Testing!',
+                content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
+                phase: 'beta',
+              });
+              activeVenture.phase = 'beta';
+            }
+          }
+
           // Auto-check: if in beta phase and enough testers, move to growth
           if (activeVenture.phase === 'beta') {
             const betaTesters = await BetaTester.filter({ venture_id: activeVenture.id });
