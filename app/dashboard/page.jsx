@@ -190,16 +190,18 @@ const updateValuation = useCallback(() => {
         const hasAngelInvestment = fundingEvents.some(e => e.investment_type === 'angel');
         if (hasAngelInvestment) { passed = false; rejectReason = `Unfortunately, I have to pass. Your venture looks promising, but I don't co-invest alongside other angel investors. Best of luck!`; }
 
+        // [FIX 050526] Screening logic — only 3 rejection conditions allowed.
+        // focus_sectors mismatch is NOT a rejection criterion — it only affects investment amount after the meeting.
         if (investor.investor_type === 'no_go') {
+          // no_go investors always reject — they never take new investments
           passed = false;
-          rejectReason = `Thank you for reaching out. We are currently focusing on our existing portfolio and are not taking new investments at this time.`;
+          rejectReason = `Thank you for your time, but we have decided not to move forward as we are currently only advising our existing portfolio companies.`;
         } else if (investor.investor_type === 'team_focused' && (venture.founders_count || 1) < 2) {
+          // team_focused investors require at least 2 co-founders
           passed = false;
-          rejectReason = `After reviewing your materials, we've decided to pass. We have a strong preference for ventures with multiple co-founders.`;
-        } else if (investor.focus_sectors?.length > 0 && venture.sector && !investor.focus_sectors.includes(venture.sector)) {
-          passed = false;
-          rejectReason = `Thank you for sharing your business plan. Unfortunately, your venture's sector doesn't align with our current investment focus.`;
+          rejectReason = `We have a strong focus on ventures with multiple co-founders and have decided to pass at this time.`;
         }
+        // All other cases (flexible, team_focused with 2+ founders) pass to meeting
 
         if (passed) {
           await InvestorMeeting.update(meeting.id, { status: 'screening_passed', screening_result: 'passed', screening_result_sent_at: now.toISOString() });
