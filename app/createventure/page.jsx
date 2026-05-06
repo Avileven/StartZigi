@@ -184,7 +184,7 @@ function CreateVentureForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: user.email,
-            founderName: user.full_name || user.name || "",
+            founderName: user.username || user.full_name || user.name || "",
             ventureName: newVenture.name,
           }),
         });
