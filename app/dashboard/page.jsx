@@ -579,8 +579,8 @@ if (userVentures.length === 0) {
   }, [router]);
 
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  loadDashboard();
+}, []);
 // update valuation
   useEffect(() => {
   if (!currentVenture || !messages) return;
