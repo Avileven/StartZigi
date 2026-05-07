@@ -891,11 +891,14 @@ const newCapital = freshCapital + message.investment_offer_checksize;
 
   // [ADDED] Join angel meeting from dashboard — fetches meeting & investor from investor_meetings table
   // Checks meeting_scheduled_at to verify timing before opening PitchModal
-  const handleJoinAngelMeeting = async () => {
+  const handleJoinAngelMeeting = async (message) => {
     try {
       const meetings = await InvestorMeeting.filter({ venture_id: currentVenture.id, meeting_status: 'scheduled' });
       if (!meetings.length) { alert("Could not find the meeting details."); return; }
-      const meeting = meetings[0];
+      // [FIX 07/05/2026] Match meeting to correct investor using message title
+      const titleMatch = message?.title?.match(/with (.+)$/);
+      const investorNameFromTitle = titleMatch ? titleMatch[1].trim() : null;
+      const meeting = (investorNameFromTitle && meetings.find(m => m.investor_name === investorNameFromTitle)) || meetings[0];
 
       const now = new Date();
 const meetingTime = new Date(meeting.meeting_scheduled_at);
@@ -1927,7 +1930,7 @@ if (showToS) {
                                 </p>
                                 <div className="flex gap-2">
                                   <Button
-                                    onClick={handleJoinAngelMeeting}
+                                    onClick={() => handleJoinAngelMeeting(message)}
                                     disabled={!isActive}
                                     className={isActive
                                       ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
