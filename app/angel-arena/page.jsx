@@ -23,7 +23,9 @@ const STATUSES = {
   IN_MEETING: { color: 'bg-yellow-500', label: 'In Meeting', icon: Clock, ringColor: 'ring-yellow-400' },
 };
 
-// [CHANGED] Investor card color is now determined by meeting status, not random gradient
+// getMeetingColor() — determines the background color of each investor circle.
+// Color reflects the current meeting status for this venture+investor pair.
+// Called on every render with the investor's meeting status from the investor_meetings table.
 const getMeetingColor = (mStatus, meetingScheduledAt) => {
   if (!mStatus) return 'bg-green-500';                                               // no contact yet — green
   if (mStatus === 'pending_screening') return 'bg-yellow-400';                       // awaiting — yellow
@@ -33,7 +35,8 @@ const getMeetingColor = (mStatus, meetingScheduledAt) => {
   return 'bg-green-500';
 };
 
-// Returns the status of this investor for this venture based on existing meetings
+// getInvestorMeetingStatus() — looks up whether this venture has an existing meeting
+// with this investor. Returns the status string or null if no contact yet.
 const getInvestorMeetingStatus = (investorId, meetings) => {
   const meeting = meetings.find(m => m.investor_id === investorId);
   if (!meeting) return null;
@@ -103,14 +106,19 @@ export default function AngelArena() {
     setSelectedInvestor(investor);
   };
 
-  // Send business plan info to investor — creates InvestorMeeting record
+  // handleSendInfo() — called when founder clicks "Send Information to [Name]".
+  // Creates a new investor_meetings record with status pending_screening.
+  // runScreeningCheck() in dashboard/page.jsx will process the result after 36 hours (0 in testing).
   const handleSendInfo = async () => {
     if (!venture || !selectedInvestor) return;
     setSendingInfo(true);
     try {
+      // [FIX 070526] investor_name was missing — caused null investor_name in DB,
+      // breaking getMeetingColor() and screening result display on the investor circles.
       const newMeeting = await InvestorMeeting.create({
         venture_id: venture.id,
         investor_id: selectedInvestor.id,
+        investor_name: selectedInvestor.name, // [FIX] saves investor name for display in dashboard messages
         status: 'pending_screening',
         screening_submitted_at: new Date().toISOString(),
         created_by: venture.created_by || '',
@@ -159,14 +167,16 @@ export default function AngelArena() {
     );
   }
 
-  // Find meeting for selectedInvestor
+  // selectedMeeting — the investor_meetings record for the currently open investor detail modal.
+  // Used to determine which action button to show (Send Info / Awaiting / Schedule / Join).
   const selectedMeeting = selectedInvestor
     ? meetings.find(m => m.investor_id === selectedInvestor.id)
     : null;
 
   const meetingStatus = selectedMeeting?.status || null;
 
-  // Is Join button active? meeting_scheduled_at has passed but within 20 min window
+  // isJoinActive() — returns true if within the 20-minute meeting window.
+  // TESTING MODE: always returns true. For production, uncomment the time-based logic below.
  // const isJoinActive = () => {
     // if (!selectedMeeting?.meeting_scheduled_at) return false;
    // const now = new Date();
