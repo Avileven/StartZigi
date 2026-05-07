@@ -830,6 +830,8 @@ const newCapital = freshCapital + message.investment_offer_checksize;
 
   // [ADDED] Angel Arena — open schedule modal directly from dashboard message
   const handleAngelSchedule = async (message) => {
+    // [FIX 050526] Guard against null currentVenture
+    if (!currentVenture) { alert("Venture data is still loading. Please try again."); return; }
     try {
       // Find the meeting record via investor_meeting_id or by matching venture+screening_passed
       const meetings = await InvestorMeeting.filter({ venture_id: currentVenture.id, status: 'screening_passed' });
