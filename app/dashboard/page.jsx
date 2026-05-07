@@ -1,4 +1,10 @@
 //dashboard 010526 message new
+// [FIX 07/05/2026] Line ~708: handleInvestmentDecision — angel investments do NOT touch burn rate
+//   or burn_rate_start at all. Budget calculation and burn rate update only runs for VC investments.
+//   Previously both angel and VC recalculated burn rate from budget, contradicting the spec.
+// [FIX 07/05/2026] Line ~755: handleInvestmentDecision — angel congratulations message now shows
+//   correct investor name (message.investor_name), amount, valuation, and dilution %.
+//   Previously used message.vc_firm_name which is undefined for angel deals.
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -704,38 +710,43 @@ const freshVenture = await Venture.filter({ id: currentVenture.id });
 const freshCapital = freshVenture[0]?.virtual_capital || 0;
 const newCapital = freshCapital + message.investment_offer_checksize;
 
-        // Calculate new monthly burn rate from budget (total 2-year budget ÷ 24)
-        let newMonthlyBurn = currentVenture.monthly_burn_rate || 5000;
-        try {
-          const budgets = await Budget.filter({ venture_id: currentVenture.id });
-          if (budgets.length > 0 && budgets[0].is_complete) {
-            const b = budgets[0];
-            const tSal = (b.salaries || []).reduce((s, i) => s + (i.avg_salary * i.count * (i.percentage || 100) / 100 * 24), 0);
-            const tMkt = (b.marketing_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
-            const tOps = (b.operational_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
-            const budgetTotal = tSal + tMkt + tOps;
-            if (budgetTotal > 0) newMonthlyBurn = Math.round(budgetTotal / 24);
-          }
-        } catch (e) { console.error('Error calculating burn rate from budget:', e); }
+        // [FIX 07/05/2026] Angel investments do NOT touch burn rate at all — it was set earlier in the flow.
+        // VC investments calculate burn rate from budget ÷ 24.
+        let newMonthlyBurn = currentVenture.monthly_burn_rate; // fallback — only used for VC
+        if (message.investment_type !== 'angel') {
+          try {
+            const budgets = await Budget.filter({ venture_id: currentVenture.id });
+            if (budgets.length > 0 && budgets[0].is_complete) {
+              const b = budgets[0];
+              const tSal = (b.salaries || []).reduce((s, i) => s + (i.avg_salary * i.count * (i.percentage || 100) / 100 * 24), 0);
+              const tMkt = (b.marketing_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
+              const tOps = (b.operational_costs || []).reduce((s, i) => s + (i.cost * 24), 0);
+              const budgetTotal = tSal + tMkt + tOps;
+              if (budgetTotal > 0) newMonthlyBurn = Math.round(budgetTotal / 24);
+            }
+          } catch (e) { console.error('Error calculating burn rate from budget:', e); }
+        }
 
-        // Update venture: capital, valuation, vc_funded flag, new burn rate
+        // Update venture: capital, valuation. burn_rate_start and monthly_burn_rate only updated for VC.
+        const isAngelInvestment = message.investment_type === 'angel';
         await Venture.update(currentVenture.id, {
             virtual_capital: newCapital,
             valuation: message.investment_offer_valuation,
             vc_funded: true,
-            monthly_burn_rate: newMonthlyBurn,
-            // [FIX] Reset burn_rate_start to now so the new burn rate ($8,000/month)
-    // is calculated forward from this moment, not backward from the old start date.
-    burn_rate_start: new Date().toISOString(),
+            ...(isAngelInvestment ? {} : {
+              monthly_burn_rate: newMonthlyBurn,
+              burn_rate_start: new Date().toISOString(),
+            }),
         });
         setCurrentVenture(prev => ({
           ...prev,
           virtual_capital: newCapital,
           valuation: message.investment_offer_valuation,
           vc_funded: true,
-          monthly_burn_rate: newMonthlyBurn,
-          // [FIX] Keep frontend state in sync with the DB update above.
-  burn_rate_start: new Date().toISOString(),
+          ...(isAngelInvestment ? {} : {
+            monthly_burn_rate: newMonthlyBurn,
+            burn_rate_start: new Date().toISOString(),
+          }),
         }));
 
         await FundingEvent.create({
@@ -743,19 +754,22 @@ const newCapital = freshCapital + message.investment_offer_checksize;
   venture_name: currentVenture.name,
   venture_tagline: currentVenture.description,
   venture_landing_page_url: currentVenture.landing_page_url,
-  investor_name: message.vc_firm_name,
+  investor_name: message.investment_type === 'angel' ? message.investor_name : message.vc_firm_name,
   investment_type: message.investment_type || 'VC',
   amount: message.investment_offer_checksize,
-  // [ADDED] שומר את שווי החברה בזמן ההשקעה הספציפית הזו.
-  // fallback לוואלואציה הנוכחית אם הערך חסר, כדי שלא יקרוס.
   valuation_at_time: message.investment_offer_valuation || currentVenture.valuation || 0,
 });
 
+        // [FIX 07/05/2026] Angel and VC get separate congratulations messages with correct fields
+        const investorDisplayName = isAngelInvestment ? message.investor_name : message.vc_firm_name;
+        const dilutionPct = ((message.investment_offer_checksize / message.investment_offer_valuation) * 100).toFixed(1);
         await VentureMessage.create({
           venture_id: currentVenture.id,
           message_type: 'system',
-          title: `🎉 Congratulations on your VC investment!`,
-          content: `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${message.vc_firm_name}. The funds have been added to your virtual capital, and your venture is now valued at $${message.investment_offer_valuation.toLocaleString()}. Your new monthly burn rate is $${newMonthlyBurn.toLocaleString()} based on your approved budget. Keep building and growing!`,
+          title: isAngelInvestment ? `🎉 Congratulations on your angel investment!` : `🎉 Congratulations on your VC investment!`,
+          content: isAngelInvestment
+            ? `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${investorDisplayName} at a valuation of $${message.investment_offer_valuation.toLocaleString()} (${dilutionPct}% equity). The funds have been added to your virtual capital. Your monthly burn rate remains $5,000. Keep building and growing!`
+            : `Fantastic news! You have successfully secured $${message.investment_offer_checksize.toLocaleString()} from ${investorDisplayName} at a valuation of $${message.investment_offer_valuation.toLocaleString()} (${dilutionPct}% equity). The funds have been added to your virtual capital, and your new monthly burn rate is $${newMonthlyBurn.toLocaleString()} based on your approved budget. Keep building and growing!`,
           phase: currentVenture.phase,
           priority: 4
         });

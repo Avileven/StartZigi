@@ -1,4 +1,9 @@
 // PITCH MODAL - AI SCORE MODEL v2.0
+// [FIX 07/05/2026] Line ~525: Added investment_type: 'angel' to investment_offer VentureMessage.
+//   Previously removed by AI ([FIX 070526]), which caused handleInvestmentDecision to save every
+//   angel FundingEvent as 'VC', breaking the hasAngelInvestment screening check in runScreeningCheck.
+// [FIX 07/05/2026] Line ~526: Added investor_name: localInvestor.name to investment_offer VentureMessage.
+//   Required by handleInvestmentDecision to show correct investor name in angel congratulations message.
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Investor, MasterQuestion, PitchAnswer, Venture, VentureMessage, businessPlan } from '@/api/entities.js';
@@ -522,7 +527,8 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           investment_offer_checksize: proposal.checkSize,
           investment_offer_valuation: proposal.valuation,
           investment_offer_status: 'pending',
-          // [FIX 070526] investment_type removed — this field belongs in funding_events, not venture_messages
+          investment_type: 'angel', // [FIX 07/05/2026] Restored — handleInvestmentDecision reads this to write correct type to funding_events
+          investor_name: localInvestor.name, // [FIX 07/05/2026] Added — used by handleInvestmentDecision to show correct investor name in angel congrats message
           is_dismissed: false,
           created_by: venture.created_by || 'system',
           created_by_id: venture.created_by_id
