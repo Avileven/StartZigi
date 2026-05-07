@@ -522,7 +522,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
           investment_offer_checksize: proposal.checkSize,
           investment_offer_valuation: proposal.valuation,
           investment_offer_status: 'pending',
-          investment_type: 'angel',
+          // [FIX 070526] investment_type removed — this field belongs in funding_events, not venture_messages
           is_dismissed: false,
           created_by: venture.created_by || 'system',
           created_by_id: venture.created_by_id

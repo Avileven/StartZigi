@@ -836,7 +836,8 @@ const newCapital = freshCapital + message.investment_offer_checksize;
       // Find the meeting record via investor_meeting_id or by matching venture+screening_passed
       const meetings = await InvestorMeeting.filter({ venture_id: currentVenture.id, status: 'screening_passed' });
       if (!meetings.length) { alert("Could not find the meeting details."); return; }
-      const meeting = meetings[0];
+      // [FIX 070526] Find the correct meeting by investor_name from the message, not just first result
+      const meeting = meetings.find(m => m.investor_name === message.investor_name) || meetings[0];
       const investors = await Investor.filter({ id: meeting.investor_id });
       if (!investors.length) { alert("Could not find the investor details."); return; }
       setSelectedAngelMeeting(meeting);
@@ -1408,7 +1409,7 @@ if (showToS) {
       {isAngelPitchOpen && pitchInvestor && currentVenture && (
         <PitchModal
           investor={pitchInvestor}
-          venture={phaseModalData?.venture || currentVenture}
+          venture={phaseModalData.venture || currentVenture}
           isOpen={isAngelPitchOpen}
           onClose={() => {
             setIsAngelPitchOpen(false);
@@ -1436,7 +1437,7 @@ if (showToS) {
       {isVCScheduleModalOpen && selectedVCMeeting && currentVenture && (
         <VCScheduleMeetingModal
           vcMeeting={selectedVCMeeting}
-          venture={phaseModalData?.venture || currentVenture}
+          venture={phaseModalData.venture || currentVenture}
           isFollowup={isVCFollowup}
           onClose={() => {
             setIsVCScheduleModalOpen(false);
