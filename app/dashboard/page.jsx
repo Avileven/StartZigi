@@ -1408,7 +1408,7 @@ if (showToS) {
       {isAngelPitchOpen && pitchInvestor && currentVenture && (
         <PitchModal
           investor={pitchInvestor}
-          venture={phaseModalData.venture || currentVenture}
+          venture={phaseModalData?.venture || currentVenture}
           isOpen={isAngelPitchOpen}
           onClose={() => {
             setIsAngelPitchOpen(false);
@@ -1436,7 +1436,7 @@ if (showToS) {
       {isVCScheduleModalOpen && selectedVCMeeting && currentVenture && (
         <VCScheduleMeetingModal
           vcMeeting={selectedVCMeeting}
-          venture={phaseModalData.venture || currentVenture}
+          venture={phaseModalData?.venture || currentVenture}
           isFollowup={isVCFollowup}
           onClose={() => {
             setIsVCScheduleModalOpen(false);
