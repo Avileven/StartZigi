@@ -406,6 +406,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
         for (let i = 0; i < maxRetries; i++) {
           try {
             const { response } = await InvokeLLM({ prompt });
+            console.log('🤖 AI RESPONSE:', response);
             return response;
           } catch (error) {
             console.error(`AI evaluation attempt ${i + 1}/${maxRetries} failed:`, error);
