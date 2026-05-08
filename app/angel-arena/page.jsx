@@ -1,4 +1,9 @@
 // 120326 updated model
+// [FIX 07/05/2026] Line 13: Added FundingEvent import
+// [FIX 07/05/2026] Line 57: Added fundedInvestorNames state
+// [FIX 07/05/2026] Line 89: Fetch funding_events and populate fundedInvestorNames
+// [FIX 07/05/2026] Line 247: Disabled investor button if already invested
+// [FIX 07/05/2026] Line ~262: Added "Invested" badge on investor who already invested
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -263,6 +268,12 @@ setFundedInvestorNames(fundingEvents.filter(e => e.investment_type === 'angel').
                         className: `w-5 h-5 ${statusConfig.color.replace('bg-', 'text-')}`
                       })}
                     </div>
+                    {/* [FIX 07/05/2026] Show Invested badge for investors who already invested */}
+                    {fundedInvestorNames.includes(investor.name) && (
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-semibold shadow">
+                        Invested
+                      </div>
+                    )}
                     {/* Meeting status badge */}
                     {mStatus === 'pending_screening' && (
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-semibold shadow">
