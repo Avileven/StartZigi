@@ -131,7 +131,7 @@ const getInvestorMessage = (aiScore) => {
 };
 
 const calculateInvestmentOffer = (investor, venture, effectiveTeamScore, aiScore) => {
-    if (aiScore < 2.5) {
+    if (aiScore < 3.3) {
         return {
             decision: 'Reject',
             reason: getInvestorMessage(aiScore).message,

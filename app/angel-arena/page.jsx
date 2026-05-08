@@ -10,6 +10,7 @@ import { Investor } from "@/api/entities.js";
 import { Venture } from "@/api/entities.js";
 import { User } from "@/api/entities.js";
 import { InvestorMeeting } from "@/api/entities.js";
+import { FundingEvent } from "@/api/entities.js";
 import PitchModal from "@/components/angels/PitchModal";
 import ScheduleMeetingModal from "@/components/angels/ScheduleMeetingModal";
 import {
@@ -53,7 +54,7 @@ export default function AngelArena() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [sendingInfo, setSendingInfo] = useState(false);
   const [sentAnimation, setSentAnimation] = useState(false);
-
+  const [fundedInvestorNames, setFundedInvestorNames] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -84,6 +85,8 @@ export default function AngelArena() {
           setVenture(v);
           const existingMeetings = await InvestorMeeting.filter({ venture_id: v.id });
           setMeetings(existingMeetings || []);
+          const fundingEvents = await FundingEvent.filter({ venture_id: v.id });
+setFundedInvestorNames(fundingEvents.filter(e => e.investment_type === 'angel').map(e => e.investor_name));
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -241,7 +244,7 @@ export default function AngelArena() {
                 >
                   <button
                     onClick={() => handleInvestorClick(investor)}
-                    disabled={!isAvailable}
+                   disabled={!isAvailable || fundedInvestorNames.includes(investor.name)}
                     className={`
                       relative w-32 h-32 rounded-full flex items-center justify-center
                       transition-all duration-300 shadow-lg

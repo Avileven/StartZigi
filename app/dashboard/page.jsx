@@ -709,6 +709,14 @@ if (userVentures.length === 0) {
 const freshVenture = await Venture.filter({ id: currentVenture.id });
 const freshCapital = freshVenture[0]?.virtual_capital || 0;
 const newCapital = freshCapital + message.investment_offer_checksize;
+if (message.investment_type === 'angel') {
+  const existingFunding = await FundingEvent.filter({ venture_id: currentVenture.id });
+  const alreadyHasAngel = existingFunding.some(e => e.investment_type === 'angel');
+  if (alreadyHasAngel) {
+    alert("You have already accepted an angel investment. You cannot accept another one.");
+    return;
+  }
+}
 
         // [FIX 07/05/2026] Angel investments do NOT touch burn rate at all — it was set earlier in the flow.
         // VC investments calculate burn rate from budget ÷ 24.
