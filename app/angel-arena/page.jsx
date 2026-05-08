@@ -270,11 +270,12 @@ export default function AngelArena() {
                       })}
                     </div>
                     {/* [FIX 07/05/2026] Show Invested badge for investors who already invested */}
-                    {fundedInvestorNames.includes(investor.name) && (
+                    {fundedInvestorNames.includes(investor.name) ? (
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-semibold shadow">
                         Invested
                       </div>
-                    )}
+                    ) : (
+                      <>
                     {/* Meeting status badge */}
                     {mStatus === 'pending_screening' && (
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-semibold shadow">
@@ -290,6 +291,8 @@ export default function AngelArena() {
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-400 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-semibold shadow">
                         Passed
                       </div>
+                    )}
+                      </>
                     )}
                   </button>
                   <p className="mt-3 text-xs font-medium text-gray-600">{statusConfig.label}</p>
