@@ -92,9 +92,7 @@ export default function AngelArena() {
           setMeetings(existingMeetings || []);
           const fundingEvents = await FundingEvent.filter({ venture_id: v.id });
           const names = fundingEvents.filter(e => e.investment_type === 'angel').map(e => e.investor_name);
-console.log('names:', names);
-setFundedInvestorNames(names);
-setFundedInvestorNames(fundingEvents.filter(e => e.investment_type === 'angel').map(e => e.investor_name));
+          setFundedInvestorNames(names);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
