@@ -91,7 +91,9 @@ export default function AngelArena() {
           const existingMeetings = await InvestorMeeting.filter({ venture_id: v.id });
           setMeetings(existingMeetings || []);
           const fundingEvents = await FundingEvent.filter({ venture_id: v.id });
-          console.log('funded:', fundingEvents, fundedInvestorNames);
+          const names = fundingEvents.filter(e => e.investment_type === 'angel').map(e => e.investor_name);
+console.log('names:', names);
+setFundedInvestorNames(names);
 setFundedInvestorNames(fundingEvents.filter(e => e.investment_type === 'angel').map(e => e.investor_name));
         }
       } catch (error) {
