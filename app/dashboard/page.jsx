@@ -1671,7 +1671,6 @@ if (showToS) {
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => {
-                    console.log("Check message:", message);
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
                     const isVCMeeting = (message.message_type === 'vc_meeting_request' || message.vc_stage === 'stage_2_ready') && message.vc_stage !== 'stage_2_passed';

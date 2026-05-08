@@ -515,7 +515,7 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       };
       
       console.log("🔍 PITCH EVALUATION - FULL BREAKDOWN:");
-      console.log(calculationBreakdown);
+      console.log(JSON.stringify(calculationBreakdown, null, 2));
       console.log("📊 Raw Proposal Object:", proposal);
       if (proposal.decision === 'Invest') {
         await VentureMessage.create({
