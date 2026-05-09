@@ -107,7 +107,7 @@ const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours
           : `📋 Response from ${investor.name}`;
 
         const bodyContent = passed
-          ? `<p style="color:#475569;font-size:16px;line-height:1.6;">Great news! <strong>${investor.name}</strong> reviewed your business plan and is interested in learning more. Head to your dashboard to schedule your Zoom meeting. Good luck!</p>`
+          ? `<p style="color:#475569;font-size:16px;line-height:1.6;">Great news! <strong>${investor.name}</strong> reviewed your business plan and is interested in learning more. Head to your dashboard to schedule your meeting. Good luck!</p>`
           : `<p style="color:#475569;font-size:16px;line-height:1.6;"><strong>${investor.name}</strong> has reviewed your business plan and sent the following response:</p>
              <div style="background:#f8fafc;border-left:4px solid #cbd5e1;padding:16px;border-radius:4px;margin:16px 0;">
                <p style="color:#334155;font-size:15px;line-height:1.6;margin:0;">${rejectReason}</p>
