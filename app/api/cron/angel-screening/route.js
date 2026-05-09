@@ -30,7 +30,8 @@ export async function GET(request) {
 
   try {
     const now = new Date();
-const cutoff = new Date(now.getTime() + 60000); // TESTING
+    const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
+
     // Fetch all pending screenings older than 48 hours
     const { data: pendingMeetings, error: meetingsError } = await supabase
       .from("investor_meetings")
@@ -63,8 +64,8 @@ const cutoff = new Date(now.getTime() + 60000); // TESTING
         if (!ventures?.length) continue;
         const venture = ventures[0];
 
-        // Load founder email from auth.users
-        const { data: authUser } = await supabase.auth.admin.getUserById(venture.founder_user_id);
+        // Load founder email from auth.users using created_by_id
+        const { data: authUser } = await supabase.auth.admin.getUserById(venture.created_by_id);
         const founderEmail = authUser?.user?.email;
         if (!founderEmail) continue;
 
