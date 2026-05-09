@@ -784,8 +784,9 @@ if (message.investment_type === 'angel') {
     }
 
     await VentureMessage.update(message.id, {
-        investment_offer_status: decision
-    });
+    investment_offer_status: decision,
+    ...(decision === 'rejected' ? { is_dismissed: true } : {})
+});
 
     if (decision === 'accepted') {
         // Using a custom message box instead of alert, but keeping as alert for minimal change
@@ -795,11 +796,15 @@ if (message.investment_type === 'angel') {
         alert('Investment offer declined.');
     }
 
-    setMessages(prev => prev.map(msg =>
-      msg.id === message.id
-        ? {...msg, investment_offer_status: decision}
-        : msg
-    ));
+    if (decision === 'rejected') {
+  setMessages(prev => prev.filter(msg => msg.id !== message.id));
+} else {
+  setMessages(prev => prev.map(msg =>
+    msg.id === message.id
+      ? {...msg, investment_offer_status: decision}
+      : msg
+  ));
+}
   };
 
   const handleJoinVCMeeting = async (message) => {
