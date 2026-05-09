@@ -30,8 +30,7 @@ export async function GET(request) {
 
   try {
     const now = new Date();
-    //const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
-    const cutoff = new Date(now.getTime() - 0); // TESTING: immediate
+    const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
 
     // Fetch all pending screenings older than 48 hours
     const { data: pendingMeetings, error: meetingsError } = await supabase
@@ -65,12 +64,9 @@ export async function GET(request) {
         if (!ventures?.length) continue;
         const venture = ventures[0];
 
-        // Load founder email
-        const { data: profiles } = await supabase
-          .from("user_profiles")
-          .select("email")
-          .eq("id", venture.founder_user_id);
-        const founderEmail = profiles?.[0]?.email;
+        // Load founder email from auth.users
+        const { data: authUser } = await supabase.auth.admin.getUserById(venture.founder_user_id);
+        const founderEmail = authUser?.user?.email;
         if (!founderEmail) continue;
 
         // Screening logic — same as runScreeningCheck in dashboard
