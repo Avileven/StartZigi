@@ -5,6 +5,11 @@
 // [FIX 07/05/2026] Line ~755: handleInvestmentDecision — angel congratulations message now shows
 //   correct investor name (message.investor_name), amount, valuation, and dilution %.
 //   Previously used message.vc_firm_name which is undefined for angel deals.
+// [FIX 11/05/2026] Lines ~462, ~485: phase_complete messages (mlp, beta) now check for existing
+//   message before creating — prevents duplicate messages when dashboard loads multiple times,
+//   which caused the PhaseCompletionModal to open twice in a row.
+// [FIX 11/05/2026] Line ~574: phase_complete detection now skips dismissed messages —
+//   prevents the modal from reopening on every dashboard load within 24 hours after closing.
 "use client";
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useCallback } from "react";
@@ -460,6 +465,10 @@ if (userVentures.length === 0) {
             const feedbacks = await ProductFeedback.filter({ venture_id: activeVenture.id });
             if (feedbacks.length >= 10) {
               await Venture.update(activeVenture.id, { phase: 'beta' });
+              // [FIX 11/05/2026] Check before creating — prevents duplicate phase_complete messages
+              // when dashboard loads multiple times, which caused the modal to open twice.
+              const existingMlpComplete = await VentureMessage.filter({ venture_id: activeVenture.id, message_type: 'phase_complete', phase: 'mlp' });
+              if (!existingMlpComplete.length) {
               await VentureMessage.create({
                 venture_id: activeVenture.id,
                 message_type: 'phase_complete',
@@ -474,6 +483,7 @@ if (userVentures.length === 0) {
                 content: `It's time to get real users! Set up your beta testing page and start gathering sign-ups.`,
                 phase: 'beta',
               });
+              }
               activeVenture.phase = 'beta';
             }
           }
@@ -483,6 +493,10 @@ if (userVentures.length === 0) {
             const betaTesters = await BetaTester.filter({ venture_id: activeVenture.id });
             if (betaTesters.length >= 50) {
               await Venture.update(activeVenture.id, { phase: 'growth' });
+              // [FIX 11/05/2026] Check before creating — prevents duplicate phase_complete messages
+              // when dashboard loads multiple times, which caused the modal to open twice.
+              const existingBetaComplete = await VentureMessage.filter({ venture_id: activeVenture.id, message_type: 'phase_complete', phase: 'beta' });
+              if (!existingBetaComplete.length) {
               await VentureMessage.create({
                 venture_id: activeVenture.id,
                 message_type: 'phase_complete',
@@ -497,6 +511,7 @@ if (userVentures.length === 0) {
                 content: `It's time to scale your startup. Focus on growing your user base and securing funding.`,
                 phase: 'growth',
               });
+              }
               activeVenture.phase = 'growth';
             }
           }
@@ -572,6 +587,9 @@ if (userVentures.length === 0) {
           // This ensures the modal shows right after a phase transition, not on every login.
           const recentPhaseComplete = filteredMessages.find(msg => {
             if (msg.message_type !== 'phase_complete') return false;
+            // [FIX 11/05/2026] Skip already dismissed messages — prevents modal from reopening
+            // on every dashboard load within 24 hours after closing it.
+            if (msg.is_dismissed) return false;
             const hoursSince = (Date.now() - new Date(msg.created_date)) / 3600000;
             return hoursSince < 24;
           });
