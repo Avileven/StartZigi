@@ -736,12 +736,13 @@ if (message.investment_type === 'angel') {
         }
 
         // Update venture: capital, valuation. burn_rate_start and monthly_burn_rate only updated for VC.
+        // [FIX 11/05/2026] vc_funded only set to true for VC investments — angel must not hide VC Marketplace
         const isAngelInvestment = message.investment_type === 'angel';
         await Venture.update(currentVenture.id, {
             virtual_capital: newCapital,
             valuation: message.investment_offer_valuation,
-            vc_funded: true,
             ...(isAngelInvestment ? {} : {
+              vc_funded: true,
               monthly_burn_rate: newMonthlyBurn,
               burn_rate_start: new Date().toISOString(),
             }),
@@ -750,8 +751,8 @@ if (message.investment_type === 'angel') {
           ...prev,
           virtual_capital: newCapital,
           valuation: message.investment_offer_valuation,
-          vc_funded: true,
           ...(isAngelInvestment ? {} : {
+            vc_funded: true,
             monthly_burn_rate: newMonthlyBurn,
             burn_rate_start: new Date().toISOString(),
           }),
