@@ -1626,7 +1626,7 @@ if (showToS) {
                 })()}
                 <div>
                   <p className="text-sm text-gray-500">Current Phase</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPhaseColor(currentVenture.phase)}`}>
+                  <span className="text-xs font-medium text-indigo-700">
                     {currentVenture.phase.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
