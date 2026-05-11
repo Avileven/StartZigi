@@ -1582,28 +1582,9 @@ if (showToS) {
               </CardContent>
             </Card>
           )}
+        </div>
 
-          {/* [ADDED 11/05/2026] NEWS card — angel investor activity. Shown in business_plan phase only, hidden after angel investment received */}
-          {currentVenture.phase === 'business_plan' && (
-            <Card className="bg-indigo-50 border-indigo-200 mt-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center gap-2">
-                  <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded font-bold">NEWS</span>
-                  Angel Investor Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-indigo-800 leading-relaxed">
-                  ⚡ Kenji Sato just backed a founder at MVP stage — no revenue, just a product that worked and a founder who understood the market better than anyone. He's open to the next one.
-                </p>
-                <Link href={createPageUrl('angel-arena')}>
-                  <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mt-3 text-xs">
-                    Open Angel Arena
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
