@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/angel-screening",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/vc-screening",
+      "schedule": "0 9 * * *"
     }
   ]
 }
