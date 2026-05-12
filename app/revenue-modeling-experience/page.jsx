@@ -1284,11 +1284,10 @@ export default function RevenueModelingExperience() {
 
 Key tasks:
 • Complete the MLP Development Center to plan your enhancements
-• Share your landing page to collect feedback from users
-• Use the Promotion Center to invite users for feedback
+• Enter the Promotion Center and share your landing page to collect feedback from users
 • Analyze feedback in the Product Feedback Center
 
-Once you've completed MLP development, you'll be ready to move to the Beta phase.`,
+Once you've completed MLP development phase, you'll be ready to move to the Beta phase.`,
           phase: 'mlp',
           priority: 3
         });
