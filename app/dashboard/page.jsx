@@ -1,4 +1,4 @@
-//dashboard 010526 message new
+//dashboard 010526 message new TETS
 // [FIX 07/05/2026] Line ~708: handleInvestmentDecision — angel investments do NOT touch burn rate
 //   or burn_rate_start at all. Budget calculation and burn rate update only runs for VC investments.
 //   Previously both angel and VC recalculated burn rate from budget, contradicting the spec.
@@ -271,7 +271,7 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingVCMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-        if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
+        if (hoursElapsed < 0.083) continue; // TESTING: immediate — replace with line below for production
         // if (hoursElapsed < 36) continue; // PRODUCTION
 
         const firms = await VCFirm.filter({ id: meeting.vc_firm_id });
