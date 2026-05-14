@@ -1,6 +1,12 @@
 // app/api/cron/angel-screening/route.js
-// [ADDED 08/05/2026] Daily cron job — runs angel screening for pending meetings older than 48 hours.
-// Sends email to founder with investor response. Dashboard runScreeningCheck creates VentureMessage when user logs in.
+// [UPDATED 13/05/2026] Refactored to match VC screening logic.
+// Dashboard owns screening + status. Cron only sends email reminder next day.
+//
+// LOGIC:
+// 1. Dashboard processes pending_screening meetings immediately — updates status, creates VentureMessage with button.
+// 2. Cron runs daily at 08:00 UTC — finds all meetings where screening_result_sent_at is within last 24 hours.
+// 3. Sends one email per meeting — no status update, dashboard owns the status.
+// 4. Cron runs once per day so each meeting is in the 24h window only once — no duplicates ever.
 // Triggered by Vercel cron (see vercel.json) — runs once per day at 08:00 UTC.
 
 import { NextResponse } from "next/server";
@@ -69,52 +75,37 @@ const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours
         const founderEmail = authUser?.user?.email;
         if (!founderEmail) continue;
 
-        // Screening logic — same as runScreeningCheck in dashboard
-        let passed = true;
+        // Determine result from status set by dashboard — no screening logic in cron
+        const passed = meeting.status === "screening_passed";
+
+        // Rejection reason — re-derive from investor type
         let rejectReason = "";
-
-        const { data: fundingEvents } = await supabase
-          .from("funding_events")
-          .select("investment_type")
-          .eq("venture_id", venture.id);
-
-        const hasAngelInvestment = fundingEvents?.some(e => e.investment_type === "angel");
-        if (hasAngelInvestment) {
-          passed = false;
-          rejectReason = `Unfortunately, I have to pass. Your venture looks promising, but I don't co-invest alongside other angel investors. Best of luck!`;
-        } else if (investor.investor_type === "no_go") {
-          passed = false;
-          rejectReason = `Thank you for your time, but we have decided not to move forward as we are currently only advising our existing portfolio companies.`;
-        } else if (investor.investor_type === "team_focused" && (venture.founders_count || 1) < 2) {
-          passed = false;
-          rejectReason = `We have a strong focus on ventures with multiple co-founders and have decided to pass at this time.`;
+        if (!passed) {
+          const { data: fundingEvents } = await supabase
+            .from("funding_events")
+            .select("investment_type")
+            .eq("venture_id", venture.id);
+          const hasAngelInvestment = fundingEvents?.some(e => e.investment_type === "angel");
+          if (hasAngelInvestment) {
+            rejectReason = `Unfortunately, I have to pass. Your venture looks promising, but I don't co-invest alongside other angel investors. Best of luck!`;
+          } else if (investor.investor_type === "no_go") {
+            rejectReason = `Thank you for your time, but we have decided not to move forward as we are currently only advising our existing portfolio companies.`;
+          } else if (investor.investor_type === "team_focused") {
+            rejectReason = `We have a strong focus on ventures with multiple co-founders and have decided to pass at this time.`;
+          }
         }
 
-        // Update meeting status
-        await supabase
-          .from("investor_meetings")
-          .update({
-            status: passed ? "screening_passed" : "screening_rejected",
-            screening_result: passed ? "passed" : "rejected",
-            screening_result_sent_at: now.toISOString(),
-          })
-          .eq("id", meeting.id);
-
-        // Send email
+        // Send email — no status update, dashboard owns the status
         const baseUrl = getBaseUrl();
         const subject = passed
-          ? `🎉 ${investor.name} wants to meet you!`
-          : `📋 Response from ${investor.name}`;
+          ? `${investor.name} wants to meet you!`
+          : `Response from ${investor.name}`;
 
         const bodyContent = passed
-          ? `<p style="color:#475569;font-size:16px;line-height:1.6;">Great news! <strong>${investor.name}</strong> reviewed your business plan and is interested in learning more. Head to your dashboard to schedule your meeting. Good luck!</p>`
-          : `<p style="color:#475569;font-size:16px;line-height:1.6;"><strong>${investor.name}</strong> has reviewed your business plan and sent the following response:</p>
-             <div style="background:#f8fafc;border-left:4px solid #cbd5e1;padding:16px;border-radius:4px;margin:16px 0;">
-               <p style="color:#334155;font-size:15px;line-height:1.6;margin:0;">${rejectReason}</p>
-             </div>
-             <p style="color:#475569;font-size:16px;line-height:1.6;">Don't give up — there are many other investors in the Angel Arena waiting to hear from you.</p>`;
+          ? `<p style="color:#475569;font-size:16px;line-height:1.6;">Great news! <strong>${investor.name}</strong> reviewed your business plan and is interested in learning more. Head to your dashboard to schedule your Zoom meeting. Good luck!</p>`
+          : `<p style="color:#334155;font-size:15px;line-height:1.6;margin:0;">${rejectReason}</p>`;
 
-        await resend.emails.send({
+                await resend.emails.send({
           from: "StartZig <hello@startzig.com>",
           to: [founderEmail],
           subject,
@@ -127,7 +118,8 @@ const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours
                   Go to Dashboard
                 </a>
               </div>
-              <p style="margin-top:40px;font-size:12px;color:#94a3b8;text-align:center;">StartZig · startzig.com</p>
+              <p style="margin-top:24px;font-size:13px;color:#475569;text-align:center;"><a href="https://www.startzig.com" style="color:#6366f1;text-decoration:none;">startzig.com</a></p>
+              <p style="margin-top:8px;font-size:12px;color:#94a3b8;text-align:center;">Don't just start up. StartZig.</p>
             </div>
           `,
         });
