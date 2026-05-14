@@ -36,18 +36,21 @@ export async function GET(request) {
 
   try {
     const now = new Date();
-    //const cutoff = new Date(now.getTime() + 60000); // TESTING: finds all pending — change to: now.getTime() - 48 * 60 * 60 * 1000 for production
-const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours
-    // Fetch all pending screenings older than 48 hours
+    // Find all angel meetings processed by dashboard in the last 24 hours.
+    // screening_result_sent_at is set by dashboard when it processes a meeting.
+    // Cron sends one email per meeting. Runs once per day = no duplicates ever.
+    const window24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
     const { data: pendingMeetings, error: meetingsError } = await supabase
       .from("investor_meetings")
       .select("*")
-      .eq("status", "pending_screening")
-      .lt("screening_submitted_at", cutoff.toISOString());
+      .in("status", ["screening_passed", "screening_rejected"])
+      .gte("screening_result_sent_at", window24h.toISOString())
+      .order("screening_result_sent_at", { ascending: false });
 
     if (meetingsError) throw meetingsError;
     if (!pendingMeetings?.length) {
-      return NextResponse.json({ message: "No pending screenings to process." });
+      return NextResponse.json({ message: "No recent angel screenings to email." });
     }
 
     let processed = 0;
