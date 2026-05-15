@@ -1508,7 +1508,7 @@ if (showToS) {
         />
       )}
 
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
 
         {/* [MOBILE] Toolbox trigger handled by ClientLayout header */}
 
@@ -1676,8 +1676,8 @@ if (showToS) {
         </div>
 
         <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0 overflow-x-hidden">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-row justify-between items-center mb-8 gap-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
