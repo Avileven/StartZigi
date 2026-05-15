@@ -217,7 +217,7 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
   }
 
   return (
-    <SidebarProvider defaultOpen={typeof window !== 'undefined' && window.innerWidth >= 768}>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-gray-50">
         <Sidebar className="border-r border-gray-200 z-[100] bg-white">
           <SidebarHeader className="border-b border-gray-200 p-4">
