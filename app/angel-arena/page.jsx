@@ -402,7 +402,7 @@ export default function AngelArena() {
                 {!meetingStatus && (
                   <>
                     <p className="text-sm text-gray-500 text-center bg-gray-50 rounded-lg p-3">
-                      📄 Your business plan will be shared with {selectedInvestor.name.split(' ')[0]}. They will review it and get back to you within 24–48 hours.
+                      📄 Your business plan will be shared with {selectedInvestor.name.split(' ')[0]}. {selectedInvestor.name.split(' ')[0]} will review it and get back to you within a few days.
                     </p>
                     <Button
                       className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-6 text-lg shadow-lg rounded-xl"
