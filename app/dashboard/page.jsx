@@ -1508,7 +1508,7 @@ if (showToS) {
         />
       )}
 
-      <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
+      <div className="min-h-screen bg-gray-50 flex">
 
         {/* [MOBILE] Toolbox trigger handled by ClientLayout header */}
 
@@ -1675,9 +1675,9 @@ if (showToS) {
           )}
         </div>
 
-        <div className="flex-1 p-3 md:p-8 overflow-y-auto min-w-0 overflow-x-hidden w-full">
-          <div className="max-w-lg mx-auto w-full">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-3">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0 overflow-x-hidden">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-row justify-between items-center mb-8 gap-4">
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -1774,7 +1774,7 @@ if (showToS) {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4 overflow-hidden w-full">
+                <div className="space-y-4">
                   {messages.map((message) => {
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
@@ -1846,11 +1846,11 @@ if (showToS) {
                     const Icon = icon;
 
                     return (
-                      <Card key={message.id} className={`${cardClass} overflow-hidden w-full`}>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 px-3">
-                          <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                            <Icon className={`w-4 h-4 flex-shrink-0 ${iconClass}`} />
-                            <CardTitle className="text-sm font-semibold truncate">{message.title}</CardTitle>
+                      <Card key={message.id} className={`${cardClass} overflow-hidden`}>
+                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                          <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+                            <Icon className={`w-5 h-5 flex-shrink-0 ${iconClass}`} />
+                            <CardTitle className="text-md font-semibold truncate">{message.title}</CardTitle>
                           </div>
                           <div className="text-xs text-gray-500 text-right flex-shrink-0">
                             <p className="font-medium hidden md:block">
@@ -1861,8 +1861,8 @@ if (showToS) {
                             </p>
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-2 px-3">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{message.content}</p>
+                        <CardContent className="pt-2">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
 {/* כפתור מחיקה להזמנת שותף */}
 {/* [CHANGED] Added co_founder_joined to show Dismiss button for both invite and joined notifications */}
 {(message.message_type === 'co_founder_invite' || message.message_type === 'co_founder_joined') && (
