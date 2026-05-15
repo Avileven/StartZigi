@@ -1,3 +1,4 @@
+//150526
 //dashboard 010526 message new TETS
 // [FIX 07/05/2026] Line ~708: handleInvestmentDecision — angel investments do NOT touch burn rate
 //   or burn_rate_start at all. Budget calculation and burn rate update only runs for VC investments.
@@ -65,7 +66,8 @@ import {
   Code,
   Sparkles,
   Megaphone,
-  CalendarClock
+  CalendarClock,
+  Wrench
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -137,6 +139,8 @@ export default function Dashboard() {
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
   const [cofounderExpanded, setCofounderExpanded] = useState(false);
+  // [MOBILE] Toolbox drawer state
+  const [isToolboxOpen, setIsToolboxOpen] = useState(false);
   // [ADDED] Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
   const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents, venture }
@@ -1499,6 +1503,75 @@ if (showToS) {
       )}
 
       <div className="min-h-screen bg-gray-50 flex">
+
+        {/* [MOBILE] Toolbox button — fixed bottom-right, only on mobile */}
+        <button
+          className="md:hidden fixed bottom-6 right-4 z-50 bg-indigo-600 text-white rounded-full p-3 shadow-lg flex items-center gap-2"
+          onClick={() => setIsToolboxOpen(true)}
+        >
+          <Wrench className="w-5 h-5" />
+        </button>
+
+        {/* [MOBILE] Toolbox drawer overlay */}
+        {isToolboxOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsToolboxOpen(false)}
+          />
+        )}
+
+        {/* [MOBILE] Toolbox drawer */}
+        <div className={`
+          md:hidden fixed inset-y-0 right-0 z-50
+          w-72 bg-white border-l border-gray-200 overflow-y-auto p-4 space-y-6
+          transform transition-transform duration-300 ease-in-out
+          ${isToolboxOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-800">Toolbox</h3>
+            <button onClick={() => setIsToolboxOpen(false)} className="p-1 hover:bg-gray-100 rounded-full">
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {assetsAndTools.map((asset) => {
+              const Icon = asset.icon;
+              const highlightClass = asset.highlighted ? "border-amber-300 bg-amber-50 shadow-sm" : "border-gray-200";
+              const highlightIconClass = asset.highlighted ? "text-amber-600" : "text-gray-600";
+              const highlightTextClass = asset.highlighted ? "text-amber-700 font-semibold" : "";
+              return (
+                <div key={asset.id}>
+                  {asset.openInNewWindow ? (
+                    <a href={createPageUrl(asset.page)} target="_blank" rel="noopener noreferrer" className="block" onClick={() => setIsToolboxOpen(false)}>
+                      <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                        <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                        <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
+                        <ExternalLink className="w-3 h-3 text-gray-400" />
+                      </div>
+                    </a>
+                  ) : asset.external ? (
+                    <a href={asset.url} target="_blank" rel="noopener noreferrer" className="block" onClick={() => setIsToolboxOpen(false)}>
+                      <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                        <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                        <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
+                        <ExternalLink className="w-3 h-3 text-gray-400" />
+                      </div>
+                    </a>
+                  ) : (
+                    <Link href={createPageUrl(asset.page)} className="block" onClick={() => setIsToolboxOpen(false)}>
+                      <div className={`flex items-center gap-3 p-3 hover:bg-gray-100 transition-colors rounded-lg border ${highlightClass}`}>
+                        <Icon className={`w-4 h-4 ${highlightIconClass}`} />
+                        <span className={`flex-1 text-sm ${highlightTextClass}`}>{asset.title}</span>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* [DESKTOP] Toolbox sidebar — hidden on mobile */}
         <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
           <div>
             <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
@@ -1602,7 +1675,7 @@ if (showToS) {
           )}
         </div>
 
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-row justify-between items-center mb-8 gap-4">
               <div>
