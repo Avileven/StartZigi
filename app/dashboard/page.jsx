@@ -1675,7 +1675,7 @@ if (showToS) {
           )}
         </div>
 
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0 overflow-x-hidden">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-row justify-between items-center mb-8 gap-4">
               <div>
@@ -1846,20 +1846,19 @@ if (showToS) {
                     const Icon = icon;
 
                     return (
-                      <Card key={message.id} className={cardClass}>
+                      <Card key={message.id} className={`${cardClass} overflow-hidden`}>
                         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                          <div className="flex items-center gap-3">
-                            <Icon className={`w-5 h-5 ${iconClass}`} />
-                            <CardTitle className="text-md font-semibold">{message.title}</CardTitle>
+                          <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+                            <Icon className={`w-5 h-5 flex-shrink-0 ${iconClass}`} />
+                            <CardTitle className="text-md font-semibold truncate">{message.title}</CardTitle>
                           </div>
-                          <div className="text-xs text-gray-500 text-right">
-                            <p className="font-medium">
+                          <div className="text-xs text-gray-500 text-right flex-shrink-0">
+                            <p className="font-medium hidden md:block">
                               {message.vc_firm_name || message.message_type.replace('_', ' ').toUpperCase()}
                             </p>
                             <p className="text-xs">
                               {format(new Date(message.created_date), 'MMM dd, yyyy')}
                             </p>
-                           
                           </div>
                         </CardHeader>
                         <CardContent className="pt-2">
