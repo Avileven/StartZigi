@@ -371,7 +371,7 @@ export default function AngelArena() {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-xs text-gray-600 mb-1">Portfolio</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {selectedInvestor.portfolio_count || '—'} {selectedInvestor.portfolio_count ? 'Startups' : ''}
+                     {selectedInvestor.portfolio || '—'}
                   </p>
                 </div>
               </div>
