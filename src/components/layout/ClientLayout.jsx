@@ -217,9 +217,9 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
   }
 
   return (
-    <SidebarProvider style={{"--sidebar-background": "0 0% 100%", "--sidebar-foreground": "222 47% 11%", "--sidebar": "0 0% 100%"}}>
+    <SidebarProvider defaultOpen={typeof window !== 'undefined' && window.innerWidth >= 768}>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <Sidebar className="border-r border-gray-200 z-[100] !bg-white [&_[data-sidebar=sidebar]]:!bg-white">
+        <Sidebar className="border-r border-gray-200 z-[100] bg-white">
           <SidebarHeader className="border-b border-gray-200 p-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -457,7 +457,7 @@ pathname === "/"
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden w-full">
           <header className="bg-white border-b border-gray-200 px-4 py-3 md:hidden">
             <div className="flex items-center justify-center gap-3">
               <SidebarTrigger className="flex items-center justify-center gap-2 bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 w-36 h-9">
