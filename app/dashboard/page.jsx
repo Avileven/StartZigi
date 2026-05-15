@@ -154,6 +154,12 @@ export default function Dashboard() {
 };
   const router = useRouter();
 
+  useEffect(() => {
+    const handler = () => setIsToolboxOpen(true);
+    window.addEventListener('openToolbox', handler);
+    return () => window.removeEventListener('openToolbox', handler);
+  }, []);
+
   // [CHANGED] updateBalance: removed hardcoded initialCapital=15000 and totalFunding from messages.
   // [ADDED] now reads virtual_capital from DB as single source of truth.
   // virtual_capital is written to DB by loadDashboard (phase sync) and handleInvestmentDecision (investments).
@@ -1504,16 +1510,7 @@ if (showToS) {
 
       <div className="min-h-screen bg-gray-50 flex">
 
-        {/* [MOBILE] Top bar with Toolbox button */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-end">
-          <button
-            className="flex items-center gap-2 bg-indigo-600 text-white text-sm font-medium px-3 py-2 rounded-lg"
-            onClick={() => setIsToolboxOpen(true)}
-          >
-            <Wrench className="w-4 h-4" />
-            Toolbox
-          </button>
-        </div>
+        {/* [MOBILE] Toolbox trigger handled by ClientLayout header */}
 
         {/* [MOBILE] Toolbox drawer overlay */}
         {isToolboxOpen && (
@@ -1678,7 +1675,7 @@ if (showToS) {
           )}
         </div>
 
-        <div className="flex-1 p-4 pt-16 md:pt-8 md:p-8 overflow-y-auto min-w-0">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-row justify-between items-center mb-8 gap-4">
               <div>

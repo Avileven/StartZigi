@@ -1,4 +1,4 @@
-// ClientLayout 230326 plus credits
+// ClientLayout 150526 CHANGE MOBILE
 "use client";
 
 import { supabase } from '@/lib/supabase';
@@ -458,10 +458,22 @@ pathname === "/"
         </Sidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="bg-white border-b border-gray-200 px-6 py-4 md:hidden">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-semibold">StartZig</h1>
+          <header className="bg-white border-b border-gray-200 px-4 py-3 md:hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
+                <h1 className="text-lg font-semibold">StartZig</h1>
+              </div>
+              <button
+                id="toolbox-trigger"
+                className="flex items-center gap-2 bg-indigo-600 text-white text-sm font-medium px-3 py-2 rounded-lg"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('openToolbox'));
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Toolbox
+              </button>
             </div>
           </header>
 
