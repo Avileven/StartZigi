@@ -1499,7 +1499,7 @@ if (showToS) {
       )}
 
       <div className="min-h-screen bg-gray-50 flex">
-        <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
+        <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
           <div>
             <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
             <div className="space-y-2">
