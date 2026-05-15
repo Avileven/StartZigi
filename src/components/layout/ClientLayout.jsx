@@ -217,9 +217,9 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
   }
 
   return (
-    <SidebarProvider style={{"--sidebar-background": "255 255 255", "--sidebar-foreground": "15 23 42"}}>
+    <SidebarProvider style={{"--sidebar-background": "0 0% 100%", "--sidebar-foreground": "222 47% 11%", "--sidebar": "0 0% 100%"}}>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <Sidebar className="border-r border-gray-200 z-[100] bg-white">
+        <Sidebar className="border-r border-gray-200 z-[100] !bg-white [&_[data-sidebar=sidebar]]:!bg-white">
           <SidebarHeader className="border-b border-gray-200 p-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">

@@ -1774,7 +1774,7 @@ if (showToS) {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 overflow-hidden w-full">
                   {messages.map((message) => {
                     const isInvestmentOffer = message.message_type === 'investment_offer';
                     const isRejection = message.message_type === 'investment_rejection';
