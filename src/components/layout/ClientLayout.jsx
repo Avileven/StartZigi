@@ -37,6 +37,7 @@ import {
   SidebarFooter,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { canAccessFeature } from "@/components/utils/phaseValidation";
@@ -217,7 +218,7 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <Sidebar className="border-r border-gray-200 z-[100] bg-white">
           <SidebarHeader className="border-b border-gray-200 p-4">
@@ -232,7 +233,7 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="p-2">
+          <SidebarContent className="p-2" onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); } }}>
             {!isLoading && (
               <>
                 <SidebarGroup>
