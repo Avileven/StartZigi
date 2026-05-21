@@ -1,5 +1,7 @@
 //150526
 //dashboard 010526 message new TETS
+// [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
+// [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
 // [FIX 07/05/2026] Line ~708: handleInvestmentDecision — angel investments do NOT touch burn rate
 //   or burn_rate_start at all. Budget calculation and burn rate update only runs for VC investments.
 //   Previously both angel and VC recalculated burn rate from budget, contradicting the spec.
@@ -944,8 +946,8 @@ if (message.investment_type === 'angel') {
 
       const now = new Date();
 const meetingTime = new Date(meeting.meeting_scheduled_at);
-const diffMin = 5; // TESTING: always active
-      // const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION
+// const diffMin = 5; // TESTING: always active — join button works at any time
+const diffMin = (now - meetingTime) / 1000 / 60; // PRODUCTION: negative = not started yet, >20 = window passed
       if (diffMin < 0 || diffMin > 20) { alert("The meeting is not active at this time."); return; }
       const investors = await Investor.filter({ id: meeting.investor_id });
       if (!investors.length) { alert("Could not find the investor details."); return; }
@@ -2017,9 +2019,9 @@ if (showToS) {
                           {/* [ADDED] Angel meeting scheduled — Join button active only during meeting window */}
                           {isAngelMeetingScheduled && (() => {
                             const now = new Date();
-                            const isActive = true; // TESTING: always active
-                            // const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1; // PRODUCTION
-                            // const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION
+                            // const isActive = true; // TESTING: always active — button always enabled
+                            const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1; // PRODUCTION: minutes since scheduled time
+                            const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION: active only during 20min window
                             const meetingTimeStr = angelScheduledAt
                               ? angelScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                               : '';
