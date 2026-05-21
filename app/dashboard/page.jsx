@@ -1,4 +1,7 @@
 //150526
+// [PRODUCTION 21/05/2026] Angel screening: changed from immediate (hoursElapsed < 0) to 48 hours (hoursElapsed < 48).
+// [PRODUCTION 21/05/2026] Angel join meeting button: changed from always active (isActive = true) to real-time 20min window.
+// [ADDED 21/05/2026] Angel pitch completed block in runScreeningCheck: checks pitch_completed meetings after 24h (TESTING) / 72h (PRODUCTION) and creates investment_offer or rejection VentureMessage.
 //dashboard 010526 message new TETS
 // [FIX 07/05/2026] Line ~708: handleInvestmentDecision — angel investments do NOT touch burn rate
 //   or burn_rate_start at all. Budget calculation and burn rate update only runs for VC investments.
@@ -198,8 +201,8 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-      if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
-      // if (hoursElapsed < 36) continue; // PRODUCTION
+      // if (hoursElapsed < 0) continue; // TESTING: immediate
+      if (hoursElapsed < 48) continue; // PRODUCTION: 48 hours
 
         const investors = await Investor.filter({ id: meeting.investor_id });
         if (!investors.length) continue;
@@ -274,7 +277,56 @@ const updateValuation = useCallback(() => {
       console.error('Angel screening check error:', err);
     }
 
-    // ── VC: Pending screenings ──
+    // ── Angel: Pitch completed — send investment decision after 24 hours (TESTING: 24h, PRODUCTION: change to 72h)
+    try {
+      const pitchCompletedMeetings = await InvestorMeeting.filter({ venture_id: venture.id, status: 'pitch_completed' });
+
+      for (const meeting of pitchCompletedMeetings) {
+        if (!meeting.meeting_completed_at) continue;
+        const hoursElapsed = (now - new Date(meeting.meeting_completed_at)) / 1000 / 60 / 60;
+        if (hoursElapsed < 24) continue; // TESTING: 24 hours — change to 72 for production
+
+        const investors = await Investor.filter({ id: meeting.investor_id });
+        if (!investors.length) continue;
+        const investor = investors[0];
+
+        const fundingEvents = await FundingEvent.filter({ venture_id: venture.id });
+        const effectiveTeamScore = (calculateTeamScore(venture) * 0.3) + (5.0 * 10 * 0.7); // fallback aiScore=5
+        const proposal = calculateInvestmentOffer(investor, venture, effectiveTeamScore, 5.0);
+
+        if (proposal.decision === 'Invest') {
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'investment_offer',
+            title: `💰 Investment Offer from ${investor.name}!`,
+            content: `${proposal.reason}`,
+            phase: venture.phase,
+            priority: 4,
+            investment_offer_checksize: proposal.checkSize,
+            investment_offer_valuation: proposal.valuation,
+            investment_offer_status: 'pending',
+            investment_type: 'angel',
+            investor_name: investor.name,
+            is_dismissed: false,
+          });
+        } else {
+          await VentureMessage.create({
+            venture_id: venture.id,
+            message_type: 'system',
+            title: `📋 Response from ${investor.name}`,
+            content: `${proposal.reason}`,
+            phase: venture.phase,
+            priority: 2,
+            is_dismissed: false,
+          });
+        }
+
+        // Update status to prevent duplicate processing — same pattern as screening
+        await InvestorMeeting.update(meeting.id, { status: 'meeting_completed' });
+      }
+    } catch (err) {
+      console.error('Angel pitch completed check error:', err);
+    }
     try {
       const pendingVCMeetings = await VCMeeting.filter({ venture_id: venture.id, status: 'pending_screening' });
       const now = new Date();
@@ -2017,9 +2069,8 @@ if (showToS) {
                           {/* [ADDED] Angel meeting scheduled — Join button active only during meeting window */}
                           {isAngelMeetingScheduled && (() => {
                             const now = new Date();
-                            const isActive = true; // TESTING: always active
-                            // const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1; // PRODUCTION
-                            // const isActive = diffMin >= 0 && diffMin <= 20; // PRODUCTION
+                            const isActive = (() => { const diffMin = angelScheduledAt ? (now - angelScheduledAt) / 1000 / 60 : -1; return diffMin >= 0 && diffMin <= 20; })(); // PRODUCTION: active only during 20min window
+                            // const isActive = true; // TESTING: always active
                             const meetingTimeStr = angelScheduledAt
                               ? angelScheduledAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                               : '';
