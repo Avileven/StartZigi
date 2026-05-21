@@ -1,7 +1,4 @@
 // PITCH MODAL - AI SCORE MODEL v2.0
-// [PRODUCTION 21/05/2026] evaluateAndMakeDecision: removed immediate VentureMessage creation.
-//   Instead updates investor_meetings with status: 'pitch_completed' and meeting_completed_at.
-//   runScreeningCheck in page.jsx creates the VentureMessage after 24h (TESTING) / 72h (PRODUCTION).
 // [FIX 07/05/2026] Line ~525: Added investment_type: 'angel' to investment_offer VentureMessage.
 //   Previously removed by AI ([FIX 070526]), which caused handleInvestmentDecision to save every
 //   angel FundingEvent as 'VC', breaking the hasAngelInvestment screening check in runScreeningCheck.
@@ -520,16 +517,36 @@ export default function PitchModal({ investor, venture, isOpen, onClose }) {
       console.log("🔍 PITCH EVALUATION - FULL BREAKDOWN:");
       console.log(JSON.stringify(calculationBreakdown, null, 2));
       console.log("📊 Raw Proposal Object:", proposal);
-      // [PRODUCTION] Instead of creating VentureMessage immediately, update investor_meetings with pitch_completed.
-      // runScreeningCheck in page.jsx will create the VentureMessage after 24h (TESTING) / 72h (PRODUCTION).
-      const meetings = await InvestorMeeting.filter({ venture_id: venture.id, status: 'screening_passed' });
-      if (meetings.length) {
-        await InvestorMeeting.update(meetings[0].id, {
-          status: 'pitch_completed',
-          meeting_completed_at: new Date().toISOString(),
+      if (proposal.decision === 'Invest') {
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'investment_offer',
+          title: `💰 Investment Offer from ${localInvestor.name}!`,
+          content: `${proposal.reason}`,
+          phase: venture.phase,
+          priority: 4,
+          investment_offer_checksize: proposal.checkSize,
+          investment_offer_valuation: proposal.valuation,
+          investment_offer_status: 'pending',
+          investment_type: 'angel', // [FIX 07/05/2026] Restored — handleInvestmentDecision reads this to write correct type to funding_events
+          investor_name: localInvestor.name, // [FIX 07/05/2026] Added — used by handleInvestmentDecision to show correct investor name in angel congrats message
+          is_dismissed: false,
+          created_by: venture.created_by || 'system',
+          created_by_id: venture.created_by_id
+        });
+      } else {
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'system',
+          title: `📋 Response from ${localInvestor.name}`,
+          content: `${proposal.reason}`,
+          phase: venture.phase,
+          priority: 2,
+          is_dismissed: false,
+          created_by: venture.created_by || 'system',
+          created_by_id: venture.created_by_id
         });
       }
-      // [REMOVED] VentureMessage no longer created here — handled by runScreeningCheck after delay
       setTimeout(() => { onClose(); }, 2000);
     } catch (error) {
       console.error("Error in evaluation:", error);
