@@ -200,8 +200,8 @@ const updateValuation = useCallback(() => {
 
       for (const meeting of pendingMeetings) {
         const hoursElapsed = (now - new Date(meeting.screening_submitted_at)) / 1000 / 60 / 60;
-      //if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
-       if (hoursElapsed < 48) continue; // PRODUCTION
+      if (hoursElapsed < 0) continue; // TESTING: immediate — replace with line below for production
+       //if (hoursElapsed < 48) continue; // PRODUCTION
 
         const investors = await Investor.filter({ id: meeting.investor_id });
         if (!investors.length) continue;
