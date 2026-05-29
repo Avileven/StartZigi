@@ -1,4 +1,4 @@
-//150526
+//290526 change vc message to 48  
 //dashboard 010526 message new TETS
 // [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
 // [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
