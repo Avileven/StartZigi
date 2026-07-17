@@ -232,57 +232,12 @@ export default function Home() {
         }
       `}</style>
       <div className="py-16 px-6">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
-          <div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-              Not another AI tool someone thought would be nice to have.
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mb-10">
-              StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
-            </p>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+            Not another AI tool someone thought would be nice to have.
+          </h2>
 
-            <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
-
-            <div className="space-y-5">
-              {[
-                {
-                  title: "Not just a startup. A founder.",
-                  body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
-                },
-                {
-                  title: "Transparency is not just a slogan",
-                  body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
-                },
-                {
-                  title: "Built by founders for the next generation.",
-                  body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
-                },
-                {
-                  title: "Hard work. No shortcuts.",
-                  body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
-                },
-                {
-                  title: "Community feedback, built into the process",
-                  body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
-                },
-                {
-                  title: "Full control over your information",
-                  body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
-                },
-                {
-                  title: "Visual thinking, at every stage",
-                  body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
-                },
-              ].map((item, i) => (
-                <div key={i}>
-                  <h4 className="text-base font-semibold text-gray-900 mb-1.5">{item.title}</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:sticky lg:top-24 w-full flex justify-center">
+          <div className="w-full flex justify-center mb-10">
             <svg width="100%" viewBox="0 0 740 420" style={{ maxWidth: 520 }} role="img">
               <title>An idea growing rings as seven concepts fade in, unifying into a whole at the final stage</title>
               <g className="sz-rg6"><circle cx="370" cy="180" r="86" fill="#D97706" opacity="0.14" /></g>
@@ -301,6 +256,50 @@ export default function Home() {
               <text className="sz-lbl sz-f6" x="370" y="330" textAnchor="middle" fill="#D97706">Pitch</text>
               <text className="sz-lbl sz-f7" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Launchpad</text>
             </svg>
+          </div>
+
+          <p className="text-lg text-gray-600 max-w-3xl mb-10">
+            StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+          </p>
+
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
+
+          <div className="space-y-6">
+            {[
+              {
+                title: "Not just a startup. A founder.",
+                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
+              },
+              {
+                title: "Transparency is not just a slogan",
+                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
+              },
+              {
+                title: "Built by founders for the next generation.",
+                body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
+              },
+              {
+                title: "Hard work. No shortcuts.",
+                body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
+              },
+              {
+                title: "Community feedback, built into the process",
+                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
+              },
+              {
+                title: "Full control over your information",
+                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
+              },
+              {
+                title: "Visual thinking, at every stage",
+                body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
+              },
+            ].map((item, i) => (
+              <div key={i}>
+                <h4 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h4>
+                <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -332,4 +331,3 @@ export default function Home() {
     </div>
   );
 }
-
