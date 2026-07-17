@@ -66,7 +66,7 @@ function PhaseClock() {
         />
         <circle cx="160" cy="160" r="6" fill="#3457D5" />
       </svg>
-      <p className="text-gray-500 text-sm mt-2">Every stage, one continuous journey.</p>
+      <p className="text-gray-500 text-sm mt-2">The clock is ticking. Ready to Zig?</p>
     </div>
   );
 }
@@ -229,9 +229,6 @@ export default function Home() {
             <p className="text-lg text-gray-600 max-w-3xl">
               StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
             </p>
-            <p className="text-lg text-gray-600 max-w-3xl mt-4">
-              The journey moves through seven key stages — Specification, Visualization, Feedback, Polish, Business Modeling, Pitch, and Launchpad — each one adding another layer to your idea.
-            </p>
           </div>
 
           <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
@@ -280,7 +277,6 @@ export default function Home() {
 
       {/* CTA — copied from the WhyStartZig page */}
       <div className="text-center py-20 px-6">
-        <p className="text-gray-400 italic text-2xl mb-12">Ready to Zig?</p>
         <Link href="/register">
           <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
             Start Your Journey
