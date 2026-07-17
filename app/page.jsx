@@ -6,6 +6,71 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 
+// [ADDED] Auto-cycling phase clock — adapted from the PhaseCompletionDemo clock visual
+const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
+const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
+const CLOCK_POSITIONS = [{ x: 160, y: 64 }, { x: 247, y: 112 }, { x: 247, y: 216 }, { x: 160, y: 260 }, { x: 73, y: 216 }, { x: 73, y: 112 }];
+const CLOCK_ROTATIONS = [0, 60, 120, 180, 240, 300];
+const CLOCK_COLORS = {
+  idea: "#10b981",
+  business_plan: "#f97316",
+  mvp: "#3b82f6",
+  mlp: "#a855f7",
+  beta: "#ec4899",
+  growth: "#eab308",
+};
+
+function PhaseClock() {
+  const [phaseIndex, setPhaseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhaseIndex((prev) => (prev + 1) % CLOCK_PHASES.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentPhase = CLOCK_PHASES[phaseIndex];
+  const activeColor = CLOCK_COLORS[currentPhase];
+  const seg = 879 / 6;
+  const arcOffset = 879 - seg * (phaseIndex + 1);
+  const rotation = CLOCK_ROTATIONS[phaseIndex];
+
+  return (
+    <div className="flex flex-col items-center py-10">
+      <svg width="320" height="320" viewBox="0 0 320 320">
+        <circle cx="160" cy="160" r="140" fill="#F6F7FB" stroke="#E9E9F0" strokeWidth="1.5" />
+        <circle
+          cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
+          strokeDasharray="879" strokeDashoffset={arcOffset}
+          style={{ transform: "rotate(-90deg)", transformOrigin: "160px 160px", transition: "stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1), stroke 1.5s ease" }}
+        />
+        <circle cx="160" cy="160" r="60" fill="#EFEFF7" />
+        {CLOCK_LABELS.map((label, i) => (
+          <text
+            key={i}
+            x={CLOCK_POSITIONS[i].x} y={CLOCK_POSITIONS[i].y}
+            fontSize={CLOCK_PHASES[i] === currentPhase ? "13" : "11"}
+            fill={CLOCK_PHASES[i] === currentPhase ? CLOCK_COLORS[CLOCK_PHASES[i]] : "#9CA3AF"}
+            textAnchor="middle"
+            fontWeight={CLOCK_PHASES[i] === currentPhase ? "800" : "600"}
+            fontFamily="Inter, sans-serif"
+          >
+            {label}
+          </text>
+        ))}
+        <path
+          fill="#4C3FA8"
+          d="M158 160 L162 160 L162 75 L158 75 Z"
+          style={{ transform: `rotate(${rotation}deg)`, transformOrigin: "160px 160px", transition: "transform 1.5s cubic-bezier(0.4,0,0.2,1)" }}
+        />
+        <circle cx="160" cy="160" r="6" fill="#3457D5" />
+      </svg>
+      <p className="text-gray-500 text-sm mt-2">Every stage, one continuous journey.</p>
+    </div>
+  );
+}
+
 // [ADDED] FAQ accordion component
 function FAQItems() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -210,6 +275,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <PhaseClock />
 
       {/* CTA — copied from the WhyStartZig page */}
       <div className="text-center py-20 px-6">
