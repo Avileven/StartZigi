@@ -154,68 +154,19 @@ export default function Home() {
       </div>
 
       {/* ── Why StartZig ── */}
-      <style>{`
-        .sz-lbl { font-size: 22px; font-weight: 600; font-family: Inter, sans-serif; }
-        @keyframes sz-ring1 { 0%,9%{opacity:0} 11%,86%{opacity:1} 89%,100%{opacity:0} }
-        @keyframes sz-ring2 { 0%,23%{opacity:0} 25%,86%{opacity:1} 89%,100%{opacity:0} }
-        @keyframes sz-ring3 { 0%,37%{opacity:0} 39%,86%{opacity:1} 89%,100%{opacity:0} }
-        @keyframes sz-ring4 { 0%,51%{opacity:0} 53%,86%{opacity:1} 89%,100%{opacity:0} }
-        @keyframes sz-ring5 { 0%,65%{opacity:0} 67%,86%{opacity:1} 89%,100%{opacity:0} }
-        @keyframes sz-ring6 { 0%,79%{opacity:0} 81%,86%{opacity:1} 89%,100%{opacity:0} }
-        .sz-rg1{animation:sz-ring1 5s linear infinite;} .sz-rg2{animation:sz-ring2 5s linear infinite;}
-        .sz-rg3{animation:sz-ring3 5s linear infinite;} .sz-rg4{animation:sz-ring4 5s linear infinite;}
-        .sz-rg5{animation:sz-ring5 5s linear infinite;} .sz-rg6{animation:sz-ring6 5s linear infinite;}
-        @keyframes sz-fade1 { 0%,1%{opacity:0} 3%,9%{opacity:1} 11%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade2 { 0%,15%{opacity:0} 17%,23%{opacity:1} 25%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade3 { 0%,29%{opacity:0} 31%,37%{opacity:1} 39%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade4 { 0%,43%{opacity:0} 45%,51%{opacity:1} 53%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade5 { 0%,57%{opacity:0} 59%,65%{opacity:1} 67%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade6 { 0%,71%{opacity:0} 73%,79%{opacity:1} 81%{opacity:0} 100%{opacity:0} }
-        @keyframes sz-fade7 { 0%,85%{opacity:0} 87%,100%{opacity:1} }
-        .sz-f1{animation:sz-fade1 5s linear infinite;} .sz-f2{animation:sz-fade2 5s linear infinite;}
-        .sz-f3{animation:sz-fade3 5s linear infinite;} .sz-f4{animation:sz-fade4 5s linear infinite;}
-        .sz-f5{animation:sz-fade5 5s linear infinite;} .sz-f6{animation:sz-fade6 5s linear infinite;}
-        .sz-f7{animation:sz-fade7 5s linear infinite;}
-        @media (prefers-reduced-motion: reduce) {
-          .sz-rg1,.sz-rg2,.sz-rg3,.sz-rg4,.sz-rg5,.sz-rg6{animation:none;opacity:1;}
-          .sz-f1,.sz-f2,.sz-f3,.sz-f4,.sz-f5,.sz-f6{animation:none;opacity:0;}
-          .sz-f7{animation:none;opacity:1;}
-        }
-      `}</style>
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
             Not another AI tool someone thought would be nice to have.
           </h2>
 
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
-            <div className="flex-1">
-              <p className="text-lg text-gray-600">
-                StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
-              </p>
-              <p className="text-lg text-gray-600 mt-4">
-                The journey moves through seven key stages — Specification, Visualization, Feedback, Polish, Business Modeling, Pitch, and Launchpad — each one adding another layer to your idea.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-full md:w-[320px] flex justify-center">
-              <svg width="100%" viewBox="0 0 740 420" style={{ maxWidth: 320 }} role="img">
-                <title>An idea growing rings as seven concepts fade in, one after another</title>
-                <g className="sz-rg6"><circle cx="370" cy="180" r="86" fill="#D97706" opacity="0.14" /></g>
-                <g className="sz-rg5"><circle cx="370" cy="180" r="72" fill="#6E5AD6" opacity="0.20" /></g>
-                <g className="sz-rg4"><circle cx="370" cy="180" r="58" fill="#2C9E9E" opacity="0.26" /></g>
-                <g className="sz-rg3"><circle cx="370" cy="180" r="44" fill="#D97706" opacity="0.34" /></g>
-                <g className="sz-rg2"><circle cx="370" cy="180" r="30" fill="#6E5AD6" opacity="0.5" /></g>
-                <g className="sz-rg1"><circle cx="370" cy="180" r="20" fill="#2C9E9E" opacity="0.7" /></g>
-                <circle cx="370" cy="180" r="14" fill="#3457D5" />
-                <text className="sz-lbl sz-f1" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Specification</text>
-                <text className="sz-lbl sz-f2" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Visualization</text>
-                <text className="sz-lbl sz-f3" x="370" y="330" textAnchor="middle" fill="#D97706">Feedback</text>
-                <text className="sz-lbl sz-f4" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Polish</text>
-                <text className="sz-lbl sz-f5" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Business Modeling</text>
-                <text className="sz-lbl sz-f6" x="370" y="330" textAnchor="middle" fill="#D97706">Pitch</text>
-                <text className="sz-lbl sz-f7" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Launchpad</text>
-              </svg>
-            </div>
+          <div className="mb-10">
+            <p className="text-lg text-gray-600 max-w-3xl">
+              StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+            </p>
+            <p className="text-lg text-gray-600 max-w-3xl mt-4">
+              The journey moves through seven key stages — Specification, Visualization, Feedback, Polish, Business Modeling, Pitch, and Launchpad — each one adding another layer to your idea.
+            </p>
           </div>
 
           <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
