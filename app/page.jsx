@@ -1,19 +1,10 @@
-// Home page - 160726
+// Home page - 170726
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
-import DashboardMockup from "@/components/utils/DashboardMockup";
-import MentorMockup from "@/components/utils/MentorMockup";
-import VCMockup from "@/components/utils/VCMockup";
-import StudioMockup from "@/components/utils/StudioMockup";
-import VCSimulationMockup from "@/components/utils/VCSimulationMockup";
-import FeedbackMockup from "@/components/utils/FeedbackMockup";
-import BetaMockup from "@/components/utils/BetaMockup";
-import BusinessDeckMockup from "@/components/utils/BusinessDeckMockup";
-import ZigPlanMockup from "@/components/utils/ZigPlanMockup";
 
 
 
@@ -53,41 +44,6 @@ function BenefitsSection() {
               <p className="text-gray-600 text-base leading-relaxed">• Run a beta testing program, invite users to sign up and test your product at different stages</p>
               <p className="text-gray-600 text-base leading-relaxed">• Invite a co-founder to join your venture and build your team</p>
             </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WhoSection() {
-  return (
-    <div className="py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Who can benefit from StartZig?
-            </span>
-          </h2>
-        </div>
-
-        <div className="space-y-8">
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Experience the Startup World</h3>
-            <p className="text-gray-600 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round? StartZig puts you in the founder's seat, from your first product idea all the way to scaling your company and landing an exit.</p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Entrepreneurs with an Idea</h3>
-            <p className="text-gray-600 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture, with a dedicated AI mentor by your side. You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine, helping you grow a viral community of founders and early adopters around your product.</p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Students, Learners & Educators</h3>
-            <p className="text-gray-600 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge. StartZig gives students hands-on experience of the full startup journey, from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
           </div>
 
         </div>
@@ -245,60 +201,100 @@ export default function Home() {
       </div>
 
       {/* ── Why StartZig ── */}
+      <style>{`
+        @keyframes ring28 { 0%,19%{opacity:0} 21%,100%{opacity:1} }
+        @keyframes ring42 { 0%,39%{opacity:0} 41%,100%{opacity:1} }
+        @keyframes ring56 { 0%,59%{opacity:0} 61%,100%{opacity:1} }
+        @keyframes ring70 { 0%,79%{opacity:0} 81%,100%{opacity:1} }
+        .sz-r28{animation:ring28 6s linear infinite;} .sz-r42{animation:ring42 6s linear infinite;}
+        .sz-r56{animation:ring56 6s linear infinite;} .sz-r70{animation:ring70 6s linear infinite;}
+        @keyframes pTop    { 0%,12%{opacity:0} 15%{opacity:1} 20%{opacity:0} 100%{opacity:0} }
+        @keyframes pBottom { 0%,32%{opacity:0} 35%{opacity:1} 40%{opacity:0} 100%{opacity:0} }
+        @keyframes pRight  { 0%,52%{opacity:0} 55%{opacity:1} 60%{opacity:0} 100%{opacity:0} }
+        @keyframes pLeft   { 0%,72%{opacity:0} 75%{opacity:1} 80%{opacity:0} 100%{opacity:0} }
+        @keyframes moveTop    { 0%,15%{transform:translateY(0)} 20%{transform:translateY(101px)} 100%{transform:translateY(101px)} }
+        @keyframes moveBottom { 0%,35%{transform:translateY(0)} 40%{transform:translateY(-111px)} 100%{transform:translateY(-111px)} }
+        @keyframes moveRight  { 0%,55%{transform:translateX(0)} 60%{transform:translateX(-121px)} 100%{transform:translateX(-121px)} }
+        @keyframes moveLeft   { 0%,75%{transform:translateX(0)} 80%{transform:translateX(121px)} 100%{transform:translateX(121px)} }
+        .sz-pt{animation:pTop 6s linear infinite;} .sz-pb{animation:pBottom 6s linear infinite;}
+        .sz-pr{animation:pRight 6s linear infinite;} .sz-pl{animation:pLeft 6s linear infinite;}
+        .sz-mt{animation:moveTop 6s linear infinite;} .sz-mb{animation:moveBottom 6s linear infinite;}
+        .sz-mr{animation:moveRight 6s linear infinite;} .sz-ml{animation:moveLeft 6s linear infinite;}
+        @keyframes lblIdea  { 0%,16%{opacity:1} 20%{opacity:0} 100%{opacity:0} }
+        @keyframes lblFinal { 0%,82%{opacity:0} 86%,100%{opacity:1} }
+        .sz-li{animation:lblIdea 6s linear infinite;} .sz-lf{animation:lblFinal 6s linear infinite;}
+        @media (prefers-reduced-motion: reduce) {
+          .sz-r28,.sz-r42,.sz-r56,.sz-r70{animation:none;opacity:1;}
+          .sz-pt,.sz-pb,.sz-pr,.sz-pl,.sz-mt,.sz-mb,.sz-mr,.sz-ml{animation:none;opacity:0;}
+          .sz-li{animation:none;opacity:0;} .sz-lf{animation:none;opacity:1;}
+        }
+      `}</style>
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
               Not another AI tool someone thought would be nice to have.
             </span>
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mb-10">
-            StartZig is a real, structured methodology for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+            StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
           </p>
+
+          {/* [PLACEHOLDER — content flying into the center is still being finalized] */}
+          <div className="w-full flex justify-center mb-10">
+            <svg width="100%" viewBox="0 0 680 420" style={{ maxWidth: 560 }} role="img">
+              <title>An idea growing new rings as each stage merges into it</title>
+              <g className="sz-mt"><circle className="sz-pt" fill="#3457D5" cx="340" cy="99" r="6" /></g>
+              <text x="340" y="64" textAnchor="middle" className="sz-pt" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Business foundation</text>
+              <g className="sz-mb"><circle className="sz-pb" fill="#3457D5" cx="340" cy="311" r="6" /></g>
+              <text x="340" y="351" textAnchor="middle" className="sz-pb" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Minimum viable product</text>
+              <g className="sz-mr"><circle className="sz-pr" fill="#3457D5" cx="461" cy="200" r="6" /></g>
+              <text x="476" y="204" textAnchor="start" className="sz-pr" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Community feedback</text>
+              <g className="sz-ml"><circle className="sz-pl" fill="#3457D5" cx="219" cy="200" r="6" /></g>
+              <text x="204" y="204" textAnchor="end" className="sz-pl" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Mockup</text>
+              <g className="sz-r70"><circle cx="340" cy="200" r="70" fill="#6E5AD6" opacity="0.14" /></g>
+              <g className="sz-r56"><circle cx="340" cy="200" r="56" fill="#6E5AD6" opacity="0.20" /></g>
+              <g className="sz-r42"><circle cx="340" cy="200" r="42" fill="#6E5AD6" opacity="0.30" /></g>
+              <g className="sz-r28"><circle cx="340" cy="200" r="28" fill="#6E5AD6" opacity="0.45" /></g>
+              <circle cx="340" cy="200" r="14" fill="#6E5AD6" />
+              <text x="340" y="300" textAnchor="middle" className="sz-li" style={{ fontSize: 14, fill: "#12131A", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Idea</text>
+              <text x="340" y="300" textAnchor="middle" className="sz-lf" style={{ fontSize: 14, fill: "#12131A", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Validated product</text>
+            </svg>
+          </div>
 
           <div className="space-y-5">
             {[
               {
-                title: "Built by founders who've actually done it, for founders who haven't yet",
-                body: "Not theory, not an academic framework — StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves. It's not \u201Canother AI tool someone thought would be nice to have\u201D — it's a methodology born from real wins and real failures.",
+                title: "Not just a startup. A founder.",
+                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
               },
               {
-                title: "Idea development and founder development, together",
-                body: "StartZig doesn't just help you build a specific idea — it builds your ability to think and act like a founder. That's what lets two different people use it the exact same way: someone with a real idea building it for real, and someone who just wants to experience what founding actually feels like. Both walk away stronger.",
+                title: "Transparency is not just a slogan",
+                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
               },
               {
-                title: "Visual thinking, at every stage — not just at the end",
-                body: "The Studio isn't a design step tacked on late in the process. At any point in the journey, you can turn your thinking into something visual — see it, shape it, react to it — instead of staying stuck in your head or in a wall of text. Visual thinking is a tool you can reach for whenever you need it, not a phase you pass through once.",
+                title: "Built by founders for the next generation.",
+                body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
               },
               {
-                title: "Refinement, not just documentation",
-                body: "The goal isn't a polished write-up of your idea — it's refining it: stripping away what doesn't hold up, sharpening what does, until what's left is an actual venture, not a general concept.",
+                title: "Hard work. No shortcuts.",
+                body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
               },
               {
-                title: "No shortcuts",
-                body: "AI is a technical tool in service of the process — it never replaces the analysis, the thinking, or the hard work every founder who's ever succeeded had to go through. StartZig doesn't promise fast and easy. It promises real, because that's the only thing that actually works.",
+                title: "Community feedback, built into the process",
+                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
               },
               {
-                title: "Transparency and fairness as a built-in principle, not a slogan",
-                body: "What's free stays free, with no surprises and no hidden conditions. You always know exactly where you stand and what's ahead.",
+                title: "Full control over your information",
+                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
               },
               {
-                title: "Community feedback, built into the process — not bolted on",
-                body: "Feedback from fellow founders isn't an add-on feature. It's woven directly into the methodology, at the exact points where it matters most.",
-              },
-              {
-                title: "Your privacy stays yours",
-                body: "All your information is kept private to you. You decide what to share, with whom, and when — you shouldn't have to expose your startup to get value from the process.",
-              },
-              {
-                title: "What you leave with: a founder, not just a pitch",
-                body: "The end goal isn't a document or a deck — it's a founder who went through a real, structured process with no shortcuts, holding an idea that's already market-validated and ready for the next step: development or fundraising.",
+                title: "Visual thinking, at every stage",
+                body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
               },
             ].map((item, i) => (
-              <div key={i} className="flex gap-4 p-5 rounded-2xl bg-gray-50 border border-gray-200">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-900 text-white text-sm font-bold flex items-center justify-center">
-                  {i + 1}
-                </div>
+              <div key={i} className="flex gap-4">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gray-900 mt-2.5"></div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900 mb-1.5">{item.title}</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
@@ -306,163 +302,15 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          <div className="mt-8 rounded-2xl bg-gray-900 text-white p-7">
-            <p className="text-base leading-relaxed text-gray-200">
-              <span className="text-white font-semibold">No surprises here.</span> Your entire journey — from idea to pitching investors — is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.
-            </p>
-          </div>
         </div>
       </div>
-
-      {/* ── Everything You Need ── */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Everything You Need to Build a Startup
-            </span>
-          </h2>
-          <p className="text-lg text-gray-600 max-w-3xl">
-            We often hear about the big exits and the overnight success stories, but the reality is that fewer than 1 in 10 ideas ever reach commercial maturity. Most founders discover too late that turning a raw idea into something investable and market-ready is a completely different skill set. Knowing how to validate and shape a product, getting the right advice at the right moment, and walking into an investor meeting with a compelling story, these are things most people have never practiced.
-          </p>
-          <p className="text-lg text-gray-600 max-w-3xl mt-4">
-            StartZig's objective is to close that gap.
-          </p>
-        </div>
-      </div>
-
-      {/* ── MOCKUPS ── */}
-
-      {/* 1. Dashboard */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              A Professional Management Dashboard
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Manage your venture, track progress, and stay on top of every stage — all in one place.</p>
-        </div>
-        <DashboardMockup autoStart={false} />
-      </div>
-
-      {/* 2. Mentor */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              A Mentor Companion at Every Step
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
-        </div>
-        <MentorMockup autoStart={false} />
-      </div>
-
-      {/* 3. Investor Marketplace */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              Investor Marketplace
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Discover virtual angels and VC firms, each with their own focus and criteria, and choose who to pitch.</p>
-        </div>
-        <VCMockup autoStart={false} />
-      </div>
-
-      {/* 4. VC Simulation */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              A Real Fundraising Simulation
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
-        </div>
-        <VCSimulationMockup autoStart={false} />
-      </div>
-
-      {/* 5. ZigForge Studio */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              A Dedicated AI Studio for Building App Demos
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
-        </div>
-        <StudioMockup autoStart={false} />
-      </div>
-
-      {/* 6. Feedback */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              Real Feedback from Real Users
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Collected and analyzed through a dedicated feedback system at every stage of your product.</p>
-        </div>
-        <FeedbackMockup autoStart={false} />
-      </div>
-
-      {/* 7. Beta */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">
-              A Dedicated Beta Sign-Up Page
-            </span>
-          </h2>
-          <p className="text-gray-500 text-sm">Share it, collect testers, and grow your first user base.</p>
-        </div>
-        <BetaMockup autoStart={false} />
-      </div>
-{/* 8. Business Deck */}
-<div className="py-16 px-6">
-  <div className="max-w-4xl mx-auto mb-8">
-    <h2 className="text-3xl md:text-4xl font-bold mb-2">
-      <span className="text-gray-900">
-        Your Investor Business Plan, Generated
-      </span>
-    </h2>
-    <p className="text-gray-500 text-sm">
-      StartZig assembles everything you've built into a professional investor-ready business plan — with AI analysis, revenue forecast, and break-even analysis. Available on Pro Founder and above.
-    </p>
-  </div>
-  <BusinessDeckMockup autoStart={false} />
-</div>
-
-{/* 9. ZigPlan */}
-<div className="py-16 px-6">
-  <div className="max-w-4xl mx-auto mb-8">
-    <h2 className="text-3xl md:text-4xl font-bold mb-2">
-      <span className="text-gray-900">
-        Meet ZigPlan, Your Personal Business Analyst
-      </span>
-    </h2>
-    <p className="text-gray-500 text-sm">
-      From idea to execution — ZigPlan analyzes your product, features, and goals to generate a concise Product Requirements Document with a ready-to-use AI development prompt. Available on Pro Founder and above.
-    </p>
-  </div>
-  <ZigPlanMockup autoStart={false} />
-</div>
-      <WhoSection />
-
-      
 
       {/* ── Full Features List ── */}
       <div id="features">
         <div className="pt-16 px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
                 StartZig Features
               </span>
             </h2>
@@ -474,7 +322,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-10">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
               Frequently Asked Questions
             </span>
           </h2>
