@@ -269,6 +269,13 @@ export default function Home() {
                 <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
               </div>
             ))}
+            <div>
+              <h4 className="text-xl font-bold text-gray-900 mb-3">Turning you into a product manager</h4>
+              <p className="text-gray-600 text-base leading-relaxed">
+                We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
+                <Link href="/toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
+              </p>
+            </div>
           </div>
         </div>
       </div>
