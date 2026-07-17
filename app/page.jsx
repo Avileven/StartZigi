@@ -1,4 +1,4 @@
-// Home page - 170726
+// Home page - 240426
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -202,105 +202,105 @@ export default function Home() {
 
       {/* ── Why StartZig ── */}
       <style>{`
-        @keyframes ring28 { 0%,19%{opacity:0} 21%,100%{opacity:1} }
-        @keyframes ring42 { 0%,39%{opacity:0} 41%,100%{opacity:1} }
-        @keyframes ring56 { 0%,59%{opacity:0} 61%,100%{opacity:1} }
-        @keyframes ring70 { 0%,79%{opacity:0} 81%,100%{opacity:1} }
-        .sz-r28{animation:ring28 6s linear infinite;} .sz-r42{animation:ring42 6s linear infinite;}
-        .sz-r56{animation:ring56 6s linear infinite;} .sz-r70{animation:ring70 6s linear infinite;}
-        @keyframes pTop    { 0%,12%{opacity:0} 15%{opacity:1} 20%{opacity:0} 100%{opacity:0} }
-        @keyframes pBottom { 0%,32%{opacity:0} 35%{opacity:1} 40%{opacity:0} 100%{opacity:0} }
-        @keyframes pRight  { 0%,52%{opacity:0} 55%{opacity:1} 60%{opacity:0} 100%{opacity:0} }
-        @keyframes pLeft   { 0%,72%{opacity:0} 75%{opacity:1} 80%{opacity:0} 100%{opacity:0} }
-        @keyframes moveTop    { 0%,15%{transform:translateY(0)} 20%{transform:translateY(101px)} 100%{transform:translateY(101px)} }
-        @keyframes moveBottom { 0%,35%{transform:translateY(0)} 40%{transform:translateY(-111px)} 100%{transform:translateY(-111px)} }
-        @keyframes moveRight  { 0%,55%{transform:translateX(0)} 60%{transform:translateX(-121px)} 100%{transform:translateX(-121px)} }
-        @keyframes moveLeft   { 0%,75%{transform:translateX(0)} 80%{transform:translateX(121px)} 100%{transform:translateX(121px)} }
-        .sz-pt{animation:pTop 6s linear infinite;} .sz-pb{animation:pBottom 6s linear infinite;}
-        .sz-pr{animation:pRight 6s linear infinite;} .sz-pl{animation:pLeft 6s linear infinite;}
-        .sz-mt{animation:moveTop 6s linear infinite;} .sz-mb{animation:moveBottom 6s linear infinite;}
-        .sz-mr{animation:moveRight 6s linear infinite;} .sz-ml{animation:moveLeft 6s linear infinite;}
-        @keyframes lblIdea  { 0%,16%{opacity:1} 20%{opacity:0} 100%{opacity:0} }
-        @keyframes lblFinal { 0%,82%{opacity:0} 86%,100%{opacity:1} }
-        .sz-li{animation:lblIdea 6s linear infinite;} .sz-lf{animation:lblFinal 6s linear infinite;}
+        .sz-lbl { font-size: 22px; font-weight: 600; font-family: Inter, sans-serif; }
+        @keyframes sz-ring1 { 0%,9%{opacity:0} 11%,86%{opacity:1} 89%,100%{opacity:0} }
+        @keyframes sz-ring2 { 0%,23%{opacity:0} 25%,86%{opacity:1} 89%,100%{opacity:0} }
+        @keyframes sz-ring3 { 0%,37%{opacity:0} 39%,86%{opacity:1} 89%,100%{opacity:0} }
+        @keyframes sz-ring4 { 0%,51%{opacity:0} 53%,86%{opacity:1} 89%,100%{opacity:0} }
+        @keyframes sz-ring5 { 0%,65%{opacity:0} 67%,86%{opacity:1} 89%,100%{opacity:0} }
+        @keyframes sz-ring6 { 0%,79%{opacity:0} 81%,86%{opacity:1} 89%,100%{opacity:0} }
+        .sz-rg1{animation:sz-ring1 14s linear infinite;} .sz-rg2{animation:sz-ring2 14s linear infinite;}
+        .sz-rg3{animation:sz-ring3 14s linear infinite;} .sz-rg4{animation:sz-ring4 14s linear infinite;}
+        .sz-rg5{animation:sz-ring5 14s linear infinite;} .sz-rg6{animation:sz-ring6 14s linear infinite;}
+        @keyframes sz-unify { 0%,85%{opacity:0} 89%,100%{opacity:1} }
+        .sz-unify{animation:sz-unify 14s linear infinite;}
+        @keyframes sz-fade1 { 0%,1%{opacity:0} 3%,9%{opacity:1} 11%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade2 { 0%,15%{opacity:0} 17%,23%{opacity:1} 25%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade3 { 0%,29%{opacity:0} 31%,37%{opacity:1} 39%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade4 { 0%,43%{opacity:0} 45%,51%{opacity:1} 53%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade5 { 0%,57%{opacity:0} 59%,65%{opacity:1} 67%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade6 { 0%,71%{opacity:0} 73%,79%{opacity:1} 81%{opacity:0} 100%{opacity:0} }
+        @keyframes sz-fade7 { 0%,85%{opacity:0} 87%,100%{opacity:1} }
+        .sz-f1{animation:sz-fade1 14s linear infinite;} .sz-f2{animation:sz-fade2 14s linear infinite;}
+        .sz-f3{animation:sz-fade3 14s linear infinite;} .sz-f4{animation:sz-fade4 14s linear infinite;}
+        .sz-f5{animation:sz-fade5 14s linear infinite;} .sz-f6{animation:sz-fade6 14s linear infinite;}
+        .sz-f7{animation:sz-fade7 14s linear infinite;}
         @media (prefers-reduced-motion: reduce) {
-          .sz-r28,.sz-r42,.sz-r56,.sz-r70{animation:none;opacity:1;}
-          .sz-pt,.sz-pb,.sz-pr,.sz-pl,.sz-mt,.sz-mb,.sz-mr,.sz-ml{animation:none;opacity:0;}
-          .sz-li{animation:none;opacity:0;} .sz-lf{animation:none;opacity:1;}
+          .sz-rg1,.sz-rg2,.sz-rg3,.sz-rg4,.sz-rg5,.sz-rg6,.sz-unify{animation:none;opacity:1;}
+          .sz-f1,.sz-f2,.sz-f3,.sz-f4,.sz-f5,.sz-f6{animation:none;opacity:0;}
+          .sz-f7{animation:none;opacity:1;}
         }
       `}</style>
       <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
               Not another AI tool someone thought would be nice to have.
-            </span>
-          </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mb-10">
-            StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
-          </p>
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mb-10">
+              StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+            </p>
 
-          {/* [PLACEHOLDER — content flying into the center is still being finalized] */}
-          <div className="w-full flex justify-center mb-10">
-            <svg width="100%" viewBox="0 0 680 420" style={{ maxWidth: 560 }} role="img">
-              <title>An idea growing new rings as each stage merges into it</title>
-              <g className="sz-mt"><circle className="sz-pt" fill="#3457D5" cx="340" cy="99" r="6" /></g>
-              <text x="340" y="64" textAnchor="middle" className="sz-pt" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Business foundation</text>
-              <g className="sz-mb"><circle className="sz-pb" fill="#3457D5" cx="340" cy="311" r="6" /></g>
-              <text x="340" y="351" textAnchor="middle" className="sz-pb" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Minimum viable product</text>
-              <g className="sz-mr"><circle className="sz-pr" fill="#3457D5" cx="461" cy="200" r="6" /></g>
-              <text x="476" y="204" textAnchor="start" className="sz-pr" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Community feedback</text>
-              <g className="sz-ml"><circle className="sz-pl" fill="#3457D5" cx="219" cy="200" r="6" /></g>
-              <text x="204" y="204" textAnchor="end" className="sz-pl" style={{ fontSize: 13, fill: "#55596B", fontFamily: "Inter, sans-serif" }}>Mockup</text>
-              <g className="sz-r70"><circle cx="340" cy="200" r="70" fill="#6E5AD6" opacity="0.14" /></g>
-              <g className="sz-r56"><circle cx="340" cy="200" r="56" fill="#6E5AD6" opacity="0.20" /></g>
-              <g className="sz-r42"><circle cx="340" cy="200" r="42" fill="#6E5AD6" opacity="0.30" /></g>
-              <g className="sz-r28"><circle cx="340" cy="200" r="28" fill="#6E5AD6" opacity="0.45" /></g>
-              <circle cx="340" cy="200" r="14" fill="#6E5AD6" />
-              <text x="340" y="300" textAnchor="middle" className="sz-li" style={{ fontSize: 14, fill: "#12131A", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Idea</text>
-              <text x="340" y="300" textAnchor="middle" className="sz-lf" style={{ fontSize: 14, fill: "#12131A", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Validated product</text>
-            </svg>
-          </div>
+            <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
 
-          <div className="space-y-5">
-            {[
-              {
-                title: "Not just a startup. A founder.",
-                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
-              },
-              {
-                title: "Transparency is not just a slogan",
-                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
-              },
-              {
-                title: "Built by founders for the next generation.",
-                body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
-              },
-              {
-                title: "Hard work. No shortcuts.",
-                body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
-              },
-              {
-                title: "Community feedback, built into the process",
-                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
-              },
-              {
-                title: "Full control over your information",
-                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
-              },
-              {
-                title: "Visual thinking, at every stage",
-                body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
-              },
-            ].map((item, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gray-900 mt-2.5"></div>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1.5">{item.title}</h3>
+            <div className="space-y-5">
+              {[
+                {
+                  title: "Not just a startup. A founder.",
+                  body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
+                },
+                {
+                  title: "Transparency is not just a slogan",
+                  body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
+                },
+                {
+                  title: "Built by founders for the next generation.",
+                  body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
+                },
+                {
+                  title: "Hard work. No shortcuts.",
+                  body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
+                },
+                {
+                  title: "Community feedback, built into the process",
+                  body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
+                },
+                {
+                  title: "Full control over your information",
+                  body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
+                },
+                {
+                  title: "Visual thinking, at every stage",
+                  body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
+                },
+              ].map((item, i) => (
+                <div key={i}>
+                  <h4 className="text-base font-semibold text-gray-900 mb-1.5">{item.title}</h4>
                   <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:sticky lg:top-24 w-full flex justify-center">
+            <svg width="100%" viewBox="0 0 740 420" style={{ maxWidth: 520 }} role="img">
+              <title>An idea growing rings as seven concepts fade in, unifying into a whole at the final stage</title>
+              <g className="sz-rg6"><circle cx="370" cy="180" r="86" fill="#D97706" opacity="0.14" /></g>
+              <g className="sz-rg5"><circle cx="370" cy="180" r="72" fill="#6E5AD6" opacity="0.20" /></g>
+              <g className="sz-rg4"><circle cx="370" cy="180" r="58" fill="#2C9E9E" opacity="0.26" /></g>
+              <g className="sz-rg3"><circle cx="370" cy="180" r="44" fill="#D97706" opacity="0.34" /></g>
+              <g className="sz-rg2"><circle cx="370" cy="180" r="30" fill="#6E5AD6" opacity="0.5" /></g>
+              <g className="sz-rg1"><circle cx="370" cy="180" r="20" fill="#2C9E9E" opacity="0.7" /></g>
+              <g className="sz-unify"><circle cx="370" cy="180" r="86" fill="#6E5AD6" opacity="0.55" /></g>
+              <circle cx="370" cy="180" r="14" fill="#3457D5" />
+              <text className="sz-lbl sz-f1" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Specification</text>
+              <text className="sz-lbl sz-f2" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Visualization</text>
+              <text className="sz-lbl sz-f3" x="370" y="330" textAnchor="middle" fill="#D97706">Feedback</text>
+              <text className="sz-lbl sz-f4" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Polish</text>
+              <text className="sz-lbl sz-f5" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Business Modeling</text>
+              <text className="sz-lbl sz-f6" x="370" y="330" textAnchor="middle" fill="#D97706">Pitch</text>
+              <text className="sz-lbl sz-f7" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Launchpad</text>
+            </svg>
           </div>
         </div>
       </div>
@@ -332,3 +332,4 @@ export default function Home() {
     </div>
   );
 }
+
