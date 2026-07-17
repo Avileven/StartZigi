@@ -6,53 +6,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 
-
-
-
-
-
-
-function BenefitsSection() {
-  return (
-    <div className="py-24 sm:py-32 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="space-y-10">
-
-          <div>
-            <h4 className="text-xl font-bold text-gray-900 mb-3">Advanced Tools for Building Your Venture</h4>
-            <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
-              <p className="text-gray-600 text-base leading-relaxed">• A professional management dashboard and business planning tools to structure your strategy and financial model</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xl font-bold text-gray-900 mb-3">Fundraising</h4>
-            <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• A wide range of virtual private and institutional investors you can approach and pitch to</p>
-              <p className="text-gray-600 text-base leading-relaxed">• A real simulation of raising capital, from angel investors to venture capital firms</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xl font-bold text-gray-900 mb-3">Community & Users</h4>
-            <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• Get structured feedback on your product from real community members</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Run a beta testing program, invite users to sign up and test your product at different stages</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Invite a co-founder to join your venture and build your team</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 // [ADDED] FAQ accordion component
 function FAQItems() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -209,11 +162,9 @@ export default function Home() {
         @keyframes sz-ring4 { 0%,51%{opacity:0} 53%,86%{opacity:1} 89%,100%{opacity:0} }
         @keyframes sz-ring5 { 0%,65%{opacity:0} 67%,86%{opacity:1} 89%,100%{opacity:0} }
         @keyframes sz-ring6 { 0%,79%{opacity:0} 81%,86%{opacity:1} 89%,100%{opacity:0} }
-        .sz-rg1{animation:sz-ring1 14s linear infinite;} .sz-rg2{animation:sz-ring2 14s linear infinite;}
-        .sz-rg3{animation:sz-ring3 14s linear infinite;} .sz-rg4{animation:sz-ring4 14s linear infinite;}
-        .sz-rg5{animation:sz-ring5 14s linear infinite;} .sz-rg6{animation:sz-ring6 14s linear infinite;}
-        @keyframes sz-unify { 0%,85%{opacity:0} 89%,100%{opacity:1} }
-        .sz-unify{animation:sz-unify 14s linear infinite;}
+        .sz-rg1{animation:sz-ring1 5s linear infinite;} .sz-rg2{animation:sz-ring2 5s linear infinite;}
+        .sz-rg3{animation:sz-ring3 5s linear infinite;} .sz-rg4{animation:sz-ring4 5s linear infinite;}
+        .sz-rg5{animation:sz-ring5 5s linear infinite;} .sz-rg6{animation:sz-ring6 5s linear infinite;}
         @keyframes sz-fade1 { 0%,1%{opacity:0} 3%,9%{opacity:1} 11%{opacity:0} 100%{opacity:0} }
         @keyframes sz-fade2 { 0%,15%{opacity:0} 17%,23%{opacity:1} 25%{opacity:0} 100%{opacity:0} }
         @keyframes sz-fade3 { 0%,29%{opacity:0} 31%,37%{opacity:1} 39%{opacity:0} 100%{opacity:0} }
@@ -221,12 +172,12 @@ export default function Home() {
         @keyframes sz-fade5 { 0%,57%{opacity:0} 59%,65%{opacity:1} 67%{opacity:0} 100%{opacity:0} }
         @keyframes sz-fade6 { 0%,71%{opacity:0} 73%,79%{opacity:1} 81%{opacity:0} 100%{opacity:0} }
         @keyframes sz-fade7 { 0%,85%{opacity:0} 87%,100%{opacity:1} }
-        .sz-f1{animation:sz-fade1 14s linear infinite;} .sz-f2{animation:sz-fade2 14s linear infinite;}
-        .sz-f3{animation:sz-fade3 14s linear infinite;} .sz-f4{animation:sz-fade4 14s linear infinite;}
-        .sz-f5{animation:sz-fade5 14s linear infinite;} .sz-f6{animation:sz-fade6 14s linear infinite;}
-        .sz-f7{animation:sz-fade7 14s linear infinite;}
+        .sz-f1{animation:sz-fade1 5s linear infinite;} .sz-f2{animation:sz-fade2 5s linear infinite;}
+        .sz-f3{animation:sz-fade3 5s linear infinite;} .sz-f4{animation:sz-fade4 5s linear infinite;}
+        .sz-f5{animation:sz-fade5 5s linear infinite;} .sz-f6{animation:sz-fade6 5s linear infinite;}
+        .sz-f7{animation:sz-fade7 5s linear infinite;}
         @media (prefers-reduced-motion: reduce) {
-          .sz-rg1,.sz-rg2,.sz-rg3,.sz-rg4,.sz-rg5,.sz-rg6,.sz-unify{animation:none;opacity:1;}
+          .sz-rg1,.sz-rg2,.sz-rg3,.sz-rg4,.sz-rg5,.sz-rg6{animation:none;opacity:1;}
           .sz-f1,.sz-f2,.sz-f3,.sz-f4,.sz-f5,.sz-f6{animation:none;opacity:0;}
           .sz-f7{animation:none;opacity:1;}
         }
@@ -237,30 +188,35 @@ export default function Home() {
             Not another AI tool someone thought would be nice to have.
           </h2>
 
-          <div className="w-full flex justify-center mb-10">
-            <svg width="100%" viewBox="0 0 740 420" style={{ maxWidth: 520 }} role="img">
-              <title>An idea growing rings as seven concepts fade in, unifying into a whole at the final stage</title>
-              <g className="sz-rg6"><circle cx="370" cy="180" r="86" fill="#D97706" opacity="0.14" /></g>
-              <g className="sz-rg5"><circle cx="370" cy="180" r="72" fill="#6E5AD6" opacity="0.20" /></g>
-              <g className="sz-rg4"><circle cx="370" cy="180" r="58" fill="#2C9E9E" opacity="0.26" /></g>
-              <g className="sz-rg3"><circle cx="370" cy="180" r="44" fill="#D97706" opacity="0.34" /></g>
-              <g className="sz-rg2"><circle cx="370" cy="180" r="30" fill="#6E5AD6" opacity="0.5" /></g>
-              <g className="sz-rg1"><circle cx="370" cy="180" r="20" fill="#2C9E9E" opacity="0.7" /></g>
-              <g className="sz-unify"><circle cx="370" cy="180" r="86" fill="#6E5AD6" opacity="0.55" /></g>
-              <circle cx="370" cy="180" r="14" fill="#3457D5" />
-              <text className="sz-lbl sz-f1" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Specification</text>
-              <text className="sz-lbl sz-f2" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Visualization</text>
-              <text className="sz-lbl sz-f3" x="370" y="330" textAnchor="middle" fill="#D97706">Feedback</text>
-              <text className="sz-lbl sz-f4" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Polish</text>
-              <text className="sz-lbl sz-f5" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Business Modeling</text>
-              <text className="sz-lbl sz-f6" x="370" y="330" textAnchor="middle" fill="#D97706">Pitch</text>
-              <text className="sz-lbl sz-f7" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Launchpad</text>
-            </svg>
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
+            <div className="flex-1">
+              <p className="text-lg text-gray-600">
+                StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+              </p>
+              <p className="text-lg text-gray-600 mt-4">
+                The journey moves through seven key stages — Specification, Visualization, Feedback, Polish, Business Modeling, Pitch, and Launchpad — each one adding another layer to your idea.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-full md:w-[320px] flex justify-center">
+              <svg width="100%" viewBox="0 0 740 420" style={{ maxWidth: 320 }} role="img">
+                <title>An idea growing rings as seven concepts fade in, one after another</title>
+                <g className="sz-rg6"><circle cx="370" cy="180" r="86" fill="#D97706" opacity="0.14" /></g>
+                <g className="sz-rg5"><circle cx="370" cy="180" r="72" fill="#6E5AD6" opacity="0.20" /></g>
+                <g className="sz-rg4"><circle cx="370" cy="180" r="58" fill="#2C9E9E" opacity="0.26" /></g>
+                <g className="sz-rg3"><circle cx="370" cy="180" r="44" fill="#D97706" opacity="0.34" /></g>
+                <g className="sz-rg2"><circle cx="370" cy="180" r="30" fill="#6E5AD6" opacity="0.5" /></g>
+                <g className="sz-rg1"><circle cx="370" cy="180" r="20" fill="#2C9E9E" opacity="0.7" /></g>
+                <circle cx="370" cy="180" r="14" fill="#3457D5" />
+                <text className="sz-lbl sz-f1" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Specification</text>
+                <text className="sz-lbl sz-f2" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Visualization</text>
+                <text className="sz-lbl sz-f3" x="370" y="330" textAnchor="middle" fill="#D97706">Feedback</text>
+                <text className="sz-lbl sz-f4" x="370" y="330" textAnchor="middle" fill="#2C9E9E">Polish</text>
+                <text className="sz-lbl sz-f5" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Business Modeling</text>
+                <text className="sz-lbl sz-f6" x="370" y="330" textAnchor="middle" fill="#D97706">Pitch</text>
+                <text className="sz-lbl sz-f7" x="370" y="330" textAnchor="middle" fill="#6E5AD6">Launchpad</text>
+              </svg>
+            </div>
           </div>
-
-          <p className="text-lg text-gray-600 max-w-3xl mb-10">
-            StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
-          </p>
 
           <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
 
@@ -304,19 +260,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Full Features List ── */}
-      <div id="features">
-        <div className="pt-16 px-6">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
-                StartZig Features
-              </span>
-            </h2>
-          </div>
-        </div>
-        <BenefitsSection />
-      </div>
       {/* [ADDED] FAQ Section */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
