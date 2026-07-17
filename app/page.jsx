@@ -211,6 +211,16 @@ export default function Home() {
         </div>
       </div>
 
+      {/* CTA — copied from the WhyStartZig page */}
+      <div className="text-center py-20 px-6">
+        <p className="text-gray-400 italic text-2xl mb-12">Ready to Zig?</p>
+        <Link href="/register">
+          <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
+            Start Your Journey
+          </button>
+        </Link>
+      </div>
+
       {/* [ADDED] FAQ Section */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
