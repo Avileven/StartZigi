@@ -86,7 +86,7 @@ export default function Navbar() {
                     <Link href="/blog" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
                       Blog
                     </Link>
-                    <Link href="/toolkit" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                    <Link href="/The toolkit" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
                       The Toolkit
                     </Link>
                     <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
@@ -146,7 +146,7 @@ export default function Navbar() {
           <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
             Blog
           </Link>
-          <Link href="/toolkit" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+          <Link href="/The toolkit" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
             The Toolkit
           </Link>
           <Link href="/how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
