@@ -255,7 +255,7 @@ export default function Home() {
                 body: (
                   <>
                     We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
-                    <Link href="/The toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
+                    <Link href="/The Toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
                   </>
                 ),
               },
