@@ -185,7 +185,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp"
             style={{ animationDelay: "0.2s" }}
           >
-            A training platform for growing raw ideas into startups, and inventors into founders. The platform combines a dedicated toolset, community wisdom, and technical support from AI.
+            A training platform for growing raw ideas into startups, and inventors into founders. The platform combines a dedicated toolset, community wisdom, and AI-powered&nbsp;technical&nbsp;support.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
@@ -227,7 +227,10 @@ export default function Home() {
 
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is a real, structured practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+              StartZig lets you follow a structured, practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+            </p>
+            <p className="text-lg text-gray-600 max-w-3xl mt-4">
+              StartZig is designed for a variety of needs — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started, <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality, and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
             </p>
           </div>
 
@@ -236,32 +239,41 @@ export default function Home() {
           <div className="space-y-6">
             {[
               {
-                title: "Not just a startup. A founder.",
-                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
-              },
-              {
-                title: "Transparency is not just a slogan",
-                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
-              },
-              {
                 title: "Built by founders for the next generation.",
                 body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
+              },
+              {
+                title: "Not just a startup. A founder.",
+                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
               },
               {
                 title: "Hard work. No shortcuts.",
                 body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
               },
               {
+                title: "Turning you into a product manager",
+                body: (
+                  <>
+                    We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
+                    <Link href="/toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
+                  </>
+                ),
+              },
+              {
                 title: "Community feedback, built into the process",
                 body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
               },
               {
-                title: "Full control over your information",
-                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
-              },
-              {
                 title: "Visual thinking, at every stage",
                 body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
+              },
+              {
+                title: "Transparency is not just a slogan",
+                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
+              },
+              {
+                title: "Full control over your information",
+                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
               },
             ].map((item, i) => (
               <div key={i}>
@@ -269,13 +281,6 @@ export default function Home() {
                 <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
               </div>
             ))}
-            <div>
-              <h4 className="text-xl font-bold text-gray-900 mb-3">Turning you into a product manager</h4>
-              <p className="text-gray-600 text-base leading-relaxed">
-                We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
-                <Link href="/toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
-              </p>
-            </div>
           </div>
         </div>
       </div>
