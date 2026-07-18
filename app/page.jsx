@@ -1,4 +1,4 @@
-// Home page - 240426
+// Home page - 180726
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -68,6 +68,52 @@ function PhaseClock() {
       </svg>
       <p className="text-gray-500 text-sm mt-2">The clock is ticking. Ready to Zig?</p>
     </div>
+  );
+}
+
+// [ADDED] "Spark Shape Ship" typewriter — types once, weight increases per word
+function SparkShapeShip() {
+  const [w1, setW1] = useState("");
+  const [w2, setW2] = useState("");
+  const [w3, setW3] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+
+  useEffect(() => {
+    const words = [
+      { text: "Spark ", setter: setW1 },
+      { text: "Shape ", setter: setW2 },
+      { text: "Ship", setter: setW3 },
+    ];
+    let wIdx = 0;
+    let cIdx = 0;
+    let timeoutId;
+    function tick() {
+      if (wIdx >= words.length) {
+        setShowCursor(false);
+        return;
+      }
+      const current = words[wIdx];
+      if (cIdx <= current.text.length) {
+        current.setter(current.text.slice(0, cIdx));
+        cIdx++;
+        timeoutId = setTimeout(tick, 120);
+      } else {
+        wIdx++;
+        cIdx = 0;
+        timeoutId = setTimeout(tick, 120);
+      }
+    }
+    tick();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  return (
+    <h2 className="text-4xl md:text-5xl mb-6 text-gray-900" style={{ minHeight: "1.2em" }}>
+      <span style={{ fontWeight: 300 }}>{w1}</span>
+      <span style={{ fontWeight: 500 }}>{w2}</span>
+      <span style={{ fontWeight: 700 }}>{w3}</span>
+      {showCursor && <span style={{ borderRight: "2px solid #111827" }}>&nbsp;</span>}
+    </h2>
   );
 }
 
@@ -221,9 +267,7 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-            Not another AI tool someone thought would be nice to have.
-          </h2>
+          <SparkShapeShip />
 
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
@@ -234,7 +278,9 @@ export default function Home() {
             </p>
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Our DNA</h3>
+          <h3 className="text-4xl md:text-5xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">Our DNA</span>
+          </h3>
 
           <div className="space-y-6">
             {[
@@ -288,7 +334,7 @@ export default function Home() {
       <PhaseClock />
 
       {/* CTA — copied from the WhyStartZig page */}
-      <div className="text-center py-20 px-6">
+      <div className="text-center py-6 px-6">
         <Link href="/register">
           <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
             Start Your Journey
