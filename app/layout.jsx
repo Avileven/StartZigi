@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "StartZig - Build Your Startup",
-  description: "The ultimate startup simulator",
+  description: "A training platform for growing raw ideas into startups, and inventors into founders.",
 };
 
 export const viewport = {
