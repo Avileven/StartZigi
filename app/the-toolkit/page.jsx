@@ -20,28 +20,28 @@ function BenefitsSection() {
           <div>
             <h4 className="text-xl font-bold text-gray-900 mb-3">Advanced Tools for Building Your Venture</h4>
             <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• A built-in AI mentor that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
-              <p className="text-gray-600 text-base leading-relaxed">• A professional management dashboard and business planning tools to structure your strategy and financial model</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
+              <p className="text-gray-600 text-base leading-relaxed">A built-in AI coach that accompanies you through every section and task, providing guidance, feedback, and professional support at every step</p>
+              <p className="text-gray-600 text-base leading-relaxed">A professional management dashboard and business planning tools to structure your strategy and financial model</p>
+              <p className="text-gray-600 text-base leading-relaxed">Product development tools at different stages of your product, including a dedicated studio for building prototypes and mockups</p>
+              <p className="text-gray-600 text-base leading-relaxed">Marketing tools, run campaigns, build your landing page, and promote your venture to early users</p>
             </div>
           </div>
 
           <div>
             <h4 className="text-xl font-bold text-gray-900 mb-3">Fundraising</h4>
             <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• A wide range of virtual private and institutional investors you can approach and pitch to</p>
-              <p className="text-gray-600 text-base leading-relaxed">• A real simulation of raising capital, from angel investors to venture capital firms</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
+              <p className="text-gray-600 text-base leading-relaxed">A wide range of virtual private and institutional investors you can approach and pitch to</p>
+              <p className="text-gray-600 text-base leading-relaxed">A real simulation of raising capital, from angel investors to venture capital firms</p>
+              <p className="text-gray-600 text-base leading-relaxed">Practice your pitch, choose the right investor for your stage, and negotiate your terms</p>
             </div>
           </div>
 
           <div>
             <h4 className="text-xl font-bold text-gray-900 mb-3">Community & Users</h4>
             <div className="space-y-2 pl-4">
-              <p className="text-gray-600 text-base leading-relaxed">• Get structured feedback on your product from real community members</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Run a beta testing program, invite users to sign up and test your product at different stages</p>
-              <p className="text-gray-600 text-base leading-relaxed">• Invite a co-founder to join your venture and build your team</p>
+              <p className="text-gray-600 text-base leading-relaxed">Get structured feedback on your product from real community members</p>
+              <p className="text-gray-600 text-base leading-relaxed">Run a beta testing program, invite users to sign up and test your product at different stages</p>
+              <p className="text-gray-600 text-base leading-relaxed">Invite a co-founder to join your venture and build your team</p>
             </div>
           </div>
 
@@ -96,8 +96,6 @@ export default function FeaturesPage() {
         <p className="text-gray-600 text-lg">A closer look at every tool along the journey.</p>
       </div>
 
-      <BenefitsSection />
-
       {/* 1. Dashboard */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
@@ -109,11 +107,11 @@ export default function FeaturesPage() {
         <DashboardMockup autoStart={false} />
       </div>
 
-      {/* 2. Mentor */}
+      {/* 2. Coach */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">A Mentor Companion at Every Step</span>
+            <span className="text-gray-900">A Coach Companion at Every Step</span>
           </h2>
           <p className="text-gray-500 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
         </div>
@@ -200,6 +198,8 @@ export default function FeaturesPage() {
         </div>
         <ZigPlanMockup autoStart={false} />
       </div>
+
+      <BenefitsSection />
 
       <WhoSection />
     </div>
