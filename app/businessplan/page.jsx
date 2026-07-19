@@ -41,6 +41,14 @@ export default function businessPlan() {
   const [isSaving, setIsSaving] = useState(false);
   const [staticGuidanceModal, setStaticGuidanceModal] = useState({ isOpen: false, sectionId: '' });
   const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
+  const [showTipsHint, setShowTipsHint] = useState(true);
+  const [showZigItHint, setShowZigItHint] = useState(true);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setShowTipsHint(false), 10000);
+    const t2 = setTimeout(() => setShowZigItHint(false), 10000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
  
   const router = useRouter();
 
@@ -441,7 +449,10 @@ await VentureMessage.create({
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Business Plan</h1>
               <p className="text-gray-600 mt-1 text-sm max-w-2xl">
-                Your business plan is the foundation of your venture. Fill in each section carefully — and remember, this is a <strong>living document</strong>. You're expected to update and refine it as your venture evolves.
+                To sharpen a raw idea into something grounded and concrete, you need to connect it to the entrepreneurial and business environment it actually operates in. This stage isn't asking for deep competitor analysis or precise financial modeling — but it's where you start building the foundations for that, and put your core assumptions to the test.
+              </p>
+              <p className="text-gray-600 mt-2 text-sm max-w-2xl">
+                Like any lean business plan, this isn't a document you fill out once and file away — it's a <strong>living document</strong>. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.
               </p>
             </div>
             <Button variant="outline" onClick={() => router.push(createPageUrl("Dashboard"))}>
@@ -498,7 +509,19 @@ await VentureMessage.create({
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
                     <div><CardTitle className="text-indigo-800">1. Mission Statement</CardTitle><CardDescription>What is your company's core purpose and vision?</CardDescription></div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 relative">
+                      {showTipsHint && (
+                        <div className="absolute -top-14 left-0 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-48 z-10 shadow-lg">
+                          A quick look at what belongs here
+                          <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
+                      {showZigItHint && (
+                        <div className="absolute -top-14 right-0 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-52 z-10 shadow-lg">
+                          Get feedback and a quality score on what you've written
+                          <div className="absolute top-full right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mission_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('mission_statement', 'Mission Statement', 'mission')} />
                     </div>
