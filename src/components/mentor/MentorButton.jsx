@@ -15,20 +15,20 @@ export default function MentorButton({ onClick, className = "" }) {
         style={{
           fontFamily: "'Helvetica Neue', Arial, sans-serif",
           fontWeight: 300,
-          letterSpacing: '1.5px',
+          letterSpacing: '0.5px',
           color: '#E08D3C',
           display: 'flex',
           alignItems: 'flex-end',
-          fontSize: '13px',
+          fontSize: '10px',
         }}
       >
         <span>zig</span>
         <span style={{ position: 'relative', display: 'inline-block' }}>
           <span>ı</span>
           <svg
-            style={{ position: 'absolute', top: '-9px', left: 'calc(50% - 1px)', transform: 'translateX(-50%)' }}
-            width="7"
-            height="7"
+            style={{ position: 'absolute', top: '-6px', left: 'calc(50% - 1px)', transform: 'translateX(-50%)' }}
+            width="5"
+            height="5"
             viewBox="0 0 24 24"
           >
             <path d="M12 0 C12 6 14 9 20 12 C14 15 12 18 12 24 C12 18 10 15 4 12 C10 9 12 6 12 0 Z" fill="#E08D3C" />
