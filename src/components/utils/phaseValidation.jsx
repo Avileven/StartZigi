@@ -14,8 +14,8 @@ export const validatePhaseTransition = async (venture, targetPhase, additionalDa
       if (venture.business_plan_completion !== 100) {
         return { 
           valid: false, 
-          message: 'Business Plan must be 100% complete before proceeding to MVP phase.',
-          requiredAction: 'Complete your Business Plan',
+          message: 'Your Plan must be 100% complete before proceeding to MVP phase.',
+          requiredAction: 'Complete your Plan',
           redirectTo: 'businessPlan'
         };
       }
@@ -65,7 +65,7 @@ export const validatePhaseTransition = async (venture, targetPhase, additionalDa
     
     growth: async () => {
       const betaTesters = await BetaTester.filter({ venture_id: venture.id });
-      if (betaTesters.length < 10) {
+      if (betaTesters.length < 50) {
         return { 
           valid: false, 
           message: `You need at least 50 beta testers to proceed to Growth phase. You currently have ${betaTesters.length}.`,
