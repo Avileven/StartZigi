@@ -118,13 +118,12 @@ export default function MentorModal({
             <div className="flex justify-between items-start">
               <div className="space-y-1 text-left">
                 <DialogTitle className="text-2xl font-bold text-indigo-900">
-                  Zig It: {sectionTitle}
+                  {sectionTitle}
                 </DialogTitle>
                 <p className="text-sm text-gray-500">
                   AI-driven strategic guidance for your venture.
                 </p>
               </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-black text-2xl font-light">✕</button>
             </div>
           </DialogHeader>
 
@@ -145,7 +144,15 @@ export default function MentorModal({
                 disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold transition-all shadow-md"
               >
-                {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Zig It'}
+                {isGettingFeedback ? (
+                  <Loader2 className="animate-spin mr-2" />
+                ) : (
+                  <span className="flex items-center justify-center gap-1">
+                    <span>Zig</span>
+                    <span className="text-orange-300 text-base">✦</span>
+                    <span>it</span>
+                  </span>
+                )}
               </Button>
 
 
