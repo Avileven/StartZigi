@@ -327,7 +327,7 @@ await VentureMessage.create({
   venture_id: venture.id,
   message_type: 'phase_complete',
   title: '💰 Capital Injection: $15,000',
-  content: `Congratulations! Your business plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
+  content: `Congratulations! Your plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
   phase: 'business_plan',
   priority: 1,
   created_by: user.email,
