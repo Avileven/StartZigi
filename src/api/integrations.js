@@ -12,9 +12,9 @@ import { supabase } from '@/lib/supabase'
 // אם בדיקת הקרדיטים נכשלת מסיבה טכנית - ה-AI עדיין עובד (fail-safe)
 //
 // [MODEL SELECTION]
-//   mentor       → gemini-2.5-flash (fast, cheap)
-//   studio_basic → gemini-2.5-pro   (higher quality)
-//   studio_boost → gemini-2.5-pro   (higher quality)
+//   mentor       → gemini-3.5-flash (fast, cheap) [UPDATED July 2026: gemini-2.5-flash deprecated, replaced with GA successor]
+//   studio_basic → gemini-3.1-pro-preview (higher quality) [UPDATED July 2026: gemini-2.5-pro deprecated; official replacement, currently preview-only]
+//   studio_boost → gemini-3.1-pro-preview (higher quality)
 export async function InvokeLLM({ prompt, creditType = 'sys' }) {
   try {
 
@@ -78,8 +78,8 @@ export async function InvokeLLM({ prompt, creditType = 'sys' }) {
 
     // [MODEL SELECTION] Studio → Pro (quality), Mentor → Flash (speed/cost)
     const model = (creditType === 'studio_basic' || creditType === 'studio_boost')
-      ? 'gemini-2.5-pro'
-      : 'gemini-2.5-flash';
+      ? 'gemini-3.1-pro-preview'
+      : 'gemini-3.5-flash';
 
     console.log(`📡 Calling Gemini (${model})...`);
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
