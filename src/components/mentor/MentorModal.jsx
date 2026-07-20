@@ -74,14 +74,14 @@ export default function MentorModal({
     setFeedback(null);
     try {
       const prompt = `
-        You are an expert startup mentor.
+        You are an expert startup coach.
         Venture Context: "${ventureDesc}"
         Section: "${sectionTitle}"
         User's Draft: "${currentText}"
 
 
         Instruction:
-        1. Start with the text "Mentor Feedback" exactly.
+        1. Start with the text "Zig Feedback" exactly.
         2. On the very next line, provide a 10-star scale using "★" for active and "☆" for empty (e.g., ★★★★☆☆☆☆☆☆).
         3. Provide sections: "Analysis:", "Strategic Hints:", and "Challenge Question:".
         4. CRITICAL: Do NOT use any markdown formatting like bolding (**), bullet points (*), or hashtags (#). Use plain text only.
@@ -118,7 +118,7 @@ export default function MentorModal({
             <div className="flex justify-between items-start">
               <div className="space-y-1 text-left">
                 <DialogTitle className="text-2xl font-bold text-indigo-900">
-                  Mentor: {sectionTitle}
+                  Zig It: {sectionTitle}
                 </DialogTitle>
                 <p className="text-sm text-gray-500">
                   AI-driven strategic guidance for your venture.
@@ -145,14 +145,14 @@ export default function MentorModal({
                 disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg font-bold transition-all shadow-md"
               >
-                {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Get Mentor Feedback'}
+                {isGettingFeedback ? <Loader2 className="animate-spin mr-2" /> : 'Zig It'}
               </Button>
 
 
               {/* [NO_CREDITS] Show upgrade prompt when user has no credits left */}
               {feedback === 'NO_CREDITS' && (
                 <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-3 animate-in fade-in">
-                  <p className="text-amber-800 font-semibold">You've used all your mentor credits this month.</p>
+                  <p className="text-amber-800 font-semibold">You've used all your Zig It credits this month.</p>
                   <a href="/pricing" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">
                     Upgrade Plan
                   </a>
@@ -179,7 +179,7 @@ export default function MentorModal({
 
 
                       // 2. עיצוב הכותרת הראשית בתוך הפידבק
-                      if (trimmedLine === "Mentor Feedback") {
+                      if (trimmedLine === "Zig Feedback") {
                         return (
                           <h3 key={index} className="text-xl font-bold text-indigo-900">
                             {trimmedLine}
