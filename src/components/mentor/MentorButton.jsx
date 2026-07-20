@@ -26,7 +26,7 @@ export default function MentorButton({ onClick, className = "" }) {
         <span style={{ position: 'relative', display: 'inline-block' }}>
           <span>ı</span>
           <svg
-            style={{ position: 'absolute', top: '-5px', left: 'calc(50% - 1px)', transform: 'translateX(-50%)' }}
+            style={{ position: 'absolute', top: '-11px', left: 'calc(50% - 1px)', transform: 'translateX(-50%)' }}
             width="9"
             height="9"
             viewBox="0 0 24 24"
