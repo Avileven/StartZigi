@@ -1,7 +1,6 @@
 // MentorButton
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageCircle } from 'lucide-react';
 
 export default function MentorButton({ onClick, className = "" }) {
   return (
@@ -12,7 +11,6 @@ export default function MentorButton({ onClick, className = "" }) {
       onClick={onClick}
       className={`flex items-center gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 ${className}`}
     >
-      <MessageCircle className="w-4 h-4" />
       Zig It
       <span className="text-indigo-400 text-xs">✦</span>
     </Button>
