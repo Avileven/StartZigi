@@ -84,7 +84,7 @@ export default function VentureWelcome() {
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: 'phase_welcome',
-        title: '📋 Welcome to Business Planning!',
+        title: '📋 Welcome to Plan & Foundation!',
         content: `You've now entered the Business Plan phase! Time to build a solid foundation for "${venture.name}". Complete all 10 sections of your business plan to unlock the next phase and start building your MVP. Focus on defining your target market, competition analysis, and revenue model.`,
         phase: 'business_plan',
         priority: 2

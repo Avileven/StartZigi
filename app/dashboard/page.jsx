@@ -545,7 +545,7 @@ if (userVentures.length === 0) {
           }
 
           // [ADDED] Sync virtual_capital to DB when entering MVP phase for the first time.
-          // $15,000 is injected when Business Plan is completed and user moves to MVP.
+          // $15,000 is injected when Plan is completed and user moves to MVP.
           // Only sets it if not already set (so investments are never overwritten).
           if (activeVenture.phase === 'mvp' && !activeVenture.virtual_capital) {
             await Venture.update(activeVenture.id, { virtual_capital: 15000 });

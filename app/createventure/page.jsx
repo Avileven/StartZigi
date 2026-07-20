@@ -167,8 +167,8 @@ function CreateVentureForm() {
         .insert([{
           venture_id: newVenture.id,
           message_type: 'phase_welcome',
-          title: '📋 Welcome to Business Planning!',
-          content: `It's time to build a solid foundation. Complete your business plan to unlock the next phase.`,
+          title: '📋 Welcome to Plan & Foundation!',
+          content: `It's time to build a solid foundation. Complete your plan to unlock the next phase.`,
           phase: 'business_plan',
           priority: 2,
           created_by: user.email,

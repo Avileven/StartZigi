@@ -8,7 +8,7 @@ const PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
 const PHASE_CONTENT = {
   idea: {
     title: "IDEA Phase Complete!",
-    subtitle: "Moving to Business Plan Phase",
+    subtitle: "Moving to Plan & Foundation Phase",
     emoji: "💡",
     nextPhase: "PLAN",
     progressPercent: 20,
@@ -44,7 +44,7 @@ const PHASE_CONTENT = {
     challenges: [
       {
         id: 1,
-        title: "Create Your Business Plan",
+        title: "Create Your Plan",
         description: "Plan your venture business highlights"
       },
       {
@@ -78,7 +78,7 @@ const PHASE_CONTENT = {
     achievements: [
       {
         id: 1,
-        title: "Business Plan Complete",
+        title: "Plan & Foundation Complete",
         description: "Comprehensive strategy documented",
         icon: "✓",
         value: null
