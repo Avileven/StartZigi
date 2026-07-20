@@ -232,7 +232,7 @@ const updateValuation = useCallback(() => {
             venture_id: venture.id,
             message_type: 'angel_screening_passed',
             title: `🎉 ${investor.name} wants to meet you!`,
-            content: `Great news! ${investor.name} reviewed your business plan and is interested in learning more. Go to Angel Arena to schedule your Zoom meeting. Good luck!`,
+            content: `Great news! ${investor.name} reviewed your plan and is interested in learning more. Go to Angel Arena to schedule your Zoom meeting. Good luck!`,
             phase: venture.phase,
             priority: 4,
             is_dismissed: false,
@@ -545,7 +545,7 @@ if (userVentures.length === 0) {
           }
 
           // [ADDED] Sync virtual_capital to DB when entering MVP phase for the first time.
-          // $15,000 is injected when Plan is completed and user moves to MVP.
+          // $15,000 is injected when Business Plan is completed and user moves to MVP.
           // Only sets it if not already set (so investments are never overwritten).
           if (activeVenture.phase === 'mvp' && !activeVenture.virtual_capital) {
             await Venture.update(activeVenture.id, { virtual_capital: 15000 });
@@ -1088,7 +1088,7 @@ const getGreeting = (username) => {
     if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
       assets.push({
         id: 'business_plan',
-        title: 'Business Plan',
+        title: 'Plan',
         icon: FileText,
         page: 'businessPlan', // createPageUrl will convert to /businessplan
         // [HIGHLIGHT] highlight Business Plan when in business_plan phase
@@ -1383,7 +1383,7 @@ if (showToS) {
             <Card>
               <CardHeader>
                 <FileText className="w-8 h-8 text-blue-500 mb-2" />
-                <CardTitle className="text-lg">Business Plan</CardTitle>
+                <CardTitle className="text-lg">Plan</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">Develop a comprehensive strategy and business model</p>
