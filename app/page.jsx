@@ -1,6 +1,6 @@
-// Home page - 180726
+// Home page - 240426
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -77,8 +77,27 @@ function SparkShapeShip() {
   const [w2, setW2] = useState("");
   const [w3, setW3] = useState("");
   const [showCursor, setShowCursor] = useState(true);
+  const hasStarted = useRef(false);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStarted.current) {
+            hasStarted.current = true;
+            startTyping();
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const startTyping = () => {
     const words = [
       { text: "Spark ", setter: setW1 },
       { text: "Shape ", setter: setW2 },
@@ -86,7 +105,6 @@ function SparkShapeShip() {
     ];
     let wIdx = 0;
     let cIdx = 0;
-    let timeoutId;
     function tick() {
       if (wIdx >= words.length) {
         setShowCursor(false);
@@ -96,19 +114,18 @@ function SparkShapeShip() {
       if (cIdx <= current.text.length) {
         current.setter(current.text.slice(0, cIdx));
         cIdx++;
-        timeoutId = setTimeout(tick, 120);
+        setTimeout(tick, 120);
       } else {
         wIdx++;
         cIdx = 0;
-        timeoutId = setTimeout(tick, 120);
+        setTimeout(tick, 120);
       }
     }
     tick();
-    return () => clearTimeout(timeoutId);
-  }, []);
+  };
 
   return (
-    <h2 className="text-4xl md:text-5xl mb-6 text-gray-900" style={{ minHeight: "1.2em" }}>
+    <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6 text-gray-900" style={{ minHeight: "1.2em" }}>
       <span style={{ fontWeight: 300 }}>{w1}</span>
       <span style={{ fontWeight: 500 }}>{w2}</span>
       <span style={{ fontWeight: 700 }}>{w3}</span>
@@ -274,7 +291,7 @@ export default function Home() {
               StartZig lets you follow a structured, practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
             </p>
             <p className="text-lg text-gray-600 max-w-3xl mt-4">
-              StartZig is designed for a variety of needs — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started, <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality, and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
+              StartZig is designed for a variety of needs and stages — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started, <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality, and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
             </p>
           </div>
 
@@ -286,11 +303,11 @@ export default function Home() {
             {[
               {
                 title: "Built by founders for the next generation.",
-                body: "Not theory, not an academic framework. StartZig reflects the real, hands-on experience of founders who've built and evaluated startups themselves.",
+                body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop, across dozens of founders, private ventures, accelerators and investor feedback.",
               },
               {
                 title: "Not just a startup. A founder.",
-                body: "The goal isn't just growing a venture — it's growing the founder behind it. By the end, you're not just holding a validated idea; you're ready for what's next: full development, or raising a seed round.",
+                body: "During your journey with StartZig, you'll shape your idea into something real and build up real knowledge and experience along the way. By the end, both the idea and you will be far more ready to raise funding and start development.",
               },
               {
                 title: "Hard work. No shortcuts.",
