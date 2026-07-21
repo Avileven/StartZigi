@@ -14,15 +14,15 @@ export default function MentorButton({ onClick, className = "" }) {
       <span
         style={{
           fontFamily: "'Helvetica Neue', Arial, sans-serif",
-          fontWeight: 300,
+          fontWeight: 600,
           letterSpacing: '0.5px',
           color: '#E08D3C',
           display: 'flex',
           alignItems: 'flex-end',
-          fontSize: '10px',
+          fontSize: '9px',
         }}
       >
-        <span>zig</span>
+        <span>Zig</span>
         <span style={{ position: 'relative', display: 'inline-block' }}>
           <span>ı</span>
           <svg
