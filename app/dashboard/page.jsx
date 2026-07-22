@@ -140,9 +140,11 @@ export default function Dashboard() {
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showRejectionDetails, setShowRejectionDetails] = useState(false);
   const [rejectionDetailsContent, setRejectionDetailsContent] = useState('');
-  const [cofounderExpanded, setCofounderExpanded] = useState(false);
-  // [MOBILE] Toolbox drawer state
+    // [MOBILE] Toolbox drawer state
   const [isToolboxOpen, setIsToolboxOpen] = useState(false);
+  // [MOBILE] Recommend desktop notice — dismissible once per session
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showMobileNotice, setShowMobileNotice] = useState(false);
   // [ADDED] Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
   const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents, venture }
@@ -161,6 +163,25 @@ export default function Dashboard() {
     window.addEventListener('openToolbox', handler);
     return () => window.removeEventListener('openToolbox', handler);
   }, []);
+
+  // [MOBILE] Show a dismissible recommendation to use desktop, once per session
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileView(mobile);
+      if (mobile && !sessionStorage.getItem('mobileNoticeDismissed')) {
+        setShowMobileNotice(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const dismissMobileNotice = () => {
+    setShowMobileNotice(false);
+    sessionStorage.setItem('mobileNoticeDismissed', 'true');
+  };
 
   // [CHANGED] updateBalance: removed hardcoded initialCapital=15000 and totalFunding from messages.
   // [ADDED] now reads virtual_capital from DB as single source of truth.
@@ -1409,6 +1430,23 @@ if (showToS) {
 
   return (
     <>
+      {/* [MOBILE] Recommend desktop for the full data-dense dashboard experience, dismissible */}
+      {showMobileNotice && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-start gap-3">
+          <span className="text-amber-500 text-lg leading-none">💡</span>
+          <div className="flex-1 text-sm text-amber-800">
+            We apologize for any inconvenience. Despite our efforts to optimize this dashboard for mobile, the volume of information it displays still makes desktop the recommended way to work.
+          </div>
+          <button
+            onClick={dismissMobileNotice}
+            className="text-amber-500 hover:text-amber-700 flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <RejectionDetailsModal
         isOpen={showRejectionDetails}
         onClose={() => setShowRejectionDetails(false)}
@@ -1619,62 +1657,7 @@ if (showToS) {
             </div>
           </div>
 
-          {(currentVenture.founders_count || 1) < 2 && (
-            <Card className="bg-amber-50 border-amber-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Users className="w-4 h-4 text-amber-600" />
-                  Why Do You Need a Co-Founder?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xs text-amber-800 space-y-2">
-                  {!cofounderExpanded ? (
-                    <>
-                      <p>Solo founders get funded 30-50% less than teams...</p>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={() => setCofounderExpanded(true)}
-                        className="p-0 h-auto text-amber-700 hover:text-amber-800"
-                      >
-                        Read more
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <p>Solo founders get funded 30-50% less than teams. A co-founder signals commitment and validation - someone else believed enough to join.</p>
-                      <div className="mt-2 space-y-2">
-                        <p><strong>Key Benefits:</strong></p>
-                        <ul className="list-disc pl-4 space-y-1">
-                          <li>Investors trust teams more than solo founders</li>
-                          <li>Shared workload and complementary skills</li>
-                          <li>Better decision-making through diverse perspectives</li>
-                          <li>Emotional support during tough times</li>
-                          <li>Higher chance of securing funding</li>
-                        </ul>
-                      </div>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={() => setCofounderExpanded(false)}
-                        className="p-0 h-auto text-amber-700 hover:text-amber-800"
-                      >
-                        Read less
-                      </Button>
-                    </>
-                  )}
-                 
-                  <Link href={createPageUrl('invite-cofounder')}>
-                    <Button size="sm" variant="outline" className="w-full border-amber-300 hover:bg-amber-100 mt-2">
-                      <UserPlus className="w-3 h-3 mr-2" />
-                      invite-cofounder
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+         
         </div>
 
         <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0 overflow-x-hidden">
