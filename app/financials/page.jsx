@@ -91,8 +91,8 @@ export default function Financials() {
 
   const totalPromotionSpending = campaigns.reduce((s, c) => s + (c.cost || 0), 0);
 
-  // Initial capital only counted if money has actually been injected
-  const INITIAL_CAPITAL = (venture.virtual_capital > 0) ? 15000 : 0;
+  // Initial capital only counted if money has actually been injected — reads the real value, not a hardcoded number
+  const INITIAL_CAPITAL = (venture.virtual_capital > 0) ? venture.virtual_capital : 0;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -135,7 +135,7 @@ export default function Financials() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* [CHANGED] Total funding now includes the $15K initial capital + all FundingEvents */}
+            {/* [CHANGED] Total funding now includes the initial virtual capital injection + all FundingEvents */}
             <div className="text-3xl font-bold text-gray-900">
               ${(displayTotalFunding + INITIAL_CAPITAL).toLocaleString()}
             </div>
@@ -191,7 +191,7 @@ export default function Financials() {
               <div className="py-2 border-b">
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold text-gray-800">Initial Capital</span>
-                  <span className="font-bold text-green-600">$15,000</span>
+                  <span className="font-bold text-green-600">${(venture.virtual_capital || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-0.5">
                   <span>Seed funding</span>

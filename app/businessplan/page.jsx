@@ -316,7 +316,7 @@ export default function businessPlan() {
   // 1. עדכון הנתונים הפיננסיים ב-Database
   await Venture.update(venture.id, { 
     phase: 'mvp',
-    virtual_capital: 15000,          // הזרקת התקציב
+    virtual_capital: 30000,          // הזרקת התקציב
     monthly_burn_rate: 5000,        // הגדרת קצב השריפה
    burn_rate_start: new Date().toISOString() // כאן השעון מתחיל לתקתק
   });
@@ -326,8 +326,8 @@ export default function businessPlan() {
 await VentureMessage.create({
   venture_id: venture.id,
   message_type: 'phase_complete',
-  title: '💰 Capital Injection: $15,000',
-  content: `Congratulations! Your plan is 100% complete. A starting capital of $15,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
+  title: '💰 Capital Injection: $30,000',
+  content: `Congratulations! Your plan is 100% complete. A starting capital of $30,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
   phase: 'business_plan',
   priority: 1,
   created_by: user.email,

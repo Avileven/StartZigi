@@ -1,4 +1,4 @@
-//150526
+//220726
 //dashboard 010526 message new TETS
 // [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
 // [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
@@ -545,11 +545,11 @@ if (userVentures.length === 0) {
           }
 
           // [ADDED] Sync virtual_capital to DB when entering MVP phase for the first time.
-          // $15,000 is injected when Business Plan is completed and user moves to MVP.
+          // $30,000 is injected when Plan is completed and user moves to MVP.
           // Only sets it if not already set (so investments are never overwritten).
           if (activeVenture.phase === 'mvp' && !activeVenture.virtual_capital) {
-            await Venture.update(activeVenture.id, { virtual_capital: 15000 });
-            activeVenture.virtual_capital = 15000;
+            await Venture.update(activeVenture.id, { virtual_capital: 30000 });
+            activeVenture.virtual_capital = 30000;
           }
 
           // [ADDED] Angel Arena — check pending screenings and missed meetings
