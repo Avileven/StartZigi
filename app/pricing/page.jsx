@@ -20,7 +20,7 @@ const PLAN_ORDER = { explorer: 0, builder: 1, pro_founder: 2, unicorn: 3 };
 
 export default function Pricing() {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' | 'sixMonth'
+  const [billingPeriod, setBillingPeriod] = useState('sixMonth'); // 'monthly' | 'sixMonth'
   const router = useRouter();
 
   const handleSelectPlan = async (planKey) => {
@@ -115,8 +115,8 @@ export default function Pricing() {
       key: 'pro_founder',
       name: 'Pro Founder',
       emoji: '🚀',
-      price: '$18',
-      sixMonthPrice: '$13',
+      price: '$19',
+      sixMonthPrice: '$15',
       priceNote: '/ month',
       subtitle: 'Designed for continuous building with AI support',
       description: 'Built for users who rely on the coach regularly and are serious about growing a real venture.',
