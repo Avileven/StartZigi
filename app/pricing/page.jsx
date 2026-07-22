@@ -20,6 +20,7 @@ const PLAN_ORDER = { explorer: 0, builder: 1, pro_founder: 2, unicorn: 3 };
 
 export default function Pricing() {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' | 'sixMonth'
   const router = useRouter();
 
   const handleSelectPlan = async (planKey) => {
@@ -79,13 +80,14 @@ export default function Pricing() {
       name: 'Explorer',
       emoji: '🧭',
       price: '$0',
+      sixMonthPrice: '$0',
       priceNote: 'forever',
-      subtitle: 'Just looking around',
+      subtitle: 'Try it out, no pressure',
       description: 'StartZig is free to explore forever. No credit card, no pressure. Use the simulator, play with ideas, learn how startups work.',
       features: [
         'Full startup journey',
         'Community & investment marketplace browsing',
-        'AI: 5 free credits for Mentor only',
+        '5 AI credits',
         'Beta — simulation tools',
       ],
       cta: 'Start Free',
@@ -96,13 +98,14 @@ export default function Pricing() {
       name: 'Builder',
       emoji: '🔨',
       price: '$9',
+      sixMonthPrice: '$7',
       priceNote: '/ month',
       subtitle: 'For users starting to seriously validate ideas',
       description: 'When you\'re ready to get serious, we give you the tools to think, plan, and move like a real founder — without bureaucracy or upfront costs.',
       features: [
         'Full startup journey',
         'Community & investment marketplace browsing',
-        'AI: 100 credits for Mentor & Demo Builder (StartZig Studio)',
+        '100 AI credits',
         'Beta — simulation tools',
       ],
       cta: 'Get Builder',
@@ -113,13 +116,14 @@ export default function Pricing() {
       name: 'Pro Founder',
       emoji: '🚀',
       price: '$18',
+      sixMonthPrice: '$13',
       priceNote: '/ month',
       subtitle: 'Designed for continuous building with AI support',
-      description: 'Built for users who rely on the mentor regularly and are serious about growing a real venture.',
+      description: 'Built for users who rely on the coach regularly and are serious about growing a real venture.',
       features: [
         'Full startup journey',
         'Community & investment marketplace browsing',
-        'AI: 300 credits for Mentor & Demo Builder (StartZig Studio)',
+        '300 AI credits',
         'Beta — simulation tools',
         'Business Deck — AI-generated investor business plan',
         'ZigPlan — AI-generated Product Requirements Document',
@@ -133,13 +137,14 @@ export default function Pricing() {
       name: 'Unicorn',
       emoji: '🦄',
       price: '$28',
+      sixMonthPrice: '$19',
       priceNote: '/ month',
       subtitle: 'For high-usage users running advanced simulations and testing at scale',
       description: 'Maximum AI power, advanced beta tools, and full platform visibility for founders scaling to the top.',
       features: [
         'Full startup journey',
         'Community & investment marketplace browsing',
-        'AI: 500 credits for Mentor & Demo Builder (StartZig Studio)',
+        '500 AI credits',
         'Business Deck — AI-generated investor business plan',
         'ZigPlan — AI-generated Product Requirements Document',
         'Founder badge — visible to community and invited guests',
@@ -151,14 +156,33 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white font-sans">
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
         <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
-          Start your <span className="text-indigo-400 italic">journey for free</span> and upgrade when you need more power.
+          Start your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent italic">journey for free</span> and upgrade when you need more power.
         </h1>
-        <p className="text-gray-400 text-sm mb-4">
+        <p className="text-gray-600 text-sm mb-4">
           All plans include monthly credits. Need more? Top up anytime.
         </p>
+
+        <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mb-4">
+          <button
+            onClick={() => setBillingPeriod('monthly')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              billingPeriod === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBillingPeriod('sixMonth')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              billingPeriod === 'sixMonth' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            6 Months <span className="text-xs font-normal">(Full journey)</span>
+          </button>
+        </div>
 
         <div className="grid md:grid-cols-4 gap-6 mt-12">
           {tiers.map((tier) => (
@@ -166,26 +190,28 @@ export default function Pricing() {
               key={tier.key}
               className={`relative flex flex-col p-8 rounded-3xl border transition-all ${
                 tier.featured
-                  ? 'bg-[#1E293B] border-indigo-500 shadow-xl scale-105 z-10'
-                  : 'bg-[#1E293B]/50 border-white/10'
+                  ? 'bg-blue-50 border-blue-300 shadow-xl scale-105 z-10'
+                  : 'bg-gray-50 border-gray-200'
               }`}
             >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-bold text-left">{tier.name}</h3>
+                <h3 className="text-xl font-bold text-left text-gray-900">{tier.name}</h3>
                 {tier.featured && (
-                  <span className="bg-indigo-500 text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Most Popular</span>
+                  <span className="bg-blue-600 text-white text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Most Popular</span>
                 )}
               </div>
 
-              <p className="text-xs text-indigo-300 italic text-left mb-4">{tier.subtitle}</p>
+              <p className="text-xs text-blue-600 italic text-left mb-4">{tier.subtitle}</p>
 
-              <p className="text-sm text-gray-400 text-left mb-6 min-h-[48px]">
+              <p className="text-sm text-gray-600 text-left mb-6 min-h-[48px]">
                 {tier.description}
               </p>
 
               <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-4xl font-bold">{tier.price}</span>
-                <span className="text-gray-400 text-sm">{tier.priceNote}</span>
+                <span className="text-4xl font-bold text-gray-900">
+                  {billingPeriod === 'sixMonth' ? tier.sixMonthPrice : tier.price}
+                </span>
+                <span className="text-gray-500 text-sm">{tier.priceNote}</span>
               </div>
 
               <div className="flex-1">
@@ -194,8 +220,8 @@ export default function Pricing() {
                 </p>
                 <ul className="space-y-4 text-sm text-left">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-gray-300">
-                      <Check className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                    <li key={feature} className="flex items-start gap-3 text-gray-700">
+                      <Check className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -206,7 +232,7 @@ export default function Pricing() {
                 onClick={() => handleSelectPlan(tier.key)}
                 disabled={isUpdating}
                 className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
-                  tier.featured ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-white/10 hover:bg-white/20'
+                  tier.featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-900 hover:bg-gray-800 text-white'
                 } disabled:opacity-50`}
               >
                 {isUpdating ? 'Updating...' : tier.cta}
