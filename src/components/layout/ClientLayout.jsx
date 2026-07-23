@@ -95,6 +95,14 @@ export default function ClientLayout({ children }) {
   const [user, setUser] = useState(null);
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // [ONBOARDING] Listens for the step broadcast from the Dashboard's first-time walkthrough
+  const [onboardingStep, setOnboardingStep] = useState(-1);
+
+  useEffect(() => {
+    const handler = (e) => setOnboardingStep(e.detail.step);
+    window.addEventListener('onboardingStep', handler);
+    return () => window.removeEventListener('onboardingStep', handler);
+  }, []);
   
   // Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
@@ -236,7 +244,10 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
           <SidebarContent className="p-2" onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); } }}>
             {!isLoading && (
               <>
-                <SidebarGroup>
+                <SidebarGroup className="relative">
+                  {onboardingStep === 0 && (
+                    <div className="absolute -inset-1 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+                  )}
                   <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                     Navigation
                   </SidebarGroupLabel>
@@ -308,7 +319,10 @@ pathname === "/"
                       {/* ======================================== */}
 
                       {landingPageItem && (
-                        <SidebarMenuItem>
+                        <SidebarMenuItem className="relative">
+                          {onboardingStep === 4 && (
+                            <div className="absolute -inset-1 rounded-lg border-2 border-indigo-400 pointer-events-none z-20"></div>
+                          )}
                           <SidebarMenuButton
                             asChild
                             className="mb-1 rounded-lg transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-700"

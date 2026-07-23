@@ -145,6 +145,15 @@ export default function Dashboard() {
   // [MOBILE] Recommend desktop notice — dismissible once per session
   const [isMobileView, setIsMobileView] = useState(false);
   const [showMobileNotice, setShowMobileNotice] = useState(false);
+  // [ONBOARDING] First-time dashboard walkthrough — shown once ever, then never again
+  const [onboardingStep, setOnboardingStep] = useState(-1); // -1 = not running
+  const ONBOARDING_STEPS = [
+    { key: 'navigation', text: "Quick access to the app's main pages." },
+    { key: 'toolbox', text: "Highlighted tools are the ones you need at this stage." },
+    { key: 'venture', text: "Your venture at a glance." },
+    { key: 'board', text: "Ongoing updates about your venture." },
+    { key: 'landing', text: "Your public page. Updates automatically as your venture progresses." },
+  ];
   // [ADDED] Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
   const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents, venture }
@@ -182,6 +191,29 @@ export default function Dashboard() {
     setShowMobileNotice(false);
     sessionStorage.setItem('mobileNoticeDismissed', 'true');
   };
+
+  // [ONBOARDING] Start the first-time walkthrough once the venture is loaded, if never shown before
+  useEffect(() => {
+    if (currentVenture && !localStorage.getItem('dashboardOnboardingSeen')) {
+      const timer = setTimeout(() => setOnboardingStep(0), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [currentVenture]);
+
+  useEffect(() => {
+    if (onboardingStep === -1) {
+      window.dispatchEvent(new CustomEvent('onboardingStep', { detail: { step: -1 } }));
+      return;
+    }
+    if (onboardingStep >= ONBOARDING_STEPS.length) {
+      setOnboardingStep(-1);
+      localStorage.setItem('dashboardOnboardingSeen', 'true');
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('onboardingStep', { detail: { step: onboardingStep } }));
+    const timer = setTimeout(() => setOnboardingStep((s) => s + 1), 3200);
+    return () => clearTimeout(timer);
+  }, [onboardingStep]);
 
   // [CHANGED] updateBalance: removed hardcoded initialCapital=15000 and totalFunding from messages.
   // [ADDED] now reads virtual_capital from DB as single source of truth.
@@ -1447,6 +1479,13 @@ if (showToS) {
         </div>
       )}
 
+      {/* [ONBOARDING] First-time walkthrough caption — fixed at bottom, auto-advances, no dismiss needed */}
+      {onboardingStep >= 0 && onboardingStep < ONBOARDING_STEPS.length && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 bg-gray-900 text-white text-sm px-5 py-3 rounded-full shadow-lg">
+          {ONBOARDING_STEPS[onboardingStep].text}
+        </div>
+      )}
+
       <RejectionDetailsModal
         isOpen={showRejectionDetails}
         onClose={() => setShowRejectionDetails(false)}
@@ -1612,7 +1651,10 @@ if (showToS) {
         </div>
 
         {/* [DESKTOP] Toolbox sidebar — hidden on mobile */}
-        <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6">
+        <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6 relative">
+          {onboardingStep === 1 && (
+            <div className="absolute inset-2 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+          )}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
             <div className="space-y-2">
@@ -1710,7 +1752,11 @@ if (showToS) {
              
             </div>
 
-            <Card className="mb-6">
+            <div className="relative">
+              {onboardingStep === 2 && (
+                <div className="absolute -inset-1 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+              )}
+              <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-lg font-bold">{currentVenture.name}</CardTitle>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
@@ -1747,8 +1793,12 @@ if (showToS) {
                 </div>
               </CardHeader>
             </Card>
+            </div>
 
-            <div>
+            <div className="relative">
+              {onboardingStep === 3 && (
+                <div className="absolute -inset-2 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+              )}
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Board</h2>
 
               {messages.length === 0 ? (
