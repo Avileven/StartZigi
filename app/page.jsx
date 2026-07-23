@@ -1,4 +1,4 @@
-// Home page - 240426
+// Home page - 230726
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -138,13 +138,12 @@ function SparkShapeShip() {
 function FAQItems() {
   const [openFaq, setOpenFaq] = useState(null);
   const FAQS = [
-    { q: "Is this a real startup platform or a simulation?", a: "Both. The journey, tools, and AI guidance are real and built for serious founders. The investment simulations and virtual capital are simulated — designed to help you practice and prepare before facing real investors." },
-    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey simulation and 5 AI mentor credits to get started." },
+    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
     { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
     { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan — available on Pro Founder and Unicorn." },
-    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using the AI Mentor costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
+    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
     { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. You choose when and with whom to share it — whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "Can I join as an investor?", a: "Not at the moment. Investor accounts are not yet available, but we plan to open this up in the future. Stay tuned." },
+    { q: "How long does the journey take?", a: "It depends on how intensively you work. As a rough estimate, we've found the full journey takes about 6 months — from shaping the idea, through building a demo, to getting real feedback from the community." },
   ];
   return (
     <div className="space-y-3">
@@ -286,6 +285,17 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <SparkShapeShip />
 
+          <PhaseClock />
+
+          {/* CTA — copied from the WhyStartZig page */}
+          <div className="text-center py-6">
+            <Link href="/register">
+              <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
+                Start Your Journey
+              </button>
+            </Link>
+          </div>
+
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
               StartZig lets you follow a structured, practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
@@ -346,17 +356,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </div>
-
-      <PhaseClock />
-
-      {/* CTA — copied from the WhyStartZig page */}
-      <div className="text-center py-6 px-6">
-        <Link href="/register">
-          <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
-            Start Your Journey
-          </button>
-        </Link>
       </div>
 
       {/* [ADDED] FAQ Section */}
