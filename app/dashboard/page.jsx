@@ -1493,7 +1493,8 @@ if (showToS) {
       />
 
       {/* [ADDED] Phase Completion Modal — opens automatically when a phase_complete message is detected */}
-      {showPhaseModal && phaseModalData && (
+      {/* [DISABLED — 22/07/2026] Presentation content is outdated / conflicting with ClientLayout's copy. Re-enable once updated. */}
+      {false && showPhaseModal && phaseModalData && (
         <PhaseCompletionModal
           isOpen={showPhaseModal}
           onClose={async () => {

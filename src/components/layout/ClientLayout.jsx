@@ -493,8 +493,9 @@ pathname === "/"
       </div>
       
       {/* Phase Completion Modal */}
+      {/* [DISABLED — 22/07/2026] Presentation content is outdated / conflicting with Dashboard's copy. Re-enable once updated. */}
       <PhaseCompletionModal
-        isOpen={showPhaseModal}
+        isOpen={false}
         onClose={() => {
           setShowPhaseModal(false);
           // Mark as seen - update localStorage to current phase
