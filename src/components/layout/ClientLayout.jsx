@@ -246,16 +246,16 @@ landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
               <>
                 <SidebarGroup className="relative">
                   {onboardingStep === 0 && (
-                    <>
-                      <div className="absolute -inset-1 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
-                      <div className="absolute top-6 left-1 right-1 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600 shadow-lg">
-                        Quick access to the app's main pages.
-                      </div>
-                    </>
+                    <div className="absolute -inset-1 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
                   )}
                   <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                     Navigation
                   </SidebarGroupLabel>
+                  {onboardingStep === 0 && (
+                    <div className="mx-2 mb-2 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 text-sm font-medium text-orange-600 shadow-lg">
+                      Quick access to the app's main pages.
+                    </div>
+                  )}
 
                   <SidebarGroupContent>
                     <SidebarMenu>

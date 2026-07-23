@@ -1647,15 +1647,15 @@ if (showToS) {
         {/* [DESKTOP] Toolbox sidebar — hidden on mobile */}
         <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6 relative">
           {onboardingStep === 1 && (
-            <>
-              <div className="absolute inset-2 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
-              <div className="absolute top-2 left-2 right-2 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600 shadow-lg">
-                Highlighted tools are the ones you need at this stage.
-              </div>
-            </>
+            <div className="absolute inset-2 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
           )}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
+            {onboardingStep === 1 && (
+              <div className="mb-3 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 text-sm font-medium text-orange-600 shadow-lg">
+                Highlighted tools are the ones you need at this stage.
+              </div>
+            )}
             <div className="space-y-2">
               {assetsAndTools.map((asset) => {
                 const Icon = asset.icon;
@@ -1751,14 +1751,14 @@ if (showToS) {
              
             </div>
 
+            {onboardingStep === 2 && (
+              <div className="mb-2 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 text-sm font-medium text-orange-600 shadow-lg">
+                Your venture at a glance.
+              </div>
+            )}
             <div className="relative">
               {onboardingStep === 2 && (
-                <>
-                  <div className="absolute -inset-1 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
-                  <div className="absolute top-1 left-1 right-1 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600 shadow-lg">
-                    Your venture at a glance.
-                  </div>
-                </>
+                <div className="absolute -inset-1 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
               )}
               <Card className="mb-6">
               <CardHeader>
