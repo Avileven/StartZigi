@@ -18,6 +18,7 @@ export default function Footer() {
         <nav className="mb-6">
           <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-gray-400">
             <li><Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
+            <li><Link href="/the-toolkit" className="hover:text-white transition-colors">The Toolkit</Link></li>
             <li><Link href="/why-startzig" className="hover:text-white transition-colors">Why StartZig</Link></li>
             <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
             <li><Link href="/community" className="hover:text-white transition-colors">Community</Link></li>
