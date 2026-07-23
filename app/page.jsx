@@ -125,11 +125,13 @@ function SparkShapeShip() {
   };
 
   return (
-    <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6 text-gray-900" style={{ minHeight: "1.2em" }}>
-      <span style={{ fontWeight: 300 }}>{w1}</span>
-      <span style={{ fontWeight: 500 }}>{w2}</span>
-      <span style={{ fontWeight: 700 }}>{w3}</span>
-      {showCursor && <span style={{ borderRight: "2px solid #111827" }}>&nbsp;</span>}
+    <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
+      <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <span style={{ fontWeight: 300 }}>{w1}</span>
+        <span style={{ fontWeight: 500 }}>{w2}</span>
+        <span style={{ fontWeight: 700 }}>{w3}</span>
+        {showCursor && <span style={{ borderRight: "2px solid #6E5AD6" }}>&nbsp;</span>}
+      </span>
     </h2>
   );
 }
@@ -140,10 +142,10 @@ function FAQItems() {
   const FAQS = [
     { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
     { q: "How long does the journey take?", a: "It depends on how intensively you work. As a rough estimate, we've found the full journey takes about 6 months, from the first spark of an idea to a validated, demo-ready product." },
+    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. You choose when and with whom to share it — whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
     { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
     { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan — available on Pro Founder and Unicorn." },
     { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
-    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. You choose when and with whom to share it — whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
   ];
   return (
     <div className="space-y-3">
@@ -305,7 +307,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold mb-6">
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-10">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">Our DNA</span>
           </h3>
 
