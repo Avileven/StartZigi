@@ -126,11 +126,11 @@ function SparkShapeShip() {
 
   return (
     <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
-      <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <span className="text-blue-600">
         <span style={{ fontWeight: 300 }}>{w1}</span>
         <span style={{ fontWeight: 500 }}>{w2}</span>
         <span style={{ fontWeight: 700 }}>{w3}</span>
-        {showCursor && <span style={{ borderRight: "2px solid #6E5AD6" }}>&nbsp;</span>}
+        {showCursor && <span style={{ borderRight: "2px solid #2563EB" }}>&nbsp;</span>}
       </span>
     </h2>
   );
@@ -307,7 +307,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-10">
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">Our DNA</span>
           </h3>
 
@@ -363,7 +363,7 @@ export default function Home() {
       {/* [ADDED] FAQ Section */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-10">
+          <h2 className="text-4xl md:text-5xl font-bold mb-16">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
               Frequently Asked Questions
             </span>
