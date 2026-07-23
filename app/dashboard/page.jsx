@@ -1479,13 +1479,6 @@ if (showToS) {
         </div>
       )}
 
-      {/* [ONBOARDING] First-time walkthrough caption — fixed at bottom, auto-advances, no dismiss needed */}
-      {onboardingStep >= 0 && onboardingStep < ONBOARDING_STEPS.length && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 bg-gray-900 text-white text-sm px-5 py-3 rounded-full shadow-lg">
-          {ONBOARDING_STEPS[onboardingStep].text}
-        </div>
-      )}
-
       <RejectionDetailsModal
         isOpen={showRejectionDetails}
         onClose={() => setShowRejectionDetails(false)}
@@ -1654,7 +1647,12 @@ if (showToS) {
         {/* [DESKTOP] Toolbox sidebar — hidden on mobile */}
         <div className="hidden md:block w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4 space-y-6 relative">
           {onboardingStep === 1 && (
-            <div className="absolute inset-2 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+            <>
+              <div className="absolute inset-2 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
+              <div className="absolute -bottom-2 left-2 right-2 translate-y-full bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600">
+                Highlighted tools are the ones you need at this stage.
+              </div>
+            </>
           )}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 mb-3 px-2">Toolbox</h3>
@@ -1755,7 +1753,12 @@ if (showToS) {
 
             <div className="relative">
               {onboardingStep === 2 && (
-                <div className="absolute -inset-1 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+                <>
+                  <div className="absolute -inset-1 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
+                  <div className="absolute -top-2 left-0 -translate-y-full bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600">
+                    Your venture at a glance.
+                  </div>
+                </>
               )}
               <Card className="mb-6">
               <CardHeader>
@@ -1798,7 +1801,12 @@ if (showToS) {
 
             <div className="relative">
               {onboardingStep === 3 && (
-                <div className="absolute -inset-2 rounded-xl border-2 border-indigo-400 pointer-events-none z-20"></div>
+                <>
+                  <div className="absolute -inset-2 rounded-xl border-2 border-orange-500 pointer-events-none z-20"></div>
+                  <div className="absolute -top-2 left-2 -translate-y-full bg-white border-2 border-orange-500 rounded-lg px-3 py-2 z-30 text-sm font-medium text-orange-600">
+                    Ongoing updates about your venture.
+                  </div>
+                </>
               )}
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Board</h2>
 
