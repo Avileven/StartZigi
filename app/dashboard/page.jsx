@@ -1467,7 +1467,7 @@ if (showToS) {
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-start gap-3">
           <span className="text-amber-500 text-lg leading-none">💡</span>
           <div className="flex-1 text-sm text-amber-800">
-            We apologize for any inconvenience. Despite our efforts to optimize this dashboard for mobile, the volume of information it displays still makes desktop the recommended way to work.
+           Despite our efforts to optimize this dashboard for mobile,The volume of information it displays still makes desktop the recommended way to work.We apologize for any inconvenience. 
           </div>
           <button
             onClick={dismissMobileNotice}
