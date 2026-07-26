@@ -1157,7 +1157,7 @@ const getGreeting = (username) => {
         id: 'business_plan',
         title: 'Plan',
         icon: FileText,
-        page: 'businessPlan', // createPageUrl will convert to /businessplan
+        page: 'plan', // createPageUrl will convert to /plan
         // [HIGHLIGHT] highlight Business Plan when in business_plan phase
         highlighted: currentVenture.phase === 'business_plan'
       });
