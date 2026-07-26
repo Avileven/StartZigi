@@ -1,376 +1,982 @@
-// Home page - 240426
-"use client";
-import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+//business plan 230226 updated
+"use client"
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { businessPlan as businessPlanEntity } from "@/api/entities";
+import { Budget } from "@/api/entities";
+import { Venture } from "@/api/entities";
+import { VentureMessage } from "@/api/entities";
+import { User } from "@/api/entities";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { createPageUrl } from "@/lib/utils";
+import MentorButton from "@/components/mentor/MentorButton";
+import MentorModal from "@/components/mentor/MentorModal";
+import StaticGuidanceViewer from "@/components/mentor/StaticGuidanceViewer";
 
-// [ADDED] Auto-cycling phase clock — adapted from the PhaseCompletionDemo clock visual
-const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
-const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
-const CLOCK_POSITIONS = [{ x: 160, y: 64 }, { x: 247, y: 112 }, { x: 247, y: 216 }, { x: 160, y: 260 }, { x: 73, y: 216 }, { x: 73, y: 112 }];
-const CLOCK_ROTATIONS = [0, 60, 120, 180, 240, 300];
-const CLOCK_COLORS = {
-  idea: "#10b981",
-  business_plan: "#f97316",
-  mvp: "#3b82f6",
-  mlp: "#a855f7",
-  beta: "#ec4899",
-  growth: "#eab308",
+
+export default function businessPlan() {
+  const [venture, setVenture] = useState(null);
+  const [mission, setMission] = useState("");
+  const [problem, setProblem] = useState("");
+  const [solution, setSolution] = useState("");
+  const [productDetails, setProductDetails] = useState("");
+  const [marketSize, setMarketSize] = useState("");
+  const [targetCustomers, setTargetCustomers] = useState("");
+  const [competition, setCompetition] = useState("");
+  const [entrepreneurBackground, setEntrepreneurBackground] = useState("");
+  const [revenueModel, setRevenueModel] = useState("");
+  const [fundingRequirements, setFundingRequirements] = useState("");
+
+  // Maps this component's local (camelCase) field keys to the snake_case
+  // keys used in zigConfig.js's FIELD_CONFIG — the two are named
+  // differently on purpose (local state vs. AI-facing config), so this is
+  // the single place that bridges them.
+  const ZIG_KEY_MAP = {
+    problem: 'problem',
+    targetCustomers: 'target_customers',
+    competition: 'competitive_landscape',
+    marketSize: 'market_size',
+    solution: 'solution',
+    productDetails: 'product_details',
+    entrepreneurBackground: 'founding_team',
+    revenueModel: 'revenue_model',
+    mission: 'mission',
+    fundingRequirements: 'funding_requirements',
+  };
+
+
+  const [salaries, setSalaries] = useState([{ id: '1', role: 'Founder', count: 1, percentage: 100, avg_salary: 5000 }]);
+  const [marketingCosts, setMarketingCosts] = useState([{ id: '1', channel: 'Social Media Ads', cost: 1000 }]);
+  const [operationalCosts, setOperationalCosts] = useState([{ id: '1', item: 'Office Rent', cost: 2000 }]);
+
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [staticGuidanceModal, setStaticGuidanceModal] = useState({ isOpen: false, sectionId: '' });
+  const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
+  const [showTipsHint, setShowTipsHint] = useState(true);
+  const [showZigItHint, setShowZigItHint] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => { setShowTipsHint(false); setShowZigItHint(true); }, 5000);
+    const t2 = setTimeout(() => setShowZigItHint(false), 10000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  // Browser tab label only — the route stays /businessplan, the file
+  // and function name stay businessPlan, nothing else changes. This is
+  // purely what the user sees in the tab.
+  useEffect(() => {
+    document.title = 'Plan';
+  }, []);
+
+  const router = useRouter();
+
+
+  const debugSupabaseError = async (context, error, payload = null) => {
+  console.groupCollapsed(`❌ [Supabase ${context}]`);
+  console.error("Message:", error?.message || error);
+
+
+  if (payload) console.log("Payload:", payload);
+
+
+  // Supabase v2 returns richer error objects
+  if (error && typeof error === "object") {
+    for (const key of Object.keys(error)) {
+      console.log(`${key}:`, error[key]);
+    }
+  }
+
+
+  // In case it's a fetch response:
+  if (error?.response) {
+    try {
+      const data = await error.response.json();
+      console.log("Response JSON:", data);
+    } catch (_) {}
+  }
+
+
+  console.groupEnd();
 };
 
-function PhaseClock() {
-  const [phaseIndex, setPhaseIndex] = useState(0);
+
+
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const user = await User.me();
+      const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
+
+
+      if (ventures.length > 0) {
+        const currentVenture = ventures[0];
+        setVenture(currentVenture);
+
+
+        const existingPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
+
+
+        if (existingPlans.length > 0) {
+          const plan = existingPlans[0];
+          setMission(plan.mission || "");
+          setProblem(plan.problem || "");
+          setSolution(plan.solution || "");
+          setProductDetails(plan.product_details || "");
+          setMarketSize(plan.market_size || "");
+          setTargetCustomers(plan.target_customers || "");
+          setCompetition(plan.competition || "");
+          setEntrepreneurBackground(plan.founding_team || "");
+          setRevenueModel(plan.revenue_model || "");
+          setFundingRequirements(plan.funding_requirements || "");
+        }
+
+
+        const existingBudgets = await Budget.filter({ venture_id: currentVenture.id });
+        if (existingBudgets.length > 0) {
+          const budget = existingBudgets[0];
+          if (budget.salaries && budget.salaries.length > 0) setSalaries(budget.salaries);
+          if (budget.marketing_costs && budget.marketing_costs.length > 0) setMarketingCosts(budget.marketing_costs);
+          if (budget.operational_costs && budget.operational_costs.length > 0) setOperationalCosts(budget.operational_costs);
+        }
+      }
+    } catch (error) {
+      debugSupabaseError("loadData", error);
+      console.error("Error loading business plan:", error);
+    }
+    setIsLoading(false);
+  }, []);
+
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+
+  const addSalaryRow = (role = '') => {
+    setSalaries([...salaries, { id: Date.now().toString(), role: role, count: 1, percentage: 100, avg_salary: 0 }]);
+  };
+
+
+  const removeSalaryRow = (id) => {
+    setSalaries(salaries.filter(s => s.id !== id));
+  };
+
+
+  const updateSalary = (id, field, value) => {
+    setSalaries(salaries.map(s => s.id === id ? { ...s, [field]: value } : s));
+  };
+
+
+  const addMarketingRow = (channel = '') => {
+    setMarketingCosts([...marketingCosts, { id: Date.now().toString(), channel: channel, cost: 0 }]);
+  };
+
+
+  const removeMarketingRow = (id) => {
+    setMarketingCosts(marketingCosts.filter(m => m.id !== id));
+  };
+
+
+  const updateMarketing = (id, field, value) => {
+    setMarketingCosts(marketingCosts.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+
+  const addOperationalRow = (item = '') => {
+    setOperationalCosts([...operationalCosts, { id: Date.now().toString(), item: item, cost: 0 }]);
+  };
+
+
+  const removeOperationalRow = (id) => {
+    setOperationalCosts(operationalCosts.filter(o => o.id !== id));
+  };
+
+
+  const updateOperational = (id, field, value) => {
+    setOperationalCosts(operationalCosts.map(o => o.id === id ? { ...o, [field]: value } : o));
+  };
+
+
+  const calculateTotalBudget = () => {
+    const totalSalaries = salaries.reduce((sum, s) => sum + (s.count * s.avg_salary * (s.percentage / 100) * 24), 0);
+    const totalMarketing = marketingCosts.reduce((sum, m) => sum + (m.cost * 24), 0);
+    const totalOperational = operationalCosts.reduce((sum, o) => sum + (o.cost * 24), 0);
+    return {
+      salaries: totalSalaries,
+      marketing: totalMarketing,
+      operational: totalOperational,
+      total: totalSalaries + totalMarketing + totalOperational,
+      monthlyBurn: (totalSalaries + totalMarketing + totalOperational) / 12
+    };
+  };
+
+
+  const calculateCompletion = () => {
+    const sections = [
+      mission, problem, solution, productDetails, marketSize,
+      targetCustomers, competition, entrepreneurBackground, revenueModel, fundingRequirements
+    ];
+    const completed = sections.filter(s => s.trim().length >= 50).length;
+    return Math.round((completed / sections.length) * 100);
+  };
+
+
+  const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
+    setMentorModal({ isOpen: true, sectionId, sectionTitle, fieldKey });
+  };
+
+
+  const closeMentorModal = () => {
+    setMentorModal({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
+  };
+
+
+  const handleMentorUpdate = (newValue) => {
+    if (mentorModal.fieldKey) {
+      const setters = {
+        mission: setMission,
+        problem: setProblem,
+        solution: setSolution,
+        productDetails: setProductDetails,
+        marketSize: setMarketSize,
+        targetCustomers: setTargetCustomers,
+        competition: setCompetition,
+        entrepreneurBackground: setEntrepreneurBackground,
+        revenueModel: setRevenueModel,
+        fundingRequirements: setFundingRequirements
+      };
+      if (setters[mentorModal.fieldKey]) {
+        setters[mentorModal.fieldKey](newValue);
+      }
+    }
+  };
+
+
+  // Safe getter instead of eval()
+  const getFieldValue = (fieldKey) => {
+    switch (fieldKey) {
+      case 'mission': return mission;
+      case 'problem': return problem;
+      case 'solution': return solution;
+      case 'productDetails': return productDetails;
+      case 'marketSize': return marketSize;
+      case 'targetCustomers': return targetCustomers;
+      case 'competition': return competition;
+      case 'entrepreneurBackground': return entrepreneurBackground;
+      case 'revenueModel': return revenueModel;
+      case 'fundingRequirements': return fundingRequirements;
+      default: return '';
+    }
+  };
+
+
+  const handleSave = async () => {
+    if (!venture) return;
+
+
+    setIsSaving(true);
+    try {
+      const user = await User.me();   // need this!
+      const planData = {
+        venture_id: venture.id,
+        created_by_id: user.id || null,
+        created_by: user.email,     // ←  Supabase ז400
+        mission,
+        problem,
+        solution,
+        product_details: productDetails,
+        market_size: marketSize,
+        target_customers: targetCustomers,
+        competition,
+        founding_team: entrepreneurBackground,
+        revenue_model: revenueModel,
+        funding_requirements: fundingRequirements,
+        completion_percentage: calculateCompletion()
+      };
+
+
+      const existingPlans = await businessPlanEntity.filter({ venture_id: venture.id });
+      if (existingPlans.length > 0) {
+        await businessPlanEntity.update(existingPlans[0].id, planData);
+      } else {
+        await businessPlanEntity.create(planData);
+      }
+
+
+      const budgetData = {
+        venture_id: venture.id,
+        salaries,
+        marketing_costs: marketingCosts,
+        operational_costs: operationalCosts,
+        is_complete: true,
+        created_by: user.email,
+        created_by_id: user.id || null,
+      };
+
+
+      const existingBudgets = await Budget.filter({ venture_id: venture.id });
+      if (existingBudgets.length > 0) {
+        await Budget.update(existingBudgets[0].id, budgetData);
+      } else {
+        await Budget.create(budgetData);
+      }
+
+
+      const completion = calculateCompletion();
+      await Venture.update(venture.id, {
+        business_plan_completion: completion,
+        funding_plan_completed: true
+      });
+
+
+      if (completion === 100 && venture.phase === 'business_plan') {
+  // 1. עדכון הנתונים הפיננסיים ב-Database
+  await Venture.update(venture.id, { 
+    phase: 'mvp',
+    virtual_capital: 30000,          // הזרקת התקציב
+    monthly_burn_rate: 5000,        // הגדרת קצב השריפה
+   burn_rate_start: new Date().toISOString() // כאן השעון מתחיל לתקתק
+  });
+
+  // 2. יצירת ההודעה באנגלית כפי שביקשת
+  // 1. קודם כל - הודעה על סיום התוכנית העסקית וקבלת הכסף
+await VentureMessage.create({
+  venture_id: venture.id,
+  message_type: 'phase_complete',
+  title: '💰 Capital Injection: $30,000',
+  content: `Congratulations! Your plan is 100% complete. A starting capital of $30,000 has been deposited. Note: Your monthly burn rate is now set to $5,000.`,
+  phase: 'business_plan',
+  priority: 1,
+  created_by: user.email,
+  created_by_id: user.id || null
+});
+
+// 2. ורק אז - הודעת ברוכים הבאים לשלב הבא (MVP)
+await VentureMessage.create({
+  venture_id: venture.id,
+  message_type: 'phase_welcome',
+  title: '🚀 Welcome to MVP Phase!',
+  content: 'Time to build your Minimum Viable Product. ZigForge is now available to design a visual prototype of your app. ',
+  phase: 'mvp',
+  priority: 2, // עדיפות גבוהה יותר כדי שזה יהיה הדבר הראשון שרואים מעל הודעת הכסף
+  created_by: user.email,
+  created_by_id: user.id || null
+});
+}
+
+
+      alert("Business plan and funding plan saved successfully!");
+      router.push(createPageUrl("Dashboard"));
+    } catch (error) {
+      debugSupabaseError("handleSave", error, { ventureId: venture?.id });
+      console.error("Error saving business plan:", error);
+      alert("There was an error saving your business plan. Please try again.");
+    }
+    setIsSaving(false);
+  };
+
+
+  const [activeTab, setActiveTab] = useState(0);
+
+  // חישוב התקדמות לכל לשונית
+  const tab1Fields = [problem, targetCustomers, competition, marketSize, solution, productDetails];
+  const tab2Fields = [entrepreneurBackground, revenueModel, mission, fundingRequirements];
+
+  const tabProgress = (fields) => {
+    const completed = fields.filter(f => f.trim().length >= 50).length;
+    return Math.round((completed / fields.length) * 100);
+  };
+
+  const tab1Progress = tabProgress(tab1Fields);
+  const tab2Progress = tabProgress(tab2Fields);
+
+  const getTabColor = (progress) => {
+    if (progress === 100) return 'text-green-600 border-green-500 bg-green-50';
+    if (progress > 0) return 'text-orange-600 border-orange-400 bg-orange-50';
+    return 'text-gray-500 border-gray-200 bg-white';
+  };
+
+  const getTabDot = (progress) => {
+    if (progress === 100) return '🟢';
+    if (progress > 0) return '🟠';
+    return '⚪';
+  };
+
+  // שמירה אוטומטית בין לשוניות (ללא מעבר שלב)
+  const autoSave = async () => {
+    if (!venture) return;
+    try {
+      const user = await User.me();
+      const planData = {
+        venture_id: venture.id,
+        created_by_id: user.id || null,
+        created_by: user.email,
+        mission, problem, solution,
+        product_details: productDetails,
+        market_size: marketSize,
+        target_customers: targetCustomers,
+        competition,
+        founding_team: entrepreneurBackground,
+        revenue_model: revenueModel,
+        funding_requirements: fundingRequirements,
+        completion_percentage: calculateCompletion()
+      };
+      const existingPlans = await businessPlanEntity.filter({ venture_id: venture.id });
+      if (existingPlans.length > 0) {
+        await businessPlanEntity.update(existingPlans[0].id, planData);
+      } else {
+        await businessPlanEntity.create(planData);
+      }
+    } catch (e) {
+      console.error('Auto-save failed:', e);
+    }
+  };
+
+  // Timer-based autosave every 30s, on top of the existing tab-change
+  // autosave. Uses a ref so the interval itself is created once (on
+  // mount) but always calls the latest version of autoSave — otherwise
+  // a plain setInterval would close over stale field values from
+  // whichever render created it.
+  const autoSaveRef = useRef(autoSave);
+  useEffect(() => {
+    autoSaveRef.current = autoSave;
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setPhaseIndex((prev) => (prev + 1) % CLOCK_PHASES.length);
-    }, 2200);
+      autoSaveRef.current();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const currentPhase = CLOCK_PHASES[phaseIndex];
-  const activeColor = CLOCK_COLORS[currentPhase];
-  const seg = 879 / 6;
-  const arcOffset = 879 - seg * (phaseIndex + 1);
-  const rotation = CLOCK_ROTATIONS[phaseIndex];
-
-  return (
-    <div className="flex flex-col items-center py-10">
-      <svg width="320" height="320" viewBox="0 0 320 320">
-        <circle cx="160" cy="160" r="140" fill="#F6F7FB" stroke="#E9E9F0" strokeWidth="1.5" />
-        <circle
-          cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
-          strokeDasharray="879" strokeDashoffset={arcOffset}
-          style={{ transform: "rotate(-90deg)", transformOrigin: "160px 160px", transition: "stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1), stroke 1.5s ease" }}
-        />
-        <circle cx="160" cy="160" r="60" fill="#EFEFF7" />
-        {CLOCK_LABELS.map((label, i) => (
-          <text
-            key={i}
-            x={CLOCK_POSITIONS[i].x} y={CLOCK_POSITIONS[i].y}
-            fontSize={CLOCK_PHASES[i] === currentPhase ? "13" : "11"}
-            fill={CLOCK_PHASES[i] === currentPhase ? CLOCK_COLORS[CLOCK_PHASES[i]] : "#9CA3AF"}
-            textAnchor="middle"
-            fontWeight={CLOCK_PHASES[i] === currentPhase ? "800" : "600"}
-            fontFamily="Inter, sans-serif"
-          >
-            {label}
-          </text>
-        ))}
-        <path
-          fill="#4C3FA8"
-          d="M158 160 L162 160 L162 75 L158 75 Z"
-          style={{ transform: `rotate(${rotation}deg)`, transformOrigin: "160px 160px", transition: "transform 1.5s cubic-bezier(0.4,0,0.2,1)" }}
-        />
-        <circle cx="160" cy="160" r="6" fill="#3457D5" />
-      </svg>
-      <p className="text-gray-500 text-sm mt-2">The clock is ticking. Ready to Zig?</p>
-    </div>
-  );
-}
-
-// [ADDED] "Spark Shape Ship" typewriter — types once, weight increases per word
-function SparkShapeShip() {
-  const [w1, setW1] = useState("");
-  const [w2, setW2] = useState("");
-  const [w3, setW3] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
-  const hasStarted = useRef(false);
-  const sectionRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasStarted.current) {
-            hasStarted.current = true;
-            startTyping();
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const startTyping = () => {
-    const words = [
-      { text: "Spark ", setter: setW1 },
-      { text: "Shape ", setter: setW2 },
-      { text: "Ship", setter: setW3 },
-    ];
-    let wIdx = 0;
-    let cIdx = 0;
-    function tick() {
-      if (wIdx >= words.length) {
-        setShowCursor(false);
-        return;
-      }
-      const current = words[wIdx];
-      if (cIdx <= current.text.length) {
-        current.setter(current.text.slice(0, cIdx));
-        cIdx++;
-        setTimeout(tick, 120);
-      } else {
-        wIdx++;
-        cIdx = 0;
-        setTimeout(tick, 120);
-      }
-    }
-    tick();
+  const handleTabChange = async (idx) => {
+    await autoSave();
+    setActiveTab(idx);
   };
 
-  return (
-    <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
-      <span className="text-blue-600">
-        <span style={{ fontWeight: 300 }}>{w1}</span>
-        <span style={{ fontWeight: 500 }}>{w2}</span>
-        <span style={{ fontWeight: 700 }}>{w3}</span>
-        {showCursor && <span style={{ borderRight: "2px solid #2563EB" }}>&nbsp;</span>}
-      </span>
-    </h2>
-  );
-}
-
-// [ADDED] FAQ accordion component
-function FAQItems() {
-  const [openFaq, setOpenFaq] = useState(null);
-  const FAQS = [
-    { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
-    { q: "How long does the journey take?", a: "It depends on how intensively you work. As a rough estimate, we've found the full journey takes about 6 months, from the first spark of an idea to a validated, demo-ready product." },
-    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. You choose when and with whom to share it — whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
-    { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan — available on Pro Founder and Unicorn." },
-    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
+  const tabs = [
+    { label: 'Foundation', progress: tab1Progress, activeClass: 'border-indigo-500 bg-indigo-50 text-indigo-700', dotActive: 'bg-indigo-500', color: 'indigo' },
+    { label: 'Venture Plan', progress: tab2Progress, activeClass: 'border-purple-500 bg-purple-50 text-purple-700', dotActive: 'bg-purple-500', color: 'purple' },
   ];
-  return (
-    <div className="space-y-3">
-      {FAQS.map((item, i) => (
-        <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
-          <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-6 py-4 text-left text-gray-900 font-semibold text-base hover:bg-gray-50 transition-colors">
-            <span>{item.q}</span>
-            <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
-          </button>
-          {openFaq === i && (
-            <div className="px-6 pb-5 text-gray-500 text-sm leading-relaxed">{item.a}</div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
-export default function Home() {
-  const [user, setUser] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasVenture, setHasVenture] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-        setUser(currentUser);
-
-        if (currentUser) {
-          const { data: ventures } = await supabase
-            .from("ventures")
-            .select("id")
-            .eq("created_by", currentUser.email)
-            .limit(1);
-          setHasVenture(ventures && ventures.length > 0);
-        }
-      } catch (error) {
-        setUser(null);
-        setHasVenture(false);
-      }
-      setIsLoading(false);
-    };
-
-    checkUser();
-  }, []);
-
-  const handleLogin = () => {
-    const next = window.location.pathname + window.location.search;
-    window.location.href = `/login?next=${encodeURIComponent(next)}`;
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
-  return (
-    <div className="bg-white text-gray-900 min-h-screen">
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slideUp {
-          animation: slideUp 0.8s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .fade-in-startzig {
-          animation: fadeIn 2s ease-in forwards;
-        }
-      `}</style>
-
-      {/* Navigation - 2 level gradient */}
-
-      {/* Hero Section */}
-      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
-            Don't just start up.{" "}
-            <span
-              style={{
-                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-              className="fade-in-startzig"
-            >
-              StartZig
-            </span>
-            .
-          </h1>
-          <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp"
-            style={{ animationDelay: "0.2s" }}
-          >
-            A training platform for growing raw ideas into startups, and inventors into founders. The platform combines a dedicated toolset, community wisdom, and AI-powered&nbsp;technical&nbsp;support.
-          </p>
-          <div
-            className="flex flex-col gap-4 items-center animate-slideUp"
-            style={{ animationDelay: "0.4s" }}
-          >
-            {user ? (
-              hasVenture ? (
-                <Link href="/dashboard" className="w-full max-w-sm">
-                  <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full">
-                    Go to dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/createventure" className="w-full max-w-sm">
-                  <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full">
-                    Create Your Venture
-                  </Button>
-                </Link>
-              )
-            ) : (
-              <Button
-                onClick={handleLogin}
-                size="lg"
-                className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full max-w-sm"
-              >
-                Start Your Journey
-              </Button>
-            )}
-          </div>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
+    );
+  }
 
-      {/* ── Why StartZig ── */}
-      <div className="py-16 px-6">
+  const budget = calculateTotalBudget();
+  const allComplete = calculateCompletion() === 100;
+
+  // Cross-field context for Zig, keyed by the same snake_case keys as
+  // zigConfig.js's FIELD_CONFIG (see ZIG_KEY_MAP above).
+  const allFieldValuesForZig = {
+    problem,
+    target_customers: targetCustomers,
+    competitive_landscape: competition,
+    market_size: marketSize,
+    solution,
+    product_details: productDetails,
+    founding_team: entrepreneurBackground,
+    revenue_model: revenueModel,
+    mission,
+    funding_requirements: fundingRequirements,
+  };
+
+  // Has this venture already completed Foundation once before? Reuses the
+  // same phase field that already gates progression to MVP — no new
+  // computed check needed (see zig-core-prompt.md Data Model Notes).
+  const firstPass = !venture?.phase || venture.phase === 'business_plan';
+
+  return (
+    <>
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <SparkShapeShip />
 
-          <div className="mb-10">
-            <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig lets you follow a structured, practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
-            </p>
-            <p className="text-lg text-gray-600 max-w-3xl mt-4">
-              StartZig is designed for a variety of needs and stages — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started, <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality, and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
-            </p>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Plan &amp; Foundation</h1>
+              <p className="text-gray-600 mt-1 text-sm max-w-2xl">
+                To sharpen a raw idea into something grounded and concrete, you need to connect it to the entrepreneurial and business environment it actually operates in. This stage isn't asking for deep competitor analysis or precise financial modeling — but it's where you start building the foundations for that, and put your core assumptions to the test.
+              </p>
+              <p className="text-gray-600 mt-2 text-sm max-w-2xl">
+                Like any lean business plan, this isn't a document you fill out once and file away — it's a <strong>living document</strong>. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => router.push(createPageUrl("Dashboard"))}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
           </div>
 
-          <PhaseClock />
-
-          {/* CTA — copied from the WhyStartZig page */}
-          <div className="text-center py-6">
-            <Link href="/register">
-              <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
-                Start Your Journey
-              </button>
-            </Link>
-          </div>
-
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">Our DNA</span>
-          </h3>
-
-          <div className="space-y-6">
-            {[
-              {
-                title: "Built by founders for the next generation.",
-                body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop, across dozens of founders, private ventures, accelerators and investor feedback.",
-              },
-              {
-                title: "Not just a startup. A founder.",
-                body: "During your journey with StartZig, you'll shape your idea into something real and build up real knowledge and experience along the way. By the end, both the idea and you will be far more ready to raise funding and start development.",
-              },
-              {
-                title: "Hard work. No shortcuts.",
-                body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
-              },
-              {
-                title: "Turning you into a product manager",
-                body: (
-                  <>
-                    We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
-                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
-                  </>
-                ),
-              },
-              {
-                title: "Community feedback, built into the process",
-                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
-              },
-              {
-                title: "Visual thinking, at every stage",
-                body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
-              },
-              {
-                title: "Transparency is not just a slogan",
-                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
-              },
-              {
-                title: "Full control over your information",
-                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
-              },
-            ].map((item, i) => (
-              <div key={i}>
-                <h4 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h4>
-                <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
+          {/* Overall progress */}
+          <Card className="mb-6">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">Overall Completion</span>
+                <span className="text-sm text-gray-600">{calculateCompletion()}%</span>
               </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-indigo-600 h-2 rounded-full transition-all" style={{ width: `${calculateCompletion()}%` }} />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Each section requires at least 50 characters</p>
+            </CardContent>
+          </Card>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6">
+            {tabs.map((tab, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleTabChange(idx)}
+                className={`flex-1 py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all ${
+                  activeTab === idx
+                    ? tab.activeClass
+                    : getTabColor(tab.progress)
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <span>{getTabDot(tab.progress)}</span>
+                  <span>{tab.label}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1">
+                  <div
+                    className={`h-1 rounded-full transition-all ${tab.progress === 100 ? 'bg-green-500' : 'bg-orange-400'}`}
+                    style={{ width: `${tab.progress}%` }}
+                  />
+                </div>
+                <div className="text-xs mt-1 opacity-70">{tab.progress}%</div>
+              </button>
             ))}
           </div>
+
+          {/* Tab 1 - Foundation */}
+          {activeTab === 0 && (
+            <div className="space-y-6">
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">1. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <div className="relative">
+                        {showTipsHint && (
+                          <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-44 z-10 shadow-lg text-center">
+                            A quick look at what belongs here
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        )}
+                        <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'problem_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      </div>
+                      <div className="relative">
+                        {showZigItHint && (
+                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-52 z-10 shadow-lg text-center">
+                            Get feedback and a quality score on what you've written
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        )}
+                        <MentorButton onClick={() => openMentorModal('problem_statement', 'Problem Statement', 'problem')} />
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={problem} onChange={(e) => setProblem(e.target.value)} placeholder="Describe the problem..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{problem.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">2. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'target_customers' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('target_customers', 'Target Customers', 'targetCustomers')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={targetCustomers} onChange={(e) => setTargetCustomers(e.target.value)} placeholder="Describe your target customers..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{targetCustomers.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">3. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('competition', 'Competitive Landscape', 'competition')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="Describe your competition..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{competition.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">4. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'market_size' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('market_size', 'Market Size & Opportunity', 'marketSize')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={marketSize} onChange={(e) => setMarketSize(e.target.value)} placeholder="Describe your market..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{marketSize.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">5. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'proposed_solution' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('proposed_solution', 'Solution Overview', 'solution')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={solution} onChange={(e) => setSolution(e.target.value)} placeholder="Describe your solution..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{solution.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">6. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'product_details' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('product_details', 'Product/Service Details', 'productDetails')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={productDetails} onChange={(e) => setProductDetails(e.target.value)} placeholder="Describe your product..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{productDetails.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end">
+                <Button onClick={() => handleTabChange(1)} className="bg-indigo-600 hover:bg-indigo-700">
+                  Next: Venture Plan →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2 - Venture Plan */}
+          {activeTab === 1 && (
+            <div className="space-y-6">
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">7. Founding Team</CardTitle><CardDescription>What roles or expertise will this venture need, and where are the gaps today?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'founding_team' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('founding_team', 'Founding Team', 'entrepreneurBackground')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={entrepreneurBackground} onChange={(e) => setEntrepreneurBackground(e.target.value)} placeholder="Describe the team and roles this venture will need..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{entrepreneurBackground.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              {/* Revenue Model */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">8. Revenue Model</CardTitle><CardDescription>How will your venture make money?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'revenue_model' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('revenue_model', 'Revenue Model', 'revenueModel')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={revenueModel} onChange={(e) => setRevenueModel(e.target.value)} placeholder="Describe how you'll make money..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{revenueModel.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              {/* Mission Statement */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">9. Mission Statement</CardTitle><CardDescription>Now that you've mapped the problem, market, and solution — what's the core purpose behind it?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mission_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('mission_statement', 'Mission Statement', 'mission')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={mission} onChange={(e) => setMission(e.target.value)} placeholder="Describe your company's mission..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{mission.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              {/* Funding Requirements */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">10. Funding Requirements</CardTitle><CardDescription>How much funding do you need and how will you use it?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'funding_requirements' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('funding_requirements', 'Funding Requirements', 'fundingRequirements')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={fundingRequirements} onChange={(e) => setFundingRequirements(e.target.value)} placeholder="Describe your funding needs..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{fundingRequirements.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              {/* Budget */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">Funding Plan & Budget Breakdown</CardTitle><CardDescription>Plan your monthly operational expenses and funding requirements for your first two years</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'budget_planning' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('budget_planning', 'Budget Planning', '')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {/* Team Salaries */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Team Salaries (Monthly)</h3>
+                      <div className="flex gap-2">
+                        <select onChange={(e) => { if (e.target.value) { addSalaryRow(e.target.value); e.target.value = ''; } }} className="border rounded px-3 py-1 text-sm">
+                          <option value="">Select Role...</option>
+                          <optgroup label="Engineering">
+                            <option value="CTO">CTO</option>
+                            <option value="Full Stack Developer">Full Stack Developer</option>
+                            <option value="Frontend Developer">Frontend Developer</option>
+                            <option value="Backend Developer">Backend Developer</option>
+                            <option value="Mobile Developer">Mobile Developer</option>
+                            <option value="DevOps Engineer">DevOps Engineer</option>
+                          </optgroup>
+                          <optgroup label="Product & Design">
+                            <option value="Product Manager">Product Manager</option>
+                            <option value="UI/UX Designer">UI/UX Designer</option>
+                            <option value="Product Designer">Product Designer</option>
+                          </optgroup>
+                          <optgroup label="Business & Operations">
+                            <option value="CEO">CEO</option>
+                            <option value="COO">COO</option>
+                            <option value="CFO">CFO</option>
+                            <option value="Business Development">Business Development</option>
+                          </optgroup>
+                          <optgroup label="Marketing & Sales">
+                            <option value="CMO">CMO</option>
+                            <option value="Marketing Manager">Marketing Manager</option>
+                            <option value="Sales Manager">Sales Manager</option>
+                            <option value="Content Creator">Content Creator</option>
+                          </optgroup>
+                          <optgroup label="Other">
+                            <option value="HR Manager">HR Manager</option>
+                            <option value="Customer Support">Customer Support</option>
+                          </optgroup>
+                        </select>
+                        <Button type="button" onClick={() => addSalaryRow('')} size="sm"><Plus className="w-4 h-4 mr-2" />Custom Role</Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {salaries.map((salary) => (
+                        <div key={salary.id} className="grid grid-cols-12 gap-3 items-center">
+                          <div className="col-span-3"><Input value={salary.role} onChange={(e) => updateSalary(salary.id, 'role', e.target.value)} placeholder="Role" /></div>
+                          <div className="col-span-2"><Input type="number" value={salary.count} onChange={(e) => updateSalary(salary.id, 'count', parseInt(e.target.value) || 0)} placeholder="Count" /></div>
+                          <div className="col-span-2">
+                            <select value={salary.percentage} onChange={(e) => updateSalary(salary.id, 'percentage', parseInt(e.target.value))} className="w-full border rounded px-3 py-2">
+                              <option value="25">25%</option>
+                              <option value="50">50%</option>
+                              <option value="75">75%</option>
+                              <option value="100">100%</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2"><Input type="number" value={salary.avg_salary} onChange={(e) => updateSalary(salary.id, 'avg_salary', parseInt(e.target.value) || 0)} placeholder="Salary" /></div>
+                          <div className="col-span-2 text-sm font-medium">${((salary.count * salary.avg_salary * (salary.percentage / 100))).toLocaleString()}</div>
+                          <div className="col-span-1"><Button type="button" variant="ghost" size="sm" onClick={() => removeSalaryRow(salary.id)} disabled={salaries.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-sm font-medium">Total 2-Year Salaries: ${budget.salaries.toLocaleString()}</p></div>
+                  </div>
+
+                  {/* Marketing Costs */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Marketing Costs (Monthly)</h3>
+                      <div className="flex gap-2">
+                        <select onChange={(e) => { if (e.target.value) { addMarketingRow(e.target.value); e.target.value = ''; } }} className="border rounded px-3 py-1 text-sm">
+                          <option value="">Select Channel...</option>
+                          <optgroup label="Digital Marketing">
+                            <option value="Google Ads">Google Ads</option>
+                            <option value="Facebook Ads">Facebook Ads</option>
+                            <option value="Instagram Ads">Instagram Ads</option>
+                            <option value="LinkedIn Ads">LinkedIn Ads</option>
+                            <option value="TikTok Ads">TikTok Ads</option>
+                            <option value="Twitter Ads">Twitter Ads</option>
+                          </optgroup>
+                          <optgroup label="Content & SEO">
+                            <option value="SEO Services">SEO Services</option>
+                            <option value="Content Creation">Content Creation</option>
+                            <option value="Video Production">Video Production</option>
+                            <option value="Influencer Marketing">Influencer Marketing</option>
+                          </optgroup>
+                          <optgroup label="Traditional">
+                            <option value="PR & Media">PR & Media</option>
+                            <option value="Events & Sponsorships">Events & Sponsorships</option>
+                            <option value="Print Advertising">Print Advertising</option>
+                          </optgroup>
+                          <optgroup label="Tools & Software">
+                            <option value="Email Marketing (Mailchimp)">Email Marketing (Mailchimp)</option>
+                            <option value="Marketing Automation">Marketing Automation</option>
+                            <option value="Analytics Tools">Analytics Tools</option>
+                          </optgroup>
+                        </select>
+                        <Button type="button" onClick={() => addMarketingRow('')} size="sm"><Plus className="w-4 h-4 mr-2" />Custom</Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {marketingCosts.map((marketing) => (
+                        <div key={marketing.id} className="grid grid-cols-12 gap-3 items-center">
+                          <div className="col-span-6"><Input value={marketing.channel} onChange={(e) => updateMarketing(marketing.id, 'channel', e.target.value)} placeholder="Marketing Channel" /></div>
+                          <div className="col-span-5"><Input type="number" value={marketing.cost} onChange={(e) => updateMarketing(marketing.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly Cost" /></div>
+                          <div className="col-span-1"><Button type="button" variant="ghost" size="sm" onClick={() => removeMarketingRow(marketing.id)} disabled={marketingCosts.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg"><p className="text-sm font-medium">Total 2-Year Marketing: ${budget.marketing.toLocaleString()}</p></div>
+                  </div>
+
+                  {/* Operational Costs */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Operational Costs (Monthly)</h3>
+                      <div className="flex gap-2">
+                        <select onChange={(e) => { if (e.target.value) { addOperationalRow(e.target.value); e.target.value = ''; } }} className="border rounded px-3 py-1 text-sm">
+                          <option value="">Select Item...</option>
+                          <optgroup label="Office & Infrastructure">
+                            <option value="Office Rent">Office Rent</option>
+                            <option value="Co-working Space">Co-working Space</option>
+                            <option value="Utilities (Electric, Water)">Utilities (Electric, Water)</option>
+                            <option value="Internet & Telecom">Internet & Telecom</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                          </optgroup>
+                          <optgroup label="Software & Tools">
+                            <option value="AWS/Cloud Hosting">AWS/Cloud Hosting</option>
+                            <option value="SaaS Subscriptions">SaaS Subscriptions</option>
+                            <option value="Design Tools (Figma, Adobe)">Design Tools (Figma, Adobe)</option>
+                            <option value="Project Management Tools">Project Management Tools</option>
+                            <option value="CRM Software">CRM Software</option>
+                          </optgroup>
+                          <optgroup label="Legal & Finance">
+                            <option value="Legal Services">Legal Services</option>
+                            <option value="Accounting Services">Accounting Services</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Banking Fees">Banking Fees</option>
+                          </optgroup>
+                          <optgroup label="Other">
+                            <option value="Travel & Transportation">Travel & Transportation</option>
+                            <option value="Training & Development">Training & Development</option>
+                            <option value="Customer Support Tools">Customer Support Tools</option>
+                          </optgroup>
+                        </select>
+                        <Button type="button" onClick={() => addOperationalRow('')} size="sm"><Plus className="w-4 h-4 mr-2" />Custom</Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {operationalCosts.map((operational) => (
+                        <div key={operational.id} className="grid grid-cols-12 gap-3 items-center">
+                          <div className="col-span-6"><Input value={operational.item} onChange={(e) => updateOperational(operational.id, 'item', e.target.value)} placeholder="Operational Item" /></div>
+                          <div className="col-span-5"><Input type="number" value={operational.cost} onChange={(e) => updateOperational(operational.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly Cost" /></div>
+                          <div className="col-span-1"><Button type="button" variant="ghost" size="sm" onClick={() => removeOperationalRow(operational.id)} disabled={operationalCosts.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-purple-50 rounded-lg"><p className="text-sm font-medium">Total 2-Year Operations: ${budget.operational.toLocaleString()}</p></div>
+                  </div>
+
+                  <div className="p-6 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                    <h3 className="text-xl font-bold text-indigo-900 mb-4">Total 2-Year Budget</h3>
+                    <p className="text-3xl font-bold text-indigo-600 mb-2">${budget.total.toLocaleString()}</p>
+                    <p className="text-sm text-indigo-700">Monthly Burn: ${budget.monthlyBurn.toLocaleString()}</p>
+                    <p className="text-xs text-indigo-600 mt-3 italic">This budget serves as a projection for investors and will not impact your actual venture balance until funding is secured.</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-between items-center">
+                <Button variant="outline" onClick={() => handleTabChange(0)}>← Back</Button>
+
+
+                {!allComplete && (
+                  <p className="text-sm text-amber-600 font-medium">⚠️ Complete all sections to save your plan</p>
+                )}
+
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving || !allComplete}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                  size="lg"
+                >
+                  {isSaving ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4 mr-2" />Save Plan</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* [ADDED] FAQ Section */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-16">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
-              Frequently Asked Questions
-            </span>
-          </h2>
-          <FAQItems />
-        </div>
-      </div>
-    </div>
+      <StaticGuidanceViewer
+        isOpen={staticGuidanceModal.isOpen}
+        onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+        sectionId={staticGuidanceModal.sectionId}
+      />
+
+      <MentorModal
+        isOpen={mentorModal.isOpen}
+        onClose={closeMentorModal}
+        documentType="business_plan"
+        fieldKey={ZIG_KEY_MAP[mentorModal.fieldKey] || mentorModal.fieldKey}
+        sectionTitle={mentorModal.sectionTitle}
+        fieldValue={getFieldValue(mentorModal.fieldKey)}
+        allFieldValues={allFieldValuesForZig}
+        firstPass={firstPass}
+        onUpdateField={handleMentorUpdate}
+        ventureId={venture?.id}
+      />
+    </>
   );
 }
+
