@@ -90,6 +90,20 @@ const createPageUrl = (path) => `/${path.toLowerCase()}`;
 
 const PHASES_ORDER = ["idea", "business_plan", "mvp", "mlp", "beta", "growth", "ma"];
 
+// Display-only labels for the "Current Phase" badge. The underlying
+// phase values (used in PHASES_ORDER, valuations, colors, icons, etc.
+// throughout this file) are untouched — this map only changes what text
+// the user sees.
+const PHASE_LABELS = {
+  idea: "Idea",
+  business_plan: "Plan",
+  mvp: "MVP",
+  mlp: "MLP",
+  beta: "Beta",
+  growth: "Growth",
+  ma: "M&A",
+};
+
 const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
   if (!isOpen) return null;
   return (
@@ -1744,7 +1758,7 @@ if (showToS) {
                 <div>
                   <p className="text-sm text-gray-500">Current Phase</p>
                   <span className="text-xs font-medium text-indigo-700">
-                    {currentVenture.phase.replace('_', ' ').toUpperCase()}
+                    {(PHASE_LABELS[currentVenture.phase] || currentVenture.phase.replace('_', ' ')).toUpperCase()}
                   </span>
                 </div>
               </div>

@@ -29,6 +29,18 @@ const nextConfig = {
       },
     ];
   },
+
+  // /plan is an alias for the existing /businessplan folder — the folder
+  // itself is untouched, this just lets the URL bar show /plan. Any
+  // existing links to /businessplan keep working exactly as before.
+  async rewrites() {
+    return [
+      {
+        source: "/plan",
+        destination: "/businessplan",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
