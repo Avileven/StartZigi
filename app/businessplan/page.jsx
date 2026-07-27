@@ -1,6 +1,6 @@
 //business plan 230226 updated
 "use client"
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
 import { Budget } from "@/api/entities";
 import { Venture } from "@/api/entities";
@@ -31,6 +31,23 @@ export default function businessPlan() {
   const [revenueModel, setRevenueModel] = useState("");
   const [fundingRequirements, setFundingRequirements] = useState("");
 
+  // Maps this component's local (camelCase) field keys to the snake_case
+  // keys used in zigConfig.js's FIELD_CONFIG — the two are named
+  // differently on purpose (local state vs. AI-facing config), so this is
+  // the single place that bridges them.
+  const ZIG_KEY_MAP = {
+    problem: 'problem',
+    targetCustomers: 'target_customers',
+    competition: 'competitive_landscape',
+    marketSize: 'market_size',
+    solution: 'solution',
+    productDetails: 'product_details',
+    entrepreneurBackground: 'founding_team',
+    revenueModel: 'revenue_model',
+    mission: 'mission',
+    fundingRequirements: 'funding_requirements',
+  };
+
 
   const [salaries, setSalaries] = useState([{ id: '1', role: 'Founder', count: 1, percentage: 100, avg_salary: 5000 }]);
   const [marketingCosts, setMarketingCosts] = useState([{ id: '1', channel: 'Social Media Ads', cost: 1000 }]);
@@ -49,7 +66,14 @@ export default function businessPlan() {
     const t2 = setTimeout(() => setShowZigItHint(false), 10000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
- 
+
+  // Browser tab label only — the route stays /businessplan, the file
+  // and function name stay businessPlan, nothing else changes. This is
+  // purely what the user sees in the tab.
+  useEffect(() => {
+    document.title = 'Plan';
+  }, []);
+
   const router = useRouter();
 
 
@@ -108,7 +132,7 @@ export default function businessPlan() {
           setMarketSize(plan.market_size || "");
           setTargetCustomers(plan.target_customers || "");
           setCompetition(plan.competition || "");
-          setEntrepreneurBackground(plan.entrepreneur_background || "");
+          setEntrepreneurBackground(plan.founding_team || "");
           setRevenueModel(plan.revenue_model || "");
           setFundingRequirements(plan.funding_requirements || "");
         }
@@ -271,7 +295,7 @@ export default function businessPlan() {
         market_size: marketSize,
         target_customers: targetCustomers,
         competition,
-        entrepreneur_background: entrepreneurBackground,
+        founding_team: entrepreneurBackground,
         revenue_model: revenueModel,
         funding_requirements: fundingRequirements,
         completion_percentage: calculateCompletion()
@@ -362,9 +386,8 @@ await VentureMessage.create({
   const [activeTab, setActiveTab] = useState(0);
 
   // חישוב התקדמות לכל לשונית
-  const tab1Fields = [mission, problem, solution, productDetails, entrepreneurBackground];
-  const tab2Fields = [marketSize, targetCustomers, competition];
-  const tab3Fields = [revenueModel, fundingRequirements];
+  const tab1Fields = [problem, targetCustomers, competition, marketSize, solution, productDetails];
+  const tab2Fields = [entrepreneurBackground, revenueModel, mission, fundingRequirements];
 
   const tabProgress = (fields) => {
     const completed = fields.filter(f => f.trim().length >= 50).length;
@@ -373,7 +396,6 @@ await VentureMessage.create({
 
   const tab1Progress = tabProgress(tab1Fields);
   const tab2Progress = tabProgress(tab2Fields);
-  const tab3Progress = tabProgress(tab3Fields);
 
   const getTabColor = (progress) => {
     if (progress === 100) return 'text-green-600 border-green-500 bg-green-50';
@@ -401,7 +423,7 @@ await VentureMessage.create({
         market_size: marketSize,
         target_customers: targetCustomers,
         competition,
-        entrepreneur_background: entrepreneurBackground,
+        founding_team: entrepreneurBackground,
         revenue_model: revenueModel,
         funding_requirements: fundingRequirements,
         completion_percentage: calculateCompletion()
@@ -417,15 +439,31 @@ await VentureMessage.create({
     }
   };
 
+  // Timer-based autosave every 30s, on top of the existing tab-change
+  // autosave. Uses a ref so the interval itself is created once (on
+  // mount) but always calls the latest version of autoSave — otherwise
+  // a plain setInterval would close over stale field values from
+  // whichever render created it.
+  const autoSaveRef = useRef(autoSave);
+  useEffect(() => {
+    autoSaveRef.current = autoSave;
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      autoSaveRef.current();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleTabChange = async (idx) => {
     await autoSave();
     setActiveTab(idx);
   };
 
   const tabs = [
-    { label: 'Product & Vision', progress: tab1Progress, activeClass: 'border-indigo-500 bg-indigo-50 text-indigo-700', dotActive: 'bg-indigo-500', color: 'indigo' },
-    { label: 'Market', progress: tab2Progress, activeClass: 'border-teal-500 bg-teal-50 text-teal-700', dotActive: 'bg-teal-500', color: 'teal' },
-    { label: 'Financials', progress: tab3Progress, activeClass: 'border-purple-500 bg-purple-50 text-purple-700', dotActive: 'bg-purple-500', color: 'purple' },
+    { label: 'Foundation', progress: tab1Progress, activeClass: 'border-indigo-500 bg-indigo-50 text-indigo-700', dotActive: 'bg-indigo-500', color: 'indigo' },
+    { label: 'Venture Plan', progress: tab2Progress, activeClass: 'border-purple-500 bg-purple-50 text-purple-700', dotActive: 'bg-purple-500', color: 'purple' },
   ];
 
   if (isLoading) {
@@ -438,6 +476,26 @@ await VentureMessage.create({
 
   const budget = calculateTotalBudget();
   const allComplete = calculateCompletion() === 100;
+
+  // Cross-field context for Zig, keyed by the same snake_case keys as
+  // zigConfig.js's FIELD_CONFIG (see ZIG_KEY_MAP above).
+  const allFieldValuesForZig = {
+    problem,
+    target_customers: targetCustomers,
+    competitive_landscape: competition,
+    market_size: marketSize,
+    solution,
+    product_details: productDetails,
+    founding_team: entrepreneurBackground,
+    revenue_model: revenueModel,
+    mission,
+    funding_requirements: fundingRequirements,
+  };
+
+  // Has this venture already completed Foundation once before? Reuses the
+  // same phase field that already gates progression to MVP — no new
+  // computed check needed (see zig-core-prompt.md Data Model Notes).
+  const firstPass = !venture?.phase || venture.phase === 'business_plan';
 
   return (
     <>
@@ -502,13 +560,13 @@ await VentureMessage.create({
             ))}
           </div>
 
-          {/* Tab 1 - Product & Vision */}
+          {/* Tab 1 - Foundation */}
           {activeTab === 0 && (
             <div className="space-y-6">
               <Card className="border-indigo-200">
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">1. Mission Statement</CardTitle><CardDescription>What is your company's core purpose and vision?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">1. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
                     <div className="flex gap-2">
                       <div className="relative">
                         {showTipsHint && (
@@ -517,7 +575,7 @@ await VentureMessage.create({
                             <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                           </div>
                         )}
-                        <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mission_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'problem_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       </div>
                       <div className="relative">
                         {showZigItHint && (
@@ -526,24 +584,8 @@ await VentureMessage.create({
                             <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                           </div>
                         )}
-                        <MentorButton onClick={() => openMentorModal('mission_statement', 'Mission Statement', 'mission')} />
+                        <MentorButton onClick={() => openMentorModal('problem_statement', 'Problem Statement', 'problem')} />
                       </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Textarea value={mission} onChange={(e) => setMission(e.target.value)} placeholder="Describe your company's mission..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{mission.trim().length}/50 characters minimum</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-indigo-200">
-                <CardHeader className="bg-indigo-50 rounded-t-xl">
-                  <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">2. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'problem_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('problem_statement', 'Problem Statement', 'problem')} />
                     </div>
                   </div>
                 </CardHeader>
@@ -556,7 +598,55 @@ await VentureMessage.create({
               <Card className="border-indigo-200">
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">3. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">2. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'target_customers' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('target_customers', 'Target Customers', 'targetCustomers')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={targetCustomers} onChange={(e) => setTargetCustomers(e.target.value)} placeholder="Describe your target customers..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{targetCustomers.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">3. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('competition', 'Competitive Landscape', 'competition')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="Describe your competition..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{competition.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">4. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'market_size' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('market_size', 'Market Size & Opportunity', 'marketSize')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={marketSize} onChange={(e) => setMarketSize(e.target.value)} placeholder="Describe your market..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{marketSize.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-indigo-800">5. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'proposed_solution' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('proposed_solution', 'Solution Overview', 'solution')} />
@@ -572,7 +662,7 @@ await VentureMessage.create({
               <Card className="border-indigo-200">
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">4. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">6. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'product_details' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('product_details', 'Product/Service Details', 'productDetails')} />
@@ -585,91 +675,83 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
-                <CardHeader className="bg-indigo-50 rounded-t-xl">
-                  <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">5. Founder Background</CardTitle><CardDescription>What makes you and your team qualified?</CardDescription></div>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'founder_background' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('entrepreneur_background', 'Founder Background', 'entrepreneurBackground')} />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Textarea value={entrepreneurBackground} onChange={(e) => setEntrepreneurBackground(e.target.value)} placeholder="Describe your background..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{entrepreneurBackground.trim().length}/50 characters minimum</p>
-                </CardContent>
-              </Card>
-
               <div className="flex justify-end">
                 <Button onClick={() => handleTabChange(1)} className="bg-indigo-600 hover:bg-indigo-700">
-                  Next: Market →
+                  Next: Venture Plan →
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Tab 2 - Market */}
+          {/* Tab 2 - Venture Plan */}
           {activeTab === 1 && (
             <div className="space-y-6">
-              <Card className="border-teal-200">
-                <CardHeader className="bg-teal-50 rounded-t-xl">
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-teal-800">6. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">7. Founding Team</CardTitle><CardDescription>What roles or expertise will this venture need, and where are the gaps today?</CardDescription></div>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'market_size' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('market_size', 'Market Size & Opportunity', 'marketSize')} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'founding_team' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('founding_team', 'Founding Team', 'entrepreneurBackground')} />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Textarea value={marketSize} onChange={(e) => setMarketSize(e.target.value)} placeholder="Describe your market..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{marketSize.trim().length}/50 characters minimum</p>
+                  <Textarea value={entrepreneurBackground} onChange={(e) => setEntrepreneurBackground(e.target.value)} placeholder="Describe the team and roles this venture will need..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{entrepreneurBackground.trim().length}/50 characters minimum</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-teal-200">
-                <CardHeader className="bg-teal-50 rounded-t-xl">
+              {/* Revenue Model */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-teal-800">7. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">8. Revenue Model</CardTitle><CardDescription>How will your venture make money?</CardDescription></div>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'target_customers' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('target_customers', 'Target Customers', 'targetCustomers')} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'revenue_model' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('revenue_model', 'Revenue Model', 'revenueModel')} />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Textarea value={targetCustomers} onChange={(e) => setTargetCustomers(e.target.value)} placeholder="Describe your target customers..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{targetCustomers.trim().length}/50 characters minimum</p>
+                  <Textarea value={revenueModel} onChange={(e) => setRevenueModel(e.target.value)} placeholder="Describe how you'll make money..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{revenueModel.trim().length}/50 characters minimum</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-teal-200">
-                <CardHeader className="bg-teal-50 rounded-t-xl">
+              {/* Mission Statement */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-teal-800">8. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
+                    <div><CardTitle className="text-purple-800">9. Mission Statement</CardTitle><CardDescription>Now that you've mapped the problem, market, and solution — what's the core purpose behind it?</CardDescription></div>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('competition', 'Competitive Landscape', 'competition')} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mission_statement' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('mission_statement', 'Mission Statement', 'mission')} />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Textarea value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="Describe your competition..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{competition.trim().length}/50 characters minimum</p>
+                  <Textarea value={mission} onChange={(e) => setMission(e.target.value)} placeholder="Describe your company's mission..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{mission.trim().length}/50 characters minimum</p>
                 </CardContent>
               </Card>
 
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => handleTabChange(0)}>← Back</Button>
-                <Button onClick={() => handleTabChange(2)} className="bg-teal-600 hover:bg-teal-700">Next: Financials →</Button>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 3 - Financials */}
-          {activeTab === 2 && (
-            <div className="space-y-6">
+              {/* Funding Requirements */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 rounded-t-xl">
+                  <div className="flex justify-between items-start">
+                    <div><CardTitle className="text-purple-800">10. Funding Requirements</CardTitle><CardDescription>How much funding do you need and how will you use it?</CardDescription></div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'funding_requirements' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
+                      <MentorButton onClick={() => openMentorModal('funding_requirements', 'Funding Requirements', 'fundingRequirements')} />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Textarea value={fundingRequirements} onChange={(e) => setFundingRequirements(e.target.value)} placeholder="Describe your funding needs..." className="min-h-[100px]" />
+                  <p className="text-xs text-gray-500 mt-1">{fundingRequirements.trim().length}/50 characters minimum</p>
+                </CardContent>
+              </Card>
 
               {/* Budget */}
               <Card className="border-purple-200">
@@ -849,42 +931,9 @@ await VentureMessage.create({
                 </CardContent>
               </Card>
 
-              {/* Revenue Model */}
-              <Card className="border-purple-200">
-                <CardHeader className="bg-purple-50 rounded-t-xl">
-                  <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-purple-800">9. Revenue Model</CardTitle><CardDescription>How will your venture make money?</CardDescription></div>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'revenue_model' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('revenue_model', 'Revenue Model', 'revenueModel')} />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Textarea value={revenueModel} onChange={(e) => setRevenueModel(e.target.value)} placeholder="Describe how you'll make money..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{revenueModel.trim().length}/50 characters minimum</p>
-                </CardContent>
-              </Card>
-
-              {/* Funding Requirements */}
-              <Card className="border-purple-200">
-                <CardHeader className="bg-purple-50 rounded-t-xl">
-                  <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-purple-800">10. Funding Requirements</CardTitle><CardDescription>How much funding do you need and how will you use it?</CardDescription></div>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'funding_requirements' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
-                      <MentorButton onClick={() => openMentorModal('funding_requirements', 'Funding Requirements', 'fundingRequirements')} />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Textarea value={fundingRequirements} onChange={(e) => setFundingRequirements(e.target.value)} placeholder="Describe your funding needs..." className="min-h-[100px]" />
-                  <p className="text-xs text-gray-500 mt-1">{fundingRequirements.trim().length}/50 characters minimum</p>
-                </CardContent>
-              </Card>
-
               <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={() => handleTabChange(1)}>← Back</Button>
+                <Button variant="outline" onClick={() => handleTabChange(0)}>← Back</Button>
+
 
                 {!allComplete && (
                   <p className="text-sm text-amber-600 font-medium">⚠️ Complete all sections to save your plan</p>
@@ -918,9 +967,12 @@ await VentureMessage.create({
       <MentorModal
         isOpen={mentorModal.isOpen}
         onClose={closeMentorModal}
-        sectionId={mentorModal.sectionId}
+        documentType="business_plan"
+        fieldKey={ZIG_KEY_MAP[mentorModal.fieldKey] || mentorModal.fieldKey}
         sectionTitle={mentorModal.sectionTitle}
         fieldValue={getFieldValue(mentorModal.fieldKey)}
+        allFieldValues={allFieldValuesForZig}
+        firstPass={firstPass}
         onUpdateField={handleMentorUpdate}
         ventureId={venture?.id}
       />

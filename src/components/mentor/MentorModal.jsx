@@ -1,6 +1,10 @@
 // MentorModal 220226
 // UPDATE 180426: When user runs out of credits, show a styled message with an Upgrade Plan button
 //                linking to /pricing instead of plain text error.
+// UPDATE — config-driven rewrite: prompts, categories, help-types and
+// cross-field context now come from zigConfig.js (FIELD_CONFIG) instead of
+// being hand-written per call. See zig-core-prompt.md for the full spec
+// this implements.
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -14,30 +18,89 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
-import { Loader2, MessageSquare } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT } from './zigConfig';
 
+// Parses lines like "Clarity: 8/10 - short reason" out of the model's
+// plain-text response. Returns [] if the format wasn't followed.
+function parseCategoryLines(text, categoryNames) {
+  const results = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const match = line.match(/^([A-Za-z /+]+):\s*(\d+)\/10\s*-?\s*(.*)$/);
+    if (match) {
+      const name = match[1].trim();
+      if (categoryNames.some(c => c.toLowerCase() === name.toLowerCase())) {
+        results.push({ name, score: parseInt(match[2], 10), reason: match[3].trim() });
+      }
+    }
+  }
+  return results;
+}
+
+function scoreColor(score) {
+  if (score >= 7) return { text: '#3B6D11', fill: '#639922' };
+  if (score >= 4) return { text: '#8A5A17', fill: '#BA7517' };
+  return { text: '#993C1D', fill: '#D85A30' };
+}
+
+function ScoreBar({ name, score, reason, previousScore }) {
+  const { text, fill } = scoreColor(score);
+  const delta = previousScore != null ? score - previousScore : null;
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
+        <span style={{ fontWeight: 500 }}>{name}</span>
+        <span style={{ color: text, fontWeight: 500 }}>
+          {score}/10{delta ? ` (${delta > 0 ? '+' : ''}${delta} from last time)` : ''}
+        </span>
+      </div>
+      <div style={{ height: 8, background: '#eee', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${score * 10}%`, background: fill, borderRadius: 4 }} />
+      </div>
+      {reason && <p className="text-sm text-gray-600 mt-1">{reason}</p>}
+    </div>
+  );
+}
 
 export default function MentorModal({
   isOpen,
   onClose,
-  sectionId,
-  sectionTitle,
+  documentType = 'business_plan', // which document's config to use — defaults to the one built out so far
+  fieldKey,         // e.g. 'problem', 'founding_team' — must match a key in FIELD_CONFIG[documentType]
+  sectionTitle,      // display title, e.g. "Problem Statement"
   fieldValue,
+  allFieldValues,    // { [fieldKey]: text } — every field currently in the plan, for cross-field context
+  firstPass,         // boolean — has this venture completed Foundation once already?
   onUpdateField,
   ventureId
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [rawFeedback, setRawFeedback] = useState(null); // raw text or 'NO_CREDITS'
+  const [parsedCategories, setParsedCategories] = useState([]);
+  const [leadIn, setLeadIn] = useState('');
+  const [closingLine, setClosingLine] = useState('');
   const [ventureDesc, setVentureDesc] = useState('');
   const [isLoadingContext, setIsLoadingContext] = useState(false);
 
+  // Session-level score history, keyed by fieldKey — persists across
+  // different fields opened in the same page session because this
+  // component stays mounted (isOpen just toggles the Dialog). NOT
+  // persisted across page reloads; that needs a DB column (see
+  // zig-core-prompt.md Data Model Notes).
+  const [scoreHistory, setScoreHistory] = useState({});
 
-  // טעינת תיאור המיזם מהדאטאבייס ברקע (ללא הצגה למשתמש)
+  // helpStage: null (closed) | 'choosing' | 'dont_know' | 'searched_nothing'
+  const [helpStage, setHelpStage] = useState(null);
+  const [isGettingHelp, setIsGettingHelp] = useState(false);
+  const [helpResponse, setHelpResponse] = useState(null);
+
+  const field = getFieldConfig(documentType, fieldKey); // null if not configured (e.g. MVP/MLP) — triggers legacy fallback below
+
   useEffect(() => {
     const fetchVentureContext = async () => {
       if (!ventureId || !isOpen) return;
-     
       setIsLoadingContext(true);
       try {
         const { data } = await supabase
@@ -45,11 +108,7 @@ export default function MentorModal({
           .select('description')
           .eq('id', ventureId)
           .single();
-
-
-        if (data) {
-          setVentureDesc(data.description);
-        }
+        if (data) setVentureDesc(data.description);
       } catch (err) {
         console.error('Context fetch failed:', err);
       } finally {
@@ -57,63 +116,150 @@ export default function MentorModal({
       }
     };
 
-
     if (isOpen) {
       setCurrentText(fieldValue || '');
-      setFeedback(null);
+      setRawFeedback(null);
+      setParsedCategories([]);
+      setLeadIn('');
+      setClosingLine('');
+      setHelpStage(null);
+      setHelpResponse(null);
       fetchVentureContext();
     }
   }, [isOpen, fieldValue, ventureId]);
 
-
   const handleGetFeedback = async () => {
     if (!currentText.trim()) return;
 
-
     setIsGettingFeedback(true);
-    setFeedback(null);
+    setRawFeedback(null);
+    setParsedCategories([]);
+    setHelpStage(null);
+    setHelpResponse(null);
+
     try {
-      const prompt = `
-        You are an expert startup coach.
-        Venture Context: "${ventureDesc}"
-        Section: "${sectionTitle}"
-        User's Draft: "${currentText}"
+      // LEGACY FALLBACK: this document/field isn't in zigConfig yet
+      // (e.g. MVP/MLP screens still using the old generic behavior).
+      // Keep this identical to the pre-rewrite prompt so nothing outside
+      // business_plan breaks.
+      if (!field) {
+        const legacyPrompt = `
+          You are an expert startup coach.
+          Venture Context: "${ventureDesc}"
+          Section: "${sectionTitle}"
+          User's Draft: "${currentText}"
 
+          Instruction:
+          1. Start with the text "Zig Feedback" exactly.
+          2. On the very next line, provide a 10-star scale using "★" for active and "☆" for empty (e.g., ★★★★☆☆☆☆☆☆).
+          3. Provide sections: "Analysis:", "Strategic Hints:", and "Challenge Question:".
+          4. CRITICAL: Do NOT use any markdown formatting like bolding (**), bullet points (*), or hashtags (#). Use plain text only.
+          5. DO NOT provide the rewritten text for the user. Focus on hints.
 
-        Instruction:
-        1. Start with the text "Zig Feedback" exactly.
-        2. On the very next line, provide a 10-star scale using "★" for active and "☆" for empty (e.g., ★★★★☆☆☆☆☆☆).
-        3. Provide sections: "Analysis:", "Strategic Hints:", and "Challenge Question:".
-        4. CRITICAL: Do NOT use any markdown formatting like bolding (**), bullet points (*), or hashtags (#). Use plain text only.
-        5. DO NOT provide the rewritten text for the user. Focus on hints.
+          Language: English.
+        `;
+        const legacyData = await InvokeLLM({ prompt: legacyPrompt, creditType: 'mentor' });
+        setRawFeedback(legacyData?.response || 'No response from AI.');
+        setIsGettingFeedback(false);
+        return;
+      }
 
+      const previous = scoreHistory[fieldKey] || null;
+      const prompt = buildFeedbackPrompt({
+        documentType,
+        fieldKey,
+        currentText,
+        allFieldValues: allFieldValues || {},
+        firstPass: firstPass !== false, // default true if not provided
+        previousScore: previous ? previous.categories : null,
+      });
 
-        Language: English.
-      `;
-
-      // [CREDITS] מעביר creditType='mentor' - עולה קרדיט אחד
+      // [CREDITS] one credit per feedback call
       const data = await InvokeLLM({ prompt, creditType: 'mentor' });
-      setFeedback(data?.response || "No response from AI.");
-    } catch (error) {
-      // [CREDITS] טיפול בחסימה כשנגמרו הקרדיטים
-      if (error.message === 'NO_CREDITS') {
-        // [NO_CREDITS] Set a special flag so the UI renders a styled upgrade prompt instead of plain text
-        setFeedback('NO_CREDITS');
+      const responseText = data?.response || '';
+
+      if (!responseText) {
+        setRawFeedback('Error generating feedback.');
       } else {
-        setFeedback("Error generating feedback.");
+        const categoryNames = field.categories.map(c => c.name);
+        const parsed = parseCategoryLines(responseText, categoryNames);
+        const lines = responseText.split('\n').map(l => l.trim()).filter(Boolean);
+        const firstNonCategoryLine = lines.find(l => !parsed.some(p => l.startsWith(p.name)));
+        const lastLine = lines[lines.length - 1];
+
+        setParsedCategories(parsed);
+        setLeadIn(firstNonCategoryLine && firstNonCategoryLine !== lastLine ? firstNonCategoryLine : '');
+        setClosingLine(lastLine && !parsed.some(p => lastLine.startsWith(p.name)) ? lastLine : '');
+        setRawFeedback(responseText);
+
+        // store this attempt as the new "previous" for next time
+        if (parsed.length > 0) {
+          const categoriesMap = {};
+          parsed.forEach(p => { categoriesMap[p.name] = p.score; });
+          setScoreHistory(prev => ({ ...prev, [fieldKey]: { text: currentText, categories: categoriesMap } }));
+        }
+      }
+    } catch (error) {
+      if (error.message === 'NO_CREDITS') {
+        setRawFeedback('NO_CREDITS');
+      } else {
+        setRawFeedback('Error generating feedback.');
       }
     }
     setIsGettingFeedback(false);
   };
 
+  // [HELP] Separate entry point — never scores, only teaches. Available
+  // regardless of whether the field has text in it.
+  const handleGetHelp = async (stage) => {
+    setHelpStage(stage);
+    setIsGettingHelp(true);
+    setHelpResponse(null);
+    setRawFeedback(null);
+    setParsedCategories([]);
+    try {
+      // LEGACY FALLBACK: same reasoning as handleGetFeedback above.
+      const alreadyTried = stage === 'searched_nothing'
+        ? 'The founder already searched and could not find an answer.'
+        : 'The founder has no idea where to even start looking.';
+
+      const prompt = field
+        ? STUCK_PROMPT(field, stage)
+        : `
+          You are an expert startup coach.
+          Venture Context: "${ventureDesc}"
+          Section: "${sectionTitle}"
+          Situation: ${alreadyTried}
+
+          Instruction:
+          1. Do NOT give the founder the answer. Teach a concrete method instead.
+          2. If the situation is "searched and found nothing", be more concrete
+             and directive than for "no idea where to start".
+          3. Keep it to 3-5 sentences. Plain text only, no markdown.
+
+          Language: English.
+        `;
+
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      setHelpResponse(data?.response || 'No response from AI.');
+    } catch (error) {
+      if (error.message === 'NO_CREDITS') {
+        setHelpResponse('NO_CREDITS');
+      } else {
+        setHelpResponse('Error generating help.');
+      }
+    }
+    setIsGettingHelp(false);
+  };
+
+  const previousForThisField = scoreHistory[fieldKey]?.categories || null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
         <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" />
         <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
-         
-          {/* Header נקי ללא Context Box */}
+
           <DialogHeader className="p-6 border-b bg-slate-50">
             <div className="flex justify-between items-start">
               <div className="space-y-1 text-left">
@@ -127,7 +273,6 @@ export default function MentorModal({
             </div>
           </DialogHeader>
 
-
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             <div className="max-w-3xl mx-auto space-y-4">
               <label className="text-sm font-semibold text-gray-700 block text-left">Your Draft:</label>
@@ -138,46 +283,79 @@ export default function MentorModal({
                 placeholder="Describe your strategy..."
               />
 
-
-              <Button
-                onClick={handleGetFeedback}
-                disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center"
-              >
-                {isGettingFeedback ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <span
-                    style={{
-                      fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                      fontWeight: 300,
-                      letterSpacing: '3.5px',
-                      color: '#F5C99B',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      fontSize: '26px',
-                    }}
-                  >
-                    <span>zig</span>
-                    <span style={{ position: 'relative', display: 'inline-block' }}>
-                      <span>ı</span>
-                      <svg
-                        style={{ position: 'absolute', top: '-7px', left: 'calc(50% - 2px)', transform: 'translateX(-50%)' }}
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 0 C12 6 14 9 20 12 C14 15 12 18 12 24 C12 18 10 15 4 12 C10 9 12 6 12 0 Z" fill="#F5C99B" />
-                      </svg>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleGetFeedback}
+                  disabled={isGettingFeedback || isGettingHelp || isLoadingContext || !currentText.trim()}
+                  className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center"
+                >
+                  {isGettingFeedback ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <span
+                      style={{
+                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                        fontWeight: 300,
+                        letterSpacing: '3.5px',
+                        color: '#F5C99B',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        fontSize: '26px',
+                      }}
+                    >
+                      <span>zig</span>
+                      <span style={{ position: 'relative', display: 'inline-block' }}>
+                        <span>ı</span>
+                        <svg
+                          style={{ position: 'absolute', top: '-7px', left: 'calc(50% - 2px)', transform: 'translateX(-50%)' }}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 0 C12 6 14 9 20 12 C14 15 12 18 12 24 C12 18 10 15 4 12 C10 9 12 6 12 0 Z" fill="#F5C99B" />
+                        </svg>
+                      </span>
+                      <span>t</span>
                     </span>
-                    <span>t</span>
-                  </span>
-                )}
-              </Button>
+                  )}
+                </Button>
 
+                <Button
+                  onClick={() => setHelpStage(helpStage ? null : 'choosing')}
+                  disabled={isGettingFeedback || isGettingHelp || isLoadingContext}
+                  variant="outline"
+                  className="flex-1 h-12 border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all"
+                >
+                  Help me
+                </Button>
+              </div>
 
-              {/* [NO_CREDITS] Show upgrade prompt when user has no credits left */}
-              {feedback === 'NO_CREDITS' && (
+              {helpStage === 'choosing' && (
+                <div className="flex gap-3 animate-in fade-in">
+                  <Button
+                    onClick={() => handleGetHelp('dont_know')}
+                    variant="outline"
+                    className="flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    I don't know where to start
+                  </Button>
+                  <Button
+                    onClick={() => handleGetHelp('searched_nothing')}
+                    variant="outline"
+                    className="flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    I tried and still couldn't land on it
+                  </Button>
+                </div>
+              )}
+
+              {isGettingHelp && (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="animate-spin text-indigo-600" />
+                </div>
+              )}
+
+              {helpResponse === 'NO_CREDITS' && (
                 <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-3 animate-in fade-in">
                   <p className="text-amber-800 font-semibold">You've used all your Zig It credits this month.</p>
                   <a href="/pricing" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">
@@ -186,62 +364,90 @@ export default function MentorModal({
                 </div>
               )}
 
-              {/* אזור הפידבק המעוצב */}
-              {feedback && feedback !== 'NO_CREDITS' && (
-                <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                  <div className="space-y-4 text-left">
-                    {feedback.split('\n').map((line, index) => {
-                      const trimmedLine = line.trim();
-                      if (!trimmedLine) return null;
-
-
-                      // 1. צביעת הכוכבים בכחול
-                      if (trimmedLine.includes('★') || trimmedLine.includes('☆')) {
-                        return (
-                          <div key={index} className="text-2xl tracking-[0.3em] text-blue-600 font-mono my-2">
-                            {trimmedLine}
-                          </div>
-                        );
-                      }
-
-
-                      // 2. עיצוב הכותרת הראשית בתוך הפידבק
-                      if (trimmedLine === "Zig Feedback") {
-                        return (
-                          <h3 key={index} className="text-xl font-bold text-indigo-900">
-                            {trimmedLine}
-                          </h3>
-                        );
-                      }
-
-
-                      // 3. עיצוב כותרות משניות (Analysis, Hints, etc)
-                      const subHeaders = ['Analysis:', 'Strategic Hints:', 'Challenge Question:'];
-                      const isSubHeader = subHeaders.some(h => trimmedLine.startsWith(h));
-
-
-                      if (isSubHeader) {
-                        return (
-                          <h4 key={index} className="text-lg font-bold text-indigo-900 mt-6 mb-1">
-                            {trimmedLine.replace(':', '')}
-                          </h4>
-                        );
-                      }
-
-
-                      // 4. טקסט רגיל (נקי מכוכביות)
-                      return (
-                        <p key={index} className="text-gray-700 leading-relaxed text-base">
-                          {trimmedLine}
-                        </p>
-                      );
-                    })}
-                  </div>
+              {helpResponse && helpResponse !== 'NO_CREDITS' && (
+                <div className="p-6 bg-indigo-50 border border-indigo-200 rounded-2xl text-left space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                  <p className="text-sm font-semibold text-indigo-900">Where to look</p>
+                  <p className="text-gray-700 leading-relaxed text-base">{helpResponse}</p>
                 </div>
+              )}
+
+              {rawFeedback === 'NO_CREDITS' && (
+                <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-3 animate-in fade-in">
+                  <p className="text-amber-800 font-semibold">You've used all your Zig It credits this month.</p>
+                  <a href="/pricing" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">
+                    Upgrade Plan
+                  </a>
+                </div>
+              )}
+
+              {rawFeedback && rawFeedback !== 'NO_CREDITS' && rawFeedback !== 'Error generating feedback.' && (
+                <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  {field ? (
+                    // Configured field: categorized score bars
+                    <>
+                      {leadIn && <p className="text-gray-800 font-medium mb-4">{leadIn}</p>}
+                      {parsedCategories.length > 0 ? (
+                        <div className="space-y-1">
+                          {parsedCategories.map((c, i) => (
+                            <ScoreBar
+                              key={i}
+                              name={c.name}
+                              score={c.score}
+                              reason={c.reason}
+                              previousScore={previousForThisField ? previousForThisField[c.name] : null}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-700 leading-relaxed text-base whitespace-pre-line">{rawFeedback}</p>
+                      )}
+                      {closingLine && <p className="text-gray-700 mt-4">{closingLine}</p>}
+                    </>
+                  ) : (
+                    // LEGACY FALLBACK rendering: original star-scale + section format
+                    <div className="space-y-4 text-left">
+                      {rawFeedback.split('\n').map((line, index) => {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) return null;
+                        if (trimmedLine.includes('★') || trimmedLine.includes('☆')) {
+                          return (
+                            <div key={index} className="text-2xl tracking-[0.3em] text-blue-600 font-mono my-2">
+                              {trimmedLine}
+                            </div>
+                          );
+                        }
+                        if (trimmedLine === 'Zig Feedback') {
+                          return (
+                            <h3 key={index} className="text-xl font-bold text-indigo-900">
+                              {trimmedLine}
+                            </h3>
+                          );
+                        }
+                        const subHeaders = ['Analysis:', 'Strategic Hints:', 'Challenge Question:'];
+                        const isSubHeader = subHeaders.some(h => trimmedLine.startsWith(h));
+                        if (isSubHeader) {
+                          return (
+                            <h4 key={index} className="text-lg font-bold text-indigo-900 mt-6 mb-1">
+                              {trimmedLine.replace(':', '')}
+                            </h4>
+                          );
+                        }
+                        return (
+                          <p key={index} className="text-gray-700 leading-relaxed text-base">
+                            {trimmedLine}
+                          </p>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {rawFeedback === 'Error generating feedback.' && (
+                <p className="text-red-600 text-sm">Error generating feedback. Please try again.</p>
               )}
             </div>
           </div>
-
 
           <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
             <Button variant="outline" onClick={onClose} className="px-6">Cancel</Button>
@@ -257,4 +463,3 @@ export default function MentorModal({
     </Dialog>
   );
 }
-
