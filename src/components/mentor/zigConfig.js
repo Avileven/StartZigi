@@ -34,9 +34,14 @@ then continue helping normally.
 
 OUTPUT FORMAT (strict — the UI parses this):
 Line 1: a one-sentence acknowledgement of what the founder wrote.
-Then, one line per category, exactly in this format:
+Then, one line per category, in exactly this format — category name,
+colon, score, "/10", dash, reason, all on the SAME line:
 CategoryName: X/10 - short honest reason
-(one line per category, in the order given below, nothing else on those lines)
+Do not put the category name and score on one line with the reason on
+the next line. Do not omit the colon or dash. Example of the expected
+format for a field with Clarity and Grounding categories:
+Clarity: 7/10 - clear and easy to follow, but a little long
+Grounding: 4/10 - no source given for the market size claim
 Then a closing line with brief encouragement or a pointer to what's most
 worth improving next. Do not add extra headers, bullets, or sections.`;
 

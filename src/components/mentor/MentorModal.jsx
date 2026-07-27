@@ -21,21 +21,47 @@ import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT } from './zigConfig';
 
-// Parses lines like "Clarity: 8/10 - short reason" out of the model's
-// plain-text response. Returns [] if the format wasn't followed.
+// Parses category scores out of the model's plain-text response.
+// Handles both "Clarity: 8/10 - reason" (single line) and "Clarity8/10"
+// followed by the reason on the next line — models don't always follow
+// the exact punctuation in the prompt, so this matches on the category
+// name + score pattern only and treats colon/dash as optional.
 function parseCategoryLines(text, categoryNames) {
-  const results = [];
-  const lines = text.split('\n');
-  for (const line of lines) {
-    const match = line.match(/^([A-Za-z /+]+):\s*(\d+)\/10\s*-?\s*(.*)$/);
-    if (match) {
-      const name = match[1].trim();
-      if (categoryNames.some(c => c.toLowerCase() === name.toLowerCase())) {
-        results.push({ name, score: parseInt(match[2], 10), reason: match[3].trim() });
+  const lines = text.split('\n').map(l => l.trim());
+  const escaped = categoryNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const startPattern = new RegExp(`^(${escaped.join('|')})\\s*:?\\s*(\\d{1,2})\\s*\\/\\s*10\\s*:?\\s*-?\\s*(.*)$`, 'i');
+
+  const categories = [];
+  let i = 0;
+  const leadInLines = [];
+  while (i < lines.length && !startPattern.test(lines[i])) {
+    if (lines[i]) leadInLines.push(lines[i]);
+    i++;
+  }
+  while (i < lines.length) {
+    const m = lines[i].match(startPattern);
+    if (!m) break;
+    const matchedLower = m[1].trim().toLowerCase();
+    const canonicalName = categoryNames.find(c => c.toLowerCase() === matchedLower) || m[1].trim();
+    const score = parseInt(m[2], 10);
+    let reason = m[3].trim();
+    i++;
+    if (!reason) {
+      while (i < lines.length && !lines[i]) i++; // skip blank lines
+      if (i < lines.length && !startPattern.test(lines[i])) {
+        reason = lines[i];
+        i++;
       }
     }
+    categories.push({ name: canonicalName, score, reason });
   }
-  return results;
+  const closingLines = lines.slice(i).filter(l => l && !startPattern.test(l));
+
+  return {
+    categories,
+    leadIn: leadInLines.join(' '),
+    closingLine: closingLines.join(' '),
+  };
 }
 
 function scoreColor(score) {
@@ -182,14 +208,11 @@ export default function MentorModal({
         setRawFeedback('Error generating feedback.');
       } else {
         const categoryNames = field.categories.map(c => c.name);
-        const parsed = parseCategoryLines(responseText, categoryNames);
-        const lines = responseText.split('\n').map(l => l.trim()).filter(Boolean);
-        const firstNonCategoryLine = lines.find(l => !parsed.some(p => l.startsWith(p.name)));
-        const lastLine = lines[lines.length - 1];
+        const { categories: parsed, leadIn: parsedLeadIn, closingLine: parsedClosing } = parseCategoryLines(responseText, categoryNames);
 
         setParsedCategories(parsed);
-        setLeadIn(firstNonCategoryLine && firstNonCategoryLine !== lastLine ? firstNonCategoryLine : '');
-        setClosingLine(lastLine && !parsed.some(p => lastLine.startsWith(p.name)) ? lastLine : '');
+        setLeadIn(parsedLeadIn);
+        setClosingLine(parsedClosing);
         setRawFeedback(responseText);
 
         // store this attempt as the new "previous" for next time
