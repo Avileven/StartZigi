@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
-import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT } from './zigConfig';
+import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT, CATEGORY_HELP_PROMPT } from './zigConfig';
 
 // Parses category scores out of the model's plain-text response.
 // Handles both "Clarity: 8/10 - reason" (single line) and "Clarity8/10"
@@ -70,7 +70,7 @@ function scoreColor(score) {
   return { text: '#993C1D', fill: '#D85A30' };
 }
 
-function ScoreBar({ name, score, reason, previousScore }) {
+function ScoreBar({ name, score, reason, previousScore, helpType, helpState, onHelp, onReveal, onDecline }) {
   const { text, fill } = scoreColor(score);
   const delta = previousScore != null ? score - previousScore : null;
   return (
@@ -85,6 +85,41 @@ function ScoreBar({ name, score, reason, previousScore }) {
         <div style={{ height: '100%', width: `${score * 10}%`, background: fill, borderRadius: 4 }} />
       </div>
       {reason && <p className="text-sm text-gray-600 mt-1">{reason}</p>}
+
+      {!helpState && (
+        <button
+          onClick={onHelp}
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-800 mt-2"
+        >
+          Help with {name}
+        </button>
+      )}
+
+      {helpState?.loading && (
+        <div className="mt-2"><Loader2 className="animate-spin w-4 h-4 text-indigo-600" /></div>
+      )}
+
+      {/* information-type: opt-in choice before any AI call */}
+      {helpState?.stage === 'offer' && (
+        <div className="mt-2 flex gap-2">
+          <button onClick={onReveal} className="text-xs font-medium px-3 py-1 rounded border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+            Show me
+          </button>
+          <button onClick={onDecline} className="text-xs font-medium px-3 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">
+            I'll look myself
+          </button>
+        </div>
+      )}
+
+      {helpState?.stage === 'declined' && (
+        <p className="text-xs text-gray-500 mt-2 italic">No problem — come back and revise once you have more.</p>
+      )}
+
+      {(helpState?.stage === 'shown' || helpState?.stage === 'revealed') && helpState.text && (
+        <div className="mt-2 p-3 bg-indigo-50 rounded-lg text-sm text-gray-700">
+          {helpState.text}
+        </div>
+      )}
     </div>
   );
 }
@@ -122,6 +157,10 @@ export default function MentorModal({
   const [isGettingHelp, setIsGettingHelp] = useState(false);
   const [helpResponse, setHelpResponse] = useState(null);
 
+  // Per-category "Help with X" state, keyed by category name.
+  // { [categoryName]: { stage: 'offer'|'shown'|'revealed'|'declined', loading, text } }
+  const [categoryHelp, setCategoryHelp] = useState({});
+
   const field = getFieldConfig(documentType, fieldKey); // null if not configured (e.g. MVP/MLP) — triggers legacy fallback below
 
   useEffect(() => {
@@ -150,6 +189,7 @@ export default function MentorModal({
       setClosingLine('');
       setHelpStage(null);
       setHelpResponse(null);
+      setCategoryHelp({});
       fetchVentureContext();
     }
   }, [isOpen, fieldValue, ventureId]);
@@ -162,6 +202,7 @@ export default function MentorModal({
     setParsedCategories([]);
     setHelpStage(null);
     setHelpResponse(null);
+    setCategoryHelp({});
 
     try {
       // LEGACY FALLBACK: this document/field isn't in zigConfig yet
@@ -273,6 +314,46 @@ export default function MentorModal({
       }
     }
     setIsGettingHelp(false);
+  };
+
+  // [CATEGORY HELP] Clicking "Help with X" under a specific score.
+  // Behavior branches by that category's configured help-type.
+  const handleCategoryHelpClick = async (categoryName) => {
+    const catConfig = field?.categories.find(c => c.name === categoryName);
+    const helpType = catConfig?.helpType || 'thinking';
+
+    if (helpType === 'information') {
+      // Don't call the AI yet — offer the opt-in choice first.
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'offer' } }));
+      return;
+    }
+
+    setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'shown', loading: true } }));
+    try {
+      const prompt = CATEGORY_HELP_PROMPT({ field, categoryName, helpType, currentText, ventureDesc });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'shown', loading: false, text: data?.response || 'No response from AI.' } }));
+    } catch (error) {
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'shown', loading: false, text: 'Error generating help.' } }));
+    }
+  };
+
+  // [CATEGORY HELP] "Show me" — only fires the AI/search call after
+  // explicit opt-in, per the information help-type rule (never automatic).
+  const handleCategoryReveal = async (categoryName) => {
+    setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: true } }));
+    try {
+      const prompt = CATEGORY_HELP_PROMPT({ field, categoryName, helpType: 'information', currentText, ventureDesc });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.' } }));
+    } catch (error) {
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: 'Error generating help.' } }));
+    }
+  };
+
+  // [CATEGORY HELP] "I'll look myself" — no AI call, just acknowledges.
+  const handleCategoryDecline = (categoryName) => {
+    setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'declined' } }));
   };
 
   const previousForThisField = scoreHistory[fieldKey]?.categories || null;
@@ -418,6 +499,11 @@ export default function MentorModal({
                               score={c.score}
                               reason={c.reason}
                               previousScore={previousForThisField ? previousForThisField[c.name] : null}
+                              helpType={field.categories.find(cat => cat.name === c.name)?.helpType}
+                              helpState={categoryHelp[c.name]}
+                              onHelp={() => handleCategoryHelpClick(c.name)}
+                              onReveal={() => handleCategoryReveal(c.name)}
+                              onDecline={() => handleCategoryDecline(c.name)}
                             />
                           ))}
                         </div>

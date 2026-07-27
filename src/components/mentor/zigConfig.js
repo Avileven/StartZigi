@@ -194,6 +194,51 @@ export function getFieldConfig(documentType, fieldKey) {
   return FIELD_CONFIG[documentType]?.[fieldKey];
 }
 
+// Per-category follow-up help — called only AFTER feedback has been
+// given, when the founder clicks "Help with [Category]" under a specific
+// score. Behavior depends on that category's help-type:
+// - thinking: guiding questions / unrelated-domain example, never the answer
+// - middle: a direction to verify, never the final answer
+// - information: only called once the founder has explicitly chosen to
+//   see more (after an opt-in "Show me / I'll look myself" choice) — see
+//   MentorModal's handleCategoryReveal.
+export function CATEGORY_HELP_PROMPT({ field, categoryName, helpType, currentText, ventureDesc }) {
+  const base = `You are Zig, an entrepreneurial-thinking coach inside a startup training tool (not a real business plan for investors).
+Field: "${field.label}". Category being helped: "${categoryName}".
+Venture context: "${ventureDesc}".
+Founder's current draft for this field: "${currentText}"`;
+
+  if (helpType === 'thinking') {
+    return `${base}
+
+This category is thinking-type: do NOT rewrite or improve their text, and
+do NOT give the answer. Either ask 1-2 short guiding questions specific to
+this category, OR give one brief structural example from an UNRELATED
+field or venture (never anything resembling their own venture) that shows
+the shape of a strong answer without content they could copy. 3-4
+sentences, plain text, no markdown.`;
+  }
+
+  if (helpType === 'middle') {
+    return `${base}
+
+This category is middle-type: suggest ONE concrete direction to verify or
+check related to this category — not the final answer, just what to look
+at and why it matters for this specific category. 2-3 sentences, plain
+text, no markdown.`;
+  }
+
+  // information — only reached after the founder opted in to "Show me"
+  return `${base}
+
+The founder explicitly asked to see more for this category. Provide 2-4
+concrete, specific findings (named examples, real data points, or
+comparable cases) that add genuine value here — framed as an addition on
+top of what they already wrote, never as "the answer you should have had".
+Be concrete and grounded, not generic. 3-5 sentences or a short list,
+plain text, no markdown.`;
+}
+
 // Builds the full feedback prompt for a given field.
 // allFieldValues: { [fieldKey]: string } — current text of every field in the plan
 // firstPass: boolean — has this venture already completed Foundation once?
@@ -214,8 +259,8 @@ export function buildFeedbackPrompt({ documentType, fieldKey, currentText, allFi
     .join('\n');
 
   const thresholdRule = firstPass
-    ? 'STOPPING RULE: This is the founder\'s first pass through Foundation. If every category scores 7 or above individually, say explicitly that this is strong for this stage and they can move on.'
-    : 'STOPPING RULE: The founder has been through this field before. Only stop and congratulate once the AVERAGE across categories reaches 8.5 — a stricter bar than first pass.';
+    ? `STOPPING RULE: This is the founder's first pass through Foundation. If every category scores 7 or above individually, the closing line must say plainly this is strong for this stage and they can move on — but NEVER mention the number 7, "threshold", "average", or any score in that closing line. Praise the content itself (e.g. "this gives you a clear, distinct group to design around"), not a grade.`
+    : `STOPPING RULE: The founder has been through this field before. Only stop and congratulate once the AVERAGE across categories reaches 8.5. Whether stopping or not, the closing line must NEVER mention "average", "8.5", "threshold", or any number — point at the concept to sharpen (e.g. "narrowing down exactly who your first users are"), not a score to chase.`;
 
   const historyNote = previousScore
     ? `PREVIOUS ATTEMPT (this session): ${JSON.stringify(previousScore)}. If this revision shows genuine improvement, acknowledge it explicitly and warmly before anything else.`
