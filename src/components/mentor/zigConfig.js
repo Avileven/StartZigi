@@ -45,6 +45,34 @@ Grounding: 4/10 - no source given for the market size claim
 Then a closing line with brief encouragement or a pointer to what's most
 worth improving next. Do not add extra headers, bullets, or sections.`;
 
+// Plain-language one-liner shown under each category name in the UI, so
+// founders don't have to guess what an abstract word like "Grounding"
+// means. Matched by normalized name (case/space-insensitive) — see
+// normalize() usage pattern in MentorModal.jsx's parser.
+export const CATEGORY_DESCRIPTIONS = {
+  'clarity': 'How easy this is to understand on a first read',
+  'specificity': 'How narrowly targeted this is, vs. generic',
+  'specificityofmotivation': 'How personal and specific your reason is, vs. generic',
+  'grounding': 'Whether this is backed by something real, not just asserted',
+  'datagrounding': 'Whether the numbers are backed by a real source',
+  'dataaccuracy': 'Whether the numbers are backed by a real source',
+  'informationquality': 'Whether the details given are accurate and relevant',
+  'completeness': "Whether anything important is missing",
+  'differentiation': "What makes this different from existing alternatives",
+  'uniqueness': "What makes this different from existing alternatives",
+  'feasibility': "How realistic this is to actually build or do",
+  'realism': "Whether the numbers or claims are believable",
+  'marketfit': "Whether this matches what the market actually wants",
+  'genuineness': "Whether this reads as a real reason, not a filler answer",
+  'gapawareness': "Whether you recognize what you don't know yet",
+  'justification': "Whether you explained why this choice makes sense",
+  'relevantfit': "Why you specifically are suited to this",
+  'credibility': "Whether this is believable given what you've shared",
+  'alignment': "Whether this is consistent with what you wrote elsewhere",
+  'alignmentwithproblem': "Whether this matches the problem you defined earlier",
+  'alignmentwithmission+marketsize': "Whether this fits your mission and market size",
+};
+
 export const HELP_TYPE_INSTRUCTIONS = {
   thinking: `This category is "thinking" type: never supply written content or
 external info. Ask guiding questions only, or offer one structural example
@@ -271,6 +299,8 @@ export function buildFeedbackPrompt({ documentType, fieldKey, currentText, allFi
 FIELD: ${field.label}
 CATEGORIES FOR THIS FIELD:
 ${categoryLines}
+
+MANDATORY: You must output a scored line for ALL ${field.categories.length} categories listed above — ${field.categories.map(c => `"${c.name}"`).join(', ')} — every single time, even if some categories deserve a low score or feel repetitive. Never skip, merge, or omit any of them.
 
 GIBBERISH LOOKS LIKE (for this field specifically): ${field.gibberishHint}
 

@@ -18,8 +18,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
-import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT, CATEGORY_HELP_PROMPT } from './zigConfig';
+import { Loader2, Lightbulb, Search, Globe } from 'lucide-react';
+import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT, CATEGORY_HELP_PROMPT, CATEGORY_DESCRIPTIONS } from './zigConfig';
+
+const HELP_TYPE_ICON = {
+  thinking: Lightbulb,
+  middle: Search,
+  information: Globe,
+};
 
 // Parses category scores out of the model's plain-text response.
 // Handles both "Clarity: 8/10 - reason" (single line) and "Clarity8/10"
@@ -80,14 +86,20 @@ function scoreColor(score) {
 function ScoreBar({ name, score, reason, previousScore, helpType, helpState, onHelp, onReveal, onDecline }) {
   const { text, fill } = scoreColor(score);
   const delta = previousScore != null ? score - previousScore : null;
+  const Icon = HELP_TYPE_ICON[helpType] || Lightbulb;
+  const description = CATEGORY_DESCRIPTIONS[name.toLowerCase().replace(/\s+/g, '')];
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
-        <span style={{ fontWeight: 500 }}>{name}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: 14, marginBottom: 2 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
+          <Icon size={14} className="text-gray-400" />
+          {name}
+        </span>
         <span style={{ color: text, fontWeight: 500 }}>
           {score}/10{delta ? ` (${delta > 0 ? '+' : ''}${delta} from last time)` : ''}
         </span>
       </div>
+      {description && <p className="text-xs text-gray-400 mb-2">{description}</p>}
       <div style={{ height: 8, background: '#eee', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${score * 10}%`, background: fill, borderRadius: 4 }} />
       </div>
