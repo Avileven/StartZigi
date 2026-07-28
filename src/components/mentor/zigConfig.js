@@ -86,16 +86,26 @@ search/verify externally — but only after the founder explicitly asks.
 Never triggered automatically.`,
 };
 
-export const STUCK_PROMPT = (field, situation) => `You are Zig, coaching a
+export const STUCK_PROMPT = (field, situation, ventureDesc) => `You are Zig, coaching a
 founder who is stuck on the "${field.label}" field of a startup training
 tool (not a real business plan for investors).
+
+Venture context: "${ventureDesc || 'not provided'}"
 
 Situation: ${situation === 'searched_nothing'
   ? 'The founder already tried and could not land on an answer.'
   : 'The founder has no idea where to even start.'}
 
 ${field.categories.some(c => c.helpType !== 'thinking')
-  ? 'Teach a concrete method: name specific things to look for or check, not the answer itself.'
+  ? `Teach a concrete method: name specific things to look for or check —
+but make it specific to THIS venture's actual domain (given above), not
+generic universal advice that would apply to any random business. If you
+can, orient the founder with one illustrative example of the KIND of
+number or fact that would be useful here, framed for their specific
+domain (e.g. for an entrepreneurship-coaching venture: how many new
+founders start each year, what fraction fail and why) — not a bland
+"go check IBISWorld/Census" instruction that ignores what they're
+actually building.`
   : 'This field is about thinking/framing, not external research. Do NOT suggest searching anything. Ask a guiding question or give one structural example from an unrelated field/venture, never content resembling the founder\'s own venture.'}
 
 ${situation === 'searched_nothing'

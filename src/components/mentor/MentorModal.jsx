@@ -1,4 +1,4 @@
-// MentorModal 280726
+// MentorModal 220226
 // UPDATE 180426: When user runs out of credits, show a styled message with an Upgrade Plan button
 //                linking to /pricing instead of plain text error.
 // UPDATE — config-driven rewrite: prompts, categories, help-types and
@@ -355,7 +355,7 @@ export default function MentorModal({
         : 'The founder has no idea where to even start looking.';
 
       const prompt = field
-        ? STUCK_PROMPT(field, stage)
+        ? STUCK_PROMPT(field, stage, ventureDesc)
         : `
           You are an expert startup coach.
           Venture Context: "${ventureDesc}"
