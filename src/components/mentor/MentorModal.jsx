@@ -282,13 +282,33 @@ export default function MentorModal({
 
       // [CREDITS] one credit per feedback call
       const data = await InvokeLLM({ prompt, creditType: 'mentor' });
-      const responseText = data?.response || '';
+      let responseText = data?.response || '';
 
       if (!responseText) {
         setRawFeedback('Error generating feedback.');
       } else {
         const categoryNames = field.categories.map(c => c.name);
-        const { categories: parsed, leadIn: parsedLeadIn, closingLine: parsedClosing } = parseCategoryLines(responseText, categoryNames);
+        let { categories: parsed, leadIn: parsedLeadIn, closingLine: parsedClosing } = parseCategoryLines(responseText, categoryNames);
+
+        // [RELIABILITY] Asking nicely in the prompt isn't enough — models
+        // sometimes skip a category anyway. If the response is missing
+        // any, retry once automatically before showing the founder
+        // anything, rather than silently displaying a partial result.
+        if (parsed.length < categoryNames.length) {
+          try {
+            const retryData = await InvokeLLM({ prompt, creditType: 'mentor' });
+            const retryText = retryData?.response || '';
+            const retryParsed = parseCategoryLines(retryText, categoryNames);
+            if (retryParsed.categories.length > parsed.length) {
+              responseText = retryText;
+              parsed = retryParsed.categories;
+              parsedLeadIn = retryParsed.leadIn;
+              parsedClosing = retryParsed.closingLine;
+            }
+          } catch (retryError) {
+            // if the retry itself fails (e.g. credits), just keep what we had
+          }
+        }
 
         setParsedCategories(parsed);
         setLeadIn(parsedLeadIn);
@@ -472,7 +492,7 @@ export default function MentorModal({
                   variant="outline"
                   className="flex-1 h-12 border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all"
                 >
-                  TEST123 Help me
+                  Help me
                 </Button>
               </div>
 
