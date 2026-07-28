@@ -1,11 +1,11 @@
-// MentorModal 220226
+// MentorModal 280726
 // UPDATE 180426: When user runs out of credits, show a styled message with an Upgrade Plan button
 //                linking to /pricing instead of plain text error.
 // UPDATE — config-driven rewrite: prompts, categories, help-types and
 // cross-field context now come from zigConfig.js (FIELD_CONFIG) instead of
 // being hand-written per call. See zig-core-prompt.md for the full spec
 // this implements.
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { InvokeLLM } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Lightbulb, Search, Globe } from 'lucide-react';
+import { Loader2, Lightbulb, Search, Globe, CheckCircle2 } from 'lucide-react';
 import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT, CATEGORY_HELP_PROMPT, CATEGORY_DESCRIPTIONS } from './zigConfig';
 
 const HELP_TYPE_ICON = {
@@ -186,6 +186,11 @@ export default function MentorModal({
   const [scoreHistory, setScoreHistory] = useState({});
 
   // helpStage: null (closed) | 'choosing' | 'dont_know' | 'searched_nothing'
+  // Which mode is currently selected — the founder picks this FIRST,
+  // then "Zig it" executes whichever one is selected.
+  const [mode, setMode] = useState('feedback'); // 'feedback' | 'help'
+  const responseRef = useRef(null);
+
   const [helpStage, setHelpStage] = useState(null);
   const [isGettingHelp, setIsGettingHelp] = useState(false);
   const [helpResponse, setHelpResponse] = useState(null);
@@ -195,6 +200,14 @@ export default function MentorModal({
   const [categoryHelp, setCategoryHelp] = useState({});
 
   const field = getFieldConfig(documentType, fieldKey); // null if not configured (e.g. MVP/MLP) — triggers legacy fallback below
+
+  // Auto-scroll to the response the moment it's ready — the founder
+  // shouldn't have to go looking for it.
+  useEffect(() => {
+    if ((rawFeedback || helpResponse) && responseRef.current) {
+      responseRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [rawFeedback, helpResponse]);
 
   useEffect(() => {
     const fetchVentureContext = async () => {
@@ -216,6 +229,7 @@ export default function MentorModal({
 
     if (isOpen) {
       setCurrentText(fieldValue || '');
+      setMode('feedback');
       setRawFeedback(null);
       setParsedCategories([]);
       setLeadIn('');
@@ -443,13 +457,46 @@ export default function MentorModal({
                 placeholder="Describe your strategy..."
               />
 
-              <div className="flex gap-3">
+              {/* Step 1: pick a mode. Step 2: click Zig it to run it. */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMode('feedback')}
+                  className={`flex-1 h-10 rounded-lg text-sm font-medium border transition-all ${
+                    mode === 'feedback'
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Feedback
+                </button>
+                <button
+                  onClick={() => setMode('help')}
+                  className={`flex-1 h-10 rounded-lg text-sm font-medium border transition-all ${
+                    mode === 'help'
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Help me
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
                 <Button
-                  onClick={handleGetFeedback}
-                  disabled={isGettingFeedback || isGettingHelp || isLoadingContext || !currentText.trim()}
+                  onClick={() => {
+                    if (mode === 'feedback') {
+                      handleGetFeedback();
+                    } else {
+                      setHelpStage('choosing');
+                    }
+                  }}
+                  disabled={
+                    isGettingFeedback || isGettingHelp || isLoadingContext ||
+                    (mode === 'feedback' && !currentText.trim())
+                  }
                   className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center"
                 >
-                  {isGettingFeedback ? (
+                  {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
                   ) : (
                     <span
@@ -479,18 +526,14 @@ export default function MentorModal({
                     </span>
                   )}
                 </Button>
-
-                <Button
-                  onClick={() => setHelpStage(helpStage ? null : 'choosing')}
-                  disabled={isGettingFeedback || isGettingHelp || isLoadingContext}
-                  variant="outline"
-                  className="flex-1 h-12 border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all"
-                >
-                  Help me
-                </Button>
+                {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
+                  <span className="flex items-center gap-1 text-sm text-green-700 font-medium">
+                    <CheckCircle2 size={16} /> Done
+                  </span>
+                )}
               </div>
 
-              {helpStage === 'choosing' && (
+              {mode === 'help' && helpStage === 'choosing' && (
                 <div className="flex gap-3 animate-in fade-in">
                   <Button
                     onClick={() => handleGetHelp('dont_know')}
@@ -509,11 +552,7 @@ export default function MentorModal({
                 </div>
               )}
 
-              {isGettingHelp && (
-                <div className="flex justify-center py-2">
-                  <Loader2 className="animate-spin text-indigo-600" />
-                </div>
-              )}
+              <div ref={responseRef} />
 
               {helpResponse === 'NO_CREDITS' && (
                 <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-3 animate-in fade-in">
@@ -610,6 +649,15 @@ export default function MentorModal({
 
               {rawFeedback === 'Error generating feedback.' && (
                 <p className="text-red-600 text-sm">Error generating feedback. Please try again.</p>
+              )}
+
+              {/* Fixed next-step guidance — shown after ANY successful response,
+                  so the founder always knows what to do next. */}
+              {((rawFeedback && rawFeedback !== 'NO_CREDITS' && rawFeedback !== 'Error generating feedback.') ||
+                (helpResponse && helpResponse !== 'NO_CREDITS')) && (
+                <p className="text-sm text-gray-500 text-center pt-2">
+                  Update your draft above based on this, then click <span className="font-medium text-gray-700">Save &amp; Close</span> if you're done — or keep refining and run Zig it again.
+                </p>
               )}
             </div>
           </div>
