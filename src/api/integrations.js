@@ -117,28 +117,30 @@ export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = fal
     const data = await response.json();
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI";
 
-    // [DEBUG - TEMPORARY] Log the full raw response when search is used,
-    // so we can see the actual field names Google returns for this model/
-    // API version and fix the extraction below if it's wrong. Remove
-    // once grounding sources are confirmed working.
-    if (enableSearch) {
-      console.log('🔍 Full Gemini response (search grounding debug):', JSON.stringify(data, null, 2));
-    }
-
     // [SEARCH GROUNDING] When enableSearch was used, Gemini returns the
     // actual source URLs it grounded the answer in — surface these so
     // the founder can verify themselves, not just trust the AI's word.
     let sources = [];
+    let debugRawMetadata = null;
     if (enableSearch) {
       const chunks = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
       sources = chunks
         .map(c => c.web ? { uri: c.web.uri, title: c.web.title } : null)
         .filter(Boolean);
+      // [DEBUG - TEMPORARY] Return the raw candidate (minus the long text)
+      // so the app can display it directly, instead of relying on the
+      // browser console. Remove once grounding sources are confirmed.
+      debugRawMetadata = JSON.stringify(
+        { ...data.candidates?.[0], content: undefined },
+        null,
+        2
+      );
     }
 
     return {
       response: aiText,
       sources,
+      debugRawMetadata,
       usage: {},
     };
   } catch (error) {

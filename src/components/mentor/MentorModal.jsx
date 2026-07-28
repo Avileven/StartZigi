@@ -151,6 +151,12 @@ function ScoreBar({ name, score, reason, previousScore, helpType, helpState, onH
               </ul>
             </div>
           )}
+          {helpState.debugRawMetadata && (
+            <details className="mt-2 pt-2 border-t border-indigo-100">
+              <summary className="text-xs font-medium text-amber-700 cursor-pointer">Debug: raw response (temporary, click to expand)</summary>
+              <pre className="text-[10px] text-gray-600 whitespace-pre-wrap break-all mt-1 max-h-40 overflow-auto bg-white p-2 rounded">{helpState.debugRawMetadata}</pre>
+            </details>
+          )}
         </div>
       )}
     </div>
@@ -381,7 +387,7 @@ export default function MentorModal({
     try {
       const prompt = CATEGORY_HELP_PROMPT({ field, categoryName, helpType: 'information', currentText, ventureDesc });
       const data = await InvokeLLM({ prompt, creditType: 'mentor', enableSearch: true });
-      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.', sources: data?.sources || [] } }));
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.', sources: data?.sources || [], debugRawMetadata: data?.debugRawMetadata } }));
     } catch (error) {
       setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: 'Error generating help.' } }));
     }
