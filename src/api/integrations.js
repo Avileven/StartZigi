@@ -15,7 +15,14 @@ import { supabase } from '@/lib/supabase'
 //   mentor       → gemini-3.5-flash (fast, cheap) [UPDATED July 2026: gemini-2.5-flash deprecated, replaced with GA successor]
 //   studio_basic → gemini-3.1-pro-preview (higher quality) [UPDATED July 2026: gemini-2.5-pro deprecated; official replacement, currently preview-only]
 //   studio_boost → gemini-3.1-pro-preview (higher quality)
-export async function InvokeLLM({ prompt, creditType = 'sys' }) {
+//
+// [SEARCH GROUNDING] Pass enableSearch: true to ground this specific call
+// in live Google Search results instead of only the model's training
+// data. Use this ONLY for calls where factual accuracy matters (e.g.
+// Zig's "information"-type category reveals — checking if competitors,
+// market data, etc. are real) — not for every call, to keep cost/latency
+// down on calls that don't need it (thinking/middle-type guidance).
+export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = false }) {
   try {
 
 
@@ -81,17 +88,22 @@ export async function InvokeLLM({ prompt, creditType = 'sys' }) {
       ? 'gemini-3.1-pro-preview'
       : 'gemini-3.5-flash';
 
-    console.log(`📡 Calling Gemini (${model})...`);
+    console.log(`📡 Calling Gemini (${model})${enableSearch ? ' with search grounding' : ''}...`);
+    const requestBody = {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+    };
+    if (enableSearch) {
+      requestBody.tools = [{ google_search: {} }];
+    }
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log('✅ Gemini responded, status:', response.status);

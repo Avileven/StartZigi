@@ -340,11 +340,14 @@ export default function MentorModal({
 
   // [CATEGORY HELP] "Show me" — only fires the AI/search call after
   // explicit opt-in, per the information help-type rule (never automatic).
+  // enableSearch: true grounds this specific call in live Google Search,
+  // since this is exactly the case where factual accuracy matters (see
+  // integrations.js for why this isn't on by default for every call).
   const handleCategoryReveal = async (categoryName) => {
     setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: true } }));
     try {
       const prompt = CATEGORY_HELP_PROMPT({ field, categoryName, helpType: 'information', currentText, ventureDesc });
-      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor', enableSearch: true });
       setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.' } }));
     } catch (error) {
       setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: 'Error generating help.' } }));
