@@ -28,8 +28,15 @@ import { getFieldConfig, buildFeedbackPrompt, STUCK_PROMPT, CATEGORY_HELP_PROMPT
 // name + score pattern only and treats colon/dash as optional.
 function parseCategoryLines(text, categoryNames) {
   const lines = text.split('\n').map(l => l.trim());
-  const escaped = categoryNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  // Escape regex special chars, then let any internal spaces in a
+  // multi-word category name (e.g. "Information Quality") match zero or
+  // more spaces — models sometimes drop the space entirely
+  // ("InformationQuality6/10"), which a literal match would miss.
+  const escaped = categoryNames.map(n =>
+    n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s*')
+  );
   const startPattern = new RegExp(`^(${escaped.join('|')})\\s*:?\\s*(\\d{1,2})\\s*\\/\\s*10\\s*:?\\s*-?\\s*(.*)$`, 'i');
+  const normalize = s => s.toLowerCase().replace(/\s+/g, '');
 
   const categories = [];
   let i = 0;
@@ -41,8 +48,8 @@ function parseCategoryLines(text, categoryNames) {
   while (i < lines.length) {
     const m = lines[i].match(startPattern);
     if (!m) break;
-    const matchedLower = m[1].trim().toLowerCase();
-    const canonicalName = categoryNames.find(c => c.toLowerCase() === matchedLower) || m[1].trim();
+    const matchedNormalized = normalize(m[1].trim());
+    const canonicalName = categoryNames.find(c => normalize(c) === matchedNormalized) || m[1].trim();
     const score = parseInt(m[2], 10);
     let reason = m[3].trim();
     i++;
