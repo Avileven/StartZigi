@@ -117,9 +117,20 @@ export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = fal
     const data = await response.json();
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI";
 
+    // [SEARCH GROUNDING] When enableSearch was used, Gemini returns the
+    // actual source URLs it grounded the answer in — surface these so
+    // the founder can verify themselves, not just trust the AI's word.
+    let sources = [];
+    if (enableSearch) {
+      const chunks = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      sources = chunks
+        .map(c => c.web ? { uri: c.web.uri, title: c.web.title } : null)
+        .filter(Boolean);
+    }
 
     return {
       response: aiText,
+      sources,
       usage: {},
     };
   } catch (error) {

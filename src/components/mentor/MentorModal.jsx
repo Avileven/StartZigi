@@ -137,6 +137,20 @@ function ScoreBar({ name, score, reason, previousScore, helpType, helpState, onH
       {(helpState?.stage === 'shown' || helpState?.stage === 'revealed') && helpState.text && (
         <div className="mt-2 p-3 bg-indigo-50 rounded-lg text-sm text-gray-700">
           {helpState.text}
+          {helpState.sources && helpState.sources.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-indigo-100">
+              <p className="text-xs font-medium text-indigo-900 mb-1">Sources — check these yourself:</p>
+              <ul className="space-y-0.5">
+                {helpState.sources.map((s, idx) => (
+                  <li key={idx}>
+                    <a href={s.uri} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline break-all">
+                      {s.title || s.uri}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -367,7 +381,7 @@ export default function MentorModal({
     try {
       const prompt = CATEGORY_HELP_PROMPT({ field, categoryName, helpType: 'information', currentText, ventureDesc });
       const data = await InvokeLLM({ prompt, creditType: 'mentor', enableSearch: true });
-      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.' } }));
+      setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: data?.response || 'No response from AI.', sources: data?.sources || [] } }));
     } catch (error) {
       setCategoryHelp(prev => ({ ...prev, [categoryName]: { stage: 'revealed', loading: false, text: 'Error generating help.' } }));
     }
