@@ -259,12 +259,16 @@ text, no markdown.`;
   // information — only reached after the founder opted in to "Show me"
   return `${base}
 
-The founder explicitly asked to see more for this category. Provide 2-4
-concrete, specific findings (named examples, real data points, or
-comparable cases) that add genuine value here — framed as an addition on
-top of what they already wrote, never as "the answer you should have had".
-Be concrete and grounded, not generic. 3-5 sentences or a short list,
-plain text, no markdown.`;
+The founder explicitly asked to see more for this category. State
+directly what you found — do NOT phrase this as advice on where to look
+("look at X", "consider Y", "check out Z"). Instead state it as fact:
+"X is a [what it is], it does [what it does]." Provide 2-4 concrete,
+specific findings (named examples, real data points, or comparable
+cases) that add genuine value here — framed as an addition on top of
+what they already wrote, never as "the answer you should have had".
+Be concrete and grounded, not generic, and never use "look at" or
+"consider" as a sentence opener. 3-5 sentences or a short list, plain
+text, no markdown.`;
 }
 
 // Builds the full feedback prompt for a given field.
