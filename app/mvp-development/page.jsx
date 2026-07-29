@@ -604,17 +604,33 @@ export default function MVPDevelopment() {
                 )}
 
                 {featureMatrix.length > 0 && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-sm text-blue-900 mb-2">Selected MVP Features:</h4>
-                    <p className="text-xs text-blue-700 mb-2">This is the core feature set for your initial product launch.</p>
-                    <div className="space-y-1">
-                      {featureMatrix.filter(f => f.isSelected).map(feature => (
-                        <div key={feature.id} className="text-sm text-blue-700">
-                          ✓ {feature.featureName || 'Unnamed Feature'} (Priority Score: {feature.priorityScore})
-                        </div>
-                      ))}
+                  <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-semibold text-sm text-indigo-900">Selected MVP Features</h4>
+                      <button
+                        onClick={handleSuggestFeatures}
+                        disabled={isSuggestingFeatures}
+                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                      >
+                        {isSuggestingFeatures ? 'Thinking...' : '+ Suggest more'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-indigo-700 mb-3">This is the core feature set for your initial product launch.</p>
+                    <div className="space-y-2">
+                      {featureMatrix.filter(f => f.isSelected).map(feature => {
+                        const score = feature.priorityScore;
+                        const badgeColor = score >= 49 ? 'bg-green-100 text-green-800' : score >= 25 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
+                        return (
+                          <div key={feature.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 shadow-sm">
+                            <span className="text-sm font-medium text-gray-800">{feature.featureName || 'Unnamed Feature'}</span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeColor}`}>
+                              {score}
+                            </span>
+                          </div>
+                        );
+                      })}
                       {featureMatrix.filter(f => f.isSelected).length === 0 && (
-                        <p className="text-sm text-blue-600">No features selected yet.</p>
+                        <p className="text-sm text-indigo-600">No features selected yet.</p>
                       )}
                     </div>
                   </div>
