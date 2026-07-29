@@ -2,7 +2,7 @@
 // mvp-development 240126
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
@@ -47,8 +47,13 @@ export default function MVPDevelopment() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showMvpExplainer, setShowMvpExplainer] = useState(false);
-  const [showSuggestHint, setShowSuggestHint] = useState(true);
-  const [showAnalyzeHint, setShowAnalyzeHint] = useState(false);
+
+  // First-visit tooltip sequence explaining how to use the Feature
+  // Matrix itself (name → Add → rate → select → review selection) —
+  // triggered when the matrix actually scrolls into view, not on page
+  // load, so it isn't missed while still reading the top of the page.
+  const [hintStep, setHintStep] = useState(0); // 0 = not started, 1-4 = which hint is showing, 5 = done
+  const matrixRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -81,13 +86,28 @@ export default function MVPDevelopment() {
     return () => document.body.classList.remove('startzig-force-light');
   }, []);
 
-  // First-visit tooltip sequence for the two Zig it circles — same
-  // pattern as the business plan page's Tips/Zig it hints.
+  // Starts the 4-step hint sequence only once the Feature Matrix card
+  // actually scrolls into view — not on page load, so it isn't missed.
   useEffect(() => {
-    const t1 = setTimeout(() => { setShowSuggestHint(false); setShowAnalyzeHint(true); }, 5000);
-    const t2 = setTimeout(() => setShowAnalyzeHint(false), 10000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+    if (!matrixRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hintStep === 0) {
+          setHintStep(1);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(matrixRef.current);
+    return () => observer.disconnect();
+  }, [hintStep]);
+
+  useEffect(() => {
+    if (hintStep === 0 || hintStep >= 5) return;
+    const t = setTimeout(() => setHintStep(prev => prev + 1), 4500);
+    return () => clearTimeout(t);
+  }, [hintStep]);
 
   useEffect(() => {
     const loadVenture = async () => {
@@ -461,7 +481,7 @@ export default function MVPDevelopment() {
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
+          <Card className="mb-6" ref={matrixRef}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
@@ -496,24 +516,39 @@ export default function MVPDevelopment() {
                  </div>
                 </div>
 
-                {featureMatrix.map((feature) => (
+                {featureMatrix.map((feature, idx) => (
                   <Card key={feature.id} className="bg-gray-50">
                     <CardContent className="p-4">
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={feature.isSelected}
-                            onCheckedChange={(checked) => handleFeatureChange(feature.id, 'isSelected', checked)}
-                            className="mt-1"
-                          />
+                          <div className="relative mt-1">
+                            {idx === 0 && hintStep === 3 && (
+                              <div className="absolute -top-16 left-0 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-48 z-10 shadow-lg text-center">
+                                Check this box to mark a feature as part of your MVP.
+                                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                              </div>
+                            )}
+                            <Checkbox
+                              checked={feature.isSelected}
+                              onCheckedChange={(checked) => handleFeatureChange(feature.id, 'isSelected', checked)}
+                            />
+                          </div>
 
                           <div className="flex-1">
-                            <Input
-                              value={feature.featureName}
-                              onChange={(e) => handleFeatureChange(feature.id, 'featureName', e.target.value)}
-                              placeholder="Feature name..."
-                              className="font-semibold mb-3"
-                            />
+                            <div className="relative">
+                              {idx === 0 && hintStep === 1 && (
+                                <div className="absolute -top-16 left-0 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-56 z-10 shadow-lg text-center">
+                                  Write the name of a feature you're considering here.
+                                  <div className="absolute top-full left-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              )}
+                              <Input
+                                value={feature.featureName}
+                                onChange={(e) => handleFeatureChange(feature.id, 'featureName', e.target.value)}
+                                placeholder="Feature name..."
+                                className="font-semibold mb-3"
+                              />
+                            </div>
 
                             <div className="grid grid-cols-3 gap-4">
                               <div>
@@ -587,38 +622,38 @@ export default function MVPDevelopment() {
                   </Card>
                 ))}
 
-                <Button
-                  onClick={handleAddFeature}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Feature
-                </Button>
+                <div className="relative">
+                  {hintStep === 2 && (
+                    <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-56 z-10 shadow-lg text-center">
+                      Click here to add another feature to the list.
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleAddFeature}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Feature
+                  </Button>
+                </div>
 
                 {/* [ZIG] Suggest additional features — never automatic, opt-in only.
                     Moved up here, right after Add Feature, so founders see
                     suggestions before deciding what to select. */}
                 <div className="flex items-center justify-center gap-3">
-                  <div className="relative shrink-0">
-                    {showSuggestHint && (
-                      <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-56 z-10 shadow-lg text-center">
-                        Write the features you want, click Add, then think about how to rate them — and mark which ones you want to start with.
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
+                  <Button
+                    onClick={handleSuggestFeatures}
+                    disabled={isSuggestingFeatures}
+                    className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                  >
+                    {isSuggestingFeatures ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
                     )}
-                    <Button
-                      onClick={handleSuggestFeatures}
-                      disabled={isSuggestingFeatures}
-                      className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
-                    >
-                      {isSuggestingFeatures ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
-                      )}
-                    </Button>
-                  </div>
+                  </Button>
                   <p className="text-sm text-gray-600">
                     Get AI-suggested features you haven't thought of yet.
                   </p>
@@ -659,17 +694,15 @@ export default function MVPDevelopment() {
                 )}
 
                 {featureMatrix.length > 0 && (
-                  <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-sm text-indigo-900">Selected MVP Features</h4>
-                      <button
-                        onClick={handleSuggestFeatures}
-                        disabled={isSuggestingFeatures}
-                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                      >
-                        {isSuggestingFeatures ? 'Thinking...' : '+ Suggest more'}
-                      </button>
-                    </div>
+                  <div className="relative">
+                    {hintStep === 4 && (
+                      <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-56 z-10 shadow-lg text-center">
+                        This shows the features you've marked as part of your MVP.
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    )}
+                    <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <h4 className="font-semibold text-sm text-indigo-900 mb-1">Selected MVP Features</h4>
                     <p className="text-xs text-indigo-700 mb-3">This is the core feature set for your initial product launch.</p>
                     <div className="space-y-2">
                       {featureMatrix.filter(f => f.isSelected).map(feature => {
@@ -688,31 +721,24 @@ export default function MVPDevelopment() {
                         <p className="text-sm text-indigo-600">No features selected yet.</p>
                       )}
                     </div>
+                    </div>
                   </div>
                 )}
 
                 {/* [ZIG] Analyze the selected features against venture context */}
                 {featureMatrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
                   <div className="flex items-center justify-center gap-3">
-                    <div className="relative shrink-0">
-                      {showAnalyzeHint && (
-                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-52 z-10 shadow-lg text-center">
-                          Get feedback on the features you've selected, checked against your plan.
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                        </div>
+                    <Button
+                      onClick={handleAnalyzeFeatures}
+                      disabled={isAnalyzingFeatures}
+                      className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                    >
+                      {isAnalyzingFeatures ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
                       )}
-                      <Button
-                        onClick={handleAnalyzeFeatures}
-                        disabled={isAnalyzingFeatures}
-                        className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
-                      >
-                        {isAnalyzingFeatures ? (
-                          <Loader2 className="animate-spin" />
-                        ) : (
-                          <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
-                        )}
-                      </Button>
-                    </div>
+                    </Button>
                     <p className="text-sm text-gray-600">
                       Get feedback on the features you've selected.
                     </p>
