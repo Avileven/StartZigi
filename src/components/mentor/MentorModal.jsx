@@ -457,11 +457,11 @@ export default function MentorModal({
                 placeholder="Describe your strategy..."
               />
 
-              {/* Step 1: pick a mode. Step 2: click Zig it to run it. */}
-              <div className="flex gap-2">
+              {/* Step 1: pick a mode. Step 2: click the circle to run it. */}
+              <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={() => setMode('feedback')}
-                  className={`flex-1 h-10 rounded-lg text-sm font-medium border transition-all ${
+                  className={`px-3 h-8 rounded-lg text-xs font-medium border transition-all ${
                     mode === 'feedback'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
@@ -469,19 +469,7 @@ export default function MentorModal({
                 >
                   Feedback
                 </button>
-                <button
-                  onClick={() => setMode('help')}
-                  className={`flex-1 h-10 rounded-lg text-sm font-medium border transition-all ${
-                    mode === 'help'
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  Help me
-                </button>
-              </div>
 
-              <div className="flex items-center justify-center gap-3">
                 <Button
                   onClick={() => {
                     if (mode === 'feedback') {
@@ -494,7 +482,7 @@ export default function MentorModal({
                     isGettingFeedback || isGettingHelp || isLoadingContext ||
                     (mode === 'feedback' && !currentText.trim())
                   }
-                  className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
+                  className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
                 >
                   {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
@@ -502,12 +490,26 @@ export default function MentorModal({
                     <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
                   )}
                 </Button>
-                {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
+
+                <button
+                  onClick={() => setMode('help')}
+                  className={`px-3 h-8 rounded-lg text-xs font-medium border transition-all ${
+                    mode === 'help'
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Help me
+                </button>
+              </div>
+
+              {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
+                <div className="flex justify-center">
                   <span className="flex items-center gap-1 text-sm text-green-700 font-medium">
                     <CheckCircle2 size={16} /> Done
                   </span>
-                )}
-              </div>
+                </div>
+              )}
 
               {mode === 'help' && helpStage === 'choosing' && (
                 <div className="flex gap-3 animate-in fade-in">
