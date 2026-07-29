@@ -589,21 +589,22 @@ export default function MVPDevelopment() {
                 {/* [ZIG] Suggest additional features — never automatic, opt-in only.
                     Moved up here, right after Add Feature, so founders see
                     suggestions before deciding what to select. */}
-                <Button
-                  onClick={handleSuggestFeatures}
-                  disabled={isSuggestingFeatures}
-                  variant="outline"
-                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 flex items-center justify-center gap-2"
-                >
-                  {isSuggestingFeatures ? (
-                    'Thinking...'
-                  ) : (
-                    <>
-                      <img src="/zig-it-logo.png" alt="" style={{ height: '18px', width: 'auto' }} />
-                      Suggest more features
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleSuggestFeatures}
+                    disabled={isSuggestingFeatures}
+                    className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                  >
+                    {isSuggestingFeatures ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                    )}
+                  </Button>
+                  <p className="text-sm text-gray-600">
+                    Zig it — get AI-suggested features you haven't thought of yet.
+                  </p>
+                </div>
 
                 {suggestedFeatures.length > 0 && (
                   <div className="overflow-x-auto">
@@ -674,20 +675,22 @@ export default function MVPDevelopment() {
 
                 {/* [ZIG] Analyze the selected features against venture context */}
                 {featureMatrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
-                  <Button
-                    onClick={handleAnalyzeFeatures}
-                    disabled={isAnalyzingFeatures}
-                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
-                  >
-                    {isAnalyzingFeatures ? (
-                      'Analyzing...'
-                    ) : (
-                      <>
-                        <img src="/zig-it-logo.png" alt="" style={{ height: '18px', width: 'auto' }} />
-                        Zig it — analyze my selected features
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={handleAnalyzeFeatures}
+                      disabled={isAnalyzingFeatures}
+                      className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                    >
+                      {isAnalyzingFeatures ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                      )}
+                    </Button>
+                    <p className="text-sm text-gray-600">
+                      Zig it — get feedback on the features you've selected.
+                    </p>
+                  </div>
                 )}
 
                 {featureAnalysis && (
