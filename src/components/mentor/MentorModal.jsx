@@ -494,7 +494,7 @@ export default function MentorModal({
                     isGettingFeedback || isGettingHelp || isLoadingContext ||
                     (mode === 'feedback' && !currentText.trim())
                   }
-                  className="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center p-0"
+                  className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
                 >
                   {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
