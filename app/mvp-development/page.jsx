@@ -35,17 +35,12 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-import MentorButton from '@/components/mentor/MentorButton.jsx';
-import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 
 export default function MVPDevelopment() {
   const [venture, setVenture] = useState(null);
 
   const [mvpData, setMvpData] = useState({
-    product_definition: '',
-    technical_specs: '',
-    user_testing: '',
     feature_matrix: [],
     uploaded_files: []
   });
@@ -59,29 +54,15 @@ export default function MVPDevelopment() {
     sectionId: ''
   });
 
-  const [mentorModal, setMentorModal] = useState({
-    isOpen: false,
-    sectionId: '',
-    sectionTitle: '',
-    fieldKey: ''
-  });
-
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [formData, setFormData] = useState({
-    productDefinition: '',
-    technicalSpecs: '',
-    userTesting: ''
-  });
 
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [featureMatrix, setFeatureMatrix] = useState([]);
 
-  // Business plan context, fetched once on load, used only for the
-  // Feature Matrix analysis/suggestions below — the three MVP text
-  // fields above stay independent, per the decision to keep MVP
-  // self-contained for now.
+  // Business plan context, fetched once on load — used both for the
+  // read-only summary card at the top and for the Feature Matrix
+  // analysis/suggestions prompts.
   const [businessPlanContext, setBusinessPlanContext] = useState(null);
 
   // Feature Matrix Zig integration
@@ -107,17 +88,12 @@ export default function MVPDevelopment() {
           setVenture(currentVenture);
 
           if (currentVenture.mvp_data) {
-            setFormData({
-              productDefinition: currentVenture.mvp_data.product_definition || '',
-              technicalSpecs: currentVenture.mvp_data.technical_specs || '',
-              userTesting: currentVenture.mvp_data.user_testing || ''
-            });
             setUploadedFiles(currentVenture.mvp_data.uploaded_files || []);
             setFeatureMatrix(currentVenture.mvp_data.feature_matrix || []);
           }
 
-          // Fetch business plan context for the Feature Matrix analysis
-          // only — not used by the three text fields above.
+          // Business plan context — used both for the read-only summary
+          // card and for the Feature Matrix analysis/suggestion prompts.
           try {
             const plans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
             if (plans.length > 0) {
@@ -125,6 +101,7 @@ export default function MVPDevelopment() {
                 problem: plans[0].problem || '',
                 solution: plans[0].solution || '',
                 competition: plans[0].competition || '',
+                product_details: plans[0].product_details || '',
               });
             }
           } catch (bpError) {
@@ -139,50 +116,6 @@ export default function MVPDevelopment() {
 
     loadVenture();
   }, []);
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setMvpData(prev => ({ ...prev, [field]: value }));
-  };
-
- const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
-    // 1. נמשוך רק את תיאור המיזם מהדאטהבייס (הקונטקסט שחסר לו)
-    const projectDescription = venture?.description || "";
-
-    // 2. נבנה "מעטפת" שמשלבת את התיאור עם מה שכתבת
-    const enrichedValue = `
-      Project Context: ${projectDescription}
-      Section: ${sectionTitle}
-      User Input: ${formData[fieldKey] || ""}
-      
-      Instruction: Based on the project context above, please analyze if this input is aligned and provide feedback.
-    `;
-
-    setMentorModal({
-      isOpen: true,
-      sectionId,
-      sectionTitle,
-      fieldKey,
-      // אנחנו שולחים את הכל ארוז יחד כ-overrideValue
-      overrideValue: enrichedValue 
-    });
-  };
-
-  const closeMentorModal = () => {
-    setMentorModal({
-      isOpen: false,
-      sectionId: '',
-      sectionTitle: '',
-      fieldKey: ''
-    });
-  };
-
-  const handleMentorUpdate = (newValue) => {
-    if (mentorModal.fieldKey) {
-      setFormData(prev => ({ ...prev, [mentorModal.fieldKey]: newValue }));
-      setMvpData(prev => ({ ...prev, [mentorModal.fieldKey]: newValue }));
-    }
-  };
 
   const handleAddFeature = () => {
     const newFeature = {
@@ -302,9 +235,13 @@ export default function MVPDevelopment() {
         .map(l => l.trim())
         .filter(Boolean)
         .map(line => {
-          const idx = line.indexOf(':');
-          if (idx === -1) return null;
-          return { name: line.slice(0, idx).trim(), reason: line.slice(idx + 1).trim() };
+          const parts = line.split('|').map(p => p.trim());
+          if (parts.length < 4) return null;
+          const [name, criticalityStr, easeStr, reason] = parts;
+          const criticality = parseInt(criticalityStr, 10);
+          const ease = parseInt(easeStr, 10);
+          if (!name || isNaN(criticality) || isNaN(ease)) return null;
+          return { name, criticality, ease, reason };
         })
         .filter(Boolean);
       setSuggestedFeatures(suggestions);
@@ -314,15 +251,16 @@ export default function MVPDevelopment() {
     setIsSuggestingFeatures(false);
   };
 
-  // Adds a suggested feature straight into the matrix, pre-filled and
-  // selected — the founder still adjusts the sliders themselves.
+  // Adds a suggested feature straight into the matrix, pre-filled with
+  // the AI's own Criticality/Ease estimate — the founder can still
+  // adjust the sliders themselves afterward.
   const handleAddSuggestedFeature = (suggestion) => {
     const newFeature = {
       id: `feature_${Date.now()}`,
       featureName: suggestion.name,
-      userCriticality: 5,
-      implementationEase: 5,
-      priorityScore: 25,
+      userCriticality: suggestion.criticality,
+      implementationEase: suggestion.ease,
+      priorityScore: suggestion.criticality * suggestion.ease,
       isSelected: true,
     };
     setFeatureMatrix(prev => [...prev, newFeature]);
@@ -380,9 +318,6 @@ export default function MVPDevelopment() {
 
     try {
       const mvpPayload = {
-        product_definition: formData.productDefinition,
-        technical_specs: formData.technicalSpecs,
-        user_testing: formData.userTesting,
         uploaded_files: uploadedFiles,
         feature_matrix: featureMatrix
       };
@@ -420,10 +355,9 @@ export default function MVPDevelopment() {
     );
   }
 
-  const canSubmit =
-    formData.productDefinition.trim() &&
-    formData.technicalSpecs.trim() &&
-    formData.userTesting.trim();
+  // Submission now requires at least one selected feature — the three
+  // text fields no longer exist to gate on.
+  const canSubmit = featureMatrix.some(f => f.isSelected && f.featureName?.trim());
 
   return (
     <>
@@ -466,110 +400,25 @@ export default function MVPDevelopment() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                1️⃣ Product Definition
+                Your Product, So Far
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Describe what your MVP does and what problem it solves</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mvp_definition' })}
-                    // [2026-01-06] FIX: make Tips button readable + consistent (no “washed out” green)
-                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-                  >
-                    <Info className="w-4 h-4" />
-                    Tips
-                  </Button>
-                  <MentorButton
-                    onClick={() => openMentorModal('mvp_definition', 'Product Definition', 'productDefinition')}
-                  />
-                </div>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-gray-500 -mt-2">
+                Pulled from your business plan — edit it there if anything here is out of date.
+              </p>
+              <div>
+                <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Problem</p>
+                <p className="text-sm text-gray-700">{businessPlanContext?.problem || 'Not filled in yet — head to your business plan first.'}</p>
               </div>
-
-              <Textarea
-                value={formData.productDefinition}
-                onChange={(e) => handleInputChange('productDefinition', e.target.value)}
-                placeholder="Describe what your MVP does and what problem it solves..."
-                className="min-h-[120px]"
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wrench className="w-5 h-5" />
-                2️⃣ Technical Approach
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Describe the technology stack and development approach</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'technical_approach' })}
-                    // [2026-01-06] FIX
-                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-                  >
-                    <Info className="w-4 h-4" />
-                    Tips
-                  </Button>
-                  <MentorButton
-                    onClick={() => openMentorModal('technical_approach', 'Technical Approach', 'technicalSpecs')}
-                  />
-                </div>
+              <div>
+                <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Solution</p>
+                <p className="text-sm text-gray-700">{businessPlanContext?.solution || 'Not filled in yet — head to your business plan first.'}</p>
               </div>
-
-              <Textarea
-                value={formData.technicalSpecs}
-                onChange={(e) => handleInputChange('technicalSpecs', e.target.value)}
-                placeholder="Describe the technology stack and development approach..."
-                className="min-h-[120px]"
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                3️⃣ User Testing Plan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Explain how you will test your MVP with users</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'user_testing' })}
-                    // [2026-01-06] FIX
-                    className="flex items-center gap-1 bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-                  >
-                    <Info className="w-4 h-4" />
-                    Tips
-                  </Button>
-                  <MentorButton
-                    onClick={() => openMentorModal('user_testing', 'User Testing Plan', 'userTesting')}
-                  />
-                </div>
+              <div>
+                <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Product Details</p>
+                <p className="text-sm text-gray-700">{businessPlanContext?.product_details || 'Not filled in yet — head to your business plan first.'}</p>
               </div>
-
-              <Textarea
-                value={formData.userTesting}
-                onChange={(e) => handleInputChange('userTesting', e.target.value)}
-                placeholder="Explain how you will test your MVP with users..."
-                className="min-h-[120px]"
-              />
             </CardContent>
           </Card>
 
@@ -577,7 +426,7 @@ export default function MVPDevelopment() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                4️⃣ Feature Evaluation Matrix
+                1️⃣ Feature Evaluation Matrix
               </CardTitle>
             </CardHeader>
 
@@ -708,6 +557,52 @@ export default function MVPDevelopment() {
                   Add Feature
                 </Button>
 
+                {/* [ZIG] Suggest additional features — never automatic, opt-in only.
+                    Moved up here, right after Add Feature, so founders see
+                    suggestions before deciding what to select. */}
+                <Button
+                  onClick={handleSuggestFeatures}
+                  disabled={isSuggestingFeatures}
+                  variant="outline"
+                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                >
+                  {isSuggestingFeatures ? 'Thinking...' : 'Suggest more features'}
+                </Button>
+
+                {suggestedFeatures.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-500 border-b">
+                          <th className="py-2 pr-2">Feature</th>
+                          <th className="py-2 px-2 text-center">Criticality</th>
+                          <th className="py-2 px-2 text-center">Ease</th>
+                          <th className="py-2 px-2 text-center">Priority</th>
+                          <th className="py-2 pl-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {suggestedFeatures.map((s, idx) => (
+                          <tr key={idx} className="border-b border-gray-100 align-top">
+                            <td className="py-2 pr-2">
+                              <p className="font-semibold text-indigo-900">{s.name}</p>
+                              <p className="text-xs text-gray-600">{s.reason}</p>
+                            </td>
+                            <td className="py-2 px-2 text-center font-medium text-indigo-600">{s.criticality}</td>
+                            <td className="py-2 px-2 text-center font-medium text-indigo-600">{s.ease}</td>
+                            <td className="py-2 px-2 text-center font-semibold text-green-700">{s.criticality * s.ease}</td>
+                            <td className="py-2 pl-2">
+                              <Button size="sm" onClick={() => handleAddSuggestedFeature(s)} className="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap">
+                                Add
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
                 {featureMatrix.length > 0 && (
                   <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                     <h4 className="font-semibold text-sm text-blue-900 mb-2">Selected MVP Features:</h4>
@@ -753,32 +648,6 @@ export default function MVPDevelopment() {
                     )}
                   </div>
                 )}
-
-                {/* [ZIG] Suggest additional features — never automatic, opt-in only */}
-                <Button
-                  onClick={handleSuggestFeatures}
-                  disabled={isSuggestingFeatures}
-                  variant="outline"
-                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                >
-                  {isSuggestingFeatures ? 'Thinking...' : 'Suggest more features'}
-                </Button>
-
-                {suggestedFeatures.length > 0 && (
-                  <div className="space-y-2">
-                    {suggestedFeatures.map((s, idx) => (
-                      <div key={idx} className="flex items-start justify-between gap-3 p-3 bg-indigo-50 rounded-lg">
-                        <div>
-                          <p className="text-sm font-semibold text-indigo-900">{s.name}</p>
-                          <p className="text-xs text-gray-600">{s.reason}</p>
-                        </div>
-                        <Button size="sm" onClick={() => handleAddSuggestedFeature(s)} className="bg-indigo-600 hover:bg-indigo-700 shrink-0">
-                          Add
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -787,7 +656,7 @@ export default function MVPDevelopment() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="w-5 h-5" />
-                5️⃣ Upload MVP Files
+                2️⃣ Upload MVP Files
               </CardTitle>
             </CardHeader>
 
@@ -892,7 +761,7 @@ export default function MVPDevelopment() {
 
           {!canSubmit && (
             <p className="text-sm text-amber-600 text-center mt-4">
-              Please complete at least the Product Definition, Technical Approach, and User Testing Plan sections to enable submission.
+              Select at least one feature in the matrix above to enable submission.
             </p>
           )}
         </div>
@@ -902,16 +771,6 @@ export default function MVPDevelopment() {
         isOpen={staticGuidanceModal.isOpen}
         onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
         sectionId={staticGuidanceModal.sectionId}
-      />
-
-      <MentorModal
-        isOpen={mentorModal.isOpen}
-        onClose={closeMentorModal}
-        sectionId={mentorModal.sectionId}
-        sectionTitle={mentorModal.sectionTitle}
-        fieldValue={formData[mentorModal.fieldKey]}
-        onUpdateField={handleMentorUpdate}
-        ventureId={venture?.id}
       />
     </>
   );

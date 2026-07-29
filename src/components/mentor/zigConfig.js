@@ -337,7 +337,9 @@ scores, numbers, or thresholds, just what to actually do next>`;
 // Suggests ADDITIONAL features the founder hasn't listed, based on the
 // same venture context — never automatic, only called when the founder
 // clicks "Suggest more features". Output format (strict, parsed): one
-// line per suggestion as "FeatureName: one-line reason", 3-5 suggestions.
+// line per suggestion as "FeatureName | Criticality | Ease | reason",
+// 3-5 suggestions, so each can be added directly into the matrix with a
+// real starting estimate instead of a flat default.
 export function buildFeatureSuggestionPrompt({ ventureDesc, businessPlanContext, existingFeatureNames }) {
   return `You are Zig, an entrepreneurial-thinking coach inside a startup training tool (not a real business plan for investors).
 
@@ -354,8 +356,21 @@ genuinely strengthen this specific MVP's core added value — not generic
 features every app has. Each must tie directly to their problem,
 solution, or what differentiates them from the competitors above.
 
-MANDATORY OUTPUT FORMAT — exactly one line per suggestion, nothing else:
-FeatureName: one-line reason tied to their specific problem/solution/differentiation`;
+For each suggestion also estimate, on the SAME 1-10 scales the founder
+uses themselves:
+- Criticality (1-10): how essential this is to the core value proposition
+- Ease (1-10): how easy this is to implement for an early MVP — assume
+  the founder has little technical background, so favor existing
+  services/APIs over custom builds when estimating ease
+
+MANDATORY OUTPUT FORMAT — exactly one line per suggestion, nothing else,
+pipe-separated in this exact order:
+FeatureName | Criticality | Ease | one-line reason tied to their specific problem/solution/differentiation
+
+FeatureName must be a short, natural, human-readable name WITH SPACES
+between words (e.g. "Peer Critique Marketplace"), never camelCase or
+PascalCase run together (never "PeerCritiqueMarketplace"). Criticality
+and Ease must be plain integers 1-10, nothing else in those fields.`;
 }
 // allFieldValues: { [fieldKey]: string } — current text of every field in the plan
 // firstPass: boolean — has this venture already completed Foundation once?
