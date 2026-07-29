@@ -499,31 +499,7 @@ export default function MentorModal({
                   {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <span
-                      style={{
-                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                        fontWeight: 300,
-                        letterSpacing: '3.5px',
-                        color: '#F5C99B',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        fontSize: '26px',
-                      }}
-                    >
-                      <span>zig</span>
-                      <span style={{ position: 'relative', display: 'inline-block' }}>
-                        <span>ı</span>
-                        <svg
-                          style={{ position: 'absolute', top: '-7px', left: 'calc(50% - 2px)', transform: 'translateX(-50%)' }}
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 0 C12 6 14 9 20 12 C14 15 12 18 12 24 C12 18 10 15 4 12 C10 9 12 6 12 0 Z" fill="#F5C99B" />
-                        </svg>
-                      </span>
-                      <span>t</span>
-                    </span>
+                    <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '32px', width: 'auto' }} />
                   )}
                 </Button>
                 {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
