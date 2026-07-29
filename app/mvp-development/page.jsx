@@ -47,6 +47,8 @@ export default function MVPDevelopment() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showMvpExplainer, setShowMvpExplainer] = useState(false);
+  const [showSuggestHint, setShowSuggestHint] = useState(true);
+  const [showAnalyzeHint, setShowAnalyzeHint] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -77,6 +79,14 @@ export default function MVPDevelopment() {
   useEffect(() => {
     document.body.classList.add('startzig-force-light');
     return () => document.body.classList.remove('startzig-force-light');
+  }, []);
+
+  // First-visit tooltip sequence for the two Zig it circles — same
+  // pattern as the business plan page's Tips/Zig it hints.
+  useEffect(() => {
+    const t1 = setTimeout(() => { setShowSuggestHint(false); setShowAnalyzeHint(true); }, 5000);
+    const t2 = setTimeout(() => setShowAnalyzeHint(false), 10000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   useEffect(() => {
@@ -400,11 +410,11 @@ export default function MVPDevelopment() {
           <div className="mb-6">
             <button
               onClick={() => setShowMvpExplainer(prev => !prev)}
-              className="flex items-center gap-2 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+              className="flex items-center justify-center gap-2 w-full text-base font-medium text-indigo-700 hover:text-indigo-900"
             >
-              <Info className="w-4 h-4" />
+              <Info className="w-5 h-5" />
               What is an MVP, and how does Zig fit in here?
-              <span className="text-xs">{showMvpExplainer ? '▲' : '▼'}</span>
+              <span className="text-sm">{showMvpExplainer ? '▲' : '▼'}</span>
             </button>
             {showMvpExplainer && (
               <div className="mt-3 p-4 bg-indigo-50 rounded-xl text-sm text-gray-700 space-y-2">
@@ -589,20 +599,28 @@ export default function MVPDevelopment() {
                 {/* [ZIG] Suggest additional features — never automatic, opt-in only.
                     Moved up here, right after Add Feature, so founders see
                     suggestions before deciding what to select. */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={handleSuggestFeatures}
-                    disabled={isSuggestingFeatures}
-                    className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
-                  >
-                    {isSuggestingFeatures ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                <div className="flex items-center justify-center gap-3">
+                  <div className="relative shrink-0">
+                    {showSuggestHint && (
+                      <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-56 z-10 shadow-lg text-center">
+                        Write the features you want, click Add, then think about how to rate them — and mark which ones you want to start with.
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
                     )}
-                  </Button>
+                    <Button
+                      onClick={handleSuggestFeatures}
+                      disabled={isSuggestingFeatures}
+                      className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
+                    >
+                      {isSuggestingFeatures ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                      )}
+                    </Button>
+                  </div>
                   <p className="text-sm text-gray-600">
-                    Zig it — get AI-suggested features you haven't thought of yet.
+                    Get AI-suggested features you haven't thought of yet.
                   </p>
                 </div>
 
@@ -675,20 +693,28 @@ export default function MVPDevelopment() {
 
                 {/* [ZIG] Analyze the selected features against venture context */}
                 {featureMatrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <Button
-                      onClick={handleAnalyzeFeatures}
-                      disabled={isAnalyzingFeatures}
-                      className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
-                    >
-                      {isAnalyzingFeatures ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="relative shrink-0">
+                      {showAnalyzeHint && (
+                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 w-52 z-10 shadow-lg text-center">
+                          Get feedback on the features you've selected, checked against your plan.
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
                       )}
-                    </Button>
+                      <Button
+                        onClick={handleAnalyzeFeatures}
+                        disabled={isAnalyzingFeatures}
+                        className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0"
+                      >
+                        {isAnalyzingFeatures ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                        )}
+                      </Button>
+                    </div>
                     <p className="text-sm text-gray-600">
-                      Zig it — get feedback on the features you've selected.
+                      Get feedback on the features you've selected.
                     </p>
                   </div>
                 )}
