@@ -481,7 +481,7 @@ export default function MentorModal({
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <Button
                   onClick={() => {
                     if (mode === 'feedback') {
@@ -494,12 +494,12 @@ export default function MentorModal({
                     isGettingFeedback || isGettingHelp || isLoadingContext ||
                     (mode === 'feedback' && !currentText.trim())
                   }
-                  className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center"
+                  className="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center p-0"
                 >
                   {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '32px', width: 'auto' }} />
+                    <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
                   )}
                 </Button>
                 {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
