@@ -46,6 +46,7 @@ export default function MVPDevelopment() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [showMvpExplainer, setShowMvpExplainer] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -396,16 +397,44 @@ export default function MVPDevelopment() {
             <p className="text-gray-600">Build and document your Minimum Viable Product</p>
           </div>
 
+          <div className="mb-6">
+            <button
+              onClick={() => setShowMvpExplainer(prev => !prev)}
+              className="flex items-center gap-2 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+            >
+              <Info className="w-4 h-4" />
+              What is an MVP, and how does Zig fit in here?
+              <span className="text-xs">{showMvpExplainer ? '▲' : '▼'}</span>
+            </button>
+            {showMvpExplainer && (
+              <div className="mt-3 p-4 bg-indigo-50 rounded-xl text-sm text-gray-700 space-y-2">
+                <p>
+                  An MVP is the earliest stage where you connect a raw idea to an actual product —
+                  it's not final, and it's not supposed to be. The goal here is just to sharpen it as
+                  you go, not to lock it down.
+                </p>
+                <p>
+                  Zig helps in two ways on this page: it reviews the features you've selected against
+                  your problem and solution, and it can suggest features you haven't thought of yet.
+                </p>
+                <p>
+                  Once saved, this MVP data feeds into your landing page — where real users are
+                  invited to give feedback on it and suggest additional features themselves.
+                </p>
+              </div>
+            )}
+          </div>
+
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Your Product, So Far
+                Your Product Profile
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-gray-500 -mt-2">
-                Pulled from your business plan — edit it there if anything here is out of date.
+                Pulled from your Plan — edit it there if anything here is out of date.
               </p>
               <div>
                 <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Problem</p>
@@ -564,9 +593,16 @@ export default function MVPDevelopment() {
                   onClick={handleSuggestFeatures}
                   disabled={isSuggestingFeatures}
                   variant="outline"
-                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 flex items-center justify-center gap-2"
                 >
-                  {isSuggestingFeatures ? 'Thinking...' : 'Suggest more features'}
+                  {isSuggestingFeatures ? (
+                    'Thinking...'
+                  ) : (
+                    <>
+                      <img src="/zig-it-logo.png" alt="" style={{ height: '18px', width: 'auto' }} />
+                      Suggest more features
+                    </>
+                  )}
                 </Button>
 
                 {suggestedFeatures.length > 0 && (
@@ -641,9 +677,16 @@ export default function MVPDevelopment() {
                   <Button
                     onClick={handleAnalyzeFeatures}
                     disabled={isAnalyzingFeatures}
-                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
                   >
-                    {isAnalyzingFeatures ? 'Analyzing...' : 'Zig it — analyze my selected features'}
+                    {isAnalyzingFeatures ? (
+                      'Analyzing...'
+                    ) : (
+                      <>
+                        <img src="/zig-it-logo.png" alt="" style={{ height: '18px', width: 'auto' }} />
+                        Zig it — analyze my selected features
+                      </>
+                    )}
                   </Button>
                 )}
 
@@ -710,6 +753,9 @@ export default function MVPDevelopment() {
                       <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
                   </a>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Our dedicated studio for designing mockups — free to get started, upgradeable with AI usage.
+                  </p>
                 </div>
 
                 <Input
