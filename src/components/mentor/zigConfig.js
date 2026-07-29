@@ -281,7 +281,82 @@ Be concrete and grounded, not generic, and never use "look at" or
 text, no markdown.`;
 }
 
-// Builds the full feedback prompt for a given field.
+// ============================================
+// MVP Feature Matrix — a different shape than the text-field system
+// above (FIELD_CONFIG). Here the founder rates a LIST of features
+// (name + self-given Criticality/Ease 1-10), not a paragraph of text.
+// Assumes the founder has no technical background and needs orientation,
+// not just validation.
+// ============================================
+
+// Analyzes the founder's SELECTED features against their own ratings and
+// the venture's business-plan context. Output format (strict, parsed by
+// the UI): for each feature, a line "### <exact feature name>" followed
+// by 2-4 sentences of commentary, then a blank line before the next one.
+export function buildFeatureAnalysisPrompt({ ventureDesc, businessPlanContext, features }) {
+  const featureList = features
+    .map(f => `- "${f.featureName}" — founder rated Criticality: ${f.userCriticality}/10, Implementation Ease: ${f.implementationEase}/10`)
+    .join('\n');
+
+  return `You are Zig, an entrepreneurial-thinking coach inside a startup training tool (not a real business plan for investors).
+
+Venture context: "${ventureDesc || 'not provided'}"
+Problem (from their business plan): "${businessPlanContext?.problem || 'not filled in yet'}"
+Solution (from their business plan): "${businessPlanContext?.solution || 'not filled in yet'}"
+Competitive landscape (from their business plan): "${businessPlanContext?.competition || 'not filled in yet'}"
+
+The founder selected these features for their MVP and self-rated them:
+${featureList}
+
+ASSUME the founder has little to no technical background — they need
+orientation, not just validation. For EACH feature above, do two things:
+
+1. Comment on whether the Criticality rating makes sense given the
+   problem/solution/competitive context above — does this feature
+   actually matter for their core value proposition, or did they
+   overrate something peripheral?
+
+2. Reality-check the Implementation Ease rating. If "easy" depends on
+   HOW they build it (custom-built vs. an existing service/API), say so
+   explicitly and name real options (e.g. "building login from scratch
+   takes 1-2 weeks; using Clerk, Auth0, or Supabase Auth takes 1-2
+   days"). Give a rough real-world time estimate. Do not assume they
+   know this distinction already — spell it out plainly.
+
+MANDATORY OUTPUT FORMAT — for each feature, exactly this shape, in the
+same order as listed above:
+### <exact feature name as given>
+<2-4 sentences covering both points above, plain text, no markdown>
+
+Leave one blank line between features. After all features, add:
+### Next steps
+<ONE closing sentence of practical next-step guidance — never mention
+scores, numbers, or thresholds, just what to actually do next>`;
+}
+
+// Suggests ADDITIONAL features the founder hasn't listed, based on the
+// same venture context — never automatic, only called when the founder
+// clicks "Suggest more features". Output format (strict, parsed): one
+// line per suggestion as "FeatureName: one-line reason", 3-5 suggestions.
+export function buildFeatureSuggestionPrompt({ ventureDesc, businessPlanContext, existingFeatureNames }) {
+  return `You are Zig, an entrepreneurial-thinking coach inside a startup training tool (not a real business plan for investors).
+
+Venture context: "${ventureDesc || 'not provided'}"
+Problem (from their business plan): "${businessPlanContext?.problem || 'not filled in yet'}"
+Solution (from their business plan): "${businessPlanContext?.solution || 'not filled in yet'}"
+Competitive landscape (from their business plan): "${businessPlanContext?.competition || 'not filled in yet'}"
+
+The founder has already listed these features for their MVP:
+${existingFeatureNames.length > 0 ? existingFeatureNames.map(n => `- ${n}`).join('\n') : '(none yet)'}
+
+Suggest 3-5 ADDITIONAL features they have NOT already listed that would
+genuinely strengthen this specific MVP's core added value — not generic
+features every app has. Each must tie directly to their problem,
+solution, or what differentiates them from the competitors above.
+
+MANDATORY OUTPUT FORMAT — exactly one line per suggestion, nothing else:
+FeatureName: one-line reason tied to their specific problem/solution/differentiation`;
+}
 // allFieldValues: { [fieldKey]: string } — current text of every field in the plan
 // firstPass: boolean — has this venture already completed Foundation once?
 // previousScore: { [categoryName]: number } | null — from THIS session only;

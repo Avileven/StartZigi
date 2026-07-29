@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
-import { UploadFile } from '@/api/integrations';
+import { businessPlan as businessPlanEntity } from '@/api/entities.js';
+import { UploadFile, InvokeLLM } from '@/api/integrations';
+import { buildFeatureAnalysisPrompt, buildFeatureSuggestionPrompt } from '@/components/mentor/zigConfig';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
@@ -76,6 +78,18 @@ export default function MVPDevelopment() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [featureMatrix, setFeatureMatrix] = useState([]);
 
+  // Business plan context, fetched once on load, used only for the
+  // Feature Matrix analysis/suggestions below — the three MVP text
+  // fields above stay independent, per the decision to keep MVP
+  // self-contained for now.
+  const [businessPlanContext, setBusinessPlanContext] = useState(null);
+
+  // Feature Matrix Zig integration
+  const [featureAnalysis, setFeatureAnalysis] = useState(null); // parsed: [{ name, text }]
+  const [isAnalyzingFeatures, setIsAnalyzingFeatures] = useState(false);
+  const [suggestedFeatures, setSuggestedFeatures] = useState([]); // [{ name, reason }]
+  const [isSuggestingFeatures, setIsSuggestingFeatures] = useState(false);
+
   // [2026-01-06] FIX: force light theme tokens ONLY while this page is mounted
   // This fixes "Tips" modal showing dark background + gray text in dashboard theme.
   useEffect(() => {
@@ -100,6 +114,21 @@ export default function MVPDevelopment() {
             });
             setUploadedFiles(currentVenture.mvp_data.uploaded_files || []);
             setFeatureMatrix(currentVenture.mvp_data.feature_matrix || []);
+          }
+
+          // Fetch business plan context for the Feature Matrix analysis
+          // only — not used by the three text fields above.
+          try {
+            const plans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
+            if (plans.length > 0) {
+              setBusinessPlanContext({
+                problem: plans[0].problem || '',
+                solution: plans[0].solution || '',
+                competition: plans[0].competition || '',
+              });
+            }
+          } catch (bpError) {
+            console.error('Error loading business plan context:', bpError);
           }
         }
       } catch (error) {
@@ -211,6 +240,94 @@ export default function MVPDevelopment() {
         return f;
       })
     }));
+  };
+
+  // [ZIG] Analyzes the founder's SELECTED features against their own
+  // Criticality/Ease ratings and the business plan context.
+  const handleAnalyzeFeatures = async () => {
+    const selected = featureMatrix.filter(f => f.isSelected && f.featureName?.trim());
+    if (selected.length === 0) return;
+
+    setIsAnalyzingFeatures(true);
+    setFeatureAnalysis(null);
+    try {
+      const prompt = buildFeatureAnalysisPrompt({
+        ventureDesc: venture?.description,
+        businessPlanContext,
+        features: selected,
+      });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      const text = data?.response || '';
+
+      // Parse "### Feature Name" / "### Next steps" blocks — all use the
+      // same marker, so parsing is uniform (no fragile leftover-text
+      // guessing).
+      const parsed = [];
+      let closingLine = '';
+      const blocks = text.split(/^###\s*/m).filter(Boolean);
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        const name = lines[0].trim();
+        const body = lines.slice(1).join('\n').trim();
+        if (name.toLowerCase() === 'next steps') {
+          closingLine = body;
+        } else if (selected.some(f => f.featureName.trim().toLowerCase() === name.toLowerCase())) {
+          parsed.push({ name, text: body });
+        }
+      }
+
+      setFeatureAnalysis({ items: parsed, closingLine, raw: text });
+    } catch (error) {
+      setFeatureAnalysis({ items: [], raw: 'Error generating analysis. Please try again.' });
+    }
+    setIsAnalyzingFeatures(false);
+  };
+
+  // [ZIG] Suggests additional features on top of what's already listed —
+  // never automatic, only runs when the founder clicks the button.
+  const handleSuggestFeatures = async () => {
+    setIsSuggestingFeatures(true);
+    setSuggestedFeatures([]);
+    try {
+      const existingNames = featureMatrix.map(f => f.featureName).filter(Boolean);
+      const prompt = buildFeatureSuggestionPrompt({
+        ventureDesc: venture?.description,
+        businessPlanContext,
+        existingFeatureNames: existingNames,
+      });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      const text = data?.response || '';
+      const suggestions = text
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(line => {
+          const idx = line.indexOf(':');
+          if (idx === -1) return null;
+          return { name: line.slice(0, idx).trim(), reason: line.slice(idx + 1).trim() };
+        })
+        .filter(Boolean);
+      setSuggestedFeatures(suggestions);
+    } catch (error) {
+      setSuggestedFeatures([]);
+    }
+    setIsSuggestingFeatures(false);
+  };
+
+  // Adds a suggested feature straight into the matrix, pre-filled and
+  // selected — the founder still adjusts the sliders themselves.
+  const handleAddSuggestedFeature = (suggestion) => {
+    const newFeature = {
+      id: `feature_${Date.now()}`,
+      featureName: suggestion.name,
+      userCriticality: 5,
+      implementationEase: 5,
+      priorityScore: 25,
+      isSelected: true,
+    };
+    setFeatureMatrix(prev => [...prev, newFeature]);
+    setMvpData(prev => ({ ...prev, feature_matrix: [...prev.feature_matrix, newFeature] }));
+    setSuggestedFeatures(prev => prev.filter(s => s.name !== suggestion.name));
   };
 
   const handleFileUpload = async (e) => {
@@ -605,6 +722,61 @@ export default function MVPDevelopment() {
                         <p className="text-sm text-blue-600">No features selected yet.</p>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {/* [ZIG] Analyze the selected features against venture context */}
+                {featureMatrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
+                  <Button
+                    onClick={handleAnalyzeFeatures}
+                    disabled={isAnalyzingFeatures}
+                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {isAnalyzingFeatures ? 'Analyzing...' : 'Zig it — analyze my selected features'}
+                  </Button>
+                )}
+
+                {featureAnalysis && (
+                  <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-4">
+                    {featureAnalysis.items.length > 0 ? (
+                      featureAnalysis.items.map((item, idx) => (
+                        <div key={idx}>
+                          <p className="font-semibold text-sm text-indigo-900 mb-1">{item.name}</p>
+                          <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-700 whitespace-pre-line">{featureAnalysis.raw}</p>
+                    )}
+                    {featureAnalysis.closingLine && (
+                      <p className="text-sm text-gray-500 pt-2 border-t border-gray-100">{featureAnalysis.closingLine}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* [ZIG] Suggest additional features — never automatic, opt-in only */}
+                <Button
+                  onClick={handleSuggestFeatures}
+                  disabled={isSuggestingFeatures}
+                  variant="outline"
+                  className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                >
+                  {isSuggestingFeatures ? 'Thinking...' : 'Suggest more features'}
+                </Button>
+
+                {suggestedFeatures.length > 0 && (
+                  <div className="space-y-2">
+                    {suggestedFeatures.map((s, idx) => (
+                      <div key={idx} className="flex items-start justify-between gap-3 p-3 bg-indigo-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-semibold text-indigo-900">{s.name}</p>
+                          <p className="text-xs text-gray-600">{s.reason}</p>
+                        </div>
+                        <Button size="sm" onClick={() => handleAddSuggestedFeature(s)} className="bg-indigo-600 hover:bg-indigo-700 shrink-0">
+                          Add
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
