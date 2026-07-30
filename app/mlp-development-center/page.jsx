@@ -666,7 +666,16 @@ export default function MLPDevelopmentCenter() {
                                         max={10}
                                         min={1}
                                         step={1}
+                                        className="mb-2
+                                          [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                          [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                          [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                          [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                          [&_[role=slider]]:shadow-md"
                                       />
+                                      <div className="text-center text-sm font-semibold text-indigo-600">
+                                        {feature.userCriticality || 5}
+                                      </div>
                                     </div>
                                     <div>
                                       <Label className="text-xs mb-2 block">Implementation Ease (1-10)</Label>
@@ -676,7 +685,16 @@ export default function MLPDevelopmentCenter() {
                                         max={10}
                                         min={1}
                                         step={1}
+                                        className="mb-2
+                                          [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                          [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                          [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                          [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                          [&_[role=slider]]:shadow-md"
                                       />
+                                      <div className="text-center text-sm font-semibold text-indigo-600">
+                                        {feature.implementationEase || 5}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
