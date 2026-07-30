@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { createClient } from "@supabase/supabase-js";
 import {
   Lightbulb, Target, Heart, FileText, CheckCircle, Users, Code,
@@ -112,6 +113,9 @@ export default function VentureLanding() {
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [invitationToken, setInvitationToken] = useState(null);
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
+  const [featuresRating, setFeaturesRating] = useState(5);
+  const [lookFeelRating, setLookFeelRating] = useState(5);
+  const [uxRating, setUxRating] = useState(5);
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
@@ -356,7 +360,7 @@ export default function VentureLanding() {
 
   const handleMlpFeedbackSubmit = async (e) => {
     e.preventDefault();
-    if (!mlpFeedbackText.trim() || !venture) return;
+    if (!venture) return;
     setIsSubmittingMlpFeedback(true);
     try {
       // [CHANGED] Using supabase directly instead of ProductFeedbackEntity.create()
@@ -367,6 +371,9 @@ export default function VentureLanding() {
         venture_id: venture.id,
         feedback_text: mlpFeedbackText.trim(),
         feedback_type: "other",
+        features_rating: featuresRating,
+        look_feel_rating: lookFeelRating,
+        ux_rating: uxRating,
         created_by: null,
         created_by_id: null,
         // [ADDED] Reviewer identity — null if not invited via in-app promotion
@@ -477,58 +484,30 @@ export default function VentureLanding() {
                 <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
               </div>
 
-              {/* MLP Content Cards */}
-              <div className="space-y-6 mb-10">
-                {venture.mlp_data.feedback_analysis && (
-                  <Card className="shadow-md bg-gradient-to-br from-blue-50 to-indigo-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-indigo-800">
-                        <Sparkles className="w-5 h-5 text-indigo-500" />
-                        What We Learned from Users
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.feedback_analysis} /></CardContent>
-                  </Card>
-                )}
-                {venture.mlp_data.enhancement_strategy && (
-                  <Card className="shadow-md bg-gradient-to-br from-green-50 to-emerald-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-emerald-800">
-                        <CheckCircle className="w-5 h-5 text-emerald-500" />
-                        How We're Making It Better
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.enhancement_strategy} /></CardContent>
-                  </Card>
-                )}
-                {venture.mlp_data.wow_moments && (
+              {/* MLP Content — only the two fields marked public in the
+                  builder show up here. feedback_analysis and
+                  enhancement_plan are internal-only and never render. */}
+              {venture.mlp_data.lovable_experience && (
+                <div className="mb-10">
                   <Card className="shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-amber-800">
                         <Heart className="w-5 h-5 text-amber-500" />
-                        Delightful Moments You'll Love
+                        Why You'll Love This
                       </CardTitle>
                     </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.wow_moments} /></CardContent>
+                    <CardContent><ReadMoreText text={venture.mlp_data.lovable_experience} /></CardContent>
                   </Card>
-                )}
-                {venture.mlp_data.user_journey && (
-                  <Card className="shadow-md bg-gradient-to-br from-purple-50 to-pink-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-purple-800">
-                        <Users className="w-5 h-5 text-purple-500" />
-                        Your Journey with Us
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.user_journey} /></CardContent>
-                  </Card>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* MLP Files */}
               {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Product Showcase</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Product Showcase</h3>
+                  {venture.mlp_data.visual_prototype && (
+                    <p className="text-center text-gray-600 max-w-2xl mx-auto mb-6">{venture.mlp_data.visual_prototype}</p>
+                  )}
                   <div className="space-y-4">
                     {venture.mlp_data.uploaded_files.map((file, index) => renderFile(file, index, mlpHtmlContents))}
                   </div>
@@ -553,7 +532,7 @@ export default function VentureLanding() {
                       <p className="text-gray-400 text-xs mt-3">Redirecting you back to your dashboard in a few seconds...</p>
                     </div>
                   ) : (
-                    <form onSubmit={handleMlpFeedbackSubmit} className="space-y-4">
+                    <form onSubmit={handleMlpFeedbackSubmit} className="space-y-6">
                       {/* [ADDED] Show reviewer venture name so user can confirm their identity is correct */}
                       {reviewerVenture && (
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 text-sm text-indigo-700">
@@ -561,13 +540,61 @@ export default function VentureLanding() {
                         </div>
                       )}
                       <div>
-                        <Label htmlFor="mlp-feedback">What do you think about this product?</Label>
+                        <Label className="text-sm">Features (1-10)</Label>
+                        <Slider
+                          value={[featuresRating]}
+                          onValueChange={(value) => setFeaturesRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{featuresRating}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">Look &amp; Feel (1-10)</Label>
+                        <Slider
+                          value={[lookFeelRating]}
+                          onValueChange={(value) => setLookFeelRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{lookFeelRating}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">User Experience (1-10)</Label>
+                        <Slider
+                          value={[uxRating]}
+                          onValueChange={(value) => setUxRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{uxRating}</div>
+                      </div>
+                      <div>
+                        <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
                         <Textarea id="mlp-feedback" value={mlpFeedbackText}
                           onChange={(e) => setMlpFeedbackText(e.target.value)}
                           placeholder="Your feedback helps make this product even better..."
-                          className="min-h-[100px] mt-2" required disabled={isSubmittingMlpFeedback} />
+                          className="min-h-[80px] mt-2" disabled={isSubmittingMlpFeedback} />
                       </div>
-                      <Button type="submit" disabled={isSubmittingMlpFeedback || !mlpFeedbackText.trim()}
+                      <Button type="submit" disabled={isSubmittingMlpFeedback}
                         className="w-full bg-indigo-600 hover:bg-indigo-700">
                         {isSubmittingMlpFeedback
                           ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
