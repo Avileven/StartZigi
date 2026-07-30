@@ -29,13 +29,9 @@ export default function MLPDevelopmentCenter() {
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
   const [mlpData, setMlpData] = useState({
     feedback_analysis: '',
-    enhancement_strategy: '',
-    wow_moments: '',
-    user_journey: '',
-    ui_ux_requirements: '',
-    technical_excellence: '',
-    visual_mockups: '',
-    prototype_description: '',
+    enhancement_plan: '',
+    lovable_experience: '',
+    visual_prototype: '',
     uploaded_files: []
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -68,10 +64,23 @@ export default function MLPDevelopmentCenter() {
           setMvpFeedback(feedback);
           const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
           setSuggestedFeatures(suggestions);
-          if (currentVenture.mlp_data) {
-            setMlpData(currentVenture.mlp_data);
-          } else if (currentVenture.mlp_development_data) {
-            setMlpData(currentVenture.mlp_development_data);
+          const rawMlpData = currentVenture.mlp_data || currentVenture.mlp_development_data;
+          if (rawMlpData) {
+            // Backward-compat: if the old 8-field shape is present and
+            // the new merged fields are empty, combine the old values so
+            // nothing already written gets lost. Safe because mlp_data
+            // is a single JSON column, not a fixed-schema table.
+            const combine = (...parts) => parts.filter(p => p && p.trim()).join('\n\n');
+            setMlpData({
+              feedback_analysis: rawMlpData.feedback_analysis || '',
+              enhancement_plan: rawMlpData.enhancement_plan ||
+                combine(rawMlpData.enhancement_strategy, rawMlpData.ui_ux_requirements, rawMlpData.technical_excellence),
+              lovable_experience: rawMlpData.lovable_experience ||
+                combine(rawMlpData.wow_moments, rawMlpData.user_journey),
+              visual_prototype: rawMlpData.visual_prototype ||
+                combine(rawMlpData.visual_mockups, rawMlpData.prototype_description),
+              uploaded_files: rawMlpData.uploaded_files || []
+            });
           }
 
           // Auto-check: if MLP is completed and venture is still in mlp phase, check feedback count
@@ -110,12 +119,17 @@ export default function MLPDevelopmentCenter() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Autosave every 30 seconds
+  // Autosave every 30 seconds — only if something actually changed since
+  // the last save, so this doesn't hit the DB or show a toast for no reason.
+  const lastSavedRef = React.useRef(null);
   useEffect(() => {
     if (!venture) return;
     const interval = setInterval(async () => {
+      const currentSnapshot = JSON.stringify(mlpData);
+      if (currentSnapshot === lastSavedRef.current) return;
       try {
         await Venture.update(venture.id, { mlp_data: mlpData });
+        lastSavedRef.current = currentSnapshot;
         showToast('Auto-saved', 'success');
       } catch (e) {}
     }, 30000);
@@ -200,13 +214,9 @@ export default function MLPDevelopmentCenter() {
     if (!venture) return;
     const missing = [];
     if (!mlpData.feedback_analysis.trim()) missing.push('Feedback Analysis');
-    if (!mlpData.enhancement_strategy.trim()) missing.push('Enhancement Strategy');
-    if (!mlpData.wow_moments.trim()) missing.push('"Wow" Moments');
-    if (!mlpData.user_journey.trim()) missing.push('User Journey');
-    if (!mlpData.ui_ux_requirements.trim()) missing.push('UI/UX Requirements');
-    if (!mlpData.technical_excellence.trim()) missing.push('Technical Excellence');
-    if (!mlpData.visual_mockups.trim()) missing.push('Visual Mockups');
-    if (!mlpData.prototype_description.trim()) missing.push('Prototype Description');
+    if (!mlpData.enhancement_plan.trim()) missing.push('Enhancement Plan');
+    if (!mlpData.lovable_experience.trim()) missing.push('What Makes It Lovable');
+    if (!mlpData.visual_prototype.trim()) missing.push('Visual & Prototype');
     if (mlpData.uploaded_files.length === 0) missing.push('Uploaded Files');
     if (missing.length > 0) {
       setMissingFields(missing);
@@ -307,6 +317,14 @@ export default function MLPDevelopmentCenter() {
     return summary;
   };
 
+  // Partially masks an email for display (e.g. "j***@gmail.com") — real
+  // identity without exposing the full address.
+  const maskEmail = (email) => {
+    if (!email || !email.includes('@')) return 'Anonymous';
+    const [local, domain] = email.split('@');
+    return `${local[0]}***@${domain}`;
+  };
+
   const getFileDisplay = (fileName, fileUrl) => {
     const extension = fileName.split('.').pop().toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) {
@@ -341,10 +359,10 @@ export default function MLPDevelopmentCenter() {
   };
 
   const completionPct = React.useMemo(() => {
-    const fields = [mlpData.feedback_analysis, mlpData.enhancement_strategy, mlpData.wow_moments, mlpData.user_journey, mlpData.ui_ux_requirements, mlpData.technical_excellence, mlpData.visual_mockups, mlpData.prototype_description];
+    const fields = [mlpData.feedback_analysis, mlpData.enhancement_plan, mlpData.lovable_experience, mlpData.visual_prototype];
     const filesOk = mlpData.uploaded_files.length > 0 ? 1 : 0;
     const completed = fields.filter(f => f && f.trim()).length + filesOk;
-    return Math.round((completed / 9) * 100);
+    return Math.round((completed / 5) * 100);
   }, [mlpData]);
 
   const feedbackStats = calculateFeedbackStats();
@@ -410,20 +428,18 @@ export default function MLPDevelopmentCenter() {
             </div>
           </div>
 
-          <Tabs defaultValue="phase1" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="phase1" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Phase 1: Feedback</TabsTrigger>
-              <TabsTrigger value="phase2" className="data-[state=active]:bg-pink-600 data-[state=active]:text-white">Phase 2: Experience</TabsTrigger>
-              <TabsTrigger value="phase3" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Phase 3: Visualization</TabsTrigger>
-              <TabsTrigger value="phase4" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Phase 4: Review</TabsTrigger>
+          <Tabs defaultValue="analysis" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="analysis" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Analysis (internal)</TabsTrigger>
+              <TabsTrigger value="landing" className="data-[state=active]:bg-pink-600 data-[state=active]:text-white">Landing Page Content</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="phase1" className="space-y-6">
+            <TabsContent value="analysis" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-indigo-700">
                     <Target className="w-5 h-5 text-indigo-600" />
-                    1.1 Analyze Your MVP Feedback
+                    1. Analyze Your MVP Feedback
                     <div className="ml-auto flex items-center gap-2">
                       <Button
                         type="button"
@@ -440,7 +456,7 @@ export default function MLPDevelopmentCenter() {
                       />
                     </div>
                   </CardTitle>
-                  <CardDescription>Review the feedback collected from your MVP users</CardDescription>
+                  <CardDescription>Review the feedback collected from your MVP users — internal only, never shown publicly</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {feedbackStats && feedbackStats.length > 0 ? (
@@ -475,20 +491,33 @@ export default function MLPDevelopmentCenter() {
                   {suggestedFeatures.length > 0 && (
                     <div className="mt-6">
                       <h3 className="font-semibold mb-3">User-Suggested Features</h3>
-                      <ul className="space-y-2">
-                        {suggestedFeatures.map((feature, idx) => (
-                          <li key={idx} className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                            <Sparkles className="w-4 h-4 text-blue-500" />
-                            <span>{feature.feature_name}</span>
-                            {feature.user_email && <span className="text-xs text-gray-500">- by {feature.user_email}</span>}
-                          </li>
-                        ))}
-                      </ul>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Feature</TableHead>
+                            <TableHead>Suggested by</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {suggestedFeatures.map((feature, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-blue-500" />
+                                {feature.feature_name}
+                              </TableCell>
+                              <TableCell className="text-gray-500">{maskEmail(feature.user_email)}</TableCell>
+                              <TableCell className="text-gray-500">
+                                {feature.created_date ? new Date(feature.created_date).toLocaleDateString() : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   )}
                   <div className="mt-6">
                     <Label htmlFor="feedback_analysis">Feedback Analysis Summary</Label>
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                     <Textarea
                       id="feedback_analysis"
                       value={mlpData.feedback_analysis}
@@ -504,108 +533,71 @@ export default function MLPDevelopmentCenter() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-indigo-700">
                     <TrendingUp className="w-5 h-5 text-indigo-600" />
-                    1.2 Define MLP Enhancement Strategy
+                    2. Enhancement Plan
                     <div className="ml-auto flex items-center gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_enhancement_strategy' })}
+                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_enhancement_plan' })}
                         className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                       >
                         <Info className="w-4 h-4" />
                         Tips
                       </Button>
                       <MentorButton
-                        onClick={() => openMentorModal('mlp_enhancement_strategy', 'Enhancement Strategy', 'enhancement_strategy')}
+                        onClick={() => openMentorModal('mlp_enhancement_plan', 'Enhancement Plan', 'enhancement_plan')}
                       />
                     </div>
                   </CardTitle>
-                  <CardDescription>For each feature you're keeping, define what needs to be FIXED, POLISHED, and ADDED</CardDescription>
+                  <CardDescription>What needs to be fixed, polished, and technically solid — internal only, never shown publicly</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="enhancement_strategy">Enhancement Strategy</Label>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
+                  <Label htmlFor="enhancement_plan">Enhancement Plan</Label>
                   <Textarea
-                    id="enhancement_strategy"
-                    value={mlpData.enhancement_strategy}
-                    onChange={(e) => handleInputChange('enhancement_strategy', e.target.value)}
-                    placeholder="For each MVP feature: What needs to be FIXED? (bugs, performance). What needs to be POLISHED? (better UI, clearer messaging). What needs to be ADDED? (small delightful enhancements)."
-                    className="h-40 mt-2"
+                    id="enhancement_plan"
+                    value={mlpData.enhancement_plan}
+                    onChange={(e) => handleInputChange('enhancement_plan', e.target.value)}
+                    placeholder="For each feature you're keeping: what needs to be FIXED (bugs, performance), what needs to be POLISHED (UI, messaging), and what needs to be ADDED (small enhancements). Also note your quality bar: visual design consistency, load times, security, and reliability."
+                    className="h-48 mt-2"
                   />
                 </CardContent>
               </Card>
+            </TabsContent>
 
+            <TabsContent value="landing" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-pink-700">
                     <Sparkles className="w-5 h-5 text-yellow-500" />
-                    1.3 Identify "Wow" Moments to Add
+                    3. What Makes It Lovable
                     <div className="ml-auto flex items-center gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_wow_moments' })}
+                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_lovable_experience' })}
                         className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                       >
                         <Info className="w-4 h-4" />
                         Tips
                       </Button>
                       <MentorButton
-                        onClick={() => openMentorModal('mlp_wow_moments', '"Wow" Moments', 'wow_moments')}
+                        onClick={() => openMentorModal('mlp_lovable_experience', 'What Makes It Lovable', 'lovable_experience')}
                       />
                     </div>
                   </CardTitle>
-                  <CardDescription>What small features will surprise and delight users?</CardDescription>
+                  <CardDescription>The experience and delight factors — this is shown to visitors on your public MLP page</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="wow_moments">"Wow" Moments & Delight Factors</Label>
+                  <Label htmlFor="lovable_experience">What Makes It Lovable</Label>
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
                   <Textarea
-                    id="wow_moments"
-                    value={mlpData.wow_moments}
-                    onChange={(e) => handleInputChange('wow_moments', e.target.value)}
-                    placeholder="Examples: keyboard shortcuts, smart defaults, congratulations on achievements, undo functionality, dark mode, personalized recommendations, etc."
-                    className="h-32 mt-2"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="phase2" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-pink-700">
-                    <Users className="w-5 h-5 text-pink-600" />
-                    2.1 User Journey Map
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_user_journey' })}
-                        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                      >
-                        <Info className="w-4 h-4" />
-                        Tips
-                      </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_user_journey', 'User Journey Map', 'user_journey')}
-                      />
-                    </div>
-                  </CardTitle>
-                  <CardDescription>Define the user experience from awareness to advocacy</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Label htmlFor="user_journey">User Journey (Awareness → Onboarding → First Use → Regular Use → Advocacy)</Label>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
-                  <Textarea
-                    id="user_journey"
-                    value={mlpData.user_journey}
-                    onChange={(e) => handleInputChange('user_journey', e.target.value)}
-                    placeholder="For each stage: What does the user experience? How should they feel? What makes it 'lovable'?"
-                    className="h-40 mt-2"
+                    id="lovable_experience"
+                    value={mlpData.lovable_experience}
+                    onChange={(e) => handleInputChange('lovable_experience', e.target.value)}
+                    placeholder="Describe the journey from a user's first visit to becoming a regular — and the small delightful touches along the way (smart defaults, celebrations, personalization, dark mode, etc.). What makes someone say 'I can't live without this'?"
+                    className="h-48 mt-2"
                   />
                 </CardContent>
               </Card>
@@ -613,152 +605,40 @@ export default function MLPDevelopmentCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-pink-700">
-                    2.2 UI/UX Requirements
+                    <FileText className="w-5 h-5 text-pink-600" />
+                    4. Visual & Prototype
                     <div className="ml-auto flex items-center gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_ui_ux' })}
+                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_visual_prototype' })}
                         className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                       >
                         <Info className="w-4 h-4" />
                         Tips
                       </Button>
                       <MentorButton
-                        onClick={() => openMentorModal('mlp_ui_ux', 'UI/UX Requirements', 'ui_ux_requirements')}
+                        onClick={() => openMentorModal('mlp_visual_prototype', 'Visual & Prototype', 'visual_prototype')}
                       />
                     </div>
                   </CardTitle>
-                  <CardDescription>Visual design, interaction design, and delight factors</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Label htmlFor="ui_ux_requirements">UI/UX Requirements</Label>
-                  <Textarea
-                    id="ui_ux_requirements"
-                    value={mlpData.ui_ux_requirements}
-                    onChange={(e) => handleInputChange('ui_ux_requirements', e.target.value)}
-                    placeholder="Visual Design: consistent design system, high-quality visuals, responsive, accessible. Interaction Design: smooth animations, intuitive navigation, clear CTAs. Delight Factors: micro-interactions, personalization, celebrations."
-                    className="h-40 mt-2"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-pink-700">
-                    2.3 Technical Excellence
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_technical' })}
-                        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                      >
-                        <Info className="w-4 h-4" />
-                        Tips
-                      </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_technical', 'Technical Excellence', 'technical_excellence')}
-                      />
-                    </div>
-                  </CardTitle>
-                  <CardDescription>Fast, bug-free, secure, and smooth</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Label htmlFor="technical_excellence">Technical Excellence Goals</Label>
-                  <Textarea
-                    id="technical_excellence"
-                    value={mlpData.technical_excellence}
-                    onChange={(e) => handleInputChange('technical_excellence', e.target.value)}
-                    placeholder="Fast load times (<3s), no critical bugs, works offline (if applicable), data security, smooth performance"
-                    className="h-32 mt-2"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="phase3" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700">
-                    <FileText className="w-5 h-5 text-green-600" />
-                    3.1 Visual Mockups
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_visual_mockups' })}
-                        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                      >
-                        <Info className="w-4 h-4" />
-                        Tips
-                      </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_visual_mockups', 'Visual Mockups', 'visual_mockups')}
-                      />
-                    </div>
-                  </CardTitle>
-                  <CardDescription>Describe your high-fidelity designs</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Label htmlFor="visual_mockups">Visual Mockups Description</Label>
-                  <Textarea
-                    id="visual_mockups"
-                    value={mlpData.visual_mockups}
-                    onChange={(e) => handleInputChange('visual_mockups', e.target.value)}
-                    placeholder="Describe your landing page, onboarding flow, core feature screens, key user flows, empty/error/success states."
-                    className="h-32 mt-2"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700">
-                    3.2 Interactive Prototype
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'mlp_prototype' })}
-                        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                      >
-                        <Info className="w-4 h-4" />
-                        Tips
-                      </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_prototype', 'Interactive Prototype', 'prototype_description')}
-                      />
-                    </div>
-                  </CardTitle>
-                  <CardDescription>Describe your clickable prototype</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Label htmlFor="prototype_description">Prototype Description</Label>
-                  <Textarea
-                    id="prototype_description"
-                    value={mlpData.prototype_description}
-                    onChange={(e) => handleInputChange('prototype_description', e.target.value)}
-                    placeholder="Describe your interactive prototype: main user flows, realistic data, branding, key animations. Tools: Figma, InVision, etc."
-                    className="h-32 mt-2"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="w-5 h-5 text-green-600" />
-                    3.3 Upload MLP Files
-                  </CardTitle>
-                  <CardDescription>Upload mockups, prototypes, demo videos, or any visual assets. New uploads will replace previous files.</CardDescription>
+                  <CardDescription>Your high-fidelity designs and clickable prototype — this is shown to visitors on your public MLP page</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200 mb-4">
+                  <div>
+                    <Label htmlFor="visual_prototype">Visual & Prototype Description</Label>
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mt-1 mb-1 block"><Globe className="w-3 h-3" /> Visible on your public MLP page</span>
+                    <Textarea
+                      id="visual_prototype"
+                      value={mlpData.visual_prototype}
+                      onChange={(e) => handleInputChange('visual_prototype', e.target.value)}
+                      placeholder="Describe your landing page, onboarding flow, and core feature screens — plus your clickable prototype: main user flows, realistic data, branding, key animations. Tools: Figma, InVision, ZigForge, etc."
+                      className="h-40 mt-2"
+                    />
+                  </div>
+
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                         <ExternalLink className="w-5 h-5 text-white" />
@@ -775,6 +655,7 @@ export default function MLPDevelopmentCenter() {
                       </Button>
                     </a>
                   </div>
+
                   <div>
                     <Label htmlFor="mlp_files">MLP Visual Assets</Label>
                     <Input
@@ -821,32 +702,16 @@ export default function MLPDevelopmentCenter() {
                       <p className="text-sm">{mlpData.feedback_analysis ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Enhancement Strategy</h4>
-                      <p className="text-sm">{mlpData.enhancement_strategy ? '✓ Completed' : '✗ Not completed'}</p>
+                      <h4 className="font-semibold text-sm text-gray-600">Enhancement Plan</h4>
+                      <p className="text-sm">{mlpData.enhancement_plan ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm text-gray-600">"Wow" Moments</h4>
-                      <p className="text-sm">{mlpData.wow_moments ? '✓ Completed' : '✗ Not completed'}</p>
+                      <h4 className="font-semibold text-sm text-gray-600">What Makes It Lovable</h4>
+                      <p className="text-sm">{mlpData.lovable_experience ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm text-gray-600">User Journey</h4>
-                      <p className="text-sm">{mlpData.user_journey ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">UI/UX Requirements</h4>
-                      <p className="text-sm">{mlpData.ui_ux_requirements ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Technical Excellence</h4>
-                      <p className="text-sm">{mlpData.technical_excellence ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Visual Mockups</h4>
-                      <p className="text-sm">{mlpData.visual_mockups ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Prototype Description</h4>
-                      <p className="text-sm">{mlpData.prototype_description ? '✓ Completed' : '✗ Not completed'}</p>
+                      <h4 className="font-semibold text-sm text-gray-600">Visual & Prototype</h4>
+                      <p className="text-sm">{mlpData.visual_prototype ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm text-gray-600">Uploaded Files</h4>
