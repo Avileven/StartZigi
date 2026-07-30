@@ -372,6 +372,37 @@ between words (e.g. "Peer Critique Marketplace"), never camelCase or
 PascalCase run together (never "PeerCritiqueMarketplace"). Criticality
 and Ease must be plain integers 1-10, nothing else in those fields.`;
 }
+// MLP step 2 — takes the founder's per-feature enhancement notes (how
+// each selected feature changes in the new demo) and produces either
+// build guidance or a ready-to-paste prompt for an external tool
+// (Lovable, Bolt, ZigForge). Assumes no technical background.
+export function buildMlpDemoPlanPrompt({ ventureDesc, businessPlanContext, featureNotes }) {
+  const notesList = featureNotes
+    .map(f => `- "${f.featureName}": ${f.note || '(no specific change noted)'}`)
+    .join('\n');
+
+  return `You are Zig, an entrepreneurial-thinking coach inside a startup training tool (not a real business plan for investors).
+
+Venture context: "${ventureDesc || 'not provided'}"
+Problem: "${businessPlanContext?.problem || 'not filled in yet'}"
+Solution: "${businessPlanContext?.solution || 'not filled in yet'}"
+
+The founder is building an improved demo (MLP) and has these planned changes per feature:
+${notesList}
+
+ASSUME the founder has little to no technical background. Produce TWO things:
+
+1. A short (3-4 sentence) plain-English build plan: what to prioritize
+   first and why, given these changes together.
+
+2. A ready-to-paste prompt (clearly separated, prefixed with "PROMPT FOR
+   AI BUILDER TOOLS:") that the founder could paste directly into a tool
+   like Lovable, Bolt.new, or ZigForge to generate this demo — written as
+   a clear product/feature spec in plain English, not code.
+
+Plain text only, no markdown formatting.`;
+}
+
 // allFieldValues: { [fieldKey]: string } — current text of every field in the plan
 // firstPass: boolean — has this venture already completed Foundation once?
 // previousScore: { [categoryName]: number } | null — from THIS session only;

@@ -7,7 +7,11 @@ import { SuggestedFeature } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
-import { UploadFile } from '@/api/integrations';
+import { businessPlan as businessPlanEntity } from '@/api/entities.js';
+import { UploadFile, InvokeLLM } from '@/api/integrations';
+import { buildFeatureAnalysisPrompt, buildMlpDemoPlanPrompt } from '@/components/mentor/zigConfig';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 import { createPageUrl } from '@/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
@@ -28,8 +32,8 @@ export default function MLPDevelopmentCenter() {
   const [mvpFeedback, setMvpFeedback] = useState([]);
   const [suggestedFeatures, setSuggestedFeatures] = useState([]);
   const [mlpData, setMlpData] = useState({
-    feedback_analysis: '',
-    enhancement_plan: '',
+    feature_matrix: [],       // step 1 — same shape as MVP's feature matrix, seeded with user-suggested features first
+    enhancement_notes: {},    // step 2 — { [featureId]: "how this changes in the new demo" }, one per selected feature
     lovable_experience: '',
     visual_prototype: '',
     uploaded_files: []
@@ -52,6 +56,18 @@ export default function MLPDevelopmentCenter() {
   });
   const router = useRouter();
 
+  // Business plan context — for both Zig integrations below.
+  const [businessPlanContext, setBusinessPlanContext] = useState(null);
+
+  // Step 1 — analyze the selected feature matrix
+  const [mlpFeatureAnalysis, setMlpFeatureAnalysis] = useState(null);
+  const [isAnalyzingMlpFeatures, setIsAnalyzingMlpFeatures] = useState(false);
+
+  // Step 2 — generate a build plan / external-tool prompt from the
+  // enhancement notes
+  const [demoPlan, setDemoPlan] = useState(null);
+  const [isGeneratingDemoPlan, setIsGeneratingDemoPlan] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -65,22 +81,55 @@ export default function MLPDevelopmentCenter() {
           const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
           setSuggestedFeatures(suggestions);
           const rawMlpData = currentVenture.mlp_data || currentVenture.mlp_development_data;
-          if (rawMlpData) {
-            // Backward-compat: if the old 8-field shape is present and
-            // the new merged fields are empty, combine the old values so
-            // nothing already written gets lost. Safe because mlp_data
-            // is a single JSON column, not a fixed-schema table.
-            const combine = (...parts) => parts.filter(p => p && p.trim()).join('\n\n');
+          if (rawMlpData && Array.isArray(rawMlpData.feature_matrix)) {
+            // Already has the new structured shape — load as-is.
             setMlpData({
-              feedback_analysis: rawMlpData.feedback_analysis || '',
-              enhancement_plan: rawMlpData.enhancement_plan ||
-                combine(rawMlpData.enhancement_strategy, rawMlpData.ui_ux_requirements, rawMlpData.technical_excellence),
-              lovable_experience: rawMlpData.lovable_experience ||
-                combine(rawMlpData.wow_moments, rawMlpData.user_journey),
-              visual_prototype: rawMlpData.visual_prototype ||
-                combine(rawMlpData.visual_mockups, rawMlpData.prototype_description),
+              feature_matrix: rawMlpData.feature_matrix || [],
+              enhancement_notes: rawMlpData.enhancement_notes || {},
+              lovable_experience: rawMlpData.lovable_experience || '',
+              visual_prototype: rawMlpData.visual_prototype || '',
               uploaded_files: rawMlpData.uploaded_files || []
             });
+          } else {
+            // First time building this structure (or old text-based shape
+            // from before) — seed the matrix: user-suggested features
+            // first (the most important signal), then features carried
+            // over from the MVP stage.
+            const suggestedAsFeatures = suggestions.map((s, idx) => ({
+              id: `suggested_${idx}_${Date.now()}`,
+              featureName: s.feature_name,
+              userCriticality: 5,
+              implementationEase: 5,
+              priorityScore: 25,
+              isSelected: false,
+              source: 'suggested',
+            }));
+            const mvpFeatures = (currentVenture.mvp_data?.feature_matrix || []).map(f => ({
+              ...f,
+              isSelected: false, // don't carry over MVP's selection — MLP starts fresh
+              source: 'mvp',
+            }));
+            setMlpData(prev => ({
+              ...prev,
+              feature_matrix: [...suggestedAsFeatures, ...mvpFeatures],
+              lovable_experience: rawMlpData?.lovable_experience || '',
+              visual_prototype: rawMlpData?.visual_prototype || '',
+              uploaded_files: rawMlpData?.uploaded_files || []
+            }));
+          }
+
+          // Business plan context for both Zig integrations below.
+          try {
+            const plans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
+            if (plans.length > 0) {
+              setBusinessPlanContext({
+                problem: plans[0].problem || '',
+                solution: plans[0].solution || '',
+                competition: plans[0].competition || '',
+              });
+            }
+          } catch (bpError) {
+            console.error('Error loading business plan context:', bpError);
           }
 
           // Auto-check: if MLP is completed and venture is still in mlp phase, check feedback count
@@ -138,6 +187,100 @@ export default function MLPDevelopmentCenter() {
 
   const handleInputChange = (field, value) => {
     setMlpData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Feature Matrix (step 1) handlers — same pattern as the MVP page.
+  const handleMlpFeatureChange = (featureId, field, value) => {
+    setMlpData(prev => ({
+      ...prev,
+      feature_matrix: prev.feature_matrix.map(f => {
+        if (f.id !== featureId) return f;
+        const updated = { ...f, [field]: value };
+        if (field === 'userCriticality' || field === 'implementationEase') {
+          const criticality = field === 'userCriticality' ? value : updated.userCriticality;
+          const ease = field === 'implementationEase' ? value : updated.implementationEase;
+          updated.priorityScore = criticality * ease;
+        }
+        return updated;
+      })
+    }));
+  };
+
+  const handleAddMlpFeature = () => {
+    setMlpData(prev => ({
+      ...prev,
+      feature_matrix: [...prev.feature_matrix, {
+        id: `feature_${Date.now()}`,
+        featureName: '',
+        userCriticality: 5,
+        implementationEase: 5,
+        priorityScore: 25,
+        isSelected: false,
+        source: 'manual',
+      }]
+    }));
+  };
+
+  // [ZIG] Step 1 — analyze the selected feature matrix against the
+  // business plan context. Reuses the same prompt builder as MVP, since
+  // the shape (features with Criticality/Ease) is identical.
+  const handleAnalyzeMlpFeatures = async () => {
+    const selected = mlpData.feature_matrix.filter(f => f.isSelected && f.featureName?.trim());
+    if (selected.length === 0) return;
+
+    setIsAnalyzingMlpFeatures(true);
+    setMlpFeatureAnalysis(null);
+    try {
+      const prompt = buildFeatureAnalysisPrompt({
+        ventureDesc: venture?.description,
+        businessPlanContext,
+        features: selected,
+      });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      const text = data?.response || '';
+
+      const parsed = [];
+      let closingLine = '';
+      const blocks = text.split(/^###\s*/m).filter(Boolean);
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        const name = lines[0].trim();
+        const body = lines.slice(1).join('\n').trim();
+        if (name.toLowerCase() === 'next steps') {
+          closingLine = body;
+        } else if (selected.some(f => f.featureName.trim().toLowerCase() === name.toLowerCase())) {
+          parsed.push({ name, text: body });
+        }
+      }
+      setMlpFeatureAnalysis({ items: parsed, closingLine, raw: text });
+    } catch (error) {
+      setMlpFeatureAnalysis({ items: [], raw: 'Error generating analysis. Please try again.' });
+    }
+    setIsAnalyzingMlpFeatures(false);
+  };
+
+  // [ZIG] Step 2 — turn the per-feature enhancement notes into a build
+  // plan and a ready-to-paste prompt for external tools.
+  const handleGenerateDemoPlan = async () => {
+    const selectedWithNotes = mlpData.feature_matrix
+      .filter(f => f.isSelected && f.featureName?.trim())
+      .map(f => ({ featureName: f.featureName, note: mlpData.enhancement_notes[f.id] || '' }));
+    if (selectedWithNotes.length === 0) return;
+
+    setIsGeneratingDemoPlan(true);
+    setDemoPlan(null);
+    try {
+      const prompt = buildMlpDemoPlanPrompt({
+        ventureDesc: venture?.description,
+        businessPlanContext,
+        featureNotes: selectedWithNotes,
+      });
+      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
+      setDemoPlan(data?.response || 'No response from AI.');
+    } catch (error) {
+      setDemoPlan('Error generating plan. Please try again.');
+    }
+    setIsGeneratingDemoPlan(false);
   };
 
   const openMentorModal = (sectionId, sectionTitle, fieldKey) => {
@@ -213,8 +356,8 @@ export default function MLPDevelopmentCenter() {
   const handleComplete = async () => {
     if (!venture) return;
     const missing = [];
-    if (!mlpData.feedback_analysis.trim()) missing.push('Feedback Analysis');
-    if (!mlpData.enhancement_plan.trim()) missing.push('Enhancement Plan');
+    const hasSelectedFeatures = mlpData.feature_matrix.some(f => f.isSelected && f.featureName?.trim());
+    if (!hasSelectedFeatures) missing.push('Select at least one feature');
     if (!mlpData.lovable_experience.trim()) missing.push('What Makes It Lovable');
     if (!mlpData.visual_prototype.trim()) missing.push('Visual & Prototype');
     if (mlpData.uploaded_files.length === 0) missing.push('Uploaded Files');
@@ -359,9 +502,11 @@ export default function MLPDevelopmentCenter() {
   };
 
   const completionPct = React.useMemo(() => {
-    const fields = [mlpData.feedback_analysis, mlpData.enhancement_plan, mlpData.lovable_experience, mlpData.visual_prototype];
+    const hasSelectedFeatures = mlpData.feature_matrix.some(f => f.isSelected && f.featureName?.trim());
+    const hasEnhancementNotes = Object.values(mlpData.enhancement_notes).some(n => n && n.trim());
+    const fields = [mlpData.lovable_experience, mlpData.visual_prototype];
     const filesOk = mlpData.uploaded_files.length > 0 ? 1 : 0;
-    const completed = fields.filter(f => f && f.trim()).length + filesOk;
+    const completed = (hasSelectedFeatures ? 1 : 0) + (hasEnhancementNotes ? 1 : 0) + fields.filter(f => f && f.trim()).length + filesOk;
     return Math.round((completed / 5) * 100);
   }, [mlpData]);
 
@@ -451,9 +596,6 @@ export default function MLPDevelopmentCenter() {
                         <Info className="w-4 h-4" />
                         Tips
                       </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_feedback_analysis', 'Feedback Analysis', 'feedback_analysis')}
-                      />
                     </div>
                   </CardTitle>
                   <CardDescription>Review the feedback collected from your MVP users — internal only, never shown publicly</CardDescription>
@@ -488,44 +630,101 @@ export default function MLPDevelopmentCenter() {
                   ) : (
                     <p className="text-gray-500">No MVP feedback collected yet.</p>
                   )}
-                  {suggestedFeatures.length > 0 && (
+                  {mlpData.feature_matrix.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="font-semibold mb-3">User-Suggested Features</h3>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Feature</TableHead>
-                            <TableHead>Suggested by</TableHead>
-                            <TableHead>Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {suggestedFeatures.map((feature, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-medium flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-blue-500" />
-                                {feature.feature_name}
-                              </TableCell>
-                              <TableCell className="text-gray-500">{maskEmail(feature.user_email)}</TableCell>
-                              <TableCell className="text-gray-500">
-                                {feature.created_date ? new Date(feature.created_date).toLocaleDateString() : '—'}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <h3 className="font-semibold mb-1">What Goes Into the Next Version</h3>
+                      <p className="text-xs text-gray-500 mb-3">User-suggested features are listed first — that's the strongest signal you have.</p>
+                      <div className="space-y-3">
+                        {mlpData.feature_matrix.map((feature) => (
+                          <Card key={feature.id} className={feature.source === 'suggested' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <Checkbox
+                                  checked={feature.isSelected}
+                                  onCheckedChange={(checked) => handleMlpFeatureChange(feature.id, 'isSelected', checked)}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    {feature.source === 'suggested' && <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />}
+                                    <Input
+                                      value={feature.featureName}
+                                      onChange={(e) => handleMlpFeatureChange(feature.id, 'featureName', e.target.value)}
+                                      placeholder="Feature name..."
+                                      className="font-semibold"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-xs mb-2 block">User Criticality (1-10)</Label>
+                                      <Slider
+                                        value={[feature.userCriticality || 5]}
+                                        onValueChange={(value) => handleMlpFeatureChange(feature.id, 'userCriticality', value[0])}
+                                        max={10}
+                                        min={1}
+                                        step={1}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs mb-2 block">Implementation Ease (1-10)</Label>
+                                      <Slider
+                                        value={[feature.implementationEase || 5]}
+                                        onValueChange={(value) => handleMlpFeatureChange(feature.id, 'implementationEase', value[0])}
+                                        max={10}
+                                        min={1}
+                                        step={1}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+
+                      <Button onClick={handleAddMlpFeature} variant="outline" className="w-full mt-3">
+                        Add Feature
+                      </Button>
+
+                      {mlpData.feature_matrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
+                        <div className="flex items-center justify-center gap-3 mt-4">
+                          <Button
+                            onClick={handleAnalyzeMlpFeatures}
+                            disabled={isAnalyzingMlpFeatures}
+                            className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                          >
+                            {isAnalyzingMlpFeatures ? (
+                              <Loader2 className="animate-spin" />
+                            ) : (
+                              <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                            )}
+                          </Button>
+                          <p className="text-sm text-gray-600">
+                            Get feedback on which features to bring into this version.
+                          </p>
+                        </div>
+                      )}
+
+                      {mlpFeatureAnalysis && (
+                        <div className="mt-4 p-4 bg-white border border-slate-200 rounded-xl space-y-4">
+                          {mlpFeatureAnalysis.items.length > 0 ? (
+                            mlpFeatureAnalysis.items.map((item, idx) => (
+                              <div key={idx}>
+                                <p className="font-semibold text-sm text-indigo-900 mb-1">{item.name}</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-gray-700 whitespace-pre-line">{mlpFeatureAnalysis.raw}</p>
+                          )}
+                          {mlpFeatureAnalysis.closingLine && (
+                            <p className="text-sm text-gray-500 pt-2 border-t border-gray-100">{mlpFeatureAnalysis.closingLine}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
-                  <div className="mt-6">
-                    <Label htmlFor="feedback_analysis">Feedback Analysis Summary</Label>
-                    <Textarea
-                      id="feedback_analysis"
-                      value={mlpData.feedback_analysis}
-                      onChange={(e) => handleInputChange('feedback_analysis', e.target.value)}
-                      placeholder="Summarize the key insights from your MVP feedback. What did users love? What frustrated them? What features had high/low engagement?"
-                      className="h-40 mt-2"
-                    />
-                  </div>
                 </CardContent>
               </Card>
 
@@ -545,22 +744,56 @@ export default function MLPDevelopmentCenter() {
                         <Info className="w-4 h-4" />
                         Tips
                       </Button>
-                      <MentorButton
-                        onClick={() => openMentorModal('mlp_enhancement_plan', 'Enhancement Plan', 'enhancement_plan')}
-                      />
                     </div>
                   </CardTitle>
-                  <CardDescription>What needs to be fixed, polished, and technically solid — internal only, never shown publicly</CardDescription>
+                  <CardDescription>For each feature you selected above, how will it change in the new demo? — internal only, never shown publicly</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Label htmlFor="enhancement_plan">Enhancement Plan</Label>
-                  <Textarea
-                    id="enhancement_plan"
-                    value={mlpData.enhancement_plan}
-                    onChange={(e) => handleInputChange('enhancement_plan', e.target.value)}
-                    placeholder="For each feature you're keeping: what needs to be FIXED (bugs, performance), what needs to be POLISHED (UI, messaging), and what needs to be ADDED (small enhancements). Also note your quality bar: visual design consistency, load times, security, and reliability."
-                    className="h-48 mt-2"
-                  />
+                <CardContent className="space-y-4">
+                  {mlpData.feature_matrix.filter(f => f.isSelected && f.featureName?.trim()).length === 0 ? (
+                    <p className="text-sm text-gray-500">Select at least one feature in step 1 to plan its changes here.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {mlpData.feature_matrix.filter(f => f.isSelected && f.featureName?.trim()).map(feature => (
+                        <div key={feature.id}>
+                          <Label className="text-sm font-medium">{feature.featureName}</Label>
+                          <Textarea
+                            value={mlpData.enhancement_notes[feature.id] || ''}
+                            onChange={(e) => setMlpData(prev => ({
+                              ...prev,
+                              enhancement_notes: { ...prev.enhancement_notes, [feature.id]: e.target.value }
+                            }))}
+                            placeholder="How will this look or work differently in the new demo?"
+                            className="h-20 mt-1"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {mlpData.feature_matrix.filter(f => f.isSelected && f.featureName?.trim()).length > 0 && (
+                    <div className="flex items-center justify-center gap-3 pt-2">
+                      <Button
+                        onClick={handleGenerateDemoPlan}
+                        disabled={isGeneratingDemoPlan}
+                        className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                      >
+                        {isGeneratingDemoPlan ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                        )}
+                      </Button>
+                      <p className="text-sm text-gray-600">
+                        Turn this into a build plan and a ready-to-paste prompt for an AI builder tool.
+                      </p>
+                    </div>
+                  )}
+
+                  {demoPlan && (
+                    <div className="p-4 bg-white border border-slate-200 rounded-xl">
+                      <p className="text-sm text-gray-700 whitespace-pre-line">{demoPlan}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -698,12 +931,12 @@ export default function MLPDevelopmentCenter() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Feedback Analysis</h4>
-                      <p className="text-sm">{mlpData.feedback_analysis ? '✓ Completed' : '✗ Not completed'}</p>
+                      <h4 className="font-semibold text-sm text-gray-600">Feature Selection</h4>
+                      <p className="text-sm">{mlpData.feature_matrix.some(f => f.isSelected && f.featureName?.trim()) ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm text-gray-600">Enhancement Plan</h4>
-                      <p className="text-sm">{mlpData.enhancement_plan ? '✓ Completed' : '✗ Not completed'}</p>
+                      <p className="text-sm">{Object.values(mlpData.enhancement_notes).some(n => n && n.trim()) ? '✓ Completed' : '✗ Not completed'}</p>
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm text-gray-600">What Makes It Lovable</h4>
