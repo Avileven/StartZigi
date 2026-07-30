@@ -653,6 +653,9 @@ export default function MLPDevelopmentCenter() {
                                       placeholder="Feature name..."
                                       className="font-semibold"
                                     />
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 shrink-0 whitespace-nowrap">
+                                      Priority: {feature.priorityScore}
+                                    </span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
