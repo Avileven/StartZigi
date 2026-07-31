@@ -210,14 +210,12 @@ export default function ClientLayout({ children }) {
   };
 
   if (venture) {
-    if (venture.mlp_completed) {
-      // ✅ FIX: folder is /mlp-landing-page
-landingPageItem.url = `/mlp-landing-page?id=${venture.id}`;
-      landingPageItem.isExternal = false;
-    } else {
-      landingPageItem.url = venture.landing_page_url || "#";
-      landingPageItem.isExternal = venture.landing_page_url?.startsWith("http") || false;
-    }
+    // [FIX] Removed the old mlp_completed override that hardcoded
+    // /mlp-landing-page — everything is now consolidated into one
+    // unified landing page, whose URL is already stored correctly in
+    // venture.landing_page_url for every phase, including MLP.
+    landingPageItem.url = venture.landing_page_url || "#";
+    landingPageItem.isExternal = venture.landing_page_url?.startsWith("http") || false;
   }
 
   // ✅ keep bypass render for public pages (no sidebar)
