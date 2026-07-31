@@ -329,9 +329,16 @@ same order as listed above:
 <2-4 sentences covering both points above, plain text, no markdown>
 
 Leave one blank line between features. After all features, add:
-### Next steps
-<ONE closing sentence of practical next-step guidance — never mention
-scores, numbers, or thresholds, just what to actually do next>`;
+### Recommendation
+<Look across ALL the features together — their Criticality/Ease ratings,
+the realistic build time from your Ease assessment above, and the
+product context — and give a clear, prioritized recommendation of which
+features to actually bring into this version and which to leave out or
+defer. Name the features explicitly (e.g. "Bring in X and Y first — they
+are both high-impact and fast to build using existing services. Hold off
+on Z until after launch — it's high-effort relative to its impact right
+now."). 3-5 sentences. Never mention scores, numbers, or thresholds —
+speak in terms of impact and effort, not ratings.>`;
 }
 
 // Suggests ADDITIONAL features the founder hasn't listed, based on the

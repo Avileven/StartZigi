@@ -246,7 +246,7 @@ export default function MLPDevelopmentCenter() {
         const lines = block.split('\n');
         const name = lines[0].trim();
         const body = lines.slice(1).join('\n').trim();
-        if (name.toLowerCase() === 'next steps') {
+        if (name.toLowerCase() === 'recommendation') {
           closingLine = body;
         } else if (selected.some(f => f.featureName.trim().toLowerCase() === name.toLowerCase())) {
           parsed.push({ name, text: body });
@@ -740,7 +740,10 @@ export default function MLPDevelopmentCenter() {
                             <p className="text-sm text-gray-700 whitespace-pre-line">{mlpFeatureAnalysis.raw}</p>
                           )}
                           {mlpFeatureAnalysis.closingLine && (
-                            <p className="text-sm text-gray-500 pt-2 border-t border-gray-100">{mlpFeatureAnalysis.closingLine}</p>
+                            <div className="pt-3 border-t border-gray-100">
+                              <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Recommendation</p>
+                              <p className="text-sm text-gray-700">{mlpFeatureAnalysis.closingLine}</p>
+                            </div>
                           )}
                         </div>
                       )}

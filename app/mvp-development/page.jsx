@@ -233,7 +233,7 @@ export default function MVPDevelopment() {
         const lines = block.split('\n');
         const name = lines[0].trim();
         const body = lines.slice(1).join('\n').trim();
-        if (name.toLowerCase() === 'next steps') {
+        if (name.toLowerCase() === 'recommendation') {
           closingLine = body;
         } else if (selected.some(f => f.featureName.trim().toLowerCase() === name.toLowerCase())) {
           parsed.push({ name, text: body });
@@ -758,7 +758,10 @@ export default function MVPDevelopment() {
                       <p className="text-sm text-gray-700 whitespace-pre-line">{featureAnalysis.raw}</p>
                     )}
                     {featureAnalysis.closingLine && (
-                      <p className="text-sm text-gray-500 pt-2 border-t border-gray-100">{featureAnalysis.closingLine}</p>
+                      <div className="pt-3 border-t border-gray-100">
+                        <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">Recommendation</p>
+                        <p className="text-sm text-gray-700">{featureAnalysis.closingLine}</p>
+                      </div>
                     )}
                   </div>
                 )}
