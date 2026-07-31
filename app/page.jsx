@@ -1,4 +1,4 @@
-// Home page - 240426
+// Home page - 310726
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -246,10 +246,10 @@ export default function Home() {
             .
           </h1>
           <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp"
+            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
             style={{ animationDelay: "0.2s" }}
           >
-            A training platform for growing raw ideas into startups, and inventors into founders. The platform combines a dedicated toolset, community wisdom, and AI-powered&nbsp;technical&nbsp;support.
+            Where ideas grow and founders are built.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
@@ -289,10 +289,11 @@ export default function Home() {
 
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig lets you follow a structured, practical process for turning a raw idea into something you'd actually stake a business on — built from the ground up around one person, working alone, from the very first spark of an idea to a validated, demo-ready product.
+              StartZig is the ecosystem for early-stage founders — a continuous process where ideas are shaped, products are defined, entrepreneurs help each other, and founder reputation grows over time. From your first spark to your first users, StartZig connects everything you need to build smarter.
             </p>
-            <p className="text-lg text-gray-600 max-w-3xl mt-4">
-              StartZig is designed for a variety of needs and stages — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started, <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality, and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
+            <h3 className="text-2xl font-bold text-gray-900 mt-10 mb-3">Built for Every Stage of the Journey</h3>
+            <p className="text-lg text-gray-600 max-w-3xl">
+              StartZig is designed for a variety of needs and stages — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started; <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality; and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
             </p>
           </div>
 
@@ -308,7 +309,7 @@ export default function Home() {
           </div>
 
           <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">Our DNA</span>
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">The StartZig Way</span>
           </h3>
 
           <div className="space-y-6">
@@ -318,8 +319,8 @@ export default function Home() {
                 body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop, across dozens of founders, private ventures, accelerators and investor feedback.",
               },
               {
-                title: "Not just a startup. A founder.",
-                body: "During your journey with StartZig, you'll shape your idea into something real and build up real knowledge and experience along the way. By the end, both the idea and you will be far more ready to raise funding and start development.",
+                title: "Not just an idea. A founder.",
+                body: "StartZig is not only about growing your current idea. Every product you shape, every decision you improve, and every entrepreneur you help — all build your experience and your reputation. Over time, you don't just build products. You build yourself as a founder.",
               },
               {
                 title: "Hard work. No shortcuts.",
@@ -330,13 +331,13 @@ export default function Home() {
                 body: (
                   <>
                     We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
-                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>.
+                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>. The platform combines a dedicated toolset, community wisdom, and AI-powered technical support.
                   </>
                 ),
               },
               {
-                title: "Community feedback, built into the process",
-                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. That's why it's built directly into the product-definition process, not bolted on.",
+                title: "Listen to Your Community. Build It.",
+                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. Share your progress, collect insights, understand your audience — and build a community around your idea, long before you launch.",
               },
               {
                 title: "Visual thinking, at every stage",
