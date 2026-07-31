@@ -176,7 +176,7 @@ export default function MLPLandingPage() {
           <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">FUCK YOU</h1>
+          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">Our Lovable Product</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             {venture.description}
           </p>

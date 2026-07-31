@@ -414,23 +414,55 @@ export default function ProductFeedbackPage() {
               <Badge className="bg-pink-100 text-pink-800 ml-2">{productFeedbacks.length}</Badge>
             </div>
             <div className="space-y-3">
-              {productFeedbacks.map((fb) => (
-                <Card key={fb.id} className="border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="w-4 h-4 text-pink-500" />
+              {productFeedbacks.map((fb) => {
+                const hasRatings = fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null;
+                return (
+                  <Card key={fb.id} className="border-0 shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="w-4 h-4 text-pink-500" />
+                        </div>
+                        <div className="flex-1">
+                          {hasRatings ? (
+                            <div className="flex flex-wrap gap-4 mb-2">
+                              {fb.features_rating != null && (
+                                <span className="text-sm">
+                                  <span className="text-gray-400">Features:</span>{' '}
+                                  <span className="font-semibold text-indigo-600">{fb.features_rating}/10</span>
+                                </span>
+                              )}
+                              {fb.look_feel_rating != null && (
+                                <span className="text-sm">
+                                  <span className="text-gray-400">Look &amp; Feel:</span>{' '}
+                                  <span className="font-semibold text-indigo-600">{fb.look_feel_rating}/10</span>
+                                </span>
+                              )}
+                              {fb.ux_rating != null && (
+                                <span className="text-sm">
+                                  <span className="text-gray-400">UX:</span>{' '}
+                                  <span className="font-semibold text-indigo-600">{fb.ux_rating}/10</span>
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            // [LEGACY] Feedback submitted before ratings existed — text only.
+                            <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 mb-2">
+                              Legacy feedback — no ratings
+                            </span>
+                          )}
+                          {fb.feedback_text && (
+                            <p className="text-gray-700">{fb.feedback_text}</p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-2">
+                            {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-gray-700">{fb.feedback_text}</p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
