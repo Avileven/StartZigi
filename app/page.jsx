@@ -1,4 +1,4 @@
-// Home page - 310726
+// Home page - 010826
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -142,9 +142,9 @@ function FAQItems() {
   const FAQS = [
     { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
     { q: "How long does the journey take?", a: "It depends on how intensively you work. As a rough estimate, we've found the full journey takes about 6 months, from the first spark of an idea to a validated, demo-ready product." },
-    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information — StartZig does not accept liability for data breaches. You choose when and with whom to share it — whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever — no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
-    { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan — available on Pro Founder and Unicorn." },
+    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information. StartZig does not accept liability for data breaches. You choose when and with whom to share it, whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
+    { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever, no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
+    { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan, available on Pro Founder and Unicorn." },
     { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
   ];
   return (
@@ -287,7 +287,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
-              More than just an AI tool, a founder community, or a business plan generator — StartZig is the ecosystem for early-stage founders: a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
+              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's the ecosystem for early-stage founders, a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
+            </p>
+          </div>
+
+          <div className="mb-10">
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Built for Every Stage of the Journey</h3>
+            <p className="text-lg text-gray-600 max-w-3xl">
+              StartZig is designed for different types of people. <strong className="text-gray-900">Explorers</strong> experience the startup journey and learn how ideas become products. <strong className="text-gray-900">Inventors</strong> turn ideas into structured concepts and demos. Early-stage <strong className="text-gray-900">Founders</strong> get feedback and build their first customer base around an advanced demo.
             </p>
           </div>
 
@@ -302,36 +309,12 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="mt-10">
-            <SparkShapeShip />
-          </div>
-
-          <div className="max-w-3xl mx-auto mb-10 space-y-3 mt-6">
-            <p className="text-lg text-gray-600">
-              <strong className="text-gray-900">SPARK.</strong> Grow a raw idea into a defined product.
-            </p>
-            <p className="text-lg text-gray-600">
-              <strong className="text-gray-900">SHAPE.</strong> Refine your product through real feedback from other users.
-            </p>
-            <p className="text-lg text-gray-600">
-              <strong className="text-gray-900">SHIP.</strong> Build your first customer base around an advanced demo.
-            </p>
-          </div>
-
           <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block leading-relaxed pb-2">The StartZig Way</span>
+            <span className="text-blue-600 inline-block leading-relaxed pb-2">The StartZig Way</span>
           </h3>
 
           <div className="space-y-6">
             {[
-              {
-                title: "Built for Every Stage of the Journey",
-                body: (
-                  <>
-                    StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
-                  </>
-                ),
-              },
               {
                 title: "Build your audience before you launch",
                 body: "One of the hardest challenges for early-stage founders is finding the first people willing to listen, test, and give feedback. Most founders wait until launch to search for users. StartZig helps you start earlier. Share your progress, collect focused feedback, understand your audience, and build relationships with people who may become your first users.",
@@ -341,7 +324,7 @@ export default function Home() {
                 body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
               },
               {
-                title: "AI as a tool — not a shortcut",
+                title: "AI as a tool, not a shortcut",
                 body: "AI can accelerate your work, but it cannot replace founder thinking. The founder comes first. The community adds perspective. AI accelerates the journey.",
               },
               {
@@ -355,7 +338,7 @@ export default function Home() {
               },
               {
                 title: "Visual thinking, at every stage",
-                body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
+                body: "Founders used to sketch ideas on napkins just to make them visual. It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas, one that stays with you throughout the entire process.",
               },
               {
                 title: "Simple. Transparent.",
