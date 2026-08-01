@@ -285,16 +285,24 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
+          <SparkShapeShip />
+
           <div className="mb-10">
-            <p className="text-lg text-gray-500 italic max-w-3xl mb-4">
-              Much more than just an AI tool, a founder community, or a business plan generator.
-            </p>
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is the ecosystem for early-stage founders — a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
+              More than just an AI tool, a founder community, or a business plan generator — StartZig is the ecosystem for early-stage founders: a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
             </p>
           </div>
 
           <PhaseClock />
+
+          {/* CTA — copied from the WhyStartZig page */}
+          <div className="text-center py-6">
+            <Link href="/register">
+              <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
+                Start Your Journey
+              </button>
+            </Link>
+          </div>
 
           <div className="max-w-3xl mx-auto mb-10 space-y-3">
             <p className="text-lg text-gray-600">
@@ -306,15 +314,6 @@ export default function Home() {
             <p className="text-lg text-gray-600">
               <strong className="text-gray-900">SHIP.</strong> Build your first customer base around an advanced demo.
             </p>
-          </div>
-
-          {/* CTA — copied from the WhyStartZig page */}
-          <div className="text-center py-6">
-            <Link href="/register">
-              <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
-                Start Your Journey
-              </button>
-            </Link>
           </div>
 
           <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20 leading-normal">
