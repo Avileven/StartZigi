@@ -249,7 +249,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
             style={{ animationDelay: "0.2s" }}
           >
-            Where ideas grow and founders are built.
+            Where ideas take shape and founders grow.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
@@ -288,12 +288,15 @@ export default function Home() {
           <SparkShapeShip />
 
           <div className="mb-10">
+            <p className="text-lg text-gray-500 italic max-w-3xl mb-4">
+              Much more than just an AI tool, a founder community, or a business plan generator.
+            </p>
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is the ecosystem for early-stage founders — a continuous process where ideas are shaped, products are defined, entrepreneurs help each other, and founder reputation grows over time. From your first spark to your first users, StartZig connects everything you need to build smarter.
+              StartZig is the ecosystem for early-stage founders — a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
             </p>
             <h3 className="text-2xl font-bold text-gray-900 mt-10 mb-3">Built for Every Stage of the Journey</h3>
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is designed for a variety of needs and stages — <strong className="text-gray-900">Explorers</strong>, who want to experience the startup journey, supported by a built-in idea bank to get started; <strong className="text-gray-900">Inventors</strong>, ready to turn their ideas into reality; and early-stage <strong className="text-gray-900">Founders</strong>, seeking real feedback and access to potential users.
+              StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas from their head into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
             </p>
           </div>
 
@@ -319,12 +322,12 @@ export default function Home() {
                 body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop, across dozens of founders, private ventures, accelerators and investor feedback.",
               },
               {
-                title: "Not just an idea. A founder.",
-                body: "StartZig is not only about growing your current idea. Every product you shape, every decision you improve, and every entrepreneur you help — all build your experience and your reputation. Over time, you don't just build products. You build yourself as a founder.",
+                title: "Not just a startup. A founder.",
+                body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
               },
               {
-                title: "Hard work. No shortcuts.",
-                body: "Every successful founder will tell you the same thing first: it took hard work. A mentor or AI magic won't do it for you — they're just tools. You're the one who gets your hands dirty and drives the process forward.",
+                title: "AI as a tool — not a shortcut",
+                body: "AI can accelerate your work, but it cannot replace founder thinking. The founder comes first. The community adds perspective. AI accelerates the journey.",
               },
               {
                 title: "Turning you into a product manager",
@@ -336,20 +339,20 @@ export default function Home() {
                 ),
               },
               {
-                title: "Listen to Your Community. Build It.",
-                body: "There's no feedback more valuable than hearing it from peer founders — real cross-pollination, not a courtesy comment. Share your progress, collect insights, understand your audience — and build a community around your idea, long before you launch.",
+                title: "Build your audience before you launch",
+                body: "One of the hardest challenges for early-stage founders is finding the first people willing to listen, test, and give feedback. Most founders wait until launch to search for users. StartZig helps you start earlier. Share your progress, collect focused feedback, understand your audience, and build relationships with people who may become your first users.",
               },
               {
                 title: "Visual thinking, at every stage",
                 body: "Founders used to sketch ideas on napkins just to make them visual :) It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas — one that stays with you throughout the entire process.",
               },
               {
-                title: "Transparency is not just a slogan",
-                body: "No surprises here. Your entire journey, from idea to pitching investors, is free, and always will be, with no trial days and no gimmicks. You only pay if you want an extra layer of AI power along the way.",
+                title: "Simple. Transparent.",
+                body: "Your journey from idea to defined product and demo is free. No trials. No gimmicks. You only pay if you choose additional AI capabilities or advanced features.",
               },
               {
-                title: "Full control over your information",
-                body: "We keep your information secure in the system. Only you decide whether to release part of it to the community to get feedback on your progress. And keep in mind — some of the people giving you that feedback could become your future customers :)",
+                title: "You control your ideas",
+                body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want.",
               },
             ].map((item, i) => (
               <div key={i}>
