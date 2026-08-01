@@ -285,8 +285,6 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <SparkShapeShip />
-
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
               More than just an AI tool, a founder community, or a business plan generator — StartZig is the ecosystem for early-stage founders: a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
@@ -304,7 +302,11 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="max-w-3xl mx-auto mb-10 space-y-3">
+          <div className="mt-10">
+            <SparkShapeShip />
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-10 space-y-3 mt-6">
             <p className="text-lg text-gray-600">
               <strong className="text-gray-900">SPARK.</strong> Grow a raw idea into a defined product.
             </p>
@@ -316,8 +318,8 @@ export default function Home() {
             </p>
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20 leading-normal">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">The StartZig Way</span>
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block leading-relaxed pb-2">The StartZig Way</span>
           </h3>
 
           <div className="space-y-6">
