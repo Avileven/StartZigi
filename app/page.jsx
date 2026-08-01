@@ -285,8 +285,6 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <SparkShapeShip />
-
           <div className="mb-10">
             <p className="text-lg text-gray-500 italic max-w-3xl mb-4">
               Much more than just an AI tool, a founder community, or a business plan generator.
@@ -294,13 +292,21 @@ export default function Home() {
             <p className="text-lg text-gray-600 max-w-3xl">
               StartZig is the ecosystem for early-stage founders — a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
             </p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-10 mb-3">Built for Every Stage of the Journey</h3>
-            <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
-            </p>
           </div>
 
           <PhaseClock />
+
+          <div className="max-w-3xl mx-auto mb-10 space-y-3">
+            <p className="text-lg text-gray-600">
+              <strong className="text-gray-900">SPARK.</strong> Grow a raw idea into a defined product.
+            </p>
+            <p className="text-lg text-gray-600">
+              <strong className="text-gray-900">SHAPE.</strong> Refine your product through real feedback from other users.
+            </p>
+            <p className="text-lg text-gray-600">
+              <strong className="text-gray-900">SHIP.</strong> Build your first customer base around an advanced demo.
+            </p>
+          </div>
 
           {/* CTA — copied from the WhyStartZig page */}
           <div className="text-center py-6">
@@ -311,15 +317,23 @@ export default function Home() {
             </Link>
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20 leading-normal">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">The StartZig Way</span>
           </h3>
 
           <div className="space-y-6">
             {[
               {
-                title: "Built by founders for the next generation.",
-                body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop across dozens of founders, private ventures, accelerators, and investor feedback.",
+                title: "Built for Every Stage of the Journey",
+                body: (
+                  <>
+                    StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
+                  </>
+                ),
+              },
+              {
+                title: "Build your audience before you launch",
+                body: "One of the hardest challenges for early-stage founders is finding the first people willing to listen, test, and give feedback. Most founders wait until launch to search for users. StartZig helps you start earlier. Share your progress, collect focused feedback, understand your audience, and build relationships with people who may become your first users.",
               },
               {
                 title: "Not just a startup. A founder.",
@@ -337,10 +351,6 @@ export default function Home() {
                     <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>. The platform combines a dedicated toolset, community wisdom, and AI-powered technical support.
                   </>
                 ),
-              },
-              {
-                title: "Build your audience before you launch",
-                body: "One of the hardest challenges for early-stage founders is finding the first people willing to listen, test, and give feedback. Most founders wait until launch to search for users. StartZig helps you start earlier. Share your progress, collect focused feedback, understand your audience, and build relationships with people who may become your first users.",
               },
               {
                 title: "Visual thinking, at every stage",
