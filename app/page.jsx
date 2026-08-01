@@ -283,7 +283,7 @@ export default function Home() {
       </div>
 
       {/* ── Why StartZig ── */}
-      <div className="py-16 px-6">
+      <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
           <SparkShapeShip />
 
@@ -296,7 +296,7 @@ export default function Home() {
             </p>
             <h3 className="text-2xl font-bold text-gray-900 mt-10 mb-3">Built for Every Stage of the Journey</h3>
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas from their head into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
+              StartZig is designed for different types of people — <strong className="text-gray-900">Explorers</strong>, who experience the startup journey and learn how ideas become products; <strong className="text-gray-900">Inventors</strong>, who turn ideas into structured concepts and demos; and early-stage <strong className="text-gray-900">Founders</strong>, who get feedback, build their audience, and prepare for real users.
             </p>
           </div>
 
@@ -319,7 +319,7 @@ export default function Home() {
             {[
               {
                 title: "Built by founders for the next generation.",
-                body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop, across dozens of founders, private ventures, accelerators and investor feedback.",
+                body: "Not theory, not an academic framework. Grounded in real, hands-on research: watching how ideas actually develop across dozens of founders, private ventures, accelerators, and investor feedback.",
               },
               {
                 title: "Not just a startup. A founder.",
@@ -330,7 +330,7 @@ export default function Home() {
                 body: "AI can accelerate your work, but it cannot replace founder thinking. The founder comes first. The community adds perspective. AI accelerates the journey.",
               },
               {
-                title: "Turning you into a product manager",
+                title: "Think like a product manager",
                 body: (
                   <>
                     We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
