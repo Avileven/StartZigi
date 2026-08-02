@@ -321,6 +321,14 @@ export default function VentureLanding() {
         features_rating: featuresRating,
         look_feel_rating: lookFeelRating,
         ux_rating: uxRating,
+        // [FIX 020826] Attribute feedback to the giving founder when logged in.
+        // Previously sent with no attribution at all, even for logged-in users —
+        // this made it impossible to credit the giver's feedback count/reputation,
+        // and impossible to show who gave it. Matches the pattern already used
+        // correctly in InteractiveFeedbackForm.jsx for MVP feedback / suggestions.
+        // Stays null for anonymous/logged-out visitors — unchanged behavior for them.
+        created_by: currentUser ? currentUser.email : null,
+        created_by_id: currentUser ? currentUser.id : null,
       });
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");

@@ -2,6 +2,17 @@
 // [140426] CHANGES:
 //   - Export CSV button: now always visible, disabled with tooltip for non-Unicorn users
 //   - Added comments throughout Unicorn-only section for clarity
+// [020826] CHANGES:
+//   - Reorganized into phase-based sections (MVP / MLP / Beta), each shown only if
+//     the founder has actually reached that phase — no empty placeholders.
+//   - Suggested Features: removed raw email display (privacy fix) — now shows a
+//     clickable founder-name button instead, matching MLP/Beta.
+//   - Added a shared "founder profile preview" panel: clicking any founder-name
+//     button (MVP responses, Suggested Features, MLP feedback, Beta sign-ups)
+//     opens an inline panel with what we can show today (username, early adopter).
+//     NOTE: richer profile data (Zig Age, Ideas Started, reputation tags) will
+//     populate here once Part A's reputation groups actually exist in the DB —
+//     this is a first version, not the final Zig Profile page.
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -13,10 +24,65 @@ import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, Sparkles, MessageCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card.jsx';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+// [ADDED 020826] Small pill button showing a founder's name with a profile icon.
+// Clicking it opens the shared profile preview panel via onSelect(founderId, name).
+function FounderNameButton({ founderId, name, onSelect }) {
+  if (!founderId || !name) {
+    // No attribution available (e.g. legacy feedback given before the
+    // attribution fix, or anonymous visitor) — nothing clickable to show.
+    return null;
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(founderId, name)}
+      className="inline-flex items-center gap-1.5 border border-gray-200 bg-white rounded-full pl-1.5 pr-2.5 py-1 text-xs text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+    >
+      <UserCircle2 className="w-4 h-4" />
+      {name}
+    </button>
+  );
+}
+
+// [ADDED 020826] Inline profile preview panel — first version only.
+// Shows what we can already display (username, early adopter). Once Part A's
+// reputation groups (Spark/Plan/Demo/Beta, feedback tags, Zig Age, Ideas
+// Started) exist in the DB, this panel is where they'll render.
+function ProfilePreviewPanel({ profile, onClose }) {
+  if (!profile) return null;
+  const initial = (profile.username || profile.email || '?')[0].toUpperCase();
+  return (
+    <Card className="border-2 border-indigo-200 shadow-sm mb-6">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
+              {initial}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">{profile.username || profile.name || 'Founder'}</p>
+              <p className="text-xs text-gray-400">Zig profile preview</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">
+            Close
+          </button>
+        </div>
+        {profile.early_adopter && (
+          <Badge className="bg-amber-100 text-amber-800 mt-3">Early Adopter</Badge>
+        )}
+        <p className="text-xs text-gray-400 mt-3">
+          More profile details (stage, feedback given, tenure) will appear here once the reputation system ships.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ProductFeedbackPage() {
   const [venture, setVenture] = useState(null);
@@ -30,6 +96,14 @@ export default function ProductFeedbackPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [businessPlanData, setBusinessPlanData] = useState(null);
+
+  // [ADDED 020826] username lookup cache + currently-open profile preview
+  const [founderProfiles, setFounderProfiles] = useState({}); // { [founderId]: { username, early_adopter } }
+  const [openProfileId, setOpenProfileId] = useState(null);
+
+  // [ADDED 020826] expand/collapse state for the detail lists under each summary
+  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false });
+  const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
     const loadData = async () => {
@@ -84,6 +158,7 @@ export default function ProductFeedbackPage() {
                     name: feature.featureName,
                     avgRating: avgRating.toFixed(1),
                     totalResponses: total,
+                    responses: feedbackForFeature, // [ADDED 020826] keep individual rows for the detail list
                     breakdown: {
                       neverUse: ratings.filter(r => r >= 0 && r <= 2).length,
                       confusing: ratings.filter(r => r >= 3 && r <= 4).length,
@@ -94,6 +169,24 @@ export default function ProductFeedbackPage() {
                 }
               });
             setAnalytics(featureAnalytics);
+          }
+
+          // [ADDED 020826] Batch-fetch usernames for everyone who gave attributed
+          // feedback, so name buttons don't need a query per click.
+          const founderIds = new Set();
+          feedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
+          suggestions.forEach(s => s.created_by_id && founderIds.add(s.created_by_id));
+          pfeedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
+          if (founderIds.size > 0) {
+            const { data: profiles } = await supabase
+              .from('user_profiles')
+              .select('id, username, early_adopter')
+              .in('id', Array.from(founderIds));
+            if (profiles) {
+              const map = {};
+              profiles.forEach(p => { map[p.id] = p; });
+              setFounderProfiles(map);
+            }
           }
         }
       } catch (error) {
@@ -174,6 +267,26 @@ export default function ProductFeedbackPage() {
 
   const totalFeedback = productFeedbacks.length + (venture.mvp_feedback_count || 0);
 
+  // [ADDED 020826] Which phase-sections has this founder actually reached?
+  // No empty placeholders for phases not yet reached.
+  const reachedMVP = Boolean(venture.mvp_uploaded) || Object.keys(analytics).length > 0 || suggestedFeatures.length > 0;
+  const reachedMLP = Boolean(venture.mlp_completed || venture.mlp_development_completed) || productFeedbacks.length > 0;
+  const reachedBeta = venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0;
+
+  const openProfile = (founderId) => setOpenProfileId(founderId);
+  const activeProfile = openProfileId ? founderProfiles[openProfileId] : null;
+
+  // [ADDED 020826] MLP average ratings across all responses, for the summary row.
+  const mlpAverages = (() => {
+    const withRatings = productFeedbacks.filter(fb => fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null);
+    if (withRatings.length === 0) return null;
+    const avg = (key) => {
+      const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
+      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
+    };
+    return { features: avg('features_rating'), lookFeel: avg('look_feel_rating'), ux: avg('ux_rating') };
+  })();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
@@ -238,96 +351,189 @@ export default function ProductFeedbackPage() {
           ))}
         </div>
 
-        {/* MVP Feature Ratings */}
-        {Object.keys(analytics).length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-1 h-7 bg-indigo-500 rounded-full" />
-              <h2 className="text-2xl font-bold text-gray-900">MVP Feature Ratings</h2>
-            </div>
-            <div className="space-y-4">
-              {Object.entries(analytics).map(([featureId, data]) => {
-                const category = getCategoryFromRating(data.avgRating);
-                const total = data.totalResponses;
-                const pNever = Math.round((data.breakdown.neverUse / total) * 100);
-                const pConfusing = Math.round((data.breakdown.confusing / total) * 100);
-                const pNice = Math.round((data.breakdown.niceToHave / total) * 100);
-                const pEssential = Math.round((data.breakdown.essential / total) * 100);
+        {/* [ADDED 020826] Shared founder profile preview — opens above whichever section triggered it */}
+        <ProfilePreviewPanel profile={activeProfile} onClose={() => setOpenProfileId(null)} />
 
-                return (
-                  <Card key={featureId} className="border-0 shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${category.dot}`} />
-                          <h3 className="font-semibold text-gray-900 text-lg">{data.name}</h3>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                            <span className="font-bold text-gray-900 text-lg">{data.avgRating}</span>
-                            <span className="text-gray-400 text-sm">/10</span>
+        {/* ===================== MVP ===================== */}
+        {reachedMVP && (
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MVP</p>
+
+            {Object.keys(analytics).length > 0 && (
+              <div className="space-y-4 mb-4">
+                {Object.entries(analytics).map(([featureId, data]) => {
+                  const category = getCategoryFromRating(data.avgRating);
+                  const total = data.totalResponses;
+                  const pNever = Math.round((data.breakdown.neverUse / total) * 100);
+                  const pConfusing = Math.round((data.breakdown.confusing / total) * 100);
+                  const pNice = Math.round((data.breakdown.niceToHave / total) * 100);
+                  const pEssential = Math.round((data.breakdown.essential / total) * 100);
+                  const detailKey = 'mvpDetail_' + featureId;
+
+                  return (
+                    <Card key={featureId} className="border-0 shadow-sm">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${category.dot}`} />
+                            <h3 className="font-semibold text-gray-900 text-lg">{data.name}</h3>
                           </div>
-                          <Badge className={category.color}>{category.label}</Badge>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                              <span className="font-bold text-gray-900 text-lg">{data.avgRating}</span>
+                              <span className="text-gray-400 text-sm">/10</span>
+                            </div>
+                            <Badge className={category.color}>{category.label}</Badge>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Progress bar */}
-                      <div className="h-3 rounded-full overflow-hidden flex mb-3">
-                        {pNever > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pNever}%` }} title={`Never use: ${pNever}%`} />}
-                        {pConfusing > 0 && <div className="bg-yellow-400 h-full transition-all" style={{ width: `${pConfusing}%` }} title={`Confusing: ${pConfusing}%`} />}
-                        {pNice > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pNice}%` }} title={`Nice to have: ${pNice}%`} />}
-                        {pEssential > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pEssential}%` }} title={`Essential: ${pEssential}%`} />}
-                      </div>
+                        <div className="h-3 rounded-full overflow-hidden flex mb-3">
+                          {pNever > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pNever}%` }} title={`Never use: ${pNever}%`} />}
+                          {pConfusing > 0 && <div className="bg-yellow-400 h-full transition-all" style={{ width: `${pConfusing}%` }} title={`Confusing: ${pConfusing}%`} />}
+                          {pNice > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pNice}%` }} title={`Nice to have: ${pNice}%`} />}
+                          {pEssential > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pEssential}%` }} title={`Essential: ${pEssential}%`} />}
+                        </div>
 
-                      <div className="flex gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Never use {pNever}%</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Confusing {pConfusing}%</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Nice to have {pNice}%</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Essential {pEssential}%</span>
-                        <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                        <div className="flex gap-4 text-xs text-gray-500 mb-3">
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Never use {pNever}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Confusing {pConfusing}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Nice to have {pNice}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Essential {pEssential}%</span>
+                          <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
+                        </div>
 
-        {/* Suggested Features */}
-        {suggestedFeatures.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-1 h-7 bg-yellow-400 rounded-full" />
-              <h2 className="text-2xl font-bold text-gray-900">Suggested Features</h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              {suggestedFeatures.map((suggestion) => (
-                <Card key={suggestion.id} className="border-0 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Lightbulb className="w-4 h-4 text-yellow-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{suggestion.feature_name}</p>
-                        {suggestion.user_email && (
-                          <p className="text-sm text-gray-400 mt-1">by {suggestion.user_email}</p>
+                        {/* [ADDED 020826] Individual responses, collapsed by default */}
+                        <button
+                          type="button"
+                          onClick={() => toggle(detailKey)}
+                          className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          {expanded[detailKey] ? 'Hide' : 'See'} individual responses
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded[detailKey] ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expanded[detailKey] && (
+                          <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                            {data.responses.map((r) => (
+                              <div key={r.id} className="flex items-center justify-between">
+                                <FounderNameButton
+                                  founderId={r.created_by_id}
+                                  name={founderProfiles[r.created_by_id]?.username || r.user_email}
+                                  onSelect={openProfile}
+                                />
+                                <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {suggestedFeatures.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lightbulb className="w-4 h-4 text-yellow-500" />
+                    <h3 className="font-semibold text-gray-900">Suggested features</h3>
+                    <Badge className="bg-yellow-100 text-yellow-800">{suggestedFeatures.length}</Badge>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {suggestedFeatures.map((suggestion) => (
+                      <div key={suggestion.id} className="border border-gray-100 rounded-xl p-3">
+                        <p className="font-medium text-gray-900 mb-1.5">{suggestion.feature_name}</p>
+                        {/* [FIX 020826] Was showing raw email — now a clickable
+                            founder-name button instead. Falls back to nothing
+                            (not the email) if attribution is missing. */}
+                        <FounderNameButton
+                          founderId={suggestion.created_by_id}
+                          name={founderProfiles[suggestion.created_by_id]?.username}
+                          onSelect={openProfile}
+                        />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
-        {/* Beta Sign-ups */}
-        {betaTesters.length > 0 && (() => {
-          // [UNICORN ONLY] exportCSV — generates and downloads a CSV of all beta testers.
-          // Only called when userPlan === 'unicorn'. Button is disabled for all other plans.
+        {/* ===================== MLP ===================== */}
+        {reachedMLP && (
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MLP</p>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                {mlpAverages && (
+                  <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-100">
+                    {mlpAverages.features != null && (
+                      <div><p className="text-xs text-gray-400">Features</p><p className="text-lg font-bold text-gray-900">{mlpAverages.features}/10</p></div>
+                    )}
+                    {mlpAverages.lookFeel != null && (
+                      <div><p className="text-xs text-gray-400">Look &amp; feel</p><p className="text-lg font-bold text-gray-900">{mlpAverages.lookFeel}/10</p></div>
+                    )}
+                    {mlpAverages.ux != null && (
+                      <div><p className="text-xs text-gray-400">UX</p><p className="text-lg font-bold text-gray-900">{mlpAverages.ux}/10</p></div>
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggle('mlp')}
+                  className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  {productFeedbacks.length} response{productFeedbacks.length !== 1 ? 's' : ''}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded.mlp ? 'rotate-180' : ''}`} />
+                </button>
+                {expanded.mlp && (
+                  <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+                    {productFeedbacks.map((fb) => {
+                      const hasRatings = fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null;
+                      return (
+                        <div key={fb.id} className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <MessageSquare className="w-4 h-4 text-pink-500" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <FounderNameButton
+                                founderId={fb.created_by_id}
+                                name={founderProfiles[fb.created_by_id]?.username}
+                                onSelect={openProfile}
+                              />
+                              <span className="text-xs text-gray-400">
+                                {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            {hasRatings ? (
+                              <div className="flex flex-wrap gap-4">
+                                {fb.features_rating != null && <span className="text-sm"><span className="text-gray-400">Features:</span> <span className="font-semibold text-indigo-600">{fb.features_rating}/10</span></span>}
+                                {fb.look_feel_rating != null && <span className="text-sm"><span className="text-gray-400">Look &amp; Feel:</span> <span className="font-semibold text-indigo-600">{fb.look_feel_rating}/10</span></span>}
+                                {fb.ux_rating != null && <span className="text-sm"><span className="text-gray-400">UX:</span> <span className="font-semibold text-indigo-600">{fb.ux_rating}/10</span></span>}
+                              </div>
+                            ) : (
+                              <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">
+                                Legacy feedback — no ratings
+                              </span>
+                            )}
+                            {fb.feedback_text && <p className="text-gray-700 mt-1">{fb.feedback_text}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ===================== BETA ===================== */}
+        {reachedBeta && betaTesters.length > 0 && (() => {
           const exportCSV = () => {
             const rows = [
               ['Full Name', 'Email', 'Date', 'Interest Reason'],
@@ -349,126 +555,71 @@ export default function ProductFeedbackPage() {
           };
 
           return (
-          <div className="mb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-1 h-7 bg-purple-500 rounded-full" />
-              <h2 className="text-2xl font-bold text-gray-900">Beta Sign-ups</h2>
-              <Badge className="bg-purple-100 text-purple-800 ml-2">{betaTesters.length}</Badge>
-              {/* [UNICORN ONLY] Export CSV button — visible to all, active only for Unicorn plan.
-                  Non-Unicorn users see a disabled button with an upgrade note. */}
-              <div className="ml-auto flex items-center gap-2">
-                {userPlan !== 'unicorn' && (
-                  <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
-                    Unicorn only
-                  </span>
-                )}
-                <Button
-                  onClick={exportCSV}
-                  size="sm"
-                  variant="outline"
-                  disabled={userPlan !== 'unicorn'}
-                  className={userPlan === 'unicorn'
-                    ? "border-purple-300 text-purple-700 hover:bg-purple-50"
-                    : "border-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                  }
-                  title={userPlan !== 'unicorn' ? 'Available on Unicorn plan only' : ''}
-                >
-                  Export CSV
-                </Button>
+            <div className="mb-10">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Beta</p>
+                <div className="flex items-center gap-2">
+                  {userPlan !== 'unicorn' && (
+                    <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">Unicorn only</span>
+                  )}
+                  <Button
+                    onClick={exportCSV}
+                    size="sm"
+                    variant="outline"
+                    disabled={userPlan !== 'unicorn'}
+                    className={userPlan === 'unicorn' ? "border-purple-300 text-purple-700 hover:bg-purple-50" : "border-gray-200 text-gray-400 cursor-not-allowed opacity-50"}
+                    title={userPlan !== 'unicorn' ? 'Available on Unicorn plan only' : ''}
+                  >
+                    Export CSV
+                  </Button>
+                </div>
               </div>
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-5">
+                  <button
+                    type="button"
+                    onClick={() => toggle('beta')}
+                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    {betaTesters.length} sign-up{betaTesters.length !== 1 ? 's' : ''}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.beta ? 'rotate-180' : ''}`} />
+                  </button>
+                  {expanded.beta && (
+                    <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+                      {betaTesters
+                        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+                        .map((tester) => (
+                          <div key={tester.id} className="flex items-start gap-3">
+                            <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-purple-700">
+                              {tester.full_name?.[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                {/* [NOTE 020826] Beta sign-ups don't yet carry created_by_id
+                                    (they're an interest form, not an authenticated founder
+                                    action) — showing the name plain for now, not as a
+                                    profile-linked button, until that's added. */}
+                                <p className="font-semibold text-gray-900">{tester.full_name}</p>
+                                <span className="text-xs text-gray-400">
+                                  {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                              {tester.interest_reason && (
+                                <p className="text-sm text-gray-600 mt-1 italic">"{tester.interest_reason}"</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-            <div className="space-y-3">
-              {betaTesters
-                .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-                .map((tester) => (
-                  <Card key={tester.id} className="border-0 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-purple-700">
-                          {tester.full_name?.[0]?.toUpperCase() || '?'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{tester.full_name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                          </p>
-                          {tester.interest_reason && (
-                            <p className="text-sm text-gray-600 mt-2 italic">"{tester.interest_reason}"</p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </div>
           );
         })()}
 
-        {/* MLP User Feedback */}
-        {productFeedbacks.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-1 h-7 bg-pink-500 rounded-full" />
-              <h2 className="text-2xl font-bold text-gray-900">MLP User Feedback</h2>
-              <Badge className="bg-pink-100 text-pink-800 ml-2">{productFeedbacks.length}</Badge>
-            </div>
-            <div className="space-y-3">
-              {productFeedbacks.map((fb) => {
-                const hasRatings = fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null;
-                return (
-                  <Card key={fb.id} className="border-0 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <MessageSquare className="w-4 h-4 text-pink-500" />
-                        </div>
-                        <div className="flex-1">
-                          {hasRatings ? (
-                            <div className="flex flex-wrap gap-4 mb-2">
-                              {fb.features_rating != null && (
-                                <span className="text-sm">
-                                  <span className="text-gray-400">Features:</span>{' '}
-                                  <span className="font-semibold text-indigo-600">{fb.features_rating}/10</span>
-                                </span>
-                              )}
-                              {fb.look_feel_rating != null && (
-                                <span className="text-sm">
-                                  <span className="text-gray-400">Look &amp; Feel:</span>{' '}
-                                  <span className="font-semibold text-indigo-600">{fb.look_feel_rating}/10</span>
-                                </span>
-                              )}
-                              {fb.ux_rating != null && (
-                                <span className="text-sm">
-                                  <span className="text-gray-400">UX:</span>{' '}
-                                  <span className="font-semibold text-indigo-600">{fb.ux_rating}/10</span>
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            // [LEGACY] Feedback submitted before ratings existed — text only.
-                            <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 mb-2">
-                              Legacy feedback — no ratings
-                            </span>
-                          )}
-                          {fb.feedback_text && (
-                            <p className="text-gray-700">{fb.feedback_text}</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-2">
-                            {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Empty state */}
-        {totalFeedback === 0 && Object.keys(analytics).length === 0 && (
+        {!reachedMVP && !reachedMLP && !reachedBeta && (
           <Card className="border-0 shadow-sm">
             <CardContent className="p-12 text-center">
               <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
