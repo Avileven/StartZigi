@@ -344,11 +344,14 @@ export default function VentureLanding() {
     setIsSubmittingMlpFeedback(true);
     try {
       const now = new Date().toISOString();
-      await ProductFeedbackEntity.create({
-        // [FIX 020826] Providing created_by/created_by_id manually means the
-        // system no longer auto-fills these — same pattern already required
-        // in InteractiveFeedbackForm.jsx and beta-testing/page.jsx. Missing
-        // these caused a "null value in column created_date" DB error.
+      // [FIX 020826] Bypassing ProductFeedbackEntity.create() entirely —
+      // it appears to silently drop or mishandle created_date/updated_date
+      // once created_by/created_by_id are present, and guessing at its
+      // internal behavior twice didn't resolve it. Inserting directly via
+      // supabase (already used elsewhere in this file) removes that
+      // uncertainty — every column is explicit, nothing is auto-filled
+      // behind the scenes.
+      const { error: insertError } = await supabase.from('product_feedback').insert({
         id: crypto.randomUUID(),
         created_date: now,
         updated_date: now,
@@ -358,20 +361,10 @@ export default function VentureLanding() {
         features_rating: featuresRating,
         look_feel_rating: lookFeelRating,
         ux_rating: uxRating,
-        // [FIX 020826] Attribute feedback to the giving founder when logged in.
-        // Previously sent with no attribution at all, even for logged-in users —
-        // this made it impossible to credit the giver's feedback count/reputation,
-        // and impossible to show who gave it. Matches the pattern already used
-        // correctly in InteractiveFeedbackForm.jsx for MVP feedback / suggestions.
-        // [FIX 020826] Token-invite case: currentUser is intentionally null here
-        // (see the token branch above), so fall back to invitedIdentity — the
-        // invitee's email/name resolved from the invitation record itself.
-        // No created_by_id in this case (the invitee may not have a platform
-        // account at all), so their feedback won't link to a Zig Profile, but
-        // it will at least show a name instead of nothing.
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
       });
+      if (insertError) throw insertError;
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
     } catch (err) {
