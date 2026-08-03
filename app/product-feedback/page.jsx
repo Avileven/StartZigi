@@ -67,9 +67,41 @@ function getDisplayName(profile, emailFallback) {
 // Shows what we can already display (username, early adopter). Once Part A's
 // reputation groups (Spark/Plan/Demo/Beta, feedback tags, Zig Age, Ideas
 // Started) exist in the DB, this panel is where they'll render.
+// [ADDED 020826] Maps the venture's raw phase to the Group 1 tag names
+// decided in the planning doc (Part A.2): Spark/Plan/Demo/Beta. Demo covers
+// both mvp and mlp (the demo keeps evolving through MLP); growth falls back
+// to Beta since Group 1 has no tag of its own for it.
+function getJourneyTag(rawPhase) {
+  const map = {
+    idea: 'Spark',
+    business_plan: 'Plan',
+    mvp: 'Demo',
+    mlp: 'Demo',
+    beta: 'Beta',
+    growth: 'Beta',
+  };
+  return map[rawPhase] || null;
+}
+
+// [ADDED 020826] "Zig Age" (Part A.4) — a plain relative duration like
+// Reddit Age, not a named tier.
+function getZigAge(joinedDate) {
+  if (!joinedDate) return null;
+  const days = Math.floor((Date.now() - new Date(joinedDate).getTime()) / 86400000);
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'}`;
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return `${months} month${months === 1 ? '' : 's'}`;
+  }
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? '' : 's'}`;
+}
+
 function ProfilePreviewPanel({ profile, onClose }) {
   if (!profile) return null;
   const initial = (profile.username || profile.email || '?')[0].toUpperCase();
+  const journeyTag = getJourneyTag(profile.current_phase);
+  const zigAge = getZigAge(profile.joined_date);
   return (
     <Card className="border-2 border-indigo-200 shadow-sm mb-6">
       <CardContent className="p-5">
@@ -90,9 +122,27 @@ function ProfilePreviewPanel({ profile, onClose }) {
         {profile.early_adopter && (
           <Badge className="bg-amber-100 text-amber-800 mt-3">Early Adopter</Badge>
         )}
-        <p className="text-xs text-gray-400 mt-3">
-          More profile details (stage, feedback given, tenure) will appear here once the reputation system ships.
-        </p>
+        {/* [ADDED 020826] Groups 1/2/3 (Part A) — first real content in this panel */}
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+          <div>
+            <p className="text-xs text-gray-400">Stage</p>
+            <p className="text-sm font-semibold text-gray-900">{journeyTag || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Feedback given</p>
+            <p className="text-sm font-semibold text-gray-900">{profile.feedback_count ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Zig age</p>
+            <p className="text-sm font-semibold text-gray-900">{zigAge || '—'}</p>
+          </div>
+        </div>
+        {/* [NOTE 020826] Ideas Started intentionally left off this panel for now —
+            this count (profile.ideas_count) currently only reflects ventures that
+            still exist today, not the true lifetime count from Part B (which
+            persists across deleted/replaced ventures via venture_history). Showing
+            it now would be misleading once that ships and the number changes
+            meaning. Add it once Part B's venture_history/profile counters exist. */}
       </CardContent>
     </Card>
   );
