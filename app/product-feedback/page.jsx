@@ -49,6 +49,20 @@ function FounderNameButton({ founderId, name, onSelect }) {
   );
 }
 
+// [ADDED 020826] Resolves a display name for a founder-name button:
+// prefer the real username; if it's not set, derive a friendly name from
+// the local part of their email (e.g. "avi@leventhal.co.il" -> "Avi") —
+// deliberately NOT the raw email address, to keep the earlier privacy fix
+// intact while still showing *something* instead of nothing.
+function getDisplayName(profile, emailFallback) {
+  if (profile?.username) return profile.username;
+  if (emailFallback) {
+    const local = emailFallback.split('@')[0];
+    if (local) return local.charAt(0).toUpperCase() + local.slice(1);
+  }
+  return null;
+}
+
 // [ADDED 020826] Inline profile preview panel — first version only.
 // Shows what we can already display (username, early adopter). Once Part A's
 // reputation groups (Spark/Plan/Demo/Beta, feedback tags, Zig Age, Ideas
@@ -173,10 +187,13 @@ export default function ProductFeedbackPage() {
 
           // [ADDED 020826] Batch-fetch usernames for everyone who gave attributed
           // feedback, so name buttons don't need a query per click.
+          // [FIX 020826] Beta testers DO carry created_by_id (confirmed in schema) —
+          // an earlier version of this file incorrectly assumed they didn't.
           const founderIds = new Set();
           feedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
           suggestions.forEach(s => s.created_by_id && founderIds.add(s.created_by_id));
           pfeedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
+          testers.forEach(t => t.created_by_id && founderIds.add(t.created_by_id));
           if (founderIds.size > 0) {
             const { data: profiles } = await supabase
               .from('user_profiles')
@@ -418,7 +435,7 @@ export default function ProductFeedbackPage() {
                               <div key={r.id} className="flex items-center justify-between">
                                 <FounderNameButton
                                   founderId={r.created_by_id}
-                                  name={founderProfiles[r.created_by_id]?.username || r.user_email}
+                                  name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
                                   onSelect={openProfile}
                                 />
                                 <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
@@ -450,7 +467,7 @@ export default function ProductFeedbackPage() {
                             (not the email) if attribution is missing. */}
                         <FounderNameButton
                           founderId={suggestion.created_by_id}
-                          name={founderProfiles[suggestion.created_by_id]?.username}
+                          name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
                           onSelect={openProfile}
                         />
                       </div>
@@ -502,7 +519,7 @@ export default function ProductFeedbackPage() {
                             <div className="flex items-center justify-between mb-1">
                               <FounderNameButton
                                 founderId={fb.created_by_id}
-                                name={founderProfiles[fb.created_by_id]?.username}
+                                name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
                                 onSelect={openProfile}
                               />
                               <span className="text-xs text-gray-400">
@@ -595,11 +612,20 @@ export default function ProductFeedbackPage() {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                {/* [NOTE 020826] Beta sign-ups don't yet carry created_by_id
-                                    (they're an interest form, not an authenticated founder
-                                    action) — showing the name plain for now, not as a
-                                    profile-linked button, until that's added. */}
-                                <p className="font-semibold text-gray-900">{tester.full_name}</p>
+                                {/* [FIX 020826] Beta sign-ups now carry created_by_id when the
+                                    person was logged in at sign-up time (see the companion fix
+                                    in beta-testing/page.jsx). Show a profile-linked button in
+                                    that case; fall back to plain text for genuinely anonymous
+                                    sign-ups (no account to link to). */}
+                                {tester.created_by_id ? (
+                                  <FounderNameButton
+                                    founderId={tester.created_by_id}
+                                    name={tester.full_name}
+                                    onSelect={openProfile}
+                                  />
+                                ) : (
+                                  <p className="font-semibold text-gray-900">{tester.full_name}</p>
+                                )}
                                 <span className="text-xs text-gray-400">
                                   {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </span>

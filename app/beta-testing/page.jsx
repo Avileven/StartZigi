@@ -48,12 +48,28 @@ export default function BetaTesting() {
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({ fullName: '', email: '', interest: '' });
   const [demoHtmlContent, setDemoHtmlContent] = useState(null);
+  // [ADDED 020826] Optional — if the person signing up happens to be logged
+  // in (e.g. a registered founder checking out another venture's beta),
+  // we capture their id so the sign-up can be attributed and linked to
+  // their profile later. This does NOT make the page require login — it's
+  // a non-blocking, best-effort check; anonymous visitors are unaffected.
+  const [currentUserId, setCurrentUserId] = useState(null);
   const formRef = useRef(null);
   
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        // [ADDED 020826] Best-effort, non-blocking session check — see state
+        // comment above. Wrapped so any failure here never affects the rest
+        // of this public page's loading.
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          setCurrentUserId(userData?.user?.id || null);
+        } catch (err) {
+          setCurrentUserId(null);
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const ventureId = urlParams.get('id');
         // [ADDED] Read campaign_id from URL — passed when user comes via In-App promotion.
@@ -151,7 +167,12 @@ export default function BetaTesting() {
         created_date: now,
         updated_date: now,
         created_by: formData.email,
-        created_by_id: null,
+        // [FIX 020826] Was hardcoded to null unconditionally — meant a
+        // logged-in founder signing up for someone else's beta was always
+        // shown as unattributed. Now uses the id from the optional session
+        // check above when present; stays null for genuinely anonymous
+        // visitors, unchanged.
+        created_by_id: currentUserId,
         // Venture and tester data
         venture_id: venture.id,
         full_name: formData.fullName,

@@ -111,6 +111,12 @@ export default function VentureLanding() {
   const [joinError, setJoinError] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [invitationToken, setInvitationToken] = useState(null);
+  // [ADDED 020826] Identity of the invited feedback-giver, looked up directly
+  // from the co_founder_invitations record by token — deliberately NOT tied
+  // to supabase.auth/session, to avoid re-triggering the identity-mixup bug
+  // that the session-based approach caused before (dashboard showing the
+  // wrong venture). Used only as a fallback for feedback attribution.
+  const [invitedIdentity, setInvitedIdentity] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
   const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
@@ -260,6 +266,29 @@ export default function VentureLanding() {
       setInvitationToken(token);
       if (token) {
         setCurrentUser(null);
+        // [FIX 020826] Previously this branch only blanked the user and
+        // stopped — feedback given via an invitation link had no way to be
+        // attributed to anyone, even though the invitee's identity is
+        // already known at this point (stored on the invitation record
+        // itself when the invite was sent from promotion-center).
+        // This looks that identity up directly by token, WITHOUT touching
+        // supabase.auth/session — deliberately isolated from the mechanism
+        // that caused the earlier dashboard identity-mixup bug.
+        try {
+          const { data: invitation } = await supabase
+            .from('co_founder_invitations')
+            .select('invitee_email, invitee_name')
+            .eq('invitation_token', token)
+            .single();
+          if (invitation) {
+            setInvitedIdentity({
+              email: invitation.invitee_email || null,
+              name: invitation.invitee_name || null,
+            });
+          }
+        } catch (err) {
+          console.error('[VentureLanding] Could not resolve invitation identity:', err);
+        }
         await loadVenture(null);
         return;
       }
@@ -326,8 +355,13 @@ export default function VentureLanding() {
         // this made it impossible to credit the giver's feedback count/reputation,
         // and impossible to show who gave it. Matches the pattern already used
         // correctly in InteractiveFeedbackForm.jsx for MVP feedback / suggestions.
-        // Stays null for anonymous/logged-out visitors — unchanged behavior for them.
-        created_by: currentUser ? currentUser.email : null,
+        // [FIX 020826] Token-invite case: currentUser is intentionally null here
+        // (see the token branch above), so fall back to invitedIdentity — the
+        // invitee's email/name resolved from the invitation record itself.
+        // No created_by_id in this case (the invitee may not have a platform
+        // account at all), so their feedback won't link to a Zig Profile, but
+        // it will at least show a name instead of nothing.
+        created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
       });
       setMlpFeedbackSubmitted(true);
