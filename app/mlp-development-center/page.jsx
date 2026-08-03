@@ -939,44 +939,14 @@ export default function MLPDevelopmentCenter() {
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            <TabsContent value="phase4" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    MLP Development Summary
-                  </CardTitle>
-                  <CardDescription>Review your MLP development before submitting</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Feature Selection</h4>
-                      <p className="text-sm">{mlpData.feature_matrix.some(f => f.isSelected && f.featureName?.trim()) ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Enhancement Plan</h4>
-                      <p className="text-sm">{Object.values(mlpData.enhancement_notes).some(n => n && n.trim()) ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">What Makes It Lovable</h4>
-                      <p className="text-sm">{mlpData.lovable_experience ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Visual & Prototype</h4>
-                      <p className="text-sm">{mlpData.visual_prototype ? '✓ Completed' : '✗ Not completed'}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-600">Uploaded Files</h4>
-                      <p className="text-sm">{mlpData.uploaded_files.length > 0 ? `✓ ${mlpData.uploaded_files.length} files` : '✗ No files'}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-6">
-                    {/* [CHANGED] If already completed — show only Save Draft as primary button, hide Complete */}
+                  {/* [FIX 020826] Moved here from an orphaned "phase4" tab that had
+                      no matching TabsTrigger — it became unreachable once the
+                      4-step tab structure was reduced to 2 tabs, even though the
+                      buttons themselves were never deleted. No new tab added,
+                      per request — placed right after the uploaded files, at the
+                      end of this same tab. */}
+                  <div className="flex justify-end gap-3 pt-4 mt-2 border-t">
                     {venture?.mlp_development_completed ? (
                       <Button onClick={handleSaveDraft} disabled={isSaving} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700">
                         {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Changes'}
