@@ -297,7 +297,6 @@ export default function ProductFeedbackPage() {
   const reachedBeta = venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0;
 
   const openProfile = (founderId) => setOpenProfileId(founderId);
-  const activeProfile = openProfileId ? founderProfiles[openProfileId] : null;
 
   // [ADDED 020826] MLP average ratings across all responses, for the summary row.
   const mlpAverages = (() => {
@@ -374,9 +373,6 @@ export default function ProductFeedbackPage() {
           ))}
         </div>
 
-        {/* [ADDED 020826] Shared founder profile preview — opens above whichever section triggered it */}
-        <ProfilePreviewPanel profile={activeProfile} onClose={() => setOpenProfileId(null)} />
-
         {/* ===================== MVP ===================== */}
         {reachedMVP && (
           <div className="mb-10">
@@ -438,14 +434,23 @@ export default function ProductFeedbackPage() {
                         {expanded[detailKey] && (
                           <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
                             {data.responses.map((r) => (
-                              <div key={r.id} className="flex items-center justify-between">
-                                <FounderNameButton
-                                  founderId={r.created_by_id}
-                                  name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
-                                  onSelect={openProfile}
-                                />
-                                <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
-                              </div>
+                              <React.Fragment key={r.id}>
+                                <div className="flex items-center justify-between">
+                                  <FounderNameButton
+                                    founderId={r.created_by_id}
+                                    name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
+                                    onSelect={openProfile}
+                                  />
+                                  <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
+                                </div>
+                                {/* [FIX 020826] Was a single shared panel rendered at a fixed
+                                    spot at the top of the page — jumped far away from whatever
+                                    row you actually clicked. Now shown inline, right under the
+                                    specific row, wherever that is in the page. */}
+                                {openProfileId === r.created_by_id && (
+                                  <ProfilePreviewPanel profile={founderProfiles[r.created_by_id]} onClose={() => setOpenProfileId(null)} />
+                                )}
+                              </React.Fragment>
                             ))}
                           </div>
                         )}
@@ -476,6 +481,11 @@ export default function ProductFeedbackPage() {
                           name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
                           onSelect={openProfile}
                         />
+                        {openProfileId === suggestion.created_by_id && (
+                          <div className="mt-2">
+                            <ProfilePreviewPanel profile={founderProfiles[suggestion.created_by_id]} onClose={() => setOpenProfileId(null)} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -555,6 +565,9 @@ export default function ProductFeedbackPage() {
                               </span>
                             )}
                             {fb.feedback_text && <p className="text-gray-700 mt-1">{fb.feedback_text}</p>}
+                            {openProfileId === fb.created_by_id && (
+                              <ProfilePreviewPanel profile={founderProfiles[fb.created_by_id]} onClose={() => setOpenProfileId(null)} />
+                            )}
                           </div>
                         </div>
                       );
@@ -649,6 +662,9 @@ export default function ProductFeedbackPage() {
                               </div>
                               {tester.interest_reason && (
                                 <p className="text-sm text-gray-600 mt-1 italic">"{tester.interest_reason}"</p>
+                              )}
+                              {openProfileId === tester.created_by_id && (
+                                <ProfilePreviewPanel profile={founderProfiles[tester.created_by_id]} onClose={() => setOpenProfileId(null)} />
                               )}
                             </div>
                           </div>
