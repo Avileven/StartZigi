@@ -523,11 +523,22 @@ export default function ProductFeedbackPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
-                              <FounderNameButton
-                                founderId={fb.created_by_id}
-                                name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
-                                onSelect={openProfile}
-                              />
+                              {/* [FIX 020826] External invitees (arrived via a token invite
+                                  link, no platform account) legitimately have no
+                                  created_by_id — that's expected, not a bug. Previously
+                                  FounderNameButton rendered nothing at all in that case,
+                                  making their feedback disappear from view entirely. Now
+                                  falls back to plain text (name/email, no profile link),
+                                  matching the same pattern already used for Beta sign-ups. */}
+                              {fb.created_by_id ? (
+                                <FounderNameButton
+                                  founderId={fb.created_by_id}
+                                  name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
+                                  onSelect={openProfile}
+                                />
+                              ) : fb.created_by ? (
+                                <p className="text-xs text-gray-500">{fb.created_by}</p>
+                              ) : null}
                               <span className="text-xs text-gray-400">
                                 {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                               </span>
