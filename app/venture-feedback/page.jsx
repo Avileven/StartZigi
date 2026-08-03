@@ -260,6 +260,10 @@ export default function VentureLanding() {
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         return;
       }
+      // [FIX 020826] currentUser state existed and was read in several places
+      // (the Like button, feedback attribution) but was never actually set —
+      // it stayed null the whole time even though login is enforced above.
+      setCurrentUser(userData.user);
 
       // [ADDED] Check if ?from= param exists and matches a real venture.
       // Only ventures that were invited (have a valid from= param) can see this page.
@@ -363,19 +367,28 @@ export default function VentureLanding() {
     if (!venture) return;
     setIsSubmittingMlpFeedback(true);
     try {
-      // [CHANGED] Using supabase directly instead of ProductFeedbackEntity.create()
+      // [FIX 020826] Using supabase directly instead of ProductFeedbackEntity.create()
       // because this page has no auth session — the Entity class would fail with 400.
       // [ADDED] reviewer_venture_id and reviewer_venture_name saved from ?from= param
       // to track which venture gave the feedback.
+      // [FIX 020826] This insert was missing id/created_date/updated_date entirely —
+      // that's the actual cause of the "null value in column created_date" error.
+      // Also: created_by/created_by_id were hardcoded to null even though this page
+      // enforces login before showing any content (see the auth check above) — now
+      // uses the real logged-in user, consistent with currentUser actually being set.
+      const now = new Date().toISOString();
       const { error } = await supabase.from("product_feedback").insert({
+        id: crypto.randomUUID(),
+        created_date: now,
+        updated_date: now,
         venture_id: venture.id,
         feedback_text: mlpFeedbackText.trim(),
         feedback_type: "other",
         features_rating: featuresRating,
         look_feel_rating: lookFeelRating,
         ux_rating: uxRating,
-        created_by: null,
-        created_by_id: null,
+        created_by: currentUser?.email || null,
+        created_by_id: currentUser?.id || null,
         // [ADDED] Reviewer identity — null if not invited via in-app promotion
         reviewer_venture_id: reviewerVenture?.id || null,
         reviewer_venture_name: reviewerVenture?.name || null,
