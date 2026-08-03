@@ -195,15 +195,21 @@ export default function ProductFeedbackPage() {
           pfeedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
           testers.forEach(t => t.created_by_id && founderIds.add(t.created_by_id));
           if (founderIds.size > 0) {
-            const { data: profiles } = await supabase
-              .from('user_profiles')
-              .select('id, username, early_adopter')
-              .in('id', Array.from(founderIds));
-            if (profiles) {
-              const map = {};
-              profiles.forEach(p => { map[p.id] = p; });
-              setFounderProfiles(map);
-            }
+            // [FIX 020826] Was a direct user_profiles query — blocked by RLS
+            // (user_profiles_select_own only allows id = auth.uid()), so it
+            // silently returned nothing for anyone else's profile. Now uses
+            // the get_public_founder_profile RPC (security definer), which
+            // safely exposes only username/early_adopter for any founder id.
+            const ids = Array.from(founderIds);
+            const results = await Promise.all(
+              ids.map(id => supabase.rpc('get_public_founder_profile', { profile_id: id }))
+            );
+            const map = {};
+            results.forEach((res, i) => {
+              const row = res?.data?.[0];
+              if (row) map[ids[i]] = row;
+            });
+            setFounderProfiles(map);
           }
         }
       } catch (error) {
