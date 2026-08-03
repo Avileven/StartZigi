@@ -343,7 +343,15 @@ export default function VentureLanding() {
     if (!venture) return;
     setIsSubmittingMlpFeedback(true);
     try {
+      const now = new Date().toISOString();
       await ProductFeedbackEntity.create({
+        // [FIX 020826] Providing created_by/created_by_id manually means the
+        // system no longer auto-fills these — same pattern already required
+        // in InteractiveFeedbackForm.jsx and beta-testing/page.jsx. Missing
+        // these caused a "null value in column created_date" DB error.
+        id: crypto.randomUUID(),
+        created_date: now,
+        updated_date: now,
         venture_id: venture.id,
         feedback_text: mlpFeedbackText.trim(),
         feedback_type: "other",
