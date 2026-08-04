@@ -25,31 +25,13 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 // [ADDED 020826] Small pill button showing a founder's name with a profile icon.
 // Clicking it opens the shared profile preview panel via onSelect(founderId, name).
-function FounderNameButton({ founderId, name, onSelect }) {
-  if (!founderId || !name) {
-    // No attribution available (e.g. legacy feedback given before the
-    // attribution fix, or anonymous visitor) — nothing clickable to show.
-    return null;
-  }
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(founderId, name)}
-      className="inline-flex items-center gap-1.5 border border-gray-200 bg-white rounded-full pl-1.5 pr-2.5 py-1 text-xs text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
-    >
-      <UserCircle2 className="w-4 h-4" />
-      {name}
-    </button>
-  );
-}
-
-// [ADDED 020826] Resolves a display name for a founder-name button:
+// [ADDED 020826] Resolves a display name for the hover card trigger:
 // prefer the real username; if it's not set, derive a friendly name from
 // the local part of their email (e.g. "avi@leventhal.co.il" -> "Avi") —
 // deliberately NOT the raw email address, to keep the earlier privacy fix
@@ -63,10 +45,6 @@ function getDisplayName(profile, emailFallback) {
   return null;
 }
 
-// [ADDED 020826] Inline profile preview panel — first version only.
-// Shows what we can already display (username, early adopter). Once Part A's
-// reputation groups (Spark/Plan/Demo/Beta, feedback tags, Zig Age, Ideas
-// Started) exist in the DB, this panel is where they'll render.
 // [ADDED 020826] Maps the venture's raw phase to the Group 1 tag names
 // decided in the planning doc (Part A.2): Spark/Plan/Demo/Beta. Demo covers
 // both mvp and mlp (the demo keeps evolving through MLP); growth falls back
@@ -97,54 +75,85 @@ function getZigAge(joinedDate) {
   return `${years} year${years === 1 ? '' : 's'}`;
 }
 
-function ProfilePreviewPanel({ profile, onClose }) {
-  if (!profile) return null;
-  const initial = (profile.username || profile.email || '?')[0].toUpperCase();
-  const journeyTag = getJourneyTag(profile.current_phase);
-  const zigAge = getZigAge(profile.joined_date);
+// [FIX 020826] Part A.3.1 — the raw feedback-given count is never shown to
+// other founders, only a translated public status label. (The founder's own
+// "Zig Profile" self-view, per A.6.2, is a separate place that CAN show the
+// raw number — not built yet, out of scope for this hover card.)
+function getInsightStatus(count) {
+  if (count >= 50) return 'Insight Master';
+  if (count >= 20) return 'Insight Champion';
+  if (count >= 5) return 'Insight Builder';
+  if (count >= 1) return 'Insight Starter';
+  return null;
+}
+
+// [FIX 020826] Replaces the old click-to-open FounderNameButton +
+// ProfilePreviewPanel + openProfileId state machinery entirely. This is now
+// a single self-contained component: the name pill IS the hover trigger, and
+// the card is positioned relative to it via CSS (group-hover), so it always
+// appears right next to whichever row you're actually looking at — no more
+// jumping to a fixed spot on the page (A.6.1).
+function FounderHoverCard({ founderId, name, profile }) {
+  if (!founderId || !name) {
+    // No attribution available (e.g. legacy feedback given before the
+    // attribution fix, or anonymous visitor) — nothing clickable to show.
+    return null;
+  }
+  const initial = name[0].toUpperCase();
+  const journeyTag = getJourneyTag(profile?.current_phase);
+  const zigAge = getZigAge(profile?.joined_date);
+  const insightStatus = getInsightStatus(profile?.feedback_count ?? 0);
+
   return (
-    <Card className="border-2 border-indigo-200 shadow-sm mb-6">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
-              {initial}
+    <span className="relative inline-block group">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 border border-gray-200 bg-white rounded-full pl-1.5 pr-2.5 py-1 text-xs text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+      >
+        <UserCircle2 className="w-4 h-4" />
+        {name}
+      </button>
+
+      {/* Hover card — hidden by default, shown on hover via the `group` above */}
+      <div className="hidden group-hover:block absolute z-20 top-full left-0 mt-2 w-72">
+        <Card className="border-2 border-indigo-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700 flex-shrink-0">
+                {initial}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">{profile?.username || name}</p>
+                <p className="text-[11px] text-gray-400">Zig profile preview</p>
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-gray-900">{profile.username || profile.name || 'Founder'}</p>
-              <p className="text-xs text-gray-400">Zig profile preview</p>
+            {profile?.early_adopter && (
+              <Badge className="bg-amber-100 text-amber-800 mt-2 flex items-center gap-1 w-fit">
+                <Star className="w-3 h-3" />
+                Early Adopter
+              </Badge>
+            )}
+            <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <Rocket className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <span className="text-xs text-gray-400 w-24">Stage</span>
+                <span className="text-xs font-semibold text-gray-900">{journeyTag || '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <span className="text-xs text-gray-400 w-24">Insight status</span>
+                <span className="text-xs font-semibold text-gray-900">{insightStatus || '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <span className="text-xs text-gray-400 w-24">Zig age</span>
+                <span className="text-xs font-semibold text-gray-900">{zigAge || '—'}</span>
+              </div>
             </div>
-          </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">
-            Close
-          </button>
-        </div>
-        {profile.early_adopter && (
-          <Badge className="bg-amber-100 text-amber-800 mt-3">Early Adopter</Badge>
-        )}
-        {/* [ADDED 020826] Groups 1/2/3 (Part A) — first real content in this panel */}
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-gray-400">Stage</p>
-            <p className="text-sm font-semibold text-gray-900">{journeyTag || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Feedback given</p>
-            <p className="text-sm font-semibold text-gray-900">{profile.feedback_count ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Zig age</p>
-            <p className="text-sm font-semibold text-gray-900">{zigAge || '—'}</p>
-          </div>
-        </div>
-        {/* [NOTE 020826] Ideas Started intentionally left off this panel for now —
-            this count (profile.ideas_count) currently only reflects ventures that
-            still exist today, not the true lifetime count from Part B (which
-            persists across deleted/replaced ventures via venture_history). Showing
-            it now would be misleading once that ships and the number changes
-            meaning. Add it once Part B's venture_history/profile counters exist. */}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </span>
   );
 }
 
@@ -163,7 +172,8 @@ export default function ProductFeedbackPage() {
 
   // [ADDED 020826] username lookup cache + currently-open profile preview
   const [founderProfiles, setFounderProfiles] = useState({}); // { [founderId]: { username, early_adopter } }
-  const [openProfileId, setOpenProfileId] = useState(null);
+  // [FIX 020826] openProfileId/openProfile removed — the hover card
+  // (FounderHoverCard) no longer needs click-based open/close state.
 
   // [ADDED 020826] expand/collapse state for the detail lists under each summary
   const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false });
@@ -346,7 +356,6 @@ export default function ProductFeedbackPage() {
   const reachedMLP = Boolean(venture.mlp_completed || venture.mlp_development_completed) || productFeedbacks.length > 0;
   const reachedBeta = venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0;
 
-  const openProfile = (founderId) => setOpenProfileId(founderId);
 
   // [ADDED 020826] MLP average ratings across all responses, for the summary row.
   const mlpAverages = (() => {
@@ -484,23 +493,14 @@ export default function ProductFeedbackPage() {
                         {expanded[detailKey] && (
                           <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
                             {data.responses.map((r) => (
-                              <React.Fragment key={r.id}>
-                                <div className="flex items-center justify-between">
-                                  <FounderNameButton
-                                    founderId={r.created_by_id}
-                                    name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
-                                    onSelect={openProfile}
-                                  />
-                                  <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
-                                </div>
-                                {/* [FIX 020826] Was a single shared panel rendered at a fixed
-                                    spot at the top of the page — jumped far away from whatever
-                                    row you actually clicked. Now shown inline, right under the
-                                    specific row, wherever that is in the page. */}
-                                {openProfileId === r.created_by_id && (
-                                  <ProfilePreviewPanel profile={founderProfiles[r.created_by_id]} onClose={() => setOpenProfileId(null)} />
-                                )}
-                              </React.Fragment>
+                              <div key={r.id} className="flex items-center justify-between">
+                                <FounderHoverCard
+                                  founderId={r.created_by_id}
+                                  name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
+                                  profile={founderProfiles[r.created_by_id]}
+                                />
+                                <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
+                              </div>
                             ))}
                           </div>
                         )}
@@ -524,18 +524,13 @@ export default function ProductFeedbackPage() {
                       <div key={suggestion.id} className="border border-gray-100 rounded-xl p-3">
                         <p className="font-medium text-gray-900 mb-1.5">{suggestion.feature_name}</p>
                         {/* [FIX 020826] Was showing raw email — now a clickable
-                            founder-name button instead. Falls back to nothing
+                            founder-name hover card instead. Falls back to nothing
                             (not the email) if attribution is missing. */}
-                        <FounderNameButton
+                        <FounderHoverCard
                           founderId={suggestion.created_by_id}
                           name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
-                          onSelect={openProfile}
+                          profile={founderProfiles[suggestion.created_by_id]}
                         />
-                        {openProfileId === suggestion.created_by_id && (
-                          <div className="mt-2">
-                            <ProfilePreviewPanel profile={founderProfiles[suggestion.created_by_id]} onClose={() => setOpenProfileId(null)} />
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -591,10 +586,10 @@ export default function ProductFeedbackPage() {
                                   falls back to plain text (name/email, no profile link),
                                   matching the same pattern already used for Beta sign-ups. */}
                               {fb.created_by_id ? (
-                                <FounderNameButton
+                                <FounderHoverCard
                                   founderId={fb.created_by_id}
                                   name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
-                                  onSelect={openProfile}
+                                  profile={founderProfiles[fb.created_by_id]}
                                 />
                               ) : fb.created_by ? (
                                 <p className="text-xs text-gray-500">{fb.created_by}</p>
@@ -615,9 +610,6 @@ export default function ProductFeedbackPage() {
                               </span>
                             )}
                             {fb.feedback_text && <p className="text-gray-700 mt-1">{fb.feedback_text}</p>}
-                            {openProfileId === fb.created_by_id && (
-                              <ProfilePreviewPanel profile={founderProfiles[fb.created_by_id]} onClose={() => setOpenProfileId(null)} />
-                            )}
                           </div>
                         </div>
                       );
@@ -698,10 +690,10 @@ export default function ProductFeedbackPage() {
                                     that case; fall back to plain text for genuinely anonymous
                                     sign-ups (no account to link to). */}
                                 {tester.created_by_id ? (
-                                  <FounderNameButton
+                                  <FounderHoverCard
                                     founderId={tester.created_by_id}
                                     name={tester.full_name}
-                                    onSelect={openProfile}
+                                    profile={founderProfiles[tester.created_by_id]}
                                   />
                                 ) : (
                                   <p className="font-semibold text-gray-900">{tester.full_name}</p>
@@ -712,9 +704,6 @@ export default function ProductFeedbackPage() {
                               </div>
                               {tester.interest_reason && (
                                 <p className="text-sm text-gray-600 mt-1 italic">"{tester.interest_reason}"</p>
-                              )}
-                              {openProfileId === tester.created_by_id && (
-                                <ProfilePreviewPanel profile={founderProfiles[tester.created_by_id]} onClose={() => setOpenProfileId(null)} />
                               )}
                             </div>
                           </div>
