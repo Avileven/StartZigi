@@ -83,7 +83,10 @@ import VCScheduleMeetingModal from '@/components/vc/VCScheduleMeetingModal';
 import PitchModal from '@/components/angels/PitchModal';
 // [ADDED] Phase completion modal — shown automatically when a phase_complete message is detected
 // [FIXED] Correct path to PhaseCompletionModal
-import PhaseCompletionModal from '@/components/ventures/PhaseCompletionModal';
+// [FIX 020826] Replaced PhaseCompletionModal (the old Achievements/Next
+// Challenges slide content, explicitly rejected by the founder) with the
+// new, simpler stage-unlock animation.
+import StageUnlockAnimation from '@/components/ventures/StageUnlockAnimation';
 
 // FIX: Always convert path to lowercase to prevent case sensitivity issues on Linux/Vercel
 const createPageUrl = (path) => `/${path.toLowerCase()}`;
@@ -125,6 +128,22 @@ const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
     </Dialog>
   );
 };
+
+// [ADDED 020826] Maps the *completed* phase (stored on phase_complete
+// VentureMessages — confirmed this session to be the phase just finished,
+// not the new one entered) to the Group 1 stage tag that should animate.
+// Spark isn't handled here — it fires at venture-creation time, a separate
+// trigger point, not through this phase_complete mechanism.
+function getNewStageTag(completedPhase) {
+  const map = {
+    business_plan: 'Plan',
+    mvp: 'Demo',
+    mlp: 'Beta',
+    // 'beta' completed -> entering growth, which has no Group 1 tag of its
+    // own (A.2) -> no animation.
+  };
+  return map[completedPhase] || null;
+}
 
 export default function Dashboard() {
   const [ventures, setVentures] = useState([]);
@@ -1499,28 +1518,29 @@ if (showToS) {
         details={rejectionDetailsContent}
       />
 
-      {/* [ADDED] Phase Completion Modal — opens automatically when a phase_complete message is detected */}
-      {/* [DISABLED — 22/07/2026] Presentation content is outdated / conflicting with ClientLayout's copy. Re-enable once updated. */}
-      {false && showPhaseModal && phaseModalData && (
-        <PhaseCompletionModal
-          isOpen={showPhaseModal}
-          onClose={async () => {
-  setShowPhaseModal(false);
-  if (phaseModalData?.phase) {
-    try {
-      const msg = messages.find(m => 
-        m.message_type === 'phase_complete' && m.phase === phaseModalData.phase
-      );
-      if (msg) await VentureMessage.update(msg.id, { is_dismissed: true });
-    } catch (e) {
-      console.error('Could not dismiss phase modal message:', e);
-    }
-  }
-}}
-          completedPhase={phaseModalData.phase}
-          venture={phaseModalData?.venture || currentVenture}
-          fundingEvents={phaseModalData.fundingEvents}
-          liveBalance={liveBalance}
+      {/* [FIX 020826] Re-enabled — was double-disabled (this copy and the one
+          in ClientLayout.jsx each pointed at the other as "the correct one,"
+          so neither ever showed). Per the D.8 decision, only this copy
+          (dashboard) is re-enabled; ClientLayout's stays disabled to avoid
+          the original duplicate-display bug that caused both to be turned
+          off in the first place. Content is new (StageUnlockAnimation), not
+          the old PhaseCompletionModal slides — those were explicitly dropped. */}
+      {showPhaseModal && phaseModalData && getNewStageTag(phaseModalData.phase) && (
+        <StageUnlockAnimation
+          stageName={getNewStageTag(phaseModalData.phase)}
+          onComplete={async () => {
+            setShowPhaseModal(false);
+            if (phaseModalData?.phase) {
+              try {
+                const msg = messages.find(m =>
+                  m.message_type === 'phase_complete' && m.phase === phaseModalData.phase
+                );
+                if (msg) await VentureMessage.update(msg.id, { is_dismissed: true });
+              } catch (e) {
+                console.error('Could not dismiss phase modal message:', e);
+              }
+            }
+          }}
         />
       )}
 
