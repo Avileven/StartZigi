@@ -1,7 +1,7 @@
 "use client";
 // [ADDED 020826] New lightweight component replacing the old
 // PhaseCompletionModal "Achievements/Next Challenges" slide content for
-// Group 1 stage transitions (Spark/Plan/Builder/Beta). Deliberately NOT reusing
+// Group 1 stage transitions (Spark/Plan/Shape/Beta). Deliberately NOT reusing
 // PhaseCompletionModal.jsx's two-column layout — per the founder's explicit
 // decision, that content is dropped. This is a simple, auto-dismissing
 // stage-unlock animation: a ring fills in around the stage name (colored to
@@ -15,11 +15,11 @@ import React, { useEffect, useRef, useState } from "react";
 
 // Same phase -> Group 1 tag mapping used elsewhere (product-feedback-page.jsx,
 // my-account-page.jsx) — kept in sync so "Stage" reads the same everywhere.
-const STAGE_ORDER = ["Spark", "Plan", "Builder", "Beta"];
+const STAGE_ORDER = ["Spark", "Plan", "Shape", "Beta"];
 const STAGE_COLORS = {
   Spark: "#CEE8DE",
   Plan: "#9FE1CB",
-  Builder: "#5DCAA5",
+  Shape: "#5DCAA5",
   Beta: "#1D9E75",
 };
 

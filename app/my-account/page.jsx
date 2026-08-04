@@ -1,4 +1,4 @@
-// 040826 add public profile
+// 220226
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -15,8 +15,8 @@ function getJourneyTag(rawPhase) {
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
-    mvp: 'Builder',
-    mlp: 'Builder',
+    mvp: 'Shape',
+    mlp: 'Shape',
     beta: 'Beta',
     growth: 'Beta',
   };
@@ -42,7 +42,7 @@ function getInsightStatus(count) {
 const STAGE_RING_COLORS = {
   Spark: { stroke: '#CEE8DE', text: '#0F6E56' },
   Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
-  Builder: { stroke: '#5DCAA5', text: '#0F6E56' },
+  Shape: { stroke: '#5DCAA5', text: '#0F6E56' },
   Beta: { stroke: '#1D9E75', text: '#04342C' },
 };
 const INSIGHT_RING_COLORS = {
@@ -201,7 +201,7 @@ export default function MyAccount() {
               text={STAGE_RING_COLORS[getJourneyTag(reputation?.current_phase)]?.text || '#888780'}
             />
             <RingBadge
-              value={getInsightStatus(reputation?.feedback_count ?? 0)}
+              value={getInsightStatus(reputation?.feedback_count ?? 0).replace('Insight ', '')}
               label="Status"
               stroke={INSIGHT_RING_COLORS[getInsightStatus(reputation?.feedback_count ?? 0)]?.stroke || '#F1EFE8'}
               text={INSIGHT_RING_COLORS[getInsightStatus(reputation?.feedback_count ?? 0)]?.text || '#888780'}

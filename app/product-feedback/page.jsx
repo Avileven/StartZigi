@@ -53,8 +53,8 @@ function getJourneyTag(rawPhase) {
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
-    mvp: 'Builder',
-    mlp: 'Builder',
+    mvp: 'Shape',
+    mlp: 'Shape',
     beta: 'Beta',
     growth: 'Beta',
   };
@@ -99,7 +99,7 @@ function getInsightStatus(count) {
 const STAGE_RING_COLORS = {
   Spark: { stroke: '#CEE8DE', text: '#0F6E56' },
   Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
-  Builder: { stroke: '#5DCAA5', text: '#0F6E56' },
+  Shape: { stroke: '#5DCAA5', text: '#0F6E56' },
   Beta: { stroke: '#1D9E75', text: '#04342C' },
 };
 // Insight status uses its own (amber) ramp — deliberately different from
@@ -188,7 +188,7 @@ function FounderHoverCard({ founderId, name, profile }) {
                 small
               />
               <RingBadge
-                value={insightStatus || '—'}
+                value={insightStatus ? insightStatus.replace('Insight ', '') : '—'}
                 label="Status"
                 stroke={INSIGHT_RING_COLORS[insightStatus]?.stroke || '#F1EFE8'}
                 text={INSIGHT_RING_COLORS[insightStatus]?.text || '#888780'}
