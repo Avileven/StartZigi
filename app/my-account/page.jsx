@@ -4,9 +4,24 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/api/entities';
 import Link from 'next/link';
-import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight } from 'lucide-react';
+import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight, Rocket, MessageSquare, Clock, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+// [ADDED 020826] Same phase-to-tag mapping used in the founder hover card
+// (Part A.2) — kept in sync so "Stage" reads the same everywhere.
+function getJourneyTag(rawPhase) {
+  const map = {
+    idea: 'Spark',
+    business_plan: 'Plan',
+    mvp: 'Demo',
+    mlp: 'Demo',
+    beta: 'Beta',
+    growth: 'Beta',
+  };
+  return map[rawPhase] || null;
+}
 
 // [MY ACCOUNT] מיפוי תכניות לקרדיטים
 const PLAN_CREDITS = {
@@ -27,6 +42,11 @@ export default function MyAccount() {
   const [profile, setProfile] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // [ADDED 020826] Reputation fields (Part A) — fetched via the same
+  // get_public_founder_profile RPC already used for the founder hover card,
+  // just reused here for the founder's own self-view (raw numbers, not the
+  // translated public status label used for others — see A.6.2).
+  const [reputation, setReputation] = useState(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -41,6 +61,15 @@ export default function MyAccount() {
           .single();
 
         setProfile(data);
+
+        // [ADDED 020826] Self-view reputation data (Part A.6.2) — reuses the
+        // RPC rather than querying ventures/feedback tables directly here,
+        // since we already know that RPC safely bypasses the RLS gaps found
+        // earlier without needing to check each table's policies individually.
+        const { data: repData } = await supabase.rpc('get_public_founder_profile', {
+          profile_id: currentUser.id,
+        });
+        if (repData?.[0]) setReputation(repData[0]);
       } catch (error) {
         console.error('Error loading profile:', error);
       }
@@ -86,6 +115,61 @@ export default function MyAccount() {
             <span className="font-semibold">Member since:</span>{' '}
             {joinedDate ? joinedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
           </p>
+        </CardContent>
+      </Card>
+
+      {/* [ADDED 020826] Zig Profile — Part A.6.2 self-view: raw numbers, not the
+          translated public status label shown to other founders via the hover
+          card elsewhere. Ideas Started intentionally omitted for now — see the
+          same reasoning already noted in product-feedback-page.jsx: the count
+          only reflects ventures that exist today, not the true lifetime count
+          from Part B (venture_history), so showing it now would be misleading
+          once that ships and the number's meaning changes. */}
+      <Card className="border-t-4 border-t-indigo-500 shadow-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+            <UserCircle className="w-4 h-4" /> Zig Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {profile?.early_adopter && (
+            <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1 w-fit">
+              <Star className="w-3 h-3" />
+              Early Adopter
+            </Badge>
+          )}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex items-start gap-2">
+              <Rocket className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-gray-400">Stage</p>
+                <p className="text-sm font-semibold text-gray-900">{getJourneyTag(reputation?.current_phase) || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <MessageSquare className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-gray-400">Feedback given</p>
+                <p className="text-sm font-semibold text-gray-900">{reputation?.feedback_count ?? 0}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-gray-400">Zig age</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {joinedDate
+                    ? (() => {
+                        const days = Math.floor((Date.now() - joinedDate.getTime()) / 86400000);
+                        if (days < 30) return `${days} day${days === 1 ? '' : 's'}`;
+                        if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) === 1 ? '' : 's'}`;
+                        return `${Math.floor(days / 365)} year${Math.floor(days / 365) === 1 ? '' : 's'}`;
+                      })()
+                    : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
