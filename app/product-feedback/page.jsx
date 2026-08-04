@@ -53,8 +53,8 @@ function getJourneyTag(rawPhase) {
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
-    mvp: 'Demo',
-    mlp: 'Demo',
+    mvp: 'Builder',
+    mlp: 'Builder',
     beta: 'Beta',
     growth: 'Beta',
   };
@@ -93,6 +93,52 @@ function getInsightStatus(count) {
 // the card is positioned relative to it via CSS (group-hover), so it always
 // appears right next to whichever row you're actually looking at — no more
 // jumping to a fixed spot on the page (A.6.1).
+// [ADDED 020826] Ring-badge color mapping, matching StageUnlockAnimation.jsx's
+// ramp (muted for early stages, richer for later ones) — reused here so the
+// profile display and the unlock animation feel like the same system.
+const STAGE_RING_COLORS = {
+  Spark: { stroke: '#CEE8DE', text: '#0F6E56' },
+  Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
+  Builder: { stroke: '#5DCAA5', text: '#0F6E56' },
+  Beta: { stroke: '#1D9E75', text: '#04342C' },
+};
+// Insight status uses its own (amber) ramp — deliberately different from
+// Stage's (green/teal) so the two badges are never confused for the same
+// kind of progress at a glance.
+const INSIGHT_RING_COLORS = {
+  'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
+  'Insight Starter': { stroke: '#FAC775', text: '#633806' },
+  'Insight Builder': { stroke: '#EF9F27', text: '#412402' },
+  'Insight Champion': { stroke: '#BA7517', text: '#FAEEDA' },
+  'Insight Master': { stroke: '#412402', text: '#FAEEDA' },
+};
+// Zig Age is a fact, not an achievement — fixed neutral color for everyone,
+// not a progress shade (deciding otherwise would wrongly imply "older = better").
+const ZIG_AGE_RING_COLOR = { stroke: '#378ADD', text: '#185FA5' };
+
+// [ADDED 020826] Small reusable ring badge — SVG circle stroke filled to
+// 100% (this is a static display, not the animated reveal used in
+// StageUnlockAnimation.jsx), with a label below.
+function RingBadge({ value, label, stroke, text, small }) {
+  const size = small ? 56 : 64;
+  const r = small ? 24 : 28;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
+        </svg>
+        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 8 ? 9 : 12 }}>
+          {value}
+        </span>
+      </div>
+      <span className="text-[11px] text-gray-400">{label}</span>
+    </div>
+  );
+}
+
 function FounderHoverCard({ founderId, name, profile }) {
   if (!founderId || !name) {
     // No attribution available (e.g. legacy feedback given before the
@@ -133,22 +179,28 @@ function FounderHoverCard({ founderId, name, profile }) {
                 Early Adopter
               </Badge>
             )}
-            <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                <Rocket className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                <span className="text-xs text-gray-400 w-24">Stage</span>
-                <span className="text-xs font-semibold text-gray-900">{journeyTag || '—'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                <span className="text-xs text-gray-400 w-24">Insight status</span>
-                <span className="text-xs font-semibold text-gray-900">{insightStatus || '—'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                <span className="text-xs text-gray-400 w-24">Zig age</span>
-                <span className="text-xs font-semibold text-gray-900">{zigAge || '—'}</span>
-              </div>
+            <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100">
+              <RingBadge
+                value={journeyTag || '—'}
+                label="Stage"
+                stroke={STAGE_RING_COLORS[journeyTag]?.stroke || '#F1EFE8'}
+                text={STAGE_RING_COLORS[journeyTag]?.text || '#888780'}
+                small
+              />
+              <RingBadge
+                value={insightStatus || '—'}
+                label="Status"
+                stroke={INSIGHT_RING_COLORS[insightStatus]?.stroke || '#F1EFE8'}
+                text={INSIGHT_RING_COLORS[insightStatus]?.text || '#888780'}
+                small
+              />
+              <RingBadge
+                value={zigAge || '—'}
+                label="Zig age"
+                stroke={ZIG_AGE_RING_COLOR.stroke}
+                text={ZIG_AGE_RING_COLOR.text}
+                small
+              />
             </div>
           </CardContent>
         </Card>

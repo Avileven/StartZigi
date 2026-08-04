@@ -1,4 +1,4 @@
-//220726
+//040826 add anima for stages
 //dashboard 010526 message new TETS
 // [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
 // [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
@@ -140,7 +140,7 @@ function getNewStageTag(phase, messageType) {
   if (messageType === 'phase_complete') {
     const map = {
       business_plan: 'Plan',
-      mvp: 'Demo',
+      mvp: 'Builder',
       mlp: 'Beta',
       // 'beta' completed -> entering growth, which has no Group 1 tag of its
       // own (A.2) -> no animation.

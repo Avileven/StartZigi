@@ -1,4 +1,4 @@
-// 220226
+// 040826 add public profile
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -15,8 +15,8 @@ function getJourneyTag(rawPhase) {
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
-    mvp: 'Demo',
-    mlp: 'Demo',
+    mvp: 'Builder',
+    mlp: 'Builder',
     beta: 'Beta',
     growth: 'Beta',
   };
@@ -34,6 +34,44 @@ function getInsightStatus(count) {
   if (count >= 5) return 'Insight Builder';
   if (count >= 1) return 'Insight Starter';
   return 'Insight Seeker';
+}
+
+// [ADDED 020826] Same ring-badge system used in product-feedback-page.jsx's
+// hover card — kept in sync so the profile looks identical everywhere it
+// appears.
+const STAGE_RING_COLORS = {
+  Spark: { stroke: '#CEE8DE', text: '#0F6E56' },
+  Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
+  Builder: { stroke: '#5DCAA5', text: '#0F6E56' },
+  Beta: { stroke: '#1D9E75', text: '#04342C' },
+};
+const INSIGHT_RING_COLORS = {
+  'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
+  'Insight Starter': { stroke: '#FAC775', text: '#633806' },
+  'Insight Builder': { stroke: '#EF9F27', text: '#412402' },
+  'Insight Champion': { stroke: '#BA7517', text: '#FAEEDA' },
+  'Insight Master': { stroke: '#412402', text: '#FAEEDA' },
+};
+const ZIG_AGE_RING_COLOR = { stroke: '#378ADD', text: '#185FA5' };
+
+function RingBadge({ value, label, stroke, text }) {
+  const size = 64;
+  const r = 28;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
+        </svg>
+        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 8 ? 9 : 12 }}>
+          {value}
+        </span>
+      </div>
+      <span className="text-[11px] text-gray-400">{label}</span>
+    </div>
+  );
 }
 
 // [MY ACCOUNT] מיפוי תכניות לקרדיטים
@@ -155,37 +193,34 @@ export default function MyAccount() {
               Early Adopter
             </Badge>
           )}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex items-start gap-2">
-              <Rocket className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-gray-400">Stage</p>
-                <p className="text-sm font-semibold text-gray-900">{getJourneyTag(reputation?.current_phase) || '—'}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <MessageSquare className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-gray-400">Insight status</p>
-                <p className="text-sm font-semibold text-gray-900">{getInsightStatus(reputation?.feedback_count ?? 0) || '—'}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-gray-400">Zig age</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {joinedDate
-                    ? (() => {
-                        const days = Math.floor((Date.now() - joinedDate.getTime()) / 86400000);
-                        if (days < 30) return `${days} day${days === 1 ? '' : 's'}`;
-                        if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) === 1 ? '' : 's'}`;
-                        return `${Math.floor(days / 365)} year${Math.floor(days / 365) === 1 ? '' : 's'}`;
-                      })()
-                    : '—'}
-                </p>
-              </div>
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            <RingBadge
+              value={getJourneyTag(reputation?.current_phase) || '—'}
+              label="Stage"
+              stroke={STAGE_RING_COLORS[getJourneyTag(reputation?.current_phase)]?.stroke || '#F1EFE8'}
+              text={STAGE_RING_COLORS[getJourneyTag(reputation?.current_phase)]?.text || '#888780'}
+            />
+            <RingBadge
+              value={getInsightStatus(reputation?.feedback_count ?? 0)}
+              label="Status"
+              stroke={INSIGHT_RING_COLORS[getInsightStatus(reputation?.feedback_count ?? 0)]?.stroke || '#F1EFE8'}
+              text={INSIGHT_RING_COLORS[getInsightStatus(reputation?.feedback_count ?? 0)]?.text || '#888780'}
+            />
+            <RingBadge
+              value={
+                joinedDate
+                  ? (() => {
+                      const days = Math.floor((Date.now() - joinedDate.getTime()) / 86400000);
+                      if (days < 30) return `${days}d`;
+                      if (days < 365) return `${Math.floor(days / 30)}mo`;
+                      return `${Math.floor(days / 365)}y`;
+                    })()
+                  : '—'
+              }
+              label="Zig age"
+              stroke={ZIG_AGE_RING_COLOR.stroke}
+              text={ZIG_AGE_RING_COLOR.text}
+            />
           </div>
         </CardContent>
       </Card>
