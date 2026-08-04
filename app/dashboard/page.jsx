@@ -129,20 +129,25 @@ const RejectionDetailsModal = ({ isOpen, onClose, details }) => {
   );
 };
 
-// [ADDED 020826] Maps the *completed* phase (stored on phase_complete
-// VentureMessages — confirmed this session to be the phase just finished,
-// not the new one entered) to the Group 1 stage tag that should animate.
-// Spark isn't handled here — it fires at venture-creation time, a separate
-// trigger point, not through this phase_complete mechanism.
-function getNewStageTag(completedPhase) {
-  const map = {
-    business_plan: 'Plan',
-    mvp: 'Demo',
-    mlp: 'Beta',
-    // 'beta' completed -> entering growth, which has no Group 1 tag of its
-    // own (A.2) -> no animation.
-  };
-  return map[completedPhase] || null;
+// [FIX 020826] Now takes messageType too — 'business_plan' means something
+// different depending on which message type it came from: on phase_welcome
+// it means "just entered business_plan" (= Spark achieved, idea just
+// created); on phase_complete it means "just finished business_plan" (=
+// Plan achieved, moving to MVP). Confirmed this session via the actual
+// VentureMessage.create() calls in the codebase.
+function getNewStageTag(phase, messageType) {
+  if (messageType === 'phase_welcome' && phase === 'business_plan') return 'Spark';
+  if (messageType === 'phase_complete') {
+    const map = {
+      business_plan: 'Plan',
+      mvp: 'Demo',
+      mlp: 'Beta',
+      // 'beta' completed -> entering growth, which has no Group 1 tag of its
+      // own (A.2) -> no animation.
+    };
+    return map[phase] || null;
+  }
+  return null;
 }
 
 export default function Dashboard() {
@@ -680,11 +685,16 @@ if (userVentures.length === 0) {
           });
           setMessages(filteredMessages);
 
-          // [ADDED] Detect phase_complete message and open PhaseCompletionModal automatically.
-          // Only opens if there's a recent phase_complete message (within last 24 hours).
-          // This ensures the modal shows right after a phase transition, not on every login.
+          // [FIX 020826] Extended to also catch the 'phase_welcome' message for
+          // entering business_plan — confirmed this session that this message
+          // ALREADY gets created on venture creation (phase field stores the
+          // NEW phase entered for phase_welcome, unlike phase_complete which
+          // stores the phase just finished). This is the real Spark trigger —
+          // no separate venture-creation file needs to be touched.
           const recentPhaseComplete = filteredMessages.find(msg => {
-            if (msg.message_type !== 'phase_complete') return false;
+            const isPhaseComplete = msg.message_type === 'phase_complete';
+            const isSparkWelcome = msg.message_type === 'phase_welcome' && msg.phase === 'business_plan';
+            if (!isPhaseComplete && !isSparkWelcome) return false;
             // [FIX 11/05/2026] Skip already dismissed messages — prevents modal from reopening
             // on every dashboard load within 24 hours after closing it.
             if (msg.is_dismissed) return false;
@@ -706,11 +716,11 @@ if (userVentures.length === 0) {
             setLiveBalance(modalBalance);
             try {
               const events = await FundingEvent.filter({ venture_id: activeVenture.id }, "-created_date");
-              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: events, venture: activeVenture });
+              setPhaseModalData({ phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: events, venture: activeVenture });
               setShowPhaseModal(true);
             } catch (e) {
               console.error('Could not load funding events for phase modal:', e);
-              setPhaseModalData({ phase: recentPhaseComplete.phase, fundingEvents: [], venture: activeVenture });
+              setPhaseModalData({ phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: [], venture: activeVenture });
               setShowPhaseModal(true);
             }
           }
@@ -1525,15 +1535,15 @@ if (showToS) {
           the original duplicate-display bug that caused both to be turned
           off in the first place. Content is new (StageUnlockAnimation), not
           the old PhaseCompletionModal slides — those were explicitly dropped. */}
-      {showPhaseModal && phaseModalData && getNewStageTag(phaseModalData.phase) && (
+      {showPhaseModal && phaseModalData && getNewStageTag(phaseModalData.phase, phaseModalData.messageType) && (
         <StageUnlockAnimation
-          stageName={getNewStageTag(phaseModalData.phase)}
+          stageName={getNewStageTag(phaseModalData.phase, phaseModalData.messageType)}
           onComplete={async () => {
             setShowPhaseModal(false);
             if (phaseModalData?.phase) {
               try {
                 const msg = messages.find(m =>
-                  m.message_type === 'phase_complete' && m.phase === phaseModalData.phase
+                  m.message_type === phaseModalData.messageType && m.phase === phaseModalData.phase
                 );
                 if (msg) await VentureMessage.update(msg.id, { is_dismissed: true });
               } catch (e) {
