@@ -115,9 +115,9 @@ function FounderHoverCard({ founderId, name, profile }) {
       </button>
 
       {/* Hover card — hidden by default, shown on hover via the `group` above */}
-      <div className="hidden group-hover:block absolute z-20 top-full left-0 mt-2 w-72">
-        <Card className="border-2 border-indigo-200 shadow-lg">
-          <CardContent className="p-4">
+      <div className="hidden group-hover:block absolute z-50 top-full left-0 mt-2 w-72">
+        <Card className="border-2 border-indigo-200 shadow-xl bg-white">
+          <CardContent className="p-4 bg-white rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700 flex-shrink-0">
                 {initial}
