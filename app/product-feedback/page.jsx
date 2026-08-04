@@ -84,7 +84,7 @@ function getInsightStatus(count) {
   if (count >= 20) return 'Insight Champion';
   if (count >= 5) return 'Insight Builder';
   if (count >= 1) return 'Insight Starter';
-  return null;
+  return 'Insight Seeker';
 }
 
 // [FIX 020826] Replaces the old click-to-open FounderNameButton +

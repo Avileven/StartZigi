@@ -23,6 +23,19 @@ function getJourneyTag(rawPhase) {
   return map[rawPhase] || null;
 }
 
+// [FIX 020826] This section shows exactly what other founders see via the
+// hover card (Part A.3.1) — a public-profile preview, not a private
+// analytics view. So it uses the same status label, not the raw count.
+// Insight Credits themselves (how many earned/available) aren't shown here
+// either — that mechanism (Part E.7) isn't built yet.
+function getInsightStatus(count) {
+  if (count >= 50) return 'Insight Master';
+  if (count >= 20) return 'Insight Champion';
+  if (count >= 5) return 'Insight Builder';
+  if (count >= 1) return 'Insight Starter';
+  return 'Insight Seeker';
+}
+
 // [MY ACCOUNT] מיפוי תכניות לקרדיטים
 const PLAN_CREDITS = {
   explorer: 5,
@@ -42,10 +55,11 @@ export default function MyAccount() {
   const [profile, setProfile] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  // [ADDED 020826] Reputation fields (Part A) — fetched via the same
-  // get_public_founder_profile RPC already used for the founder hover card,
-  // just reused here for the founder's own self-view (raw numbers, not the
-  // translated public status label used for others — see A.6.2).
+  // [FIX 020826] Reputation fields (Part A) — fetched via the same
+  // get_public_founder_profile RPC already used for the founder hover card.
+  // This section shows the same public-facing view others see (status
+  // label, not raw count) — corrected after an earlier version of this file
+  // mistakenly showed raw numbers here as if this were a private view.
   const [reputation, setReputation] = useState(null);
 
   useEffect(() => {
@@ -118,9 +132,9 @@ export default function MyAccount() {
         </CardContent>
       </Card>
 
-      {/* [ADDED 020826] Zig Profile — Part A.6.2 self-view: raw numbers, not the
-          translated public status label shown to other founders via the hover
-          card elsewhere. Ideas Started intentionally omitted for now — see the
+      {/* [FIX 020826] Zig Profile — public-profile preview, showing exactly what
+          other founders see via the hover card (same status label, per
+          A.3.1), not raw numbers. Ideas Started intentionally omitted for now — see the
           same reasoning already noted in product-feedback-page.jsx: the count
           only reflects ventures that exist today, not the true lifetime count
           from Part B (venture_history), so showing it now would be misleading
@@ -130,6 +144,9 @@ export default function MyAccount() {
           <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
             <UserCircle className="w-4 h-4" /> Zig Profile
           </CardTitle>
+          {/* [FIX 020826] Made explicit: this is the same preview other founders
+              see when they hover your name — not a private/self-only view. */}
+          <p className="text-xs text-gray-400">Public Profile</p>
         </CardHeader>
         <CardContent className="space-y-3">
           {profile?.early_adopter && (
@@ -149,8 +166,8 @@ export default function MyAccount() {
             <div className="flex items-start gap-2">
               <MessageSquare className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-400">Feedback given</p>
-                <p className="text-sm font-semibold text-gray-900">{reputation?.feedback_count ?? 0}</p>
+                <p className="text-xs text-gray-400">Insight status</p>
+                <p className="text-sm font-semibold text-gray-900">{getInsightStatus(reputation?.feedback_count ?? 0) || '—'}</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
