@@ -334,13 +334,19 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Promotion Center
+            Validation Center
           </h1>
           <p className="text-gray-600">
-            Launch campaigns to market your venture and track results.
+            Validate. Learn. Improve. Collect real feedback and grow your reputation in the ecosystem.
           </p>
         </div>
 
+        {/* [FIX 020826] Was showing "Virtual Capital" here — no longer relevant to
+            this page since promotion no longer spends venture.virtual_capital
+            (Part E). Replaced with the Feedback Request Pool balance instead.
+            NOTE: venture.feedback_request_pool doesn't exist in the schema yet —
+            this reads a fallback default (20) until that field is added; wire
+            up the real column before shipping. */}
         <div className="mb-6 bg-white rounded-lg p-4 border">
           <div className="flex items-center justify-between">
             <div>
@@ -348,9 +354,9 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
               <p className="text-lg font-semibold">{venture.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Virtual Capital</p>
+              <p className="text-sm text-gray-500">Feedback Requests Remaining</p>
               <p className="text-2xl font-bold text-green-600">
-                ${(venture.virtual_capital || 0).toLocaleString()}
+                {venture.feedback_request_pool ?? 20}
               </p>
             </div>
           </div>
@@ -394,27 +400,17 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                           {isActive ? "Active" : "Ended"}
                         </span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Cost</p>
-                        <p className="text-lg font-bold text-red-600">
-                          -${(campaign.cost || 0).toLocaleString()}
-                        </p>
-                      </div>
+                      {/* [FIX 020826] Removed the dollar "Cost" display — promotion
+                          no longer spends virtual_capital (Part E). */}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* [CHANGED] Renamed metrics to clearer terms:
-                        Invites Sent = how many messages were sent
-                        Exposure = how many opened/viewed the message  
-                        Clicks = how many clicked the feedback link */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <BarChart3 className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-blue-600">
-                          {campaign.audience_size || 0}
-                        </p>
-                        <p className="text-xs text-gray-600">Invites Sent</p>
-                      </div>
+                    {/* [FIX 020826] Removed "Invites Sent" (campaign.audience_size) —
+                        this directly exposed the reach number, which Part E.3
+                        explicitly decided should never be shown to the founder.
+                        Kept Exposure/Clicks — those measure engagement with
+                        people who actually responded, not how many were contacted. */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-4 bg-purple-50 rounded-lg">
                         <Eye className="w-6 h-6 text-purple-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-purple-600">
@@ -539,6 +535,9 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* [FIX 020826] Removed "Choose audience size (20-100 users)" and
+                  "Costs virtual currency" — the package-tier picker is gone
+                  (Part E.3/E.6), and this never reveals the reach number. */}
               <ul className="space-y-2 text-sm text-gray-600 mb-4">
                 <li className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-green-500" />
@@ -546,11 +545,11 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                 </li>
                 <li className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-green-500" />
-                  Choose audience size (20-100 users)
+                  {isBetaPhase ? "Build your beta community" : "Get real product feedback"}
                 </li>
                 <li className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-yellow-500" />
-                  Costs virtual currency
+                  Uses your Feedback Request Pool
                 </li>
               </ul>
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700">

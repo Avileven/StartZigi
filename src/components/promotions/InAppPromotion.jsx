@@ -9,21 +9,23 @@ import { Venture, VentureMessage, PromotionCampaign, User } from "@/api/entities
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from "lucide-react";
 
-// [CHANGED] Updated package sizes and costs per new pricing
-const PACKAGES = [
-  { size: 20, cost: 1000 },
-  { size: 50, cost: 1500 },
-  { size: 100, cost: 2000 },
-];
+// [FIX 020826] Removed the 3-tier package picker (20/50/100 reach for
+// $1,000/$1,500/$2,000 virtual_capital) — replaced by the Feedback Request
+// Pool model (Part E.6): a fixed base allowance per venture, spent as the
+// founder chooses per round, no dollar packages.
 
-const MAX_MESSAGES_PER_VENTURE_PER_WEEK = 3;
+const MAX_MESSAGES_PER_VENTURE_PER_WEEK = 5; // [FIX 020826] Raised from 3 to 5, per this session's decision (Part D/E discussion).
 
 export default function InAppPromotion({ goBack }) {
   const [venture, setVenture] = useState(null);
-  const [selectedPackage, setSelectedPackage] = useState(null);
+  // [FIX 020826] Replaces selectedPackage — the founder now picks how many of
+  // their remaining Feedback Request Pool to spend on this round, not a fixed
+  // tier size.
+  const [requestsToUse, setRequestsToUse] = useState(1);
   const [tagline, setTagline] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,13 +58,14 @@ export default function InAppPromotion({ goBack }) {
   }, []);
 
   const handleLaunchCampaign = async () => {
-    if (!selectedPackage || !tagline.trim() || !venture) {
-      alert("Please select a package and provide a tagline.");
+    if (!requestsToUse || requestsToUse < 1 || !tagline.trim() || !venture) {
+      alert("Please choose how many requests to send and provide a tagline.");
       return;
     }
 
-    if ((venture.virtual_capital || 0) < selectedPackage.cost) {
-      alert("Insufficient virtual capital for this package.");
+    const remainingPool = venture.feedback_request_pool ?? 20;
+    if (remainingPool < requestsToUse) {
+      alert("You don't have enough requests remaining in your Feedback Request Pool for this round.");
       return;
     }
 
@@ -119,7 +122,10 @@ export default function InAppPromotion({ goBack }) {
         return;
       }
 
-      const actualAudienceSize = Math.min(selectedPackage.size, eligibleVentures.length);
+      // [FIX 020826] actualAudienceSize is still tracked internally (useful for
+      // future success-rate measurement, Part E.5) but — per Part E.3 — is
+      // never shown to the founder anywhere in this file's UI.
+      const actualAudienceSize = Math.min(requestsToUse, eligibleVentures.length);
       const shuffled = [...eligibleVentures].sort(() => 0.5 - Math.random());
       const selectedTargets = shuffled.slice(0, actualAudienceSize);
 
@@ -133,7 +139,10 @@ const { data: campaign, error: campaignErr } = await supabase
     venture_id: venture.id,
     campaign_type: "in-app",
     audience_size: actualAudienceSize,
-    cost: selectedPackage.cost,
+    // [FIX 020826] No more dollar cost — cost field now stores the number of
+    // Feedback Request Pool units spent (still not shown to the founder as a
+    // "reach" figure anywhere; it's an internal spend record).
+    cost: requestsToUse,
     tagline: tagline,
     status: "active",
     created_by: user?.email || null,
@@ -189,17 +198,18 @@ if (campaignErr) throw campaignErr;
         });
       }
 
-      // [FIX] Fetch fresh virtual_capital from DB before deducting.
-      // Using frontend state value could cause wrong balance if time has passed.
+      // [FIX 020826] Deduct from feedback_request_pool instead of
+      // virtual_capital — fetching fresh from DB first, same reasoning as
+      // before (avoid stale frontend state causing a wrong balance).
       const { data: freshVenture } = await supabase
         .from("ventures")
-        .select("virtual_capital")
+        .select("feedback_request_pool")
         .eq("id", venture.id)
         .single();
-      const freshCapital = freshVenture?.virtual_capital || 0;
+      const freshPool = freshVenture?.feedback_request_pool ?? 20;
       await supabase
         .from("ventures")
-        .update({ virtual_capital: freshCapital - selectedPackage.cost })
+        .update({ feedback_request_pool: freshPool - requestsToUse })
         .eq("id", venture.id);
 
       await VentureMessage.create({
@@ -269,38 +279,38 @@ if (campaignErr) throw campaignErr;
           <CardContent className="p-8">
             <div className="space-y-6">
 
-              {/* [ADDED] How It Works — moved to top so user understands the flow before selecting a package */}
+              {/* [FIX 020826] Updated per Part E: no dollar cost, no reach
+                  number promised to the founder — only how many requests
+                  from their pool they're choosing to spend. */}
               <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl">
                 <h4 className="font-semibold text-blue-900 mb-3">How It Works:</h4>
                 <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5">
-                  <li>Select a promotion package — the cost will be deducted from your balance</li>
+                  <li>Choose how many requests to spend from your Feedback Request Pool</li>
                   <li>Give your campaign a name (tagline)</li>
-                  <li>Launch the campaign and track its performance in the Promotion Center</li>
-                  <li>The campaign is active for 7 days — after that, invitations expire automatically</li>
+                  <li>Launch the round and track results in the Validation Center</li>
+                  <li>The round is active for 7 days — after that, invitations expire automatically</li>
                 </ol>
               </div>
 
               <div>
-                <h3 className="font-semibold text-lg mb-4">Select Your Package</h3>
-                <div className="grid sm:grid-cols-3 gap-4">
-                  {PACKAGES.map((pkg) => (
-                    <Card
-                      key={pkg.size}
-                      className={`cursor-pointer transition-all ${
-                        selectedPackage?.size === pkg.size
-                          ? "border-2 border-indigo-600 shadow-lg"
-                          : "hover:shadow-md"
-                      }`}
-                      onClick={() => setSelectedPackage(pkg)}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-indigo-600 mb-2">{pkg.size}</p>
-                        <p className="text-sm text-gray-600 mb-3">ventures reached</p>
-                        <p className="text-lg font-semibold">${pkg.cost.toLocaleString()}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <h3 className="font-semibold text-lg mb-2">Feedback Requests Remaining</h3>
+                <p className="text-3xl font-bold text-indigo-600 mb-4">{venture.feedback_request_pool ?? 20}</p>
+                <Label htmlFor="requests-to-use">How many would you like to use for this round?</Label>
+                <Input
+                  id="requests-to-use"
+                  type="number"
+                  min={1}
+                  max={venture.feedback_request_pool ?? 20}
+                  value={requestsToUse}
+                  onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className="mt-2 max-w-[140px]"
+                />
+                {/* [FIX 020826] Earn-more framing (Part E.7/E.8) instead of a
+                    "buy more" purchase flow — Insight Credits transfer 1:1
+                    into this pool, they aren't spent on it. */}
+                <p className="text-xs text-gray-500 mt-2">
+                  Need more? Give feedback to other founders to earn Insight Credits — each one adds a request to this pool.
+                </p>
               </div>
 
               {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
@@ -315,38 +325,20 @@ if (campaignErr) throw campaignErr;
                 />
               </div>
 
-              {selectedPackage && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Total Cost:</span>
-                    <span className="text-2xl font-bold text-indigo-600">
-                      ${selectedPackage.cost.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 text-sm">
-                    <span>Your Virtual Capital:</span>
-                    <span
-                      className={(venture.virtual_capital || 0) < selectedPackage.cost ? "text-red-600 font-semibold" : "text-gray-600"}
-                    >
-                      ${(venture.virtual_capital || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* [CHANGED] Button is green and active only when all steps are complete:
-                  1. Package selected 2. Campaign name filled 3. Sufficient balance
-                  When disabled, shows gray to indicate steps are missing */}
+              {/* [FIX 020826] Button active when: tagline filled, at least 1
+                  request chosen, and enough remaining in the pool. No dollar
+                  balance check anymore. */}
               <Button
                 onClick={handleLaunchCampaign}
                 disabled={
-                  !selectedPackage ||
+                  !requestsToUse ||
+                  requestsToUse < 1 ||
                   !tagline.trim() ||
                   isSubmitting ||
-                  (venture.virtual_capital || 0) < (selectedPackage?.cost || 0)
+                  (venture.feedback_request_pool ?? 20) < requestsToUse
                 }
                 className={`w-full transition-all ${
-                  selectedPackage && tagline.trim() && (venture.virtual_capital || 0) >= (selectedPackage?.cost || 0)
+                  requestsToUse >= 1 && tagline.trim() && (venture.feedback_request_pool ?? 20) >= requestsToUse
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
