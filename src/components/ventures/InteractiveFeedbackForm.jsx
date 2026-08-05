@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input.jsx';
 import { Slider } from '@/components/ui/slider';
 import { MessageSquare, Loader2, CheckCircle, Plus } from 'lucide-react';
 
-export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, reviewerVenture }) {
+export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, reviewerVenture, campaignId }) {
   const [feedbackData, setFeedbackData] = useState({});
   const [newFeatureName, setNewFeatureName] = useState('');
   const [pendingFeatures, setPendingFeatures] = useState([]); // [CHANGED] local list before submit
@@ -62,6 +62,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           user_email: createdByEmail,
           reviewer_venture_id: reviewerVenture?.id || null,
           reviewer_venture_name: reviewerVenture?.name || null,
+          // [ADDED 020826] Links this feedback back to the promotion round
+          // that generated it (Validation Center's "Feedback Received" count).
+          campaign_id: campaignId || null,
         });
       });
 
@@ -74,6 +77,8 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           venture_id: venture.id,
           feature_name: name,
           user_email: createdByEmail,
+          // [ADDED 020826] Same campaign linkage as MVP ratings above.
+          campaign_id: campaignId || null,
         })
       );
 

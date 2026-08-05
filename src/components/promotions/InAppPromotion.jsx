@@ -174,7 +174,10 @@ if (campaignErr) throw campaignErr;
       // [ADDED] campaign param in beta URL — lets beta-testing page save campaign_id with each sign-up
       const getFeedbackUrl = (targetVentureId) => {
         if (venture.phase === "mvp" || venture.phase === "mlp") {
-          return `/venture-feedback?id=${venture.id}&from=${targetVentureId}`;
+          // [FIX 020826] Was missing &campaign=... entirely — this is why
+          // feedback received via in-app rounds could never be linked back
+          // to the campaign that generated it.
+          return `/venture-feedback?id=${venture.id}&from=${targetVentureId}&campaign=${campaign.id}`;
         }
         return `/beta-testing?id=${venture.id}&campaign=${campaign.id}`;
       };

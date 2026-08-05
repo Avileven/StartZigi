@@ -149,7 +149,25 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
         { venture_id: currentVenture.id },
         "-created_date"
       );
-      setCampaigns(ventureCampaigns || []);
+
+      // [FIX 020826] Replaces the dead Exposure/Clicks counters (never
+      // updated anywhere in the codebase) with a real "Feedback Received"
+      // count per campaign — counted across all feedback tables now linked
+      // via campaign_id, plus beta sign-ups (which already had campaign_id
+      // wired in beta-testing/page.jsx before this session).
+      const campaignsWithCounts = await Promise.all(
+        (ventureCampaigns || []).map(async (c) => {
+          const [mvp, suggestions, mlp, beta] = await Promise.all([
+            supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+            supabase.from('suggested_features').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+            supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+            supabase.from('beta_testers').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+          ]);
+          const feedbackReceived = (mvp.count || 0) + (suggestions.count || 0) + (mlp.count || 0) + (beta.count || 0);
+          return { ...c, feedbackReceived };
+        })
+      );
+      setCampaigns(campaignsWithCounts);
 
       // [2026-01-10] FIX: load ONLY external_feedback invitations (so it won’t mix with cofounder invitations)
       const invites = await CoFounderInvitation.filter(
@@ -405,26 +423,16 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* [FIX 020826] Removed "Invites Sent" (campaign.audience_size) —
-                        this directly exposed the reach number, which Part E.3
-                        explicitly decided should never be shown to the founder.
-                        Kept Exposure/Clicks — those measure engagement with
-                        people who actually responded, not how many were contacted. */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-purple-50 rounded-lg">
-                        <Eye className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-purple-600">
-                          {campaign.views || 0}
-                        </p>
-                        <p className="text-xs text-gray-600">Exposure</p>
-                      </div>
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <MousePointerClick className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-green-600">
-                          {campaign.clicks || 0}
-                        </p>
-                        <p className="text-xs text-gray-600">Clicks</p>
-                      </div>
+                    {/* [FIX 020826] Replaced dead Exposure/Clicks (never updated
+                        anywhere in the code) with a real, campaign-linked
+                        Feedback Received count. Still no reach/audience-size
+                        shown, per Part E.3. */}
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <MousePointerClick className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-green-600">
+                        {campaign.feedbackReceived || 0}
+                      </p>
+                      <p className="text-xs text-gray-600">Feedback Received</p>
                     </div>
                     <div className="mt-4 pt-4 border-t">
                       <p className="text-xs text-gray-500">

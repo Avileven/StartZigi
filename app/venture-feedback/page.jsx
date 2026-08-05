@@ -121,6 +121,9 @@ export default function VentureLanding() {
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
   // This identifies which venture gave the feedback, for tracking inter-venture interactions.
   const [reviewerVenture, setReviewerVenture] = useState(null);
+  // [ADDED 020826] Links feedback given here back to the in-app promotion
+  // round that generated it (Validation Center's "Feedback Received" count).
+  const [campaignId, setCampaignId] = useState(null);
   // [ADDED] Authorization state — user must be logged in AND have a valid ?from= venture.
   // null = still checking, true = authorized, false = not authorized.
   const [isAuthorized, setIsAuthorized] = useState(null);
@@ -252,6 +255,7 @@ export default function VentureLanding() {
     const init = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const fromId = urlParams.get("from");
+      setCampaignId(urlParams.get("campaign"));
 
       // [ADDED] Check if user is logged in.
       // If not — redirect to login page.
@@ -392,6 +396,9 @@ export default function VentureLanding() {
         // [ADDED] Reviewer identity — null if not invited via in-app promotion
         reviewer_venture_id: reviewerVenture?.id || null,
         reviewer_venture_name: reviewerVenture?.name || null,
+        // [ADDED 020826] Links this feedback back to the promotion round that
+        // generated it, so Validation Center can show a real received count.
+        campaign_id: campaignId || null,
       });
       if (error) throw error;
       
@@ -701,7 +708,8 @@ export default function VentureLanding() {
               {hasSelectedFeaturesForMVPFeedback && (
                 <div className="mb-12">
                   {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
-                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} />
+                  {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
+                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
                 </div>
               )}
 
