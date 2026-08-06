@@ -353,14 +353,12 @@ export default function MyAccount() {
 
       {/* Confirmation modal */}
       {showResetModal && venture && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-md w-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4">
+          <Card className="max-w-md w-full bg-white shadow-2xl">
+            <CardContent className="space-y-4 bg-white rounded-lg p-6">
+              <h2 className="flex items-center gap-2 text-gray-900 font-semibold text-lg">
                 <Rocket className="w-5 h-5 text-indigo-600" /> Start a New Idea
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </h2>
               <p className="text-sm text-gray-600">
                 You can start a new idea at any time. To do that, your current idea will be permanently deleted.
               </p>
