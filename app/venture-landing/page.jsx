@@ -543,74 +543,68 @@ export default function VentureLanding() {
             </>
           ) : (
             <>
-              {/* MVP Header */}
-              <Card className="shadow-xl mb-8">
-                <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-3xl font-bold text-gray-900">{venture.name}</CardTitle>
-                      {['pro_founder', 'unicorn'].includes(founderPlan) && (
-                        <span className="flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-semibold px-3 py-1 rounded-full">
-                          <span className="text-[9px] text-purple-400 uppercase tracking-widest">StartZig</span>
-                          <span className="text-xs">Pro Founder</span>
-                        </span>
-                      )}
-                      {/* [EARLY ADOPTER] Show gold badge if user is an early adopter */}
-                      {earlyAdopter && (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
-                          <defs>
-                            <linearGradient id="gold4" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor="#FFD700"/>
-                              <stop offset="50%" stopColor="#FFA500"/>
-                              <stop offset="100%" stopColor="#CC8800"/>
-                            </linearGradient>
-                            <linearGradient id="bg4" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor="#1a1a2e"/>
-                              <stop offset="100%" stopColor="#0f0f1a"/>
-                            </linearGradient>
-                          </defs>
-                          <rect x="1" y="1" width="118" height="38" rx="6" fill="url(#bg4)"/>
-                          <rect x="1" y="1" width="118" height="38" rx="6" fill="none" stroke="url(#gold4)" strokeWidth="1.2"/>
-                          <rect x="5" y="5" width="110" height="30" rx="3" fill="none" stroke="url(#gold4)" strokeWidth="0.5" opacity="0.4"/>
-                          <text x="60" y="16" fontFamily="Arial, serif" fontSize="6" fill="#FFD700" textAnchor="middle" letterSpacing="2" opacity="0.7">STARTZIG</text>
-                          <line x1="12" y1="19" x2="108" y2="19" stroke="#FFD700" strokeWidth="0.5" opacity="0.3"/>
-                          <text x="60" y="32" fontFamily="Arial, serif" fontSize="11" fontWeight="800" fill="#FFA500" textAnchor="middle" letterSpacing="0.5">Early Adopter</text>
-                        </svg>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-lg">{venture.description}</p>
-                    {/* [FIX 020826] Hidden when the founder picked "Not sure
-                        yet" or "Other" at venture creation — there's nothing
-                        meaningful to show visitors in that case, better than
-                        displaying a vague/unhelpful label. */}
-                    {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
-                      <div className="flex items-center gap-4 mt-4">
-                        <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-              </Card>
+              {/* [FIX 020826] Redesigned per the mockup direction: less
+                  boxes-within-boxes (was Card > CardHeader > gradient bg),
+                  cleaner typography, centered, responsive (Tailwind classes
+                  scale down on mobile by default). Venture name uses the
+                  same amber tone as the Early Adopter badge; description is
+                  the brand indigo, bold, centered. Sector is now a plain
+                  neutral pill instead of the shadcn outline Badge. */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-8">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
+                  {['pro_founder', 'unicorn'].includes(founderPlan) && (
+                    <span className="flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-700 font-semibold px-3 py-1 rounded-full">
+                      <span className="text-[9px] text-purple-400 uppercase tracking-widest">StartZig</span>
+                      <span className="text-xs">Pro Founder</span>
+                    </span>
+                  )}
+                  {/* [EARLY ADOPTER] Show gold badge if user is an early adopter */}
+                  {earlyAdopter && (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+                      <defs>
+                        <linearGradient id="gold4" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#FFD700"/>
+                          <stop offset="50%" stopColor="#FFA500"/>
+                          <stop offset="100%" stopColor="#CC8800"/>
+                        </linearGradient>
+                        <linearGradient id="bg4" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1a1a2e"/>
+                          <stop offset="100%" stopColor="#0f0f1a"/>
+                        </linearGradient>
+                      </defs>
+                      <rect x="1" y="1" width="118" height="38" rx="6" fill="url(#bg4)"/>
+                      <rect x="1" y="1" width="118" height="38" rx="6" fill="none" stroke="url(#gold4)" strokeWidth="1.2"/>
+                      <rect x="5" y="5" width="110" height="30" rx="3" fill="none" stroke="url(#gold4)" strokeWidth="0.5" opacity="0.4"/>
+                      <text x="60" y="16" fontFamily="Arial, serif" fontSize="6" fill="#FFD700" textAnchor="middle" letterSpacing="2" opacity="0.7">STARTZIG</text>
+                      <line x1="12" y1="19" x2="108" y2="19" stroke="#FFD700" strokeWidth="0.5" opacity="0.3"/>
+                      <text x="60" y="32" fontFamily="Arial, serif" fontSize="11" fontWeight="800" fill="#FFA500" textAnchor="middle" letterSpacing="0.5">Early Adopter</text>
+                    </svg>
+                  )}
+                </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
+              </div>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-red-500" />
-                      The Problem We Solve
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.problem} /></CardContent>
-                </Card>
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-yellow-500" />
-                      Our Innovative Solution
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.solution} /></CardContent>
-                </Card>
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden mb-8">
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-gray-400" />
+                    The problem we solve
+                  </p>
+                  <ReadMoreText text={venture.problem} />
+                </div>
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-4 h-4 text-gray-400" />
+                    Our innovative solution
+                  </p>
+                  <ReadMoreText text={venture.solution} />
+                </div>
               </div>
 
               {venture.mvp_uploaded && venture.mvp_data && (
