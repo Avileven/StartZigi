@@ -324,17 +324,20 @@ function CreateVentureForm() {
                 <ArrowRight className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Industry</h2>
-              <p className="text-gray-600">Select the sector that best describes your venture.</p>
+              <p className="text-gray-600">Select the industry that best describes your venture.</p>
             </div>
 
             <div>
-              <Label htmlFor="sector">Industry Sector *</Label>
+              {/* [FIX 020826] Unified wording to "Industry" everywhere on this
+                  step (was "Industry Sector" here vs. "Choose Your Industry"
+                  in the heading above — same thing, two different words). */}
+              <Label htmlFor="sector">Industry *</Label>
               <Select
                 value={ventureData.sector}
                 onValueChange={(value) => handleChange("sector", value)}
               >
                 <SelectTrigger className="bg-white border border-gray-300">
-                  <SelectValue placeholder="Select your industry sector" />
+                  <SelectValue placeholder="Select your industry" />
                 </SelectTrigger>
 
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
@@ -351,13 +354,20 @@ function CreateVentureForm() {
               </Select>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">Ready to Launch!</h3>
-              <p className="text-blue-700 text-sm">
-                Once you create your venture, you'll receive $15,000 in virtual capital to get started. 
-                The only way to increase your capital is by securing funding from angels or VCs as you progress through different phases.
-              </p>
-            </div>
+            {/* [FIX 020826] Only shown once an industry is actually selected —
+                previously always visible regardless of form progress.
+                Content rewritten: was about $15,000 virtual capital (also
+                had a copy/behavior mismatch — the actual insert always sets
+                virtual_capital: 0, unrelated bug not fixed here), now
+                describes the journey ahead instead. */}
+            {ventureData.sector && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Ready to Launch!</h3>
+                <p className="text-blue-700 text-sm">
+                  Once you create your venture, you'll land on your Dashboard. It's your home base for the entire journey. From there you'll shape your business plan, build your MVP, collect feedback from other founders, and track your progress every step of the way.
+                </p>
+              </div>
+            )}
           </div>
         );
     }
@@ -370,26 +380,6 @@ function CreateVentureForm() {
 
           {/* עמודה ראשית - Create Your Venture */}
           <div className="flex-1 min-w-0">
-            <div className="mb-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                {[1, 2, 3].map((num) => (
-                  <div
-                    key={num}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      num <= step 
-                        ? 'bg-indigo-600 text-white' 
-                        : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {num}
-                  </div>
-                ))}
-              </div>
-              <p className="text-center text-sm text-gray-500">
-                Step {step} of 3: {step === 1 ? 'Basic Info' : step === 2 ? 'Problem & Solution' : 'Industry'}
-              </p>
-            </div>
-
             {errorMessage && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -413,7 +403,32 @@ function CreateVentureForm() {
                     </div>
                   )}
 
-                  <div className="flex justify-between mt-8">
+                  {/* [FIX 020826] Moved here from the top of the page — the
+                      step indicator was out of view by the time founders
+                      scrolled down to fill fields and click Continue, so
+                      progressing between steps felt invisible. Now it sits
+                      right next to the action that triggers it. */}
+                  <div className="mt-8">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      {[1, 2, 3].map((num) => (
+                        <div
+                          key={num}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            num <= step
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-gray-200 text-gray-500'
+                          }`}
+                        >
+                          {num}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-center text-sm text-gray-500 mb-4">
+                      Step {step} of 3: {step === 1 ? 'Basic Info' : step === 2 ? 'Problem & Solution' : 'Industry'}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between">
                     {step > 1 && (
                       <Button 
                         type="button" 
