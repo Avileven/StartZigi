@@ -238,7 +238,7 @@ export default function MyAccount() {
               Early Adopter
             </Badge>
           )}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <RingBadge
               value={getJourneyTag(reputation?.current_phase) || '—'}
               label="Stage"
@@ -263,6 +263,16 @@ export default function MyAccount() {
                   : '—'
               }
               label="Zig age"
+              stroke={ZIG_AGE_RING_COLOR.stroke}
+              text={ZIG_AGE_RING_COLOR.text}
+            />
+            {/* [ADDED 020826] Ideas Started — sourced from the real
+                ideas_started_count column (Part B), not a live venture
+                count, so it persists correctly across resets. Fixed neutral
+                color, like Zig Age — a fact, not a shaded achievement. */}
+            <RingBadge
+              value={reputation?.ideas_count != null ? String(reputation.ideas_count) : '—'}
+              label="Ideas"
               stroke={ZIG_AGE_RING_COLOR.stroke}
               text={ZIG_AGE_RING_COLOR.text}
             />

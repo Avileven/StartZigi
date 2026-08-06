@@ -161,7 +161,7 @@ function FounderHoverCard({ founderId, name, profile }) {
       </button>
 
       {/* Hover card — hidden by default, shown on hover via the `group` above */}
-      <div className="hidden group-hover:block absolute z-50 top-full left-0 mt-2 w-72">
+      <div className="hidden group-hover:block absolute z-50 top-full left-0 mt-2 w-80">
         <Card className="border-2 border-indigo-200 shadow-xl bg-white">
           <CardContent className="p-4 bg-white rounded-lg">
             <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ function FounderHoverCard({ founderId, name, profile }) {
                 Early Adopter
               </Badge>
             )}
-            <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-100">
               <RingBadge
                 value={journeyTag || '—'}
                 label="Stage"
@@ -197,6 +197,18 @@ function FounderHoverCard({ founderId, name, profile }) {
               <RingBadge
                 value={zigAge || '—'}
                 label="Zig age"
+                stroke={ZIG_AGE_RING_COLOR.stroke}
+                text={ZIG_AGE_RING_COLOR.text}
+                small
+              />
+              {/* [ADDED 020826] Ideas Started — now sourced from the real
+                  ideas_started_count column (Part B) instead of counting
+                  live ventures, so it correctly persists across resets.
+                  Fixed neutral color, like Zig Age — it's a fact, not an
+                  achievement to shade by progress. */}
+              <RingBadge
+                value={profile?.ideas_count != null ? String(profile.ideas_count) : '—'}
+                label="Ideas"
                 stroke={ZIG_AGE_RING_COLOR.stroke}
                 text={ZIG_AGE_RING_COLOR.text}
                 small
