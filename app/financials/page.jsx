@@ -1,10 +1,10 @@
-// financials 30426
+// financials 60826
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Venture, User, VentureMessage, PromotionCampaign, FundingEvent } from "@/api/entities";
+import { Venture, User, VentureMessage, FundingEvent } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, TrendingUp, DollarSign, ArrowLeft, History, PieChart, Zap } from "lucide-react";
+import { Wallet, TrendingUp, DollarSign, ArrowLeft, History, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { createPageUrl } from "@/lib/utils";
@@ -13,7 +13,6 @@ export default function Financials() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
   const [liveBalance, setLiveBalance] = useState(0);
   const [fundingEvents, setFundingEvents] = useState([]);
   const router = useRouter();
@@ -28,9 +27,7 @@ export default function Financials() {
         const v = ventures[0];
         setVenture(v);
         const events = await FundingEvent.filter({ venture_id: v.id }, "-created_date");
-        const cmps = await PromotionCampaign.filter({ venture_id: v.id }, "-created_date");
         setFundingEvents(events);
-        setCampaigns(cmps);
       }
     } catch (e) {
       console.error("Load error:", e);
@@ -88,8 +85,6 @@ export default function Financials() {
     });
     return Math.round(founderEquity * (venture.valuation || 0));
   })();
-
-  const totalPromotionSpending = campaigns.reduce((s, c) => s + (c.cost || 0), 0);
 
   // Initial capital only counted if money has actually been injected — reads the real value, not a hardcoded number
   const INITIAL_CAPITAL = (venture.virtual_capital > 0) ? venture.virtual_capital : 0;
@@ -167,18 +162,7 @@ export default function Financials() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-l-4 border-l-amber-500 bg-amber-50/30 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800">
-              <Zap className="w-5 h-5 text-amber-500" /> Promotion Spending
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-amber-700">${totalPromotionSpending.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-6">
         <Card className="shadow-sm border-gray-200">
           <CardHeader className="bg-gray-50/50 border-b py-3">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-gray-700">
