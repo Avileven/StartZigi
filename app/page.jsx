@@ -1,4 +1,4 @@
-// Home page - 010826
+// Home page - 060826
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -141,6 +141,8 @@ function FAQItems() {
   const [openFaq, setOpenFaq] = useState(null);
   const FAQS = [
     { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
+    { q: "Can I switch to a different idea or product?", a: "Yes, at any time. StartZig keeps you focused on one active idea at a time, so go to My Account and choose \"Start a New Idea.\" Your current idea will be permanently deleted, but your profile, reputation, feedback history, and AI credits all stay with you for whatever you build next." },
+    { q: "How does Zig Profile work?", a: "Every founder has a Zig Profile, visible to other founders you interact with. It shows your current stage (Spark, Plan, Shape, or Beta), your Insight status based on how much feedback you've given other founders, your Zig Age (how long you've been part of the community), and how many ideas you've started. You can view your own profile from My Account, and click on any founder's name to see theirs." },
     { q: "How long does the journey take?", a: "It depends on how intensively you work. As a rough estimate, we've found the full journey takes about 6 months, from the first spark of an idea to a validated, demo-ready product." },
     { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information. StartZig does not accept liability for data breaches. You choose when and with whom to share it, whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
     { q: "Is StartZig free to use?", a: "Yes. The Explorer plan is free forever, no credit card required. You get full access to the startup journey and 5 AI credits to get started." },
