@@ -1,4 +1,4 @@
-// 220226
+// 060826
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -299,7 +299,7 @@ export default function MyAccount() {
       <Card className="border-t-4 border-t-green-500 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <Zap className="w-4 h-4" /> Mentor Credits
+            <Zap className="w-4 h-4" /> AI Credits
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -348,7 +348,7 @@ export default function MyAccount() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-gray-500">
-              Ready for something new? You can start a fresh idea at any time. Your current idea, "{venture.name}," will be permanently deleted — but your profile, reputation, and credits stay with you.
+              You can start a fresh idea at any time.
             </p>
             <Button
               variant="outline"
@@ -377,13 +377,13 @@ export default function MyAccount() {
                 <p className="font-medium text-gray-700">What happens next:</p>
                 <p className="text-gray-600">• "{venture.name}" and all its content will be removed</p>
                 <p className="text-gray-600">• Your profile, reputation, and feedback history will remain</p>
-                <p className="text-gray-600">• Your Mentor Credits will remain available</p>
+                <p className="text-gray-600">• Your AI Credits will remain available</p>
                 <p className="text-gray-600">• You can immediately start building a new idea</p>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  To continue, type <span className="font-bold">{venture.name}</span>
+                  This action is <span className="font-bold">permanent and cannot be undone</span>. To confirm you want to delete all data for <span className="font-bold">{venture.name}</span>, type its name below:
                 </label>
                 <Input
                   value={confirmText}
