@@ -13,13 +13,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 
 const SECTORS = [
+  { value: "not_sure", label: "Not sure yet" },
   { value: "ai_deep_tech", label: "AI / Deep Tech" },
   { value: "fintech", label: "FinTech" },
   { value: "digital_health_biotech", label: "Digital Health / Biotech" },
   { value: "b2b_saas", label: "B2B SaaS" },
   { value: "consumer_apps", label: "Consumer Apps / Marketplaces" },
   { value: "climatetech_energy", label: "ClimateTech / Energy / AgriTech" },
-  { value: "web3_blockchain", label: "Web3 / Blockchain" }
+  { value: "web3_blockchain", label: "Web3 / Blockchain" },
+  { value: "other", label: "Other" }
 ];
 
 function CreateVentureForm() {
