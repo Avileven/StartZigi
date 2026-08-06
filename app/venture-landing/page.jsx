@@ -579,9 +579,15 @@ export default function VentureLanding() {
                       )}
                     </div>
                     <p className="text-gray-600 text-lg">{venture.description}</p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
-                    </div>
+                    {/* [FIX 020826] Hidden when the founder picked "Not sure
+                        yet" or "Other" at venture creation — there's nothing
+                        meaningful to show visitors in that case, better than
+                        displaying a vague/unhelpful label. */}
+                    {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                      <div className="flex items-center gap-4 mt-4">
+                        <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
               </Card>
