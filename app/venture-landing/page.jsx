@@ -418,36 +418,41 @@ export default function VentureLanding() {
 
           {isMLPMode ? (
             <>
-              {/* MLP Hero */}
-              <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-indigo-600 rounded-2xl flex flex-col items-center justify-center text-center px-8 py-16 mb-10 shadow-xl">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5">
-                  <Sparkles className="w-10 h-10 text-white" />
+              {/* [FIX 020826] Redesigned per the same direction applied to
+                  MVP mode — replaced the loud purple/pink/indigo gradient
+                  hero with the same calm, centered header style, so both
+                  modes feel like one consistent product, not two different
+                  skins. Static content only — the feedback form below is
+                  untouched. */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
                 </div>
-                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">Our Lovable Product</h1>
-                <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
 
               {/* MLP Content — only the two fields marked public in the
                   builder show up here. feedback_analysis and
                   enhancement_plan are internal-only and never render. */}
               {venture.mlp_data.lovable_experience && (
-                <div className="mb-10">
-                  <Card className="shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-amber-800">
-                        <Heart className="w-5 h-5 text-amber-500" />
-                        Why You'll Love This
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.lovable_experience} /></CardContent>
-                  </Card>
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Heart className="w-4 h-4 text-gray-400" />
+                    Why you'll love this
+                  </p>
+                  <ReadMoreText text={venture.mlp_data.lovable_experience} />
                 </div>
               )}
 
               {/* MLP Files */}
               {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Product Showcase</h3>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Product showcase</h3>
                   {venture.mlp_data.visual_prototype && (
                     <p className="text-center text-gray-600 max-w-2xl mx-auto mb-6">{venture.mlp_data.visual_prototype}</p>
                   )}
@@ -609,36 +614,36 @@ export default function VentureLanding() {
 
               {venture.mvp_uploaded && venture.mvp_data && (
                 <div className="mb-12">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
-                  <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Our minimum viable product</h2>
+                  <div className="border border-gray-200 rounded-xl p-6 md:p-8">
                     <div className="grid lg:grid-cols-2 gap-8">
                       <div className="space-y-6">
                         <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-purple-600" />
-                            Product Definition
-                          </h3>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-4 h-4 text-gray-400" />
+                            Product definition
+                          </p>
                           <ReadMoreText text={venture.mvp_data.product_definition} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Code className="w-5 h-5 text-blue-600" />
-                            Technical Approach
-                          </h3>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
+                            <Code className="w-4 h-4 text-gray-400" />
+                            Technical approach
+                          </p>
                           <ReadMoreText text={venture.mvp_data.technical_specs} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Users className="w-5 h-5 text-green-600" />
-                            User Testing & Validation
-                          </h3>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
+                            <Users className="w-4 h-4 text-gray-400" />
+                            User testing and validation
+                          </p>
                           <ReadMoreText text={venture.mvp_data.user_testing} />
                         </div>
                       </div>
                       <div className="space-y-6">
                         {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
                           <div>
-                            <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">MVP artifacts</p>
                             <div className="space-y-4">
                               {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
                             </div>
