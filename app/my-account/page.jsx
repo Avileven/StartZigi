@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/api/entities';
 import Link from 'next/link';
-import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight, Rocket, MessageSquare, Clock, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight, Rocket, MessageSquare, Clock, Star, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // [ADDED 020826] Same phase-to-tag mapping used in the founder hover card
 // (Part A.2) — kept in sync so "Stage" reads the same everywhere.
@@ -90,9 +92,17 @@ const PLAN_PRICES = {
 };
 
 export default function MyAccount() {
+  const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // [ADDED 020826] Multi-venture reset ("Start a New Idea") — see the
+  // separate project-definition doc for full scope/decisions.
+  const [venture, setVenture] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   // [FIX 020826] Reputation fields (Part A) — fetched via the same
   // get_public_founder_profile RPC already used for the founder hover card.
   // This section shows the same public-facing view others see (status
@@ -122,6 +132,18 @@ export default function MyAccount() {
           profile_id: currentUser.id,
         });
         if (repData?.[0]) setReputation(repData[0]);
+
+        // [ADDED 020826] Load the founder's venture (name + id) — needed for
+        // the "Start a New Idea" confirmation (type the venture's name) and
+        // the delete call itself. Uses the same `created_by: email` pattern
+        // already used in most other pages (D.7 in the main planning doc).
+        const { data: ventures } = await supabase
+          .from('ventures')
+          .select('id, name')
+          .eq('created_by', currentUser.email)
+          .order('created_date', { ascending: false })
+          .limit(1);
+        if (ventures?.[0]) setVenture(ventures[0]);
       } catch (error) {
         console.error('Error loading profile:', error);
       }
@@ -132,6 +154,29 @@ export default function MyAccount() {
   }, []);
 
   if (isLoading) return <div className="p-8 text-center font-bold">Loading...</div>;
+
+  // [ADDED 020826] Calls the archive_and_delete_venture RPC (created this
+  // session) — one atomic DB call: archives to venture_history, increments
+  // ideas_started_count, deletes the venture and all its related rows.
+  // No RLS/permissions are touched by this — the function runs as
+  // security definer, exactly as scoped in the project-definition doc.
+  const handleStartNewIdea = async () => {
+    if (!venture || confirmText.trim() !== venture.name) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const { error } = await supabase.rpc('archive_and_delete_venture', {
+        p_venture_id: venture.id,
+        p_founder_id: user.id,
+      });
+      if (error) throw error;
+      router.push('/createventure');
+    } catch (error) {
+      console.error('Error deleting venture:', error);
+      setDeleteError('Something went wrong. Please try again.');
+      setIsDeleting(false);
+    }
+  };
 
   const plan = profile?.plan || 'free';
   const creditsUsed = profile?.credits_used || 0;
@@ -279,6 +324,96 @@ export default function MyAccount() {
           Upgrade Plan
         </Button>
       </Link>
+
+      {/* [ADDED 020826] Start a New Idea — multi-venture reset (Part B).
+          Positive framing per the project-definition doc: "Start a New Idea"
+          is the primary action, not "Delete." Only shown if there's an
+          active venture to reset. */}
+      {venture && (
+        <Card className="border-t-4 border-t-gray-300 shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <Rocket className="w-4 h-4" /> Start a New Idea
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Ready for something new? You can start a fresh idea at any time. Your current idea, "{venture.name}," will be permanently deleted — but your profile, reputation, and credits stay with you.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setShowResetModal(true)}
+              className="w-full border-gray-300"
+            >
+              Start a New Idea
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Confirmation modal */}
+      {showResetModal && venture && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Rocket className="w-5 h-5 text-indigo-600" /> Start a New Idea
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                You can start a new idea at any time. To do that, your current idea will be permanently deleted.
+              </p>
+
+              <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm">
+                <p className="font-medium text-gray-700">What happens next:</p>
+                <p className="text-gray-600">• "{venture.name}" and all its content will be removed</p>
+                <p className="text-gray-600">• Your profile, reputation, and feedback history will remain</p>
+                <p className="text-gray-600">• Your Mentor Credits will remain available</p>
+                <p className="text-gray-600">• You can immediately start building a new idea</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  To continue, type <span className="font-bold">{venture.name}</span>
+                </label>
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={venture.name}
+                  className="mt-1.5"
+                />
+              </div>
+
+              {deleteError && (
+                <div className="flex items-start gap-2 text-sm text-red-600">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => { setShowResetModal(false); setConfirmText(''); setDeleteError(''); }}
+                  disabled={isDeleting}
+                >
+                  Not now
+                </Button>
+                <Button
+                  onClick={handleStartNewIdea}
+                  disabled={confirmText.trim() !== venture.name || isDeleting}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Start New Idea
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
