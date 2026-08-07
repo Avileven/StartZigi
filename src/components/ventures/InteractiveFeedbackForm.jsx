@@ -101,23 +101,27 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 px-3 sm:px-0">
       <Card className="shadow-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-0 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
-          <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <MessageSquare className="w-6 h-6" />
+        <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-3xl font-bold text-center flex items-center justify-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             MVP Feature Feedback
           </CardTitle>
-          <CardDescription className="text-purple-100 text-center text-lg font-medium mt-2">
+          <CardDescription className="text-purple-100 text-center text-sm sm:text-lg font-medium mt-2">
             Rate the features below to help this venture improve
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 bg-white">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <CardContent className="p-4 sm:p-8 bg-white">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Category Headers */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            {/* [FIX 020826] Was a rigid grid-cols-4 with large fixed padding —
+                crammed and overlapped on narrow phone screens. Now wraps to
+                2x2 below the sm breakpoint, with smaller text/padding on
+                mobile. */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
               {[
                 { label: 'Never use', range: '0-2', from: 'from-red-500', to: 'to-red-600', text: 'text-red-600' },
                 { label: 'Confusing', range: '3-4', from: 'from-yellow-500', to: 'to-yellow-600', text: 'text-yellow-600' },
@@ -125,23 +129,23 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                 { label: 'Essential', range: '8-10', from: 'from-green-500', to: 'to-green-600', text: 'text-green-600' },
               ].map(c => (
                 <div key={c.label} className="text-center">
-                  <div className={`bg-gradient-to-r ${c.from} ${c.to} text-white px-4 py-3 rounded-xl font-bold shadow-lg`}>{c.label}</div>
-                  <div className={`text-xs ${c.text} mt-2 font-semibold`}>{c.range}</div>
+                  <div className={`bg-gradient-to-r ${c.from} ${c.to} text-white px-2 py-2 sm:px-4 sm:py-3 rounded-xl font-bold shadow-lg text-xs sm:text-base leading-tight`}>{c.label}</div>
+                  <div className={`text-[10px] sm:text-xs ${c.text} mt-1 sm:mt-2 font-semibold`}>{c.range}</div>
                 </div>
               ))}
             </div>
 
             {/* Features */}
             {selectedFeatures.map((feature) => (
-              <div key={feature.id} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 shadow-lg border-2 border-gray-200 hover:border-indigo-300 transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">{feature.featureName}</h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl font-bold text-indigo-600">
+              <div key={feature.id} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-gray-200 hover:border-indigo-300 transition-all duration-300">
+                <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+                  <h3 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{feature.featureName}</h3>
+                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <span className="text-xl sm:text-3xl font-bold text-indigo-600">
                       {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : '—'}
                     </span>
                     {feedbackData[feature.id] !== undefined && (
-                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${getCategoryFromRating(feedbackData[feature.id]).color}`}>
+                      <div className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getCategoryFromRating(feedbackData[feature.id]).color}`}>
                         {getCategoryFromRating(feedbackData[feature.id]).label}
                       </div>
                     )}
@@ -156,7 +160,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                   />
                   <div className="flex justify-between items-center mt-3">
                     <span className="text-sm font-semibold text-gray-500">0</span>
-                    <span className="text-xs text-gray-400 italic">← Drag or click to rate →</span>
+                    <span className="text-[10px] sm:text-xs text-gray-400 italic">← Drag or click to rate →</span>
                     <span className="text-sm font-semibold text-gray-500">10</span>
                   </div>
                 </div>

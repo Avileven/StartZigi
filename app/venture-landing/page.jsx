@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { createClient } from "@supabase/supabase-js";
 import {
-  Lightbulb, Target, Heart, FileText, CheckCircle, Users, Code,
+  Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
@@ -615,43 +615,21 @@ export default function VentureLanding() {
               {venture.mvp_uploaded && venture.mvp_data && (
                 <div className="mb-12">
                   <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Our minimum viable product</h2>
-                  <div className="border border-gray-200 rounded-xl p-6 md:p-8">
-                    <div className="grid lg:grid-cols-2 gap-8">
-                      <div className="space-y-6">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-4 h-4 text-gray-400" />
-                            Product definition
-                          </p>
-                          <ReadMoreText text={venture.mvp_data.product_definition} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
-                            <Code className="w-4 h-4 text-gray-400" />
-                            Technical approach
-                          </p>
-                          <ReadMoreText text={venture.mvp_data.technical_specs} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-2">
-                            <Users className="w-4 h-4 text-gray-400" />
-                            User testing and validation
-                          </p>
-                          <ReadMoreText text={venture.mvp_data.user_testing} />
-                        </div>
-                      </div>
-                      <div className="space-y-6">
-                        {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">MVP artifacts</p>
-                            <div className="space-y-4">
-                              {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
-                            </div>
-                          </div>
-                        )}
+                  {/* [FIX 020826] Removed product_definition / technical_specs /
+                      user_testing — confirmed these are legacy fields from an
+                      older MVP builder version. The current mvp-development
+                      builder only ever saves feature_matrix and
+                      uploaded_files, so these three were always empty and
+                      rendering nothing (ReadMoreText returns null for empty
+                      text) — not a redesign bug, dead fields with no writer. */}
+                  {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl p-6 md:p-8">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-4">MVP artifacts</p>
+                      <div className="space-y-4">
+                        {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
