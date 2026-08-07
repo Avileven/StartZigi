@@ -396,6 +396,28 @@ export default function ProductFeedbackPage() {
     return { label: 'Never use', color: 'bg-red-100 text-red-800', dot: 'bg-red-500' };
   };
 
+  // [ADDED 020826] Part G v1 (approved this session): rule-based decision
+  // mapping from the existing avgRating — no AI, no new questions, no schema
+  // change. Signal/action/microText are derived straight from the rating
+  // categories that already exist (getCategoryFromRating above).
+  const getFeatureDecision = (avgRating) => {
+    const rating = parseFloat(avgRating);
+    if (rating >= 8) {
+      return { signal: 'Strong', action: 'Keep', micro: "Users see this as essential to the product.",
+        border: 'border-l-emerald-500', badge: 'bg-emerald-100 text-emerald-700', actionColor: 'text-emerald-600' };
+    }
+    if (rating >= 5) {
+      return { signal: 'Mixed', action: 'Improve', micro: "Users like this, but it's not yet a must-have.",
+        border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', actionColor: 'text-amber-600' };
+    }
+    if (rating >= 3) {
+      return { signal: 'Mixed', action: 'Improve', micro: "Users find this confusing or hard to use.",
+        border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', actionColor: 'text-amber-600' };
+    }
+    return { signal: 'Weak', action: 'Remove', micro: "Users don't see enough value in this feature.",
+      border: 'border-l-red-500', badge: 'bg-red-100 text-red-700', actionColor: 'text-red-600' };
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center min-h-screen">
@@ -460,20 +482,41 @@ export default function ProductFeedbackPage() {
               {isAnalyzing ? 'Analyzing...' : 'Mentor'}
             </Button>
           </div>
-          {aiAnalysis && (
-            <Card className="border-0 shadow-sm mt-5">
-              <CardContent className="p-5">
-                {aiAnalysis.split('\n').map((line, i) => {
-                  const trimmed = line.trim();
-                  if (!trimmed) return null;
-                  const isHeader = /^[A-Z][A-Z\s']+:/.test(trimmed);
-                  return isHeader
-                    ? <h4 key={i} className="font-bold text-indigo-800 mt-4 mb-1 text-sm">{trimmed}</h4>
-                    : <p key={i} className="text-gray-700 leading-relaxed text-sm mb-1">{trimmed}</p>;
-                })}
-              </CardContent>
-            </Card>
-          )}
+          {aiAnalysis && (() => {
+            // [ADDED 020826] Restyled per the approved mockup — grouped into
+            // bordered sections with colored labels (green/amber/indigo)
+            // instead of a flat list of h4/p pairs. Parsing logic unchanged
+            // (same header-detection regex), only the rendering changed.
+            const sectionColors = [
+              { text: 'text-emerald-600' },
+              { text: 'text-amber-600' },
+              { text: 'text-indigo-600' },
+            ];
+            const lines = aiAnalysis.split('\n').map(l => l.trim()).filter(Boolean);
+            const sections = [];
+            lines.forEach((line) => {
+              const isHeader = /^[A-Z][A-Z\s']+:/.test(line);
+              if (isHeader) {
+                sections.push({ header: line, body: [] });
+              } else if (sections.length > 0) {
+                sections[sections.length - 1].body.push(line);
+              }
+            });
+            return (
+              <div className="border border-gray-200 rounded-xl overflow-hidden mt-5">
+                {sections.map((section, i) => (
+                  <div key={i} className={`p-5 ${i < sections.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${sectionColors[i % 3].text}`}>
+                      {section.header}
+                    </p>
+                    {section.body.map((line, j) => (
+                      <p key={j} className="text-sm text-gray-700 leading-relaxed mb-1">{line}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Stats */}
@@ -500,6 +543,34 @@ export default function ProductFeedbackPage() {
         {reachedMVP && (
           <div className="mb-10">
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MVP</p>
+
+            {/* [ADDED 020826] Feature Decisions — Part G v1, approved this
+                session: decision-first summary (Keep/Improve/Remove) sitting
+                above the existing detailed rating breakdown. Rule-based only,
+                derived from the same avgRating already computed below — no
+                AI, no new data. */}
+            {Object.keys(analytics).length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Feature decisions</p>
+                <div className="space-y-2.5">
+                  {Object.entries(analytics).map(([featureId, data]) => {
+                    const decision = getFeatureDecision(data.avgRating);
+                    return (
+                      <div key={featureId} className={`flex items-center justify-between gap-4 border border-gray-200 border-l-4 ${decision.border} rounded-lg px-5 py-4`}>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-gray-900">{data.name}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${decision.badge}`}>{decision.signal}</span>
+                          </div>
+                          <p className="text-sm text-gray-500">{decision.micro}</p>
+                        </div>
+                        <span className={`text-sm font-semibold whitespace-nowrap ${decision.actionColor}`}>{decision.action}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {Object.keys(analytics).length > 0 && (
               <div className="space-y-4 mb-4">
@@ -576,30 +647,28 @@ export default function ProductFeedbackPage() {
             )}
 
             {suggestedFeatures.length > 0 && (
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb className="w-4 h-4 text-yellow-500" />
-                    <h3 className="font-semibold text-gray-900">Suggested features</h3>
-                    <Badge className="bg-yellow-100 text-yellow-800">{suggestedFeatures.length}</Badge>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {suggestedFeatures.map((suggestion) => (
-                      <div key={suggestion.id} className="border border-gray-100 rounded-xl p-3">
-                        <p className="font-medium text-gray-900 mb-1.5">{suggestion.feature_name}</p>
-                        {/* [FIX 020826] Was showing raw email — now a clickable
-                            founder-name hover card instead. Falls back to nothing
-                            (not the email) if attribution is missing. */}
-                        <FounderHoverCard
-                          founderId={suggestion.created_by_id}
-                          name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
-                          profile={founderProfiles[suggestion.created_by_id]}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Consider adding</p>
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  {suggestedFeatures.map((suggestion, i) => (
+                    <div
+                      key={suggestion.id}
+                      className={`flex items-center gap-3 px-5 py-3.5 ${i < suggestedFeatures.length - 1 ? 'border-b border-gray-100' : ''}`}
+                    >
+                      <Lightbulb className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <p className="font-medium text-gray-900 flex-1">{suggestion.feature_name}</p>
+                      {/* [FIX 020826] Was showing raw email — now a clickable
+                          founder-name hover card instead. Falls back to nothing
+                          (not the email) if attribution is missing. */}
+                      <FounderHoverCard
+                        founderId={suggestion.created_by_id}
+                        name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
+                        profile={founderProfiles[suggestion.created_by_id]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
