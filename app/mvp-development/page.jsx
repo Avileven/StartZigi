@@ -152,6 +152,11 @@ export default function MVPDevelopment() {
     const newFeature = {
       id: `feature_${Date.now()}`,
       featureName: '',
+      // [ADDED 020826] Part G.6 follow-up — a short value-proposition
+      // explanation alongside the name, so ratings mean more than a bare
+      // label like "community." Shown to reviewers in the feedback form and
+      // on the landing page (InteractiveFeedbackForm.jsx, venture-landing-page.jsx).
+      description: '',
       userCriticality: 5,
       implementationEase: 5,
       priorityScore: 25,
@@ -546,8 +551,23 @@ export default function MVPDevelopment() {
                                 value={feature.featureName}
                                 onChange={(e) => handleFeatureChange(feature.id, 'featureName', e.target.value)}
                                 placeholder="Feature name..."
-                                className="font-semibold mb-3"
+                                className="font-semibold mb-2"
                               />
+                              {/* [ADDED 020826] Part G.6 follow-up — short
+                                  value-prop explanation, required alongside
+                                  the name so reviewers rate something more
+                                  meaningful than a bare label. Character
+                                  limit keeps it a one-liner, not a paragraph. */}
+                              <div className="mb-3">
+                                <Input
+                                  value={feature.description || ''}
+                                  onChange={(e) => handleFeatureChange(feature.id, 'description', e.target.value.slice(0, 80))}
+                                  placeholder="Short description — what value does this give the user? (max 80 characters)"
+                                  maxLength={80}
+                                  className="text-sm"
+                                />
+                                <p className="text-[11px] text-gray-400 mt-1 text-right">{(feature.description || '').length}/80</p>
+                              </div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-4">
@@ -703,17 +723,22 @@ export default function MVPDevelopment() {
                     )}
                     <div className="mt-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
                     <h4 className="font-semibold text-sm text-indigo-900 mb-1">Selected MVP Features</h4>
-                    <p className="text-xs text-indigo-700 mb-3">This is the core feature set for your initial product launch.</p>
+                    <p className="text-xs text-indigo-700 mb-3">These are the features that will be shown to reviewers for feedback.</p>
                     <div className="space-y-2">
                       {featureMatrix.filter(f => f.isSelected).map(feature => {
                         const score = feature.priorityScore;
                         const badgeColor = score >= 49 ? 'bg-green-100 text-green-800' : score >= 25 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
                         return (
-                          <div key={feature.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 shadow-sm">
-                            <span className="text-sm font-medium text-gray-800">{feature.featureName || 'Unnamed Feature'}</span>
-                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeColor}`}>
-                              {score}
-                            </span>
+                          <div key={feature.id} className="bg-white rounded-lg px-3 py-2 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-800">{feature.featureName || 'Unnamed Feature'}</span>
+                              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeColor}`}>
+                                {score}
+                              </span>
+                            </div>
+                            {feature.description && (
+                              <p className="text-xs text-gray-500 mt-0.5">{feature.description}</p>
+                            )}
                           </div>
                         );
                       })}

@@ -213,7 +213,17 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
             {selectedFeatures.map((feature) => (
               <div key={feature.id} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-gray-200 hover:border-indigo-300 transition-all duration-300">
                 <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
-                  <h3 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{feature.featureName}</h3>
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{feature.featureName}</h3>
+                    {/* [ADDED 020826] Part G.6 follow-up — the short
+                        value-prop description set at feature-definition time
+                        (mvp-development/page.jsx), shown here in small text
+                        under the large name so reviewers rate something
+                        meaningful, not a bare label. */}
+                    {feature.description && (
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{feature.description}</p>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     <span className="text-xl sm:text-3xl font-bold text-indigo-600">
                       {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : '—'}
