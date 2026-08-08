@@ -311,6 +311,7 @@ export default function ProductFeedbackPage() {
                   // the redefined importance scale in InteractiveFeedbackForm.jsx.
                   featureAnalytics[feature.id] = {
                     name: feature.featureName,
+                    description: feature.description || '',
                     avgRating: avgRating.toFixed(1),
                     totalResponses: total,
                     responses: feedbackForFeature, // [ADDED 020826] keep individual rows for the detail list
@@ -365,8 +366,12 @@ export default function ProductFeedbackPage() {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
+      // [FIX 020826] Part G.7 — now includes each feature's description
+      // (the AI needs this to reason about what a feature actually *means*,
+      // not just its name/score — this is the core dependency this whole
+      // redesign relies on).
       const featureSummary = Object.entries(analytics).map(([, data]) =>
-        'Feature: "' + data.name + '" - Avg: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Unnecessary: ' + data.breakdown.unnecessary + ', Somewhat important: ' + data.breakdown.somewhatImportant + ', Critical: ' + data.breakdown.critical + '.'
+        'Feature: "' + data.name + '" — described by the founder as: "' + (data.description || 'no description provided') + '". Avg rating: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Unnecessary: ' + data.breakdown.unnecessary + ', Somewhat important: ' + data.breakdown.somewhatImportant + ', Critical: ' + data.breakdown.critical + '.'
       ).join('\n');
       const mlpSummary = productFeedbacks.map(fb => '- "' + fb.feedback_text + '"').join('\n');
       const suggestedSummary = suggestedFeatures.map(s => '- ' + s.feature_name).join('\n');
@@ -374,23 +379,56 @@ export default function ProductFeedbackPage() {
         ? 'Mission: ' + (businessPlanData.mission || 'N/A') + '\nProblem: ' + (businessPlanData.problem || 'N/A') + '\nSolution: ' + (businessPlanData.solution || 'N/A') + '\nTarget customers: ' + (businessPlanData.target_customers || 'N/A')
         : 'No business plan data available.';
 
-      const prompt = 'You are a sharp product strategist. Analyze this startup feedback data and respond in exactly 3 short sections. Each section: 1 header line in caps followed by max 2-3 bullet points, one sentence each. No fluff, no explanations.\n\n'
+      // [ADDED 020826] Part G.7 — the product-representation score (does the
+      // mockup capture the idea?), used for the Representation Gap check
+      // (Section 15 of the spec): comparing what users value against what
+      // the mockup actually communicates.
+      const representationContext = productLevelFeedback
+        ? 'Mockup representation score: ' + productLevelFeedback.avgScore + '/10 (' + productLevelFeedback.totalResponses + ' responses). Reviewer notes on the mockup: ' + (productLevelFeedback.notes.length > 0 ? productLevelFeedback.notes.map(n => '"' + n + '"').join('; ') : 'none.')
+        : 'No product-representation data yet.';
+
+      // [ADDED 020826] Part G.7, Sections 20-22 — confidence/evidence-strength
+      // is rule-based on response count AND consistency, not left to the AI's
+      // own judgment. Computed here and handed to the AI as a fact to phrase
+      // correctly, not something for it to estimate itself.
+      const responseCount = productLevelFeedback?.totalResponses || 0;
+      let confidenceLevel;
+      if (responseCount >= 6) confidenceLevel = 'Strong (6+ responses) — use language like "the feedback consistently indicates..."';
+      else if (responseCount >= 3) confidenceLevel = 'Early/Emerging (3-5 responses) — use language like "this may indicate..." or "the feedback suggests..." and explicitly recommend collecting more responses before major decisions.';
+      else confidenceLevel = 'Basic (1-2 responses) — do not draw a product-direction conclusion yet, only note early signals and recommend more responses.';
+
+      const prompt = 'You are a product strategist analyzing structured startup feedback. Follow this exact reasoning sequence, per the StartZig AI Product Direction methodology:\n'
+        + 'Level 1 (Feature): individual feature ratings.\n'
+        + 'Level 2 (Capability): group features with similar ratings AND similar founder-described meaning into an underlying capability — do not just repeat feature names, identify what they have in common in terms of user value.\n'
+        + 'Level 3 (Product Direction): what type of product capability is the strongest signal pointing toward (e.g. decision support, validation, discovery, automation, communication, collaboration, creation, organization, monitoring, education, or a more fitting description you generate).\n\n'
+        + 'CRITICAL RULES:\n'
+        + '- Never just say "keep A and B, remove C and D" — always explain what A and B have in common, and what that implies about product direction.\n'
+        + '- Distinguish evidence (from users) from recommendation (your interpretation) — be explicit about which is which.\n'
+        + '- Never imply statistical certainty the data cannot support. Match your confidence language to: ' + confidenceLevel + '\n'
+        + '- If a Representation Gap exists (users value a capability highly but the mockup score is low, or vice versa), call it out explicitly.\n'
+        + '- Suggested features are strategic signals, not a backlog — only mention ones that reinforce or reveal the emerging direction, and explain how.\n'
+        + '- Never suggest generic features (dark mode, notifications, social sharing) unless they demonstrably connect to the identified direction.\n\n'
         + 'Startup: "' + (venture?.name || '') + '"\n\n'
         + 'BUSINESS CONTEXT:\n' + bpContext + '\n\n'
-        + 'MVP FEATURE RATINGS:\n' + (featureSummary || 'No feature ratings yet.') + '\n\n'
+        + 'MVP FEATURE RATINGS AND DESCRIPTIONS:\n' + (featureSummary || 'No feature ratings yet.') + '\n\n'
+        + 'PRODUCT REPRESENTATION (MOCKUP FIT):\n' + representationContext + '\n\n'
         + 'MLP USER FEEDBACK:\n' + (mlpSummary || 'No MLP feedback yet.') + '\n\n'
         + 'SUGGESTED FEATURES FROM USERS:\n' + (suggestedSummary || 'No suggestions yet.') + '\n\n'
         + 'Respond with EXACTLY this structure, nothing else:\n\n'
-        + "WHAT'S WORKING:\n"
-        + '- [one sentence]\n'
-        + '- [one sentence]\n\n'
-        + 'WHAT NEEDS ATTENTION:\n'
-        + '- [one sentence]\n'
-        + '- [one sentence]\n\n'
-        + 'RECOMMENDED NEW FEATURES:\n'
-        + '1. [feature name] — [one sentence reason, referencing business plan or user suggestions]\n'
-        + '2. [feature name] — [one sentence reason]\n'
-        + '3. [feature name] — [one sentence reason]\n\n'
+        + 'EMERGING PRODUCT DIRECTION:\n'
+        + '- [one to two sentences: the Level 3 conclusion, or "not enough data yet" if confidence is Basic]\n\n'
+        + 'WHY WE THINK THIS:\n'
+        + '- [the Level 2 capability grouping — what the well-rated features have in common, in the founder\'s own terms]\n'
+        + '- [what the lower-rated features have in common, if a pattern exists]\n\n'
+        + 'PRODUCT REPRESENTATION:\n'
+        + '- [one sentence: does the mockup score match what users seem to value, or is there a gap]\n\n'
+        + 'USER SUGGESTIONS:\n'
+        + '- [how suggested features relate to the emerging direction, or "no suggestions yet"]\n\n'
+        + 'RECOMMENDED FOCUS:\n'
+        + '- Strengthen: [one specific area]\n'
+        + '- Deprioritize: [one specific area, if evidence supports it]\n\n'
+        + 'CONFIDENCE:\n'
+        + '- [state the confidence level and response count, matching the rules above]\n\n'
         + 'Plain text only. No markdown. No extra commentary.';
 
       const data = await InvokeLLM({ prompt, creditType: 'mentor' });
@@ -482,7 +520,11 @@ export default function ProductFeedbackPage() {
 
         {/* AI Analysis */}
         <div className="mb-10">
-          <p className="text-sm text-gray-500 text-center mb-3">Strategic insights based on all your feedback data</p>
+          {/* [FIX 020826] Part G.7.3 — renamed "Mentor" to "Get Product
+              Insights," per both source specs' explicit instruction: "Use:
+              Get Product Insights. Not: Ask AI." Positions this as a product
+              advisor, not a chatbot. */}
+          <p className="text-sm text-gray-500 text-center mb-3">Understand what your feedback means for your product's direction</p>
           <div className="flex justify-center">
             <Button
               type="button"
@@ -492,7 +534,7 @@ export default function ProductFeedbackPage() {
               className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 px-8 py-3 text-base"
             >
               {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
-              {isAnalyzing ? 'Analyzing...' : 'Mentor'}
+              {isAnalyzing ? 'Analyzing...' : 'Get Product Insights'}
             </Button>
           </div>
           {aiAnalysis && (() => {
