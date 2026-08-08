@@ -405,20 +405,13 @@ export default function ProductFeedbackPage() {
     setIsAnalyzing(false);
   };
 
-  // [FIX 020826] Part G.6 — renamed/redefined from the old 4-band Never
-  // Use/Confusing/Nice To Have/Essential scale to match the new 3-band
-  // importance scale in InteractiveFeedbackForm.jsx.
-  const getCategoryFromRating = (avgRating) => {
-    const rating = parseFloat(avgRating);
-    if (rating >= 8) return { label: 'Critical', color: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
-    if (rating >= 4) return { label: 'Somewhat Important', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' };
-    return { label: 'Unnecessary', color: 'bg-red-100 text-red-800', dot: 'bg-red-500' };
-  };
-
+  // [FIX 020826] getCategoryFromRating (dot/color badge) removed — no
+  // longer used since the Feature Decisions view merged with the detailed
+  // breakdown (this session); getFeatureDecision below covers the same
+  // rating, styled for the merged card instead.
   // [ADDED 020826] Part G v1 (approved this session): rule-based decision
   // mapping from the existing avgRating — no AI, no new questions, no schema
-  // change. Signal/action/microText are derived straight from the rating
-  // categories that already exist (getCategoryFromRating above).
+  // change.
   // [FIX 020826] Part G.6 — boundaries aligned to the new 3-band importance
   // scale (0-3/4-7/8-10). Removed the old "Confusing" branch — that signal
   // now lives separately in the "Hard to see in the mockup" toggle
@@ -589,108 +582,94 @@ export default function ProductFeedbackPage() {
                 above the existing detailed rating breakdown. Rule-based only,
                 derived from the same avgRating already computed below — no
                 AI, no new data. */}
+            {/* [FIX 020826] Merged with what used to be a separate detailed
+                section below — was two disconnected views of the same data,
+                confusing. Now one card per feature: the decision summary is
+                always visible, and a "Zoom in" toggle reveals the detailed
+                breakdown (bar, hard-to-see warning, individual responses)
+                inline, right where it belongs. Nothing was deleted, only
+                relocated and merged. */}
             {Object.keys(analytics).length > 0 && (
               <div className="mb-6">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Feature decisions</p>
                 <div className="space-y-2.5">
                   {Object.entries(analytics).map(([featureId, data]) => {
                     const decision = getFeatureDecision(data.avgRating);
+                    const total = data.totalResponses;
+                    const pUnnecessary = Math.round((data.breakdown.unnecessary / total) * 100);
+                    const pSomewhat = Math.round((data.breakdown.somewhatImportant / total) * 100);
+                    const pCritical = Math.round((data.breakdown.critical / total) * 100);
+                    const detailKey = 'mvpDetail_' + featureId;
                     return (
-                      <div key={featureId} className={`flex items-center justify-between gap-4 border border-gray-200 border-l-4 ${decision.border} rounded-lg px-5 py-4`}>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-gray-900">{data.name}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${decision.badge}`}>{decision.signal}</span>
+                      <div key={featureId} className={`border border-gray-200 border-l-4 ${decision.border} rounded-lg`}>
+                        <div className="flex items-center justify-between gap-4 px-5 py-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-gray-900">{data.name}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${decision.badge}`}>{decision.signal}</span>
+                            </div>
+                            <p className="text-sm text-gray-500">{decision.micro}</p>
                           </div>
-                          <p className="text-sm text-gray-500">{decision.micro}</p>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className={`text-sm font-semibold whitespace-nowrap ${decision.actionColor}`}>{decision.action}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggle(detailKey)}
+                              className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 whitespace-nowrap"
+                            >
+                              Zoom in
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded[detailKey] ? 'rotate-180' : ''}`} />
+                            </button>
+                          </div>
                         </div>
-                        <span className={`text-sm font-semibold whitespace-nowrap ${decision.actionColor}`}>{decision.action}</span>
+
+                        {expanded[detailKey] && (
+                          <div className="px-5 pb-5 pt-1 border-t border-gray-100">
+                            <div className="flex items-center gap-1 mb-3 mt-3">
+                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                              <span className="font-bold text-gray-900">{data.avgRating}</span>
+                              <span className="text-gray-400 text-sm">/10 average</span>
+                            </div>
+
+                            {data.hardToSeeCount > 0 && (
+                              <p className="text-xs text-amber-600 mb-3 flex items-center gap-1">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                {data.hardToSeeCount} of {total} reviewer{data.hardToSeeCount !== 1 ? 's' : ''} found this hard to see in the mockup
+                              </p>
+                            )}
+
+                            <div className="h-3 rounded-full overflow-hidden flex mb-3">
+                              {pUnnecessary > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pUnnecessary}%` }} title={`Unnecessary: ${pUnnecessary}%`} />}
+                              {pSomewhat > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pSomewhat}%` }} title={`Somewhat important: ${pSomewhat}%`} />}
+                              {pCritical > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pCritical}%` }} title={`Critical: ${pCritical}%`} />}
+                            </div>
+
+                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-4">
+                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Unnecessary {pUnnecessary}%</span>
+                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Somewhat important {pSomewhat}%</span>
+                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Critical {pCritical}%</span>
+                              <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
+                            </div>
+
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Individual responses</p>
+                            <div className="space-y-2">
+                              {data.responses.map((r) => (
+                                <div key={r.id} className="flex items-center justify-between">
+                                  <FounderHoverCard
+                                    founderId={r.created_by_id}
+                                    name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
+                                    profile={founderProfiles[r.created_by_id]}
+                                  />
+                                  <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {Object.keys(analytics).length > 0 && (
-              <div className="space-y-4 mb-4">
-                {Object.entries(analytics).map(([featureId, data]) => {
-                  const category = getCategoryFromRating(data.avgRating);
-                  const total = data.totalResponses;
-                  // [FIX 020826] Part G.6 — 3 segments instead of 4, matching
-                  // the redefined importance scale.
-                  const pUnnecessary = Math.round((data.breakdown.unnecessary / total) * 100);
-                  const pSomewhat = Math.round((data.breakdown.somewhatImportant / total) * 100);
-                  const pCritical = Math.round((data.breakdown.critical / total) * 100);
-                  const detailKey = 'mvpDetail_' + featureId;
-
-                  return (
-                    <Card key={featureId} className="border-0 shadow-sm">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${category.dot}`} />
-                            <h3 className="font-semibold text-gray-900 text-lg">{data.name}</h3>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                              <span className="font-bold text-gray-900 text-lg">{data.avgRating}</span>
-                              <span className="text-gray-400 text-sm">/10</span>
-                            </div>
-                            <Badge className={category.color}>{category.label}</Badge>
-                          </div>
-                        </div>
-
-                        {/* [ADDED 020826] Part G.6 — clarity signal, separate
-                            from the importance rating above. */}
-                        {data.hardToSeeCount > 0 && (
-                          <p className="text-xs text-amber-600 mb-3 flex items-center gap-1">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            {data.hardToSeeCount} of {total} reviewer{data.hardToSeeCount !== 1 ? 's' : ''} found this hard to see in the mockup
-                          </p>
-                        )}
-
-                        <div className="h-3 rounded-full overflow-hidden flex mb-3">
-                          {pUnnecessary > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pUnnecessary}%` }} title={`Unnecessary: ${pUnnecessary}%`} />}
-                          {pSomewhat > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pSomewhat}%` }} title={`Somewhat important: ${pSomewhat}%`} />}
-                          {pCritical > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pCritical}%` }} title={`Critical: ${pCritical}%`} />}
-                        </div>
-
-                        <div className="flex gap-4 text-xs text-gray-500 mb-3">
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Unnecessary {pUnnecessary}%</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Somewhat important {pSomewhat}%</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Critical {pCritical}%</span>
-                          <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
-                        </div>
-
-                        {/* [ADDED 020826] Individual responses, collapsed by default */}
-                        <button
-                          type="button"
-                          onClick={() => toggle(detailKey)}
-                          className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-                        >
-                          {expanded[detailKey] ? 'Hide' : 'See'} individual responses
-                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded[detailKey] ? 'rotate-180' : ''}`} />
-                        </button>
-                        {expanded[detailKey] && (
-                          <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
-                            {data.responses.map((r) => (
-                              <div key={r.id} className="flex items-center justify-between">
-                                <FounderHoverCard
-                                  founderId={r.created_by_id}
-                                  name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
-                                  profile={founderProfiles[r.created_by_id]}
-                                />
-                                <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
               </div>
             )}
 
