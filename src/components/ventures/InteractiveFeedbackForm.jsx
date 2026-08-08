@@ -13,6 +13,16 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
   const [pendingFeatures, setPendingFeatures] = useState([]); // [CHANGED] local list before submit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  // [ADDED 020826] Part G.6 — product-level question, shown before the
+  // per-feature list. PRODUCT_SCORE_THRESHOLD is the "low score" cutoff
+  // below which the optional follow-up appears — proposed as <6 this
+  // session, not finalized.
+  const PRODUCT_SCORE_THRESHOLD = 6;
+  const [productScore, setProductScore] = useState(null);
+  const [productNote, setProductNote] = useState('');
+  // [ADDED 020826] Part G.6 — lightweight per-feature toggle, replacing what
+  // would otherwise have been a second full rating axis.
+  const [hardToSeeMap, setHardToSeeMap] = useState({});
 
   const selectedFeatures = useMemo(() => {
     if (!venture || !venture.mvp_data || !Array.isArray(venture.mvp_data.feature_matrix)) return [];
@@ -34,7 +44,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (Object.keys(feedbackData).length === 0) return;
+    // [FIX 020826] Now also requires the product-level question to be
+    // answered — it's the first thing asked, per G.6's design.
+    if (productScore === null || Object.keys(feedbackData).length === 0) return;
     setIsSubmitting(true);
 
     try {
@@ -45,6 +57,27 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
       const now = new Date().toISOString();
       const createdByEmail = currentUser ? currentUser.email : 'anonymous_user';
       const createdById = currentUser ? currentUser.id : null;
+
+      // [ADDED 020826] Part G.6 — the product-level question. Stored in the
+      // same table as a sentinel row (feature_id: 'product_overall') rather
+      // than a new table, since it's conceptually "one more rating," just
+      // not tied to a specific feature. The optional open-text follow-up
+      // goes in the new `note` column.
+      const productLevelPromise = MVPFeatureFeedback.create({
+        id: crypto.randomUUID(),
+        created_date: now, updated_date: now,
+        created_by: createdByEmail, created_by_id: createdById,
+        venture_id: venture.id,
+        feature_id: 'product_overall',
+        feature_name: 'Product Overall',
+        rating: productScore,
+        note: productScore < PRODUCT_SCORE_THRESHOLD ? (productNote.trim() || null) : null,
+        submission_id: submissionId,
+        user_email: createdByEmail,
+        reviewer_venture_id: reviewerVenture?.id || null,
+        reviewer_venture_name: reviewerVenture?.name || null,
+        campaign_id: campaignId || null,
+      });
 
       // Submit ratings
       const feedbackPromises = selectedFeatures.map(feature => {
@@ -58,6 +91,8 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           feature_id: feature.id,
           feature_name: feature.featureName || "Unnamed Feature",
           rating,
+          // [ADDED 020826] Part G.6 — the lightweight mockup-clarity toggle.
+          hard_to_see_in_mockup: Boolean(hardToSeeMap[feature.id]),
           submission_id: submissionId,
           user_email: createdByEmail,
           reviewer_venture_id: reviewerVenture?.id || null,
@@ -82,7 +117,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
         })
       );
 
-      await Promise.all([...feedbackPromises, ...suggestionPromises]);
+      await Promise.all([productLevelPromise, ...feedbackPromises, ...suggestionPromises]);
       setIsSubmitted(true);
       setTimeout(() => { if (onFeedbackSubmitted) onFeedbackSubmitted(); }, 2000);
 
@@ -93,11 +128,14 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
     }
   };
 
-  const getCategoryFromRating = (rating) => {
-    if (rating <= 2) return { label: 'Never use', color: 'text-red-600 bg-red-100' };
-    if (rating <= 4) return { label: 'Confusing', color: 'text-yellow-600 bg-yellow-100' };
-    if (rating <= 7) return { label: 'Nice To Have', color: 'text-blue-600 bg-blue-100' };
-    return { label: 'Essential', color: 'text-green-600 bg-green-100' };
+  // [FIX 020826] Part G.6 — redefined from the old Never Use/Confusing/Nice
+  // To Have/Essential scale (which mixed desirability with an unrelated
+  // clarity signal) to a single, coherent "importance" scale. The clarity
+  // signal now lives separately in the "Hard to see in the mockup" toggle.
+  const getImportance = (rating) => {
+    if (rating <= 3) return { label: 'Unnecessary', color: 'text-red-600 bg-red-100' };
+    if (rating <= 7) return { label: 'Somewhat Important', color: 'text-blue-600 bg-blue-100' };
+    return { label: 'Critical', color: 'text-green-600 bg-green-100' };
   };
 
   return (
@@ -116,17 +154,53 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
         </CardHeader>
         <CardContent className="p-4 sm:p-8 bg-white">
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+            {/* [ADDED 020826] Part G.6 — product-level question, shown first,
+                before any per-feature rating (deliberately, to capture a
+                general impression before feature-level details anchor it). */}
+            <div className="bg-white border-2 border-indigo-200 rounded-2xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1">
+                Does the mockup succeed in capturing the idea and answering the need?
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 mb-4">Based on the problem and solution described above.</p>
+              <div className="relative px-2">
+                <Slider
+                  value={[productScore ?? 0]}
+                  onValueChange={(value) => setProductScore(value[0])}
+                  max={10} min={0} step={1}
+                  className="w-full [&_span:first-child]:bg-indigo-200 [&_span:first-child]:h-1 [&_span:nth-child(2)]:bg-indigo-600 [&_span:nth-child(3)]:bg-gray-700 data-[state=active]:ring-2 data-[state=active]:ring-gray-700/50"
+                />
+                <div className="flex justify-between items-center mt-3">
+                  <span className="text-sm font-semibold text-gray-500">0</span>
+                  <span className="text-lg sm:text-2xl font-bold text-indigo-600">{productScore ?? '—'}</span>
+                  <span className="text-sm font-semibold text-gray-500">10</span>
+                </div>
+              </div>
+              {/* [ADDED 020826] Optional follow-up, only shown below the
+                  threshold — can always be skipped, per this session's
+                  decision ("can't force it"). */}
+              {productScore !== null && productScore < PRODUCT_SCORE_THRESHOLD && (
+                <div className="mt-4">
+                  <label className="text-sm font-medium text-gray-700">
+                    How would you improve it to better match the problem and solution described? <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <textarea
+                    value={productNote}
+                    onChange={(e) => setProductNote(e.target.value)}
+                    placeholder="Share what would make this more convincing..."
+                    className="w-full mt-2 border border-gray-300 rounded-lg p-3 text-sm min-h-[80px]"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Category Headers */}
-            {/* [FIX 020826] Was a rigid grid-cols-4 with large fixed padding —
-                crammed and overlapped on narrow phone screens. Now wraps to
-                2x2 below the sm breakpoint, with smaller text/padding on
-                mobile. */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
+            {/* [FIX 020826] Part G.6 — reduced from 4 bands to 3, matching
+                the redefined importance scale (getImportance above). */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
-                { label: 'Never use', range: '0-2', from: 'from-red-500', to: 'to-red-600', text: 'text-red-600' },
-                { label: 'Confusing', range: '3-4', from: 'from-yellow-500', to: 'to-yellow-600', text: 'text-yellow-600' },
-                { label: 'Nice To Have', range: '5-7', from: 'from-blue-500', to: 'to-blue-600', text: 'text-blue-600' },
-                { label: 'Essential', range: '8-10', from: 'from-green-500', to: 'to-green-600', text: 'text-green-600' },
+                { label: 'Unnecessary', range: '0-3', from: 'from-red-500', to: 'to-red-600', text: 'text-red-600' },
+                { label: 'Somewhat Important', range: '4-7', from: 'from-blue-500', to: 'to-blue-600', text: 'text-blue-600' },
+                { label: 'Critical', range: '8-10', from: 'from-green-500', to: 'to-green-600', text: 'text-green-600' },
               ].map(c => (
                 <div key={c.label} className="text-center">
                   <div className={`bg-gradient-to-r ${c.from} ${c.to} text-white px-2 py-2 sm:px-4 sm:py-3 rounded-xl font-bold shadow-lg text-xs sm:text-base leading-tight`}>{c.label}</div>
@@ -145,13 +219,18 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                       {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : '—'}
                     </span>
                     {feedbackData[feature.id] !== undefined && (
-                      <div className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getCategoryFromRating(feedbackData[feature.id]).color}`}>
-                        {getCategoryFromRating(feedbackData[feature.id]).label}
+                      <div className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getImportance(feedbackData[feature.id]).color}`}>
+                        {getImportance(feedbackData[feature.id]).label}
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="relative">
+                <div className="relative px-2">
+                  {/* [FIX 020826] The slider thumb extends slightly past the
+                      track's edges at min/max values — combined with the
+                      outer Card's overflow-hidden and tighter mobile padding,
+                      this was clipping the thumb on small screens. This px-2
+                      wrapper gives it room without touching the Card itself. */}
                   <Slider
                     value={[feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : 0]}
                     onValueChange={(value) => handleRatingChange(feature.id, value)}
@@ -164,6 +243,18 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                     <span className="text-sm font-semibold text-gray-500">10</span>
                   </div>
                 </div>
+                {/* [ADDED 020826] Part G.6 — lightweight clarity signal,
+                    replacing what would otherwise have been a second full
+                    rating axis. */}
+                <label className="flex items-center gap-2 mt-4 text-sm text-gray-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(hardToSeeMap[feature.id])}
+                    onChange={(e) => setHardToSeeMap(prev => ({ ...prev, [feature.id]: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Hard to see in the mockup
+                </label>
               </div>
             ))}
 
@@ -212,7 +303,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
               ) : (
                 <Button
                   type="submit"
-                  disabled={isSubmitting || Object.keys(feedbackData).length === 0}
+                  disabled={isSubmitting || productScore === null || Object.keys(feedbackData).length === 0}
                   className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white text-xl px-16 py-4 rounded-full shadow-2xl transform transition hover:scale-105 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
