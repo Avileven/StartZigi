@@ -25,7 +25,7 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -230,6 +230,9 @@ export default function ProductFeedbackPage() {
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
+  // [ADDED 020826] Part G.6 — the product-level question's aggregated
+  // results (average score + any open-text follow-ups).
+  const [productLevelFeedback, setProductLevelFeedback] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [businessPlanData, setBusinessPlanData] = useState(null);
@@ -282,6 +285,18 @@ export default function ProductFeedbackPage() {
           const bp = await businessPlan.filter({ venture_id: currentVenture.id });
           if (bp.length > 0) setBusinessPlanData(bp[0]);
 
+          // [ADDED 020826] Part G.6 — the product-level question is stored as
+          // a sentinel row (feature_id: 'product_overall') in the same
+          // table. Pulled out separately here so it doesn't get treated as
+          // a real feature anywhere below.
+          const productLevelRows = feedback.filter(f => f.feature_id === 'product_overall');
+          if (productLevelRows.length > 0) {
+            const scores = productLevelRows.map(r => r.rating);
+            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+            const notes = productLevelRows.map(r => r.note).filter(Boolean);
+            setProductLevelFeedback({ avgScore: avg.toFixed(1), totalResponses: scores.length, notes, responses: productLevelRows });
+          }
+
           if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
             const featureAnalytics = {};
             currentVenture.mvp_data.feature_matrix
@@ -292,16 +307,18 @@ export default function ProductFeedbackPage() {
                   const ratings = feedbackForFeature.map(f => f.rating);
                   const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
                   const total = ratings.length;
+                  // [FIX 020826] Part G.6 — 3 bands instead of 4, matching
+                  // the redefined importance scale in InteractiveFeedbackForm.jsx.
                   featureAnalytics[feature.id] = {
                     name: feature.featureName,
                     avgRating: avgRating.toFixed(1),
                     totalResponses: total,
                     responses: feedbackForFeature, // [ADDED 020826] keep individual rows for the detail list
+                    hardToSeeCount: feedbackForFeature.filter(f => f.hard_to_see_in_mockup).length,
                     breakdown: {
-                      neverUse: ratings.filter(r => r >= 0 && r <= 2).length,
-                      confusing: ratings.filter(r => r >= 3 && r <= 4).length,
-                      niceToHave: ratings.filter(r => r >= 5 && r <= 7).length,
-                      essential: ratings.filter(r => r >= 8 && r <= 10).length,
+                      unnecessary: ratings.filter(r => r >= 0 && r <= 3).length,
+                      somewhatImportant: ratings.filter(r => r >= 4 && r <= 7).length,
+                      critical: ratings.filter(r => r >= 8 && r <= 10).length,
                     }
                   };
                 }
@@ -349,7 +366,7 @@ export default function ProductFeedbackPage() {
     setAiAnalysis(null);
     try {
       const featureSummary = Object.entries(analytics).map(([, data]) =>
-        'Feature: "' + data.name + '" - Avg: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Never use: ' + data.breakdown.neverUse + ', Confusing: ' + data.breakdown.confusing + ', Nice to have: ' + data.breakdown.niceToHave + ', Essential: ' + data.breakdown.essential + '.'
+        'Feature: "' + data.name + '" - Avg: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Unnecessary: ' + data.breakdown.unnecessary + ', Somewhat important: ' + data.breakdown.somewhatImportant + ', Critical: ' + data.breakdown.critical + '.'
       ).join('\n');
       const mlpSummary = productFeedbacks.map(fb => '- "' + fb.feedback_text + '"').join('\n');
       const suggestedSummary = suggestedFeatures.map(s => '- ' + s.feature_name).join('\n');
@@ -388,30 +405,33 @@ export default function ProductFeedbackPage() {
     setIsAnalyzing(false);
   };
 
+  // [FIX 020826] Part G.6 — renamed/redefined from the old 4-band Never
+  // Use/Confusing/Nice To Have/Essential scale to match the new 3-band
+  // importance scale in InteractiveFeedbackForm.jsx.
   const getCategoryFromRating = (avgRating) => {
     const rating = parseFloat(avgRating);
-    if (rating >= 8) return { label: 'Essential', color: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
-    if (rating >= 5) return { label: 'Nice To Have', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' };
-    if (rating >= 3) return { label: 'Confusing', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' };
-    return { label: 'Never use', color: 'bg-red-100 text-red-800', dot: 'bg-red-500' };
+    if (rating >= 8) return { label: 'Critical', color: 'bg-green-100 text-green-800', dot: 'bg-green-500' };
+    if (rating >= 4) return { label: 'Somewhat Important', color: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' };
+    return { label: 'Unnecessary', color: 'bg-red-100 text-red-800', dot: 'bg-red-500' };
   };
 
   // [ADDED 020826] Part G v1 (approved this session): rule-based decision
   // mapping from the existing avgRating — no AI, no new questions, no schema
   // change. Signal/action/microText are derived straight from the rating
   // categories that already exist (getCategoryFromRating above).
+  // [FIX 020826] Part G.6 — boundaries aligned to the new 3-band importance
+  // scale (0-3/4-7/8-10). Removed the old "Confusing" branch — that signal
+  // now lives separately in the "Hard to see in the mockup" toggle
+  // (hardToSeeCount, surfaced separately on the card, not folded into the
+  // micro-text here).
   const getFeatureDecision = (avgRating) => {
     const rating = parseFloat(avgRating);
     if (rating >= 8) {
       return { signal: 'Strong', action: 'Keep', micro: "Users see this as essential to the product.",
         border: 'border-l-emerald-500', badge: 'bg-emerald-100 text-emerald-700', actionColor: 'text-emerald-600' };
     }
-    if (rating >= 5) {
+    if (rating >= 4) {
       return { signal: 'Mixed', action: 'Improve', micro: "Users like this, but it's not yet a must-have.",
-        border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', actionColor: 'text-amber-600' };
-    }
-    if (rating >= 3) {
-      return { signal: 'Mixed', action: 'Improve', micro: "Users find this confusing or hard to use.",
         border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', actionColor: 'text-amber-600' };
     }
     return { signal: 'Weak', action: 'Remove', micro: "Users don't see enough value in this feature.",
@@ -544,6 +564,26 @@ export default function ProductFeedbackPage() {
           <div className="mb-10">
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MVP</p>
 
+            {/* [ADDED 020826] Part G.6 — product-level feedback, shown first
+                (matches the order reviewers actually answer it in: mockup
+                fit before feature-level details). */}
+            {productLevelFeedback && (
+              <div className="mb-6 border-2 border-indigo-200 rounded-xl p-5 bg-indigo-50/40">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Does the mockup capture the idea?</p>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="text-3xl font-bold text-indigo-700">{productLevelFeedback.avgScore}</span>
+                  <span className="text-gray-400 text-sm">/10 average · {productLevelFeedback.totalResponses} response{productLevelFeedback.totalResponses !== 1 ? 's' : ''}</span>
+                </div>
+                {productLevelFeedback.notes.length > 0 && (
+                  <div className="space-y-2 border-t border-indigo-100 pt-3">
+                    {productLevelFeedback.notes.map((note, i) => (
+                      <p key={i} className="text-sm text-gray-700 italic">"{note}"</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* [ADDED 020826] Feature Decisions — Part G v1, approved this
                 session: decision-first summary (Keep/Improve/Remove) sitting
                 above the existing detailed rating breakdown. Rule-based only,
@@ -577,10 +617,11 @@ export default function ProductFeedbackPage() {
                 {Object.entries(analytics).map(([featureId, data]) => {
                   const category = getCategoryFromRating(data.avgRating);
                   const total = data.totalResponses;
-                  const pNever = Math.round((data.breakdown.neverUse / total) * 100);
-                  const pConfusing = Math.round((data.breakdown.confusing / total) * 100);
-                  const pNice = Math.round((data.breakdown.niceToHave / total) * 100);
-                  const pEssential = Math.round((data.breakdown.essential / total) * 100);
+                  // [FIX 020826] Part G.6 — 3 segments instead of 4, matching
+                  // the redefined importance scale.
+                  const pUnnecessary = Math.round((data.breakdown.unnecessary / total) * 100);
+                  const pSomewhat = Math.round((data.breakdown.somewhatImportant / total) * 100);
+                  const pCritical = Math.round((data.breakdown.critical / total) * 100);
                   const detailKey = 'mvpDetail_' + featureId;
 
                   return (
@@ -601,18 +642,25 @@ export default function ProductFeedbackPage() {
                           </div>
                         </div>
 
+                        {/* [ADDED 020826] Part G.6 — clarity signal, separate
+                            from the importance rating above. */}
+                        {data.hardToSeeCount > 0 && (
+                          <p className="text-xs text-amber-600 mb-3 flex items-center gap-1">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            {data.hardToSeeCount} of {total} reviewer{data.hardToSeeCount !== 1 ? 's' : ''} found this hard to see in the mockup
+                          </p>
+                        )}
+
                         <div className="h-3 rounded-full overflow-hidden flex mb-3">
-                          {pNever > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pNever}%` }} title={`Never use: ${pNever}%`} />}
-                          {pConfusing > 0 && <div className="bg-yellow-400 h-full transition-all" style={{ width: `${pConfusing}%` }} title={`Confusing: ${pConfusing}%`} />}
-                          {pNice > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pNice}%` }} title={`Nice to have: ${pNice}%`} />}
-                          {pEssential > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pEssential}%` }} title={`Essential: ${pEssential}%`} />}
+                          {pUnnecessary > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pUnnecessary}%` }} title={`Unnecessary: ${pUnnecessary}%`} />}
+                          {pSomewhat > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pSomewhat}%` }} title={`Somewhat important: ${pSomewhat}%`} />}
+                          {pCritical > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pCritical}%` }} title={`Critical: ${pCritical}%`} />}
                         </div>
 
                         <div className="flex gap-4 text-xs text-gray-500 mb-3">
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Never use {pNever}%</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Confusing {pConfusing}%</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Nice to have {pNice}%</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Essential {pEssential}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Unnecessary {pUnnecessary}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Somewhat important {pSomewhat}%</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Critical {pCritical}%</span>
                           <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
                         </div>
 
