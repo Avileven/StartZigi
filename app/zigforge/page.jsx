@@ -13,7 +13,7 @@ import { InvokeLLM } from '@/api/integrations';
 // founder fills in themselves, same as any other feature — no fake content.
 const ANCHOR_FEATURES = [
   { id: 'home', name: 'Home', icon: '🏠', description: '', isActive: true, isAnchor: true },
-  { id: 'business', name: 'Business Model', icon: '💼', description: '', isActive: true, isAnchor: true, packages: [] },
+  { id: 'business', name: 'Pricing (Business Model)', icon: '💼', description: '', isActive: true, isAnchor: true, packages: [] },
   { id: 'account', name: 'Account & Preferences', icon: '⚙️', description: '', isActive: true, isAnchor: true },
 ];
 
@@ -556,7 +556,8 @@ const App = () => {
         content = `<div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl">
           <div class="text-6xl mb-4 text-indigo-600">${feature.icon}</div>
           <h2 class="text-xl font-bold mb-3 text-gray-800">${appState.appTitle}</h2>
-          <p class="text-gray-500 max-w-sm mb-6">${appState.appDescription}</p>
+          <p class="text-gray-500 max-w-sm mb-3">${appState.appDescription}</p>
+          ${appState.appOverview ? '<p class="text-gray-400 text-sm max-w-sm">' + appState.appOverview + '</p>' : ''}
         </div>`;
       } else if (feature.id === 'business') {
         // [FIX 020826] Now renders the founder's real packages (name, price,
@@ -577,11 +578,27 @@ const App = () => {
           <div class="w-full max-w-md mx-auto space-y-4">${packagesHtml}</div>
         </div>`;
       } else if (feature.id === 'account') {
-        isFullHeightScreen = true;
-        content = `<div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl">
-          <div class="text-5xl mb-4 text-gray-600">${feature.icon}</div>
-          <h2 class="text-xl font-bold mb-3 text-gray-800">${feature.name}</h2>
-          <p class="text-gray-500 max-w-sm">${feature.description || 'Manage your profile and preferences.'}</p>
+        // [FIX 020826] Universal, legitimate structure (profile card +
+        // standard settings rows) instead of a generic icon+text
+        // placeholder — this is a real static template, since account
+        // settings look roughly the same across almost every app.
+        content = `<div class="bg-white bg-opacity-90 backdrop-blur-sm p-4 rounded-xl space-y-4">
+          <div class="flex flex-col items-center text-center pb-4 border-b border-gray-100">
+            <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-2xl text-indigo-600 mb-2">👤</div>
+            <p class="font-bold text-gray-800">Your Name</p>
+            <p class="text-xs text-gray-400">your.email@example.com</p>
+            ${feature.description ? '<p class="text-xs text-gray-500 mt-2 max-w-xs">' + feature.description + '</p>' : ''}
+          </div>
+          <div class="space-y-2">
+            ${['Edit Profile', 'Notification Preferences', 'Privacy & Security', 'Help & Support'].map(item => `
+              <div class="flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-700">${item}</span>
+                <span class="text-gray-300">›</span>
+              </div>`).join('')}
+          </div>
+          <div class="pt-2 border-t border-gray-100">
+            <p class="text-sm text-red-500 font-medium text-center py-2">Log Out</p>
+          </div>
         </div>`;
       } else {
         // [FIX 020826] Simplified for real founder-defined features (from
@@ -690,18 +707,26 @@ const App = () => {
     <div className="min-h-screen font-sans antialiased">
 
       {/* ── TABS ── */}
-      <div style={{ background: 'rgba(26,26,62,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 40 }}>
+      <div style={{ background: 'white', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 4 }}>
-          <span style={{ color: 'white', fontWeight: 900, fontSize: 20, marginRight: 24, letterSpacing: '-0.02em', padding: '16px 0', background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>ZigForge</span>
+          {/* [FIX 020826] Replaced the gradient "ZigForge" text logo with the
+              normal StartZig logo (icon + wordmark), matching the sidebar
+              used everywhere else in the app. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 24, padding: '16px 0' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <span style={{ color: '#1f2937', fontWeight: 800, fontSize: 17, letterSpacing: '-0.02em' }}>StartZig</span>
+          </div>
           <button
             onClick={() => setActiveTab('guide')}
-            style={{ padding: '18px 20px', fontSize: 14, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'guide' ? '2px solid white' : '2px solid transparent', color: activeTab === 'guide' ? 'white' : 'rgba(255,255,255,0.45)', transition: 'all 0.2s' }}
+            style={{ padding: '18px 20px', fontSize: 14, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'guide' ? '2px solid #6366f1' : '2px solid transparent', color: activeTab === 'guide' ? '#1f2937' : '#9ca3af', transition: 'all 0.2s' }}
           >
             How it works
           </button>
           <button
             onClick={() => setActiveTab('builder')}
-            style={{ padding: '18px 20px', fontSize: 14, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'builder' ? '2px solid white' : '2px solid transparent', color: activeTab === 'builder' ? 'white' : 'rgba(255,255,255,0.45)', transition: 'all 0.2s' }}
+            style={{ padding: '18px 20px', fontSize: 14, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'builder' ? '2px solid #6366f1' : '2px solid transparent', color: activeTab === 'builder' ? '#1f2937' : '#9ca3af', transition: 'all 0.2s' }}
           >
             Builder
           </button>
@@ -710,111 +735,111 @@ const App = () => {
 
       {/* ── GUIDE TAB ── */}
       {activeTab === 'guide' && (
-        <div style={{ background: '#1a1a3e', color: '#e8e8f0', minHeight: '100vh' }}>
+        <div style={{ background: '#f9fafb', color: '#374151', minHeight: '100vh' }}>
 
           {/* HERO */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '100px 24px 80px', background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.25) 0%, transparent 70%)' }}>
-            <h1 style={{ fontSize: 'clamp(44px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 12, color: 'white' }}>
-              <span style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>ZigForge</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '100px 24px 80px', background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.06) 0%, transparent 70%)' }}>
+            <h1 style={{ fontSize: 'clamp(44px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 12, color: '#1f2937' }}>
+              <span style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>ZigForge</span>
             </h1>
-            <div style={{ fontSize: 'clamp(18px, 2.5vw, 24px)', fontWeight: 600, color: 'rgba(232,232,240,0.5)', marginBottom: 24 }}>Zig it. Then build it.</div>
-            <p style={{ fontSize: 17, color: 'rgba(232,232,240,0.55)', maxWidth: 560, margin: '0 auto 48px', lineHeight: 1.7 }}>
-              A prototype builder designed for early-stage founders — visualize your app idea at every stage of development, from first sketch to investor-ready mockup, before writing a single line of code.
+            <div style={{ fontSize: 'clamp(18px, 2.5vw, 24px)', fontWeight: 600, color: '#9ca3af', marginBottom: 24 }}>Zig it. Then build it.</div>
+            <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 560, margin: '0 auto 48px', lineHeight: 1.7 }}>
+              A prototype planning tool designed for early-stage founders — plan your app's structure and content at every stage, from MVP to MLP, before writing a single line of code.
             </p>
-            <button onClick={() => setActiveTab('builder')} style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', fontSize: 16, fontWeight: 700, padding: '16px 40px', borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 0 40px rgba(124,58,237,0.3)' }}>
+            <button onClick={() => setActiveTab('builder')} style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', fontSize: 16, fontWeight: 700, padding: '16px 40px', borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.25)' }}>
               Start Building
             </button>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', maxWidth: 960, margin: '0 auto' }} />
+          <div style={{ height: 1, background: '#e5e7eb', maxWidth: 960, margin: '0 auto' }} />
 
           {/* PHILOSOPHY */}
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '80px 24px' }}>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 20, color: 'white' }}>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 20, color: '#1f2937' }}>
               You don't need to know<br />what you want{' '}
-              <span style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>yet</span>
+              <span style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>yet</span>
             </h2>
             <div style={{ maxWidth: 720 }}>
-              <p style={{ fontSize: 17, color: 'rgba(232,232,240,0.6)', lineHeight: 1.8, marginBottom: 16 }}>A prototype is a visual, interactive mockup of your app — not the real product, but a realistic representation of how it will look and feel. ZigForge lets you build prototypes at any stage: to clarify your own thinking, to test with real users, or to present to investors.</p>
-              <p style={{ fontSize: 17, color: 'rgba(232,232,240,0.6)', lineHeight: 1.8, marginBottom: 16 }}>Many founders come with an idea but without a clear picture of what their product should look like. That's completely normal. <strong style={{ color: '#c4b5fd' }}>The path to building the right product often goes through seeing it first.</strong></p>
-              <p style={{ fontSize: 17, color: 'rgba(232,232,240,0.6)', lineHeight: 1.8 }}>Start for free — no credits, no commitment. Build skeleton versions, try different screens, download and compare. Only when you have a clear direction does it make sense to bring in AI. And even then — <strong style={{ color: '#c4b5fd' }}>start with BASIC, iterate, then upgrade to BOOST</strong> only when you know exactly what you want.</p>
+              <p style={{ fontSize: 17, color: '#6b7280', lineHeight: 1.8, marginBottom: 16 }}>A prototype plan lays out your app's screens, content, and structure — not the real product, but a clear blueprint of how it will look and feel. ZigForge lets you plan at any stage: to clarify your own thinking, to test with real users, or to present to investors.</p>
+              <p style={{ fontSize: 17, color: '#6b7280', lineHeight: 1.8, marginBottom: 16 }}>Many founders come with an idea but without a clear picture of what their product should look like. That's completely normal. <strong style={{ color: '#7c3aed' }}>The path to building the right product often goes through planning it first.</strong></p>
+              <p style={{ fontSize: 17, color: '#6b7280', lineHeight: 1.8 }}>Start for free — no credits, no commitment. Lay out your screens using the features you've already defined, preview the structure, download and compare. Only when you have a clear direction does it make sense to bring in AI. And even then — <strong style={{ color: '#7c3aed' }}>start with BASIC, iterate, then upgrade to BOOST</strong> only when you know exactly what you want.</p>
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', maxWidth: 960, margin: '0 auto' }} />
+          <div style={{ height: 1, background: '#e5e7eb', maxWidth: 960, margin: '0 auto' }} />
 
           {/* THREE STAGES */}
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '80px 24px' }}>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16, color: 'white' }}>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16, color: '#1f2937' }}>
               Three stages,{' '}
-              <span style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>your pace</span>
+              <span style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>your pace</span>
             </h2>
-            <p style={{ fontSize: 16, color: 'rgba(232,232,240,0.5)', marginBottom: 48, lineHeight: 1.7 }}>Each stage builds on the previous one. There's no rush — and no wrong order.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p style={{ fontSize: 16, color: '#9ca3af', marginBottom: 48, lineHeight: 1.7 }}>Each stage builds on the previous one. There's no rush — and no wrong order.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: '#e5e7eb', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
               {[
-                { badge: 'Free', bc: '#4ade80', bb: 'rgba(34,197,94,0.12)', bbr: 'rgba(34,197,94,0.25)', title: 'Explore & understand', sub: 'No credits needed — build as many versions as you want', cr: '0', cl: 'credits', steps: ['Describe your app — Enter your App Title, a short Tagline, and an Overview: who is it for, what problem does it solve, what makes it different.', 'Choose your screens — Activate the features you want. Each feature becomes one screen. You can also add custom screens with your own name and description.', 'Preview in real time — See a functional prototype instantly. No AI yet — just your structure, your content, your navigation.', 'Download and compare — Build several versions, share them, gather feedback. Repeat until you have a clear direction.'], note: "This stage is about clarity. Don't rush to AI until you have a good sense of your screens, your flow, and your content direction." },
-                { badge: 'BASIC · MVP', bc: '#a78bfa', bb: 'rgba(124,58,237,0.12)', bbr: 'rgba(124,58,237,0.25)', title: 'Validate with AI', sub: 'Professional prototype — up to 4 screens, real design', cr: '5', cl: 'credits / run', steps: ['Choose your visual direction — Select a venture type (Social, SaaS, Marketplace, Service) and a design style. This guides the AI on layout, imagery, and tone.', 'AI builds each screen individually — The AI uses your structure, content and design preferences to generate a professional mockup. Takes 1–3 minutes.', 'Download and test — Share with users, mentors, or your team. Get real feedback on a real-looking prototype.', 'Improve as many times as needed — Write short feedback and re-generate. Each improvement costs 5 credits and rebuilds all screens from scratch.'], note: "Iterate here as much as you need. BASIC is designed for affordable, fast cycles until you're confident in the result." },
-                { badge: 'BOOST · MLP', bc: '#f472b6', bb: 'rgba(236,72,153,0.12)', bbr: 'rgba(236,72,153,0.25)', title: 'Present with confidence', sub: 'Investor-ready — up to 8 screens, rich design, full polish', cr: '10', cl: 'credits / run', steps: ["Only when you're ready — Use BOOST after you've validated your direction with BASIC. Don't spend 10 credits on a first draft.", 'Up to 8 screens — A more complete product story. Richer content, more sophisticated layout, stronger visual impact.', 'Built for high-stakes moments — Investor meetings, demo days, team alignment, or any moment where first impressions matter.'], note: "Our recommendation: reach BOOST only after at least one solid BASIC iteration. The result will be dramatically better when you already know what you want." },
+                { badge: 'Free', bc: '#16a34a', bb: 'rgba(34,197,94,0.1)', bbr: 'rgba(34,197,94,0.25)', title: 'Explore & understand', sub: 'No credits needed — plan as many versions as you want', cr: '0', cl: 'credits', steps: ['Your venture details are loaded automatically — Your venture name and description come from your MVP/MLP setup. Add a tagline and overview to complete your Home screen.', 'Your features are already here — Every screen matches a feature you already defined for feedback (MVP or MLP, whichever stage you\'re in), plus three built-in screens every app needs: Home, Pricing, and Account & Preferences.', 'Preview in real time — See a structural prototype instantly. No AI yet — just your screens, your content, your navigation.', 'Download and compare — Build several versions, share them, gather feedback. Repeat until you have a clear direction.'], note: "This stage is about clarity. Don't rush to AI until you have a good sense of your screens, your flow, and your content direction." },
+                { badge: 'BASIC · MVP', bc: '#7c3aed', bb: 'rgba(124,58,237,0.1)', bbr: 'rgba(124,58,237,0.25)', title: 'Validate with AI', sub: 'Professional prototype — up to 4 screens, real design', cr: '5', cl: 'credits / run', steps: ['Choose your visual direction — Select a venture type (Social, SaaS, Marketplace, Service) and a design style. This guides the AI on layout, imagery, and tone.', 'AI builds each screen individually — The AI uses your structure, content and design preferences to generate a professional mockup. Takes 1–3 minutes.', 'Download and test — Share with users, mentors, or your team. Get real feedback on a real-looking prototype.', 'Improve as many times as needed — Write short feedback and re-generate. Each improvement costs 5 credits and rebuilds all screens from scratch.'], note: "Iterate here as much as you need. BASIC is designed for affordable, fast cycles until you're confident in the result." },
+                { badge: 'BOOST · MLP', bc: '#db2777', bb: 'rgba(236,72,153,0.1)', bbr: 'rgba(236,72,153,0.25)', title: 'Present with confidence', sub: 'Investor-ready — up to 8 screens, rich design, full polish', cr: '10', cl: 'credits / run', steps: ["Only when you're ready — Use BOOST after you've validated your direction with BASIC. Don't spend 10 credits on a first draft.", 'Up to 8 screens — A more complete product story. Richer content, more sophisticated layout, stronger visual impact.', 'Built for high-stakes moments — Investor meetings, demo days, team alignment, or any moment where first impressions matter.'], note: "Our recommendation: reach BOOST only after at least one solid BASIC iteration. The result will be dramatically better when you already know what you want." },
               ].map((p, pi) => (
-                <div key={pi} style={{ background: '#1a1a3e' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '24px 28px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                <div key={pi} style={{ background: 'white' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '24px 28px', borderBottom: '1px solid #f3f4f6', flexWrap: 'wrap' }}>
                     <span style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 100, fontSize: 12, fontWeight: 700, background: p.bb, border: `1px solid ${p.bbr}`, color: p.bc }}>{p.badge}</span>
-                    <div style={{ flex: 1 }}><div style={{ fontSize: 16, fontWeight: 700, color: 'white', marginBottom: 2 }}>{p.title}</div><div style={{ fontSize: 13, color: 'rgba(232,232,240,0.4)' }}>{p.sub}</div></div>
-                    <div style={{ textAlign: 'right' }}><div style={{ fontSize: 22, fontWeight: 900, color: 'white' }}>{p.cr}</div><div style={{ fontSize: 12, color: 'rgba(232,232,240,0.4)' }}>{p.cl}</div></div>
+                    <div style={{ flex: 1 }}><div style={{ fontSize: 16, fontWeight: 700, color: '#1f2937', marginBottom: 2 }}>{p.title}</div><div style={{ fontSize: 13, color: '#9ca3af' }}>{p.sub}</div></div>
+                    <div style={{ textAlign: 'right' }}><div style={{ fontSize: 22, fontWeight: 900, color: '#1f2937' }}>{p.cr}</div><div style={{ fontSize: 12, color: '#9ca3af' }}>{p.cl}</div></div>
                   </div>
-                  <div style={{ padding: '24px 28px', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ padding: '24px 28px', background: '#fafafa' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 18 }}>
                       {p.steps.map((s, si) => (
                         <div key={si} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                          <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(232,232,240,0.4)', flexShrink: 0, marginTop: 1 }}>{si + 1}</div>
-                          <p style={{ fontSize: 14, color: 'rgba(232,232,240,0.55)', lineHeight: 1.6 }}>{s}</p>
+                          <div style={{ width: 22, height: 22, borderRadius: 6, background: 'white', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#9ca3af', flexShrink: 0, marginTop: 1 }}>{si + 1}</div>
+                          <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>{s}</p>
                         </div>
                       ))}
                     </div>
-                    <div style={{ padding: '12px 16px', background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 10, fontSize: 13, color: 'rgba(232,232,240,0.5)', lineHeight: 1.6 }}>{p.note}</div>
+                    <div style={{ padding: '12px 16px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 10, fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{p.note}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', maxWidth: 960, margin: '0 auto' }} />
+          <div style={{ height: 1, background: '#e5e7eb', maxWidth: 960, margin: '0 auto' }} />
 
           {/* WHAT AI CAN DO */}
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '80px 24px' }}>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16, color: 'white' }}>
-              What the AI can <span style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>and cannot do</span>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16, color: '#1f2937' }}>
+              What the AI can <span style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>and cannot do</span>
             </h2>
-            <p style={{ fontSize: 16, color: 'rgba(232,232,240,0.5)', marginBottom: 32, lineHeight: 1.7 }}>Every re-run rebuilds all screens from scratch. The AI starts fresh each time — it has no memory of previous versions.</p>
+            <p style={{ fontSize: 16, color: '#9ca3af', marginBottom: 32, lineHeight: 1.7 }}>Every re-run rebuilds all screens from scratch. The AI starts fresh each time — it has no memory of previous versions.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
                 { yes: true,  t: '"Make the colors darker and more corporate"' },
                 { yes: true,  t: '"Add more detail to the pricing screen" or "Make the home page feel more premium"' },
                 { yes: true,  t: '"Change the tone — more startup energy, less corporate"' },
                 { yes: true,  t: '"Focus more on the community angle, less on features"' },
-                { yes: false, t: '"Add a new screen" — go back to the feature list, activate it, then re-run. BASIC = 4 screens max, BOOST = 8.' },
+                { yes: false, t: '"Add a new screen" — go back to your MVP/MLP feature list, then re-run. BASIC = 4 screens max, BOOST = 8.' },
                 { yes: false, t: '"Keep what you did last time but change X" — the AI has no memory between runs.' },
               ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 18px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, marginTop: 7, background: item.yes ? '#4ade80' : '#f472b6' }} />
-                  <p style={{ fontSize: 14, color: 'rgba(232,232,240,0.55)', lineHeight: 1.6 }}><strong style={{ color: 'rgba(232,232,240,0.9)' }}>{item.yes ? 'Works:' : "Won't work:"}</strong> {item.t}</p>
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 18px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fafafa' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, marginTop: 7, background: item.yes ? '#16a34a' : '#db2777' }} />
+                  <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}><strong style={{ color: '#374151' }}>{item.yes ? 'Works:' : "Won't work:"}</strong> {item.t}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', maxWidth: 960, margin: '0 auto' }} />
+          <div style={{ height: 1, background: '#e5e7eb', maxWidth: 960, margin: '0 auto' }} />
 
           {/* STARTZIG CONNECTION */}
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '80px 24px' }}>
-            <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(236,72,153,0.08))', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 20, padding: '48px', textAlign: 'center' }}>
-              <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 16, color: 'white' }}>
-                From prototype to <span style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>real traction</span>
+            <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.04), rgba(236,72,153,0.04))', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 20, padding: '48px', textAlign: 'center' }}>
+              <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 16, color: '#1f2937' }}>
+                From prototype to <span style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>real traction</span>
               </h2>
-              <p style={{ fontSize: 17, color: 'rgba(232,232,240,0.55)', maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}>
+              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}>
                 ZigForge is where your idea takes shape. StartZig is where it takes off. Upload your prototype to your venture page, invite early users and fellow founders to explore it, and start collecting real feedback — before you write a single line of code.
               </p>
-              <button onClick={() => setActiveTab('builder')} style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', fontSize: 15, fontWeight: 700, padding: '14px 32px', borderRadius: 10, border: 'none', cursor: 'pointer', boxShadow: '0 0 30px rgba(124,58,237,0.25)' }}>
+              <button onClick={() => setActiveTab('builder')} style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'white', fontSize: 15, fontWeight: 700, padding: '14px 32px', borderRadius: 10, border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.2)' }}>
                 Start Building
               </button>
             </div>
@@ -1019,44 +1044,7 @@ const App = () => {
       )}
 
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl space-y-4">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-            <span className="text-2xl mr-2">⚙️</span>
-            App Core Settings
-          </h2>
-          <label className="block">
-            <span className="text-sm font-semibold text-gray-700">App Title</span>
-            <input
-              type="text"
-              className="mt-2 block w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3 text-gray-800 font-medium"
-              value={appState.appTitle}
-              onChange={(e) => handleSimpleContentChange('appTitle', e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-gray-700">App Description <span className="text-gray-400 font-normal">(Tagline)</span></span>
-            <textarea
-              rows="2"
-              className="mt-2 block w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3 text-gray-800"
-              value={appState.appDescription}
-              onChange={(e) => handleSimpleContentChange('appDescription', e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-gray-700">App Overview <span className="text-gray-400 font-normal">(Value Proposition)</span></span>
-            <textarea
-              rows="4"
-              placeholder="Describe what your app does, who it's for, and what makes it different..."
-              className="mt-2 block w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3 text-gray-800"
-              value={appState.appOverview}
-              onChange={(e) => handleSimpleContentChange('appOverview', e.target.value)}
-            />
-          </label>
-        </div>
-
-
-        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl space-y-4">
+      <div className="max-w-4xl mx-auto space-y-6">        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl space-y-4">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
             <span className="text-2xl mr-2">🎯</span>
             App Features
@@ -1073,7 +1061,7 @@ const App = () => {
                       features (from feature_matrix) show their description
                       read-only — it's defined at the source (MVP/MLP
                       builder), not here, to avoid drifting out of sync. */}
-                  {feature.isAnchor && feature.id !== 'business' ? (
+                  {feature.isAnchor && feature.id === 'account' ? (
                     <div>
                       <input
                         type="text"
@@ -1085,6 +1073,8 @@ const App = () => {
                       />
                       <p className="text-[11px] text-gray-400 mt-0.5 text-right">{(feature.description || '').length}/80</p>
                     </div>
+                  ) : feature.id === 'home' ? (
+                    <p className="text-sm text-gray-500 italic">Set below — Title, Description, and Overview.</p>
                   ) : (
                     <p className="text-sm text-gray-600">{feature.description}</p>
                   )}
@@ -1095,6 +1085,45 @@ const App = () => {
               {/* [FIX 020826] Replaces the single hardcoded premiumPrice
                   input — founder now defines their own packages (name,
                   price, description). */}
+              {/* [FIX 020826] Merged the old standalone "App Core Settings"
+                  box into the Home card itself — they were confusingly
+                  separate before (and Home's own description field wasn't
+                  even connected to anything). This is now the single place
+                  to set what Home actually shows. */}
+              {feature.id === 'home' && (
+                <div className="mb-3 p-3 bg-indigo-50 rounded-lg border border-indigo-200 space-y-3">
+                  <label className="block">
+                    <span className="text-xs font-bold text-indigo-700">Venture Name</span>
+                    <p className="text-sm text-gray-500 mt-0.5">Loaded from your venture — {appState.appTitle || 'not set'}</p>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-bold text-indigo-700">Tagline <span className="text-gray-400 font-normal">(shown on the Home screen, max 100 characters)</span></span>
+                    <input
+                      type="text"
+                      value={appState.appDescription}
+                      onChange={(e) => handleSimpleContentChange('appDescription', e.target.value.slice(0, 100))}
+                      placeholder="e.g. Your calm companion for late-night thoughts"
+                      maxLength={100}
+                      className="mt-1 w-full text-sm border border-indigo-200 rounded-lg p-2"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-0.5 text-right">{(appState.appDescription || '').length}/100</p>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-bold text-indigo-700">Overview <span className="text-gray-400 font-normal">(value proposition, max 300 characters)</span></span>
+                    <textarea
+                      rows="3"
+                      value={appState.appOverview}
+                      onChange={(e) => handleSimpleContentChange('appOverview', e.target.value.slice(0, 300))}
+                      placeholder="What does it do, who is it for, what makes it different?"
+                      maxLength={300}
+                      className="mt-1 w-full text-sm border border-indigo-200 rounded-lg p-2"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-0.5 text-right">{(appState.appOverview || '').length}/300</p>
+                  </label>
+                </div>
+              )}
+
+
               {feature.id === 'business' && (
                 <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
                   <span className="text-xs font-bold text-green-700">💰 Pricing Packages</span>
@@ -1107,15 +1136,18 @@ const App = () => {
                         placeholder="Package name"
                         className="flex-1 text-sm border border-gray-200 rounded p-1.5"
                       />
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={pkg.price}
-                        onChange={(e) => handlePackageChange(i, 'price', e.target.value)}
-                        placeholder="Price"
-                        className="w-20 text-sm border border-gray-200 rounded p-1.5 text-center"
-                      />
+                      <div className="w-24 flex items-center gap-1 border border-gray-200 rounded p-1.5">
+                        <span className="text-xs text-gray-400 font-semibold">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={pkg.price}
+                          onChange={(e) => handlePackageChange(i, 'price', e.target.value)}
+                          placeholder="0"
+                          className="w-full text-sm text-center outline-none"
+                        />
+                      </div>
                       <input
                         type="text"
                         value={pkg.description}
@@ -1250,33 +1282,33 @@ const App = () => {
         </div>
 
 
-        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl text-center">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Ready to Export?</h3>
-         
-          <div className="space-y-3">
-            {/* Download Button */}
+        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl">
+          {/* [FIX 020826] Removed the redundant "Ready to Export?" heading —
+              the download button already says what it does. Download is now
+              a small secondary action; "Zig it" (AI upgrade) is the
+              prominent one, with an inline explanation of what it does. */}
+          <div className="flex items-center gap-3">
             <button
               onClick={handleDownloadHtml}
-              className="w-full py-4 px-6 text-lg font-bold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="flex items-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-xl text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all"
             >
-              📥 Download Prototype HTML
+              📥 Download
             </button>
-           
-            {/* AI Generate Button - only show if app title is filled */}
+
             {appState.appTitle && appState.appTitle.trim() && (
               <button
                 onClick={() => setShowAIModal(true)}
-                className="w-full py-4 px-6 text-lg font-bold rounded-xl text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex-1 py-3 px-6 text-lg font-bold rounded-xl text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl"
               >
-                ✨ Upgrade with AI
+                ✨ Zig it
               </button>
             )}
           </div>
-         
-          <p className="text-sm text-gray-600 mt-3">
+
+          <p className="text-sm text-gray-500 mt-3 text-center">
             {appState.appTitle && appState.appTitle.trim()
-              ? "Download now or upgrade with AI for a professional prototype!"
-              : "Fill in your app details above to enable AI upgrade"}
+              ? "Download your plan as-is, or use Zig it to turn it into a real AI-designed prototype."
+              : "Fill in your venture details above to enable Zig it"}
           </p>
         </div>
       </div>
