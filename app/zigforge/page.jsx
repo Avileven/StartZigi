@@ -4,31 +4,25 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { InvokeLLM } from '@/api/integrations';
 
 
-const defaultFeatureTemplates = [
-  { id: 'home', name: 'Home', icon: '🏠', description: 'Application welcome screen.', isActive: true, isDefault: true },
-  { id: 'posts', name: 'Community Feed', icon: '🗣', description: 'A scrollable feed for sharing updates and engaging with others.', isActive: true },
-  { id: 'messages', name: 'Direct Messaging', icon: '✉️', description: 'Real-time 1:1 communication between users.', isActive: true },
-  { id: 'counter', name: 'Simple Counter', icon: '🔢', description: 'A basic utility for tracking scores, counts, or goals.', isActive: false },
-  { id: 'business', name: 'Business Model', icon: '💼', description: 'Subscription tiers and pricing plans for your app.', isActive: true },
-  { id: 'settings', name: 'User Settings', icon: '⚙️', description: 'Manage preferences, notifications, and profile details.', isActive: true },
-  { id: 'metrics', name: 'Performance Metrics', icon: '📊', description: 'Dashboard showing usage statistics and achievements.', isActive: false },
+// [FIX 020826] Replaces the old defaultFeatureTemplates (Community Feed,
+// Direct Messaging, Simple Counter — fake content with no connection to the
+// actual venture). This screen is now a planning tool, not a content
+// generator: it reflects the founder's real feature_matrix (loaded async,
+// see useEffect below), plus three structural anchors every product tends
+// to need regardless of what it does. Anchors get a short description the
+// founder fills in themselves, same as any other feature — no fake content.
+const ANCHOR_FEATURES = [
+  { id: 'home', name: 'Home', icon: '🏠', description: '', isActive: true, isAnchor: true },
+  { id: 'business', name: 'Business Model', icon: '💼', description: '', isActive: true, isAnchor: true, packages: [] },
+  { id: 'account', name: 'Account & Preferences', icon: '⚙️', description: '', isActive: true, isAnchor: true },
 ];
 
 
 const getInitialState = () => ({
-  features: defaultFeatureTemplates,
-  mockPosts: [
-    { user: 'Alice', content: 'Excited about launching this feature!', timestamp: Date.now() - 50000 },
-    { user: 'Bob', content: 'Just finished integrating the new icons. Looks great!', timestamp: Date.now() - 15000 },
-  ],
-  mockMessages: [
-    { sender: 'Admin', content: 'Welcome to the prototype chat!' },
-    { sender: 'User1', content: 'What a cool app concept.' },
-  ],
-  appTitle: 'startzig studio',
-  appDescription: 'Customize this text to pitch your app idea!',
+  features: ANCHOR_FEATURES,
+  appTitle: '',
+  appDescription: '',
   appOverview: '',
-  premiumPrice: '9.99',
 });
 
 
@@ -250,7 +244,8 @@ const VENTURE_CONFIGS = {
 const App = () => {
   const [activeTab, setActiveTab] = useState('guide'); // 'guide' or 'builder'
   const [appState, setAppState] = useState(getInitialState);
-  const [jsonParseError, setJsonParseError] = useState(null);
+  // [FIX 020826] jsonParseError state removed — was only used by the Mock
+  // Posts Data JSON editor, which no longer exists.
   const [newFeatureName, setNewFeatureName] = useState('');
   const [newFeatureContent, setNewFeatureContent] = useState('');
   const [showAIModal, setShowAIModal] = useState(false);
@@ -269,6 +264,60 @@ const App = () => {
   const generatedSectionRef = useRef(null);
   const [generatedHtml, setGeneratedHtml] = useState(null);
   const [viewMode, setViewMode] = useState('mobile'); // 'mobile' or 'desktop'
+  // [ADDED 020826] Loads the founder's real features instead of showing fake
+  // ones. Reads from mvp_data.feature_matrix or mlp_data.feature_matrix
+  // depending on venture.phase — same shape in both (mlp-development-center
+  // seeds its feature_matrix from the MVP one plus user suggestions, so this
+  // works identically for both entry points, per this session's confirmed
+  // design). Deliberately does NOT look at feedback/ratings at all — the
+  // founder already made that call by redefining features for MLP.
+  const [isLoadingVenture, setIsLoadingVenture] = useState(true);
+
+  useEffect(() => {
+    const loadVentureFeatures = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { User } = await import('@/api/entities');
+        const currentUser = await User.me();
+        const { data: ventures } = await supabase
+          .from('ventures')
+          .select('id, name, description, phase, mvp_data, mlp_data')
+          .eq('created_by', currentUser.email)
+          .order('created_date', { ascending: false })
+          .limit(1);
+        const venture = ventures?.[0];
+        if (!venture) { setIsLoadingVenture(false); return; }
+
+        const isMlpStage = ['mlp', 'beta', 'growth'].includes(venture.phase);
+        const sourceMatrix = isMlpStage
+          ? (venture.mlp_data?.feature_matrix || [])
+          : (venture.mvp_data?.feature_matrix || []);
+
+        const realFeatures = sourceMatrix
+          .filter(f => f.isSelected && f.featureName?.trim())
+          .map(f => ({
+            id: f.id,
+            name: f.featureName,
+            icon: '✨',
+            description: f.description || '',
+            isActive: true,
+            customContent: f.description || '',
+          }));
+
+        setAppState(prev => ({
+          ...prev,
+          appTitle: venture.name || prev.appTitle,
+          appDescription: venture.description || prev.appDescription,
+          features: [...ANCHOR_FEATURES, ...realFeatures],
+        }));
+      } catch (error) {
+        console.error('Error loading venture features for ZigForge:', error);
+      } finally {
+        setIsLoadingVenture(false);
+      }
+    };
+    loadVentureFeatures();
+  }, []);
 
 
   const handleSimpleContentChange = useCallback((key, value) => {
@@ -277,20 +326,9 @@ const App = () => {
   }, [appState]);
 
 
-  const handleContentJsonChange = useCallback((key, jsonString) => {
-    setJsonParseError(null);
-    try {
-      const parsedData = JSON.parse(jsonString);
-      if (Array.isArray(parsedData)) {
-        const newState = { ...appState, [key]: parsedData };
-        setAppState(newState);
-      } else {
-        setJsonParseError(`Input for ${key} must be a valid JSON array.`);
-      }
-    } catch (e) {
-      setJsonParseError(`Invalid JSON format for ${key}. Please check syntax.`);
-    }
-  }, [appState]);
+  // [FIX 020826] handleContentJsonChange removed — was only used for the
+  // Mock Posts Data JSON editor, which no longer exists.
+
 
 
   const handleFeatureToggle = useCallback((id) => {
@@ -310,6 +348,41 @@ const App = () => {
     );
     const newState = { ...appState, features: newFeatures };
     setAppState(newState);
+  }, [appState]);
+
+  // [ADDED 020826] Generic field updater for anchor descriptions (Home,
+  // Account & Preferences) — same pattern as feature icon/toggle handlers.
+  const handleFeatureChange = useCallback((id, field, value) => {
+    const newFeatures = appState.features.map(f =>
+      f.id === id ? { ...f, [field]: value } : f
+    );
+    setAppState({ ...appState, features: newFeatures });
+  }, [appState]);
+
+  // [ADDED 020826] Business Model packages — add/edit/remove, replacing the
+  // old single premiumPrice field.
+  const handleAddPackage = useCallback(() => {
+    const newFeatures = appState.features.map(f =>
+      f.id === 'business' ? { ...f, packages: [...(f.packages || []), { name: '', price: '0', description: '' }] } : f
+    );
+    setAppState({ ...appState, features: newFeatures });
+  }, [appState]);
+
+  const handlePackageChange = useCallback((index, field, value) => {
+    const newFeatures = appState.features.map(f => {
+      if (f.id !== 'business') return f;
+      const newPackages = (f.packages || []).map((p, i) => i === index ? { ...p, [field]: value } : p);
+      return { ...f, packages: newPackages };
+    });
+    setAppState({ ...appState, features: newFeatures });
+  }, [appState]);
+
+  const handleRemovePackage = useCallback((index) => {
+    const newFeatures = appState.features.map(f => {
+      if (f.id !== 'business') return f;
+      return { ...f, packages: (f.packages || []).filter((_, i) => i !== index) };
+    });
+    setAppState({ ...appState, features: newFeatures });
   }, [appState]);
 
 
@@ -360,9 +433,13 @@ const App = () => {
 
         const hint = config && config.screenHints ? (config.screenHints[f.id] || '') : '';
         let dataHint = '';
-        if (f.id === 'posts') dataHint = ' Posts: ' + appState.mockPosts.map(p => p.user + ': "' + p.content + '"').join(', ');
-        if (f.id === 'messages') dataHint = ' Messages: ' + appState.mockMessages.map(m => m.sender + ': "' + m.content + '"').join(', ');
-        if (f.id === 'business') dataHint = ' Premium price: $' + appState.premiumPrice;
+        // [FIX 020826] Business Model now has a real packages array (name,
+        // price, description) that the founder fills in themselves, instead
+        // of a single hardcoded premiumPrice.
+        if (f.id === 'business' && appState.features.find(bf => bf.id === 'business')?.packages?.length > 0) {
+          dataHint = ' Pricing packages: ' + appState.features.find(bf => bf.id === 'business').packages
+            .map(p => p.name + ' ($' + p.price + '): ' + p.description).join(' | ');
+        }
 
         const colorInfo = 'Color scheme: ' + designPrefs.colorScheme + ', Style: ' + designPrefs.style;
         const modeInfo = isBoost
@@ -469,39 +546,6 @@ const App = () => {
     }).join('');
 
 
-    const postFeed = appState.features.some(f => f.id === 'posts') ? appState.mockPosts.map(post => `
-      <div class="bg-white p-4 mb-3 border border-gray-100 rounded-xl shadow-sm">
-        <div class="flex items-center space-x-2 mb-2">
-          <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-sm font-bold text-indigo-800">${(post.user && post.user[0]) || 'U'}</div>
-          <span class="font-semibold text-gray-800">${post.user || 'Unknown User'}</span>
-          <span class="text-xs text-gray-400 ml-auto">${formatTime(post.timestamp || Date.now())}</span>
-        </div>
-        <p class="text-gray-600 text-sm">${post.content || ''}</p>
-      </div>
-    `).join('') : '';
-
-
-    const messageList = appState.features.some(f => f.id === 'messages') ? appState.mockMessages.map(msg => `
-      <div class="flex ${msg.sender === 'Admin' ? 'justify-start' : 'justify-end'} mb-3">
-        <div class="max-w-xs px-4 py-2 rounded-xl ${msg.sender === 'Admin' ? 'bg-indigo-500 text-white rounded-bl-none' : 'bg-gray-200 text-gray-800 rounded-br-none'} shadow-md">
-          <p class="font-semibold text-xs mb-1 ${msg.sender === 'Admin' ? 'text-indigo-100' : 'text-gray-600'}">${msg.sender || 'Unknown Sender'}</p>
-          <p class="text-sm">${msg.content || ''}</p>
-        </div>
-      </div>
-    `).join('') : '';
-
-
-    const counterLogic = activeFeatures.find(f => f.id === 'counter') ? `
-      let count = 0;
-      const counterDisplay = document.getElementById('counter-display');
-      if(counterDisplay) {
-        counterDisplay.textContent = count;
-        document.getElementById('increment-btn').onclick = () => { count++; counterDisplay.textContent = count; };
-        document.getElementById('decrement-btn').onclick = () => { count--; counterDisplay.textContent = count; };
-      }
-    ` : '';
-
-
     const allScreens = appState.features.map(feature => {
       let content = '';
       let isFullHeightScreen = false;
@@ -514,72 +558,41 @@ const App = () => {
           <h2 class="text-xl font-bold mb-3 text-gray-800">${appState.appTitle}</h2>
           <p class="text-gray-500 max-w-sm mb-6">${appState.appDescription}</p>
         </div>`;
-      } else if (feature.id === 'posts') {
-        content = `<div class="bg-white bg-opacity-90 backdrop-blur-sm p-4 rounded-xl">${postFeed}</div>`;
-      } else if (feature.id === 'messages') {
-        content = `<div class="flex flex-col h-full bg-white bg-opacity-90 backdrop-blur-sm p-4 rounded-xl">${messageList}</div>`;
-      } else if (feature.id === 'counter') {
-        isFullHeightScreen = true;
-        content = `<div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl">
-          <h3 class="text-xl font-semibold mb-6">Simple Counter</h3>
-          <div id="counter-display" class="text-8xl font-mono mb-8 text-indigo-600">0</div>
-          <div class="flex space-x-4">
-            <button id="decrement-btn" class="bg-red-500 text-white p-4 text-3xl rounded-full shadow-lg hover:bg-red-600 transition">-</button>
-            <button id="increment-btn" class="bg-green-500 text-white p-4 text-3xl rounded-full shadow-lg hover:bg-green-600 transition">+</button>
-          </div>
-        </div>`;
       } else if (feature.id === 'business') {
+        // [FIX 020826] Now renders the founder's real packages (name, price,
+        // description) instead of a hardcoded Free/$0 + Premium/$X pair.
         isFullHeightScreen = true;
+        const packages = feature.packages && feature.packages.length > 0 ? feature.packages : [{ name: 'Free', price: '0', description: 'Basic access.' }];
+        const packagesHtml = packages.map((pkg, i) => `
+            <div class="bg-white p-4 rounded-xl shadow-lg border-2 ${i === 1 ? 'border-purple-300' : 'border-gray-200'} transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-lg font-bold text-gray-800">${pkg.name}</h3>
+                <span class="text-2xl font-bold ${i === 1 ? 'text-purple-600' : 'text-blue-600'}">$${pkg.price}</span>
+              </div>
+              <p class="text-sm text-gray-600 text-left">${pkg.description}</p>
+            </div>`).join('');
         content = `<div class="flex flex-col items-center justify-center h-full text-center p-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl overflow-y-auto">
           <div class="text-5xl mb-4 text-green-600">💼</div>
           <h2 class="text-2xl font-bold mb-6 text-gray-800">Choose Your Plan</h2>
-          <div class="w-full max-w-md mx-auto space-y-4">
-            <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-gray-200 hover:border-blue-300 transition-colors">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-bold text-gray-800">Free Plan</h3>
-                <span class="text-2xl font-bold text-blue-600">$0</span>
-              </div>
-              <ul class="text-sm text-gray-600 space-y-1 text-left">
-                <li>✓ Basic features</li>
-                <li>✓ Limited usage</li>
-                <li>✓ Community support</li>
-                <li>✓ Basic analytics</li>
-              </ul>
-              <button class="w-full mt-3 py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold">Current Plan</button>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-purple-300 hover:border-purple-400 transition-colors relative">
-              <div class="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full font-bold">POPULAR</div>
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-bold text-gray-800">Premium Plan</h3>
-                <span class="text-2xl font-bold text-purple-600">$${appState.premiumPrice}</span>
-              </div>
-              <ul class="text-sm text-gray-600 space-y-1 text-left">
-                <li>✓ All free features</li>
-                <li>✓ Unlimited usage</li>
-                <li>✓ Priority support</li>
-                <li>✓ Advanced analytics</li>
-                <li>✓ Custom branding</li>
-                <li>✓ API access</li>
-              </ul>
-              <button class="w-full mt-3 py-2 px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-semibold">Upgrade Now</button>
-            </div>
-          </div>
+          <div class="w-full max-w-md mx-auto space-y-4">${packagesHtml}</div>
         </div>`;
-      } else if (feature.id === 'settings') {
-        content = `<div class="bg-white bg-opacity-90 backdrop-blur-sm p-4 rounded-xl shadow-sm space-y-3">
-          <div class="text-gray-700 font-bold mb-3">User Preferences</div>
-          <div class="text-gray-700">Profile Management</div>
-          <div class="text-gray-700">Notification Preferences</div>
-          <div class="text-red-500 font-medium pt-2 border-t mt-3">Log Out (Mock)</div>
-        </div>`;
-      } else {
-        const displayContent = feature.customContent ? `<p class="text-gray-600 max-w-xs whitespace-pre-wrap">${feature.customContent}</p>` : `<p class="text-gray-500 max-w-xs">This is a custom module you created! Functionality to be added.</p>`;
+      } else if (feature.id === 'account') {
         isFullHeightScreen = true;
         content = `<div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl">
           <div class="text-5xl mb-4 text-gray-600">${feature.icon}</div>
-          <h2 class="text-2xl font-bold mb-4 text-gray-800">${feature.name}</h2>
-          ${displayContent}
-          <button class="bg-indigo-600 text-white p-3 rounded-xl mt-4 shadow-md hover:bg-indigo-700 transition duration-150">Interact Here</button>
+          <h2 class="text-xl font-bold mb-3 text-gray-800">${feature.name}</h2>
+          <p class="text-gray-500 max-w-sm">${feature.description || 'Manage your profile and preferences.'}</p>
+        </div>`;
+      } else {
+        // [FIX 020826] Simplified for real founder-defined features (from
+        // feature_matrix) — a clean, landing-page-style content screen
+        // (icon, name, description), not a fake "Interact Here" button that
+        // doesn't mean anything for an arbitrary feature.
+        isFullHeightScreen = true;
+        content = `<div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-xl">
+          <div class="text-5xl mb-4 text-gray-600">${feature.icon}</div>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">${feature.name}</h2>
+          <p class="text-gray-500 max-w-xs">${feature.customContent || 'This is a custom module you created! Functionality to be added.'}</p>
         </div>`;
       }
 
@@ -651,7 +664,7 @@ const App = () => {
 
     document.addEventListener('DOMContentLoaded', () => {
       const first = document.querySelector('.screen:not(.hidden-screen)');
-      if (first) { showScreen(first.id); ${counterLogic} }
+      if (first) { showScreen(first.id); }
     });
   </script>
 </body>
@@ -812,7 +825,7 @@ const App = () => {
 
       {/* ── BUILDER TAB ── */}
       {activeTab === 'builder' && (
-      <div className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 p-4">
+      <div className="bg-gray-50 p-4">
      
       {/* AI Generation Modal */}
       {showAIModal && (
@@ -938,7 +951,7 @@ const App = () => {
               {/* Preview */}
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3">📱 Live Preview</h4>
-                <div className="flex justify-center bg-gradient-to-br from-purple-600 to-indigo-700 p-4 rounded-xl">
+                <div className="flex justify-center bg-gray-100 border border-gray-200 p-4 rounded-xl">
                   <iframe
                     title="AI Generated Prototype Preview"
                     srcDoc={generatedHtml}
@@ -1054,24 +1067,72 @@ const App = () => {
                 <div className="text-2xl bg-white rounded-full p-2 shadow-md">{feature.icon}</div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-800 text-lg">{feature.name}</p>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                  {/* [FIX 020826] Anchors (Home, Business Model, Account &
+                      Preferences) get an editable description, same as any
+                      other feature — no fake placeholder text. Regular
+                      features (from feature_matrix) show their description
+                      read-only — it's defined at the source (MVP/MLP
+                      builder), not here, to avoid drifting out of sync. */}
+                  {feature.isAnchor && feature.id !== 'business' ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={feature.description}
+                        onChange={(e) => handleFeatureChange(feature.id, 'description', e.target.value.slice(0, 80))}
+                        placeholder="Short description for this screen (max 80 characters)"
+                        maxLength={80}
+                        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-0.5 text-right">{(feature.description || '').length}/80</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">{feature.description}</p>
+                  )}
                 </div>
               </div>
 
 
+              {/* [FIX 020826] Replaces the single hardcoded premiumPrice
+                  input — founder now defines their own packages (name,
+                  price, description). */}
               {feature.id === 'business' && (
-                <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <label className="block">
-                    <span className="text-xs font-bold text-green-700">💰 Premium Plan Price ($)</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      className="mt-1 block w-full rounded-lg border-2 border-green-300 p-2 font-bold text-center"
-                      value={appState.premiumPrice}
-                      onChange={(e) => handleSimpleContentChange('premiumPrice', e.target.value)}
-                    />
-                  </label>
+                <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
+                  <span className="text-xs font-bold text-green-700">💰 Pricing Packages</span>
+                  {(feature.packages || []).map((pkg, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white rounded-lg p-2 border border-green-100">
+                      <input
+                        type="text"
+                        value={pkg.name}
+                        onChange={(e) => handlePackageChange(i, 'name', e.target.value)}
+                        placeholder="Package name"
+                        className="flex-1 text-sm border border-gray-200 rounded p-1.5"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={pkg.price}
+                        onChange={(e) => handlePackageChange(i, 'price', e.target.value)}
+                        placeholder="Price"
+                        className="w-20 text-sm border border-gray-200 rounded p-1.5 text-center"
+                      />
+                      <input
+                        type="text"
+                        value={pkg.description}
+                        onChange={(e) => handlePackageChange(i, 'description', e.target.value)}
+                        placeholder="What's included"
+                        className="flex-[2] text-sm border border-gray-200 rounded p-1.5"
+                      />
+                      <button type="button" onClick={() => handleRemovePackage(i)} className="text-red-500 text-xs font-bold px-1">✕</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={handleAddPackage}
+                    className="text-xs font-semibold text-green-700 hover:text-green-800"
+                  >
+                    + Add package
+                  </button>
                 </div>
               )}
 
@@ -1087,14 +1148,14 @@ const App = () => {
                 />
                 <button
                   onClick={() => handleFeatureToggle(feature.id)}
-                  disabled={feature.id === 'home'}
+                  disabled={feature.isAnchor}
                   className={`px-6 py-3 text-sm font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 ${
                     feature.isActive
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
                       : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:from-gray-500 hover:to-gray-600'
-                  } ${feature.id === 'home' ? 'opacity-70 cursor-not-allowed transform-none' : ''}`}
+                  } ${feature.isAnchor ? 'opacity-70 cursor-not-allowed transform-none' : ''}`}
                   >
-                  {feature.id === 'home' ? 'Mandatory' : (feature.isActive ? 'Active' : 'Disabled')}
+                  {feature.isAnchor ? 'Mandatory' : (feature.isActive ? 'Active' : 'Disabled')}
                 </button>
               </div>
             </div>
@@ -1134,25 +1195,6 @@ const App = () => {
           >
             Add Feature to Prototype
           </button>
-        </div>
-
-
-        <div className="p-6 bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-xl space-y-4">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-            <span className="text-2xl mr-2">📊</span>
-            Mock Posts Data
-          </h2>
-          <p className="text-sm text-orange-600 font-semibold">⚠️ Use valid JSON array format to prevent errors</p>
-          <textarea
-            className={`mt-2 block w-full h-32 rounded-xl p-4 border-2 text-sm font-mono transition-all ${
-              jsonParseError && jsonParseError.includes('mockPosts') ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'
-            }`}
-            value={JSON.stringify(appState.mockPosts, null, 2)}
-            onChange={(e) => handleContentJsonChange('mockPosts', e.target.value)}
-          />
-          {jsonParseError && jsonParseError.includes('mockPosts') && (
-            <p className="text-sm text-red-600 font-bold bg-red-100 p-3 rounded-lg">{jsonParseError}</p>
-          )}
         </div>
 
 
