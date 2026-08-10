@@ -1,5 +1,5 @@
 
-// app/promotion-center/ 1300326 with INAPP
+// app/promotion-center/ 100826 UPDATE
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -157,13 +157,19 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
       // wired in beta-testing/page.jsx before this session).
       const campaignsWithCounts = await Promise.all(
         (ventureCampaigns || []).map(async (c) => {
-          const [mvp, suggestions, mlp, beta] = await Promise.all([
-            supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+          // [FIX 020826] mvp_feature_feedback is queried for real rows (not
+          // a head:true count) because one person rating 5 features creates
+          // 5 rows — counting rows would inflate "Feedback Received" to look
+          // like 5 people responded. Counting distinct submission_id values
+          // instead gives the actual number of people.
+          const [mvpRows, suggestions, mlp, beta] = await Promise.all([
+            supabase.from('mvp_feature_feedback').select('submission_id').eq('campaign_id', c.id),
             supabase.from('suggested_features').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
             supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
             supabase.from('beta_testers').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
           ]);
-          const feedbackReceived = (mvp.count || 0) + (suggestions.count || 0) + (mlp.count || 0) + (beta.count || 0);
+          const mvpDistinctSubmissions = new Set((mvpRows.data || []).map(r => r.submission_id)).size;
+          const feedbackReceived = mvpDistinctSubmissions + (suggestions.count || 0) + (mlp.count || 0) + (beta.count || 0);
           return { ...c, feedbackReceived };
         })
       );

@@ -1,4 +1,4 @@
-// app/venture-landing/page.jsx
+// app/venture-landing/ UPDATE 100826
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -446,6 +446,30 @@ export default function VentureLanding() {
                     Why you'll love this
                   </p>
                   <ReadMoreText text={venture.mlp_data.lovable_experience} />
+                </div>
+              )}
+
+              {/* [ADDED 020826] Pricing — shown to visitors, matching the
+                  same packages set in mlp-development-center and used in
+                  ZigForge Studio's Business Model screen, so the story stays
+                  consistent everywhere it appears. */}
+              {venture.mlp_data.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-4">
+                    <span className="text-base">💰</span>
+                    Pricing
+                  </p>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {venture.mlp_data.pricing_packages.map((pkg, i) => (
+                      <div key={i} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="font-semibold text-gray-900">{pkg.name}</p>
+                          <p className="text-lg font-bold text-indigo-600">${pkg.price}</p>
+                        </div>
+                        <p className="text-sm text-gray-500">{pkg.description}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

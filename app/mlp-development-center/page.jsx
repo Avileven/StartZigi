@@ -1,4 +1,4 @@
-// 090326 
+// NEW LOOK 100826 
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -36,6 +36,10 @@ export default function MLPDevelopmentCenter() {
     enhancement_notes: {},    // step 2 — { [featureId]: "how this changes in the new demo" }, one per selected feature
     lovable_experience: '',
     visual_prototype: '',
+    // [ADDED 020826] Pricing packages — same shape as ZigForge Studio's
+    // (name, price, description). Shown to MLP reviewers, who then answer
+    // whether it feels reasonable.
+    pricing_packages: [],
     uploaded_files: []
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +92,7 @@ export default function MLPDevelopmentCenter() {
               enhancement_notes: rawMlpData.enhancement_notes || {},
               lovable_experience: rawMlpData.lovable_experience || '',
               visual_prototype: rawMlpData.visual_prototype || '',
+              pricing_packages: rawMlpData.pricing_packages || [],
               uploaded_files: rawMlpData.uploaded_files || []
             });
           } else {
@@ -98,6 +103,7 @@ export default function MLPDevelopmentCenter() {
             const suggestedAsFeatures = suggestions.map((s, idx) => ({
               id: `suggested_${idx}_${Date.now()}`,
               featureName: s.feature_name,
+              description: '',
               userCriticality: 5,
               implementationEase: 5,
               priorityScore: 25,
@@ -114,6 +120,7 @@ export default function MLPDevelopmentCenter() {
               feature_matrix: [...suggestedAsFeatures, ...mvpFeatures],
               lovable_experience: rawMlpData?.lovable_experience || '',
               visual_prototype: rawMlpData?.visual_prototype || '',
+              pricing_packages: rawMlpData?.pricing_packages || [],
               uploaded_files: rawMlpData?.uploaded_files || []
             }));
           }
@@ -187,6 +194,21 @@ export default function MLPDevelopmentCenter() {
 
   const handleInputChange = (field, value) => {
     setMlpData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // [ADDED 020826] Pricing packages — add/edit/remove, same pattern as
+  // ZigForge Studio's business model editor.
+  const handleAddPricingPackage = () => {
+    setMlpData(prev => ({ ...prev, pricing_packages: [...(prev.pricing_packages || []), { name: '', price: '0', description: '' }] }));
+  };
+  const handlePricingPackageChange = (index, field, value) => {
+    setMlpData(prev => ({
+      ...prev,
+      pricing_packages: (prev.pricing_packages || []).map((p, i) => i === index ? { ...p, [field]: value } : p)
+    }));
+  };
+  const handleRemovePricingPackage = (index) => {
+    setMlpData(prev => ({ ...prev, pricing_packages: (prev.pricing_packages || []).filter((_, i) => i !== index) }));
   };
 
   // Feature Matrix (step 1) handlers — same pattern as the MVP page.
@@ -657,6 +679,19 @@ export default function MLPDevelopmentCenter() {
                                       Priority: {feature.priorityScore}
                                     </span>
                                   </div>
+                                  {/* [ADDED 020826] Same short value-prop description already
+                                      required on the MVP side (mvp-development/page.jsx) —
+                                      shown to reviewers and used in ZigForge Studio. */}
+                                  <div className="mb-3">
+                                    <Input
+                                      value={feature.description || ''}
+                                      onChange={(e) => handleMlpFeatureChange(feature.id, 'description', e.target.value.slice(0, 80))}
+                                      placeholder="Short description — what value does this give the user? (max 80 characters)"
+                                      maxLength={80}
+                                      className="text-sm"
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1 text-right">{(feature.description || '').length}/80</p>
+                                  </div>
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
                                       <Label className="text-xs mb-2 block">User Criticality (1-10)</Label>
@@ -911,6 +946,54 @@ export default function MLPDevelopmentCenter() {
                         Open ZigForge Studio
                       </Button>
                     </a>
+                  </div>
+
+                  {/* [ADDED 020826] Pricing — same shape as ZigForge Studio's
+                      packages (name, price, description). Shown to MLP
+                      reviewers, who then answer whether it feels reasonable
+                      — replaces the general "does the experience deliver"
+                      question that was considered and dropped in favor of
+                      this. */}
+                  <div className="p-5 rounded-xl border-2 border-green-200 bg-green-50/40 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">💰</span>
+                      <div>
+                        <p className="font-bold text-gray-800">Pricing</p>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5"><Globe className="w-3 h-3" /> Shown to reviewers on your MLP feedback page</span>
+                      </div>
+                    </div>
+                    {(mlpData.pricing_packages || []).map((pkg, i) => (
+                      <div key={i} className="flex items-center gap-2 bg-white rounded-lg p-2 border border-green-100">
+                        <Input
+                          value={pkg.name}
+                          onChange={(e) => handlePricingPackageChange(i, 'name', e.target.value)}
+                          placeholder="Package name"
+                          className="flex-1 text-sm"
+                        />
+                        <div className="w-24 flex items-center gap-1 border border-gray-200 rounded px-2">
+                          <span className="text-xs text-gray-400 font-semibold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={pkg.price}
+                            onChange={(e) => handlePricingPackageChange(i, 'price', e.target.value)}
+                            placeholder="0"
+                            className="w-full text-sm text-center outline-none py-2"
+                          />
+                        </div>
+                        <Input
+                          value={pkg.description}
+                          onChange={(e) => handlePricingPackageChange(i, 'description', e.target.value)}
+                          placeholder="What's included"
+                          className="flex-[2] text-sm"
+                        />
+                        <button type="button" onClick={() => handleRemovePricingPackage(i)} className="text-red-500 text-xs font-bold px-1">✕</button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddPricingPackage} className="text-green-700 border-green-300">
+                      + Add package
+                    </Button>
                   </div>
 
                   <div>
