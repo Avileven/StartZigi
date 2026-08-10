@@ -13,8 +13,8 @@ import { InvokeLLM } from '@/api/integrations';
 // founder fills in themselves, same as any other feature — no fake content.
 const ANCHOR_FEATURES = [
   { id: 'home', name: 'Home', icon: '🏠', description: '', isActive: true, isAnchor: true },
-  { id: 'business', name: 'Pricing (Business Model)', icon: '💼', description: '', isActive: true, isAnchor: true, packages: [] },
-  { id: 'account', name: 'Account & Preferences', icon: '⚙️', description: '', isActive: true, isAnchor: true },
+  { id: 'business', name: 'Pricing (Business Model)', icon: '💼', description: 'Choose the plan that fits how you\'ll use the product.', isActive: true, isAnchor: true, packages: [] },
+  { id: 'account', name: 'Account', icon: '⚙️', description: 'Manage your profile, notifications, and privacy settings.', isActive: true, isAnchor: true },
 ];
 
 
@@ -298,7 +298,7 @@ const App = () => {
           .map(f => ({
             id: f.id,
             name: f.featureName,
-            icon: '✨',
+            icon: '📌',
             description: f.description || '',
             isActive: true,
             customContent: f.description || '',
@@ -350,14 +350,9 @@ const App = () => {
     setAppState(newState);
   }, [appState]);
 
-  // [ADDED 020826] Generic field updater for anchor descriptions (Home,
-  // Account & Preferences) — same pattern as feature icon/toggle handlers.
-  const handleFeatureChange = useCallback((id, field, value) => {
-    const newFeatures = appState.features.map(f =>
-      f.id === id ? { ...f, [field]: value } : f
-    );
-    setAppState({ ...appState, features: newFeatures });
-  }, [appState]);
+  // [FIX 020826] handleFeatureChange removed — was only used for Account's
+  // description input, which is now pre-filled by us and not editable.
+
 
   // [ADDED 020826] Business Model packages — add/edit/remove, replacing the
   // old single premiumPrice field.
@@ -392,7 +387,7 @@ const App = () => {
     const newFeature = {
       id: newId,
       name: newFeatureName.trim(),
-      icon: '✨',
+      icon: '📌',
       description: newFeatureContent.trim() || 'A custom feature added by the user.',
       isActive: true,
       customContent: newFeatureContent.trim(),
@@ -1061,19 +1056,7 @@ const App = () => {
                       features (from feature_matrix) show their description
                       read-only — it's defined at the source (MVP/MLP
                       builder), not here, to avoid drifting out of sync. */}
-                  {feature.isAnchor && feature.id === 'account' ? (
-                    <div>
-                      <input
-                        type="text"
-                        value={feature.description}
-                        onChange={(e) => handleFeatureChange(feature.id, 'description', e.target.value.slice(0, 80))}
-                        placeholder="Short description for this screen (max 80 characters)"
-                        maxLength={80}
-                        className="mt-1 w-full text-sm border border-gray-300 rounded-lg p-2"
-                      />
-                      <p className="text-[11px] text-gray-400 mt-0.5 text-right">{(feature.description || '').length}/80</p>
-                    </div>
-                  ) : feature.id === 'home' ? (
+                  {feature.id === 'home' ? (
                     <p className="text-sm text-gray-500 italic">Set below — Title, Description, and Overview.</p>
                   ) : (
                     <p className="text-sm text-gray-600">{feature.description}</p>
@@ -1180,14 +1163,14 @@ const App = () => {
                 />
                 <button
                   onClick={() => handleFeatureToggle(feature.id)}
-                  disabled={feature.isAnchor}
+                  disabled={feature.id === 'home'}
                   className={`px-6 py-3 text-sm font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 ${
                     feature.isActive
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
                       : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:from-gray-500 hover:to-gray-600'
-                  } ${feature.isAnchor ? 'opacity-70 cursor-not-allowed transform-none' : ''}`}
+                  } ${feature.id === 'home' ? 'opacity-70 cursor-not-allowed transform-none' : ''}`}
                   >
-                  {feature.isAnchor ? 'Mandatory' : (feature.isActive ? 'Active' : 'Disabled')}
+                  {feature.id === 'home' ? 'Mandatory' : (feature.isActive ? 'Active' : 'Disabled')}
                 </button>
               </div>
             </div>
@@ -1197,7 +1180,7 @@ const App = () => {
 
         <div className="p-6 bg-gradient-to-br from-indigo-100 to-purple-100 border-2 border-indigo-200 rounded-2xl shadow-xl space-y-4">
           <h2 className="text-2xl font-bold text-indigo-800 flex items-center">
-            <span className="text-2xl mr-2">✨</span>
+            <span className="text-2xl mr-2">➕</span>
             Add New Feature
           </h2>
           <label className="block">
@@ -1307,7 +1290,7 @@ const App = () => {
 
           <p className="text-sm text-gray-500 mt-3 text-center">
             {appState.appTitle && appState.appTitle.trim()
-              ? "Download your plan as-is, or use Zig it to turn it into a real AI-designed prototype."
+              ? "Upgrade your mockup with dedicated AI."
               : "Fill in your venture details above to enable Zig it"}
           </p>
         </div>
