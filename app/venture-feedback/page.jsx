@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +125,8 @@ export default function VentureLanding() {
   const [pricingNote, setPricingNote] = useState('');
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
+  // [ADDED 020826] Insight Credits project, step 2.
+  const [showInsightAnimation, setShowInsightAnimation] = useState(false);
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
   // This identifies which venture gave the feedback, for tracking inter-venture interactions.
   const [reviewerVenture, setReviewerVenture] = useState(null);
@@ -465,6 +468,15 @@ export default function VentureLanding() {
 
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
+
+      // [ADDED 020826] Insight Credits project, step 2 — login is enforced
+      // on this whole page (see the auth check earlier), so currentUser is
+      // always a real founder here, no anonymous check needed.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
 
       // [ADDED] Auto-redirect to dashboard after 3 seconds
       setTimeout(() => {
@@ -836,6 +848,9 @@ export default function VentureLanding() {
 
         </main>
       </div>
+      {showInsightAnimation && (
+        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+      )}
     </>
   );
 }

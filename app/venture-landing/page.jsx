@@ -15,6 +15,7 @@ import {
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
+import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
 import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
 
@@ -125,6 +126,8 @@ export default function VentureLanding() {
   const [uxRating, setUxRating] = useState(5);
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
+  // [ADDED 020826] Insight Credits project, step 2.
+  const [showInsightAnimation, setShowInsightAnimation] = useState(false);
 
   const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
     if (!files || files.length === 0) return;
@@ -398,6 +401,15 @@ export default function VentureLanding() {
       if (insertError) throw insertError;
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
+
+      // [ADDED 020826] Insight Credits project, step 2 — only for a real
+      // logged-in founder. Token-invited anonymous reviewers (invitedIdentity
+      // only, currentUser null) have no profile to credit.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
     } catch (err) {
       console.error("Error submitting MLP feedback:", err);
       alert("There was an error submitting your feedback. Please try again.");
@@ -720,6 +732,9 @@ export default function VentureLanding() {
 
         </main>
       </div>
+      {showInsightAnimation && (
+        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+      )}
     </>
   );
 }

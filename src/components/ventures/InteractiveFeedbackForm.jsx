@@ -1,6 +1,8 @@
 // 010526 - UPDATED UX improvements
 import React, { useState, useMemo } from 'react';
 import { MVPFeatureFeedback, SuggestedFeature, User } from '@/api/entities.js';
+import { supabase } from '@/lib/supabase';
+import InsightEarnedAnimation from '@/components/ventures/InsightEarnedAnimation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
@@ -13,6 +15,8 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
   const [pendingFeatures, setPendingFeatures] = useState([]); // [CHANGED] local list before submit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  // [ADDED 020826] Insight Credits project, step 2.
+  const [showInsightAnimation, setShowInsightAnimation] = useState(false);
   // [ADDED 020826] Part G.6 — product-level question, shown before the
   // per-feature list. PRODUCT_SCORE_THRESHOLD is the "low score" cutoff
   // below which the optional follow-up appears — proposed as <6 this
@@ -119,6 +123,18 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
 
       await Promise.all([productLevelPromise, ...feedbackPromises, ...suggestionPromises]);
       setIsSubmitted(true);
+
+      // [ADDED 020826] Insight Credits project, step 2 — only awarded to a
+      // real logged-in founder (currentUser here comes from User.me() above,
+      // not the anonymous fallback), since anonymous/token-invited reviewers
+      // have no profile to credit. Fire-and-forget: a credit-award failure
+      // shouldn't block the thank-you flow the reviewer already sees.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
+
       setTimeout(() => { if (onFeedbackSubmitted) onFeedbackSubmitted(); }, 2000);
 
     } catch (error) {
@@ -327,6 +343,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           </form>
         </CardContent>
       </Card>
+      {showInsightAnimation && (
+        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+      )}
     </div>
   );
 }
