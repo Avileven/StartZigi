@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { createClient } from "@supabase/supabase-js";
 import {
-  Lightbulb, Target, Heart, FileText, CheckCircle, Users, Code,
-  Loader2, ExternalLink, Sparkles, MessageSquare, Send,
+  Lightbulb, Target, Heart, FileText, CheckCircle,
+  Loader2, ExternalLink, MessageSquare, Send,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
@@ -550,36 +550,59 @@ export default function VentureLanding() {
 
           {isMLPMode ? (
             <>
-              {/* MLP Hero */}
-              <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-indigo-600 rounded-2xl flex flex-col items-center justify-center text-center px-8 py-16 mb-10 shadow-xl">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5">
-                  <Sparkles className="w-10 h-10 text-white" />
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  same calm centered header, same Pricing section (this file
+                  was missing Pricing entirely — never updated when it was
+                  added there). */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
                 </div>
-                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">{venture.name}</h1>
-                <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
 
               {/* MLP Content — only the two fields marked public in the
                   builder show up here. feedback_analysis and
                   enhancement_plan are internal-only and never render. */}
               {venture.mlp_data.lovable_experience && (
-                <div className="mb-10">
-                  <Card className="shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-amber-800">
-                        <Heart className="w-5 h-5 text-amber-500" />
-                        Why You'll Love This
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.lovable_experience} /></CardContent>
-                  </Card>
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Heart className="w-4 h-4 text-gray-400" />
+                    Why you'll love this
+                  </p>
+                  <ReadMoreText text={venture.mlp_data.lovable_experience} />
+                </div>
+              )}
+
+              {venture.mlp_data.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-4">
+                    <span className="text-base">💰</span>
+                    Pricing
+                  </p>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {venture.mlp_data.pricing_packages.map((pkg, i) => (
+                      <div key={i} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="font-semibold text-gray-900">{pkg.name}</p>
+                          <p className="text-lg font-bold text-indigo-600">${pkg.price}</p>
+                        </div>
+                        <p className="text-sm text-gray-500">{pkg.description}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* MLP Files */}
               {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Product Showcase</h3>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Product showcase</h3>
                   {venture.mlp_data.visual_prototype && (
                     <p className="text-center text-gray-600 max-w-2xl mx-auto mb-6">{venture.mlp_data.visual_prototype}</p>
                   )}
@@ -679,19 +702,14 @@ export default function VentureLanding() {
                           before asking for a reaction, matching the pattern
                           used for the MVP mockup question (show it, then
                           ask). */}
+                      {/* [FIX 020826] Removed the mini pricing-package list
+                          that was duplicated here — the full Pricing section
+                          (added earlier this session, matching
+                          venture-landing-page.jsx) already shows it above
+                          the form. Just the question stays here. */}
                       {venture.mlp_data?.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
                         <div className="border border-gray-200 rounded-xl p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">Pricing</p>
-                          <div className="grid gap-2">
-                            {venture.mlp_data.pricing_packages.map((pkg, i) => (
-                              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                                <span className="text-sm font-medium text-gray-800">{pkg.name}</span>
-                                <span className="text-sm font-semibold text-indigo-600">${pkg.price}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-4">
-                            <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
+                          <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
                             <Slider
                               value={[pricingScore ?? 5]}
                               onValueChange={(value) => setPricingScore(value[0])}
@@ -717,7 +735,6 @@ export default function VentureLanding() {
                                 />
                               </div>
                             )}
-                          </div>
                         </div>
                       )}
                       <div>
@@ -741,80 +758,55 @@ export default function VentureLanding() {
             </>
           ) : (
             <>
-              {/* MVP Header */}
-              <Card className="shadow-xl mb-8">
-                <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-                  <div>
-                    <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
-                    <p className="text-gray-600 text-lg">{venture.description}</p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-red-500" />
-                      The Problem We Solve
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.problem} /></CardContent>
-                </Card>
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-yellow-500" />
-                      Our Innovative Solution
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.solution} /></CardContent>
-                </Card>
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  these two files are near-identical forks (public link vs.
+                  in-app campaign invite) and had drifted out of sync
+                  visually. Same header/Problem-Solution treatment as there. */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-8">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
 
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden mb-8">
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-gray-400" />
+                    The problem we solve
+                  </p>
+                  <ReadMoreText text={venture.problem} />
+                </div>
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-4 h-4 text-gray-400" />
+                    Our innovative solution
+                  </p>
+                  <ReadMoreText text={venture.solution} />
+                </div>
+              </div>
+
+              {/* [FIX 020826] Removed product_definition / technical_specs /
+                  user_testing — confirmed these are legacy fields from an
+                  older MVP builder version (same finding as
+                  venture-landing-page.jsx). The current mvp-development
+                  builder only ever saves feature_matrix and uploaded_files. */}
               {venture.mvp_uploaded && venture.mvp_data && (
                 <div className="mb-12">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
-                  <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
-                    <div className="grid lg:grid-cols-2 gap-8">
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-purple-600" />
-                            Product Definition
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.product_definition} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Code className="w-5 h-5 text-blue-600" />
-                            Technical Approach
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.technical_specs} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Users className="w-5 h-5 text-green-600" />
-                            User Testing & Validation
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.user_testing} />
-                        </div>
-                      </div>
-                      <div className="space-y-6">
-                        {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
-                          <div>
-                            <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
-                            <div className="space-y-4">
-                              {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
-                            </div>
-                          </div>
-                        )}
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Our minimum viable product</h2>
+                  {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl p-6 md:p-8">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-4">MVP artifacts</p>
+                      <div className="space-y-4">
+                        {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 

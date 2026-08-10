@@ -124,6 +124,12 @@ export default function VentureLanding() {
   const [featuresRating, setFeaturesRating] = useState(5);
   const [lookFeelRating, setLookFeelRating] = useState(5);
   const [uxRating, setUxRating] = useState(5);
+  // [FIX 020826] Was missing entirely on this page — only the static
+  // Pricing display existed here, the actual question was only ever added
+  // to venture-feedback-page.jsx. Adding it here too for consistency.
+  const PRICING_SCORE_THRESHOLD = 6;
+  const [pricingScore, setPricingScore] = useState(null);
+  const [pricingNote, setPricingNote] = useState('');
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
   // [ADDED 020826] Insight Credits project, step 2.
@@ -395,6 +401,8 @@ export default function VentureLanding() {
         features_rating: featuresRating,
         look_feel_rating: lookFeelRating,
         ux_rating: uxRating,
+        pricing_score: pricingScore,
+        pricing_note: pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD ? (pricingNote.trim() || null) : null,
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
       });
@@ -603,6 +611,40 @@ export default function VentureLanding() {
                         />
                         <div className="text-center text-sm font-semibold text-indigo-600">{uxRating}</div>
                       </div>
+                      {/* [FIX 020826] Was missing entirely — the Pricing
+                          section above already shows the packages, this is
+                          just the question (no duplicate package list, same
+                          fix applied to venture-feedback-page.jsx). */}
+                      {venture.mlp_data?.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
+                          <Slider
+                            value={[pricingScore ?? 5]}
+                            onValueChange={(value) => setPricingScore(value[0])}
+                            max={10} min={1} step={1}
+                            disabled={isSubmittingMlpFeedback}
+                            className="mt-2 mb-1
+                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:shadow-md"
+                          />
+                          <div className="text-center text-sm font-semibold text-indigo-600">{pricingScore ?? '—'}</div>
+                          {pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD && (
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What would make this pricing feel more reasonable? (optional)</Label>
+                              <Textarea
+                                value={pricingNote}
+                                onChange={(e) => setPricingNote(e.target.value)}
+                                placeholder="Share your thoughts..."
+                                className="min-h-[60px] mt-1 text-sm"
+                                disabled={isSubmittingMlpFeedback}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
                         <Textarea id="mlp-feedback" value={mlpFeedbackText}
