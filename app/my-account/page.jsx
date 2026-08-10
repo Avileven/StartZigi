@@ -1,4 +1,4 @@
-// 060826
+// 100826
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -109,6 +109,13 @@ export default function MyAccount() {
   // label, not raw count) — corrected after an earlier version of this file
   // mistakenly showed raw numbers here as if this were a private view.
   const [reputation, setReputation] = useState(null);
+  // [ADDED 020826] Insight Credits, step 3 — conversion to Feedback Request
+  // Pool. Ratio is 1:3 (1 credit -> 3 requests), per this session's decision
+  // — updates the earlier 1:1 figure noted in the planning doc.
+  const [creditsToConvert, setCreditsToConvert] = useState(1);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState('');
+  const [convertSuccess, setConvertSuccess] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -175,6 +182,33 @@ export default function MyAccount() {
       console.error('Error deleting venture:', error);
       setDeleteError('Something went wrong. Please try again.');
       setIsDeleting(false);
+    }
+  };
+
+  // [ADDED 020826] Insight Credits, step 3 — converts credits into the
+  // active venture's Feedback Request Pool via the atomic RPC (checks
+  // balance, decrements credits, increments pool — all server-side, no
+  // read-then-write race condition from the client).
+  const handleConvertCredits = async () => {
+    if (!venture || !creditsToConvert || creditsToConvert < 1) return;
+    setIsConverting(true);
+    setConvertError('');
+    setConvertSuccess(false);
+    try {
+      const { error } = await supabase.rpc('convert_insight_credits', {
+        p_user_id: user.id,
+        p_venture_id: venture.id,
+        p_credits_to_convert: creditsToConvert,
+      });
+      if (error) throw error;
+      setProfile(prev => ({ ...prev, insight_credits: (prev.insight_credits || 0) - creditsToConvert }));
+      setConvertSuccess(true);
+      setCreditsToConvert(1);
+    } catch (error) {
+      console.error('Error converting Insight Credits:', error);
+      setConvertError(error?.message === 'Not enough Insight Credits' ? "You don't have enough Insight Credits for that." : 'Something went wrong. Please try again.');
+    } finally {
+      setIsConverting(false);
     }
   };
 
@@ -277,6 +311,54 @@ export default function MyAccount() {
               text={ZIG_AGE_RING_COLOR.text}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* [ADDED 020826] Insight Credits, step 3 — balance + conversion to
+          Feedback Request Pool. Lives here (not the public Zig Profile card
+          above), since the balance itself is private, self-only info — the
+          public profile only ever shows the translated status label
+          (Insight Starter/Builder/etc.), never the raw number, per A.6.2. */}
+      <Card className="border-t-4 border-t-amber-400 shadow-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" /> Insight Credits
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-end gap-2">
+            <span className="text-4xl font-bold text-gray-900">{profile?.insight_credits || 0}</span>
+            <span className="text-gray-500 text-lg mb-1">available</span>
+          </div>
+          <p className="text-xs text-gray-400">Earned by giving feedback to other founders — 3 credits per feedback given.</p>
+
+          {venture && (
+            <div className="pt-3 border-t border-gray-100 space-y-2">
+              <p className="text-sm font-medium text-gray-700">Convert to feedback requests <span className="text-gray-400 font-normal">(1 credit = 3 requests)</span></p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={profile?.insight_credits || 0}
+                  value={creditsToConvert}
+                  onChange={(e) => setCreditsToConvert(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className="w-24"
+                  disabled={isConverting}
+                />
+                <span className="text-sm text-gray-400">credits → {creditsToConvert * 3} requests</span>
+                <Button
+                  onClick={handleConvertCredits}
+                  disabled={isConverting || !profile?.insight_credits || creditsToConvert > (profile?.insight_credits || 0)}
+                  className="ml-auto bg-amber-600 hover:bg-amber-700"
+                  size="sm"
+                >
+                  {isConverting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Convert'}
+                </Button>
+              </div>
+              {convertError && <p className="text-xs text-red-600">{convertError}</p>}
+              {convertSuccess && <p className="text-xs text-green-600">Converted! Your Feedback Request Pool has been updated.</p>}
+            </div>
+          )}
         </CardContent>
       </Card>
 
