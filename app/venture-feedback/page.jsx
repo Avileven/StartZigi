@@ -116,6 +116,12 @@ export default function VentureLanding() {
   const [featuresRating, setFeaturesRating] = useState(5);
   const [lookFeelRating, setLookFeelRating] = useState(5);
   const [uxRating, setUxRating] = useState(5);
+  // [ADDED 020826] Pricing question — replaces the general "does the
+  // experience deliver" question that was considered and dropped in favor
+  // of this, per this session's decision.
+  const PRICING_SCORE_THRESHOLD = 6;
+  const [pricingScore, setPricingScore] = useState(null);
+  const [pricingNote, setPricingNote] = useState('');
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
@@ -221,6 +227,39 @@ export default function VentureLanding() {
       setIsLoading(false);
     }
   }, [loadHtmlFiles]);
+
+  // [ADDED 020826] Insight Credits project, step 1 — anti-abuse checks.
+  // Both computed once venture + currentUser are both known, and checked
+  // server-side (not just a client-side "already submitted" flag that a
+  // page refresh would reset).
+  const [isOwnVenture, setIsOwnVenture] = useState(false);
+  const [alreadyGaveMvpFeedback, setAlreadyGaveMvpFeedback] = useState(false);
+  const [alreadyGaveMlpFeedback, setAlreadyGaveMlpFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!venture || !currentUser) return;
+    const checkAbuseGuards = async () => {
+      // Self-feedback: covers both the sole founder and any co-founder
+      // listed on the venture — none of them should be able to farm
+      // Insight Credits or skew their own ratings by reviewing themselves.
+      const founderIds = venture.founder_user_ids || [];
+      const isOwner = venture.created_by_id === currentUser.id || founderIds.includes(currentUser.id);
+      setIsOwnVenture(isOwner);
+      if (isOwner) return; // no need to check duplicates for someone who can't submit anyway
+
+      // Duplicate feedback: checked against the database, not just local
+      // state — a page refresh must not let the same person submit again.
+      const [mvpCheck, mlpCheck] = await Promise.all([
+        supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id).eq('created_by_id', currentUser.id),
+        supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id).eq('created_by_id', currentUser.id),
+      ]);
+      setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
+      setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
+    };
+    checkAbuseGuards();
+  }, [venture, currentUser]);
+
+
 
   const handleJoinAsCofounder = useCallback(async () => {
     setJoinError(null);
@@ -391,6 +430,10 @@ export default function VentureLanding() {
         features_rating: featuresRating,
         look_feel_rating: lookFeelRating,
         ux_rating: uxRating,
+        // [ADDED 020826] Pricing question — only present if the venture has
+        // pricing packages set (the form only shows this question then).
+        pricing_score: pricingScore,
+        pricing_note: pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD ? (pricingNote.trim() || null) : null,
         created_by: currentUser?.email || null,
         created_by_id: currentUser?.id || null,
         // [ADDED] Reviewer identity — null if not invited via in-app promotion
@@ -543,7 +586,20 @@ export default function VentureLanding() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {mlpFeedbackSubmitted ? (
+                  {isOwnVenture ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMlpFeedback && !mlpFeedbackSubmitted ? (
+                    // [ADDED 020826] Checked against the database (see the
+                    // useEffect above) so a page refresh can't bypass this —
+                    // distinct from mlpFeedbackSubmitted, which only covers
+                    // the current session's own submission.
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this MLP. Thank you!</p>
+                    </div>
+                  ) : mlpFeedbackSubmitted ? (
                     // [CHANGED] Added auto-redirect message so user knows the page will close
                     <div className="text-center py-6">
                       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
@@ -607,6 +663,51 @@ export default function VentureLanding() {
                         />
                         <div className="text-center text-sm font-semibold text-indigo-600">{uxRating}</div>
                       </div>
+                      {/* [ADDED 020826] Pricing display + question — shown
+                          before asking for a reaction, matching the pattern
+                          used for the MVP mockup question (show it, then
+                          ask). */}
+                      {venture.mlp_data?.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">Pricing</p>
+                          <div className="grid gap-2">
+                            {venture.mlp_data.pricing_packages.map((pkg, i) => (
+                              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                                <span className="text-sm font-medium text-gray-800">{pkg.name}</span>
+                                <span className="text-sm font-semibold text-indigo-600">${pkg.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4">
+                            <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
+                            <Slider
+                              value={[pricingScore ?? 5]}
+                              onValueChange={(value) => setPricingScore(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingMlpFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-indigo-600">{pricingScore ?? '—'}</div>
+                            {pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">What would make this pricing feel more reasonable? (optional)</Label>
+                                <Textarea
+                                  value={pricingNote}
+                                  onChange={(e) => setPricingNote(e.target.value)}
+                                  placeholder="Share your thoughts..."
+                                  className="min-h-[60px] mt-1 text-sm"
+                                  disabled={isSubmittingMlpFeedback}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
                         <Textarea id="mlp-feedback" value={mlpFeedbackText}
@@ -707,9 +808,25 @@ export default function VentureLanding() {
 
               {hasSelectedFeaturesForMVPFeedback && (
                 <div className="mb-12">
-                  {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
-                  {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
-                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
+                  {/* [ADDED 020826] Anti-abuse guards — checked server-side
+                      (see the useEffect above), so a page refresh can't be
+                      used to bypass them. */}
+                  {isOwnVenture ? (
+                    <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMvpFeedback ? (
+                    <div className="text-center py-8 border border-green-200 rounded-xl bg-green-50">
+                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-green-700 font-semibold">You've already given feedback on this MVP. Thank you!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
+                      {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
+                      <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
+                    </>
+                  )}
                 </div>
               )}
 

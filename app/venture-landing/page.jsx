@@ -1,4 +1,4 @@
-// app/venture-landing/ UPDATE 100826
+// app/venture-landing/page.jsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -305,6 +305,37 @@ export default function VentureLanding() {
     fetchUserAndVenture();
   }, [loadVenture]);
 
+  // [ADDED 020826] Insight Credits project, step 1 — same anti-abuse guards
+  // as venture-feedback/page.jsx, adapted for this page's two visitor types:
+  // a logged-in visitor (currentUser, matched by id) or a token-invited
+  // visitor (invitedIdentity, matched by email only — there's no real user
+  // id for an anonymous invitee).
+  const [isOwnVenture, setIsOwnVenture] = useState(false);
+  const [alreadyGaveMvpFeedback, setAlreadyGaveMvpFeedback] = useState(false);
+  const [alreadyGaveMlpFeedback, setAlreadyGaveMlpFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!venture || (!currentUser && !invitedIdentity?.email)) return;
+    const checkAbuseGuards = async () => {
+      const founderIds = venture.founder_user_ids || [];
+      const isOwner = currentUser
+        ? (venture.created_by_id === currentUser.id || founderIds.includes(currentUser.id))
+        : (venture.created_by === invitedIdentity.email);
+      setIsOwnVenture(isOwner);
+      if (isOwner) return;
+
+      const mvpQuery = supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id);
+      const mlpQuery = supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id);
+      const [mvpCheck, mlpCheck] = currentUser
+        ? await Promise.all([mvpQuery.eq('created_by_id', currentUser.id), mlpQuery.eq('created_by_id', currentUser.id)])
+        : await Promise.all([mvpQuery.eq('created_by', invitedIdentity.email), mlpQuery.eq('created_by', invitedIdentity.email)]);
+      setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
+      setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
+    };
+    checkAbuseGuards();
+  }, [venture, currentUser, invitedIdentity]);
+
+
   const handleLike = async () => {
     if (!currentUser) { alert("Please log in to like this venture."); return; }
     if (venture.created_by === currentUser.email) { alert("You cannot like your own venture!"); return; }
@@ -495,7 +526,16 @@ export default function VentureLanding() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {mlpFeedbackSubmitted ? (
+                  {isOwnVenture ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMlpFeedback && !mlpFeedbackSubmitted ? (
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this MLP. Thank you!</p>
+                    </div>
+                  ) : mlpFeedbackSubmitted ? (
                     <div className="text-center py-6">
                       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                       <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
@@ -659,7 +699,18 @@ export default function VentureLanding() {
 
               {hasSelectedFeaturesForMVPFeedback && (
                 <div className="mb-12">
-                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
+                  {isOwnVenture ? (
+                    <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMvpFeedback ? (
+                    <div className="text-center py-8 border border-green-200 rounded-xl bg-green-50">
+                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-green-700 font-semibold">You've already given feedback on this MVP. Thank you!</p>
+                    </div>
+                  ) : (
+                    <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} />
+                  )}
                 </div>
               )}
 
