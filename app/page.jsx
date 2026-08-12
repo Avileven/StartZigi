@@ -331,7 +331,7 @@ export default function Home() {
 
           {/* Your Idea. Your Community. Your Next Zig. */}
           <FadeInSection className="mb-10">
-            <h3 className="text-4xl md:text-5xl font-bold mb-6">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Your Idea. Your Community. Your Next Zig.</span>
             </h3>
             <p className="text-lg text-gray-600 mb-4">
@@ -371,17 +371,17 @@ export default function Home() {
 
           {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, same style as other big headings */}
           <FadeInSection className="mt-20 mb-10">
-            <h3 className="text-4xl md:text-5xl font-bold mb-6">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Human Insight. AI Intelligence. Founder Decisions.</span>
             </h3>
-            <p className="text-gray-600 text-base leading-relaxed">
+            <p className="text-lg text-gray-600">
               The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them. StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process. The community provides the perspective. AI finds the patterns. Founders make the decisions. The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
             </p>
           </FadeInSection>
 
           {/* Our DNA, heading for the feature list below */}
           <FadeInSection>
-            <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6 mt-20">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
             </h3>
 
