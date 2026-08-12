@@ -286,7 +286,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
             style={{ animationDelay: "0.2s" }}
           >
-            Where ideas take shape and founders grow.
+            Your Idea. Your Community. Your Next Zig.
           </p>
           <div
             className="flex flex-col gap-4 items-center animate-slideUp"
@@ -322,20 +322,10 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Intro, not just another AI tool for startups */}
+          {/* Intro, not just another AI tool for startups, merged with the former "Your Idea" section */}
           <div className="mb-10">
-            <p className="text-lg text-gray-600">
-              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem where founders shape their ideas, get structured feedback from a community of users, and start building an audience of people who can grow with their product.
-            </p>
-          </div>
-
-          {/* Your Idea. Your Community. Your Next Zig. */}
-          <div className="mb-10">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Your Idea. Your Community. Your Next Zig.</span>
-            </h3>
             <p className="text-lg text-gray-600 mb-4">
-              You don't need to build alone, or wait until launch to find your first users. Start with an idea. Shape it, share it with the community, and get structured feedback. As your product develops, the same community can become the beginning of your audience, people who follow your progress, engage with what you're building, and may become your first users.
+              You don't need to build alone, or wait until launch to find your first users. Start with an idea. Shape it, share it with the community, and get structured feedback. As your product develops, the same community can become the beginning of your audience, people who follow your progress, engage with what you're building, and may become your first users. StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem where founders shape their ideas, get structured feedback from a community of users, and start building an audience of people who can grow with their product.
             </p>
             <p className="text-lg text-gray-900 font-semibold text-center">
               Build. Share. Get feedback. Grow your community. Zig again.
@@ -388,7 +378,7 @@ export default function Home() {
             <div className="space-y-6">
               {[
                 {
-                  title: "Not just a startup. A founder.",
+                  title: "Ideas take shape and founders grow.",
                   body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
                 },
                 {
