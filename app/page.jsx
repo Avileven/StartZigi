@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 
-// [ADDED] Auto-cycling phase clock — adapted from the PhaseCompletionDemo clock visual
+// [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
 const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
 const CLOCK_POSITIONS = [{ x: 160, y: 64 }, { x: 247, y: 112 }, { x: 247, y: 216 }, { x: 160, y: 260 }, { x: 73, y: 216 }, { x: 73, y: 112 }];
@@ -71,7 +71,7 @@ function PhaseClock() {
   );
 }
 
-// [ADDED] "Spark Shape Ship" typewriter — types once, weight increases per word
+// [ADDED] "Spark Shape Ship" typewriter, types once, weight increases per word
 function SparkShapeShip() {
   const [w1, setW1] = useState("");
   const [w2, setW2] = useState("");
@@ -133,6 +133,42 @@ function SparkShapeShip() {
         {showCursor && <span style={{ borderRight: "2px solid #2563EB" }}>&nbsp;</span>}
       </span>
     </h2>
+  );
+}
+
+// [ADDED] Fade-in-on-scroll wrapper, triggers once when the section enters the viewport
+function FadeInSection({ children, className }) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: "opacity 1s ease-out, transform 1s ease-out",
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -286,49 +322,45 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* 1. Intro — not just another AI tool for startups */}
-          <div className="mb-10">
-            <p className="text-lg text-gray-600 max-w-3xl">
+          {/* Intro, not just another AI tool for startups */}
+          <FadeInSection className="mb-10">
+            <p className="text-lg text-gray-600">
               StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem where founders shape their ideas, get structured feedback from a community of users, and start building an audience of people who can grow with their product.
             </p>
-          </div>
+          </FadeInSection>
 
-          {/* 2. Your Idea. Your Community. Your Next Zig. */}
-          <div className="mb-10">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Your Idea. Your Community. Your Next Zig.</h3>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              You don't need to build alone, or wait until launch to find your first users.
+          {/* Your Idea. Your Community. Your Next Zig. */}
+          <FadeInSection className="mb-10">
+            <h3 className="text-4xl md:text-5xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Your Idea. Your Community. Your Next Zig.</span>
+            </h3>
+            <p className="text-lg text-gray-600 mb-4">
+              You don't need to build alone, or wait until launch to find your first users. Start with an idea. Shape it, share it with the community, and get structured feedback. As your product develops, the same community can become the beginning of your audience, people who follow your progress, engage with what you're building, and may become your first users.
             </p>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              Start with an idea. Shape it, share it with the community, and get structured feedback.
-            </p>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              As your product develops, the same community can become the beginning of your audience, people who follow your progress, engage with what you're building, and may become your first users.
-            </p>
-            <p className="text-lg text-gray-900 font-semibold max-w-3xl">
+            <p className="text-lg text-gray-900 font-semibold text-center">
               Build. Share. Get feedback. Grow your community. Zig again.
             </p>
-          </div>
+          </FadeInSection>
 
-          {/* 3. Built for Different Starting Points */}
-          <div className="mb-10">
+          {/* Built for Different Starting Points */}
+          <FadeInSection className="mb-10">
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Built for Different Starting Points</h3>
-            <div className="space-y-4 max-w-3xl">
+            <div className="space-y-4">
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Explorers</strong> — Curious about startups? Experience the journey, explore ideas, and learn by doing.
+                <strong className="text-gray-900">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
               </p>
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Inventors</strong> — Have an idea? Give it structure, explore possibilities, and turn it into something people can see and react to.
+                <strong className="text-gray-900">Inventors.</strong> Have an idea? Give it structure, explore possibilities, and turn it into something people can see and react to.
               </p>
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Founders</strong> — Already building something? Develop your product, get structured feedback, make better decisions, and start building your first community of users.
+                <strong className="text-gray-900">Founders.</strong> Already building something? Develop your product, get structured feedback, make better decisions, and start building your first community of users.
               </p>
             </div>
-          </div>
+          </FadeInSection>
 
           <PhaseClock />
 
-          {/* CTA — copied from the WhyStartZig page */}
+          {/* CTA, copied from the WhyStartZig page */}
           <div className="text-center py-6">
             <Link href="/register">
               <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
@@ -337,65 +369,57 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* 4. Our DNA */}
-          <div className="mt-20 mb-10">
+          {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, same style as other big headings */}
+          <FadeInSection className="mt-20 mb-10">
             <h3 className="text-4xl md:text-5xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Human Insight. AI Intelligence. Founder Decisions.</span>
+            </h3>
+            <p className="text-gray-600 text-base leading-relaxed">
+              The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them. StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process. The community provides the perspective. AI finds the patterns. Founders make the decisions. The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
+            </p>
+          </FadeInSection>
+
+          {/* Our DNA, heading for the feature list below */}
+          <FadeInSection>
+            <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
             </h3>
-            <h4 className="text-xl font-bold text-gray-900 mb-3">Human Insight. AI Intelligence. Founder Decisions.</h4>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl mb-4">
-              The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them.
-            </p>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl mb-4">
-              StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process.
-            </p>
-            <p className="text-gray-900 font-semibold text-base leading-relaxed max-w-3xl mb-4">
-              The community provides the perspective. AI finds the patterns. Founders make the decisions.
-            </p>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl">
-              The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
-            </p>
-          </div>
 
-          {/* 5. What You Get */}
-          <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
-            <span className="text-blue-600 inline-block leading-relaxed pb-2">What You Get</span>
-          </h3>
-
-          <div className="space-y-6">
-            {[
-              {
-                title: "Not just a startup. A founder.",
-                body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
-              },
-              {
-                title: "Think like a product manager",
-                body: (
-                  <>
-                    StartZig gives you access to professional tools that help you think through your product, especially in the earliest stages. Define your idea. Explore your options. Visualize what you're building. Collect feedback. Understand what users are telling you. Make decisions. The{" "}
-                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link> brings professional tools, community insight, and AI-powered support together in one place.
-                  </>
-                ),
-              },
-              {
-                title: "Visual thinking, at every stage",
-                body: "Ideas become easier to understand when you can see them. StartZig includes tools for creating mockups and demos that evolve with your idea, giving the community something real to react to and giving you something concrete to improve.",
-              },
-              {
-                title: "Simple. Transparent.",
-                body: "Your journey from idea to defined product and demo is free. No trials. No gimmicks. You only pay if you choose additional AI capabilities or advanced features.",
-              },
-              {
-                title: "You control your ideas",
-                body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want. You decide when your idea is ready for feedback, what you want the community to see, and how you use the insights you receive. The community contributes. AI finds the patterns. You decide. Then you Zig.",
-              },
-            ].map((item, i) => (
-              <div key={i}>
-                <h4 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h4>
-                <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
+            <div className="space-y-6">
+              {[
+                {
+                  title: "Not just a startup. A founder.",
+                  body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
+                },
+                {
+                  title: "Think like a product manager",
+                  body: (
+                    <>
+                      StartZig gives you access to professional tools that help you think through your product, especially in the earliest stages. Define your idea. Explore your options. Visualize what you're building. Collect feedback. Understand what users are telling you. Make decisions. The{" "}
+                      <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link> brings professional tools, community insight, and AI-powered support together in one place.
+                    </>
+                  ),
+                },
+                {
+                  title: "Visual thinking, at every stage",
+                  body: "Ideas become easier to understand when you can see them. StartZig includes tools for creating mockups and demos that evolve with your idea, giving the community something real to react to and giving you something concrete to improve.",
+                },
+                {
+                  title: "Simple. Transparent.",
+                  body: "Your journey from idea to defined product and demo is free. No trials. No gimmicks. You only pay if you choose additional AI capabilities or advanced features.",
+                },
+                {
+                  title: "You control your ideas",
+                  body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want. You decide when your idea is ready for feedback, what you want the community to see, and how you use the insights you receive. The community contributes. AI finds the patterns. You decide. Then you Zig.",
+                },
+              ].map((item, i) => (
+                <div key={i}>
+                  <h4 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h4>
+                  <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </FadeInSection>
         </div>
       </div>
 
