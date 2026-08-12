@@ -136,39 +136,39 @@ function SparkShapeShip() {
   );
 }
 
-// [ADDED] Fade-in-on-scroll wrapper, triggers once when the section enters the viewport
-function FadeInSection({ children, className }) {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef(null);
+// [ADDED] Staged heading reveal, Human Insight. AI Intelligence. Founder Decisions. appears in three parts, one second apart, triggered once the heading enters the viewport
+function HumanInsightHeading() {
+  const [step, setStep] = useState(0);
+  const hasStarted = useRef(false);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setVisible(true);
+          if (entry.isIntersecting && !hasStarted.current) {
+            hasStarted.current = true;
+            setStep(1);
+            setTimeout(() => setStep(2), 1000);
+            setTimeout(() => setStep(3), 2000);
             observer.disconnect();
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.5 }
     );
-    if (ref.current) observer.observe(ref.current);
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(24px)",
-        transition: "opacity 1s ease-out, transform 1s ease-out",
-      }}
-    >
-      {children}
-    </div>
+    <h3 ref={sectionRef} className="text-3xl md:text-4xl font-bold mb-6" style={{ minHeight: "1.2em" }}>
+      <span className="text-blue-600 inline-block leading-relaxed pb-2">
+        {step >= 1 && <>Human Insight. </>}
+        {step >= 2 && <>AI Intelligence. </>}
+        {step >= 3 && <>Founder Decisions.</>}
+      </span>
+    </h3>
   );
 }
 
@@ -323,14 +323,14 @@ export default function Home() {
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
           {/* Intro, not just another AI tool for startups */}
-          <FadeInSection className="mb-10">
+          <div className="mb-10">
             <p className="text-lg text-gray-600">
               StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem where founders shape their ideas, get structured feedback from a community of users, and start building an audience of people who can grow with their product.
             </p>
-          </FadeInSection>
+          </div>
 
           {/* Your Idea. Your Community. Your Next Zig. */}
-          <FadeInSection className="mb-10">
+          <div className="mb-10">
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Your Idea. Your Community. Your Next Zig.</span>
             </h3>
@@ -340,11 +340,13 @@ export default function Home() {
             <p className="text-lg text-gray-900 font-semibold text-center">
               Build. Share. Get feedback. Grow your community. Zig again.
             </p>
-          </FadeInSection>
+          </div>
 
           {/* Built for Different Starting Points */}
-          <FadeInSection className="mb-10">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Built for Different Starting Points</h3>
+          <div className="mb-10">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Built for Different Starting Points</span>
+            </h3>
             <div className="space-y-4">
               <p className="text-lg text-gray-600">
                 <strong className="text-gray-900">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
@@ -356,7 +358,7 @@ export default function Home() {
                 <strong className="text-gray-900">Founders.</strong> Already building something? Develop your product, get structured feedback, make better decisions, and start building your first community of users.
               </p>
             </div>
-          </FadeInSection>
+          </div>
 
           <PhaseClock />
 
@@ -369,18 +371,16 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, same style as other big headings */}
-          <FadeInSection className="mt-20 mb-10">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Human Insight. AI Intelligence. Founder Decisions.</span>
-            </h3>
+          {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, staged reveal */}
+          <div className="mt-20 mb-10">
+            <HumanInsightHeading />
             <p className="text-lg text-gray-600">
               The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them. StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process. The community provides the perspective. AI finds the patterns. Founders make the decisions. The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
             </p>
-          </FadeInSection>
+          </div>
 
           {/* Our DNA, heading for the feature list below */}
-          <FadeInSection>
+          <div>
             <h3 className="text-3xl md:text-4xl font-bold mb-6 mt-20">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
             </h3>
@@ -419,7 +419,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </FadeInSection>
+          </div>
         </div>
       </div>
 
