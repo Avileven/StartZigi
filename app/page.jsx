@@ -286,44 +286,17 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* 1. Intro — not just another AI tool for startups */}
           <div className="mb-10">
             <p className="text-lg text-gray-600 max-w-3xl">
-              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem where founders shape their ideas, get structured feedback from a community of users, and start building an audience of people who can grow with their product.
+              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's the ecosystem for early-stage founders, a structured journey where ideas are shaped, founders give and receive real feedback, and entrepreneurs grow along the way.
             </p>
           </div>
 
-          {/* 2. Your Idea. Your Community. Your Next Zig. */}
           <div className="mb-10">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Your Idea. Your Community. Your Next Zig.</h3>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              You don't need to build alone, or wait until launch to find your first users.
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Built for Every Stage of the Journey</h3>
+            <p className="text-lg text-gray-600 max-w-3xl">
+              StartZig is designed for different types of people. <strong className="text-gray-900">Explorers</strong> experience the startup journey and learn how ideas become products. <strong className="text-gray-900">Inventors</strong> turn ideas into structured concepts and demos. Early-stage <strong className="text-gray-900">Founders</strong> get feedback and build their first customer base around an advanced demo.
             </p>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              Start with an idea. Shape it, share it with the community, and get structured feedback.
-            </p>
-            <p className="text-lg text-gray-600 max-w-3xl mb-4">
-              As your product develops, the same community can become the beginning of your audience, people who follow your progress, engage with what you're building, and may become your first users.
-            </p>
-            <p className="text-lg text-gray-900 font-semibold max-w-3xl">
-              Build. Share. Get feedback. Grow your community. Zig again.
-            </p>
-          </div>
-
-          {/* 3. Built for Different Starting Points */}
-          <div className="mb-10">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Built for Different Starting Points</h3>
-            <div className="space-y-4 max-w-3xl">
-              <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Explorers</strong> — Curious about startups? Experience the journey, explore ideas, and learn by doing.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Inventors</strong> — Have an idea? Give it structure, explore possibilities, and turn it into something people can see and react to.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Founders</strong> — Already building something? Develop your product, get structured feedback, make better decisions, and start building your first community of users.
-              </p>
-            </div>
           </div>
 
           <PhaseClock />
@@ -337,49 +310,36 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* 4. Our DNA */}
-          <div className="mt-20 mb-10">
-            <h3 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
-            </h3>
-            <h4 className="text-xl font-bold text-gray-900 mb-3">Human Insight. AI Intelligence. Founder Decisions.</h4>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl mb-4">
-              The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them.
-            </p>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl mb-4">
-              StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process.
-            </p>
-            <p className="text-gray-900 font-semibold text-base leading-relaxed max-w-3xl mb-4">
-              The community provides the perspective. AI finds the patterns. Founders make the decisions.
-            </p>
-            <p className="text-gray-600 text-base leading-relaxed max-w-3xl">
-              The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
-            </p>
-          </div>
-
-          {/* 5. What You Get */}
           <h3 className="text-4xl md:text-5xl font-bold mb-6 mt-20">
-            <span className="text-blue-600 inline-block leading-relaxed pb-2">What You Get</span>
+            <span className="text-blue-600 inline-block leading-relaxed pb-2">The StartZig Way</span>
           </h3>
 
           <div className="space-y-6">
             {[
               {
+                title: "Build your audience before you launch",
+                body: "One of the hardest challenges for early-stage founders is finding the first people willing to listen, test, and give feedback. Most founders wait until launch to search for users. StartZig helps you start earlier. Share your progress, collect focused feedback, understand your audience, and build relationships with people who may become your first users.",
+              },
+              {
                 title: "Not just a startup. A founder.",
                 body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
+              },
+              {
+                title: "AI as a tool, not a shortcut",
+                body: "AI can accelerate your work, but it cannot replace founder thinking. The founder comes first. The community adds perspective. AI accelerates the journey.",
               },
               {
                 title: "Think like a product manager",
                 body: (
                   <>
-                    StartZig gives you access to professional tools that help you think through your product, especially in the earliest stages. Define your idea. Explore your options. Visualize what you're building. Collect feedback. Understand what users are telling you. Make decisions. The{" "}
-                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link> brings professional tools, community insight, and AI-powered support together in one place.
+                    We give you access to professional tools that strengthen your product management skills, especially in the earliest stages, helping you navigate between product decisions, creativity, and mental flexibility. For more, see everything inside the{" "}
+                    <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link>. The platform combines a dedicated toolset, community wisdom, and AI-powered technical support.
                   </>
                 ),
               },
               {
                 title: "Visual thinking, at every stage",
-                body: "Ideas become easier to understand when you can see them. StartZig includes tools for creating mockups and demos that evolve with your idea, giving the community something real to react to and giving you something concrete to improve.",
+                body: "Founders used to sketch ideas on napkins just to make them visual. It's a basic, critical instinct for anyone shaping an idea. So we built a dedicated tool for creating mockups of ideas, one that stays with you throughout the entire process.",
               },
               {
                 title: "Simple. Transparent.",
@@ -387,7 +347,7 @@ export default function Home() {
               },
               {
                 title: "You control your ideas",
-                body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want. You decide when your idea is ready for feedback, what you want the community to see, and how you use the insights you receive. The community contributes. AI finds the patterns. You decide. Then you Zig.",
+                body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want.",
               },
             ].map((item, i) => (
               <div key={i}>
