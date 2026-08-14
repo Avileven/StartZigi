@@ -118,6 +118,8 @@ export default function VentureLanding() {
   // that the session-based approach caused before (dashboard showing the
   // wrong venture). Used only as a fallback for feedback attribution.
   const [invitedIdentity, setInvitedIdentity] = useState(null);
+  // [ADDED 020826] Needed for campaign-scoped duplicate-feedback checking.
+  const [campaignId, setCampaignId] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
   const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
@@ -308,6 +310,7 @@ export default function VentureLanding() {
       const { data: userData, error: userErr } = await supabase.auth.getUser();
       const user = userErr ? null : (userData?.user ?? null);
       setCurrentUser(user);
+      setCampaignId(urlParams.get("campaign"));
       if (urlParams.get("welcome") === "true") {
         setShowWelcome(true);
         const ventureId = urlParams.get("id");
@@ -337,16 +340,22 @@ export default function VentureLanding() {
       setIsOwnVenture(isOwner);
       if (isOwner) return;
 
-      const mvpQuery = supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id);
-      const mlpQuery = supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id);
-      const [mvpCheck, mlpCheck] = currentUser
-        ? await Promise.all([mvpQuery.eq('created_by_id', currentUser.id), mlpQuery.eq('created_by_id', currentUser.id)])
-        : await Promise.all([mvpQuery.eq('created_by', invitedIdentity.email), mlpQuery.eq('created_by', invitedIdentity.email)]);
+      // [FIX 020826] Duplicate feedback: now scoped by campaign_id, not
+      // venture_id — a new campaign is a legitimate new opportunity to give
+      // feedback again on the same venture. Falls back to venture-wide only
+      // when there's no campaign context (e.g. a token invite with no
+      // campaign attached).
+      const identityFilter = (q) => currentUser ? q.eq('created_by_id', currentUser.id) : q.eq('created_by', invitedIdentity.email);
+      const mvpBase = identityFilter(supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }));
+      const mlpBase = identityFilter(supabase.from('product_feedback').select('id', { count: 'exact', head: true }));
+      const [mvpCheck, mlpCheck] = campaignId
+        ? await Promise.all([mvpBase.eq('campaign_id', campaignId), mlpBase.eq('campaign_id', campaignId)])
+        : await Promise.all([mvpBase.eq('venture_id', venture.id), mlpBase.eq('venture_id', venture.id)]);
       setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
       setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
     };
     checkAbuseGuards();
-  }, [venture, currentUser, invitedIdentity]);
+  }, [venture, currentUser, invitedIdentity, campaignId]);
 
 
   const handleLike = async () => {
@@ -647,7 +656,7 @@ export default function VentureLanding() {
                               [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
                               [&_[role=slider]]:shadow-md"
                           />
-                          <div className="text-center text-sm font-semibold text-indigo-600">{pricingScore ?? '—'}</div>
+                          <div className="text-center text-sm font-semibold text-indigo-600">{pricingScore ?? 5}</div>
                           {pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD && (
                             <div className="mt-2">
                               <Label className="text-xs text-gray-500">What would make this pricing feel more reasonable? (optional)</Label>
@@ -676,9 +685,9 @@ export default function VentureLanding() {
                             className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                           />
                           <span>
-                            <span className="font-medium text-gray-800">Want to keep contributing to this venture?</span>
+                            <span className="font-medium text-gray-800">Become a Follower</span>
                             <br />
-                            <span className="text-xs text-gray-400">(You may be invited for future feedback rounds or Beta testing — that's up to the founder.)</span>
+                            <span className="text-xs text-gray-400">Get invited to future feedback rounds or Beta testing.</span>
                           </span>
                         </label>
                       )}
@@ -812,7 +821,7 @@ export default function VentureLanding() {
         </main>
       </div>
       {showInsightAnimation && (
-        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+        <InsightEarnedAnimation onComplete={() => { window.location.href = '/dashboard'; }} />
       )}
     </>
   );

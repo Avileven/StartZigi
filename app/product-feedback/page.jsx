@@ -1,991 +1,893 @@
-// 130426
-// [140426] CHANGES:
-//   - Export CSV button: now always visible, disabled with tooltip for non-Unicorn users
-//   - Added comments throughout Unicorn-only section for clarity
-// [020826] CHANGES:
-//   - Reorganized into phase-based sections (MVP / MLP / Beta), each shown only if
-//     the founder has actually reached that phase — no empty placeholders.
-//   - Suggested Features: removed raw email display (privacy fix) — now shows a
-//     clickable founder-name button instead, matching MLP/Beta.
-//   - Added a shared "founder profile preview" panel: clicking any founder-name
-//     button (MVP responses, Suggested Features, MLP feedback, Beta sign-ups)
-//     opens an inline panel with what we can show today (username, early adopter).
-//     NOTE: richer profile data (Zig Age, Ideas Started, reputation tags) will
-//     populate here once Part A's reputation groups actually exist in the DB —
-//     this is a first version, not the final Zig Profile page.
+// 300326 app/venture-feedback/page.jsx
+// [NEW] Public feedback page — no auth, loads venture by ?id= only.
 "use client";
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Venture } from '@/api/entities.js';
-import { MVPFeatureFeedback } from '@/api/entities.js';
-import { SuggestedFeature } from '@/api/entities.js';
-import { BetaTester } from '@/api/entities.js';
-import { ProductFeedback as ProductFeedbackEntity } from '@/api/entities.js';
-import { User } from '@/api/entities.js';
-import { businessPlan } from '@/api/entities.js';
-import { InvokeLLM } from '@/api/integrations';
-import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
-// [ADDED 020826] Small pill button showing a founder's name with a profile icon.
-// Clicking it opens the shared profile preview panel via onSelect(founderId, name).
-// [ADDED 020826] Resolves a display name for the hover card trigger:
-// prefer the real username; if it's not set, derive a friendly name from
-// the local part of their email (e.g. "avi@leventhal.co.il" -> "Avi") —
-// deliberately NOT the raw email address, to keep the earlier privacy fix
-// intact while still showing *something* instead of nothing.
-function getDisplayName(profile, emailFallback) {
-  if (profile?.username) return profile.username;
-  if (emailFallback) {
-    const local = emailFallback.split('@')[0];
-    if (local) return local.charAt(0).toUpperCase() + local.slice(1);
-  }
-  return null;
-}
+import React, { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { createClient } from "@supabase/supabase-js";
+import {
+  Lightbulb, Target, Heart, FileText, CheckCircle,
+  Loader2, ExternalLink, MessageSquare, Send,
+} from "lucide-react";
+import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
+import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
+import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
 
-// [ADDED 020826] Maps the venture's raw phase to the Group 1 tag names
-// decided in the planning doc (Part A.2): Spark/Plan/Demo/Beta. Demo covers
-// both mvp and mlp (the demo keeps evolving through MLP); growth falls back
-// to Beta since Group 1 has no tag of its own for it.
-function getJourneyTag(rawPhase) {
-  const map = {
-    idea: 'Spark',
-    business_plan: 'Plan',
-    mvp: 'Shape',
-    mlp: 'Shape',
-    beta: 'Beta',
-    growth: 'Beta',
-  };
-  return map[rawPhase] || null;
-}
-
-// [ADDED 020826] "Zig Age" (Part A.4) — a plain relative duration like
-// Reddit Age, not a named tier.
-function getZigAge(joinedDate) {
-  if (!joinedDate) return null;
-  const days = Math.floor((Date.now() - new Date(joinedDate).getTime()) / 86400000);
-  if (days < 30) return `${days} day${days === 1 ? '' : 's'}`;
-  if (days < 365) {
-    const months = Math.floor(days / 30);
-    return `${months} month${months === 1 ? '' : 's'}`;
-  }
-  const years = Math.floor(days / 365);
-  return `${years} year${years === 1 ? '' : 's'}`;
-}
-
-// [FIX 020826] Part A.3.1 — the raw feedback-given count is never shown to
-// other founders, only a translated public status label. (The founder's own
-// "Zig Profile" self-view, per A.6.2, is a separate place that CAN show the
-// raw number — not built yet, out of scope for this hover card.)
-function getInsightStatus(count) {
-  if (count >= 50) return 'Insight Master';
-  if (count >= 20) return 'Insight Champion';
-  if (count >= 5) return 'Insight Builder';
-  if (count >= 1) return 'Insight Starter';
-  return 'Insight Seeker';
-}
-
-// [FIX 020826] Replaces the old click-to-open FounderNameButton +
-// ProfilePreviewPanel + openProfileId state machinery entirely. This is now
-// a single self-contained component: the name pill IS the hover trigger, and
-// the card is positioned relative to it via CSS (group-hover), so it always
-// appears right next to whichever row you're actually looking at — no more
-// jumping to a fixed spot on the page (A.6.1).
-// [ADDED 020826] Ring-badge color mapping, matching StageUnlockAnimation.jsx's
-// ramp (muted for early stages, richer for later ones) — reused here so the
-// profile display and the unlock animation feel like the same system.
-const STAGE_RING_COLORS = {
-  Spark: { stroke: '#CEE8DE', text: '#0F6E56' },
-  Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
-  Shape: { stroke: '#5DCAA5', text: '#0F6E56' },
-  Beta: { stroke: '#1D9E75', text: '#04342C' },
-};
-// Insight status uses its own (amber) ramp — deliberately different from
-// Stage's (green/teal) so the two badges are never confused for the same
-// kind of progress at a glance.
-const INSIGHT_RING_COLORS = {
-  'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
-  'Insight Starter': { stroke: '#FAC775', text: '#633806' },
-  'Insight Builder': { stroke: '#EF9F27', text: '#412402' },
-  'Insight Champion': { stroke: '#BA7517', text: '#FAEEDA' },
-  'Insight Master': { stroke: '#412402', text: '#FAEEDA' },
-};
-// Zig Age is a fact, not an achievement — fixed neutral color for everyone,
-// not a progress shade (deciding otherwise would wrongly imply "older = better").
-const ZIG_AGE_RING_COLOR = { stroke: '#378ADD', text: '#185FA5' };
-
-// [ADDED 020826] Small reusable ring badge — SVG circle stroke filled to
-// 100% (this is a static display, not the animated reveal used in
-// StageUnlockAnimation.jsx), with a label below.
-function RingBadge({ value, label, stroke, text, small }) {
-  const size = small ? 56 : 64;
-  const r = small ? 24 : 28;
-  const c = 2 * Math.PI * r;
+const ReadMoreText = ({ text, maxLength = 300 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  if (!text) return null;
+  if (text.length <= maxLength) return <p className="text-gray-700 leading-relaxed">{text}</p>;
+  const displayedText = isExpanded ? text : `${text.substring(0, maxLength)}...`;
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
-        </svg>
-        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 8 ? 9 : 12 }}>
-          {value}
-        </span>
-      </div>
-      <span className="text-[11px] text-gray-400">{label}</span>
+    <div>
+      <p className="text-gray-700 leading-relaxed">{displayedText}</p>
+      <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 h-auto text-blue-600">
+        {isExpanded ? "Read Less" : "Read More"}
+      </Button>
     </div>
   );
-}
+};
 
-function FounderHoverCard({ founderId, name, profile }) {
-  if (!founderId || !name) {
-    // No attribution available (e.g. legacy feedback given before the
-    // attribution fix, or anonymous visitor) — nothing clickable to show.
-    return null;
-  }
-  const initial = name[0].toUpperCase();
-  const journeyTag = getJourneyTag(profile?.current_phase);
-  const zigAge = getZigAge(profile?.joined_date);
-  const insightStatus = getInsightStatus(profile?.feedback_count ?? 0);
+const renderFile = (file, index, htmlContents) => {
+  const fileName = file?.name || "";
+  const fileUrl = file?.url || "";
+  const fileExt = fileName.split(".").pop()?.toLowerCase();
+  const isHTML = ["html", "htm"].includes(fileExt);
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt);
+  const isPDF = fileExt === "pdf";
 
-  return (
-    <span className="relative inline-block group">
-      <button
-        type="button"
-        className="inline-flex items-center gap-1.5 border border-gray-200 bg-white rounded-full pl-1.5 pr-2.5 py-1 text-xs text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
-      >
-        <UserCircle2 className="w-4 h-4" />
-        {name}
-      </button>
-
-      {/* Hover card — hidden by default, shown on hover via the `group` above */}
-      <div className="hidden group-hover:block absolute z-50 top-full left-0 mt-2 w-80">
-        <Card className="border-2 border-indigo-200 shadow-xl bg-white">
-          <CardContent className="p-4 bg-white rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700 flex-shrink-0">
-                {initial}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">{profile?.username || name}</p>
-                <p className="text-[11px] text-gray-400">Zig profile preview</p>
-              </div>
-            </div>
-            {profile?.early_adopter && (
-              <Badge className="bg-amber-100 text-amber-800 mt-2 flex items-center gap-1 w-fit">
-                <Star className="w-3 h-3" />
-                Early Adopter
-              </Badge>
-            )}
-            <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-100">
-              <RingBadge
-                value={journeyTag || '—'}
-                label="Stage"
-                stroke={STAGE_RING_COLORS[journeyTag]?.stroke || '#F1EFE8'}
-                text={STAGE_RING_COLORS[journeyTag]?.text || '#888780'}
-                small
-              />
-              <RingBadge
-                value={insightStatus ? insightStatus.replace('Insight ', '') : '—'}
-                label="Status"
-                stroke={INSIGHT_RING_COLORS[insightStatus]?.stroke || '#F1EFE8'}
-                text={INSIGHT_RING_COLORS[insightStatus]?.text || '#888780'}
-                small
-              />
-              <RingBadge
-                value={zigAge || '—'}
-                label="Zig age"
-                stroke={ZIG_AGE_RING_COLOR.stroke}
-                text={ZIG_AGE_RING_COLOR.text}
-                small
-              />
-              {/* [ADDED 020826] Ideas Started — now sourced from the real
-                  ideas_started_count column (Part B) instead of counting
-                  live ventures, so it correctly persists across resets.
-                  Fixed neutral color, like Zig Age — it's a fact, not an
-                  achievement to shade by progress. */}
-              <RingBadge
-                value={profile?.ideas_count != null ? String(profile.ideas_count) : '—'}
-                label="Ideas"
-                stroke={ZIG_AGE_RING_COLOR.stroke}
-                text={ZIG_AGE_RING_COLOR.text}
-                small
-              />
-            </div>
-          </CardContent>
-        </Card>
+  if (isHTML) {
+    const content = htmlContents[fileUrl];
+    if (content) {
+      return (
+        <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+          <div className="bg-gray-100 px-4 py-2 border-b">
+            <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+          </div>
+          <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
+        </div>
+      );
+    }
+    return (
+      <div key={index} className="border-2 rounded-xl bg-white p-6 flex flex-col items-center justify-center h-[200px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <p className="text-center text-gray-500 mt-2">Loading {fileName}...</p>
       </div>
-    </span>
+    );
+  }
+  if (isImage) {
+    return (
+      <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+        <div className="bg-gray-100 px-4 py-2 border-b">
+          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+        </div>
+        <div className="p-4">
+          <img src={fileUrl} alt={fileName} className="w-full h-auto" />
+        </div>
+      </div>
+    );
+  }
+  if (isPDF) {
+    return (
+      <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
+        <div className="bg-gray-100 px-4 py-2 border-b">
+          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+        </div>
+        <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
+      </div>
+    );
+  }
+  return (
+    <div key={index} className="border-2 rounded-xl shadow-lg bg-white p-6">
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-4 rounded-lg">
+        <FileText className="w-12 h-12 text-indigo-500 flex-shrink-0" />
+        <div className="flex-1">
+          <span className="text-lg text-indigo-600 hover:underline font-medium block">{fileName}</span>
+          <span className="text-sm text-gray-500">Click to view</span>
+        </div>
+      </a>
+    </div>
   );
-}
+};
 
-export default function ProductFeedbackPage() {
+export default function VentureLanding() {
   const [venture, setVenture] = useState(null);
-  const [featureFeedback, setFeatureFeedback] = useState([]);
-  const [suggestedFeatures, setSuggestedFeatures] = useState([]);
-  const [betaTesters, setBetaTesters] = useState([]);
-  // [ADDED 020826] Followers — people who opted in on the MLP feedback form
-  // to be invited when Beta opens (Part: "רשום ביטה.docx"). Separate table
-  // from beta_testers (that's actual Beta sign-up, this is earlier-stage
-  // interest).
-  const [followers, setFollowers] = useState([]);
-  const [userPlan, setUserPlan] = useState(null);
-  const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [analytics, setAnalytics] = useState({});
-  // [ADDED 020826] Part G.6 — the product-level question's aggregated
-  // results (average score + any open-text follow-ups).
-  const [productLevelFeedback, setProductLevelFeedback] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [businessPlanData, setBusinessPlanData] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [mvpHtmlContents, setMvpHtmlContents] = useState({});
+  const [mlpHtmlContents, setMlpHtmlContents] = useState({});
+  const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
+  const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
+  const [currentUser, setCurrentUser] = useState(null);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
+  const [invitationToken, setInvitationToken] = useState(null);
+  const [mlpFeedbackText, setMlpFeedbackText] = useState("");
+  const [featuresRating, setFeaturesRating] = useState(5);
+  const [lookFeelRating, setLookFeelRating] = useState(5);
+  const [uxRating, setUxRating] = useState(5);
+  // [ADDED 020826] Pricing question — replaces the general "does the
+  // experience deliver" question that was considered and dropped in favor
+  // of this, per this session's decision.
+  const PRICING_SCORE_THRESHOLD = 6;
+  const [pricingScore, setPricingScore] = useState(null);
+  const [pricingNote, setPricingNote] = useState('');
+  // [ADDED 020826] Follower — a checkbox in the MLP feedback form itself
+  // (not a separate CTA after submit, per this session's decision), always
+  // unchecked by default. Only meaningful for a logged-in founder, since
+  // following requires a real account to later invite.
+  const [wantsToFollow, setWantsToFollow] = useState(false);
+  const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
+  const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
+  // [ADDED 020826] Insight Credits project, step 2.
+  const [showInsightAnimation, setShowInsightAnimation] = useState(false);
+  // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
+  // This identifies which venture gave the feedback, for tracking inter-venture interactions.
+  const [reviewerVenture, setReviewerVenture] = useState(null);
+  // [ADDED 020826] Links feedback given here back to the in-app promotion
+  // round that generated it (Validation Center's "Feedback Received" count).
+  const [campaignId, setCampaignId] = useState(null);
+  // [ADDED] Authorization state — user must be logged in AND have a valid ?from= venture.
+  // null = still checking, true = authorized, false = not authorized.
+  const [isAuthorized, setIsAuthorized] = useState(null);
 
-  // [ADDED 020826] username lookup cache + currently-open profile preview
-  const [founderProfiles, setFounderProfiles] = useState({}); // { [founderId]: { username, early_adopter } }
-  // [FIX 020826] openProfileId/openProfile removed — the hover card
-  // (FounderHoverCard) no longer needs click-based open/close state.
-
-  // [ADDED 020826] expand/collapse state for the detail lists under each summary
-  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false });
-  const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const user = await User.me();
-        console.log('[FeedbackHub] user:', user?.email);
-
-        // Fetch user plan for Export button visibility
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('plan')
-          .eq('id', user.id)
-          .single();
-        if (profile) setUserPlan(profile.plan);
-
-        const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
-        console.log('[FeedbackHub] ventures found:', ventures.length);
-
-        if (ventures.length > 0) {
-          const currentVenture = ventures[0];
-          console.log('[FeedbackHub] venture id:', currentVenture.id, 'name:', currentVenture.name);
-          setVenture(currentVenture);
-
-          const feedback = await MVPFeatureFeedback.filter({ venture_id: currentVenture.id });
-          console.log('[FeedbackHub] MVP feature feedback:', feedback.length);
-          setFeatureFeedback(feedback);
-
-          const suggestions = await SuggestedFeature.filter({ venture_id: currentVenture.id });
-          setSuggestedFeatures(suggestions);
-
-          const testers = await BetaTester.filter({ venture_id: currentVenture.id });
-          setBetaTesters(testers);
-
-          // [ADDED 020826] Followers — no entity wrapper exists for this new
-          // table, queried directly.
-          const { data: followerRows } = await supabase
-            .from('venture_followers')
-            .select('id, user_id, created_date')
-            .eq('venture_id', currentVenture.id)
-            .order('created_date', { ascending: false });
-          setFollowers(followerRows || []);
-
-          const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
-          console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
-          setProductFeedbacks(pfeedback);
-
-          const bp = await businessPlan.filter({ venture_id: currentVenture.id });
-          if (bp.length > 0) setBusinessPlanData(bp[0]);
-
-          // [ADDED 020826] Part G.6 — the product-level question is stored as
-          // a sentinel row (feature_id: 'product_overall') in the same
-          // table. Pulled out separately here so it doesn't get treated as
-          // a real feature anywhere below.
-          const productLevelRows = feedback.filter(f => f.feature_id === 'product_overall');
-          if (productLevelRows.length > 0) {
-            const scores = productLevelRows.map(r => r.rating);
-            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-            const notes = productLevelRows.map(r => r.note).filter(Boolean);
-            setProductLevelFeedback({ avgScore: avg.toFixed(1), totalResponses: scores.length, notes, responses: productLevelRows });
-          }
-
-          if (currentVenture.mvp_data && currentVenture.mvp_data.feature_matrix) {
-            const featureAnalytics = {};
-            currentVenture.mvp_data.feature_matrix
-              .filter(f => f.isSelected)
-              .forEach(feature => {
-                const feedbackForFeature = feedback.filter(f => f.feature_id === feature.id);
-                if (feedbackForFeature.length > 0) {
-                  const ratings = feedbackForFeature.map(f => f.rating);
-                  const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
-                  const total = ratings.length;
-                  // [FIX 020826] Part G.6 — 3 bands instead of 4, matching
-                  // the redefined importance scale in InteractiveFeedbackForm.jsx.
-                  featureAnalytics[feature.id] = {
-                    name: feature.featureName,
-                    description: feature.description || '',
-                    avgRating: avgRating.toFixed(1),
-                    totalResponses: total,
-                    responses: feedbackForFeature, // [ADDED 020826] keep individual rows for the detail list
-                    hardToSeeCount: feedbackForFeature.filter(f => f.hard_to_see_in_mockup).length,
-                    breakdown: {
-                      unnecessary: ratings.filter(r => r >= 0 && r <= 3).length,
-                      somewhatImportant: ratings.filter(r => r >= 4 && r <= 7).length,
-                      critical: ratings.filter(r => r >= 8 && r <= 10).length,
-                    }
-                  };
-                }
-              });
-            setAnalytics(featureAnalytics);
-          }
-
-          // [ADDED 020826] Batch-fetch usernames for everyone who gave attributed
-          // feedback, so name buttons don't need a query per click.
-          // [FIX 020826] Beta testers DO carry created_by_id (confirmed in schema) —
-          // an earlier version of this file incorrectly assumed they didn't.
-          const founderIds = new Set();
-          feedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
-          suggestions.forEach(s => s.created_by_id && founderIds.add(s.created_by_id));
-          pfeedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
-          testers.forEach(t => t.created_by_id && founderIds.add(t.created_by_id));
-          (followerRows || []).forEach(f => f.user_id && founderIds.add(f.user_id));
-          if (founderIds.size > 0) {
-            // [FIX 020826] Was a direct user_profiles query — blocked by RLS
-            // (user_profiles_select_own only allows id = auth.uid()), so it
-            // silently returned nothing for anyone else's profile. Now uses
-            // the get_public_founder_profile RPC (security definer), which
-            // safely exposes only username/early_adopter for any founder id.
-            const ids = Array.from(founderIds);
-            const results = await Promise.all(
-              ids.map(id => supabase.rpc('get_public_founder_profile', { profile_id: id }))
-            );
-            const map = {};
-            results.forEach((res, i) => {
-              const row = res?.data?.[0];
-              if (row) map[ids[i]] = row;
-            });
-            setFounderProfiles(map);
-          }
+  const loadHtmlFiles = useCallback(async (files, setContentState, context) => {
+    if (!files || files.length === 0) return;
+    const htmlPromises = files.map(async (file) => {
+      const fileName = file?.name || "";
+      const fileUrl = file?.url || "";
+      const fileExt = fileName.split(".").pop()?.toLowerCase();
+      if (["html", "htm"].includes(fileExt) && fileUrl) {
+        try {
+          const response = await fetch(fileUrl);
+          if (!response.ok) return null;
+          const text = await response.text();
+          return { url: fileUrl, content: text };
+        } catch (err) {
+          console.error(`Failed to load ${context} HTML from ${fileUrl}:`, err);
+          return null;
         }
-      } catch (error) {
-        console.error('[FeedbackHub] Error loading feedback data:', error);
       }
-      setIsLoading(false);
-    };
-    loadData();
+      return null;
+    });
+    const results = await Promise.all(htmlPromises);
+    const contentMap = {};
+    results.forEach((result) => { if (result) contentMap[result.url] = result.content; });
+    setContentState(contentMap);
   }, []);
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    setAiAnalysis(null);
+  const loadVenture = useCallback(async (user) => {
+    setIsLoading(true);
     try {
-      // [FIX 020826] Part G.7 — now includes each feature's description
-      // (the AI needs this to reason about what a feature actually *means*,
-      // not just its name/score — this is the core dependency this whole
-      // redesign relies on).
-      const featureSummary = Object.entries(analytics).map(([, data]) =>
-        'Feature: "' + data.name + '" — described by the founder as: "' + (data.description || 'no description provided') + '". Avg rating: ' + data.avgRating + '/10 (' + data.totalResponses + ' responses). Unnecessary: ' + data.breakdown.unnecessary + ', Somewhat important: ' + data.breakdown.somewhatImportant + ', Critical: ' + data.breakdown.critical + '.'
-      ).join('\n');
-      const mlpSummary = productFeedbacks.map(fb => '- "' + fb.feedback_text + '"').join('\n');
-      const suggestedSummary = suggestedFeatures.map(s => '- ' + s.feature_name).join('\n');
-      const bpContext = businessPlanData
-        ? 'Mission: ' + (businessPlanData.mission || 'N/A') + '\nProblem: ' + (businessPlanData.problem || 'N/A') + '\nSolution: ' + (businessPlanData.solution || 'N/A') + '\nTarget customers: ' + (businessPlanData.target_customers || 'N/A')
-        : 'No business plan data available.';
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("invitation_token");
+      const ventureId = urlParams.get("id");
 
-      // [ADDED 020826] Part G.7 — the product-representation score (does the
-      // mockup capture the idea?), used for the Representation Gap check
-      // (Section 15 of the spec): comparing what users value against what
-      // the mockup actually communicates.
-      const representationContext = productLevelFeedback
-        ? 'Mockup representation score: ' + productLevelFeedback.avgScore + '/10 (' + productLevelFeedback.totalResponses + ' responses). Reviewer notes on the mockup: ' + (productLevelFeedback.notes.length > 0 ? productLevelFeedback.notes.map(n => '"' + n + '"').join('; ') : 'none.')
-        : 'No product-representation data yet.';
+      console.log("[venture-landing] loadVenture", { hasToken: !!token, ventureId, userEmail: user?.email ?? null });
 
-      // [ADDED 020826] Part G.7, Sections 20-22 — confidence/evidence-strength
-      // is rule-based on response count AND consistency, not left to the AI's
-      // own judgment. Computed here and handed to the AI as a fact to phrase
-      // correctly, not something for it to estimate itself.
-      const responseCount = productLevelFeedback?.totalResponses || 0;
-      let confidenceLevel;
-      if (responseCount >= 6) confidenceLevel = 'Strong (6+ responses) — use language like "the feedback consistently indicates..."';
-      else if (responseCount >= 3) confidenceLevel = 'Early/Emerging (3-5 responses) — use language like "this may indicate..." or "the feedback suggests..." and explicitly recommend collecting more responses before major decisions.';
-      else confidenceLevel = 'Basic (1-2 responses) — do not draw a product-direction conclusion yet, only note early signals and recommend more responses.';
+      if (token) {
+        const inviteClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          { global: { headers: { "invitation-token": token } } }
+        );
+        const { data: invite, error: inviteErr } = await inviteClient
+          .from("co_founder_invitations")
+          .select("venture_id,status,invitee_email,invitation_token,invitation_type")
+          .eq("invitation_token", token)
+          .maybeSingle();
 
-      const prompt = 'You are a product strategist analyzing structured startup feedback. Follow this exact reasoning sequence, per the StartZig AI Product Direction methodology:\n'
-        + 'Level 1 (Feature): individual feature ratings.\n'
-        + 'Level 2 (Capability): group features with similar ratings AND similar founder-described meaning into an underlying capability — do not just repeat feature names, identify what they have in common in terms of user value.\n'
-        + 'Level 3 (Product Direction): what type of product capability is the strongest signal pointing toward (e.g. decision support, validation, discovery, automation, communication, collaboration, creation, organization, monitoring, education, or a more fitting description you generate).\n\n'
-        + 'CRITICAL RULES:\n'
-        + '- Never just say "keep A and B, remove C and D" — always explain what A and B have in common, and what that implies about product direction.\n'
-        + '- Distinguish evidence (from users) from recommendation (your interpretation) — be explicit about which is which.\n'
-        + '- Never imply statistical certainty the data cannot support. Match your confidence language to: ' + confidenceLevel + '\n'
-        + '- If a Representation Gap exists (users value a capability highly but the mockup score is low, or vice versa), call it out explicitly.\n'
-        + '- Suggested features are strategic signals, not a backlog — only mention ones that reinforce or reveal the emerging direction, and explain how.\n'
-        + '- Never suggest generic features (dark mode, notifications, social sharing) unless they demonstrably connect to the identified direction.\n\n'
-        + 'Startup: "' + (venture?.name || '') + '"\n\n'
-        + 'BUSINESS CONTEXT:\n' + bpContext + '\n\n'
-        + 'MVP FEATURE RATINGS AND DESCRIPTIONS:\n' + (featureSummary || 'No feature ratings yet.') + '\n\n'
-        + 'PRODUCT REPRESENTATION (MOCKUP FIT):\n' + representationContext + '\n\n'
-        + 'MLP USER FEEDBACK:\n' + (mlpSummary || 'No MLP feedback yet.') + '\n\n'
-        + 'SUGGESTED FEATURES FROM USERS:\n' + (suggestedSummary || 'No suggestions yet.') + '\n\n'
-        + 'Respond with EXACTLY this structure, nothing else:\n\n'
-        + 'EMERGING PRODUCT DIRECTION:\n'
-        + '- [one to two sentences: the Level 3 conclusion, or "not enough data yet" if confidence is Basic]\n\n'
-        + 'WHY WE THINK THIS:\n'
-        + '- [the Level 2 capability grouping — what the well-rated features have in common, in the founder\'s own terms]\n'
-        + '- [what the lower-rated features have in common, if a pattern exists]\n\n'
-        + 'PRODUCT REPRESENTATION:\n'
-        + '- [one sentence: does the mockup score match what users seem to value, or is there a gap]\n\n'
-        + 'USER SUGGESTIONS:\n'
-        + '- [how suggested features relate to the emerging direction, or "no suggestions yet"]\n\n'
-        + 'RECOMMENDED FOCUS:\n'
-        + '- Strengthen: [one specific area]\n'
-        + '- Deprioritize: [one specific area, if evidence supports it]\n\n'
-        + 'CONFIDENCE:\n'
-        + '- [state the confidence level and response count, matching the rules above]\n\n'
-        + 'Plain text only. No markdown. No extra commentary.';
+        if (inviteErr || !invite) { setVenture(null); return; }
+        if (!["sent", "accepted"].includes(invite.status)) { setVenture(null); return; }
 
-      const data = await InvokeLLM({ prompt, creditType: 'mentor' });
-      setAiAnalysis(data?.response || 'No analysis generated.');
-    } catch (error) {
-      if (error.message === 'NO_CREDITS') {
-        setAiAnalysis('You have used all your mentor credits this month. Upgrade your plan to get more.');
-      } else {
-        setAiAnalysis('Error generating analysis. Please try again.');
+        const { data: ventures, error: vErr } = await inviteClient
+          .from("ventures").select("*").eq("id", String(invite.venture_id));
+
+        if (vErr) { setVenture(null); return; }
+
+        if (ventures && ventures.length > 0) {
+          const v = ventures[0];
+          setVenture(v);
+          if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+          if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+          if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
+          if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+        } else {
+          setVenture(null);
+        }
+        return;
       }
+
+      if (ventureId) {
+        const { data: ventures, error } = await supabase.from("ventures").select("*").eq("id", ventureId);
+        if (error) throw error;
+        if (ventures && ventures.length > 0) {
+          const v = ventures[0];
+          setVenture(v);
+          if (user) {
+            setHasLiked(v.liked_by_users?.includes(user.id) || user.liked_venture_ids?.includes(v.id) || false);
+          }
+          if (v.mvp_data?.uploaded_files) await loadHtmlFiles(v.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+          if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+          if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
+          if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+        } else {
+          setVenture(null);
+        }
+      } else {
+        setVenture(null);
+      }
+    } catch (error) {
+      console.error("Error loading venture:", error);
+      setVenture(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsAnalyzing(false);
+  }, [loadHtmlFiles]);
+
+  // [ADDED 020826] Insight Credits project, step 1 — anti-abuse checks.
+  // Both computed once venture + currentUser are both known, and checked
+  // server-side (not just a client-side "already submitted" flag that a
+  // page refresh would reset).
+  const [isOwnVenture, setIsOwnVenture] = useState(false);
+  const [alreadyGaveMvpFeedback, setAlreadyGaveMvpFeedback] = useState(false);
+  const [alreadyGaveMlpFeedback, setAlreadyGaveMlpFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!venture || !currentUser) return;
+    const checkAbuseGuards = async () => {
+      // Self-feedback: covers both the sole founder and any co-founder
+      // listed on the venture — none of them should be able to farm
+      // Insight Credits or skew their own ratings by reviewing themselves.
+      const founderIds = venture.founder_user_ids || [];
+      const isOwner = venture.created_by_id === currentUser.id || founderIds.includes(currentUser.id);
+      setIsOwnVenture(isOwner);
+      if (isOwner) return; // no need to check duplicates for someone who can't submit anyway
+
+      // [FIX 020826] Duplicate feedback: now scoped by campaign_id, not
+      // venture_id — a new campaign (a fresh "Start Round") is a legitimate
+      // new opportunity to give feedback again on the same venture, per
+      // this session's explicit decision. Falls back to venture-wide only
+      // when there's no campaign context at all (e.g. a token-based invite
+      // with no campaign attached).
+      const mvpQuery = supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('created_by_id', currentUser.id);
+      const mlpQuery = supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('created_by_id', currentUser.id);
+      const [mvpCheck, mlpCheck] = campaignId
+        ? await Promise.all([mvpQuery.eq('campaign_id', campaignId), mlpQuery.eq('campaign_id', campaignId)])
+        : await Promise.all([mvpQuery.eq('venture_id', venture.id), mlpQuery.eq('venture_id', venture.id)]);
+      setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
+      setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
+    };
+    checkAbuseGuards();
+  }, [venture, currentUser, campaignId]);
+
+
+
+  const handleJoinAsCofounder = useCallback(async () => {
+    setJoinError(null);
+    if (!currentUser) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+    if (!invitationToken) { setJoinError("Missing invitation token in URL."); return; }
+    setIsJoining(true);
+    try {
+      const { data, error } = await supabase.rpc("accept_co_founder_invite", {
+        p_user_id: String(currentUser.id),
+        p_invitation_token: invitationToken,
+      });
+      if (error) throw error;
+      if (data?.error) { setJoinError(data.error); return; }
+      if (data?.status === "success") {
+        setJoinSuccess(true);
+        await loadVenture(currentUser);
+        window.location.href = "/dashboard";
+        return;
+      }
+      setJoinError("Unexpected response from server.");
+    } catch (e) {
+      setJoinError(e?.message || "Failed to join venture.");
+    } finally {
+      setIsJoining(false);
+    }
+  }, [currentUser, invitationToken, loadVenture]);
+
+  useEffect(() => {
+    const init = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromId = urlParams.get("from");
+      setCampaignId(urlParams.get("campaign"));
+
+      // [ADDED] Check if user is logged in.
+      // If not — redirect to login page.
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        return;
+      }
+      // [FIX 020826] currentUser state existed and was read in several places
+      // (the Like button, feedback attribution) but was never actually set —
+      // it stayed null the whole time even though login is enforced above.
+      setCurrentUser(userData.user);
+
+      // [ADDED] Check if ?from= param exists and matches a real venture.
+      // Only ventures that were invited (have a valid from= param) can see this page.
+      // Safety: if from is missing or venture not found — show unauthorized message, do not load content.
+      if (!fromId) {
+        setIsAuthorized(false);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data: reviewerData } = await supabase
+          .from("ventures")
+          .select("id, name")
+          .eq("id", fromId)
+          .single();
+
+        if (!reviewerData) {
+          // from= param exists but venture not found — not authorized
+          setIsAuthorized(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // All checks passed — authorized
+        setReviewerVenture(reviewerData);
+        setIsAuthorized(true);
+
+        // Load the venture content
+        loadVenture(null);
+      } catch (e) {
+        console.error("Authorization check failed:", e);
+        setIsAuthorized(false);
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, [loadVenture]);
+
+  const handleLike = async () => {
+    if (!currentUser) { alert("Please log in to like this venture."); return; }
+    if (venture.created_by === currentUser.email) { alert("You cannot like your own venture!"); return; }
+    if (hasLiked) { alert("You have already liked this venture!"); return; }
+    try {
+      setHasLiked(true);
+      const newLikesCount = (venture.likes_count || 0) + 1;
+      setVenture((prev) => ({ ...prev, likes_count: newLikesCount }));
+      const { error: updateError } = await supabase.from("ventures").update({ likes_count: newLikesCount }).eq("id", venture.id);
+      if (updateError) throw updateError;
+      const { error: messageError } = await supabase.from("venture_messages").insert([{
+        venture_id: venture.id,
+        message_type: "like_notification",
+        title: "Someone Liked Your Venture!",
+        content: `A user from the community liked your venture "${venture.name}". Keep up the great work!`,
+        from_venture_id: null,
+        from_venture_name: currentUser.full_name || currentUser.email,
+        from_venture_landing_page_url: null,
+        phase: venture.phase,
+        priority: 1,
+      }]);
+      if (messageError) throw messageError;
+      alert("Thank you for liking this venture!");
+    } catch (error) {
+      console.error("Error liking venture:", error);
+      setHasLiked(false);
+      setVenture((prev) => ({ ...prev, likes_count: (prev.likes_count || 1) - 1 }));
+      alert("There was an error recording your like. Please try again.");
+    }
   };
 
-  // [FIX 020826] getCategoryFromRating (dot/color badge) removed — no
-  // longer used since the Feature Decisions view merged with the detailed
-  // breakdown (this session); getFeatureDecision below covers the same
-  // rating, styled for the merged card instead.
-  // [ADDED 020826] Part G v1 (approved this session): rule-based decision
-  // mapping from the existing avgRating — no AI, no new questions, no schema
-  // change.
-  // [FIX 020826] Part G.6 — boundaries aligned to the new 3-band importance
-  // scale (0-3/4-7/8-10). Removed the old "Confusing" branch — that signal
-  // now lives separately in the "Hard to see in the mockup" toggle
-  // (hardToSeeCount, surfaced separately on the card, not folded into the
-  // micro-text here).
-  const getFeatureDecision = (avgRating) => {
-    const rating = parseFloat(avgRating);
-    if (rating >= 8) {
-      return { signal: 'Strong', action: 'Keep', micro: "Users see this as essential to the product.",
-        border: 'border-l-emerald-500', badge: 'bg-emerald-100 text-emerald-700', actionColor: 'text-emerald-600' };
+  // [CHANGED] After MVP feedback is submitted:
+  // 1. Notify the venture owner that they received feedback
+  // 2. Auto-close the page after 3 seconds (redirect to dashboard)
+  // [REMOVED] loadVenture call — was resetting the form before the Thank You screen appeared
+  const handleInteractiveFeedbackSubmitted = async () => {
+    try {
+      // [ADDED] Notify the venture owner that feedback was received
+      if (venture?.id && reviewerVenture?.name) {
+        await supabase.from("venture_messages").insert({
+          venture_id: venture.id,
+          message_type: "system",
+          title: "📝 New MVP Feedback Received!",
+          content: `${reviewerVenture.name} has reviewed your MVP and submitted feedback. Check your feedback reports for details.`,
+          phase: venture.phase,
+          priority: 3,
+          is_dismissed: false,
+        });
+      }
+    } catch (e) {
+      console.error("Could not send feedback notification:", e);
+      // Non-fatal — Thank You screen still shows
     }
-    if (rating >= 4) {
-      return { signal: 'Mixed', action: 'Improve', micro: "Users like this, but it's not yet a must-have.",
-        border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', actionColor: 'text-amber-600' };
-    }
-    return { signal: 'Weak', action: 'Remove', micro: "Users don't see enough value in this feature.",
-      border: 'border-l-red-500', badge: 'bg-red-100 text-red-700', actionColor: 'text-red-600' };
+    // [ADDED] Auto-redirect to dashboard after 3 seconds
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 3000);
   };
 
-  if (isLoading) {
+  const handleMlpFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!venture) return;
+    setIsSubmittingMlpFeedback(true);
+    try {
+      // [FIX 020826] Using supabase directly instead of ProductFeedbackEntity.create()
+      // because this page has no auth session — the Entity class would fail with 400.
+      // [ADDED] reviewer_venture_id and reviewer_venture_name saved from ?from= param
+      // to track which venture gave the feedback.
+      // [FIX 020826] This insert was missing id/created_date/updated_date entirely —
+      // that's the actual cause of the "null value in column created_date" error.
+      // Also: created_by/created_by_id were hardcoded to null even though this page
+      // enforces login before showing any content (see the auth check above) — now
+      // uses the real logged-in user, consistent with currentUser actually being set.
+      const now = new Date().toISOString();
+      const { error } = await supabase.from("product_feedback").insert({
+        id: crypto.randomUUID(),
+        created_date: now,
+        updated_date: now,
+        venture_id: venture.id,
+        feedback_text: mlpFeedbackText.trim(),
+        feedback_type: "other",
+        features_rating: featuresRating,
+        look_feel_rating: lookFeelRating,
+        ux_rating: uxRating,
+        // [ADDED 020826] Pricing question — only present if the venture has
+        // pricing packages set (the form only shows this question then).
+        pricing_score: pricingScore,
+        pricing_note: pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD ? (pricingNote.trim() || null) : null,
+        created_by: currentUser?.email || null,
+        created_by_id: currentUser?.id || null,
+        // [ADDED] Reviewer identity — null if not invited via in-app promotion
+        reviewer_venture_id: reviewerVenture?.id || null,
+        reviewer_venture_name: reviewerVenture?.name || null,
+        // [ADDED 020826] Links this feedback back to the promotion round that
+        // generated it, so Validation Center can show a real received count.
+        campaign_id: campaignId || null,
+      });
+      if (error) throw error;
+      
+      // [ADDED] Notify the venture owner that MLP feedback was received
+      try {
+        if (venture?.id && reviewerVenture?.name) {
+          await supabase.from("venture_messages").insert({
+            venture_id: venture.id,
+            message_type: "system",
+            title: "📝 New MLP Feedback Received!",
+            content: `${reviewerVenture.name} has reviewed your MLP and submitted feedback. Check your feedback reports for details.`,
+            phase: venture.phase,
+            priority: 3,
+            is_dismissed: false,
+          });
+        }
+      } catch (e) {
+        console.error("Could not send MLP feedback notification:", e);
+        // Non-fatal — Thank You screen still shows
+      }
+
+      // [ADDED 020826] Follower — saved as its own row, fire-and-forget
+      // (a failure here shouldn't block the thank-you flow). unique
+      // (venture_id, user_id) on the table means a duplicate insert (e.g.
+      // if the duplicate-feedback guard somehow let a second submission
+      // through) is safely ignored, not an error.
+      if (wantsToFollow && currentUser) {
+        supabase.from('venture_followers').insert({
+          venture_id: venture.id,
+          user_id: currentUser.id,
+        }).then(({ error: followError }) => {
+          if (followError && followError.code !== '23505') {
+            console.error('Could not save Follower:', followError);
+          }
+        });
+      }
+
+      setMlpFeedbackSubmitted(true);
+      setMlpFeedbackText("");
+
+      // [ADDED 020826] Insight Credits project, step 2 — login is enforced
+      // on this whole page (see the auth check earlier), so currentUser is
+      // always a real founder here, no anonymous check needed.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
+
+      // [ADDED] Auto-redirect to dashboard after 3 seconds
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 3000);
+
+    } catch (err) {
+      console.error("Error submitting MLP feedback:", err);
+      alert("There was an error submitting your feedback. Please try again.");
+    }
+    setIsSubmittingMlpFeedback(false);
+  };
+
+  const getSectorLabel = (sector) => {
+    const labels = {
+      ai_deep_tech: "AI / Deep Tech", fintech: "FinTech",
+      digital_health_biotech: "Digital Health / Biotech", b2b_saas: "B2B SaaS",
+      consumer_apps: "Consumer Apps / Marketplaces", climatetech_energy: "ClimateTech / Energy / AgriTech",
+      web3_blockchain: "Web3 / Blockchain",
+    };
+    return labels[sector] || sector;
+  };
+
+  if (isLoading || isAuthorized === null) {
     return (
-      <div className="flex h-full items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  // [ADDED] Show unauthorized message if user is not logged in or does not have a valid ?from= venture.
+  // This prevents bots and unauthorized users from accessing the feedback page.
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🔒</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Access Restricted</h1>
+          <p className="text-gray-600">This page is only available to ventures that have been invited to give feedback. If you received an invitation, please make sure you are logged in.</p>
+        </div>
       </div>
     );
   }
 
   if (!venture) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-600">No venture found.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Venture Not Found</h1>
+          <p className="text-gray-600">The venture you're looking for doesn't exist or has been removed.</p>
+        </div>
       </div>
     );
   }
 
-  const totalFeedback = productFeedbacks.length + (venture.mvp_feedback_count || 0);
-
-  // [ADDED 020826] Which phase-sections has this founder actually reached?
-  // No empty placeholders for phases not yet reached.
-  const reachedMVP = Boolean(venture.mvp_uploaded) || Object.keys(analytics).length > 0 || suggestedFeatures.length > 0;
-  const reachedMLP = Boolean(venture.mlp_completed || venture.mlp_development_completed) || productFeedbacks.length > 0;
-  const reachedBeta = venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0;
-
-
-  // [ADDED 020826] MLP average ratings across all responses, for the summary row.
-  const mlpAverages = (() => {
-    const withRatings = productFeedbacks.filter(fb => fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null);
-    if (withRatings.length === 0) return null;
-    const avg = (key) => {
-      const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
-      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
-    };
-    return { features: avg('features_rating'), lookFeel: avg('look_feel_rating'), ux: avg('ux_rating') };
-  })();
+  const isMLPMode = venture.mlp_development_completed && venture.mlp_data;
+  const hasSelectedFeaturesForMVPFeedback =
+    venture.mvp_uploaded && venture.mvp_data &&
+    Array.isArray(venture.mvp_data.feature_matrix) &&
+    venture.mvp_data.feature_matrix.some((f) => f.isSelected);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
+    <>
+      {showWelcome && <WelcomeOverlay ventureName={venture.name} onClose={() => setShowWelcome(false)} />}
 
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <BarChart3 className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Venture Feedback Hub</h1>
-          <p className="text-gray-500 text-lg">All feedback collected across your startup journey</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <main className="max-w-5xl mx-auto p-4 md:p-8">
 
-        {/* AI Analysis */}
-        <div className="mb-10">
-          {/* [FIX 020826] Part G.7.3 — renamed "Mentor" to "Get Product
-              Insights," per both source specs' explicit instruction: "Use:
-              Get Product Insights. Not: Ask AI." Positions this as a product
-              advisor, not a chatbot. */}
-          <p className="text-sm text-gray-500 text-center mb-3">Understand what your feedback means for your product's direction</p>
-          <div className="flex justify-center">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 px-8 py-3 text-base"
-            >
-              {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
-              {isAnalyzing ? 'Analyzing...' : 'Get Product Insights'}
-            </Button>
-          </div>
-          {aiAnalysis && (() => {
-            // [ADDED 020826] Restyled per the approved mockup — grouped into
-            // bordered sections with colored labels (green/amber/indigo)
-            // instead of a flat list of h4/p pairs. Parsing logic unchanged
-            // (same header-detection regex), only the rendering changed.
-            const sectionColors = [
-              { text: 'text-emerald-600' },
-              { text: 'text-amber-600' },
-              { text: 'text-indigo-600' },
-            ];
-            const lines = aiAnalysis.split('\n').map(l => l.trim()).filter(Boolean);
-            const sections = [];
-            lines.forEach((line) => {
-              const isHeader = /^[A-Z][A-Z\s']+:/.test(line);
-              if (isHeader) {
-                sections.push({ header: line, body: [] });
-              } else if (sections.length > 0) {
-                sections[sections.length - 1].body.push(line);
-              }
-            });
-            return (
-              <div className="border border-gray-200 rounded-xl overflow-hidden mt-5">
-                {sections.map((section, i) => (
-                  <div key={i} className={`p-5 ${i < sections.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${sectionColors[i % 3].text}`}>
-                      {section.header}
-                    </p>
-                    {section.body.map((line, j) => (
-                      <p key={j} className="text-sm text-gray-700 leading-relaxed mb-1">{line}</p>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {[
-            { label: 'Total Feedback', value: totalFeedback, icon: <MessageSquare className="w-5 h-5 text-indigo-500" />, bg: 'bg-indigo-50' },
-            { label: 'Features Analyzed', value: Object.keys(analytics).length, icon: <TrendingUp className="w-5 h-5 text-green-500" />, bg: 'bg-green-50' },
-            { label: 'Suggested Features', value: suggestedFeatures.length, icon: <Lightbulb className="w-5 h-5 text-yellow-500" />, bg: 'bg-yellow-50' },
-            { label: 'Beta Sign-ups', value: betaTesters.length, icon: <Users className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50' },
-          ].map((stat, i) => (
-            <Card key={i} className="border-0 shadow-sm">
-              <CardContent className="p-5">
-                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-3`}>
-                  {stat.icon}
-                </div>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* ===================== FOLLOWERS ===================== */}
-        {/* [FIX 020826] Moved out of the MLP-gated section — Followers can
-            now opt in from MVP too (extended this session), so this must
-            not be hidden behind reachedMLP. Shown at the top, independent of
-            venture phase, whenever there's at least one follower. */}
-        {followers.length > 0 && (
-          <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Followers</p>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{followers.length}</p>
-                    <p className="text-xs text-gray-400">Founders who want to keep contributing to this venture</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => toggle('followers')}
-                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                  >
-                    Zoom in
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.followers ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-                {expanded.followers && (
-                  <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
-                    {followers.map((f) => (
-                      <FounderHoverCard
-                        key={f.id}
-                        founderId={f.user_id}
-                        name={getDisplayName(founderProfiles[f.user_id], null)}
-                        profile={founderProfiles[f.user_id]}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* ===================== MVP ===================== */}
-        {reachedMVP && (
-          <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MVP</p>
-
-            {/* [ADDED 020826] Part G.6 — product-level feedback, shown first
-                (matches the order reviewers actually answer it in: mockup
-                fit before feature-level details). */}
-            {productLevelFeedback && (
-              <div className="mb-6 border-2 border-indigo-200 rounded-xl p-5 bg-indigo-50/40">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Does the mockup capture the idea?</p>
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span className="text-3xl font-bold text-indigo-700">{productLevelFeedback.avgScore}</span>
-                  <span className="text-gray-400 text-sm">/10 average · {productLevelFeedback.totalResponses} response{productLevelFeedback.totalResponses !== 1 ? 's' : ''}</span>
-                </div>
-                {productLevelFeedback.notes.length > 0 && (
-                  <div className="space-y-2 border-t border-indigo-100 pt-3">
-                    {productLevelFeedback.notes.map((note, i) => (
-                      <p key={i} className="text-sm text-gray-700 italic">"{note}"</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* [ADDED 020826] Feature Decisions — Part G v1, approved this
-                session: decision-first summary (Keep/Improve/Remove) sitting
-                above the existing detailed rating breakdown. Rule-based only,
-                derived from the same avgRating already computed below — no
-                AI, no new data. */}
-            {/* [FIX 020826] Merged with what used to be a separate detailed
-                section below — was two disconnected views of the same data,
-                confusing. Now one card per feature: the decision summary is
-                always visible, and a "Zoom in" toggle reveals the detailed
-                breakdown (bar, hard-to-see warning, individual responses)
-                inline, right where it belongs. Nothing was deleted, only
-                relocated and merged. */}
-            {Object.keys(analytics).length > 0 && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Feature decisions</p>
-                <div className="space-y-2.5">
-                  {Object.entries(analytics).map(([featureId, data]) => {
-                    const decision = getFeatureDecision(data.avgRating);
-                    const total = data.totalResponses;
-                    const pUnnecessary = Math.round((data.breakdown.unnecessary / total) * 100);
-                    const pSomewhat = Math.round((data.breakdown.somewhatImportant / total) * 100);
-                    const pCritical = Math.round((data.breakdown.critical / total) * 100);
-                    const detailKey = 'mvpDetail_' + featureId;
-                    return (
-                      <div key={featureId} className={`border border-gray-200 border-l-4 ${decision.border} rounded-lg`}>
-                        <div className="flex items-center justify-between gap-4 px-5 py-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900">{data.name}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${decision.badge}`}>{decision.signal}</span>
-                            </div>
-                            <p className="text-sm text-gray-500">{decision.micro}</p>
-                          </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className={`text-sm font-semibold whitespace-nowrap ${decision.actionColor}`}>{decision.action}</span>
-                            <button
-                              type="button"
-                              onClick={() => toggle(detailKey)}
-                              className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 whitespace-nowrap"
-                            >
-                              Zoom in
-                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded[detailKey] ? 'rotate-180' : ''}`} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {expanded[detailKey] && (
-                          <div className="px-5 pb-5 pt-1 border-t border-gray-100">
-                            <div className="flex items-center gap-1 mb-3 mt-3">
-                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                              <span className="font-bold text-gray-900">{data.avgRating}</span>
-                              <span className="text-gray-400 text-sm">/10 average</span>
-                            </div>
-
-                            {data.hardToSeeCount > 0 && (
-                              <p className="text-xs text-amber-600 mb-3 flex items-center gap-1">
-                                <AlertTriangle className="w-3.5 h-3.5" />
-                                {data.hardToSeeCount} of {total} reviewer{data.hardToSeeCount !== 1 ? 's' : ''} found this hard to see in the mockup
-                              </p>
-                            )}
-
-                            <div className="h-3 rounded-full overflow-hidden flex mb-3">
-                              {pUnnecessary > 0 && <div className="bg-red-400 h-full transition-all" style={{ width: `${pUnnecessary}%` }} title={`Unnecessary: ${pUnnecessary}%`} />}
-                              {pSomewhat > 0 && <div className="bg-blue-400 h-full transition-all" style={{ width: `${pSomewhat}%` }} title={`Somewhat important: ${pSomewhat}%`} />}
-                              {pCritical > 0 && <div className="bg-green-400 h-full transition-all" style={{ width: `${pCritical}%` }} title={`Critical: ${pCritical}%`} />}
-                            </div>
-
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-4">
-                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Unnecessary {pUnnecessary}%</span>
-                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Somewhat important {pSomewhat}%</span>
-                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Critical {pCritical}%</span>
-                              <span className="ml-auto">{total} response{total !== 1 ? 's' : ''}</span>
-                            </div>
-
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Individual responses</p>
-                            <div className="space-y-2">
-                              {data.responses.map((r) => (
-                                <div key={r.id} className="flex items-center justify-between">
-                                  <FounderHoverCard
-                                    founderId={r.created_by_id}
-                                    name={getDisplayName(founderProfiles[r.created_by_id], r.user_email)}
-                                    profile={founderProfiles[r.created_by_id]}
-                                  />
-                                  <span className="text-sm font-semibold text-gray-700">{r.rating}/10</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {suggestedFeatures.length > 0 && (
-              <div className="mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Consider adding</p>
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  {suggestedFeatures.map((suggestion, i) => (
-                    <div
-                      key={suggestion.id}
-                      className={`flex items-center gap-3 px-5 py-3.5 ${i < suggestedFeatures.length - 1 ? 'border-b border-gray-100' : ''}`}
-                    >
-                      <Lightbulb className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <p className="font-medium text-gray-900 flex-1">{suggestion.feature_name}</p>
-                      {/* [FIX 020826] Was showing raw email — now a clickable
-                          founder-name hover card instead. Falls back to nothing
-                          (not the email) if attribution is missing. */}
-                      <FounderHoverCard
-                        founderId={suggestion.created_by_id}
-                        name={getDisplayName(founderProfiles[suggestion.created_by_id], suggestion.user_email)}
-                        profile={founderProfiles[suggestion.created_by_id]}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ===================== MLP ===================== */}
-        {reachedMLP && (
-          <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MLP</p>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-5">
-                {mlpAverages && (
-                  <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-100">
-                    {mlpAverages.features != null && (
-                      <div><p className="text-xs text-gray-400">Features</p><p className="text-lg font-bold text-gray-900">{mlpAverages.features}/10</p></div>
-                    )}
-                    {mlpAverages.lookFeel != null && (
-                      <div><p className="text-xs text-gray-400">Look &amp; feel</p><p className="text-lg font-bold text-gray-900">{mlpAverages.lookFeel}/10</p></div>
-                    )}
-                    {mlpAverages.ux != null && (
-                      <div><p className="text-xs text-gray-400">UX</p><p className="text-lg font-bold text-gray-900">{mlpAverages.ux}/10</p></div>
-                    )}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => toggle('mlp')}
-                  className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                >
-                  {productFeedbacks.length} response{productFeedbacks.length !== 1 ? 's' : ''}
-                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded.mlp ? 'rotate-180' : ''}`} />
-                </button>
-                {expanded.mlp && (
-                  <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-                    {productFeedbacks.map((fb) => {
-                      const hasRatings = fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null;
-                      return (
-                        <div key={fb.id} className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="w-4 h-4 text-pink-500" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              {/* [FIX 020826] External invitees (arrived via a token invite
-                                  link, no platform account) legitimately have no
-                                  created_by_id — that's expected, not a bug. Previously
-                                  FounderNameButton rendered nothing at all in that case,
-                                  making their feedback disappear from view entirely. Now
-                                  falls back to plain text (name/email, no profile link),
-                                  matching the same pattern already used for Beta sign-ups. */}
-                              {fb.created_by_id ? (
-                                <FounderHoverCard
-                                  founderId={fb.created_by_id}
-                                  name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
-                                  profile={founderProfiles[fb.created_by_id]}
-                                />
-                              ) : fb.created_by ? (
-                                <p className="text-xs text-gray-500">{fb.created_by}</p>
-                              ) : null}
-                              <span className="text-xs text-gray-400">
-                                {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                              </span>
-                            </div>
-                            {hasRatings ? (
-                              <div className="flex flex-wrap gap-4">
-                                {fb.features_rating != null && <span className="text-sm"><span className="text-gray-400">Features:</span> <span className="font-semibold text-indigo-600">{fb.features_rating}/10</span></span>}
-                                {fb.look_feel_rating != null && <span className="text-sm"><span className="text-gray-400">Look &amp; Feel:</span> <span className="font-semibold text-indigo-600">{fb.look_feel_rating}/10</span></span>}
-                                {fb.ux_rating != null && <span className="text-sm"><span className="text-gray-400">UX:</span> <span className="font-semibold text-indigo-600">{fb.ux_rating}/10</span></span>}
-                              </div>
-                            ) : (
-                              <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">
-                                Legacy feedback — no ratings
-                              </span>
-                            )}
-                            {fb.feedback_text && <p className="text-gray-700 mt-1">{fb.feedback_text}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* ===================== BETA ===================== */}
-        {reachedBeta && betaTesters.length > 0 && (() => {
-          const exportCSV = () => {
-            const rows = [
-              ['Full Name', 'Email', 'Date', 'Interest Reason'],
-              ...betaTesters.map(t => [
-                t.full_name || '',
-                t.email || '',
-                new Date(t.created_date).toLocaleDateString('en-US'),
-                t.interest_reason || ''
-              ])
-            ];
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'beta-testers.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-          };
-
-          return (
-            <div className="mb-10">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Beta</p>
-                <div className="flex items-center gap-2">
-                  {userPlan !== 'unicorn' && (
-                    <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">Unicorn only</span>
+          {isMLPMode ? (
+            <>
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  same calm centered header, same Pricing section (this file
+                  was missing Pricing entirely — never updated when it was
+                  added there). */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
                   )}
-                  <Button
-                    onClick={exportCSV}
-                    size="sm"
-                    variant="outline"
-                    disabled={userPlan !== 'unicorn'}
-                    className={userPlan === 'unicorn' ? "border-purple-300 text-purple-700 hover:bg-purple-50" : "border-gray-200 text-gray-400 cursor-not-allowed opacity-50"}
-                    title={userPlan !== 'unicorn' ? 'Available on Unicorn plan only' : ''}
-                  >
-                    Export CSV
-                  </Button>
                 </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-5">
-                  <button
-                    type="button"
-                    onClick={() => toggle('beta')}
-                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                  >
-                    {betaTesters.length} sign-up{betaTesters.length !== 1 ? 's' : ''}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.beta ? 'rotate-180' : ''}`} />
-                  </button>
-                  {expanded.beta && (
-                    <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-                      {betaTesters
-                        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-                        .map((tester) => (
-                          <div key={tester.id} className="flex items-start gap-3">
-                            <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-purple-700">
-                              {tester.full_name?.[0]?.toUpperCase() || '?'}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                {/* [FIX 020826] Beta sign-ups now carry created_by_id when the
-                                    person was logged in at sign-up time (see the companion fix
-                                    in beta-testing/page.jsx). Show a profile-linked button in
-                                    that case; fall back to plain text for genuinely anonymous
-                                    sign-ups (no account to link to). */}
-                                {tester.created_by_id ? (
-                                  <FounderHoverCard
-                                    founderId={tester.created_by_id}
-                                    name={tester.full_name}
-                                    profile={founderProfiles[tester.created_by_id]}
-                                  />
-                                ) : (
-                                  <p className="font-semibold text-gray-900">{tester.full_name}</p>
-                                )}
-                                <span className="text-xs text-gray-400">
-                                  {new Date(tester.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                </span>
-                              </div>
-                              {tester.interest_reason && (
-                                <p className="text-sm text-gray-600 mt-1 italic">"{tester.interest_reason}"</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+
+              {/* MLP Content — only the two fields marked public in the
+                  builder show up here. feedback_analysis and
+                  enhancement_plan are internal-only and never render. */}
+              {venture.mlp_data.lovable_experience && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Heart className="w-4 h-4 text-gray-400" />
+                    Why you'll love this
+                  </p>
+                  <ReadMoreText text={venture.mlp_data.lovable_experience} />
+                </div>
+              )}
+
+              {venture.mlp_data.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-4">
+                    <span className="text-base">💰</span>
+                    Pricing
+                  </p>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {venture.mlp_data.pricing_packages.map((pkg, i) => (
+                      <div key={i} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="font-semibold text-gray-900">{pkg.name}</p>
+                          <p className="text-lg font-bold text-indigo-600">${pkg.price}</p>
+                        </div>
+                        <p className="text-sm text-gray-500">{pkg.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* MLP Files */}
+              {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
+                <div className="mb-10">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Product showcase</h3>
+                  {venture.mlp_data.visual_prototype && (
+                    <p className="text-center text-gray-600 max-w-2xl mx-auto mb-6">{venture.mlp_data.visual_prototype}</p>
+                  )}
+                  <div className="space-y-4">
+                    {venture.mlp_data.uploaded_files.map((file, index) => renderFile(file, index, mlpHtmlContents))}
+                  </div>
+                </div>
+              )}
+
+              {/* MLP Feedback Form */}
+              <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-indigo-800">
+                    <MessageSquare className="w-5 h-5 text-indigo-600" />
+                    Share Your Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isOwnVenture ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
                     </div>
+                  ) : alreadyGaveMlpFeedback && !mlpFeedbackSubmitted ? (
+                    // [ADDED 020826] Checked against the database (see the
+                    // useEffect above) so a page refresh can't bypass this —
+                    // distinct from mlpFeedbackSubmitted, which only covers
+                    // the current session's own submission.
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this MLP. Thank you!</p>
+                    </div>
+                  ) : mlpFeedbackSubmitted ? (
+                    // [CHANGED] Added auto-redirect message so user knows the page will close
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
+                      <p className="text-gray-500 text-sm mt-1">Your response helps the team improve their product.</p>
+                      <p className="text-gray-400 text-xs mt-3">Redirecting you back to your dashboard in a few seconds...</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleMlpFeedbackSubmit} className="space-y-6">
+                      {/* [ADDED] Show reviewer venture name so user can confirm their identity is correct */}
+                      {reviewerVenture && (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 text-sm text-indigo-700">
+                          Giving feedback as: <strong>{reviewerVenture.name}</strong>
+                        </div>
+                      )}
+                      <div>
+                        <Label className="text-sm">Features (1-10)</Label>
+                        <Slider
+                          value={[featuresRating]}
+                          onValueChange={(value) => setFeaturesRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{featuresRating}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">Look &amp; Feel (1-10)</Label>
+                        <Slider
+                          value={[lookFeelRating]}
+                          onValueChange={(value) => setLookFeelRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{lookFeelRating}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">User Experience (1-10)</Label>
+                        <Slider
+                          value={[uxRating]}
+                          onValueChange={(value) => setUxRating(value[0])}
+                          max={10} min={1} step={1}
+                          disabled={isSubmittingMlpFeedback}
+                          className="mt-2 mb-1
+                            [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                            [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                            [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                            [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                            [&_[role=slider]]:shadow-md"
+                        />
+                        <div className="text-center text-sm font-semibold text-indigo-600">{uxRating}</div>
+                      </div>
+                      {/* [ADDED 020826] Pricing display + question — shown
+                          before asking for a reaction, matching the pattern
+                          used for the MVP mockup question (show it, then
+                          ask). */}
+                      {/* [FIX 020826] Removed the mini pricing-package list
+                          that was duplicated here — the full Pricing section
+                          (added earlier this session, matching
+                          venture-landing-page.jsx) already shows it above
+                          the form. Just the question stays here. */}
+                      {venture.mlp_data?.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
+                            <Slider
+                              value={[pricingScore ?? 5]}
+                              onValueChange={(value) => setPricingScore(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingMlpFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-indigo-600">{pricingScore ?? 5}</div>
+                            {pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">What would make this pricing feel more reasonable? (optional)</Label>
+                                <Textarea
+                                  value={pricingNote}
+                                  onChange={(e) => setPricingNote(e.target.value)}
+                                  placeholder="Share your thoughts..."
+                                  className="min-h-[60px] mt-1 text-sm"
+                                  disabled={isSubmittingMlpFeedback}
+                                />
+                              </div>
+                            )}
+                        </div>
+                      )}
+                      {/* [ADDED 020826] Follower checkbox — always
+                          unchecked by default, per this session's explicit
+                          decision (never implying interest from a good
+                          rating alone). Logged-in only — this page already
+                          enforces login, so no extra check needed here. */}
+                      <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                        <input
+                          type="checkbox"
+                          checked={wantsToFollow}
+                          onChange={(e) => setWantsToFollow(e.target.checked)}
+                          disabled={isSubmittingMlpFeedback}
+                          className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span>
+                          <span className="font-medium text-gray-800">Become a Follower</span>
+                          <br />
+                          <span className="text-xs text-gray-400">Get invited to future feedback rounds or Beta testing.</span>
+                        </span>
+                      </label>
+                      <div>
+                        <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
+                        <Textarea id="mlp-feedback" value={mlpFeedbackText}
+                          onChange={(e) => setMlpFeedbackText(e.target.value)}
+                          placeholder="Your feedback helps make this product even better..."
+                          className="min-h-[80px] mt-2" disabled={isSubmittingMlpFeedback} />
+                      </div>
+                      <Button type="submit" disabled={isSubmittingMlpFeedback}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700">
+                        {isSubmittingMlpFeedback
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                          : <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
+                        }
+                      </Button>
+                    </form>
                   )}
                 </CardContent>
               </Card>
-            </div>
-          );
-        })()}
+            </>
+          ) : (
+            <>
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  these two files are near-identical forks (public link vs.
+                  in-app campaign invite) and had drifted out of sync
+                  visually. Same header/Problem-Solution treatment as there. */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-8">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
+              </div>
 
-        {/* Empty state */}
-        {!reachedMVP && !reachedMLP && !reachedBeta && (
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-12 text-center">
-              <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No feedback yet</h3>
-              <p className="text-gray-400">Share your landing page to start collecting feedback from users.</p>
-            </CardContent>
-          </Card>
-        )}
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden mb-8">
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-gray-400" />
+                    The problem we solve
+                  </p>
+                  <ReadMoreText text={venture.problem} />
+                </div>
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-4 h-4 text-gray-400" />
+                    Our innovative solution
+                  </p>
+                  <ReadMoreText text={venture.solution} />
+                </div>
+              </div>
 
+              {/* [FIX 020826] Removed product_definition / technical_specs /
+                  user_testing — confirmed these are legacy fields from an
+                  older MVP builder version (same finding as
+                  venture-landing-page.jsx). The current mvp-development
+                  builder only ever saves feature_matrix and uploaded_files. */}
+              {venture.mvp_uploaded && venture.mvp_data && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Our minimum viable product</h2>
+                  {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl p-6 md:p-8">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-4">MVP artifacts</p>
+                      <div className="space-y-4">
+                        {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {hasSelectedFeaturesForMVPFeedback && (
+                <div className="mb-12">
+                  {/* [ADDED 020826] Anti-abuse guards — checked server-side
+                      (see the useEffect above), so a page refresh can't be
+                      used to bypass them. */}
+                  {isOwnVenture ? (
+                    <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMvpFeedback ? (
+                    <div className="text-center py-8 border border-green-200 rounded-xl bg-green-50">
+                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-green-700 font-semibold">You've already given feedback on this MVP. Thank you!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
+                      {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
+                      <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* [REMOVED] Like button removed — no longer relevant for the feedback flow */}
+            </>
+          )}
+
+        </main>
       </div>
-    </div>
+      {showInsightAnimation && (
+        <InsightEarnedAnimation onComplete={() => { window.location.href = '/dashboard'; }} />
+      )}
+    </>
   );
 }

@@ -151,7 +151,15 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
           .catch((err) => console.error('Could not award Insight Credits:', err));
       }
 
-      setTimeout(() => { if (onFeedbackSubmitted) onFeedbackSubmitted(); }, 2000);
+      // [FIX 020826] For a logged-in reviewer, navigation now happens after
+      // the Insight animation finishes (see the animation's onComplete
+      // below) — routes back to their own dashboard, since they got here by
+      // clicking a feedback-request notification there. For an anonymous
+      // reviewer (no animation, nothing to route back to), keep the
+      // existing onFeedbackSubmitted flow.
+      if (!currentUser) {
+        setTimeout(() => { if (onFeedbackSubmitted) onFeedbackSubmitted(); }, 2000);
+      }
 
     } catch (error) {
       console.error("Error submitting feedback:", error);
@@ -203,7 +211,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                 />
                 <div className="flex justify-between items-center mt-3">
                   <span className="text-sm font-semibold text-gray-500">0</span>
-                  <span className="text-lg sm:text-2xl font-bold text-indigo-600">{productScore ?? '—'}</span>
+                  <span className="text-lg sm:text-2xl font-bold text-indigo-600">{productScore ?? 0}</span>
                   <span className="text-sm font-semibold text-gray-500">10</span>
                 </div>
               </div>
@@ -258,7 +266,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     <span className="text-xl sm:text-3xl font-bold text-indigo-600">
-                      {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : '—'}
+                      {feedbackData[feature.id] !== undefined ? feedbackData[feature.id] : 0}
                     </span>
                     {feedbackData[feature.id] !== undefined && (
                       <div className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getImportance(feedbackData[feature.id]).color}`}>
@@ -347,9 +355,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                 className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
               <span>
-                <span className="font-medium text-gray-800">Want to keep contributing to this venture?</span>
+                <span className="font-medium text-gray-800">Become a Follower</span>
                 <br />
-                <span className="text-xs text-gray-400">(You may be invited for future feedback rounds or Beta testing — that's up to the founder.)</span>
+                <span className="text-xs text-gray-400">Get invited to future feedback rounds or Beta testing.</span>
               </span>
             </label>
 
@@ -381,7 +389,7 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
         </CardContent>
       </Card>
       {showInsightAnimation && (
-        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+        <InsightEarnedAnimation onComplete={() => { window.location.href = '/dashboard'; }} />
       )}
     </div>
   );
