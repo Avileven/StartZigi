@@ -490,6 +490,21 @@ export default function VentureLanding() {
             console.error('Could not save Follower:', followError);
           }
         });
+        // [ADDED 020826] Dashboard notification — created_by_id holds the
+        // follower's own id, so clicking "View Profile" can look them up.
+        supabase.from('venture_messages').insert({
+          id: crypto.randomUUID(),
+          created_date: new Date().toISOString(),
+          venture_id: venture.id,
+          message_type: 'follower_joined',
+          title: '👋 New Follower!',
+          content: 'Someone who reviewed your MLP wants to keep contributing to this venture.',
+          priority: 3,
+          is_dismissed: false,
+          created_by_id: currentUser.id,
+        }).then(({ error: msgError }) => {
+          if (msgError) console.error('Could not create follower notification:', msgError);
+        });
       }
 
       setMlpFeedbackSubmitted(true);

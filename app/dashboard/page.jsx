@@ -150,6 +150,21 @@ function getNewStageTag(phase, messageType) {
   return null;
 }
 
+// [ADDED 020826] Followers project — same helpers already used in
+// product-feedback-page.jsx and my-account-page.jsx, kept in sync so the
+// profile preview reads identically everywhere.
+function getJourneyTag(rawPhase) {
+  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Beta' };
+  return map[rawPhase] || null;
+}
+function getInsightStatus(count) {
+  if (count >= 50) return 'Insight Master';
+  if (count >= 20) return 'Insight Champion';
+  if (count >= 5) return 'Insight Builder';
+  if (count >= 1) return 'Insight Starter';
+  return 'Insight Seeker';
+}
+
 export default function Dashboard() {
   const [ventures, setVentures] = useState([]);
   const [currentVenture, setCurrentVenture] = useState(null);
@@ -195,6 +210,10 @@ export default function Dashboard() {
   // [ADDED] Phase completion modal state
   const [showPhaseModal, setShowPhaseModal] = useState(false);
   const [phaseModalData, setPhaseModalData] = useState(null); // { phase, fundingEvents, venture }
+  // [ADDED 020826] Followers project — lightweight profile-preview modal,
+  // opened from a "follower_joined" message.
+  const [followerProfile, setFollowerProfile] = useState(null);
+  const [isLoadingFollowerProfile, setIsLoadingFollowerProfile] = useState(false);
   const [liveBalance, setLiveBalance] = useState(0);
   //new valuation
   const [currentValuation, setCurrentValuation] = useState(0);
@@ -790,6 +809,26 @@ if (userVentures.length === 0) {
       }
     }
     setMessages(prev => prev.filter(msg => msg.id !== message.id));
+  };
+
+  // [ADDED 020826] Followers project — fetches and opens the lightweight
+  // profile-preview modal for a "follower_joined" message. Same RPC and
+  // public-status-label approach already used in product-feedback-page.jsx
+  // and my-account-page.jsx (never the raw feedback count, per A.6.2).
+  const openFollowerProfile = async (userId) => {
+    if (!userId) return;
+    setIsLoadingFollowerProfile(true);
+    setFollowerProfile({});
+    try {
+      const { data, error } = await supabase.rpc('get_public_founder_profile', { profile_id: userId });
+      if (error) throw error;
+      setFollowerProfile(data?.[0] || null);
+    } catch (error) {
+      console.error('Could not load follower profile:', error);
+      setFollowerProfile(null);
+    } finally {
+      setIsLoadingFollowerProfile(false);
+    }
   };
 
   const handleVisitPage = async (message) => {
@@ -1554,6 +1593,60 @@ if (showToS) {
         />
       )}
 
+      {/* [ADDED 020826] Followers project — lightweight profile-preview
+          modal, opened via "View Profile" on a follower_joined message.
+          Same ring-visual language as elsewhere, simplified for a modal
+          (no hover, just Stage + Insight status + Zig age). */}
+      {followerProfile !== null && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4" onClick={() => setFollowerProfile(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            {isLoadingFollowerProfile ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+            ) : followerProfile ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">{followerProfile.username || 'Founder'}</p>
+                    <p className="text-xs text-gray-400">Public profile</p>
+                  </div>
+                  <button onClick={() => setFollowerProfile(null)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+                </div>
+                {followerProfile.early_adopter && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 mb-3">
+                    ⭐ Early Adopter
+                  </span>
+                )}
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-center">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{getJourneyTag(followerProfile.current_phase) || '—'}</p>
+                    <p className="text-[11px] text-gray-400">Stage</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{getInsightStatus(followerProfile.feedback_count ?? 0).replace('Insight ', '')}</p>
+                    <p className="text-[11px] text-gray-400">Status</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {followerProfile.joined_date
+                        ? (() => {
+                            const days = Math.floor((Date.now() - new Date(followerProfile.joined_date).getTime()) / 86400000);
+                            if (days < 30) return `${days}d`;
+                            if (days < 365) return `${Math.floor(days / 30)}mo`;
+                            return `${Math.floor(days / 365)}y`;
+                          })()
+                        : '—'}
+                    </p>
+                    <p className="text-[11px] text-gray-400">Zig age</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">Could not load this profile.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <VCMeetingModal
         isOpen={isMeetingModalOpen}
         onClose={() => setIsMeetingModalOpen(false)}
@@ -1973,6 +2066,29 @@ if (showToS) {
   >
     <X className="w-4 h-4 mr-2" /> Dismiss
   </Button>
+)}
+{/* [ADDED 020826] Followers project — View Profile opens a lightweight
+    profile-preview modal (see state/handler + render further below),
+    reusing the same get_public_founder_profile RPC already used elsewhere
+    (product-feedback-page.jsx, my-account-page.jsx). */}
+{message.message_type === 'follower_joined' && (
+  <div className="flex gap-2 mt-2">
+    <Button
+      size="sm"
+      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+      onClick={() => openFollowerProfile(message.created_by_id)}
+    >
+      View Profile
+    </Button>
+    <Button
+      variant="outline"
+      size="sm"
+      className="text-gray-500 hover:bg-gray-50"
+      onClick={() => dismissMessage(message)}
+    >
+      X Dismiss
+    </Button>
+  </div>
 )}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
                             <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
