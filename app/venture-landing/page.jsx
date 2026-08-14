@@ -130,6 +130,10 @@ export default function VentureLanding() {
   const PRICING_SCORE_THRESHOLD = 6;
   const [pricingScore, setPricingScore] = useState(null);
   const [pricingNote, setPricingNote] = useState('');
+  // [ADDED 020826] Follower — only meaningful/shown for a real logged-in
+  // visitor on this page (currentUser), not a token-invited anonymous one
+  // (invitedIdentity only) — there's no account to later invite.
+  const [wantsToFollow, setWantsToFollow] = useState(false);
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
   // [ADDED 020826] Insight Credits project, step 2.
@@ -410,6 +414,19 @@ export default function VentureLanding() {
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
 
+      // [ADDED 020826] Follower — same fire-and-forget pattern as
+      // venture-feedback/page.jsx. Only for a real logged-in visitor.
+      if (wantsToFollow && currentUser) {
+        supabase.from('venture_followers').insert({
+          venture_id: venture.id,
+          user_id: currentUser.id,
+        }).then(({ error: followError }) => {
+          if (followError && followError.code !== '23505') {
+            console.error('Could not save Follower:', followError);
+          }
+        });
+      }
+
       // [ADDED 020826] Insight Credits project, step 2 — only for a real
       // logged-in founder. Token-invited anonymous reviewers (invitedIdentity
       // only, currentUser null) have no profile to credit.
@@ -644,6 +661,26 @@ export default function VentureLanding() {
                             </div>
                           )}
                         </div>
+                      )}
+                      {/* [ADDED 020826] Follower checkbox — only shown for a
+                          real logged-in visitor (currentUser), since a
+                          token-invited anonymous reviewer has no account to
+                          later invite. Always unchecked by default. */}
+                      {currentUser && (
+                        <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                          <input
+                            type="checkbox"
+                            checked={wantsToFollow}
+                            onChange={(e) => setWantsToFollow(e.target.checked)}
+                            disabled={isSubmittingMlpFeedback}
+                            className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span>
+                            <span className="font-medium text-gray-800">Want to keep contributing to this venture?</span>
+                            <br />
+                            <span className="text-xs text-gray-400">(You may be invited for future feedback rounds or Beta testing — that's up to the founder.)</span>
+                          </span>
+                        </label>
                       )}
                       <div>
                         <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>

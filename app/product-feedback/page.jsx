@@ -1,9 +1,10 @@
-// 100826 UPDATE 
+// UPDATE 140826 WITH FOLOOW
 // [NEW] Public feedback page — no auth, loads venture by ?id= only.
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { createClient } from "@supabase/supabase-js";
 import {
-  Lightbulb, Target, Heart, FileText, CheckCircle, Users, Code,
-  Loader2, ExternalLink, Sparkles, MessageSquare, Send,
+  Lightbulb, Target, Heart, FileText, CheckCircle,
+  Loader2, ExternalLink, MessageSquare, Send,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
@@ -122,8 +123,15 @@ export default function VentureLanding() {
   const PRICING_SCORE_THRESHOLD = 6;
   const [pricingScore, setPricingScore] = useState(null);
   const [pricingNote, setPricingNote] = useState('');
+  // [ADDED 020826] Follower — a checkbox in the MLP feedback form itself
+  // (not a separate CTA after submit, per this session's decision), always
+  // unchecked by default. Only meaningful for a logged-in founder, since
+  // following requires a real account to later invite.
+  const [wantsToFollow, setWantsToFollow] = useState(false);
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
+  // [ADDED 020826] Insight Credits project, step 2.
+  const [showInsightAnimation, setShowInsightAnimation] = useState(false);
   // [ADDED] Reviewer venture data — loaded from ?from=VENTURE_ID in the URL.
   // This identifies which venture gave the feedback, for tracking inter-venture interactions.
   const [reviewerVenture, setReviewerVenture] = useState(null);
@@ -227,6 +235,39 @@ export default function VentureLanding() {
       setIsLoading(false);
     }
   }, [loadHtmlFiles]);
+
+  // [ADDED 020826] Insight Credits project, step 1 — anti-abuse checks.
+  // Both computed once venture + currentUser are both known, and checked
+  // server-side (not just a client-side "already submitted" flag that a
+  // page refresh would reset).
+  const [isOwnVenture, setIsOwnVenture] = useState(false);
+  const [alreadyGaveMvpFeedback, setAlreadyGaveMvpFeedback] = useState(false);
+  const [alreadyGaveMlpFeedback, setAlreadyGaveMlpFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!venture || !currentUser) return;
+    const checkAbuseGuards = async () => {
+      // Self-feedback: covers both the sole founder and any co-founder
+      // listed on the venture — none of them should be able to farm
+      // Insight Credits or skew their own ratings by reviewing themselves.
+      const founderIds = venture.founder_user_ids || [];
+      const isOwner = venture.created_by_id === currentUser.id || founderIds.includes(currentUser.id);
+      setIsOwnVenture(isOwner);
+      if (isOwner) return; // no need to check duplicates for someone who can't submit anyway
+
+      // Duplicate feedback: checked against the database, not just local
+      // state — a page refresh must not let the same person submit again.
+      const [mvpCheck, mlpCheck] = await Promise.all([
+        supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id).eq('created_by_id', currentUser.id),
+        supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('venture_id', venture.id).eq('created_by_id', currentUser.id),
+      ]);
+      setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
+      setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
+    };
+    checkAbuseGuards();
+  }, [venture, currentUser]);
+
+
 
   const handleJoinAsCofounder = useCallback(async () => {
     setJoinError(null);
@@ -430,8 +471,33 @@ export default function VentureLanding() {
         // Non-fatal — Thank You screen still shows
       }
 
+      // [ADDED 020826] Follower — saved as its own row, fire-and-forget
+      // (a failure here shouldn't block the thank-you flow). unique
+      // (venture_id, user_id) on the table means a duplicate insert (e.g.
+      // if the duplicate-feedback guard somehow let a second submission
+      // through) is safely ignored, not an error.
+      if (wantsToFollow && currentUser) {
+        supabase.from('venture_followers').insert({
+          venture_id: venture.id,
+          user_id: currentUser.id,
+        }).then(({ error: followError }) => {
+          if (followError && followError.code !== '23505') {
+            console.error('Could not save Follower:', followError);
+          }
+        });
+      }
+
       setMlpFeedbackSubmitted(true);
       setMlpFeedbackText("");
+
+      // [ADDED 020826] Insight Credits project, step 2 — login is enforced
+      // on this whole page (see the auth check earlier), so currentUser is
+      // always a real founder here, no anonymous check needed.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
 
       // [ADDED] Auto-redirect to dashboard after 3 seconds
       setTimeout(() => {
@@ -505,36 +571,59 @@ export default function VentureLanding() {
 
           {isMLPMode ? (
             <>
-              {/* MLP Hero */}
-              <div className="bg-gradient-to-br from-purple-600 via-pink-500 to-indigo-600 rounded-2xl flex flex-col items-center justify-center text-center px-8 py-16 mb-10 shadow-xl">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5">
-                  <Sparkles className="w-10 h-10 text-white" />
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  same calm centered header, same Pricing section (this file
+                  was missing Pricing entirely — never updated when it was
+                  added there). */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
                 </div>
-                <h1 className="text-5xl font-extrabold text-white mb-3 tracking-tight">{venture.name}</h1>
-                <p className="text-xl text-white/80 max-w-2xl leading-relaxed">{venture.description}</p>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
 
               {/* MLP Content — only the two fields marked public in the
                   builder show up here. feedback_analysis and
                   enhancement_plan are internal-only and never render. */}
               {venture.mlp_data.lovable_experience && (
-                <div className="mb-10">
-                  <Card className="shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 border-0">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-amber-800">
-                        <Heart className="w-5 h-5 text-amber-500" />
-                        Why You'll Love This
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent><ReadMoreText text={venture.mlp_data.lovable_experience} /></CardContent>
-                  </Card>
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Heart className="w-4 h-4 text-gray-400" />
+                    Why you'll love this
+                  </p>
+                  <ReadMoreText text={venture.mlp_data.lovable_experience} />
+                </div>
+              )}
+
+              {venture.mlp_data.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-4">
+                    <span className="text-base">💰</span>
+                    Pricing
+                  </p>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {venture.mlp_data.pricing_packages.map((pkg, i) => (
+                      <div key={i} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="font-semibold text-gray-900">{pkg.name}</p>
+                          <p className="text-lg font-bold text-indigo-600">${pkg.price}</p>
+                        </div>
+                        <p className="text-sm text-gray-500">{pkg.description}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* MLP Files */}
               {venture.mlp_data.uploaded_files && venture.mlp_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Product Showcase</h3>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Product showcase</h3>
                   {venture.mlp_data.visual_prototype && (
                     <p className="text-center text-gray-600 max-w-2xl mx-auto mb-6">{venture.mlp_data.visual_prototype}</p>
                   )}
@@ -553,7 +642,20 @@ export default function VentureLanding() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {mlpFeedbackSubmitted ? (
+                  {isOwnVenture ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMlpFeedback && !mlpFeedbackSubmitted ? (
+                    // [ADDED 020826] Checked against the database (see the
+                    // useEffect above) so a page refresh can't bypass this —
+                    // distinct from mlpFeedbackSubmitted, which only covers
+                    // the current session's own submission.
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this MLP. Thank you!</p>
+                    </div>
+                  ) : mlpFeedbackSubmitted ? (
                     // [CHANGED] Added auto-redirect message so user knows the page will close
                     <div className="text-center py-6">
                       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
@@ -621,19 +723,14 @@ export default function VentureLanding() {
                           before asking for a reaction, matching the pattern
                           used for the MVP mockup question (show it, then
                           ask). */}
+                      {/* [FIX 020826] Removed the mini pricing-package list
+                          that was duplicated here — the full Pricing section
+                          (added earlier this session, matching
+                          venture-landing-page.jsx) already shows it above
+                          the form. Just the question stays here. */}
                       {venture.mlp_data?.pricing_packages && venture.mlp_data.pricing_packages.length > 0 && (
                         <div className="border border-gray-200 rounded-xl p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">Pricing</p>
-                          <div className="grid gap-2">
-                            {venture.mlp_data.pricing_packages.map((pkg, i) => (
-                              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                                <span className="text-sm font-medium text-gray-800">{pkg.name}</span>
-                                <span className="text-sm font-semibold text-indigo-600">${pkg.price}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-4">
-                            <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
+                          <Label className="text-sm">Does this pricing feel reasonable and fitting for what you'd get? (1-10)</Label>
                             <Slider
                               value={[pricingScore ?? 5]}
                               onValueChange={(value) => setPricingScore(value[0])}
@@ -659,9 +756,27 @@ export default function VentureLanding() {
                                 />
                               </div>
                             )}
-                          </div>
                         </div>
                       )}
+                      {/* [ADDED 020826] Follower checkbox — always
+                          unchecked by default, per this session's explicit
+                          decision (never implying interest from a good
+                          rating alone). Logged-in only — this page already
+                          enforces login, so no extra check needed here. */}
+                      <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                        <input
+                          type="checkbox"
+                          checked={wantsToFollow}
+                          onChange={(e) => setWantsToFollow(e.target.checked)}
+                          disabled={isSubmittingMlpFeedback}
+                          className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span>
+                          <span className="font-medium text-gray-800">Want to keep contributing to this venture?</span>
+                          <br />
+                          <span className="text-xs text-gray-400">(You may be invited for future feedback rounds or Beta testing — that's up to the founder.)</span>
+                        </span>
+                      </label>
                       <div>
                         <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
                         <Textarea id="mlp-feedback" value={mlpFeedbackText}
@@ -683,88 +798,79 @@ export default function VentureLanding() {
             </>
           ) : (
             <>
-              {/* MVP Header */}
-              <Card className="shadow-xl mb-8">
-                <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-                  <div>
-                    <CardTitle className="text-3xl font-bold text-gray-900 mb-2">{venture.name}</CardTitle>
-                    <p className="text-gray-600 text-lg">{venture.description}</p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <Badge variant="outline">{getSectorLabel(venture.sector)}</Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-red-500" />
-                      The Problem We Solve
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.problem} /></CardContent>
-                </Card>
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-yellow-500" />
-                      Our Innovative Solution
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent><ReadMoreText text={venture.solution} /></CardContent>
-                </Card>
+              {/* [FIX 020826] Redesigned to match venture-landing-page.jsx —
+                  these two files are near-identical forks (public link vs.
+                  in-app campaign invite) and had drifted out of sync
+                  visually. Same header/Problem-Solution treatment as there. */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-8">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
               </div>
 
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden mb-8">
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-gray-400" />
+                    The problem we solve
+                  </p>
+                  <ReadMoreText text={venture.problem} />
+                </div>
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-4 h-4 text-gray-400" />
+                    Our innovative solution
+                  </p>
+                  <ReadMoreText text={venture.solution} />
+                </div>
+              </div>
+
+              {/* [FIX 020826] Removed product_definition / technical_specs /
+                  user_testing — confirmed these are legacy fields from an
+                  older MVP builder version (same finding as
+                  venture-landing-page.jsx). The current mvp-development
+                  builder only ever saves feature_matrix and uploaded_files. */}
               {venture.mvp_uploaded && venture.mvp_data && (
                 <div className="mb-12">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Our Minimum Viable Product (MVP)</h2>
-                  <div className="bg-white/60 backdrop-blur-sm p-8 rounded-xl shadow-lg">
-                    <div className="grid lg:grid-cols-2 gap-8">
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-purple-600" />
-                            Product Definition
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.product_definition} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Code className="w-5 h-5 text-blue-600" />
-                            Technical Approach
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.technical_specs} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Users className="w-5 h-5 text-green-600" />
-                            User Testing & Validation
-                          </h3>
-                          <ReadMoreText text={venture.mvp_data.user_testing} />
-                        </div>
-                      </div>
-                      <div className="space-y-6">
-                        {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
-                          <div>
-                            <h3 className="text-lg font-semibold mb-2">MVP Artifacts</h3>
-                            <div className="space-y-4">
-                              {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
-                            </div>
-                          </div>
-                        )}
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Our minimum viable product</h2>
+                  {venture.mvp_data.uploaded_files && venture.mvp_data.uploaded_files.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl p-6 md:p-8">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-4">MVP artifacts</p>
+                      <div className="space-y-4">
+                        {venture.mvp_data.uploaded_files.map((file, index) => renderFile(file, index, mvpHtmlContents))}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
               {hasSelectedFeaturesForMVPFeedback && (
                 <div className="mb-12">
-                  {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
-                  {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
-                  <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
+                  {/* [ADDED 020826] Anti-abuse guards — checked server-side
+                      (see the useEffect above), so a page refresh can't be
+                      used to bypass them. */}
+                  {isOwnVenture ? (
+                    <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveMvpFeedback ? (
+                    <div className="text-center py-8 border border-green-200 rounded-xl bg-green-50">
+                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-green-700 font-semibold">You've already given feedback on this MVP. Thank you!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* [CHANGED] Added reviewerVenture prop so the form knows who is giving the feedback */}
+                      {/* [FIX 020826] Added campaignId so MVP feedback/suggestions can be linked back to the promotion round */}
+                      <InteractiveFeedbackForm venture={venture} onFeedbackSubmitted={handleInteractiveFeedbackSubmitted} reviewerVenture={reviewerVenture} campaignId={campaignId} />
+                    </>
+                  )}
                 </div>
               )}
 
@@ -774,6 +880,9 @@ export default function VentureLanding() {
 
         </main>
       </div>
+      {showInsightAnimation && (
+        <InsightEarnedAnimation onComplete={() => setShowInsightAnimation(false)} />
+      )}
     </>
   );
 }

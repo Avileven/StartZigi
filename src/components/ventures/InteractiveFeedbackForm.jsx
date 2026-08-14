@@ -17,6 +17,9 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
   const [isSubmitted, setIsSubmitted] = useState(false);
   // [ADDED 020826] Insight Credits project, step 2.
   const [showInsightAnimation, setShowInsightAnimation] = useState(false);
+  // [ADDED 020826] Follower — same mechanism as MLP's, unified wording,
+  // available at MVP too (originally MLP-only, extended this session).
+  const [wantsToFollow, setWantsToFollow] = useState(false);
   // [ADDED 020826] Part G.6 — product-level question, shown before the
   // per-feature list. PRODUCT_SCORE_THRESHOLD is the "low score" cutoff
   // below which the optional follow-up appears — proposed as <6 this
@@ -123,6 +126,19 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
 
       await Promise.all([productLevelPromise, ...feedbackPromises, ...suggestionPromises]);
       setIsSubmitted(true);
+
+      // [ADDED 020826] Follower — same fire-and-forget pattern used on the
+      // MLP side. Only for a real logged-in reviewer.
+      if (wantsToFollow && currentUser) {
+        supabase.from('venture_followers').insert({
+          venture_id: venture.id,
+          user_id: currentUser.id,
+        }).then(({ error: followError }) => {
+          if (followError && followError.code !== '23505') {
+            console.error('Could not save Follower:', followError);
+          }
+        });
+      }
 
       // [ADDED 020826] Insight Credits project, step 2 — only awarded to a
       // real logged-in founder (currentUser here comes from User.me() above,
@@ -315,6 +331,27 @@ export default function InteractiveFeedbackForm({ venture, onFeedbackSubmitted, 
                 </div>
               )}
             </div>
+
+            {/* [ADDED 020826] Follower checkbox — extended to MVP this
+                session (originally MLP-only). Only shown if the reviewer is
+                actually logged in — handled below via currentUser check at
+                submit time, but the checkbox itself is harmless to show to
+                everyone; the save is simply skipped for anonymous
+                reviewers. */}
+            <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+              <input
+                type="checkbox"
+                checked={wantsToFollow}
+                onChange={(e) => setWantsToFollow(e.target.checked)}
+                disabled={isSubmitting}
+                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span>
+                <span className="font-medium text-gray-800">Want to keep contributing to this venture?</span>
+                <br />
+                <span className="text-xs text-gray-400">(You may be invited for future feedback rounds or Beta testing — that's up to the founder.)</span>
+              </span>
+            </label>
 
             {/* Submit Button */}
             <div className="text-center pt-6">
