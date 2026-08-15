@@ -60,6 +60,21 @@ export default function businessPlan() {
   const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
   const [showTipsHint, setShowTipsHint] = useState(true);
   const [showZigItHint, setShowZigItHint] = useState(false);
+  // [ADDED 020826] Mobile Plan flow — one dominant "Continue with" card +
+  // horizontal progress dots, confirmed this session. Same fields, same
+  // autoSave, same handleSave as desktop — only the container/navigation
+  // differs.
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedField, setExpandedField] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [ventureMessages, setVentureMessages] = useState([]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(() => { setShowTipsHint(false); setShowZigItHint(true); }, 5000);
@@ -118,6 +133,10 @@ export default function businessPlan() {
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
+
+        // [ADDED 020826] For the mobile notification dropdown (bell icon).
+        const messages = await VentureMessage.filter({ venture_id: currentVenture.id, is_dismissed: false }, '-created_date');
+        setVentureMessages(messages || []);
 
 
         const existingPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
@@ -476,6 +495,207 @@ await VentureMessage.create({
 
   const budget = calculateTotalBudget();
   const allComplete = calculateCompletion() === 100;
+
+  // [ADDED 020826] Mobile Plan — 10 text fields + 3 budget categories,
+  // flattened into one ordered list of 13 "sections." Reuses the exact same
+  // state, setters, and budget row handlers already defined above — only
+  // the container/navigation differs from desktop.
+  const MOBILE_SECTIONS = [
+    { key: 'mission', label: 'Mission', type: 'text', value: mission, setter: setMission, placeholder: "What's your venture's mission?" },
+    { key: 'problem', label: 'The Problem', type: 'text', value: problem, setter: setProblem, placeholder: 'What problem are you solving?' },
+    { key: 'solution', label: 'Your Solution', type: 'text', value: solution, setter: setSolution, placeholder: 'How do you solve it?' },
+    { key: 'productDetails', label: 'Product Details', type: 'text', value: productDetails, setter: setProductDetails, placeholder: 'Describe your product.' },
+    { key: 'targetCustomers', label: 'Target Customers', type: 'text', value: targetCustomers, setter: setTargetCustomers, placeholder: 'Who is this for?' },
+    { key: 'marketSize', label: 'Market Size', type: 'text', value: marketSize, setter: setMarketSize, placeholder: 'How big is the opportunity?' },
+    { key: 'competition', label: 'Competition', type: 'text', value: competition, setter: setCompetition, placeholder: 'Who else solves this?' },
+    { key: 'entrepreneurBackground', label: 'Founding Team', type: 'text', value: entrepreneurBackground, setter: setEntrepreneurBackground, placeholder: 'Why are you the right team?' },
+    { key: 'revenueModel', label: 'Revenue Model', type: 'text', value: revenueModel, setter: setRevenueModel, placeholder: 'How will you make money?' },
+    { key: 'fundingRequirements', label: 'Funding Requirements', type: 'text', value: fundingRequirements, setter: setFundingRequirements, placeholder: 'What funding do you need?' },
+    { key: 'salaries', label: 'Team Salaries', type: 'budget-salaries' },
+    { key: 'marketing', label: 'Marketing Costs', type: 'budget-marketing' },
+    { key: 'operational', label: 'Operational Costs', type: 'budget-operational' },
+  ];
+
+  const isMobileSectionDone = (s) => {
+    if (s.type === 'text') return s.value.trim().length >= 50;
+    if (s.type === 'budget-salaries') return salaries.some(r => r.role.trim() && r.avg_salary > 0);
+    if (s.type === 'budget-marketing') return marketingCosts.some(r => r.channel.trim() && r.cost > 0);
+    if (s.type === 'budget-operational') return operationalCosts.some(r => r.item.trim() && r.cost > 0);
+    return false;
+  };
+
+  if (isMobile) {
+    const nextSection = MOBILE_SECTIONS.find(s => !isMobileSectionDone(s));
+    const completedCount = MOBILE_SECTIONS.filter(isMobileSectionDone).length;
+    const section = MOBILE_SECTIONS.find(s => s.key === expandedField);
+
+    if (section) {
+      return (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col p-4 overflow-y-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={async () => { await autoSave(); setExpandedField(null); }} className="p-2 -ml-2">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <p className="font-semibold text-gray-900">{section.label}</p>
+          </div>
+
+          {section.type === 'text' && (
+            <>
+              <Textarea
+                autoFocus
+                value={section.value}
+                onChange={(e) => section.setter(e.target.value)}
+                placeholder={section.placeholder}
+                className="flex-1 text-base resize-none border-0 focus-visible:ring-0 p-0"
+              />
+              <p className="text-xs text-gray-400 mb-3">{section.value.trim().length}/50 characters minimum</p>
+            </>
+          )}
+
+          {section.type === 'budget-salaries' && (
+            <div className="flex-1 space-y-3">
+              {salaries.map((s) => (
+                <div key={s.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                  <Input value={s.role} onChange={(e) => updateSalary(s.id, 'role', e.target.value)} placeholder="Role" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input type="number" value={s.count} onChange={(e) => updateSalary(s.id, 'count', parseInt(e.target.value) || 0)} placeholder="Count" />
+                    <Input type="number" value={s.avg_salary} onChange={(e) => updateSalary(s.id, 'avg_salary', parseInt(e.target.value) || 0)} placeholder="Avg salary" />
+                  </div>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeSalaryRow(s.id)} disabled={salaries.length === 1}>
+                    <Trash2 className="w-4 h-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" onClick={() => addSalaryRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add role</Button>
+              <p className="text-sm font-medium bg-blue-50 rounded-lg p-3">Total 2-Year: ${budget.salaries.toLocaleString()}</p>
+            </div>
+          )}
+
+          {section.type === 'budget-marketing' && (
+            <div className="flex-1 space-y-3">
+              {marketingCosts.map((m) => (
+                <div key={m.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                  <Input value={m.channel} onChange={(e) => updateMarketing(m.id, 'channel', e.target.value)} placeholder="Marketing channel" />
+                  <Input type="number" value={m.cost} onChange={(e) => updateMarketing(m.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly cost" />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeMarketingRow(m.id)} disabled={marketingCosts.length === 1}>
+                    <Trash2 className="w-4 h-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" onClick={() => addMarketingRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add channel</Button>
+              <p className="text-sm font-medium bg-green-50 rounded-lg p-3">Total 2-Year: ${budget.marketing.toLocaleString()}</p>
+            </div>
+          )}
+
+          {section.type === 'budget-operational' && (
+            <div className="flex-1 space-y-3">
+              {operationalCosts.map((o) => (
+                <div key={o.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                  <Input value={o.item} onChange={(e) => updateOperational(o.id, 'item', e.target.value)} placeholder="Operational item" />
+                  <Input type="number" value={o.cost} onChange={(e) => updateOperational(o.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly cost" />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeOperationalRow(o.id)} disabled={operationalCosts.length === 1}>
+                    <Trash2 className="w-4 h-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" onClick={() => addOperationalRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add item</Button>
+              <p className="text-sm font-medium bg-purple-50 rounded-lg p-3">Total 2-Year: ${budget.operational.toLocaleString()}</p>
+            </div>
+          )}
+
+          <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
+            Save and continue
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 relative">
+        {/* Header — project name + notification bell, no hamburger menu */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
+            <p className="text-xs text-gray-400">Current phase: Plan</p>
+          </div>
+          <button onClick={() => setShowNotifications(v => !v)} className="relative p-2 rounded-full bg-white border border-gray-200">
+            <span className="text-lg">🔔</span>
+            {ventureMessages.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
+                {ventureMessages.length}
+              </span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute top-14 right-4 left-4 bg-white border border-gray-200 rounded-xl shadow-lg z-40 max-h-80 overflow-y-auto">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <p className="font-semibold text-sm">Updates</p>
+                <button onClick={() => setShowNotifications(false)} className="text-gray-400">✕</button>
+              </div>
+              {ventureMessages.length === 0 ? (
+                <p className="text-sm text-gray-400 p-4 text-center">No updates.</p>
+              ) : (
+                ventureMessages.map((msg) => (
+                  <div key={msg.id} className="p-3 border-b border-gray-50 last:border-0">
+                    <p className="text-sm font-medium">{msg.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{msg.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Horizontal progress strip */}
+        <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
+          {MOBILE_SECTIONS.map((s, i) => {
+            const done = isMobileSectionDone(s);
+            const isCurrent = nextSection?.key === s.key;
+            return (
+              <React.Fragment key={s.key}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${
+                  done ? 'bg-green-500 text-white' : isCurrent ? 'bg-indigo-600 text-white' : 'border border-gray-300 text-gray-400'
+                }`}>
+                  {done ? '✓' : i + 1}
+                </div>
+                {i < MOBILE_SECTIONS.length - 1 && <div className="w-3 h-px bg-gray-200 flex-shrink-0" />}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Dominant "Continue with" card */}
+        {nextSection ? (
+          <button
+            onClick={() => setExpandedField(nextSection.key)}
+            className="w-full text-left bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between mb-4"
+          >
+            <div>
+              <p className="text-xs text-indigo-600 mb-0.5">Continue with</p>
+              <p className="font-semibold text-gray-900">{nextSection.label}</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-indigo-600 rotate-180" />
+          </button>
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 text-center">
+            <p className="font-semibold text-green-700">All sections complete!</p>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-400 text-center mb-6">{completedCount} of {MOBILE_SECTIONS.length} sections complete</p>
+
+        <Button
+          onClick={handleSave}
+          disabled={isSaving || !allComplete}
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+          size="lg"
+        >
+          {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<><Save className="w-4 h-4 mr-2" />Save Plan</>)}
+        </Button>
+      </div>
+    );
+  }
 
   // Cross-field context for Zig, keyed by the same snake_case keys as
   // zigConfig.js's FIELD_CONFIG (see ZIG_KEY_MAP above).

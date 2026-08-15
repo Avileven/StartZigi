@@ -1,7 +1,7 @@
 //createVenture - Updated with Ideas Bank integration
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { supabase, auth } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,19 @@ function CreateVentureForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [errorMessage, setErrorMessage] = useState("");
+  // [ADDED 020826] Mobile — every field opens fullscreen when editing.
+  // Desktop's 3-step/multi-field-per-step flow (below) is untouched; this
+  // is a separate render path using the same ventureData state and
+  // handleChange, flattened to one field at a time.
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedField, setExpandedField] = useState(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const handleChange = (field, value) => {
     setVentureData(prev => ({ ...prev, [field]: value }));
@@ -52,7 +65,12 @@ function CreateVentureForm() {
     e.preventDefault();
     setErrorMessage("");
     
-    if (step < 3) {
+    // [FIX 020826] This step-advancement only applies to desktop's 3-step
+    // flow. Mobile calls handleSubmit directly from "Launch Venture" (all
+    // fields already validated via MOBILE_FIELDS/mobileAllComplete), so it
+    // must skip straight to the actual creation logic below, not advance a
+    // step it never uses.
+    if (!isMobile && step < 3) {
       setStep(step + 1);
       return;
     }
@@ -372,6 +390,145 @@ function CreateVentureForm() {
         );
     }
   };
+
+  // [ADDED 020826] Mobile — same 5 fields as the desktop steps, flattened
+  // into one list. minLength drives both the checkmark and validation,
+  // matching canProceed()'s existing thresholds exactly (3/20/50/50, sector
+  // just needs any value).
+  const MOBILE_FIELDS = [
+    { key: 'name', label: 'Venture Name', type: 'input', minLength: 3, placeholder: 'e.g., QuitFlow, EcoWaste AI, UrbanConnect' },
+    { key: 'description', label: 'Brief Description', type: 'textarea', minLength: 20, placeholder: 'Describe your venture in one sentence...' },
+    { key: 'problem', label: 'The Problem', type: 'textarea', minLength: 50, placeholder: 'Describe the pain point or challenge your venture addresses...' },
+    { key: 'solution', label: 'Your Solution', type: 'textarea', minLength: 50, placeholder: 'How does your venture solve this problem?' },
+    { key: 'sector', label: 'Industry', type: 'select', minLength: 1, placeholder: 'Select your industry' },
+  ];
+
+  const isMobileFieldDone = (field) => (ventureData[field.key] || '').trim().length >= field.minLength;
+  const mobileAllComplete = MOBILE_FIELDS.every(isMobileFieldDone);
+
+  if (isMobile) {
+    if (expandedField) {
+      const field = MOBILE_FIELDS.find(f => f.key === expandedField);
+      return (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col p-4">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => setExpandedField(null)} className="p-2 -ml-2">
+              <ArrowRight className="w-5 h-5 rotate-180" />
+            </button>
+            <p className="font-semibold text-gray-900">{field.label}</p>
+          </div>
+
+          {field.type === 'input' && (
+            <Input
+              autoFocus
+              value={ventureData[field.key]}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              className="text-lg"
+            />
+          )}
+          {field.type === 'textarea' && (
+            <Textarea
+              autoFocus
+              value={ventureData[field.key]}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              className="flex-1 text-base resize-none border-0 focus-visible:ring-0 p-0"
+            />
+          )}
+          {field.type === 'select' && (
+            <Select value={ventureData.sector} onValueChange={(value) => handleChange('sector', value)}>
+              <SelectTrigger className="bg-white border border-gray-300 text-lg h-14">
+                <SelectValue placeholder={field.placeholder} />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                {SECTORS.map((sector) => (
+                  <SelectItem key={sector.value} value={sector.value}>{sector.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {field.type !== 'select' && (
+            <p className="text-xs text-gray-400 mt-3 mb-3">{(ventureData[field.key] || '').trim().length}/{field.minLength} characters minimum</p>
+          )}
+
+          <Button
+            onClick={() => setExpandedField(null)}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 mt-auto"
+            size="lg"
+          >
+            Save and continue
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-800">{errorMessage}</p>
+          </div>
+        )}
+
+        {/* [FIX 020826] Ideas Bank moved to the top on mobile — was below
+            the form, easy to miss since it required scrolling past the
+            whole form first. */}
+        {!searchParams.get('name') && (
+          <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Don't have an idea yet?</h3>
+              </div>
+              <Button onClick={() => router.push('/ideas')} className="w-full bg-indigo-600 hover:bg-indigo-700" size="sm">
+                <Lightbulb className="w-4 h-4 mr-2" />
+                Browse Ideas Bank
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <h1 className="text-xl font-bold text-gray-900 mb-4">Create your venture</h1>
+
+        <div className="space-y-2 mb-6">
+          {MOBILE_FIELDS.map((field) => {
+            const value = ventureData[field.key];
+            const displayValue = field.key === 'sector' ? (SECTORS.find(s => s.value === value)?.label || '') : value;
+            const isDone = isMobileFieldDone(field);
+            return (
+              <button
+                key={field.key}
+                onClick={() => setExpandedField(field.key)}
+                className="w-full text-left border border-gray-200 rounded-lg p-3 bg-white flex items-center justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 mb-0.5">{field.label}</p>
+                  <p className={`text-sm truncate ${displayValue ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {displayValue || 'Tap to edit'}
+                  </p>
+                </div>
+                {isDone && <Rocket className="w-4 h-4 text-green-500 flex-shrink-0 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <Button
+          onClick={handleSubmit}
+          disabled={!mobileAllComplete || isLoading}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+          size="lg"
+        >
+          {isLoading ? "Creating..." : "Launch Venture"}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8 pt-20">
