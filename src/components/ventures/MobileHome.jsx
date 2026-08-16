@@ -13,6 +13,7 @@
 // MLP/Beta mobile workspace exists yet).
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 
 // [ADDED 020826] Per-stage explanation for the (i) info icon.
@@ -26,104 +27,133 @@ const PHASE_DESCRIPTIONS = {
   growth: 'Scale what\'s already working.',
 };
 
-export default function MobileHome({ venture, messages = [] }) {
+export default function MobileHome({ venture, messages = [], userEmail }) {
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [updateIndex, setUpdateIndex] = useState(0);
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const latestUpdate = messages[updateIndex] || null;
   const canGoNewer = updateIndex > 0;
   const canGoOlder = updateIndex < messages.length - 1;
 
-  // [ADDED 020826] Continue card only for the one stage with a real mobile
-  // workspace (Plan). Every other stage just gets the Companion view below
-  // — no fake "Continue" leading somewhere that isn't mobile-ready yet.
   const showContinueToPlan = venture?.phase === 'idea' || venture?.phase === 'business_plan';
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 relative">
-      {/* [FIX 020826] Header now shows the StartZig logo, not the venture
-          name — venture name + phase moved below, just above the clock. */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </div>
-          <span className="font-extrabold text-gray-900 text-lg tracking-tight">StartZig</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => router.push('/my-account')} className="p-2 rounded-full bg-white border border-gray-200">
-            <span className="text-lg">👤</span>
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* [FIX 020826] New top row — Logout / Info / Profile / Notifications,
+          replacing the old ClientLayout Navigation/Toolbox buttons that
+          were hidden on /dashboard for this reason. Thin divider below,
+          separating it from the rest of the screen. */}
+      <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-3">
+        <button onClick={handleLogout} className="p-2 rounded-full bg-white border border-gray-200">
+          <span className="text-base">🔐</span>
+        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowPhaseInfo(v => !v)}
+            className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-sm text-gray-500"
+          >
+            i
           </button>
+          {showPhaseInfo && venture?.phase && (
+            <div className="absolute top-11 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-56 z-30">
+              <p className="text-xs font-semibold mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>{PHASE_LABELS[venture.phase]}</p>
+              <p className="text-xs text-gray-500">{PHASE_DESCRIPTIONS[venture.phase]}</p>
+            </div>
+          )}
+        </div>
+        <button onClick={() => setShowProfile(true)} className="p-2 rounded-full bg-white border border-gray-200">
+          <span className="text-base">👤</span>
+        </button>
+        <div className="relative">
           <button onClick={() => setShowNotifications(v => !v)} className="relative p-2 rounded-full bg-white border border-gray-200">
-            <span className="text-lg">🔔</span>
+            <span className="text-base">🔔</span>
             {messages.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
                 {messages.length}
               </span>
             )}
           </button>
-        </div>
-
-        {showNotifications && (
-          <div className="absolute top-14 right-4 left-4 bg-white border border-gray-200 rounded-xl shadow-lg z-40 max-h-80 overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <p className="font-semibold text-sm">Updates</p>
-              <button onClick={() => setShowNotifications(false)} className="text-gray-400">✕</button>
-            </div>
-            {messages.length === 0 ? (
-              <p className="text-sm text-gray-400 p-4 text-center">No updates.</p>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className="p-3 border-b border-gray-50 last:border-0">
-                  <p className="text-sm font-medium">{msg.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{msg.content}</p>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* [ADDED 020826] Venture name + phase (colored to match the clock),
-          moved here from the header. */}
-      <div className="mb-3">
-        <p className="font-bold text-xl text-gray-900">{venture?.name || 'Your Venture'}</p>
-        <p className="text-sm font-semibold" style={{ color: PHASE_HEX_COLORS[venture?.phase] || '#6b7280' }}>
-          {PHASE_LABELS[venture?.phase] || ''}
-        </p>
-      </div>
-
-      {/* [ADDED 020826] Explains what this screen is — especially important
-          once past Plan, where there's no Continue card and it wouldn't
-          otherwise be obvious what to do here. */}
-      <p className="text-xs text-gray-400 mb-4">
-        Your mobile companion — track updates and progress on the go.
-        {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
-          <> You're all set on mobile — head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
-        )}
-      </p>
-
-      {/* Journey clock — full-size, responsive (not shrunk), per this
-          session's decision. */}
-      {venture?.phase && (
-        <div className="mb-2 relative">
-          <button
-            onClick={() => setShowPhaseInfo(v => !v)}
-            className="absolute top-0 right-0 w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs text-gray-500 z-10"
-          >
-            i
-          </button>
-          {showPhaseInfo && (
-            <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-56 z-20">
-              <p className="text-xs font-semibold mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>{PHASE_LABELS[venture.phase]}</p>
-              <p className="text-xs text-gray-500">{PHASE_DESCRIPTIONS[venture.phase]}</p>
+          {showNotifications && (
+            <div className="absolute top-11 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-30 w-72 max-h-80 overflow-y-auto">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <p className="font-semibold text-sm">Updates</p>
+                <button onClick={() => setShowNotifications(false)} className="text-gray-400">✕</button>
+              </div>
+              {messages.length === 0 ? (
+                <p className="text-sm text-gray-400 p-4 text-center">No updates.</p>
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className="p-3 border-b border-gray-50 last:border-0">
+                    <p className="text-sm font-medium">{msg.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{msg.content}</p>
+                  </div>
+                ))
+              )}
             </div>
           )}
-          <JourneyClock currentPhase={venture.phase} maxWidth={160} />
+        </div>
+      </div>
+      <div className="border-b border-gray-200" />
+
+      {/* [ADDED 020826] Short profile overlay — deliberately brief (name/
+          email only, per this session's decision), not the full My Account
+          page. A link at the bottom goes there for anyone who wants more. */}
+      {showProfile && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowProfile(false)}>
+          <div className="bg-white rounded-t-2xl w-full p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-gray-900">Profile</p>
+              <button onClick={() => setShowProfile(false)} className="text-gray-400 text-lg">✕</button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">{userEmail || 'Signed in'}</p>
+            <button
+              onClick={() => { setShowProfile(false); router.push('/my-account'); }}
+              className="w-full text-center border border-gray-200 rounded-lg py-2.5 text-sm font-medium text-indigo-600"
+            >
+              View full account →
+            </button>
+          </div>
         </div>
       )}
+
+      <div className="p-4">
+        {/* [FIX 020826] Title is now clickable — takes the place of a
+            separate Home icon, per this session's decision. */}
+        <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 mb-3">
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <span className="font-extrabold text-gray-900 text-base tracking-tight">StartZig Mobile Companion</span>
+        </button>
+
+        <p className="text-xs text-gray-400 mb-4">
+          Your mobile companion — track updates and progress on the go.
+          {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
+            <> You're all set on mobile — head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
+          )}
+        </p>
+
+        {/* [ADDED 020826] Venture name + phase, right above the clock. */}
+        <div className="mb-3">
+          <p className="font-bold text-xl text-gray-900">{venture?.name || 'Your Venture'}</p>
+          <p className="text-sm font-semibold" style={{ color: PHASE_HEX_COLORS[venture?.phase] || '#6b7280' }}>
+            {PHASE_LABELS[venture?.phase] || ''}
+          </p>
+        </div>
+
+        {venture?.phase && (
+          <div className="mb-2">
+            <JourneyClock currentPhase={venture.phase} maxWidth={160} />
+          </div>
+        )}
 
       {/* Latest Update — always visible, separate from the notification
           dropdown above, with paging through recent messages. */}
@@ -166,6 +196,7 @@ export default function MobileHome({ venture, messages = [] }) {
           <span className="text-indigo-600">→</span>
         </button>
       )}
+      </div>
     </div>
   );
 }
