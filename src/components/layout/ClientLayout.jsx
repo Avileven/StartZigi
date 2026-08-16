@@ -481,30 +481,14 @@ pathname === "/"
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden w-full">
-          {/* [FIX 020826] Hidden on /dashboard — MobileHome.jsx (rendered
-              there for mobile visitors) has its own header/icon row, so
-              this generic Navigation/Toolbox header would be redundant.
-              Route inferred from the existing lowercase-kebab pattern
-              already confirmed for /plan and /my-account — not yet
-              confirmed for this specific route, flagged clearly rather than
-              assumed silently. */}
-          {!pathname?.startsWith('/dashboard') && (
-            <header className="bg-white border-b border-gray-200 px-4 py-3 md:hidden">
-              <div className="flex items-center justify-center gap-3">
-                <SidebarTrigger className="flex items-center justify-center gap-2 bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 w-36 h-9">
-                  Navigation
-                </SidebarTrigger>
-                <button
-                  className="flex items-center justify-center gap-2 bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 w-36 h-9"
-                  onClick={() => { window.dispatchEvent(new CustomEvent('openToolbox')); }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                  Toolbox
-                </button>
-              </div>
-            </header>
-          )}
-
+          {/* [FIX 020826] Removed entirely (not just on /dashboard) — the
+              founder confirmed this should be gone from every mobile page,
+              not only the ones with a custom mobile header like
+              MobileHome.jsx. Note: pages without their own mobile-specific
+              navigation (the "heavy" desktop-only pages — MVP builder,
+              Financials, ZigForge, etc.) now have no on-screen navigation
+              at all on mobile. Flagging this plainly since it's a real
+              tradeoff of the instruction, not silently assuming it's fine. */}
           <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
