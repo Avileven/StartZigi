@@ -13,13 +13,24 @@
 // MLP/Beta mobile workspace exists yet).
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/lib/utils';
-import JourneyClock from '@/components/ventures/JourneyClock';
+import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
+
+// [ADDED 020826] Per-stage explanation for the (i) info icon.
+const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Growth' };
+const PHASE_DESCRIPTIONS = {
+  idea: 'Turn your spark into a clear venture concept.',
+  business_plan: 'Define your mission, market, and business model.',
+  mvp: 'Build a minimum viable product and test it with real users.',
+  mlp: 'Turn feedback into a more lovable, polished product.',
+  beta: 'Open your product to real beta testers.',
+  growth: 'Scale what\'s already working.',
+};
 
 export default function MobileHome({ venture, messages = [] }) {
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [updateIndex, setUpdateIndex] = useState(0);
+  const [showPhaseInfo, setShowPhaseInfo] = useState(false);
 
   const latestUpdate = messages[updateIndex] || null;
   const canGoNewer = updateIndex > 0;
@@ -32,15 +43,17 @@ export default function MobileHome({ venture, messages = [] }) {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 relative">
-      {/* Header — venture name/phase, notification bell, My Account link.
-          No hamburger menu, per this session's explicit direction. */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="font-bold text-lg text-gray-900">{venture?.name || 'StartZig'}</p>
-          <p className="text-xs text-gray-400 capitalize">{(venture?.phase || '').replace('_', ' ')}</p>
+      {/* [FIX 020826] Header now shows the StartZig logo, not the venture
+          name — venture name + phase moved below, just above the clock. */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <span className="font-extrabold text-gray-900 text-lg tracking-tight">StartZig</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => router.push(createPageUrl('MyAccount'))} className="p-2 rounded-full bg-white border border-gray-200">
+          <button onClick={() => router.push('/my-account')} className="p-2 rounded-full bg-white border border-gray-200">
             <span className="text-lg">👤</span>
           </button>
           <button onClick={() => setShowNotifications(v => !v)} className="relative p-2 rounded-full bg-white border border-gray-200">
@@ -73,11 +86,42 @@ export default function MobileHome({ venture, messages = [] }) {
         )}
       </div>
 
+      {/* [ADDED 020826] Venture name + phase (colored to match the clock),
+          moved here from the header. */}
+      <div className="mb-3">
+        <p className="font-bold text-xl text-gray-900">{venture?.name || 'Your Venture'}</p>
+        <p className="text-sm font-semibold" style={{ color: PHASE_HEX_COLORS[venture?.phase] || '#6b7280' }}>
+          {PHASE_LABELS[venture?.phase] || ''}
+        </p>
+      </div>
+
+      {/* [ADDED 020826] Explains what this screen is — especially important
+          once past Plan, where there's no Continue card and it wouldn't
+          otherwise be obvious what to do here. */}
+      <p className="text-xs text-gray-400 mb-4">
+        Your mobile companion — track updates and progress on the go.
+        {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
+          <> You're all set on mobile — head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
+        )}
+      </p>
+
       {/* Journey clock — full-size, responsive (not shrunk), per this
           session's decision. */}
       {venture?.phase && (
-        <div className="mb-6">
-          <JourneyClock currentPhase={venture.phase} maxWidth={260} />
+        <div className="mb-2 relative">
+          <button
+            onClick={() => setShowPhaseInfo(v => !v)}
+            className="absolute top-0 right-0 w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs text-gray-500 z-10"
+          >
+            i
+          </button>
+          {showPhaseInfo && (
+            <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-56 z-20">
+              <p className="text-xs font-semibold mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>{PHASE_LABELS[venture.phase]}</p>
+              <p className="text-xs text-gray-500">{PHASE_DESCRIPTIONS[venture.phase]}</p>
+            </div>
+          )}
+          <JourneyClock currentPhase={venture.phase} maxWidth={160} />
         </div>
       )}
 

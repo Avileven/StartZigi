@@ -11,7 +11,7 @@
 // piece of work, not attempted here.
 import React from 'react';
 
-const PHASE_HEX_COLORS = {
+export const PHASE_HEX_COLORS = {
   idea: '#10b981',
   business_plan: '#f97316',
   mvp: '#3b82f6',
