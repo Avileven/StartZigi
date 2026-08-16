@@ -22,6 +22,8 @@ import {
   ExternalLink,
   FlaskConical,
   UserCircle,
+  Info,
+  Bell,
 } from "lucide-react";
 
 import {
@@ -481,14 +483,50 @@ pathname === "/"
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden w-full">
-          {/* [FIX 020826] Removed entirely (not just on /dashboard) — the
-              founder confirmed this should be gone from every mobile page,
-              not only the ones with a custom mobile header like
-              MobileHome.jsx. Note: pages without their own mobile-specific
-              navigation (the "heavy" desktop-only pages — MVP builder,
-              Financials, ZigForge, etc.) now have no on-screen navigation
-              at all on mobile. Flagging this plainly since it's a real
-              tradeoff of the instruction, not silently assuming it's fine. */}
+          {/* [FIX 020826] Replaces the old Navigation/Toolbox header —
+              persistent across every page (this is the global layout, so it
+              survives real navigation to /my-account, /notifications,
+              etc.), active state driven by the current route via
+              usePathname. This is why it lives here and not inside
+              MobileHome.jsx — a per-page icon row would disappear the
+              moment the user actually navigated away, which was the whole
+              problem with the previous version. */}
+          <div className="md:hidden flex items-center justify-between gap-2 px-4 pt-3 pb-3 bg-gray-50">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                pathname === '/dashboard' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+              }`}
+            >
+              <Home className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/info-mobile')}
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                pathname === '/info-mobile' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+              }`}
+            >
+              <Info className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/my-account')}
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                pathname === '/my-account' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+              }`}
+            >
+              <UserCircle className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/notifications')}
+              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                pathname === '/notifications' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+              }`}
+            >
+              <Bell className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="md:hidden border-b border-gray-200" />
+
           <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
