@@ -15,6 +15,7 @@
 //   prevents the modal from reopening on every dashboard load within 24 hours after closing.
 "use client";
 import { supabase } from '@/lib/supabase';
+import MobileHome from '@/components/ventures/MobileHome';
 import React, { useState, useEffect, useCallback } from "react";
 // תיקון: הוסרה src/ מכל הייבואות של entities.
 import { Venture } from "@/api/entities";
@@ -172,6 +173,17 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
   const [isLoading, setIsLoading] = useState(true);
+  // [ADDED 020826] Mobile Companion project — renders MobileHome.jsx
+  // instead of the full desktop dashboard below, once venture/messages are
+  // loaded. Kept in its own file (not another branch here) per this
+  // session's explicit decision.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
   const [showToS, setShowToS] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isAdvancedMeetingModalOpen, setIsAdvancedMeetingModalOpen] = useState(false);
@@ -1381,6 +1393,13 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         </div>
       </div>
     );
+  }
+
+  // [ADDED 020826] Mobile Companion project — renders the separate
+  // MobileHome.jsx instead of the full desktop dashboard below. Desktop
+  // rendering is completely untouched past this point.
+  if (isMobile && !showToS) {
+    return <MobileHome venture={currentVenture} messages={messages} />;
   }
 
  
