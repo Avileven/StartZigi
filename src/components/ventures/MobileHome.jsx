@@ -11,9 +11,10 @@
 // "Companion mode" only — journey clock, latest update, notifications,
 // a link to My Account. No Continue card once past business_plan (no MVP/
 // MLP/Beta mobile workspace exists yet).
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { LogOut, Info, User, Bell } from 'lucide-react';
 import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 
 // [ADDED 020826] Per-stage explanation for the (i) info icon.
@@ -27,12 +28,43 @@ const PHASE_DESCRIPTIONS = {
   growth: 'Scale what\'s already working.',
 };
 
+// [ADDED 020826] Same helpers used in product-feedback-page.jsx and
+// my-account-page.jsx, kept in sync so the profile snippet below reads
+// identically everywhere.
+function getJourneyTag(rawPhase) {
+  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Beta' };
+  return map[rawPhase] || null;
+}
+function getInsightStatus(count) {
+  if (count >= 50) return 'Master';
+  if (count >= 20) return 'Champion';
+  if (count >= 5) return 'Builder';
+  if (count >= 1) return 'Starter';
+  return 'Seeker';
+}
+
 export default function MobileHome({ venture, messages = [], userEmail }) {
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [updateIndex, setUpdateIndex] = useState(0);
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState(null);
+
+  // [FIX 020826] Profile snippet — was just email + a link, which added
+  // nothing real. Now fetches the same Stage/Insight/Zig-age summary
+  // already used on the public Zig Profile card elsewhere, via the same
+  // RPC, so it's actually substantive.
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return;
+      const { data } = await supabase.rpc('get_public_founder_profile', { profile_id: uid });
+      if (data?.[0]) setProfile(data[0]);
+    };
+    loadProfile();
+  }, []);
 
   const latestUpdate = messages[updateIndex] || null;
   const canGoNewer = updateIndex > 0;
@@ -47,34 +79,33 @@ export default function MobileHome({ venture, messages = [], userEmail }) {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* [FIX 020826] New top row — Logout / Info / Profile / Notifications,
-          replacing the old ClientLayout Navigation/Toolbox buttons that
-          were hidden on /dashboard for this reason. Thin divider below,
-          separating it from the rest of the screen. */}
-      <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-3">
-        <button onClick={handleLogout} className="p-2 rounded-full bg-white border border-gray-200">
-          <span className="text-base">🔐</span>
+      {/* [FIX 020826] Icons now proper lucide-react icons (were tiny/unclear
+          emoji), spread evenly across the full row width (was clustered on
+          the right). */}
+      <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-3">
+        <button onClick={handleLogout} className="w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+          <LogOut className="w-5 h-5 text-gray-700" />
         </button>
         <div className="relative">
           <button
             onClick={() => setShowPhaseInfo(v => !v)}
-            className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-sm text-gray-500"
+            className="w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center"
           >
-            i
+            <Info className="w-5 h-5 text-gray-700" />
           </button>
           {showPhaseInfo && venture?.phase && (
-            <div className="absolute top-11 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-56 z-30">
+            <div className="absolute top-12 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-56 z-30">
               <p className="text-xs font-semibold mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>{PHASE_LABELS[venture.phase]}</p>
               <p className="text-xs text-gray-500">{PHASE_DESCRIPTIONS[venture.phase]}</p>
             </div>
           )}
         </div>
-        <button onClick={() => setShowProfile(true)} className="p-2 rounded-full bg-white border border-gray-200">
-          <span className="text-base">👤</span>
+        <button onClick={() => setShowProfile(true)} className="w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+          <User className="w-5 h-5 text-gray-700" />
         </button>
         <div className="relative">
-          <button onClick={() => setShowNotifications(v => !v)} className="relative p-2 rounded-full bg-white border border-gray-200">
-            <span className="text-base">🔔</span>
+          <button onClick={() => setShowNotifications(v => !v)} className="relative w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+            <Bell className="w-5 h-5 text-gray-700" />
             {messages.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
                 {messages.length}
@@ -82,7 +113,7 @@ export default function MobileHome({ venture, messages = [], userEmail }) {
             )}
           </button>
           {showNotifications && (
-            <div className="absolute top-11 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-30 w-72 max-h-80 overflow-y-auto">
+            <div className="absolute top-12 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-30 w-72 max-h-80 overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-gray-100">
                 <p className="font-semibold text-sm">Updates</p>
                 <button onClick={() => setShowNotifications(false)} className="text-gray-400">✕</button>
@@ -103,17 +134,44 @@ export default function MobileHome({ venture, messages = [], userEmail }) {
       </div>
       <div className="border-b border-gray-200" />
 
-      {/* [ADDED 020826] Short profile overlay — deliberately brief (name/
-          email only, per this session's decision), not the full My Account
-          page. A link at the bottom goes there for anyone who wants more. */}
+      {/* [FIX 020826] Profile drawer now shows the same Stage/Insight
+          status/Zig age summary as the public Zig Profile card elsewhere —
+          was just an email address and a link, which wasn't real content. */}
       {showProfile && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowProfile(false)}>
           <div className="bg-white rounded-t-2xl w-full p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <p className="font-semibold text-gray-900">Profile</p>
+              <div>
+                <p className="font-semibold text-gray-900">{profile?.username || userEmail || 'Your profile'}</p>
+                {profile?.early_adopter && <p className="text-xs text-amber-600 font-medium mt-0.5">⭐ Early Adopter</p>}
+              </div>
               <button onClick={() => setShowProfile(false)} className="text-gray-400 text-lg">✕</button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">{userEmail || 'Signed in'}</p>
+            {profile && (
+              <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+                <div className="bg-gray-50 rounded-lg py-3">
+                  <p className="text-sm font-semibold text-gray-900">{getJourneyTag(profile.current_phase) || '—'}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Stage</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg py-3">
+                  <p className="text-sm font-semibold text-gray-900">{getInsightStatus(profile.feedback_count ?? 0)}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Status</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg py-3">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {profile.joined_date
+                      ? (() => {
+                          const days = Math.floor((Date.now() - new Date(profile.joined_date).getTime()) / 86400000);
+                          if (days < 30) return `${days}d`;
+                          if (days < 365) return `${Math.floor(days / 30)}mo`;
+                          return `${Math.floor(days / 365)}y`;
+                        })()
+                      : '—'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Zig age</p>
+                </div>
+              </div>
+            )}
             <button
               onClick={() => { setShowProfile(false); router.push('/my-account'); }}
               className="w-full text-center border border-gray-200 rounded-lg py-2.5 text-sm font-medium text-indigo-600"
@@ -141,8 +199,8 @@ export default function MobileHome({ venture, messages = [], userEmail }) {
           )}
         </p>
 
-        {/* [ADDED 020826] Venture name + phase, right above the clock. */}
-        <div className="mb-3">
+        {/* [FIX 020826] Centered above the clock — was left-aligned. */}
+        <div className="mb-3 text-center">
           <p className="font-bold text-xl text-gray-900">{venture?.name || 'Your Venture'}</p>
           <p className="text-sm font-semibold" style={{ color: PHASE_HEX_COLORS[venture?.phase] || '#6b7280' }}>
             {PHASE_LABELS[venture?.phase] || ''}
@@ -150,7 +208,7 @@ export default function MobileHome({ venture, messages = [], userEmail }) {
         </div>
 
         {venture?.phase && (
-          <div className="mb-2">
+          <div className="mb-2 flex justify-center">
             <JourneyClock currentPhase={venture.phase} maxWidth={160} />
           </div>
         )}

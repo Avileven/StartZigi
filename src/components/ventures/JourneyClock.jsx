@@ -9,7 +9,12 @@
 // pixel math. Per this session's decision: show it full-size and
 // responsive for now — a genuinely compact version is a later, separate
 // piece of work, not attempted here.
-import React from 'react';
+// [FIX 020826] Was rendering directly in its final state on mount — no
+// visible motion, looked static/dead. Now starts empty (full offset, needle
+// at IDEA) and animates to the real phase right after mount, using the
+// same double-rAF trick as StageUnlockAnimation.jsx to guarantee the CSS
+// transition actually fires (a same-render initial value never animates).
+import React, { useState, useEffect } from 'react';
 
 export const PHASE_HEX_COLORS = {
   idea: '#10b981',
@@ -29,9 +34,24 @@ export default function JourneyClock({ currentPhase, maxWidth = 320 }) {
   const phaseIndex = Math.max(0, PHASES.indexOf(currentPhase));
   const activeColor = PHASE_HEX_COLORS[currentPhase] || PHASE_HEX_COLORS.idea;
   const seg = 879 / 6;
-  const arcOffset = 879 - seg * (phaseIndex + 1);
-  const rotation = ROTATIONS[phaseIndex];
+  const targetOffset = 879 - seg * (phaseIndex + 1);
+  const targetRotation = ROTATIONS[phaseIndex];
   const nextLabel = LABELS[(phaseIndex + 1) % LABELS.length];
+
+  const [arcOffset, setArcOffset] = useState(879);
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    setArcOffset(879);
+    setRotation(0);
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setArcOffset(targetOffset);
+        setRotation(targetRotation);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [currentPhase, targetOffset, targetRotation]);
 
   return (
     <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: `${maxWidth}px`, margin: '0 auto' }}>
