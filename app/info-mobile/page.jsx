@@ -68,10 +68,14 @@ export default function InfoMobilePage() {
 
   return (
     <div className="p-4">
-      <p className="text-sm font-semibold text-center mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>
+      {/* [FIX 020826] Was phase (colored, larger) on top and venture name
+          (gray, smaller) below — swapped per this session's decision, to
+          match the same name-big-blue/phase-small-orange pattern used
+          everywhere else (Home page, Venture Profile card). */}
+      <p className="text-xl font-bold text-blue-600 text-center mb-1">{venture.name}</p>
+      <p className="text-sm font-semibold text-center mb-4" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>
         {PHASE_LABELS[venture.phase]}
       </p>
-      <p className="text-xs text-gray-400 text-center mb-4">{venture.name}</p>
 
       {content ? (
         <div className="bg-white border border-gray-200 rounded-xl p-4">

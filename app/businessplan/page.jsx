@@ -499,16 +499,16 @@ await VentureMessage.create({
   // as an optional section. Desktop still has budget (now optional, see
   // below), just not mirrored here.
   const MOBILE_SECTIONS = [
-    { key: 'mission', label: 'Mission', type: 'text', value: mission, setter: setMission, placeholder: "What's your venture's mission?" },
-    { key: 'problem', label: 'The Problem', type: 'text', value: problem, setter: setProblem, placeholder: 'What problem are you solving?' },
-    { key: 'solution', label: 'Your Solution', type: 'text', value: solution, setter: setSolution, placeholder: 'How do you solve it?' },
-    { key: 'productDetails', label: 'Product Details', type: 'text', value: productDetails, setter: setProductDetails, placeholder: 'Describe your product.' },
-    { key: 'targetCustomers', label: 'Target Customers', type: 'text', value: targetCustomers, setter: setTargetCustomers, placeholder: 'Who is this for?' },
-    { key: 'marketSize', label: 'Market Size', type: 'text', value: marketSize, setter: setMarketSize, placeholder: 'How big is the opportunity?' },
-    { key: 'competition', label: 'Competition', type: 'text', value: competition, setter: setCompetition, placeholder: 'Who else solves this?' },
-    { key: 'entrepreneurBackground', label: 'Founding Team', type: 'text', value: entrepreneurBackground, setter: setEntrepreneurBackground, placeholder: 'Why are you the right team?' },
-    { key: 'revenueModel', label: 'Revenue Model', type: 'text', value: revenueModel, setter: setRevenueModel, placeholder: 'How will you make money?' },
-    { key: 'fundingRequirements', label: 'Funding Requirements', type: 'text', value: fundingRequirements, setter: setFundingRequirements, placeholder: 'What funding do you need?' },
+    { key: 'mission', label: 'Mission', type: 'text', value: mission, setter: setMission, placeholder: "What's your venture's mission?", mentorId: 'mission_statement', mentorTitle: 'Mission Statement', tipsId: 'mission_statement' },
+    { key: 'problem', label: 'The Problem', type: 'text', value: problem, setter: setProblem, placeholder: 'What problem are you solving?', mentorId: 'problem_statement', mentorTitle: 'Problem Statement', tipsId: 'problem_statement' },
+    { key: 'solution', label: 'Your Solution', type: 'text', value: solution, setter: setSolution, placeholder: 'How do you solve it?', mentorId: 'proposed_solution', mentorTitle: 'Solution Overview', tipsId: 'proposed_solution' },
+    { key: 'productDetails', label: 'Product Details', type: 'text', value: productDetails, setter: setProductDetails, placeholder: 'Describe your product.', mentorId: 'product_details', mentorTitle: 'Product/Service Details', tipsId: 'product_details' },
+    { key: 'targetCustomers', label: 'Target Customers', type: 'text', value: targetCustomers, setter: setTargetCustomers, placeholder: 'Who is this for?', mentorId: 'target_customers', mentorTitle: 'Target Customers', tipsId: 'target_customers' },
+    { key: 'marketSize', label: 'Market Size', type: 'text', value: marketSize, setter: setMarketSize, placeholder: 'How big is the opportunity?', mentorId: 'market_size', mentorTitle: 'Market Size & Opportunity', tipsId: 'market_size' },
+    { key: 'competition', label: 'Competition', type: 'text', value: competition, setter: setCompetition, placeholder: 'Who else solves this?', mentorId: 'competition', mentorTitle: 'Competitive Landscape', tipsId: 'competitive_landscape' },
+    { key: 'entrepreneurBackground', label: 'Founding Team', type: 'text', value: entrepreneurBackground, setter: setEntrepreneurBackground, placeholder: 'Why are you the right team?', mentorId: 'founding_team', mentorTitle: 'Founding Team', tipsId: 'founding_team' },
+    { key: 'revenueModel', label: 'Revenue Model', type: 'text', value: revenueModel, setter: setRevenueModel, placeholder: 'How will you make money?', mentorId: 'revenue_model', mentorTitle: 'Revenue Model', tipsId: 'revenue_model' },
+    { key: 'fundingRequirements', label: 'Funding Requirements', type: 'text', value: fundingRequirements, setter: setFundingRequirements, placeholder: 'What funding do you need?', mentorId: 'funding_requirements', mentorTitle: 'Funding Requirements', tipsId: 'funding_requirements' },
   ];
 
   const isMobileSectionDone = (s) => s.value.trim().length >= 50;
@@ -537,13 +537,49 @@ await VentureMessage.create({
                 placeholder={section.placeholder}
                 className="flex-1 text-base resize-none border-0 focus-visible:ring-0 p-0"
               />
-              <p className="text-xs text-gray-400 mb-3">{section.value.trim().length}/50 characters minimum</p>
+              <p className="text-xs text-gray-400 mb-2">{section.value.trim().length}/50 characters minimum</p>
+              {/* [ADDED 020826] Zig it + Tips — were missing entirely from
+                  the mobile fullscreen editor (desktop has both on every
+                  field). The fullscreen field has plenty of room for these,
+                  more than desktop's cramped inline row. */}
+              <div className="flex items-center gap-3 mb-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: section.tipsId })}
+                  className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                >
+                  Tips
+                </Button>
+                <MentorButton onClick={() => openMentorModal(section.mentorId, section.mentorTitle, section.key)} />
+              </div>
             </>
           )}
 
           <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
             Save and continue
           </Button>
+
+          {/* [ADDED 020826] These modals previously only rendered inside
+              desktop's JSX tree — the Zig it/Tips buttons above would have
+              opened nothing at all on mobile without this. */}
+          <StaticGuidanceViewer
+            isOpen={staticGuidanceModal.isOpen}
+            onClose={() => setStaticGuidanceModal({ isOpen: false, sectionId: '' })}
+            sectionId={staticGuidanceModal.sectionId}
+          />
+          <MentorModal
+            isOpen={mentorModal.isOpen}
+            onClose={closeMentorModal}
+            documentType="business_plan"
+            fieldKey={ZIG_KEY_MAP[mentorModal.fieldKey] || mentorModal.fieldKey}
+            sectionTitle={mentorModal.sectionTitle}
+            fieldValue={getFieldValue(mentorModal.fieldKey)}
+            allFieldValues={allFieldValuesForZig}
+            firstPass={firstPass}
+            onUpdateField={handleMentorUpdate}
+            ventureId={venture?.id}
+          />
         </div>
       );
     }

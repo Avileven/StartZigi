@@ -434,20 +434,20 @@ export default function MentorModal({
         <DialogOverlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" />
         <DialogContent className="fixed left-[50%] top-[50%] z-[10000] w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] bg-white shadow-2xl h-[90vh] flex flex-col p-0 overflow-hidden text-gray-900">
 
-          <DialogHeader className="p-6 border-b bg-slate-50">
+          <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50">
             <div className="flex justify-between items-start">
               <div className="space-y-1 text-left">
-                <DialogTitle className="text-2xl font-bold text-indigo-900">
+                <DialogTitle className="text-lg sm:text-2xl font-bold text-indigo-900">
                   {sectionTitle}
                 </DialogTitle>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500">
                   AI-driven strategic guidance for your venture.
                 </p>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             <div className="max-w-3xl mx-auto space-y-4">
               <label className="text-sm font-semibold text-gray-700 block text-left">Your Draft:</label>
               <Textarea
@@ -458,10 +458,10 @@ export default function MentorModal({
               />
 
               {/* Step 1: pick a mode. Step 2: click the circle to run it. */}
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setMode('feedback')}
-                  className={`px-3 h-8 rounded-lg text-xs font-medium border transition-all ${
+                  className={`px-2.5 sm:px-3 h-8 rounded-lg text-xs font-medium border transition-all whitespace-nowrap ${
                     mode === 'feedback'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
@@ -482,18 +482,18 @@ export default function MentorModal({
                     isGettingFeedback || isGettingHelp || isLoadingContext ||
                     (mode === 'feedback' && !currentText.trim())
                   }
-                  className="w-16 h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center p-0 shrink-0"
                 >
                   {(isGettingFeedback || isGettingHelp) ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '36px', width: 'auto' }} />
+                    <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '30px', width: 'auto' }} className="sm:h-9" />
                   )}
                 </Button>
 
                 <button
                   onClick={() => setMode('help')}
-                  className={`px-3 h-8 rounded-lg text-xs font-medium border transition-all ${
+                  className={`px-2.5 sm:px-3 h-8 rounded-lg text-xs font-medium border transition-all whitespace-nowrap ${
                     mode === 'help'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'

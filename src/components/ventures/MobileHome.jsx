@@ -49,13 +49,12 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
           plainly) — stays in place, toggled with a small indicator. */}
       <button
         onClick={() => setShowExplanation(v => !v)}
-        className="flex items-center justify-center gap-1 w-full text-xs text-gray-400 mb-2"
+        className="flex items-center justify-center w-full mb-2"
       >
-        What is this?
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
       </button>
       {showExplanation && (
-        <p className="text-xs text-gray-400 mb-4 text-center">
+        <p className="text-xs text-gray-400 mb-4 text-left leading-relaxed px-2">
           Your mobile companion. Track updates and progress on the go.
           {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
             <> You are all set on mobile. Head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
@@ -77,6 +76,21 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
         <div className="mb-4 flex justify-center">
           <JourneyClock currentPhase={venture.phase} maxWidth={260} />
         </div>
+      )}
+
+      {/* [FIX 020826] Continue now appears before Venture Profile — so it's
+          clear what to do first, per this session's decision. */}
+      {showContinueToPlan && (
+        <button
+          onClick={() => router.push('/plan')}
+          className="w-full text-left bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between mb-4"
+        >
+          <div>
+            <p className="text-xs text-indigo-600 mb-0.5">Continue</p>
+            <p className="font-semibold text-gray-900">Complete your Plan</p>
+          </div>
+          <span className="text-indigo-600">→</span>
+        </button>
       )}
 
       {/* [FIX 020826] Venture Profile card — was styled like plain printed
@@ -133,19 +147,6 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
             </div>
           )}
         </div>
-      )}
-
-      {showContinueToPlan && (
-        <button
-          onClick={() => router.push('/plan')}
-          className="w-full text-left bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between"
-        >
-          <div>
-            <p className="text-xs text-indigo-600 mb-0.5">Continue</p>
-            <p className="font-semibold text-gray-900">Complete your Plan</p>
-          </div>
-          <span className="text-indigo-600">→</span>
-        </button>
       )}
 
       {/* [FIX 020826] Logout stays here, as a plain text link — not an icon
