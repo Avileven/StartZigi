@@ -513,6 +513,28 @@ await VentureMessage.create({
 
   const isMobileSectionDone = (s) => s.value.trim().length >= 50;
 
+  // [FIX 020826] Moved these two up from further down in the file — they
+  // used to be declared *after* this mobile early-return, which meant
+  // referencing them from inside the mobile branch (needed for the newly
+  // added MentorModal render there) threw a real ReferenceError at
+  // runtime ("Cannot access before initialization" — a temporal-dead-zone
+  // violation, since the mobile branch returns before the original
+  // declaration line was ever reached). This was the actual cause of the
+  // on-screen crash after adding Zig it to mobile.
+  const allFieldValuesForZig = {
+    problem,
+    target_customers: targetCustomers,
+    competitive_landscape: competition,
+    market_size: marketSize,
+    solution,
+    product_details: productDetails,
+    founding_team: entrepreneurBackground,
+    revenue_model: revenueModel,
+    mission,
+    funding_requirements: fundingRequirements,
+  };
+  const firstPass = !venture?.phase || venture.phase === 'business_plan';
+
   if (isMobile) {
     const nextSection = MOBILE_SECTIONS.find(s => !isMobileSectionDone(s));
     const completedCount = MOBILE_SECTIONS.filter(isMobileSectionDone).length;
@@ -645,26 +667,6 @@ await VentureMessage.create({
       </div>
     );
   }
-
-  // Cross-field context for Zig, keyed by the same snake_case keys as
-  // zigConfig.js's FIELD_CONFIG (see ZIG_KEY_MAP above).
-  const allFieldValuesForZig = {
-    problem,
-    target_customers: targetCustomers,
-    competitive_landscape: competition,
-    market_size: marketSize,
-    solution,
-    product_details: productDetails,
-    founding_team: entrepreneurBackground,
-    revenue_model: revenueModel,
-    mission,
-    funding_requirements: fundingRequirements,
-  };
-
-  // Has this venture already completed Foundation once before? Reuses the
-  // same phase field that already gates progression to MVP — no new
-  // computed check needed (see zig-core-prompt.md Data Model Notes).
-  const firstPass = !venture?.phase || venture.phase === 'business_plan';
 
   return (
     <>
