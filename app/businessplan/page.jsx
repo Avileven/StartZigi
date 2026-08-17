@@ -66,8 +66,9 @@ export default function businessPlan() {
   // differs.
   const [isMobile, setIsMobile] = useState(false);
   const [expandedField, setExpandedField] = useState(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [ventureMessages, setVentureMessages] = useState([]);
+  // [FIX 020826] showNotifications/ventureMessages removed — notifications
+  // now live in the global icon row (ClientLayout.jsx) + /notifications
+  // page, not a dropdown built into this page.
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -133,11 +134,6 @@ export default function businessPlan() {
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
-
-        // [ADDED 020826] For the mobile notification dropdown (bell icon).
-        const messages = await VentureMessage.filter({ venture_id: currentVenture.id, is_dismissed: false }, '-created_date');
-        setVentureMessages(messages || []);
-
 
         const existingPlans = await businessPlanEntity.filter({ venture_id: currentVenture.id });
 
@@ -496,10 +492,12 @@ await VentureMessage.create({
   const budget = calculateTotalBudget();
   const allComplete = calculateCompletion() === 100;
 
-  // [ADDED 020826] Mobile Plan — 10 text fields + 3 budget categories,
-  // flattened into one ordered list of 13 "sections." Reuses the exact same
-  // state, setters, and budget row handlers already defined above — only
-  // the container/navigation differs from desktop.
+  // [FIX 020826] Mobile Plan — was 10 text fields + 3 budget categories
+  // (13 sections). Budget removed from mobile entirely per this session's
+  // decision — it doesn't map well to "one field per screen" and the
+  // founder confirmed it shouldn't appear on mobile at all, not even
+  // as an optional section. Desktop still has budget (now optional, see
+  // below), just not mirrored here.
   const MOBILE_SECTIONS = [
     { key: 'mission', label: 'Mission', type: 'text', value: mission, setter: setMission, placeholder: "What's your venture's mission?" },
     { key: 'problem', label: 'The Problem', type: 'text', value: problem, setter: setProblem, placeholder: 'What problem are you solving?' },
@@ -511,18 +509,9 @@ await VentureMessage.create({
     { key: 'entrepreneurBackground', label: 'Founding Team', type: 'text', value: entrepreneurBackground, setter: setEntrepreneurBackground, placeholder: 'Why are you the right team?' },
     { key: 'revenueModel', label: 'Revenue Model', type: 'text', value: revenueModel, setter: setRevenueModel, placeholder: 'How will you make money?' },
     { key: 'fundingRequirements', label: 'Funding Requirements', type: 'text', value: fundingRequirements, setter: setFundingRequirements, placeholder: 'What funding do you need?' },
-    { key: 'salaries', label: 'Team Salaries', type: 'budget-salaries' },
-    { key: 'marketing', label: 'Marketing Costs', type: 'budget-marketing' },
-    { key: 'operational', label: 'Operational Costs', type: 'budget-operational' },
   ];
 
-  const isMobileSectionDone = (s) => {
-    if (s.type === 'text') return s.value.trim().length >= 50;
-    if (s.type === 'budget-salaries') return salaries.some(r => r.role.trim() && r.avg_salary > 0);
-    if (s.type === 'budget-marketing') return marketingCosts.some(r => r.channel.trim() && r.cost > 0);
-    if (s.type === 'budget-operational') return operationalCosts.some(r => r.item.trim() && r.cost > 0);
-    return false;
-  };
+  const isMobileSectionDone = (s) => s.value.trim().length >= 50;
 
   if (isMobile) {
     const nextSection = MOBILE_SECTIONS.find(s => !isMobileSectionDone(s));
@@ -552,57 +541,6 @@ await VentureMessage.create({
             </>
           )}
 
-          {section.type === 'budget-salaries' && (
-            <div className="flex-1 space-y-3">
-              {salaries.map((s) => (
-                <div key={s.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                  <Input value={s.role} onChange={(e) => updateSalary(s.id, 'role', e.target.value)} placeholder="Role" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input type="number" value={s.count} onChange={(e) => updateSalary(s.id, 'count', parseInt(e.target.value) || 0)} placeholder="Count" />
-                    <Input type="number" value={s.avg_salary} onChange={(e) => updateSalary(s.id, 'avg_salary', parseInt(e.target.value) || 0)} placeholder="Avg salary" />
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeSalaryRow(s.id)} disabled={salaries.length === 1}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Remove
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" onClick={() => addSalaryRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add role</Button>
-              <p className="text-sm font-medium bg-blue-50 rounded-lg p-3">Total 2-Year: ${budget.salaries.toLocaleString()}</p>
-            </div>
-          )}
-
-          {section.type === 'budget-marketing' && (
-            <div className="flex-1 space-y-3">
-              {marketingCosts.map((m) => (
-                <div key={m.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                  <Input value={m.channel} onChange={(e) => updateMarketing(m.id, 'channel', e.target.value)} placeholder="Marketing channel" />
-                  <Input type="number" value={m.cost} onChange={(e) => updateMarketing(m.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly cost" />
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeMarketingRow(m.id)} disabled={marketingCosts.length === 1}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Remove
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" onClick={() => addMarketingRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add channel</Button>
-              <p className="text-sm font-medium bg-green-50 rounded-lg p-3">Total 2-Year: ${budget.marketing.toLocaleString()}</p>
-            </div>
-          )}
-
-          {section.type === 'budget-operational' && (
-            <div className="flex-1 space-y-3">
-              {operationalCosts.map((o) => (
-                <div key={o.id} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                  <Input value={o.item} onChange={(e) => updateOperational(o.id, 'item', e.target.value)} placeholder="Operational item" />
-                  <Input type="number" value={o.cost} onChange={(e) => updateOperational(o.id, 'cost', parseInt(e.target.value) || 0)} placeholder="Monthly cost" />
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeOperationalRow(o.id)} disabled={operationalCosts.length === 1}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Remove
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" onClick={() => addOperationalRow()} variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" />Add item</Button>
-              <p className="text-sm font-medium bg-purple-50 rounded-lg p-3">Total 2-Year: ${budget.operational.toLocaleString()}</p>
-            </div>
-          )}
-
           <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
             Save and continue
           </Button>
@@ -612,43 +550,20 @@ await VentureMessage.create({
 
     return (
       <div className="min-h-screen bg-gray-50 p-4 relative">
-        {/* Header — project name + notification bell, no hamburger menu */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
-            <p className="text-xs text-gray-400">Current phase: Plan</p>
-          </div>
-          <button onClick={() => setShowNotifications(v => !v)} className="relative p-2 rounded-full bg-white border border-gray-200">
-            <span className="text-lg">🔔</span>
-            {ventureMessages.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
-                {ventureMessages.length}
-              </span>
-            )}
-          </button>
-
-          {showNotifications && (
-            <div className="absolute top-14 right-4 left-4 bg-white border border-gray-200 rounded-xl shadow-lg z-40 max-h-80 overflow-y-auto">
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <p className="font-semibold text-sm">Updates</p>
-                <button onClick={() => setShowNotifications(false)} className="text-gray-400">✕</button>
-              </div>
-              {ventureMessages.length === 0 ? (
-                <p className="text-sm text-gray-400 p-4 text-center">No updates.</p>
-              ) : (
-                ventureMessages.map((msg) => (
-                  <div key={msg.id} className="p-3 border-b border-gray-50 last:border-0">
-                    <p className="text-sm font-medium">{msg.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{msg.content}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+        {/* [FIX 020826] Removed the duplicate name/phase header and bell —
+            this was built before the icon row + notifications page were
+            centralized into ClientLayout.jsx; it was a leftover from before
+            that, causing a second bell icon with its own count on screen. */}
+        <div className="mb-6">
+          <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
+          <p className="text-xs text-gray-400">Current phase: Plan</p>
         </div>
 
-        {/* Horizontal progress strip */}
-        <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
+        {/* [FIX 020826] Was overflow-x-auto with no visible scroll
+            affordance — with more than ~8 dots it silently cut off at the
+            screen edge instead of scrolling into view. Wraps to multiple
+            rows instead, so every section is always visible. */}
+        <div className="flex flex-wrap items-center gap-1 mb-6">
           {MOBILE_SECTIONS.map((s, i) => {
             const done = isMobileSectionDone(s);
             const isCurrent = nextSection?.key === s.key;
@@ -983,6 +898,13 @@ await VentureMessage.create({
                       <MentorButton onClick={() => openMentorModal('budget_planning', 'Budget Planning', '')} />
                     </div>
                   </div>
+                  {/* [FIX 020826] Explicit "this is optional" note — was
+                      never actually enforced as required (not part of
+                      calculateCompletion), but that wasn't stated anywhere,
+                      so it read as mandatory. */}
+                  <p className="text-xs text-purple-700 bg-purple-100/60 rounded-lg px-3 py-2 mt-2">
+                    This section is optional. If it feels too early to plan your budget in detail, feel free to skip it for now — you can always come back to it later.
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-8">
                   {/* Team Salaries */}

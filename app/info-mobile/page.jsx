@@ -21,7 +21,7 @@ import { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 const PHASE_CONTENT = {
   business_plan: {
     title: "Let's start zigging!",
-    body: "To sharpen a raw idea into something grounded and concrete, you need to connect it to the entrepreneurial and business environment it actually operates in. This stage isn't asking for deep competitor analysis or precise financial modeling, but it's where you start building the foundations for that, and put your core assumptions to the test.\n\nLike any lean business plan, this isn't a document you fill out once and file away, it's a living document. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.",
+    body: "To sharpen a raw idea into something grounded and concrete, you need to connect it to the entrepreneurial and business environment it actually operates in. This stage isn't asking for deep competitor analysis or precise financial modeling, but it's where you start building the foundations for that, and put your core assumptions to the test.\n\nLike any lean plan, this isn't a document you fill out once and file away, it's a living document. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.",
   },
   mvp: {
     title: 'Well done!',
