@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
+import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles, Tag, FileText, Target, Building2 } from "lucide-react";
 
 const SECTORS = [
   { value: "not_sure", label: "Not sure yet" },
@@ -396,11 +396,11 @@ function CreateVentureForm() {
   // matching canProceed()'s existing thresholds exactly (3/20/50/50, sector
   // just needs any value).
   const MOBILE_FIELDS = [
-    { key: 'name', label: 'Venture Name', type: 'input', minLength: 3, placeholder: 'e.g., QuitFlow, EcoWaste AI, UrbanConnect' },
-    { key: 'description', label: 'Brief Description', type: 'textarea', minLength: 20, placeholder: 'Describe your venture in one sentence...' },
-    { key: 'problem', label: 'The Problem', type: 'textarea', minLength: 50, placeholder: 'Describe the pain point or challenge your venture addresses...' },
-    { key: 'solution', label: 'Your Solution', type: 'textarea', minLength: 50, placeholder: 'How does your venture solve this problem?' },
-    { key: 'sector', label: 'Industry', type: 'select', minLength: 1, placeholder: 'Select your industry' },
+    { key: 'name', label: 'Venture Name', type: 'input', minLength: 3, placeholder: 'e.g., QuitFlow, EcoWaste AI, UrbanConnect', icon: Tag },
+    { key: 'description', label: 'Brief Description', type: 'textarea', minLength: 20, placeholder: 'Describe your venture in one sentence...', icon: FileText },
+    { key: 'problem', label: 'The Problem', type: 'textarea', minLength: 50, placeholder: 'Describe the pain point or challenge your venture addresses...', icon: Target },
+    { key: 'solution', label: 'Your Solution', type: 'textarea', minLength: 50, placeholder: 'How does your venture solve this problem?', icon: Lightbulb },
+    { key: 'sector', label: 'Industry', type: 'select', minLength: 1, placeholder: 'Select your industry', icon: Building2 },
   ];
 
   const isMobileFieldDone = (field) => (ventureData[field.key] || '').trim().length >= field.minLength;
@@ -499,7 +499,7 @@ function CreateVentureForm() {
           {MOBILE_FIELDS.map((field) => {
             const value = ventureData[field.key];
             const displayValue = field.key === 'sector' ? (SECTORS.find(s => s.value === value)?.label || '') : value;
-            const isDone = isMobileFieldDone(field);
+            const FieldIcon = field.icon;
             return (
               <button
                 key={field.key}
@@ -512,7 +512,10 @@ function CreateVentureForm() {
                     {displayValue || 'Tap to edit'}
                   </p>
                 </div>
-                {isDone && <Rocket className="w-4 h-4 text-green-500 flex-shrink-0 ml-2" />}
+                {/* [FIX 020826] Was the same green Rocket icon on every
+                    field (only shown once filled in); now each field shows
+                    its own content-matching icon, always, in blue. */}
+                <FieldIcon className="w-4 h-4 text-blue-500 flex-shrink-0 ml-2" />
               </button>
             );
           })}

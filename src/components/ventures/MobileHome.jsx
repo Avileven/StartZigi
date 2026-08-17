@@ -6,7 +6,7 @@
 //
 // [FIX 020826] Simplified this session — the icon row and Info/Profile/
 // Notifications panels moved to ClientLayout.jsx (the global layout, so it
-// persists across real navigation to /journey, /my-account,
+// persists across real navigation to /info-mobile, /my-account,
 // /notifications). This file is now just the Home content: venture name +
 // phase, the journey clock, a styled Venture Profile card, and the
 // Continue-to-Plan card.
@@ -31,35 +31,51 @@ function formatValuation(val) {
 export default function MobileHome({ venture, messages = [], liveBalance = 0, currentValuation = 0 }) {
   const router = useRouter();
   const [showCreationDetails, setShowCreationDetails] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const showContinueToPlan = venture?.phase === 'idea' || venture?.phase === 'business_plan';
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 mb-3">
+      {/* [FIX 020826] Title now centered (was left-aligned). */}
+      <button onClick={() => router.push('/dashboard')} className="flex items-center justify-center gap-2 mb-3 w-full">
         <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         </div>
         <span className="font-extrabold text-gray-900 text-base tracking-tight">StartZig Mobile Companion</span>
       </button>
 
-      <p className="text-xs text-gray-400 mb-4">
-        Your mobile companion. Track updates and progress on the go.
-        {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
-          <> You are all set on mobile. Head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
-        )}
-      </p>
+      {/* [FIX 020826] Explanation is now collapsible (was always shown
+          plainly) — stays in place, toggled with a small indicator. */}
+      <button
+        onClick={() => setShowExplanation(v => !v)}
+        className="flex items-center justify-center gap-1 w-full text-xs text-gray-400 mb-2"
+      >
+        What is this?
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
+      </button>
+      {showExplanation && (
+        <p className="text-xs text-gray-400 mb-4 text-center">
+          Your mobile companion. Track updates and progress on the go.
+          {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
+            <> You are all set on mobile. Head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
+          )}
+        </p>
+      )}
 
       <div className="mb-3 text-center">
-        <p className="font-bold text-xl text-gray-900">{venture?.name || 'Your Venture'}</p>
+        {/* [FIX 020826] Venture name now blue. */}
+        <p className="font-bold text-xl text-blue-600">{venture?.name || 'Your Venture'}</p>
         <p className="text-sm font-semibold" style={{ color: PHASE_HEX_COLORS[venture?.phase] || '#6b7280' }}>
           {PHASE_LABELS[venture?.phase] || ''}
         </p>
       </div>
 
+      {/* [FIX 020826] Clock enlarged back up (was 160, shrinking it earlier
+          made it illegible/pointless — reverted, closer to original size). */}
       {venture?.phase && (
         <div className="mb-4 flex justify-center">
-          <JourneyClock currentPhase={venture.phase} maxWidth={160} />
+          <JourneyClock currentPhase={venture.phase} maxWidth={260} />
         </div>
       )}
 
@@ -69,7 +85,7 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
           app (Problem/Solution sections on the landing page, etc.). */}
       {venture && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
-          <p className="font-semibold text-gray-900 mb-2">{venture.name}</p>
+          <p className="font-semibold text-blue-600 mb-2">{venture.name}</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 mb-1">
             <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" />{messages.length} messages</span>
             <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{(venture.founder_user_ids || []).length || 1} founders</span>
