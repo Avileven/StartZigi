@@ -96,6 +96,7 @@ export default function ClientLayout({ children }) {
 
   const [user, setUser] = useState(null);
   const [venture, setVenture] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   // [ONBOARDING] Listens for the step broadcast from the Dashboard's first-time walkthrough
   const [onboardingStep, setOnboardingStep] = useState(-1);
@@ -154,6 +155,18 @@ export default function ClientLayout({ children }) {
           "-created_date"
         );
         setVenture(ventures[0] || null);
+
+        // [FIX 020826] Notification count for the mobile Bell icon — was
+        // lost when the icon row moved here from MobileHome.jsx (that
+        // version had `messages`, this one only had `venture`).
+        if (ventures[0]) {
+          const { count } = await supabase
+            .from('venture_messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('venture_id', ventures[0].id)
+            .eq('is_dismissed', false);
+          setUnreadCount(count || 0);
+        }
         
         // [CREDITS] טעינת קרדיטים של המשתמש
         if (currentUser) {
@@ -518,11 +531,16 @@ pathname === "/"
             </button>
             <button
               onClick={() => router.push('/notifications')}
-              className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+              className={`relative w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
                 pathname === '/notifications' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
               }`}
             >
               <Bell className="w-5 h-5" />
+              {unreadCount > 0 && pathname !== '/notifications' && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           </div>
           <div className="md:hidden border-b border-gray-200" />

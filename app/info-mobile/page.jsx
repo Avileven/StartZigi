@@ -3,27 +3,43 @@
 // FILE DESTINATION: app/info-mobile/page.jsx
 // This file creates the route /info-mobile (the Info icon's page).
 // ============================================================
-
-// [ADDED 020826] Mobile Companion project — full page for the Info icon in
-// ClientLayout's mobile icon row. Was a small popover over the clock on
-// MobileHome.jsx; per this session's decision, every icon now navigates to
-// a real page instead, so the icon row (which lives in ClientLayout, not
-// here) stays visible and shows this as the active tab.
+//
+// [FIX 020826] Real per-stage content, from the founder's own doc
+// ("Untitled document (3).docx") — replaces the placeholder one-liners.
+// Corrections applied during review: "Your set up" -> "You've set up"
+// (MVP), a comma splice fixed with a period ("...your first step. You
+// built..." — MLP), and a double space removed ("continue  collecting" ->
+// "continue collecting" — MLP). Growth has no content yet in the source
+// doc — intentionally left out, not guessed at.
+//
+// [FIX 020826] No JourneyClock here — it's already shown on the Home page
+// (MobileHome.jsx); duplicating it here added nothing.
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
+import { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 
-const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Growth' };
-const PHASE_DESCRIPTIONS = {
-  idea: 'Turn your spark into a clear venture concept.',
-  business_plan: 'Define your mission, market, and business model.',
-  mvp: 'Build a minimum viable product and test it with real users.',
-  mlp: 'Turn feedback into a more lovable, polished product.',
-  beta: 'Open your product to real beta testers.',
-  growth: 'Scale what is already working.',
+const PHASE_CONTENT = {
+  business_plan: {
+    title: "Let's start zigging!",
+    body: "To sharpen a raw idea into something grounded and concrete, you need to connect it to the entrepreneurial and business environment it actually operates in. This stage isn't asking for deep competitor analysis or precise financial modeling, but it's where you start building the foundations for that, and put your core assumptions to the test.\n\nLike any lean business plan, this isn't a document you fill out once and file away, it's a living document. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.",
+  },
+  mvp: {
+    title: 'Well done!',
+    body: "You've set up the foundations of your venture.\n\nAn MVP is the earliest stage where you connect a raw idea to an actual product, it's not final, and it's not supposed to be. The goal here is just to sharpen it as you go, not to lock it down.\n\nZig helps in two ways on this page: it reviews the features you've selected against your problem and solution, and it can suggest features you haven't thought of yet.\n\nOnce saved, this MVP data feeds into your landing page, where real users are invited to give feedback on it and suggest additional features themselves.\n\nDuring this stage you also need to complete your revenue model and start collecting feedback from the community.",
+  },
+  mlp: {
+    title: 'Great progress!',
+    body: "The MVP phase was your first step. You built the skeleton of your product and proved it can work. Now it's time to make it lovable.\n\nThe MLP phase is about precision: refining your product based on real user feedback, sharpening the experience, and building the moments that make users say \"I can't live without this.\" Less about adding features, more about getting the details right.\n\nDuring this stage you also need to continue collecting feedback from the community about your progress and updated demo.",
+  },
+  beta: {
+    title: "You've made it to Beta!",
+    body: "This page is not your product, it's your beta sign-up page. Its job is to attract early users, convince them to join your beta program, and collect their sign-ups. The more compelling it is, the more testers you'll attract.\n\nYou need 50 beta sign-ups to move to the Growth phase. Use the Promotion Center to share this page.",
+  },
 };
 
-export default function JourneyPage() {
+const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Growth' };
+
+export default function InfoMobilePage() {
   const [venture, setVenture] = useState(null);
 
   useEffect(() => {
@@ -43,26 +59,30 @@ export default function JourneyPage() {
   }, []);
 
   if (!venture) {
-    return <div className="p-6 text-center text-gray-400 text-sm">Loading your journey…</div>;
+    return <div className="p-6 text-center text-gray-400 text-sm">Loading…</div>;
   }
+
+  // [ADDED 020826] Growth has no content in the source doc yet — falls back
+  // to just the label, not a guessed description.
+  const content = PHASE_CONTENT[venture.phase];
 
   return (
     <div className="p-4">
-      <h1 className="font-bold text-xl text-gray-900 mb-1 text-center">Your Journey</h1>
-      <p className="text-sm font-semibold text-center mb-4" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>
-        {venture.name} — {PHASE_LABELS[venture.phase]}
+      <p className="text-sm font-semibold text-center mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>
+        {PHASE_LABELS[venture.phase]}
       </p>
+      <p className="text-xs text-gray-400 text-center mb-4">{venture.name}</p>
 
-      <div className="flex justify-center mb-6">
-        <JourneyClock currentPhase={venture.phase} maxWidth={260} />
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: PHASE_HEX_COLORS[venture.phase] }}>
-          {PHASE_LABELS[venture.phase]}
-        </p>
-        <p className="text-sm text-gray-600">{PHASE_DESCRIPTIONS[venture.phase]}</p>
-      </div>
+      {content ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h1 className="font-bold text-lg text-gray-900 mb-3">{content.title}</h1>
+          {content.body.split('\n\n').map((para, i) => (
+            <p key={i} className="text-sm text-gray-600 leading-relaxed mb-3 last:mb-0">{para}</p>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 text-center mt-8">No details for this stage yet.</p>
+      )}
     </div>
   );
 }
