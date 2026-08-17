@@ -559,23 +559,21 @@ await VentureMessage.create({
           <p className="text-xs text-gray-400">Current phase: Plan</p>
         </div>
 
-        {/* [FIX 020826] Was overflow-x-auto with no visible scroll
-            affordance — with more than ~8 dots it silently cut off at the
-            screen edge instead of scrolling into view. Wraps to multiple
-            rows instead, so every section is always visible. */}
-        <div className="flex flex-wrap items-center gap-1 mb-6">
+        {/* [FIX 020826] Replaced circles-with-numbers (which either
+            overflowed off-screen or wrapped to a second, ugly row) with a
+            single-row segmented bar — always fits in one line regardless of
+            section count, per this session's decision. */}
+        <div className="flex gap-1 mb-2">
           {MOBILE_SECTIONS.map((s, i) => {
             const done = isMobileSectionDone(s);
             const isCurrent = nextSection?.key === s.key;
             return (
-              <React.Fragment key={s.key}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${
-                  done ? 'bg-green-500 text-white' : isCurrent ? 'bg-indigo-600 text-white' : 'border border-gray-300 text-gray-400'
-                }`}>
-                  {done ? '✓' : i + 1}
-                </div>
-                {i < MOBILE_SECTIONS.length - 1 && <div className="w-3 h-px bg-gray-200 flex-shrink-0" />}
-              </React.Fragment>
+              <div
+                key={s.key}
+                className={`flex-1 h-1.5 rounded-full ${
+                  done ? 'bg-green-500' : isCurrent ? 'bg-indigo-600' : 'bg-gray-200'
+                }`}
+              />
             );
           })}
         </div>
