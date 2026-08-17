@@ -560,20 +560,27 @@ await VentureMessage.create({
                 className="flex-1 text-base resize-none border-0 focus-visible:ring-0 p-0"
               />
               <p className="text-xs text-gray-400 mb-2">{section.value.trim().length}/50 characters minimum</p>
-              {/* [ADDED 020826] Zig it + Tips — were missing entirely from
-                  the mobile fullscreen editor (desktop has both on every
-                  field). The fullscreen field has plenty of room for these,
-                  more than desktop's cramped inline row. */}
-              <div className="flex items-center gap-3 mb-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: section.tipsId })}
-                  className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                >
-                  Tips
-                </Button>
-                <MentorButton onClick={() => openMentorModal(section.mentorId, section.mentorTitle, section.key)} />
+              {/* [FIX 020826] Item 13: equal-width columns for Tips and Zig
+                  it (Tips used to dominate the row, Zig it was a small
+                  circle squeezed to the side). Item 14: short caption above
+                  each button, explaining what it does — first time a
+                  founder sees these on this screen. */}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-1 flex flex-col items-center gap-1">
+                  <p className="text-[11px] text-gray-400 text-center">Writing guidance and examples</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: section.tipsId })}
+                    className="w-full text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                  >
+                    Tips
+                  </Button>
+                </div>
+                <div className="flex-1 flex flex-col items-center gap-1">
+                  <p className="text-[11px] text-gray-400 text-center">Get AI feedback or help writing</p>
+                  <MentorButton onClick={() => openMentorModal(section.mentorId, section.mentorTitle, section.key)} />
+                </div>
               </div>
             </>
           )}

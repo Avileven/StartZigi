@@ -457,6 +457,15 @@ export default function MentorModal({
                 placeholder="Describe your strategy..."
               />
 
+              {/* [ADDED 020826] Item 15 — short explanation, first time a
+                  founder sees this choice: "Feedback" reacts to what's
+                  already written, "Help me" is for when there's nothing to
+                  react to yet. */}
+              <p className="text-xs text-gray-400 text-center">
+                Already wrote something? Choose <span className="font-medium text-gray-500">Feedback</span> to get input on it.
+                Not sure where to start? Choose <span className="font-medium text-gray-500">Help me</span>.
+              </p>
+
               {/* Step 1: pick a mode. Step 2: click the circle to run it. */}
               <div className="flex items-center justify-center gap-2 sm:gap-3">
                 <button
