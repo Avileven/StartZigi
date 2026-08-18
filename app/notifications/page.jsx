@@ -59,6 +59,20 @@ export default function NotificationsPage() {
             <div key={msg.id} className="bg-white border border-gray-200 rounded-xl p-4">
               <p className="font-semibold text-gray-900 mb-1">{msg.title}</p>
               <p className="text-sm text-gray-600">{msg.content}</p>
+              {/* [ADDED 020826] Example Projects — the desktop dashboard has
+                  an "Explore Project" button for this message type; this
+                  page was fully generic (no action buttons for any message
+                  type at all), so this needed adding here too. */}
+              {msg.message_type === 'example_project' && msg.from_venture_landing_page_url && (
+                <a
+                  href={msg.from_venture_landing_page_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-sm font-medium text-amber-600"
+                >
+                  Review Example →
+                </a>
+              )}
             </div>
           ))}
         </div>

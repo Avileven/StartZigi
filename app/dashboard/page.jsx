@@ -2109,6 +2109,28 @@ if (showToS) {
     </Button>
   </div>
 )}
+{/* [ADDED 020826] Example Projects — reuses handleVisitPage (already
+    checks from_venture_landing_page_url generically), matching the
+    styling used for other "explore/visit" actions on this dashboard. */}
+{message.message_type === 'example_project' && (
+  <div className="flex gap-2 mt-2">
+    <Button
+      size="sm"
+      className="bg-amber-600 hover:bg-amber-700 text-white"
+      onClick={() => handleVisitPage(message)}
+    >
+      Review Example →
+    </Button>
+    <Button
+      variant="outline"
+      size="sm"
+      className="text-gray-500 hover:bg-gray-50"
+      onClick={() => dismissMessage(message)}
+    >
+      X Dismiss
+    </Button>
+  </div>
+)}
                           {isInvestmentOffer && message.investment_offer_status === 'pending' && (
                             <div className="mt-4 p-4 border rounded-lg bg-white space-y-3">
                               <p className="text-sm font-medium">Investment Offer Details:</p>

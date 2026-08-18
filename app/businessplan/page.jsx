@@ -384,6 +384,27 @@ await VentureMessage.create({
   created_by: user.email,
   created_by_id: user.id || null
 });
+
+// [ADDED 020826] Example Projects — separate message, own type/icon, not
+// merged into the phase_welcome message above. Links to a real example
+// venture (PocketVet.zig) via from_venture_id/from_venture_landing_page_url,
+// the same fields already used for cross-venture references elsewhere
+// (feedback_request messages). is_sample marks this as system-generated
+// content, not a real founder's activity.
+await VentureMessage.create({
+  venture_id: venture.id,
+  message_type: 'example_project',
+  title: '📚 Want to see how it works?',
+  content: 'Explore an example project at this stage, see what the founder has built, and share your perspective.',
+  phase: 'mvp',
+  priority: 3,
+  from_venture_id: 'ab85b600-875b-4755-b7af-ee155b0bdc34',
+  from_venture_name: 'PocketVet.zig',
+  from_venture_landing_page_url: '/venture-landing?id=ab85b600-875b-4755-b7af-ee155b0bdc34',
+  is_sample: true,
+  created_by: user.email,
+  created_by_id: user.id || null
+});
 }
 
 
