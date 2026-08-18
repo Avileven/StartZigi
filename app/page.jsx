@@ -324,8 +324,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           {/* Intro, not just another AI tool for startups */}
           <div className="mb-10">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">SPARK · SHAPE · SHARE</span>
+            </h3>
+            <p className="text-lg text-gray-600 mb-4">
+              You shouldn't have to wait until you've built your first version to discover you got the product wrong, or until launch to start building your first audience. Start with your startup idea, shape and define the product, share it with a real community, and use structured feedback to make better product decisions. As the product evolves, the people who engage with it can become the beginning of your audience and your first potential users.
+            </p>
             <p className="text-lg text-gray-600">
-              You shouldn't have to wait until you've built your first version to discover you got the product wrong, or until launch to start building your first audience. Start with your startup idea, shape and define the product, share it with a real community, and use structured feedback to make better product decisions. As the product evolves, the people who engage with it can become the beginning of your audience and your first potential users. StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem that brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
+              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem that brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
             </p>
           </div>
 
