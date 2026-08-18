@@ -1,4 +1,4 @@
-//220726
+//180826
 //dashboard 010526 message new TETS
 // [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
 // [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
@@ -2041,15 +2041,26 @@ if (showToS) {
                        cardClass = 'bg-gray-100 border-l-4 border-gray-400';
                        icon = Code;
                        iconClass = 'text-gray-500';
+                    } else if (message.message_type === 'example_project') {
+                       // [ADDED 020826] Custom multi-color SVG, not a
+                       // single-color lucide icon like the others here —
+                       // rendered separately below instead of through the
+                       // generic Icon slot.
+                       cardClass = 'bg-purple-50 border-l-4 border-purple-400';
                     }
 
                     const Icon = icon;
+                    const isExampleProject = message.message_type === 'example_project';
 
                     return (
                       <Card key={message.id} className={`${cardClass} overflow-hidden`}>
                         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                           <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
-                            <Icon className={`w-5 h-5 flex-shrink-0 ${iconClass}`} />
+                            {isExampleProject ? (
+                              <img src="/icons/startzig-lightbulb-icon.svg" alt="" className="w-5 h-5 flex-shrink-0" />
+                            ) : (
+                              <Icon className={`w-5 h-5 flex-shrink-0 ${iconClass}`} />
+                            )}
                             <CardTitle className="text-md font-semibold truncate">{message.title}</CardTitle>
                           </div>
                           <div className="text-xs text-gray-500 text-right flex-shrink-0">
@@ -2119,7 +2130,7 @@ if (showToS) {
       className="bg-amber-600 hover:bg-amber-700 text-white"
       onClick={() => handleVisitPage(message)}
     >
-      Review Example →
+      Take me to PocketVet.zig →
     </Button>
     <Button
       variant="outline"

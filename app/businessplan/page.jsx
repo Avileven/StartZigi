@@ -394,8 +394,8 @@ await VentureMessage.create({
 await VentureMessage.create({
   venture_id: venture.id,
   message_type: 'example_project',
-  title: '📚 Want to see how it works?',
-  content: 'Explore an example project at this stage, see what the founder has built, and share your perspective.',
+  title: "You're invited to give feedback",
+  content: "PocketVet.zig is at the MVP stage. It's recommended to watch it to learn how it looks after this stage, and also to practice giving feedback and earning Insight.",
   phase: 'mvp',
   priority: 3,
   from_venture_id: 'ab85b600-875b-4755-b7af-ee155b0bdc34',

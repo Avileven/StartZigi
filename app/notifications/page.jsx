@@ -57,7 +57,12 @@ export default function NotificationsPage() {
         <div className="space-y-3">
           {messages.slice(0, visibleCount).map((msg) => (
             <div key={msg.id} className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="font-semibold text-gray-900 mb-1">{msg.title}</p>
+              <div className="flex items-center gap-2 mb-1">
+                {msg.message_type === 'example_project' && (
+                  <img src="/icons/startzig-lightbulb-icon.svg" alt="" className="w-5 h-5 flex-shrink-0" />
+                )}
+                <p className="font-semibold text-gray-900">{msg.title}</p>
+              </div>
               <p className="text-sm text-gray-600">{msg.content}</p>
               {/* [ADDED 020826] Example Projects — the desktop dashboard has
                   an "Explore Project" button for this message type; this
@@ -70,7 +75,7 @@ export default function NotificationsPage() {
                   rel="noopener noreferrer"
                   className="inline-block mt-2 text-sm font-medium text-amber-600"
                 >
-                  Review Example →
+                  Take me to PocketVet.zig →
                 </a>
               )}
             </div>
