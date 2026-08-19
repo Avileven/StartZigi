@@ -747,11 +747,11 @@ if (userVentures.length === 0) {
             setLiveBalance(modalBalance);
             try {
               const events = await FundingEvent.filter({ venture_id: activeVenture.id }, "-created_date");
-              setPhaseModalData({ phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: events, venture: activeVenture });
+              setPhaseModalData({ messageId: recentPhaseComplete.id, phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: events, venture: activeVenture });
               setShowPhaseModal(true);
             } catch (e) {
               console.error('Could not load funding events for phase modal:', e);
-              setPhaseModalData({ phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: [], venture: activeVenture });
+              setPhaseModalData({ messageId: recentPhaseComplete.id, phase: recentPhaseComplete.phase, messageType: recentPhaseComplete.message_type, fundingEvents: [], venture: activeVenture });
               setShowPhaseModal(true);
             }
           }
@@ -1598,12 +1598,16 @@ if (showToS) {
           stageName={getNewStageTag(phaseModalData.phase, phaseModalData.messageType)}
           onComplete={async () => {
             setShowPhaseModal(false);
-            if (phaseModalData?.phase) {
+            // [FIX 020826] Was re-finding the message by matching
+            // message_type+phase against the `messages` array — a fragile
+            // lookup that could silently find nothing (no error thrown),
+            // meaning is_dismissed never got persisted, and the animation
+            // would replay on every future login. Now uses the message's
+            // own id, captured directly when phaseModalData was built —
+            // no lookup needed at all.
+            if (phaseModalData?.messageId) {
               try {
-                const msg = messages.find(m =>
-                  m.message_type === phaseModalData.messageType && m.phase === phaseModalData.phase
-                );
-                if (msg) await VentureMessage.update(msg.id, { is_dismissed: true });
+                await VentureMessage.update(phaseModalData.messageId, { is_dismissed: true });
               } catch (e) {
                 console.error('Could not dismiss phase modal message:', e);
               }
