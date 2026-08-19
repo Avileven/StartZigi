@@ -1,4 +1,4 @@
-//180826
+//220726
 //dashboard 010526 message new TETS
 // [PRODUCTION 21/05/2026] handleJoinAngelMeeting: diffMin changed from hardcoded 5 (always active) to real time calculation — join only works during 20min window from scheduled time.
 // [PRODUCTION 21/05/2026] Angel Join button (isActive): changed from true (always active) to real time 20min window calculation.
@@ -2130,7 +2130,7 @@ if (showToS) {
       className="bg-amber-600 hover:bg-amber-700 text-white"
       onClick={() => handleVisitPage(message)}
     >
-      Take me to PocketVet.zig →
+      Take me to {message.from_venture_name || 'the venture'} →
     </Button>
     <Button
       variant="outline"

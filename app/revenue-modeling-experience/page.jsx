@@ -1292,6 +1292,25 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           priority: 3
         });
 
+        // [ADDED 020826] Example Projects — separate message, own icon, not
+        // merged into the phase_welcome message above. Same pattern as the
+        // MVP entry point (businessplan-page.jsx), just pointing to the MLP
+        // example venture (GrandpaSays.zig) instead of PocketVet.zig.
+        await VentureMessage.create({
+          venture_id: venture.id,
+          message_type: 'example_project',
+          title: "You're invited to give feedback",
+          content: "GrandpaSays.zig is at the MLP stage. It's recommended to watch it to learn how it looks after this stage, and also to practice giving feedback and earning Insight.",
+          phase: 'mlp',
+          priority: 3,
+          from_venture_id: '3ca810de-a754-412c-8905-94247b9d1e90',
+          from_venture_name: 'GrandpaSays.zig',
+          from_venture_landing_page_url: '/venture-landing?id=3ca810de-a754-412c-8905-94247b9d1e90',
+          is_sample: true,
+          created_by: venture.created_by,
+          created_by_id: venture.created_by_id || null
+        });
+
         alert('Revenue model finalized successfully! You\'ve progressed to the MLP phase. Redirecting to dashboard...');
       } else {
         alert('Revenue model updated successfully!');

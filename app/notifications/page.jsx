@@ -75,7 +75,7 @@ export default function NotificationsPage() {
                   rel="noopener noreferrer"
                   className="inline-block mt-2 text-sm font-medium text-amber-600"
                 >
-                  Take me to PocketVet.zig →
+                  Take me to {msg.from_venture_name || 'the venture'} →
                 </a>
               )}
             </div>
