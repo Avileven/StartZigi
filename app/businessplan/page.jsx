@@ -405,6 +405,29 @@ await VentureMessage.create({
   created_by: user.email,
   created_by_id: user.id || null
 });
+
+// [ADDED 020826] Combined phase-transition + demo-invite email — one
+// intrusive email, not two, per this session's explicit decision. Same
+// button-lock (isSaving) already protects this from double-firing, no
+// extra duplicate-guard needed (matches the risk level already accepted
+// for the in-app messages above).
+fetch('/api/send-phase-transition', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: user.email,
+    founderName: user.full_name || user.username || '',
+    ventureName: venture.name,
+    newPhaseTitle: "Great progress! You've completed the Plan stage. Time to build your Minimum Viable Product.",
+    newPhaseMessage: `Key tasks:
+• Design and build your MVP
+• Complete a first draft of your revenue model
+• Head to the Promotion Center and send invitations to peers to get feedback on your product definition`,
+    exampleVentureName: 'PocketVet.zig',
+    exampleVentureId: 'ab85b600-875b-4755-b7af-ee155b0bdc34',
+    exampleStage: 'MVP',
+  }),
+}).catch((err) => console.error('Could not send phase-transition email:', err));
 }
 
 

@@ -1311,6 +1311,27 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           created_by_id: venture.created_by_id || null
         });
 
+        // [ADDED 020826] Combined phase-transition + demo-invite email —
+        // one intrusive email, not two, per this session's explicit
+        // decision. Same pattern as the Plan-to-MVP entry point.
+        fetch('/api/send-phase-transition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: venture.created_by,
+            ventureName: venture.name,
+            newPhaseTitle: "Great progress! You've completed the MVP stage. You're now in the Minimum Lovable Product phase. Your mission is to gather user feedback and make your product truly lovable.",
+            newPhaseMessage: `Key tasks:
+• Complete the MLP Development Center to plan your enhancements
+• Enter the Promotion Center and share your landing page to collect feedback from users
+• Collect at least 10 pieces of feedback to unlock the Beta phase
+• Analyze feedback in the Product Feedback Center`,
+            exampleVentureName: 'GrandpaSays.zig',
+            exampleVentureId: '3ca810de-a754-412c-8905-94247b9d1e90',
+            exampleStage: 'MLP',
+          }),
+        }).catch((err) => console.error('Could not send phase-transition email:', err));
+
         alert('Revenue model finalized successfully! You\'ve progressed to the MLP phase. Redirecting to dashboard...');
       } else {
         alert('Revenue model updated successfully!');
