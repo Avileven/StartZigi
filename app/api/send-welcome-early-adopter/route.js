@@ -41,11 +41,11 @@ export async function POST(request) {
           </h1>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            Your venture <strong style="color: #6366f1;">${ventureName}</strong> is now live on StartZig — the complete startup ecosystem that takes you from your first idea all the way to exit.
+            Your venture <strong style="color: #6366f1;">${ventureName}</strong> is now live on StartZig, the complete startup ecosystem that takes you from your first idea all the way to exit.
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            You're joining as one of StartZig's Early Adopters — a founding group of builders who chose to start their journey here from day one.
+            You're joining as one of StartZig's Early Adopters, a founding group of builders who chose to start their journey here from day one.
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
@@ -67,13 +67,17 @@ export async function POST(request) {
             <tr>
               <td style="padding: 10px 16px 10px 0; vertical-align: middle; font-size: 28px;">🚀</td>
               <td style="padding: 10px 0; vertical-align: middle; color: #475569; font-size: 15px; line-height: 1.5;">
-                <strong>Free Builder plan for 30 days</strong> — including 100 credits for our AI Mentor and Demo Builder. No credit card. No commitment. Just build.
+                <strong>Free Builder plan for 30 days</strong>, including 100 credits for Zig it and Demo Builder. No credit card. No commitment. Just build.
               </td>
             </tr>
           </table>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            Before every phase and after every milestone, you'll find a message waiting for you on your dashboard — guiding your next steps and tracking your progress.
+            Before every phase and after every milestone, you'll find a message waiting for you on your dashboard, guiding your next steps and tracking your progress.
+          </p>
+
+          <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+            Throughout your journey, you'll exchange feedback with other founders, giving insight on their ventures and receiving it on yours. Every contribution updates your public profile, which reflects your activity as a founder over time.
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
