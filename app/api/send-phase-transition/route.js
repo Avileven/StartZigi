@@ -43,7 +43,6 @@ export async function POST(request) {
     }
 
     const baseUrl = getBaseUrl(request);
-    const dashboardUrl = `${baseUrl}/dashboard`;
     const exampleUrl = exampleVentureId ? `${baseUrl}/venture-landing?id=${encodeURIComponent(exampleVentureId)}` : null;
 
     // [ADDED 020826] Renders each line of newPhaseMessage as its own
@@ -78,25 +77,20 @@ export async function POST(request) {
           </p>
           ${bodyHtml}
 
-          <div style="text-align: center; margin: 28px 0;">
-            <a href="${dashboardUrl}"
-               style="background-color: #6366f1; color: white; padding: 14px 32px;
-                      text-decoration: none; border-radius: 8px; display: inline-block;
-                      font-weight: bold; font-size: 15px;">
-              Go to Dashboard
-            </a>
-          </div>
-
           ${exampleUrl ? `
           <div style="border-top: 1px solid #e2e8f0; margin-top: 32px; padding-top: 24px;">
-            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 8px;">You're invited to give feedback</h2>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <img src="${baseUrl}/icons/startzig-lightbulb-icon.svg" alt="" width="22" height="22" style="display: inline-block; vertical-align: middle;" />
+              <h2 style="color: #6366f1; font-size: 18px; margin: 0;">You're invited to give feedback</h2>
+            </div>
             <p style="color: #475569; font-size: 15px; line-height: 1.6;">
               <strong>${exampleVentureName}</strong> is at the ${exampleStage || "current"} stage. It's recommended to watch it to learn how it looks after this stage, and also to practice giving feedback and earning Insight.
             </p>
             <div style="text-align: center; margin-top: 20px;">
               <a href="${exampleUrl}"
-                 style="background-color: #ffffff; color: #6366f1; border: 2px solid #6366f1; padding: 12px 28px;
-                        text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 14px;">
+                 style="background-color: #6366f1; color: white; padding: 14px 32px;
+                        text-decoration: none; border-radius: 8px; display: inline-block;
+                        font-weight: bold; font-size: 15px;">
                 Take me to ${exampleVentureName}
               </a>
             </div>

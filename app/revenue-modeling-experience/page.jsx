@@ -1123,10 +1123,16 @@ export default function RevenueModelingExperience() {
   const [currentParameter, setCurrentParameter] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mentorModal, setMentorModal] = useState({ isOpen: false, sectionId: '', sectionTitle: '', fieldKey: '' });
+  // [ADDED 020826] For the phase-transition email's greeting.
+  const [founderName, setFounderName] = useState('');
 
   useEffect(() => {
     const fetchCurrentVenture = async () => {
       const currentUser = await User.me();
+      // [ADDED 020826] Stored for later use in the phase-transition email —
+      // this function is the only place currentUser is available in this
+      // file's scope, but the email is sent from a different handler.
+      setFounderName(currentUser.full_name || currentUser.username || '');
       const ventures = await Venture.filter({ created_by: currentUser.email }, "-created_date");
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
@@ -1319,6 +1325,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: venture.created_by,
+            founderName: founderName,
             ventureName: venture.name,
             newPhaseTitle: "Great progress! You've completed the MVP stage. You're now in the Minimum Lovable Product phase. Your mission is to gather user feedback and make your product truly lovable.",
             newPhaseMessage: `Key tasks:

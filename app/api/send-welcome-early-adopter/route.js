@@ -41,7 +41,7 @@ export async function POST(request) {
           </h1>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            Your venture <strong style="color: #6366f1;">${ventureName}</strong> is now live on StartZig, the complete startup ecosystem that takes you from your first idea all the way to exit.
+            Your venture <strong style="color: #6366f1;">${ventureName}</strong> is now live on StartZig, an ecosystem that brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
@@ -67,7 +67,7 @@ export async function POST(request) {
             <tr>
               <td style="padding: 10px 16px 10px 0; vertical-align: middle; font-size: 28px;">🚀</td>
               <td style="padding: 10px 0; vertical-align: middle; color: #475569; font-size: 15px; line-height: 1.5;">
-                <strong>Free Builder plan for 30 days</strong>, including 100 credits for Zig it and Demo Builder. No credit card. No commitment. Just build.
+                <strong>A free upgrade to the Builder plan for one month</strong>, including 100 credits for Zig it and Demo Builder. After that, you can continue your journey with no commitment at all, no credit card required.
               </td>
             </tr>
           </table>
@@ -77,7 +77,7 @@ export async function POST(request) {
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            Throughout your journey, you'll exchange feedback with other founders, giving insight on their ventures and receiving it on yours. Every contribution updates your public profile, which reflects your activity as a founder over time.
+            Throughout your journey, you'll exchange feedback with other founders, giving insight on their ventures and receiving it on yours.
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
