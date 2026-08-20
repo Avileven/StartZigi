@@ -300,22 +300,27 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-3 text-center">First Revenue Sketch</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-3 text-center">Revenue Model</h1>
         <p className="text-gray-600 text-center mb-6 leading-relaxed">
-          Even at this early stage, it's worth starting to think about how your product will make money, especially as it shapes how you build it going forward. This is just a first sketch, not a final plan.
+          Even in the early stages of product planning, it's important to start thinking about your revenue model. It can shape your product decisions, at least in its first version. There are a few ways to approach this: look at competitors or similar products in your space, or think about what your customers are already used to paying for.
         </p>
 
-        {/* [ADDED 020826] Venture context card — separate from the model-
-            building flow below, just a reminder of what you're modeling
-            for. Kept short on purpose (name + problem + solution only). */}
+        {/* [FIX 020826] Venture context card — icon added, Problem/Solution
+            labels now blue (matching the field-label style used everywhere
+            else in the app), not plain gray. */}
         {(venture.problem || venture.solution) && (
           <div className="bg-white/70 rounded-xl border border-indigo-100 p-4 mb-8">
-            <p className="font-semibold text-gray-800 mb-2">{venture.name}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <div style={{ width: 24, height: 24, borderRadius: 7, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              </div>
+              <p className="font-semibold text-gray-800">{venture.name}</p>
+            </div>
             {venture.problem && (
-              <p className="text-sm text-gray-600 mb-1"><span className="font-medium text-gray-700">Problem:</span> {venture.problem}</p>
+              <p className="text-sm text-gray-600 mb-1"><span className="font-semibold text-indigo-600">Problem:</span> {venture.problem}</p>
             )}
             {venture.solution && (
-              <p className="text-sm text-gray-600"><span className="font-medium text-gray-700">Solution:</span> {venture.solution}</p>
+              <p className="text-sm text-gray-600"><span className="font-semibold text-indigo-600">Solution:</span> {venture.solution}</p>
             )}
           </div>
         )}
