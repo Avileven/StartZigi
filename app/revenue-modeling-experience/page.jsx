@@ -1,27 +1,29 @@
 // ============================================================
 // FILE DESTINATION: app/revenue-modeling-experience/page.jsx (replaces existing file)
 // ============================================================
-// [REWRITE 020826] Simplified per this session's decision — the previous
-// version (9 sliders across 4 business models, enterprise-scale examples,
-// 24-month charts) was built for a founder raising real money, not a first
-// rough sketch right after finishing an MVP. Rebuilt as a short, guided
-// flow: pick your business model (with a real-world example), answer the
-// 1-2 pricing questions that actually apply to that model, estimate users
-// after 12 months, estimate growth pace — then get one clear number.
+// [REWRITE 020826, v3] Growth is now chosen as one of 4 real-world
+// strategies (Word-of-Mouth, Marketing-Driven, B2B/Partnerships, Steady),
+// not raw growth-rate/churn sliders — a founder shouldn't need to guess
+// numbers at this stage, just pick the strategy that matches their
+// venture. Each strategy maps to real growth/churn assumptions behind the
+// scenes, fully disclosed afterward in "Model Assumptions." The underlying
+// engine is still a genuine 12-month compounding simulation (see
+// simulateMonths) — categories just replace how the two real numbers get
+// chosen, not the math itself.
 //
 // What was deliberately KEPT unchanged: all phase-transition logic —
 // updating the venture's phase to 'mlp' on first completion, the
 // VentureMessage.create calls (phase_complete, phase_welcome,
 // example_project invite), and the combined phase-transition email sent via
-// /api/send-phase-transition. This file is still the real gateway from MVP
-// to MLP; only the on-screen experience for building the revenue model
-// itself changed.
+// /api/send-phase-transition.
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from "@/utils";
 import { useRouter } from "next/navigation";
 import { Venture, User, VentureMessage } from '@/api/entities.js';
+
+const MONTHS = 12;
 
 const BUSINESS_MODELS = [
   { key: 'subscription', icon: '📅', label: 'Subscription', description: "Like Netflix or Spotify Premium. Recurring monthly fee, same price for everyone." },
@@ -31,24 +33,71 @@ const BUSINESS_MODELS = [
   { key: 'usage-based', icon: '⚙️', label: 'Usage-Based', description: "Like AWS or Twilio. You pay based on how much is actually used, not a flat fee." },
 ];
 
-const GROWTH_PACE_OPTIONS = [
-  { key: 'average', icon: '📊', label: 'Industry Average', description: 'Steady, typical growth for this kind of business.', churnRate: 0.03 },
-  { key: 'viral', icon: '🌱', label: 'Viral Growth', description: 'Banking on word-of-mouth and network effects.', churnRate: 0.015 },
-  { key: 'aggressive', icon: '📢', label: 'Aggressive, Marketing-Driven', description: 'Fast growth, fueled by paid acquisition spend.', churnRate: 0.05 },
+// [ADDED 020826] Growth strategies — a founder picks the story that fits
+// their venture, not a raw percentage. Each maps to real, disclosed
+// numbers used in the actual 12-month simulation below.
+const GROWTH_STRATEGIES = [
+  {
+    key: 'organic',
+    icon: '🗣️',
+    label: 'Word-of-Mouth / Organic',
+    description: 'Growth is slower since it relies on people recommending you to friends, but users who arrive this way tend to stick around.',
+    growthRate: 0.05,
+    churnRate: 0.015,
+  },
+  {
+    key: 'marketing',
+    icon: '📢',
+    label: 'Marketing-Driven / Paid Acquisition',
+    description: "Growth is fast since you're paying to bring people in, but users acquired this way are typically less committed and leave sooner.",
+    growthRate: 0.20,
+    churnRate: 0.06,
+  },
+  {
+    key: 'b2b',
+    icon: '🤝',
+    label: 'B2B / Partnerships / Sales-Led',
+    description: 'Growth is slow since B2B deals take time to close, but those relationships tend to be very sticky once in place.',
+    growthRate: 0.03,
+    churnRate: 0.01,
+  },
+  {
+    key: 'steady',
+    icon: '📊',
+    label: 'Steady / Industry Average',
+    description: 'A balanced, typical pace for this kind of business — a reasonable default if none of the others feel like a clear fit.',
+    growthRate: 0.08,
+    churnRate: 0.03,
+  },
 ];
 
-const USER_MILESTONES = [100, 1000, 10000, 100000, 1000000];
 const FREE_TO_PAID_CONVERSION = 0.03;
 const BASIC_VS_PRO_SPLIT = 0.7;
 const ASSUMED_TRANSACTIONS_PER_USER_PER_MONTH = 1;
 
-function formatUserCount(n) {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}K`;
-  return `${n}`;
-}
 function formatMoney(n) {
   return `$${Math.round(n).toLocaleString()}`;
+}
+function formatUsers(n) {
+  return Math.round(n).toLocaleString();
+}
+
+// [ADDED 020826] Real month-by-month simulation — each month's total users
+// depends on last month's (churn removed, new users added), and the
+// new-users figure itself compounds by growthRate each month. This is a
+// genuine 12-iteration loop, not a single-step formula dressed up to look
+// like one.
+function simulateMonths({ newUsersMonth1, growthRate, churnRate }) {
+  const data = [];
+  let totalUsers = 0;
+  let newUsersThisMonth = newUsersMonth1;
+  for (let month = 1; month <= MONTHS; month++) {
+    const churned = totalUsers * churnRate;
+    totalUsers = Math.max(0, totalUsers - churned + newUsersThisMonth);
+    data.push({ month, totalUsers });
+    newUsersThisMonth = newUsersThisMonth * (1 + growthRate);
+  }
+  return data;
 }
 
 export default function RevenueModelingExperience() {
@@ -67,8 +116,9 @@ export default function RevenueModelingExperience() {
   const [adRevenuePer1000, setAdRevenuePer1000] = useState(5);
   const [usageRevenuePer1000, setUsageRevenuePer1000] = useState(20);
 
-  const [userMilestoneIndex, setUserMilestoneIndex] = useState(2);
-  const [growthPace, setGrowthPace] = useState('average');
+  const [newUsersMonth1, setNewUsersMonth1] = useState(50);
+  const [growthStrategy, setGrowthStrategy] = useState(null);
+
   const [hasCalculated, setHasCalculated] = useState(false);
 
   useEffect(() => {
@@ -89,40 +139,46 @@ export default function RevenueModelingExperience() {
           if (d.commissionPercent != null) setCommissionPercent(d.commissionPercent);
           if (d.adRevenuePer1000 != null) setAdRevenuePer1000(d.adRevenuePer1000);
           if (d.usageRevenuePer1000 != null) setUsageRevenuePer1000(d.usageRevenuePer1000);
-          if (d.projectedUsers != null) {
-            const idx = USER_MILESTONES.indexOf(d.projectedUsers);
-            if (idx >= 0) setUserMilestoneIndex(idx);
-          }
-          if (d.growthPace) setGrowthPace(d.growthPace);
+          if (d.newUsersMonth1 != null) setNewUsersMonth1(d.newUsersMonth1);
+          if (d.growthStrategy) setGrowthStrategy(d.growthStrategy);
         }
       }
     };
     fetchCurrentVenture();
   }, []);
 
-  const projectedUsers = USER_MILESTONES[userMilestoneIndex];
-  const selectedPace = GROWTH_PACE_OPTIONS.find(p => p.key === growthPace);
-  const churnRate = selectedPace.churnRate;
   const selectedModel = BUSINESS_MODELS.find(m => m.key === businessModel);
+  const selectedStrategy = GROWTH_STRATEGIES.find(s => s.key === growthStrategy);
+
+  const monthlyData = useMemo(() => {
+    if (!selectedStrategy) return [];
+    return simulateMonths({
+      newUsersMonth1,
+      growthRate: selectedStrategy.growthRate,
+      churnRate: selectedStrategy.churnRate,
+    });
+  }, [newUsersMonth1, selectedStrategy]);
+
+  const usersAtMonth12 = monthlyData[MONTHS - 1]?.totalUsers || 0;
 
   let projectedMonthlyRevenue = 0;
   let modelSpecificAssumption = null;
   if (businessModel === 'subscription') {
-    projectedMonthlyRevenue = projectedUsers * subscriptionPrice;
+    projectedMonthlyRevenue = usersAtMonth12 * subscriptionPrice;
   } else if (businessModel === 'freemium') {
-    const payingUsers = projectedUsers * FREE_TO_PAID_CONVERSION;
+    const payingUsers = usersAtMonth12 * FREE_TO_PAID_CONVERSION;
     const basicPayingUsers = payingUsers * BASIC_VS_PRO_SPLIT;
     const proPayingUsers = payingUsers * (1 - BASIC_VS_PRO_SPLIT);
     projectedMonthlyRevenue = (basicPayingUsers * basicPrice) + (proPayingUsers * proPrice);
-    modelSpecificAssumption = `Free-to-paid conversion: ${(FREE_TO_PAID_CONVERSION * 100).toFixed(0)}% (industry average) \u00b7 Basic vs. Pro split: ${(BASIC_VS_PRO_SPLIT * 100).toFixed(0)}% / ${((1 - BASIC_VS_PRO_SPLIT) * 100).toFixed(0)}%`;
+    modelSpecificAssumption = `Free-to-paid conversion: ${(FREE_TO_PAID_CONVERSION * 100).toFixed(0)}% \u00b7 Basic vs. Pro split: ${(BASIC_VS_PRO_SPLIT * 100).toFixed(0)}% / ${((1 - BASIC_VS_PRO_SPLIT) * 100).toFixed(0)}%`;
   } else if (businessModel === 'transactional') {
-    const monthlyTransactions = projectedUsers * ASSUMED_TRANSACTIONS_PER_USER_PER_MONTH;
+    const monthlyTransactions = usersAtMonth12 * ASSUMED_TRANSACTIONS_PER_USER_PER_MONTH;
     projectedMonthlyRevenue = monthlyTransactions * avgTransactionValue * (commissionPercent / 100);
     modelSpecificAssumption = `Assumed ${ASSUMED_TRANSACTIONS_PER_USER_PER_MONTH} transaction per user per month`;
   } else if (businessModel === 'ad-driven') {
-    projectedMonthlyRevenue = (projectedUsers / 1000) * adRevenuePer1000;
+    projectedMonthlyRevenue = (usersAtMonth12 / 1000) * adRevenuePer1000;
   } else if (businessModel === 'usage-based') {
-    projectedMonthlyRevenue = (projectedUsers / 1000) * usageRevenuePer1000;
+    projectedMonthlyRevenue = (usersAtMonth12 / 1000) * usageRevenuePer1000;
     modelSpecificAssumption = `Assumes usage volume scales in proportion to user count`;
   }
 
@@ -147,13 +203,10 @@ export default function RevenueModelingExperience() {
         revenue_model_data: {
           businessModel,
           subscriptionPrice, basicPrice, proPrice, avgTransactionValue, commissionPercent, adRevenuePer1000, usageRevenuePer1000,
-          projectedUsers,
-          growthPace,
+          newUsersMonth1, growthStrategy,
+          usersAtMonth12,
           projectedMonthlyRevenue,
-          assumptions: {
-            monthlyChurn: churnRate,
-            modelSpecificAssumption,
-          },
+          assumptions: { modelSpecificAssumption },
           finalized_date: new Date().toISOString(),
         },
         revenue_model_completed: true,
@@ -241,17 +294,33 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
   };
 
   if (!venture) {
-    return <div className="p-8 text-center text-gray-400">Loading\u2026</div>;
+    return <div className="p-8 text-center text-gray-400">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-3 text-center">First Revenue Sketch</h1>
-        <p className="text-gray-600 text-center mb-10 leading-relaxed">
+        <p className="text-gray-600 text-center mb-6 leading-relaxed">
           Even at this early stage, it's worth starting to think about how your product will make money, especially as it shapes how you build it going forward. This is just a first sketch, not a final plan.
         </p>
 
+        {/* [ADDED 020826] Venture context card — separate from the model-
+            building flow below, just a reminder of what you're modeling
+            for. Kept short on purpose (name + problem + solution only). */}
+        {(venture.problem || venture.solution) && (
+          <div className="bg-white/70 rounded-xl border border-indigo-100 p-4 mb-8">
+            <p className="font-semibold text-gray-800 mb-2">{venture.name}</p>
+            {venture.problem && (
+              <p className="text-sm text-gray-600 mb-1"><span className="font-medium text-gray-700">Problem:</span> {venture.problem}</p>
+            )}
+            {venture.solution && (
+              <p className="text-sm text-gray-600"><span className="font-medium text-gray-700">Solution:</span> {venture.solution}</p>
+            )}
+          </div>
+        )}
+
+        {/* Business model */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">What's your business model?</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -273,9 +342,10 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           )}
         </div>
 
+        {/* Pricing, model-specific */}
         {businessModel && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">\ud83d\udcb0 How will you price it?</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">How will you price it?</h2>
 
             {businessModel === 'subscription' && (
               <div>
@@ -347,46 +417,45 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           </div>
         )}
 
+        {/* Initial users — slider, not a raw number field */}
         {businessModel && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">\ud83d\udcc8 How many users after 12 months?</h2>
-            <p className="text-center text-3xl font-bold text-indigo-600 my-4">{formatUserCount(projectedUsers)}</p>
-            <input
-              type="range" min="0" max={USER_MILESTONES.length - 1} step="1"
-              value={userMilestoneIndex}
-              onChange={(e) => { setUserMilestoneIndex(Number(e.target.value)); setHasCalculated(false); }}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>100 \u2014 a solid start!</span>
-              <span>1M+ \u2014 viral! \ud83d\udd25</span>
-            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">How many users in your first month?</h2>
+            <p className="text-center text-3xl font-bold text-indigo-600 my-4">{formatUsers(newUsersMonth1)}</p>
+            <input type="range" min="1" max="2000" value={newUsersMonth1}
+              onChange={(e) => { setNewUsersMonth1(Number(e.target.value)); setHasCalculated(false); }}
+              className="w-full" />
           </div>
         )}
 
+        {/* Growth strategy — categories, not raw sliders */}
         {businessModel && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">\u26a1 What's your estimated growth pace?</h2>
-            <p className="text-sm text-gray-500 mb-4">How do you expect to get to that user count?</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {GROWTH_PACE_OPTIONS.map(opt => (
+            <h2 className="text-xl font-bold text-gray-800 mb-1">What's your growth strategy?</h2>
+            <p className="text-sm text-gray-500 mb-4">Pick the story that fits how you expect to grow.</p>
+            <div className="grid grid-cols-1 gap-3">
+              {GROWTH_STRATEGIES.map(strategy => (
                 <button
-                  key={opt.key}
-                  onClick={() => { setGrowthPace(opt.key); setHasCalculated(false); }}
+                  key={strategy.key}
+                  onClick={() => { setGrowthStrategy(strategy.key); setHasCalculated(false); }}
                   className={`border-2 rounded-xl p-4 text-left transition-all ${
-                    growthPace === opt.key ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                    growthStrategy === strategy.key ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <p className="text-2xl mb-1">{opt.icon}</p>
-                  <p className="font-semibold text-gray-800 text-sm">{opt.label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{opt.description}</p>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{strategy.icon}</span>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm">{strategy.label}</p>
+                      <p className="text-xs text-gray-500 mt-1">{strategy.description}</p>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {businessModel && (
+        {businessModel && growthStrategy && (
           <div className="text-center mb-8">
             <Button
               onClick={() => setHasCalculated(true)}
@@ -399,25 +468,30 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
 
         {hasCalculated && (
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 text-center border-2 border-indigo-200">
-            <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Projected Monthly Revenue</p>
+            <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Projected users at month 12</p>
+            <p className="text-2xl font-bold text-gray-700 mb-6">{formatUsers(usersAtMonth12)}</p>
+
+            <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Projected Monthly Revenue (month 12)</p>
             <p className="text-5xl font-extrabold text-indigo-600 mb-6">{formatMoney(projectedMonthlyRevenue)}</p>
 
-            <div className="text-left bg-gray-50 rounded-xl p-4 text-sm text-gray-600 space-y-1">
-              <p className="font-semibold text-gray-700 mb-2">Model Assumptions</p>
+            <div className="text-left bg-gray-50 rounded-xl p-4 text-sm text-gray-600 space-y-2">
+              <p className="font-semibold text-gray-700 mb-1">Model Assumptions</p>
               {modelSpecificAssumption && <p>{modelSpecificAssumption}</p>}
-              <p>Monthly churn: {(churnRate * 100).toFixed(1)}% (based on your selected growth pace)</p>
+              <p>
+                Growth strategy: <strong>{selectedStrategy.label}</strong> — growing {(selectedStrategy.growthRate * 100).toFixed(1)}% month over month, with a monthly churn (the percentage of users who stop using the product each month) of {(selectedStrategy.churnRate * 100).toFixed(1)}%.
+              </p>
             </div>
           </div>
         )}
 
-        {businessModel && (
+        {businessModel && growthStrategy && (
           <div className="text-center">
             <Button
               onClick={handleFinalizeModel}
               disabled={isSubmitting || !hasCalculated}
               className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-10 py-6 rounded-full shadow-lg disabled:opacity-50"
             >
-              {isSubmitting ? 'Finalizing\u2026' : 'Finalize Revenue Model'}
+              {isSubmitting ? 'Finalizing...' : 'Finalize Revenue Model'}
             </Button>
           </div>
         )}
