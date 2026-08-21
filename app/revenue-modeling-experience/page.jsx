@@ -26,11 +26,11 @@ import { Venture, User, VentureMessage } from '@/api/entities.js';
 const MONTHS = 12;
 
 const BUSINESS_MODELS = [
-  { key: 'subscription', icon: '📅', label: 'Subscription', description: "Like Netflix or Spotify Premium. Recurring monthly fee, same price for everyone." },
-  { key: 'freemium', icon: '🎁', label: 'Freemium', description: "Like Spotify or Dropbox. Free to start, upgrade for more." },
-  { key: 'transactional', icon: '🛒', label: 'Transactional', description: "Like Uber or Etsy. You take a cut of every transaction." },
-  { key: 'ad-driven', icon: '📺', label: 'Ad-Driven', description: "Like YouTube or Facebook. Free forever, revenue from ads." },
-  { key: 'usage-based', icon: '⚙️', label: 'Usage-Based', description: "Like AWS or Twilio. You pay based on how much is actually used, not a flat fee." },
+  { key: 'subscription', icon: '📅', label: 'Subscription', description: "You charge a recurring monthly fee, and every user pays the same price. Like Netflix or Spotify Premium." },
+  { key: 'freemium', icon: '🎁', label: 'Freemium', description: "Basic functionality is available for free, with the option to upgrade to premium packages for more. Like Spotify or Dropbox." },
+  { key: 'transactional', icon: '🛒', label: 'Transactional', description: "You take a cut of every transaction that happens on your platform. Like Uber or Etsy." },
+  { key: 'ad-driven', icon: '📺', label: 'Ad-Driven', description: "Your product is free forever, and you make money by showing ads. Like YouTube or Facebook." },
+  { key: 'usage-based', icon: '⚙️', label: 'Usage-Based', description: "You charge based on how much is actually used, not a flat fee. Like AWS or Twilio." },
 ];
 
 // [ADDED 020826] Growth strategies — a founder picks the story that fits
@@ -71,7 +71,7 @@ const GROWTH_STRATEGIES = [
   },
 ];
 
-const FREE_TO_PAID_CONVERSION = 0.03;
+const FREE_TO_PAID_CONVERSION = 0.05; // 5% — good/typical benchmark for self-serve freemium (Growth Unhinged 2026 report)
 const BASIC_VS_PRO_SPLIT = 0.7;
 const ASSUMED_TRANSACTIONS_PER_USER_PER_MONTH = 1;
 
@@ -106,7 +106,7 @@ export default function RevenueModelingExperience() {
   const [founderName, setFounderName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [businessModel, setBusinessModel] = useState(null);
+  const [businessModel, setBusinessModel] = useState('freemium');
 
   const [subscriptionPrice, setSubscriptionPrice] = useState(15);
   const [basicPrice, setBasicPrice] = useState(9);
@@ -363,7 +363,12 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
             )}
 
             {businessModel === 'freemium' && (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="border-2 border-gray-200 rounded-xl p-3 text-center">
+                  <p className="text-lg mb-1">🆓</p>
+                  <p className="text-xs font-semibold text-gray-600 mb-1">Free</p>
+                  <p className="text-lg font-bold text-gray-400">$0</p>
+                </div>
                 <div>
                   <Label>Basic price?</Label>
                   <p className="text-xl font-bold text-indigo-600 my-2">${basicPrice}/mo</p>
