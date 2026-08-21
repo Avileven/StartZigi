@@ -28,10 +28,47 @@ const MONTHS = 12;
 const BUSINESS_MODELS = [
   { key: 'subscription', icon: '📅', label: 'Subscription', description: "You charge a recurring monthly fee, and every user pays the same price. Like Netflix or Spotify Premium." },
   { key: 'freemium', icon: '🎁', label: 'Freemium', description: "Basic functionality is available for free, with the option to upgrade to premium packages for more. Like Spotify or Dropbox." },
-  { key: 'transactional', icon: '🛒', label: 'Transactional', description: "You take a cut of every transaction that happens on your platform. Like Uber or Etsy." },
+  { key: 'transactional', icon: '🛒', label: 'Commission / Marketplace', description: "You take a cut of every transaction that happens on your platform. Like Uber or Etsy." },
   { key: 'ad-driven', icon: '📺', label: 'Ad-Driven', description: "Your product is free forever, and you make money by showing ads. Like YouTube or Facebook." },
   { key: 'usage-based', icon: '⚙️', label: 'Usage-Based', description: "You charge based on how much is actually used, not a flat fee. Like AWS or Twilio." },
+  { key: 'one-time', icon: '💳', label: 'One-Time Purchase', description: "The customer pays once and owns it, with no recurring charge. Like buying an app or a video game." },
 ];
+
+// [ADDED 020826] Revenue Model Selector — a structured, non-AI recommendation
+// tool (per "Revenue_model.docx"). Each model has a predefined profile on 4
+// numeric signals (0-10 scale) plus an ideal payment moment. The founder's
+// answers to 5 quick questions are compared against every profile to
+// produce a fit score — deterministic math, not an AI call. Formula
+// validated by hand against the source document's own worked example
+// (QuickFix → Commission/Marketplace, 91% in the doc, 89% reproduced here).
+const MODEL_PROFILES = {
+  subscription: { usagePattern: 8, valueDuration: 9, networkEffect: 3, valueConcentration: 2, paymentMoment: 'ongoing' },
+  freemium: { usagePattern: 7, valueDuration: 8, networkEffect: 5, valueConcentration: 3, paymentMoment: 'feature' },
+  transactional: { usagePattern: 4, valueDuration: 2, networkEffect: 9, valueConcentration: 8, paymentMoment: 'transaction' },
+  'ad-driven': { usagePattern: 8, valueDuration: 7, networkEffect: 6, valueConcentration: 3, paymentMoment: 'ongoing' },
+  'usage-based': { usagePattern: 6, valueDuration: 6, networkEffect: 3, valueConcentration: 6, paymentMoment: 'feature' },
+  'one-time': { usagePattern: 3, valueDuration: 1, networkEffect: 1, valueConcentration: 7, paymentMoment: 'before' },
+};
+
+const PAYMENT_MOMENT_OPTIONS = [
+  { key: 'before', label: 'Before using the product' },
+  { key: 'feature', label: 'When using a specific feature' },
+  { key: 'transaction', label: 'When completing a transaction' },
+  { key: 'ongoing', label: 'As long as they continue receiving value' },
+];
+
+function calculateFitScores(answers) {
+  const numericKeys = ['usagePattern', 'valueDuration', 'networkEffect', 'valueConcentration'];
+  return BUSINESS_MODELS.map(model => {
+    const profile = MODEL_PROFILES[model.key];
+    const diffs = numericKeys.map(k => Math.abs(answers[k] - profile[k]));
+    const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    const numericSimilarity = 100 - (avgDiff / 10 * 100);
+    const paymentMatch = answers.paymentMoment === profile.paymentMoment ? 100 : 0;
+    const score = Math.round(numericSimilarity * 0.8 + paymentMatch * 0.2);
+    return { ...model, score: Math.max(0, Math.min(100, score)) };
+  }).sort((a, b) => b.score - a.score);
+}
 
 // [ADDED 020826] Growth strategies — a founder picks the story that fits
 // their venture, not a raw percentage. Each maps to real, disclosed
@@ -94,7 +131,7 @@ function simulateMonths({ newUsersMonth1, growthRate, churnRate }) {
   for (let month = 1; month <= MONTHS; month++) {
     const churned = totalUsers * churnRate;
     totalUsers = Math.max(0, totalUsers - churned + newUsersThisMonth);
-    data.push({ month, totalUsers });
+    data.push({ month, totalUsers, newUsers: newUsersThisMonth });
     newUsersThisMonth = newUsersThisMonth * (1 + growthRate);
   }
   return data;
@@ -115,6 +152,16 @@ export default function RevenueModelingExperience() {
   const [commissionPercent, setCommissionPercent] = useState(10);
   const [adRevenuePer1000, setAdRevenuePer1000] = useState(5);
   const [usageRevenuePer1000, setUsageRevenuePer1000] = useState(20);
+  const [oneTimePrice, setOneTimePrice] = useState(25);
+
+  // [ADDED 020826] Revenue Model Selector quiz state
+  const [showSelector, setShowSelector] = useState(false);
+  const [featureValues, setFeatureValues] = useState({});
+  const [paymentMoment, setPaymentMoment] = useState(null);
+  const [usagePattern, setUsagePattern] = useState(5);
+  const [valueDuration, setValueDuration] = useState(5);
+  const [networkEffect, setNetworkEffect] = useState(5);
+  const [showFitResults, setShowFitResults] = useState(false);
 
   const [newUsersMonth1, setNewUsersMonth1] = useState(50);
   const [growthStrategy, setGrowthStrategy] = useState(null);
@@ -139,6 +186,7 @@ export default function RevenueModelingExperience() {
           if (d.commissionPercent != null) setCommissionPercent(d.commissionPercent);
           if (d.adRevenuePer1000 != null) setAdRevenuePer1000(d.adRevenuePer1000);
           if (d.usageRevenuePer1000 != null) setUsageRevenuePer1000(d.usageRevenuePer1000);
+          if (d.oneTimePrice != null) setOneTimePrice(d.oneTimePrice);
           if (d.newUsersMonth1 != null) setNewUsersMonth1(d.newUsersMonth1);
           if (d.growthStrategy) setGrowthStrategy(d.growthStrategy);
         }
@@ -160,6 +208,7 @@ export default function RevenueModelingExperience() {
   }, [newUsersMonth1, selectedStrategy]);
 
   const usersAtMonth12 = monthlyData[MONTHS - 1]?.totalUsers || 0;
+  const newUsersAtMonth12 = monthlyData[MONTHS - 1]?.newUsers || 0;
 
   let projectedMonthlyRevenue = 0;
   let modelSpecificAssumption = null;
@@ -180,6 +229,9 @@ export default function RevenueModelingExperience() {
   } else if (businessModel === 'usage-based') {
     projectedMonthlyRevenue = (usersAtMonth12 / 1000) * usageRevenuePer1000;
     modelSpecificAssumption = `Assumes usage volume scales in proportion to user count`;
+  } else if (businessModel === 'one-time') {
+    projectedMonthlyRevenue = newUsersAtMonth12 * oneTimePrice;
+    modelSpecificAssumption = `Based on new buyers that month (${formatUsers(newUsersAtMonth12)}), not the running total — each customer only pays once`;
   }
 
   const canFinalize = () => hasCalculated;
@@ -202,7 +254,7 @@ export default function RevenueModelingExperience() {
       const updateData = {
         revenue_model_data: {
           businessModel,
-          subscriptionPrice, basicPrice, proPrice, avgTransactionValue, commissionPercent, adRevenuePer1000, usageRevenuePer1000,
+          subscriptionPrice, basicPrice, proPrice, avgTransactionValue, commissionPercent, adRevenuePer1000, usageRevenuePer1000, oneTimePrice,
           newUsersMonth1, growthStrategy,
           usersAtMonth12,
           projectedMonthlyRevenue,
@@ -325,6 +377,125 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           </div>
         )}
 
+        {/* [ADDED 020826] Revenue Model Selector — collapsible, per this
+            session's decision: an optional structured guide before the
+            business model cards, not a replacement for them. No AI — a
+            deterministic comparison against predefined model profiles. */}
+        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6">
+          <button onClick={() => setShowSelector(v => !v)} className="w-full text-left">
+            <p className="font-bold text-gray-800">Not sure which model fits?</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Answer a few quick questions about your product, and we'll suggest which model tends to fit best — no AI, just structured logic based on how you described your MVP.
+            </p>
+            <p className="text-sm font-medium text-indigo-600 mt-2">{showSelector ? 'Hide' : 'Get a recommendation'} ▾</p>
+          </button>
+
+          {showSelector && (
+            <div className="mt-5 space-y-6">
+              {/* Step 1 — Value location, using the venture's real MVP features */}
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">1. Where is the value?</p>
+                <p className="text-sm text-gray-500 mb-3">Which part of your product creates the most value for the customer?</p>
+                {(venture.mvp_data?.feature_matrix || []).filter(f => f.isSelected).length > 0 ? (
+                  (venture.mvp_data.feature_matrix).filter(f => f.isSelected).map((f, i) => (
+                    <div key={i} className="mb-3">
+                      <p className="text-sm font-medium text-gray-700">{f.name}</p>
+                      <input type="range" min="0" max="10" value={featureValues[f.name] ?? 5}
+                        onChange={(e) => setFeatureValues(prev => ({ ...prev, [f.name]: Number(e.target.value) }))}
+                        className="w-full" />
+                      <div className="flex justify-between text-xs text-gray-400"><span>Low value</span><span>High value</span></div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No MVP features found — this step will be skipped in the calculation.</p>
+                )}
+              </div>
+
+              {/* Step 2 — Payment moment */}
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">2. When would the customer be willing to pay?</p>
+                <div className="space-y-2 mt-2">
+                  {PAYMENT_MOMENT_OPTIONS.map(opt => (
+                    <label key={opt.key} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="radio" name="paymentMoment" checked={paymentMoment === opt.key}
+                        onChange={() => setPaymentMoment(opt.key)} />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 3 — Usage frequency */}
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">3. How often will people use your product?</p>
+                <input type="range" min="0" max="10" value={usagePattern} onChange={(e) => setUsagePattern(Number(e.target.value))} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-400"><span>Rarely</span><span>Frequently</span></div>
+              </div>
+
+              {/* Step 4 — Value duration */}
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">4. How long does your product provide value?</p>
+                <input type="range" min="0" max="10" value={valueDuration} onChange={(e) => setValueDuration(Number(e.target.value))} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-400"><span>One-time</span><span>Ongoing</span></div>
+              </div>
+
+              {/* Step 5 — Network effect */}
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">5. Does your product become more valuable as more people join?</p>
+                <input type="range" min="0" max="10" value={networkEffect} onChange={(e) => setNetworkEffect(Number(e.target.value))} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-400"><span>No network effect</span><span>Strong network effect</span></div>
+              </div>
+
+              <Button
+                onClick={() => setShowFitResults(true)}
+                disabled={!paymentMoment}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+              >
+                See Revenue Model Fit
+              </Button>
+
+              {showFitResults && paymentMoment && (() => {
+                const featureRatings = Object.values(featureValues);
+                const maxRating = featureRatings.length ? Math.max(...featureRatings) : 5;
+                const avgOthers = featureRatings.length > 1
+                  ? (featureRatings.reduce((a, b) => a + b, 0) - maxRating) / (featureRatings.length - 1)
+                  : maxRating;
+                const valueConcentration = Math.max(0, Math.min(10, maxRating - avgOthers));
+
+                const fitScores = calculateFitScores({ usagePattern, valueDuration, networkEffect, valueConcentration, paymentMoment });
+                const top = fitScores[0];
+
+                return (
+                  <div className="bg-white rounded-xl p-4 mt-2">
+                    <p className="font-semibold text-gray-800 mb-3">Revenue Model Fit</p>
+                    <div className="space-y-2 mb-4">
+                      {fitScores.map(m => (
+                        <div key={m.key}>
+                          <div className="flex justify-between text-xs text-gray-600 mb-0.5">
+                            <span>{m.icon} {m.label}</span>
+                            <span className="font-semibold">{m.score}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2">
+                            <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${m.score}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400 italic mb-3">This is a recommendation based on the characteristics you've defined, not a rule — you still choose below.</p>
+                    <Button
+                      onClick={() => { setBusinessModel(top.key); setHasCalculated(false); setShowSelector(false); }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Use {top.label}
+                    </Button>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+
         {/* Business model */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">What's your business model?</h2>
@@ -421,6 +592,16 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
                 <p className="text-2xl font-bold text-indigo-600 my-2">${usageRevenuePer1000} / 1,000 uses</p>
                 <input type="range" min="1" max="200" value={usageRevenuePer1000}
                   onChange={(e) => { setUsageRevenuePer1000(Number(e.target.value)); setHasCalculated(false); }}
+                  className="w-full" />
+              </div>
+            )}
+
+            {businessModel === 'one-time' && (
+              <div>
+                <Label>What's your one-time price?</Label>
+                <p className="text-2xl font-bold text-indigo-600 my-2">${oneTimePrice}</p>
+                <input type="range" min="1" max="500" value={oneTimePrice}
+                  onChange={(e) => { setOneTimePrice(Number(e.target.value)); setHasCalculated(false); }}
                   className="w-full" />
               </div>
             )}
