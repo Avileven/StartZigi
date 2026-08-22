@@ -2,9 +2,7 @@
 "use client";
 import React from "react";
 import DashboardMockup from "@/components/utils/DashboardMockup";
-import MentorMockup from "@/components/utils/MentorMockup";
 import VCMockup from "@/components/utils/VCMockup";
-import StudioMockup from "@/components/utils/StudioMockup";
 import VCSimulationMockup from "@/components/utils/VCSimulationMockup";
 import FeedbackMockup from "@/components/utils/FeedbackMockup";
 import BetaMockup from "@/components/utils/BetaMockup";
@@ -51,41 +49,6 @@ function BenefitsSection() {
   );
 }
 
-function WhoSection() {
-  return (
-    <div className="py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
-              Who can benefit from StartZig?
-            </span>
-          </h2>
-        </div>
-
-        <div className="space-y-8">
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Experience the Startup World</h3>
-            <p className="text-gray-600 text-base leading-relaxed">Ever wondered what it feels like to build a startup, pitch to investors, and close a funding round? StartZig puts you in the founder's seat, from your first product idea all the way to scaling your company and landing an exit.</p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Entrepreneurs with an Idea</h3>
-            <p className="text-gray-600 text-base leading-relaxed">Whether you're just starting out or already have a product in mind, StartZig gives you a secured professional environment to build and grow your venture, with a dedicated AI mentor by your side. You stay in full control of your information, choosing what to share and with whom. More than just a building tool, StartZig is a marketing engine, helping you grow a viral community of founders and early adopters around your product.</p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Students, Learners &amp; Educators</h3>
-            <p className="text-gray-600 text-base leading-relaxed">The gap between theory and real-world entrepreneurship has never been harder to bridge. StartZig gives students hands-on experience of the full startup journey, from idea to exit. For educators, accelerators, and incubators, it's the perfect environment to run real startup simulations with built-in feedback loops, community engagement, and professional tools.</p>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function FeaturesPage() {
   return (
     <div className="bg-white text-gray-900 min-h-screen">
@@ -107,51 +70,7 @@ export default function FeaturesPage() {
         <DashboardMockup autoStart={false} />
       </div>
 
-      {/* 2. Coach */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">A Coach Companion at Every Step</span>
-          </h2>
-          <p className="text-gray-500 text-sm">AI-driven strategic guidance for your venture, at every section and every task.</p>
-        </div>
-        <MentorMockup autoStart={false} />
-      </div>
-
-      {/* 3. Investor Marketplace */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">Investor Marketplace</span>
-          </h2>
-          <p className="text-gray-500 text-sm">Discover virtual angels and VC firms, each with their own focus and criteria, and choose who to pitch.</p>
-        </div>
-        <VCMockup autoStart={false} />
-      </div>
-
-      {/* 4. VC Simulation */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">A Real Fundraising Simulation</span>
-          </h2>
-          <p className="text-gray-500 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
-        </div>
-        <VCSimulationMockup autoStart={false} />
-      </div>
-
-      {/* 5. ZigForge Studio */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gray-900">A Dedicated AI Studio for Building App Demos</span>
-          </h2>
-          <p className="text-gray-500 text-sm">Build working mockups and demos in a few clicks — helping you shape your product and collect real feedback while you build.</p>
-        </div>
-        <StudioMockup autoStart={false} />
-      </div>
-
-      {/* 6. Feedback */}
+      {/* 2. Feedback */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
@@ -162,7 +81,7 @@ export default function FeaturesPage() {
         <FeedbackMockup autoStart={false} />
       </div>
 
-      {/* 7. Beta */}
+      {/* 3. Beta */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
@@ -173,7 +92,29 @@ export default function FeaturesPage() {
         <BetaMockup autoStart={false} />
       </div>
 
-      {/* 8. Business Deck */}
+      {/* 4. Investor Marketplace */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="text-gray-900">Investor Marketplace</span>
+          </h2>
+          <p className="text-gray-500 text-sm">Discover virtual angels and VC firms, each with their own focus and criteria, and choose who to pitch.</p>
+        </div>
+        <VCMockup autoStart={false} />
+      </div>
+
+      {/* 5. VC Simulation */}
+      <div className="py-16 px-6">
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="text-gray-900">A Real Fundraising Simulation</span>
+          </h2>
+          <p className="text-gray-500 text-sm">Driven by our own AI algorithms built to evaluate ventures across every stage — from screening to investment decision.</p>
+        </div>
+        <VCSimulationMockup autoStart={false} />
+      </div>
+
+      {/* 6. Business Deck */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
@@ -186,7 +127,7 @@ export default function FeaturesPage() {
         <BusinessDeckMockup autoStart={false} />
       </div>
 
-      {/* 9. ZigPlan */}
+      {/* 7. ZigPlan */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
@@ -200,8 +141,6 @@ export default function FeaturesPage() {
       </div>
 
       <BenefitsSection />
-
-      <WhoSection />
     </div>
   );
 }
