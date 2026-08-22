@@ -42,12 +42,12 @@ const BUSINESS_MODELS = [
 // validated by hand against the source document's own worked example
 // (QuickFix → Commission/Marketplace, 91% in the doc, 89% reproduced here).
 const MODEL_PROFILES = {
-  subscription: { usagePattern: 8, valueDuration: 9, networkEffect: 3, valueConcentration: 2, paymentMoment: 'ongoing' },
-  freemium: { usagePattern: 7, valueDuration: 8, networkEffect: 5, valueConcentration: 3, paymentMoment: 'feature' },
-  transactional: { usagePattern: 4, valueDuration: 2, networkEffect: 9, valueConcentration: 8, paymentMoment: 'transaction' },
-  'ad-driven': { usagePattern: 8, valueDuration: 7, networkEffect: 6, valueConcentration: 3, paymentMoment: 'ongoing' },
-  'usage-based': { usagePattern: 6, valueDuration: 6, networkEffect: 3, valueConcentration: 6, paymentMoment: 'feature' },
-  'one-time': { usagePattern: 3, valueDuration: 1, networkEffect: 1, valueConcentration: 7, paymentMoment: 'before' },
+  subscription: { usageIntensity: 9, networkEffect: 3, valueConcentration: 2, paymentMoment: 'ongoing' },
+  freemium: { usageIntensity: 7, networkEffect: 5, valueConcentration: 3, paymentMoment: 'feature' },
+  transactional: { usageIntensity: 2, networkEffect: 9, valueConcentration: 8, paymentMoment: 'transaction' },
+  'ad-driven': { usageIntensity: 8, networkEffect: 6, valueConcentration: 3, paymentMoment: 'ongoing' },
+  'usage-based': { usageIntensity: 6, networkEffect: 3, valueConcentration: 6, paymentMoment: 'feature' },
+  'one-time': { usageIntensity: 1, networkEffect: 1, valueConcentration: 7, paymentMoment: 'before' },
 };
 
 const PAYMENT_MOMENT_OPTIONS = [
@@ -58,7 +58,7 @@ const PAYMENT_MOMENT_OPTIONS = [
 ];
 
 function calculateFitScores(answers) {
-  const numericKeys = ['usagePattern', 'valueDuration', 'networkEffect', 'valueConcentration'];
+  const numericKeys = ['usageIntensity', 'networkEffect', 'valueConcentration'];
   return BUSINESS_MODELS.map(model => {
     const profile = MODEL_PROFILES[model.key];
     const diffs = numericKeys.map(k => Math.abs(answers[k] - profile[k]));
@@ -158,8 +158,7 @@ export default function RevenueModelingExperience() {
   const [showSelector, setShowSelector] = useState(false);
   const [featureValues, setFeatureValues] = useState({});
   const [paymentMoment, setPaymentMoment] = useState(null);
-  const [usagePattern, setUsagePattern] = useState(5);
-  const [valueDuration, setValueDuration] = useState(5);
+  const [usageIntensity, setUsageIntensity] = useState(5);
   const [networkEffect, setNetworkEffect] = useState(5);
   const [showFitResults, setShowFitResults] = useState(false);
 
@@ -354,7 +353,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-3 text-center">Revenue Model</h1>
         <p className="text-gray-600 text-center mb-6 leading-relaxed">
-          Even in the early stages of product planning, it's important to start thinking about your revenue model. It can shape your product decisions, at least in its first version. There are a few ways to approach this: look at competitors or similar products in your space, or think about what your customers are already used to paying for.
+          Even in the early stages of product planning, it's important to start thinking about your revenue model. It can shape your product decisions, at least in its first version.
         </p>
 
         {/* [FIX 020826] Venture context card — icon added, Problem/Solution
@@ -383,11 +382,8 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
             deterministic comparison against predefined model profiles. */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6">
           <button onClick={() => setShowSelector(v => !v)} className="w-full text-left">
-            <p className="font-bold text-gray-800">Not sure which model fits?</p>
-            <p className="text-sm text-gray-600 mt-1">
-              Answer a few quick questions about your product, and we'll suggest which model tends to fit best — no AI, just structured logic based on how you described your MVP.
-            </p>
-            <p className="text-sm font-medium text-indigo-600 mt-2">{showSelector ? 'Hide' : 'Get a recommendation'} ▾</p>
+            <p className="font-bold text-gray-800">Need help choosing a model?</p>
+            <p className="text-sm font-medium text-indigo-600 mt-2">{showSelector ? 'Hide' : 'Try our guide'} →</p>
           </button>
 
           {showSelector && (
@@ -399,9 +395,9 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
                 {(venture.mvp_data?.feature_matrix || []).filter(f => f.isSelected).length > 0 ? (
                   (venture.mvp_data.feature_matrix).filter(f => f.isSelected).map((f, i) => (
                     <div key={i} className="mb-3">
-                      <p className="text-sm font-medium text-gray-700">{f.name}</p>
-                      <input type="range" min="0" max="10" value={featureValues[f.name] ?? 5}
-                        onChange={(e) => setFeatureValues(prev => ({ ...prev, [f.name]: Number(e.target.value) }))}
+                      <p className="text-sm font-medium text-gray-700">{f.featureName}</p>
+                      <input type="range" min="0" max="10" value={featureValues[f.featureName] ?? 5}
+                        onChange={(e) => setFeatureValues(prev => ({ ...prev, [f.featureName]: Number(e.target.value) }))}
                         className="w-full" />
                       <div className="flex justify-between text-xs text-gray-400"><span>Low value</span><span>High value</span></div>
                     </div>
@@ -425,23 +421,17 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
                 </div>
               </div>
 
-              {/* Step 3 — Usage frequency */}
+              {/* Step 3 (merged, was 3+4) — Usage intensity */}
               <div>
-                <p className="font-semibold text-gray-800 mb-1">3. How often will people use your product?</p>
-                <input type="range" min="0" max="10" value={usagePattern} onChange={(e) => setUsagePattern(Number(e.target.value))} className="w-full" />
-                <div className="flex justify-between text-xs text-gray-400"><span>Rarely</span><span>Frequently</span></div>
-              </div>
-
-              {/* Step 4 — Value duration */}
-              <div>
-                <p className="font-semibold text-gray-800 mb-1">4. How long does your product provide value?</p>
-                <input type="range" min="0" max="10" value={valueDuration} onChange={(e) => setValueDuration(Number(e.target.value))} className="w-full" />
-                <div className="flex justify-between text-xs text-gray-400"><span>One-time</span><span>Ongoing</span></div>
+                <p className="font-semibold text-gray-800 mb-1">3. Is this something people use often, or only when a specific need comes up?</p>
+                <p className="text-sm text-gray-500 mb-2">Think about products you use — some (like a messaging app) become part of your daily routine, while others (like calling a plumber) you only turn to when a specific problem shows up.</p>
+                <input type="range" min="0" max="10" value={usageIntensity} onChange={(e) => setUsageIntensity(Number(e.target.value))} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-400"><span>Occasional need</span><span>Daily habit</span></div>
               </div>
 
               {/* Step 5 — Network effect */}
               <div>
-                <p className="font-semibold text-gray-800 mb-1">5. Does your product become more valuable as more people join?</p>
+                <p className="font-semibold text-gray-800 mb-1">4. Does your product become more valuable as more people join?</p>
                 <input type="range" min="0" max="10" value={networkEffect} onChange={(e) => setNetworkEffect(Number(e.target.value))} className="w-full" />
                 <div className="flex justify-between text-xs text-gray-400"><span>No network effect</span><span>Strong network effect</span></div>
               </div>
@@ -462,7 +452,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
                   : maxRating;
                 const valueConcentration = Math.max(0, Math.min(10, maxRating - avgOthers));
 
-                const fitScores = calculateFitScores({ usagePattern, valueDuration, networkEffect, valueConcentration, paymentMoment });
+                const fitScores = calculateFitScores({ usageIntensity, networkEffect, valueConcentration, paymentMoment });
                 const top = fitScores[0];
 
                 return (
