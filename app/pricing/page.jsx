@@ -158,8 +158,8 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4 leading-relaxed">
-          Start your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent italic inline-block pb-1">journey for free</span> and upgrade when you need more power.
+        <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4 leading-loose">
+          Start your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent italic inline-block pt-2 pb-2">journey for free</span> and upgrade when you need more power.
         </h1>
         <p className="text-gray-600 text-sm mb-4">
           All plans include monthly credits. Need more? Top up anytime.
