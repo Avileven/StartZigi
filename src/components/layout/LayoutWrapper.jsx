@@ -19,6 +19,7 @@ export default function LayoutWrapper({ children }) {
     "/privacypolicy",
     "/disclaimer",
     "/createventure",
+    "/the-toolkit",
     "/ideas",
     "/blog"    
   ];
