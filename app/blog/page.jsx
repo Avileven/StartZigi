@@ -6,7 +6,6 @@ const allArticles = [
     id: 1,
     category: 'tips',
     title: 'Building an MVP Fast',
-    readTime: '5 min',
     desc: 'How to prioritize features and launch your product in record time.',
     accent: '#3457D5',
     content: `Most founders build too much before talking to users. The MVP is not a smaller version of your product — it is the smallest thing that tests your core assumption.
@@ -25,7 +24,6 @@ Talk to users before you finish building. The conversations you have while build
     id: 2,
     category: 'ai',
     title: 'The Future of AI in Startups',
-    readTime: '8 min',
     desc: 'How Artificial Intelligence is changing the way companies are built.',
     accent: '#6E5AD6',
     content: `Three years ago, building an AI-powered product required a machine learning team, months of training data, and significant infrastructure. Today, a solo founder can integrate GPT-level intelligence into a product in an afternoon.
@@ -42,9 +40,8 @@ The question is not whether your startup will use AI. It is whether you are usin
   },
   {
     id: 3,
-    category: 'success',
+    category: 'tips',
     title: 'The Business Plan That Won the Room',
-    readTime: '11 min',
     desc: 'What separates a business plan investors remember from one they forget.',
     accent: '#2C9E9E',
     content: `Most business plans fail before they are read. Not because the business is weak — but because the document does not communicate what makes it strong.
@@ -63,7 +60,6 @@ The best business plans end with a clear ask: how much you are raising, what you
     id: 4,
     category: 'ai',
     title: 'No-Code + AI: The Winning Combo',
-    readTime: '8 min',
     desc: 'How to build a startup without writing code using modern AI tools.',
     accent: '#D9822B',
     content: `The barrier to building a software product has never been lower. A non-technical founder today has access to tools that would have required a full engineering team five years ago.
@@ -84,7 +80,6 @@ The founders who use this combination well are not replacing engineering. They a
     id: 5,
     category: 'tips',
     title: 'Essential Metrics for Founders',
-    readTime: '6 min',
     desc: 'Key indicators to help you understand if your startup is on the right track.',
     accent: '#3457D5',
     content: `Most founders measure too many things, which means they are effectively measuring nothing. The goal is to identify the three or four numbers that actually tell you whether the business is working.
@@ -103,7 +98,6 @@ Finally, runway. Know exactly how many months of cash you have at your current b
     id: 6,
     category: 'tips',
     title: 'How to Find the Perfect Co-Founder',
-    readTime: '7 min',
     desc: 'A guide to finding a business partner who fits your vision and values.',
     accent: '#D65A8C',
     content: `The co-founder relationship is the most important relationship in a startup. More startups fail because of co-founder conflict than because of market problems, competition, or running out of money.
@@ -117,6 +111,54 @@ Look for co-founders in adjacent circles — former colleagues, accelerator coho
 Equity splits are the source of more ongoing conflict than almost any other early decision. Split equity based on contributions and commitment, not on who had the original idea. An idea is worth very little. The work of building, the risk of leaving income, the months of no salary — these are the things that determine how equity should be distributed.
 
 Get a co-founder agreement and a vesting schedule in place from day one. A four-year vest with a one-year cliff is standard. It protects both parties and aligns incentives over the long term.`
+  },
+  {
+    id: 7,
+    category: 'product',
+    title: 'Why Your Demo Matters More Than You Think',
+    desc: 'A polished mockup does not just look nice — it changes the quality of feedback you get.',
+    accent: '#7C4DFF',
+    content: `Founders often treat the demo as a formality — something to throw together so there is "something to show" before asking for feedback. That instinct gets the priority backwards.
+
+The quality of your demo directly shapes the quality of the feedback you receive. Show someone a rough sketch with placeholder text and broken flows, and their feedback will be about the sketch — confused questions about what a button does, comments on things you already know are unfinished. Show them something that actually looks and feels like a real product, and their feedback shifts to the thing you actually need to know: does this solve their problem, and would they use it.
+
+This is not about spending weeks polishing pixels. It is about removing the friction that keeps reviewers from reacting to your actual idea. A clear flow, real-sounding copy instead of "Lorem ipsum," and a visual style that feels intentional — these are enough to get people past "what is this" and into "here is what I think of this."
+
+There is a second, quieter benefit. A demo that looks considered signals that you are serious. People give more thoughtful, honest feedback to founders who clearly put in effort — and more generic, polite feedback to founders who clearly did not.
+
+The goal is not perfection. It is removing enough friction that the feedback you get is about your product, not about your prototype.`
+  },
+  {
+    id: 8,
+    category: 'product',
+    title: 'Reading Feedback Without Fooling Yourself',
+    desc: 'When five people give you five different opinions, how do you know what to actually act on?',
+    accent: '#00A896',
+    content: `Every founder eventually hits the same moment: you collect feedback from real people, and it contradicts itself. One person loves a feature, another says it is confusing. One person says the pricing is too high, another says they would happily pay more. It is tempting to average it all out or chase whoever spoke most confidently. Both instincts are wrong.
+
+Start by separating feedback about the idea from feedback about the execution. "I do not understand what this does" is often a demo problem, not a product problem — it tells you to clarify, not to change direction. "I understand exactly what this does, and I would not use it" is a much more serious signal, and far rarer than founders expect.
+
+Look for patterns, not individual opinions. A single person disliking a feature is a data point. Three unrelated people independently struggling with the same step is a pattern worth acting on. The signal is in the repetition, not the intensity of any one comment.
+
+Weight feedback by relevance, not by volume. Feedback from someone who matches your actual target customer is worth more than feedback from someone who does not, even if the second person is more articulate or more critical. Know who you are building for before you decide whose opinion moves you.
+
+Finally, be honest about the difference between feedback that is uncomfortable and feedback that is wrong. The instinct to dismiss criticism because it is unpleasant to hear is exactly the instinct that keeps founders building things nobody wants. If several people, independently, describe the same problem — that discomfort is information, not noise.`
+  },
+  {
+    id: 9,
+    category: 'product',
+    title: 'Your First Revenue Model, Simplified',
+    desc: 'You do not need a finance degree to start thinking about how your product will make money.',
+    accent: '#E85D75',
+    content: `Many founders push thinking about revenue to "later" — after the product is built, after there are users, after it feels real. That instinct is understandable, but it costs you something: how you plan to make money often shapes what you should build first.
+
+A product that plans to charge a monthly subscription needs to deliver value repeatedly, every month, to justify that recurring charge. A product that plans to take a cut of transactions needs to actually facilitate transactions, not just be a nice tool people browse. These are different products, not just different pricing pages — and knowing which one you are building changes your priorities from day one.
+
+You do not need precise numbers this early. What you need is a plausible story: who pays, what moment they are willing to pay at, and roughly what that is worth to them. A rideshare app's value is obvious at the moment of a ride — that is when payment makes sense. A note-taking app's value builds up slowly over weeks of use — a single upfront charge would not match how the value actually arrives.
+
+Look at how similar products in your space charge, and notice what your own customers are already used to paying for. If your target users already pay monthly for similar tools, a subscription will feel familiar. If they are used to one-time purchases, asking for a recurring commitment may create friction that has nothing to do with your product's quality.
+
+This first pass will not be your final pricing. It will change as you learn from real users. But even a rough model, sketched early, keeps you from building six months of features aimed at the wrong kind of customer.`
   }
 ];
 
@@ -127,6 +169,9 @@ const bgGradients = [
   'from-amber-500 to-orange-700',
   'from-blue-500 to-cyan-700',
   'from-pink-500 to-rose-700',
+  'from-violet-500 to-purple-700',
+  'from-teal-500 to-cyan-700',
+  'from-rose-500 to-pink-700',
 ];
 
 export default function BlogPage() {
@@ -141,19 +186,18 @@ export default function BlogPage() {
     { id: 'all', label: 'All Stories' },
     { id: 'tips', label: 'Founder Tips' },
     { id: 'ai', label: 'AI & Tech' },
-    { id: 'success', label: 'Success Stories' }
+    { id: 'product', label: 'Product & Demos' }
   ];
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
 
-      <header className="pt-24 pb-12 px-[10%]">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4">
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
-            StartZig Insights
+      <header className="pt-24 pb-16 px-[10%] text-center">
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 pb-2 leading-tight">
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block pb-1">
+            Blog
           </span>
         </h1>
-        <p className="text-gray-600 text-lg max-w-xl">The founder's guide to building, scaling, and mastering AI.</p>
       </header>
 
       <main className="max-w-[1400px] mx-auto px-[10%] py-12 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
@@ -196,9 +240,6 @@ export default function BlogPage() {
                   </h3>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <span>{article.readTime} Read</span>
-              </div>
               <p className="text-gray-600 text-sm line-clamp-2">{article.desc}</p>
             </article>
           ))}
@@ -219,7 +260,7 @@ export default function BlogPage() {
             {/* Modal header */}
             <div className={`bg-gradient-to-br ${bgGradients[openArticle.id - 1]} p-8 rounded-t-2xl`}>
               <p className="text-xs font-bold uppercase tracking-widest mb-3 text-white/80">
-                {categories.find(c => c.id === openArticle.category)?.label} · {openArticle.readTime} Read
+                {categories.find(c => c.id === openArticle.category)?.label}
               </p>
               <h2 className="text-2xl font-bold text-white leading-snug">{openArticle.title}</h2>
             </div>
