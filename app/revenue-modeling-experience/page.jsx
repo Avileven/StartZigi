@@ -156,7 +156,7 @@ export default function RevenueModelingExperience() {
 
   // [ADDED 020826] Revenue Model Selector quiz state
   const [showSelector, setShowSelector] = useState(false);
-  const [featureValues, setFeatureValues] = useState({});
+  const [valueConcentrationInput, setValueConcentrationInput] = useState(5);
   const [paymentMoment, setPaymentMoment] = useState(null);
   const [usageIntensity, setUsageIntensity] = useState(5);
   const [networkEffect, setNetworkEffect] = useState(5);
@@ -376,35 +376,28 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
           </div>
         )}
 
-        {/* [ADDED 020826] Revenue Model Selector — collapsible, per this
-            session's decision: an optional structured guide before the
-            business model cards, not a replacement for them. No AI — a
-            deterministic comparison against predefined model profiles. */}
-        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mb-6">
-          <button onClick={() => setShowSelector(v => !v)} className="w-full text-left">
-            <p className="font-bold text-gray-800">Need help choosing a model?</p>
-            <p className="text-sm font-medium text-indigo-600 mt-2">{showSelector ? 'Hide' : 'Try our guide'} →</p>
-          </button>
+        {/* Business model */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800">What's your business model?</h2>
+            <button onClick={() => setShowSelector(v => !v)} className="flex items-center gap-1 text-sm font-medium text-indigo-600 flex-shrink-0">
+              <span className="w-5 h-5 rounded-full border border-indigo-300 flex items-center justify-center text-xs">i</span>
+              Not sure?
+            </button>
+          </div>
 
+          {/* [ADDED 020826] Revenue Model Selector — no AI, a deterministic
+              comparison against predefined model profiles. Lives inline
+              with the business model cards now, not a separate box above
+              them. */}
           {showSelector && (
-            <div className="mt-5 space-y-6">
-              {/* Step 1 — Value location, using the venture's real MVP features */}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-5 space-y-5">
+              {/* Step 1 — Value concentration */}
               <div>
-                <p className="font-semibold text-gray-800 mb-1">1. Where is the value?</p>
-                <p className="text-sm text-gray-500 mb-3">Which part of your product creates the most value for the customer?</p>
-                {(venture.mvp_data?.feature_matrix || []).filter(f => f.isSelected).length > 0 ? (
-                  (venture.mvp_data.feature_matrix).filter(f => f.isSelected).map((f, i) => (
-                    <div key={i} className="mb-3">
-                      <p className="text-sm font-medium text-gray-700">{f.featureName}</p>
-                      <input type="range" min="0" max="10" value={featureValues[f.featureName] ?? 5}
-                        onChange={(e) => setFeatureValues(prev => ({ ...prev, [f.featureName]: Number(e.target.value) }))}
-                        className="w-full" />
-                      <div className="flex justify-between text-xs text-gray-400"><span>Low value</span><span>High value</span></div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No MVP features found — this step will be skipped in the calculation.</p>
-                )}
+                <p className="font-semibold text-gray-800 mb-1">1. Is your product's value built around one key feature, or a set of features working together?</p>
+                <p className="text-sm text-gray-500 mb-2">For example: a photo-editing app might make its money from one feature — the "remove background" tool. A fitness app usually needs everything (workouts, tracking, community) working together for people to feel it's worth paying for.</p>
+                <input type="range" min="0" max="10" value={valueConcentrationInput} onChange={(e) => setValueConcentrationInput(Number(e.target.value))} className="w-full" />
+                <div className="flex justify-between text-xs text-gray-400"><span>One specific feature</span><span>All features together</span></div>
               </div>
 
               {/* Step 2 — Payment moment */}
@@ -429,7 +422,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
                 <div className="flex justify-between text-xs text-gray-400"><span>Occasional need</span><span>Daily habit</span></div>
               </div>
 
-              {/* Step 5 — Network effect */}
+              {/* Step 4 — Network effect */}
               <div>
                 <p className="font-semibold text-gray-800 mb-1">4. Does your product become more valuable as more people join?</p>
                 <input type="range" min="0" max="10" value={networkEffect} onChange={(e) => setNetworkEffect(Number(e.target.value))} className="w-full" />
@@ -445,14 +438,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
               </Button>
 
               {showFitResults && paymentMoment && (() => {
-                const featureRatings = Object.values(featureValues);
-                const maxRating = featureRatings.length ? Math.max(...featureRatings) : 5;
-                const avgOthers = featureRatings.length > 1
-                  ? (featureRatings.reduce((a, b) => a + b, 0) - maxRating) / (featureRatings.length - 1)
-                  : maxRating;
-                const valueConcentration = Math.max(0, Math.min(10, maxRating - avgOthers));
-
-                const fitScores = calculateFitScores({ usageIntensity, networkEffect, valueConcentration, paymentMoment });
+                const fitScores = calculateFitScores({ usageIntensity, networkEffect, valueConcentration: valueConcentrationInput, paymentMoment });
                 const top = fitScores[0];
 
                 return (
@@ -484,11 +470,7 @@ Once you've completed MLP development phase, you'll be ready to move to the Beta
               })()}
             </div>
           )}
-        </div>
 
-        {/* Business model */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">What's your business model?</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {BUSINESS_MODELS.map(model => (
               <button
