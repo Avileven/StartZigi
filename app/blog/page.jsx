@@ -192,14 +192,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
 
-      <header className="pt-24 pb-16 px-[10%] text-center">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 pb-3 leading-relaxed">
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block pb-2">
-            Blog
-          </span>
-        </h1>
-      </header>
-
+      
       <main className="max-w-[1400px] mx-auto px-[10%] py-12 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
 
         <aside className="sticky top-24 h-fit">
