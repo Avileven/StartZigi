@@ -7,18 +7,18 @@ const PHASES = [
   {
     key: "plan",
     label: "PLAN",
-    venture: { name: "NovaMed", messages: 8, balance: "$15,000", val: "$250K" },
-    tools: ["Financials", "Business Plan", "Invite Co-Founder", "Promotion Center"],
+    venture: { name: "NovaMed", messages: 8, balance: "$30,000", val: "$250K" },
+    tools: ["Financials", "Plan", "Invite Co-Founder", "Promotion Center"],
     messages: [
-      { id: "a", dot: "#6c47ff", title: "Welcome to Business Planning!", tag: "PHASE WELCOME", date: "Jan 25, 2026", body: "It's time to build a solid foundation. Complete your business plan to unlock the next phase." },
-      { id: "b", dot: "#22c55e", title: "Capital Injection: $15,000", tag: "PHASE COMPLETE", date: "Jan 25, 2026", body: "Your business plan is 100% complete. A starting capital of $15,000 has been deposited. Monthly burn rate is now $5,000.", highlight: true },
+      { id: "a", dot: "#6c47ff", title: "Welcome to Plan!", tag: "PHASE WELCOME", date: "Jan 25, 2026", body: "It's time to build a solid foundation. Complete your plan to unlock the next phase." },
+      { id: "b", dot: "#22c55e", title: "Capital Injection: $30,000", tag: "PHASE COMPLETE", date: "Jan 25, 2026", body: "Your plan is 100% complete. A starting capital of $30,000 has been deposited. Monthly burn rate is now $5,000.", highlight: true },
     ],
   },
   {
     key: "mvp",
     label: "MVP",
     venture: { name: "NovaMed", messages: 14, balance: "$8,200", val: "$500K" },
-    tools: ["Financials", "Business Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback"],
+    tools: ["Financials", "Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback"],
     messages: [
       { id: "c", dot: "#f59e0b", title: "MVP Uploaded Successfully!", tag: "SYSTEM", date: "Feb 10, 2026", body: "Great work! Your MVP is live. Use the Promotion Center to collect user feedback." },
       { id: "d", dot: "#6c47ff", title: "Co-Founder Invited!", tag: "CO-FOUNDER INVITE", date: "Apr 6, 2026", body: "Invitation sent to DAN. Link points to Venture Profile.", highlight: false },
@@ -28,7 +28,7 @@ const PHASES = [
     key: "mlp",
     label: "MLP",
     venture: { name: "NovaMed", messages: 18, balance: "$2,400", val: "$1M" },
-    tools: ["Financials", "Business Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback", "Revenue Modeling", "MLP Dev Center"],
+    tools: ["Financials", "Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback", "Revenue Modeling", "MLP Dev Center"],
     messages: [
       { id: "e", dot: "#ec4899", title: "10 Feedback Responses Received", tag: "SYSTEM", date: "Mar 15, 2026", body: "You've collected 10+ feedback responses. You're now eligible to complete the MLP phase." },
       { id: "f", dot: "#22c55e", title: "MLP Phase Complete!", tag: "PHASE COMPLETE", date: "Mar 20, 2026", body: "Congratulations! Your MLP is complete. You're moving to the Beta phase.", highlight: true },
@@ -38,7 +38,7 @@ const PHASES = [
     key: "beta",
     label: "BETA",
     venture: { name: "NovaMed", messages: 20, balance: "$220,151", val: "$2M" },
-    tools: ["Financials", "Business Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback", "Revenue Modeling", "Beta Testing Page", "Venture Pitch"],
+    tools: ["Financials", "Plan", "Invite Co-Founder", "Promotion Center", "ZigForge Studio", "Product Feedback", "Revenue Modeling", "Beta Testing Page", "Venture Pitch"],
     messages: [
       { id: "g", dot: "#ec4899", title: "New Beta Tester", tag: "SYSTEM", date: "Mar 29, 2026", body: "You now have 5/50 beta sign-ups. Keep sharing your beta page to reach your goal." },
       { id: "h", dot: "#f59e0b", title: "Screening Meeting Scheduled", tag: "VC MARKETPLACE", date: "Apr 2, 2026", body: "Velocity Wave Partners agreed to a screening call. Prepare your pitch deck." },
@@ -192,7 +192,7 @@ export default function DashboardMockup({ autoStart = false }) {
                     <div style={{ background: "#fff", border: "0.5px solid #e8e8e8", borderRadius: 10, padding: "10px 12px" }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 5 }}>NovaMed</div>
                       <div style={{ display: "flex", gap: 6, fontSize: 10, color: "#999", flexWrap: "wrap" }}>
-                        <span>8 messages</span><span>·</span><span>Balance: $15,000</span><span>·</span><span>Val: $250K</span>
+                        <span>8 messages</span><span>·</span><span>Balance: $30,000</span><span>·</span><span>Val: $250K</span>
                       </div>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>Board</div>
