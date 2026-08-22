@@ -193,8 +193,8 @@ export default function BlogPage() {
     <div className="min-h-screen bg-white text-gray-900">
 
       <header className="pt-24 pb-16 px-[10%] text-center">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 pb-2 leading-tight">
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block pb-1">
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 pb-3 leading-relaxed">
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent inline-block pb-2">
             Blog
           </span>
         </h1>
