@@ -25,28 +25,81 @@ export default function WhyStartZig() {
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">What Is Zigging All About?</h2>
                             <div className="space-y-6">
                                 <p>
-                                    Every startup journey looks straight on paper: idea, product, funding, exit. In practice, it never is.
+                                    Every startup journey looks straight on paper: Idea, Product, Launch, Growth. But in reality, the path is never as straight as it looks. You start with an idea. You define a product, make assumptions about what people will want, and begin building. Then reality starts talking back. A feature you thought was essential turns out to matter less than expected. Something you considered secondary gets the strongest reaction. Users misunderstand something you thought was obvious. That's not a problem with the process. It's a process of continuous discovery.
                                 </p>
                                 <p>
-                                    Say you define five features for your first version, each one feels essential while you're building it. You share it with the community, and real feedback comes back. Two of those features people love. Two others get a lukewarm reaction, or worse, people say they'd never miss them. That's not proof you failed. It's proof your assumptions just met reality.
-                                </p>
-                                <p>
-                                    That moment is what we call a <span className="text-blue-600 font-semibold">Zig</span>. You cut what isn't landing, sharpen what is, and move forward with a product actually shaped by real signal, not just your own conviction. StartZig is built around that reality. Not a straight line from idea to launch, but a process of building, hearing real reactions, and adjusting, again and again, until what you're building actually matches what people want.
+                                    A <span className="text-blue-600 font-semibold">Zig</span> is the moment when what you learn changes what you build next. You remove what isn't working, strengthen what is, rethink your assumptions, and move forward with a better definition of the product.
                                 </p>
                             </div>
                         </section>
 
                         <section>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">How StartZig Makes It Work</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">The Zig Loop</h2>
+                            <div className="space-y-3">
+                                <p><span className="font-bold text-gray-900">DEFINE.</span> Clarify the problem, audience, and product.</p>
+                                <p><span className="font-bold text-gray-900">BUILD.</span> Turn the definition into something people can experience.</p>
+                                <p><span className="font-bold text-gray-900">SHARE.</span> Put it in front of the community.</p>
+                                <p><span className="font-bold text-gray-900">LEARN.</span> Collect structured feedback and understand the signal.</p>
+                                <p><span className="font-bold text-gray-900">ZIG.</span> Change what needs changing.</p>
+                                <p><span className="font-bold text-gray-900">REBUILD.</span> Move forward with what you've learned.</p>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">The StartZig Ecosystem</h2>
                             <div className="space-y-6">
                                 <p>
-                                    StartZig combines several layers of analysis into one continuous process. Community feedback gives you real human perspective. AI helps you find the patterns inside that feedback. And you, the founder, make the actual decisions.
+                                    StartZig brings the people, tools, and feedback needed for that process into one ecosystem.
+                                </p>
+                                <div className="space-y-3">
+                                    <p><span className="font-bold text-gray-900">FOUNDERS.</span> Define ideas, shape products, make decisions, and learn through the process.</p>
+                                    <p><span className="font-bold text-gray-900">COMMUNITY.</span> Other founders and users are invited to provide structured feedback on product demos and features.</p>
+                                    <p><span className="font-bold text-gray-900">AI.</span> Helps founders make sense of the information they collect, identify patterns, and see signals that may be difficult to spot on their own.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Founders Helping Founders</h2>
+                            <div className="space-y-6">
+                                <p>
+                                    The ecosystem works both ways.
                                 </p>
                                 <p>
-                                    The goal isn't just feedback for its own sake. It's precision. Defining a product that genuinely fits a real market need, not one that sounds good in a pitch but misses what people actually want. Every layer exists to sharpen that definition, again and again, as you learn.
+                                    The person building your product doesn't have to be the only person thinking about it. A founder can review another founder's idea, evaluate an MVP, test a Beta, or share an insight based on their own experience. That creates a two way ecosystem. Today, you help someone else understand their product. Tomorrow, someone else can help you understand yours. And by contributing, founders develop their own ability to evaluate products, recognize opportunities, and think through problems.
                                 </p>
                                 <p>
-                                    There's a second layer to this that most tools ignore completely. Every founder who reviews your idea, tries your MVP, or gives you feedback is also a potential early user. Long before your product is fully built, StartZig helps you start building the audience around it. So that by the time you're ready to launch, you're not starting from zero.
+                                    The community becomes part of the learning process.
+                                </p>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Feedback Is Only Useful If You Can Learn From It</h2>
+                            <div className="space-y-6">
+                                <p>
+                                    Getting feedback isn't difficult. Understanding what to do with it is. Unstructured feedback like "Looks good" or "I'm not sure I'd use this" may be honest, but it's difficult to turn into a product decision.
+                                </p>
+                                <p>
+                                    StartZig structures feedback around the questions that matter at each stage of the journey. Instead of giving a founder a collection of disconnected opinions, structured feedback can reveal patterns, like which features people love, which raise concerns, and where their expectations don't match what you built, and in the end make a real insight about the product's functionality.
+                                </p>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">From Community to Early Users</h2>
+                            <div className="space-y-6">
+                                <p>
+                                    The ecosystem has another effect. The people who discover and interact with a product while it's being built can become more than sources of feedback. They can become early adopters. Someone who discovers an idea at the MVP stage might follow its progress, return to see the MLP, test the Beta, and eventually become one of its first users. This means the process of validating a product can also begin the process of building its audience.
+                                </p>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">AI Finds the Signal. You Make the Zig.</h2>
+                            <div className="space-y-6">
+                                <p>
+                                    Community feedback provides the human perspective. AI can help identify patterns across that feedback, highlight recurring signals, and help the founder understand what deserves attention. But AI doesn't decide what the product should become. You do.
                                 </p>
                             </div>
                         </section>
