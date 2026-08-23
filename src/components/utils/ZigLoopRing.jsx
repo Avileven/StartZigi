@@ -9,14 +9,6 @@ export default function ZigLoopRing() {
   return (
     <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
       <style>{`
-        .zig-ring-sweep {
-          animation: zigRingSpin 5s linear infinite;
-          transform-origin: 190px 170px;
-        }
-        @keyframes zigRingSpin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
         .zig-ring-dot {
           transform-box: fill-box;
           transform-origin: center;
@@ -44,7 +36,7 @@ export default function ZigLoopRing() {
           50%      { transform: scale(1.12); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .zig-ring-sweep, .zig-ring-dot, .zig-ring-center {
+          .zig-ring-dot, .zig-ring-center {
             animation: none !important;
           }
         }
@@ -54,9 +46,6 @@ export default function ZigLoopRing() {
 
         <circle cx="190" cy="170" r="110" fill="none" stroke="#E5E3DC" strokeWidth="14" />
 
-        <circle className="zig-ring-sweep" cx="190" cy="170" r="110" fill="none" stroke="#7F77DD"
-          strokeWidth="14" strokeLinecap="round" strokeDasharray="70 621" />
-
         <circle
           cx="190" cy="170" r="62" fill="#FAFAF7" stroke="#E5E3DC" strokeWidth="1"
           style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'zigRingBreathe 4s ease-in-out infinite' }}
@@ -65,23 +54,23 @@ export default function ZigLoopRing() {
 
         {/* Plan */}
         <circle className="zig-ring-dot zig-dot-plan" cx="190" cy="60" r="9" fill="#10C652" stroke="#ffffff" strokeWidth="2" />
-        <text x="190" y="30" textAnchor="middle" fontSize="12" fontWeight="600" fill="#1A1A18">Plan</text>
+        <text x="190" y="30" textAnchor="middle" fontSize="12" fontWeight="600" fill="#D85A30">Plan</text>
 
         {/* Build */}
         <circle className="zig-ring-dot zig-dot-build" cx="295" cy="136" r="9" fill="#22B357" stroke="#ffffff" strokeWidth="2" />
-        <text x="313" y="130" textAnchor="start" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#1A1A18">Build</text>
+        <text x="313" y="130" textAnchor="start" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#D85A30">Build</text>
 
         {/* Feedback */}
         <circle className="zig-ring-dot zig-dot-feedback" cx="255" cy="259" r="9" fill="#2563EB" stroke="#ffffff" strokeWidth="2" />
-        <text x="264" y="283" textAnchor="start" fontSize="12" fontWeight="600" fill="#1A1A18">Feedback</text>
+        <text x="264" y="283" textAnchor="start" fontSize="12" fontWeight="600" fill="#D85A30">Feedback</text>
 
         {/* Analysis */}
         <circle className="zig-ring-dot zig-dot-analysis" cx="125" cy="259" r="9" fill="#488D61" stroke="#ffffff" strokeWidth="2" />
-        <text x="116" y="283" textAnchor="end" fontSize="12" fontWeight="600" fill="#1A1A18">Analysis</text>
+        <text x="116" y="283" textAnchor="end" fontSize="12" fontWeight="600" fill="#D85A30">Analysis</text>
 
         {/* Update */}
         <circle className="zig-ring-dot zig-dot-update" cx="85" cy="136" r="9" fill="#5B7B66" stroke="#ffffff" strokeWidth="2" />
-        <text x="67" y="130" textAnchor="end" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#1A1A18">Update</text>
+        <text x="67" y="130" textAnchor="end" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#D85A30">Update</text>
 
       </svg>
     </div>

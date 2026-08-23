@@ -34,7 +34,7 @@ export default function WhyStartZig() {
                             </div>
                         </section>
 
-                        <section>
+                        <section className="text-center">
                             <h2 className="text-2xl font-bold text-gray-900 mb-2">The Zig Loop</h2>
                             <p className="text-base text-gray-500 mb-6">A continuous cycle that keeps your product moving toward reality.</p>
                             <ZigLoopRing />
