@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import ZigLoopRing from "@/components/utils/ZigLoopRing";
 
 export default function WhyStartZig() {
     useEffect(() => {
@@ -35,14 +36,7 @@ export default function WhyStartZig() {
 
                         <section>
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">The Zig Loop</h2>
-                            <div className="space-y-3">
-                                <p><span className="font-bold text-gray-900">DEFINE.</span> Clarify the problem, audience, and product.</p>
-                                <p><span className="font-bold text-gray-900">BUILD.</span> Turn the definition into something people can experience.</p>
-                                <p><span className="font-bold text-gray-900">SHARE.</span> Put it in front of the community.</p>
-                                <p><span className="font-bold text-gray-900">LEARN.</span> Collect structured feedback and understand the signal.</p>
-                                <p><span className="font-bold text-gray-900">ZIG.</span> Change what needs changing.</p>
-                                <p><span className="font-bold text-gray-900">REBUILD.</span> Move forward with what you've learned.</p>
-                            </div>
+                            <ZigLoopRing />
                         </section>
 
                         <section>
