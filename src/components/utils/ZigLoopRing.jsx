@@ -41,7 +41,7 @@ export default function ZigLoopRing() {
         }
         @keyframes zigRingBreathe {
           0%, 100% { transform: scale(1); }
-          50%      { transform: scale(1.03); }
+          50%      { transform: scale(1.12); }
         }
         @media (prefers-reduced-motion: reduce) {
           .zig-ring-sweep, .zig-ring-dot, .zig-ring-center {
@@ -61,11 +61,11 @@ export default function ZigLoopRing() {
         <text x="190" y="177" textAnchor="middle" fontSize="18" fontWeight="700" fill="#D85A30">IDEA</text>
 
         {/* Plan */}
-        <circle className="zig-ring-dot zig-dot-plan" cx="190" cy="60" r="9" fill="#23A854" stroke="#ffffff" strokeWidth="2" />
+        <circle className="zig-ring-dot zig-dot-plan" cx="190" cy="60" r="9" fill="#0C963F" stroke="#ffffff" strokeWidth="2" />
         <text x="190" y="30" textAnchor="middle" fontSize="12" fontWeight="600" fill="#1A1A18">Plan</text>
 
         {/* Build */}
-        <circle className="zig-ring-dot zig-dot-build" cx="295" cy="136" r="9" fill="#2EA75B" stroke="#ffffff" strokeWidth="2" />
+        <circle className="zig-ring-dot zig-dot-build" cx="295" cy="136" r="9" fill="#1FA952" stroke="#ffffff" strokeWidth="2" />
         <text x="313" y="130" textAnchor="start" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#1A1A18">Build</text>
 
         {/* Feedback */}
@@ -73,11 +73,11 @@ export default function ZigLoopRing() {
         <text x="264" y="283" textAnchor="start" fontSize="12" fontWeight="600" fill="#1A1A18">Feedback</text>
 
         {/* Analysis */}
-        <circle className="zig-ring-dot zig-dot-analysis" cx="125" cy="259" r="9" fill="#47A269" stroke="#ffffff" strokeWidth="2" />
+        <circle className="zig-ring-dot zig-dot-analysis" cx="125" cy="259" r="9" fill="#60B57F" stroke="#ffffff" strokeWidth="2" />
         <text x="116" y="283" textAnchor="end" fontSize="12" fontWeight="600" fill="#1A1A18">Analysis</text>
 
         {/* Update */}
-        <circle className="zig-ring-dot zig-dot-update" cx="85" cy="136" r="9" fill="#559F70" stroke="#ffffff" strokeWidth="2" />
+        <circle className="zig-ring-dot zig-dot-update" cx="85" cy="136" r="9" fill="#8AB198" stroke="#ffffff" strokeWidth="2" />
         <text x="67" y="130" textAnchor="end" dominantBaseline="central" fontSize="12" fontWeight="600" fill="#1A1A18">Update</text>
 
       </svg>
