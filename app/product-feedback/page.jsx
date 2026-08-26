@@ -305,59 +305,54 @@ export default function VentureLanding() {
 
   useEffect(() => {
     const init = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const fromId = urlParams.get("from");
-      setCampaignId(urlParams.get("campaign"));
-
-      // [ADDED] Check if user is logged in.
-      // If not — redirect to login page.
+      // [FIX 020826] This page has no invitation/reviewer flow at all —
+      // confirmed directly by the founder. It's a purely internal page
+      // where a venture owner sees a summary of feedback they've received.
+      // The whole ?from=/?id= "reviewer" branch below was leftover
+      // copy-paste from venture-landing-page.jsx (confirmed by a stray
+      // console.log("[venture-landing] loadVenture"...) elsewhere in this
+      // file) and never served a real purpose here. Removed entirely —
+      // this page now only ever looks up the logged-in user's own venture.
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         return;
       }
-      // [FIX 020826] currentUser state existed and was read in several places
-      // (the Like button, feedback attribution) but was never actually set —
-      // it stayed null the whole time even though login is enforced above.
       setCurrentUser(userData.user);
 
-      // [ADDED] Check if ?from= param exists and matches a real venture.
-      // Only ventures that were invited (have a valid from= param) can see this page.
-      // Safety: if from is missing or venture not found — show unauthorized message, do not load content.
-      if (!fromId) {
-        setIsAuthorized(false);
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const { data: reviewerData } = await supabase
+        const { data: ownVentures, error } = await supabase
           .from("ventures")
-          .select("id, name")
-          .eq("id", fromId)
-          .single();
+          .select("*")
+          .eq("created_by", userData.user.email);
 
-        if (!reviewerData) {
-          // from= param exists but venture not found — not authorized
+        if (error) throw error;
+
+        if (!ownVentures || ownVentures.length === 0) {
           setIsAuthorized(false);
           setIsLoading(false);
           return;
         }
 
-        // All checks passed — authorized
-        setReviewerVenture(reviewerData);
+        const ownVenture = ownVentures[0];
         setIsAuthorized(true);
+        setVenture(ownVenture);
+        setHasLiked(ownVenture.liked_by_users?.includes(userData.user.id) || false);
 
-        // Load the venture content
-        loadVenture(null);
+        if (ownVenture.mvp_data?.uploaded_files) await loadHtmlFiles(ownVenture.mvp_data.uploaded_files, setMvpHtmlContents, "MVP");
+        if (ownVenture.mlp_data?.uploaded_files) await loadHtmlFiles(ownVenture.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
+        if (ownVenture.revenue_model_data?.uploaded_files) await loadHtmlFiles(ownVenture.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
+        if (ownVenture.business_plan_data?.uploaded_files) await loadHtmlFiles(ownVenture.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+
+        setIsLoading(false);
       } catch (e) {
-        console.error("Authorization check failed:", e);
+        console.error("Error during page authorization:", e);
         setIsAuthorized(false);
         setIsLoading(false);
       }
     };
     init();
-  }, [loadVenture]);
+  }, [loadVenture, loadHtmlFiles]);
 
   const handleLike = async () => {
     if (!currentUser) { alert("Please log in to like this venture."); return; }
