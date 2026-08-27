@@ -103,9 +103,11 @@ const BUSINESS_MODEL_TYPES = [
 const CATEGORY_EXPLANATIONS = {
   business_model: "Tests whether your pricing feels like it fits the value you're offering — not whether this reviewer personally thinks it's cheap or expensive.",
   core_features: "Tests whether the features you chose to highlight actually support what you say the product does — not whether reviewers find each feature exciting.",
-  value_proposition: "Tests whether your headline/slogan accurately represents the product — not whether the product itself sounds appealing.",
-  product_definition: "Tests whether your description is clear and accurate — not whether the product itself sounds appealing.",
+  value_proposition: "This only affects whether reviewers are asked to rate your headline's accuracy — your headline itself is always shown regardless. Useful if you're unsure your headline is landing the way you intend it to.",
+  product_definition: "This only affects whether reviewers are asked to rate your description's clarity — your description itself is always shown regardless. Useful if you're unsure your description is landing the way you intend it to.",
 };
+
+const ALWAYS_INCLUDED_EXPLANATION = "This section only affects what feedback is collected — it doesn't change what's shown on your public page. Every reviewer is asked whether they visited the real product, and one open question at the very end, no matter which categories above you turned on.";
 
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
@@ -135,10 +137,24 @@ export default function GrowthDevelopment() {
     // judging "does this fit the product" are kept — CAC/Churn/Marketing
     // Budget/etc. from the full revenue simulator are deliberately excluded,
     // per this session's explicit confirmation ("רק סוג מודל ומחירים").
+    //
+    // [FIX] Subscription and Freemium originally had identical fields, which
+    // defeated the point of picking a model type. Two changes: (1) every
+    // price now has a paired description of what it includes, not just a
+    // number; (2) Freemium gets its own differentiator — an optional ad
+    // revenue field — since this codebase's own definition of Freemium
+    // (BUSINESS_MODEL_GUIDANCE in revenue-modeling-experience) is explicitly
+    // "free users generate ad revenue, a subset converts to paid", not just
+    // "same as Subscription but cheaper". This is my proposed fix, not
+    // something confirmed word-for-word — easy to drop the ad revenue field
+    // if it's not wanted.
     business_model_data: {
       model_type: '',              // 'subscription' | 'freemium' | 'transactional' | 'ad-driven'
       tier1_price: '',             // subscription, freemium
+      tier1_description: '',       // what Tier 1 includes
       tier2_price: '',             // subscription, freemium — optional premium tier
+      tier2_description: '',       // what Tier 2 includes
+      freemium_ad_revenue_note: '', // freemium only — free tier is ad-supported; optional note on how (e.g. "in-app banner ads")
       transaction_fee_description: '', // transactional — kept as free text since fees are sometimes % and sometimes flat
       // ad-driven: no price field at all — the product is free, that's the whole model.
     },
@@ -171,7 +187,10 @@ export default function GrowthDevelopment() {
           loaded.business_model_data = {
             model_type: loaded.business_model_data?.model_type || '',
             tier1_price: loaded.business_model_data?.tier1_price || '',
+            tier1_description: loaded.business_model_data?.tier1_description || '',
             tier2_price: loaded.business_model_data?.tier2_price || '',
+            tier2_description: loaded.business_model_data?.tier2_description || '',
+            freemium_ad_revenue_note: loaded.business_model_data?.freemium_ad_revenue_note || '',
             transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
           };
           loaded.social_links = {
@@ -279,7 +298,9 @@ export default function GrowthDevelopment() {
   const businessModelReady = (() => {
     if (!growthData.selected_categories.includes('business_model')) return true;
     if (!bmd.model_type) return false;
-    if (bmd.model_type === 'subscription' || bmd.model_type === 'freemium') return bmd.tier1_price.trim().length > 0;
+    if (bmd.model_type === 'subscription' || bmd.model_type === 'freemium') {
+      return bmd.tier1_price.trim().length > 0 && bmd.tier1_description.trim().length > 0;
+    }
     if (bmd.model_type === 'transactional') return bmd.transaction_fee_description.trim().length > 0;
     if (bmd.model_type === 'ad-driven') return true; // no price field needed
     return false;
@@ -330,7 +351,7 @@ export default function GrowthDevelopment() {
 
             {/* ===================== PAGE CONTENT ===================== */}
             <TabsContent value="content" className="space-y-6">
-              <Card className="shadow-lg">
+              <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     {isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -343,7 +364,7 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-lg">
+              <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     {isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -380,10 +401,11 @@ export default function GrowthDevelopment() {
                 <CardContent className="space-y-4">
 
                   {/* --- Business Model --- */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className={`border rounded-lg p-4 ${businessModelReady && growthData.selected_categories.includes('business_model') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 flex items-center">
+                        {businessModelReady && growthData.selected_categories.includes('business_model') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
                         Business Model
                         <ExplainToggle text={CATEGORY_EXPLANATIONS.business_model} />
                       </span>
@@ -408,15 +430,35 @@ export default function GrowthDevelopment() {
                         </div>
 
                         {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
-                          <div className="flex gap-2">
-                            <div className="flex-1">
-                              <Label className="text-xs">Tier 1 price (monthly)</Label>
-                              <Input value={bmd.tier1_price} onChange={(e) => handleBusinessModelChange('tier1_price', e.target.value)} placeholder="$9.99" />
+                          <>
+                            <div className="flex gap-2">
+                              <div className="w-28">
+                                <Label className="text-xs">Tier 1 price (monthly)</Label>
+                                <Input value={bmd.tier1_price} onChange={(e) => handleBusinessModelChange('tier1_price', e.target.value)} placeholder="$9.99" />
+                              </div>
+                              <div className="flex-1">
+                                <Label className="text-xs">What's included in Tier 1</Label>
+                                <Input value={bmd.tier1_description} onChange={(e) => handleBusinessModelChange('tier1_description', e.target.value)} placeholder="e.g., Unlimited trips, no ads" />
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <Label className="text-xs">Tier 2 price (optional, premium)</Label>
-                              <Input value={bmd.tier2_price} onChange={(e) => handleBusinessModelChange('tier2_price', e.target.value)} placeholder="$29.99" />
+                            <div className="flex gap-2">
+                              <div className="w-28">
+                                <Label className="text-xs">Tier 2 price (optional)</Label>
+                                <Input value={bmd.tier2_price} onChange={(e) => handleBusinessModelChange('tier2_price', e.target.value)} placeholder="$29.99" />
+                              </div>
+                              <div className="flex-1">
+                                <Label className="text-xs">What's included in Tier 2</Label>
+                                <Input value={bmd.tier2_description} onChange={(e) => handleBusinessModelChange('tier2_description', e.target.value)} placeholder="e.g., Team seats, priority support" />
+                              </div>
                             </div>
+                          </>
+                        )}
+
+                        {bmd.model_type === 'freemium' && (
+                          <div>
+                            <Label className="text-xs">Free tier — how is it ad-supported? (optional note)</Label>
+                            <Input value={bmd.freemium_ad_revenue_note} onChange={(e) => handleBusinessModelChange('freemium_ad_revenue_note', e.target.value)} placeholder="e.g., banner ads between sessions" />
+                            <p className="text-xs text-gray-400 mt-1">This is what makes Freemium different from Subscription — a free, ad-supported tier alongside the paid one(s) above.</p>
                           </div>
                         )}
 
@@ -437,10 +479,11 @@ export default function GrowthDevelopment() {
                   </div>
 
                   {/* --- Core Features --- */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className={`border rounded-lg p-4 ${featuresReady && growthData.selected_categories.includes('core_features') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('core_features')} onCheckedChange={() => toggleCategory('core_features')} />
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 flex items-center">
+                        {featuresReady && growthData.selected_categories.includes('core_features') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
                         Core Features (up to 3)
                         <ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
                       </span>
@@ -466,37 +509,42 @@ export default function GrowthDevelopment() {
                     )}
                   </div>
 
-                  {/* --- Value Proposition (reuses headline) --- */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  {/* --- Value Proposition --- */}
+                  {/* [FIX] Your headline is ALWAYS shown to every reviewer as
+                      part of the venture summary — otherwise they can't tell
+                      what they're looking at. This checkbox does NOT control
+                      whether it's shown. It controls whether we also ask
+                      reviewers a specific question rating how accurate it is. */}
+                  <div className={`border rounded-lg p-4 ${valuePropReady && growthData.selected_categories.includes('value_proposition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('value_proposition')} onCheckedChange={() => toggleCategory('value_proposition')} />
-                      <span className="text-sm font-medium text-gray-900">
-                        Value Proposition
+                      <span className="text-sm font-medium text-gray-900 flex items-center">
+                        {valuePropReady && growthData.selected_categories.includes('value_proposition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
+                        Get feedback on my Value Proposition
                         <ExplainToggle text={CATEGORY_EXPLANATIONS.value_proposition} />
                       </span>
                     </label>
-                    {growthData.selected_categories.includes('value_proposition') && (
-                      <div className="mt-2 pl-8">
-                        <p className="text-xs text-gray-500">Uses your Headline / Slogan from the Page Content tab.</p>
-                        {!isHeadlineComplete && <p className="text-xs text-red-500 mt-1">Fill in your headline in the Page Content tab first.</p>}
-                      </div>
+                    <p className="text-xs text-gray-500 mt-1 pl-8">Your headline is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product.</p>
+                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && (
+                      <p className="text-xs text-red-500 mt-1 pl-8">Fill in your headline in the Page Content tab first.</p>
                     )}
                   </div>
 
-                  {/* --- Product Definition (reuses description) --- */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  {/* --- Product Definition --- */}
+                  {/* [FIX] Same principle: the description is always shown as
+                      context. Checkbox only opts into a rating question. */}
+                  <div className={`border rounded-lg p-4 ${definitionReady && growthData.selected_categories.includes('product_definition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('product_definition')} onCheckedChange={() => toggleCategory('product_definition')} />
-                      <span className="text-sm font-medium text-gray-900">
-                        Product Definition
+                      <span className="text-sm font-medium text-gray-900 flex items-center">
+                        {definitionReady && growthData.selected_categories.includes('product_definition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
+                        Get feedback on my Product Definition
                         <ExplainToggle text={CATEGORY_EXPLANATIONS.product_definition} />
                       </span>
                     </label>
-                    {growthData.selected_categories.includes('product_definition') && (
-                      <div className="mt-2 pl-8">
-                        <p className="text-xs text-gray-500">Uses your Short Description from the Page Content tab.</p>
-                        {!isDescriptionComplete && <p className="text-xs text-red-500 mt-1">Fill in your description in the Page Content tab first (min 50 characters).</p>}
-                      </div>
+                    <p className="text-xs text-gray-500 mt-1 pl-8">Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is.</p>
+                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && (
+                      <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Page Content tab first (min 50 characters).</p>
                     )}
                   </div>
                 </CardContent>
@@ -504,7 +552,12 @@ export default function GrowthDevelopment() {
 
               {/* Fixed, non-optional, shown for visibility only — not a toggle */}
               <Card className="shadow-lg border-emerald-200">
-                <CardHeader><CardTitle className="text-base">Always included (not optional)</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center">
+                    Always included (not optional)
+                    <ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} />
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-2 text-sm text-gray-700">
                   <p>"Did you visit the actual product?" — Yes / No. If Yes: "How well did it match what you expected?" + optional "What was different?"</p>
                   <p>Final question, regardless of category selection: "If you could change one thing about how this product is defined, what would it be?"</p>
