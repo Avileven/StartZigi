@@ -122,6 +122,26 @@ export default function VentureLanding() {
   const [campaignId, setCampaignId] = useState(null);
   const [founderPlan, setFounderPlan] = useState(null);
   const [earlyAdopter, setEarlyAdopter] = useState(false); // [EARLY ADOPTER]
+  // [NEW — Growth feedback, per project session] Mirrors the MLP rating
+  // state below exactly (same slider pattern), one state pair per
+  // founder-selectable category plus the fixed always-on questions.
+  const [businessModelRating, setBusinessModelRating] = useState(5);
+  const [businessModelNote, setBusinessModelNote] = useState('');
+  const [coreFeaturesRating, setCoreFeaturesRating] = useState(5);
+  const [coreFeaturesNote, setCoreFeaturesNote] = useState('');
+  const [valuePropRating, setValuePropRating] = useState(5);
+  const [valuePropNote, setValuePropNote] = useState('');
+  const [productDefinitionRating, setProductDefinitionRating] = useState(5);
+  const [productDefinitionNote, setProductDefinitionNote] = useState('');
+  const GROWTH_LOW_SCORE_THRESHOLD = 6; // same threshold convention as PRICING_SCORE_THRESHOLD below
+  const [visitedProduct, setVisitedProduct] = useState(null); // 'yes' | 'no' | null (unanswered)
+  const [productMatchRating, setProductMatchRating] = useState(5);
+  const [productMatchDiffText, setProductMatchDiffText] = useState('');
+  const [finalChangeText, setFinalChangeText] = useState('');
+  const [wantsToFollowGrowth, setWantsToFollowGrowth] = useState(false);
+  const [isSubmittingGrowthFeedback, setIsSubmittingGrowthFeedback] = useState(false);
+  const [growthFeedbackSubmitted, setGrowthFeedbackSubmitted] = useState(false);
+
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [featuresRating, setFeaturesRating] = useState(5);
   const [lookFeelRating, setLookFeelRating] = useState(5);
@@ -329,6 +349,11 @@ export default function VentureLanding() {
   const [isOwnVenture, setIsOwnVenture] = useState(false);
   const [alreadyGaveMvpFeedback, setAlreadyGaveMvpFeedback] = useState(false);
   const [alreadyGaveMlpFeedback, setAlreadyGaveMlpFeedback] = useState(false);
+  // [NEW — Growth] Per the implementation plan's Stage 2 decision: Growth
+  // feedback lives in its own `growth_feedback` table, not product_feedback.
+  // No `stage` column workaround needed anymore — this check is a plain,
+  // separate query against the new table, same shape as the MVP/MLP checks.
+  const [alreadyGaveGrowthFeedback, setAlreadyGaveGrowthFeedback] = useState(false);
 
   useEffect(() => {
     if (!venture || (!currentUser && !invitedIdentity?.email)) return;
@@ -348,11 +373,13 @@ export default function VentureLanding() {
       const identityFilter = (q) => currentUser ? q.eq('created_by_id', currentUser.id) : q.eq('created_by', invitedIdentity.email);
       const mvpBase = identityFilter(supabase.from('mvp_feature_feedback').select('id', { count: 'exact', head: true }));
       const mlpBase = identityFilter(supabase.from('product_feedback').select('id', { count: 'exact', head: true }));
-      const [mvpCheck, mlpCheck] = campaignId
-        ? await Promise.all([mvpBase.eq('campaign_id', campaignId), mlpBase.eq('campaign_id', campaignId)])
-        : await Promise.all([mvpBase.eq('venture_id', venture.id), mlpBase.eq('venture_id', venture.id)]);
+      const growthBase = identityFilter(supabase.from('growth_feedback').select('id', { count: 'exact', head: true }));
+      const [mvpCheck, mlpCheck, growthCheck] = campaignId
+        ? await Promise.all([mvpBase.eq('campaign_id', campaignId), mlpBase.eq('campaign_id', campaignId), growthBase.eq('campaign_id', campaignId)])
+        : await Promise.all([mvpBase.eq('venture_id', venture.id), mlpBase.eq('venture_id', venture.id), growthBase.eq('venture_id', venture.id)]);
       setAlreadyGaveMvpFeedback((mvpCheck.count || 0) > 0);
       setAlreadyGaveMlpFeedback((mlpCheck.count || 0) > 0);
+      setAlreadyGaveGrowthFeedback((growthCheck.count || 0) > 0);
     };
     checkAbuseGuards();
   }, [venture, currentUser, invitedIdentity, campaignId]);
@@ -466,6 +493,93 @@ export default function VentureLanding() {
     setIsSubmittingMlpFeedback(false);
   };
 
+  // [NEW — Growth] Mirrors handleMlpFeedbackSubmit's structure exactly:
+  // direct supabase insert (not the entity helper, same reason noted above
+  // it), Follower + Insight Credits as fire-and-forget side effects only for
+  // a real logged-in currentUser.
+  //
+  // [FIX per implementation plan Stage 2] Writes to the new, separate
+  // `growth_feedback` table instead of product_feedback — no more invented
+  // `stage` column workaround. DB DEPENDENCY: this table needs to exist per
+  // the plan's schema (see growth-feature-implementation-plan.md) — not yet
+  // confirmed created in the real database.
+  const handleGrowthFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!venture) return;
+    const gd = venture.growth_data || {};
+    // [FIX] Only require an answer to "did you visit the product?" when
+    // there's actually a product_url to visit — a founder who journeyed
+    // here without a live product yet shouldn't have this block submission.
+    if (gd.product_url && !visitedProduct) {
+      alert("Please answer whether you visited the actual product.");
+      return;
+    }
+    setIsSubmittingGrowthFeedback(true);
+    try {
+      const now = new Date().toISOString();
+      const selected = gd.selected_categories || [];
+      const { error: insertError } = await supabase.from('growth_feedback').insert({
+        id: crypto.randomUUID(),
+        created_date: now,
+        updated_date: now,
+        venture_id: venture.id,
+        business_model_rating: selected.includes('business_model') ? businessModelRating : null,
+        business_model_note: selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD ? (businessModelNote.trim() || null) : null,
+        core_features_rating: selected.includes('core_features') ? coreFeaturesRating : null,
+        core_features_note: selected.includes('core_features') && coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD ? (coreFeaturesNote.trim() || null) : null,
+        value_prop_rating: selected.includes('value_proposition') ? valuePropRating : null,
+        value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (valuePropNote.trim() || null) : null,
+        product_definition_rating: selected.includes('product_definition') ? productDefinitionRating : null,
+        product_definition_note: selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (productDefinitionNote.trim() || null) : null,
+        visited_product: gd.product_url ? visitedProduct : null,
+        product_match_rating: gd.product_url && visitedProduct === 'yes' ? productMatchRating : null,
+        product_match_diff_text: gd.product_url && visitedProduct === 'yes' ? (productMatchDiffText.trim() || null) : null,
+        final_change_text: finalChangeText.trim() || null,
+        created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
+        created_by_id: currentUser ? currentUser.id : null,
+        campaign_id: campaignId || null,
+      });
+      if (insertError) throw insertError;
+      setGrowthFeedbackSubmitted(true);
+
+      // Follower — identical pattern to the MLP handler above.
+      if (wantsToFollowGrowth && currentUser) {
+        supabase.from('venture_followers').insert({
+          venture_id: venture.id,
+          user_id: currentUser.id,
+        }).then(({ error: followError }) => {
+          if (followError && followError.code !== '23505') {
+            console.error('Could not save Follower:', followError);
+          }
+        });
+        supabase.from('venture_messages').insert({
+          id: crypto.randomUUID(),
+          created_date: new Date().toISOString(),
+          venture_id: venture.id,
+          message_type: 'follower_joined',
+          title: '👋 New Follower!',
+          content: 'Someone who reviewed your Growth page wants to keep contributing to this venture.',
+          priority: 3,
+          is_dismissed: false,
+          created_by_id: currentUser.id,
+        }).then(({ error: msgError }) => {
+          if (msgError) console.error('Could not create follower notification:', msgError);
+        });
+      }
+
+      // Insight Credits — identical pattern to the MLP handler above.
+      if (currentUser) {
+        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: 3 })
+          .then(() => setShowInsightAnimation(true))
+          .catch((err) => console.error('Could not award Insight Credits:', err));
+      }
+    } catch (err) {
+      console.error("Error submitting Growth feedback:", err);
+      alert("There was an error submitting your feedback. Please try again.");
+    }
+    setIsSubmittingGrowthFeedback(false);
+  };
+
   const getSectorLabel = (sector) => {
     const labels = {
       ai_deep_tech: "AI / Deep Tech", fintech: "FinTech",
@@ -496,6 +610,11 @@ export default function VentureLanding() {
   }
 
   const isMLPMode = venture.mlp_development_completed && venture.mlp_data;
+  // [NEW — Growth] No "_completed" flag, per this session's confirmation
+  // that Beta has no equivalent flag either (mlp_development_completed is
+  // the exception, not the pattern) — gated on having actually selected at
+  // least one feedback category instead.
+  const isGrowthMode = venture.growth_data && Array.isArray(venture.growth_data.selected_categories) && venture.growth_data.selected_categories.length > 0;
   const hasSelectedFeaturesForMVPFeedback =
     venture.mvp_uploaded && venture.mvp_data &&
     Array.isArray(venture.mvp_data.feature_matrix) &&
@@ -716,6 +835,320 @@ export default function VentureLanding() {
                       <Button type="submit" disabled={isSubmittingMlpFeedback}
                         className="w-full bg-indigo-600 hover:bg-indigo-700">
                         {isSubmittingMlpFeedback
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                          : <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
+                        }
+                      </Button>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          ) : isGrowthMode ? (
+            <>
+              {/* Header — same pattern as MLP mode above */}
+              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
+                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
+                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                      {getSectorLabel(venture.sector)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
+              </div>
+
+              {/* [ALWAYS SHOWN — not gated by selected_categories] Per this
+                  session's explicit correction: the headline and description
+                  are context every reviewer needs regardless of which
+                  categories the founder turned on for feedback. This is
+                  venture.growth_data.headline/description, distinct from
+                  venture.description used in the header above (which is the
+                  venture's general description from earlier stages, not the
+                  Growth-page-specific one authored in growth-development). */}
+              {venture.growth_data.headline && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6 text-center">
+                  <p className="text-xl font-semibold text-gray-900">{venture.growth_data.headline}</p>
+                </div>
+              )}
+              {venture.growth_data.description && (
+                <div className="mb-10 border border-gray-200 rounded-xl p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">About this product</p>
+                  <ReadMoreText text={venture.growth_data.description} />
+                </div>
+              )}
+              {venture.growth_data.product_url && (
+                <div className="text-center mb-10">
+                  <a href={venture.growth_data.product_url} target="_blank" rel="noopener noreferrer">
+                    <Button className="bg-indigo-600 hover:bg-indigo-700">
+                      <ExternalLink className="w-4 h-4 mr-2" /> Visit the actual product
+                    </Button>
+                  </a>
+                </div>
+              )}
+              {venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
+                <div className="mb-10">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Demo</h3>
+                  <div className="space-y-4">
+                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, {}))}
+                  </div>
+                </div>
+              )}
+
+              {/* Growth Feedback Form */}
+              <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-indigo-800">
+                    <MessageSquare className="w-5 h-5 text-indigo-600" />
+                    Share Your Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isOwnVenture ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                    </div>
+                  ) : alreadyGaveGrowthFeedback && !growthFeedbackSubmitted ? (
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this Growth page. Thank you!</p>
+                    </div>
+                  ) : growthFeedbackSubmitted ? (
+                    <div className="text-center py-6">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
+                      <p className="text-gray-500 text-sm mt-1">Your response helps the founder communicate this product more accurately.</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-6">
+
+                      {/* --- Business Model (conditional on founder selection) --- */}
+                      {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          {(() => {
+                            const bmd = venture.growth_data.business_model_data;
+                            const modelLabels = { subscription: 'Subscription', freemium: 'Freemium', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
+                            return (
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Business Model: {modelLabels[bmd.model_type] || bmd.model_type}</p>
+                                {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
+                                  <div className="grid sm:grid-cols-2 gap-3">
+                                    {bmd.tier1_price && (
+                                      <div className="border border-gray-200 rounded-lg p-3">
+                                        <p className="font-semibold text-gray-900">{bmd.tier1_price}</p>
+                                        <p className="text-sm text-gray-500">{bmd.tier1_description}</p>
+                                      </div>
+                                    )}
+                                    {bmd.tier2_price && (
+                                      <div className="border border-gray-200 rounded-lg p-3">
+                                        <p className="font-semibold text-gray-900">{bmd.tier2_price}</p>
+                                        <p className="text-sm text-gray-500">{bmd.tier2_description}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                {bmd.model_type === 'transactional' && (
+                                  <p className="text-sm text-gray-600">{bmd.transaction_fee_description}</p>
+                                )}
+                                {bmd.model_type === 'ad-driven' && (
+                                  <p className="text-sm text-gray-600">Free to use.</p>
+                                )}
+                              </div>
+                            );
+                          })()}
+                          <Label className="text-sm">How well does this business model fit the product and the value it provides? (1-10)</Label>
+                          <Slider
+                            value={[businessModelRating]}
+                            onValueChange={(value) => setBusinessModelRating(value[0])}
+                            max={10} min={1} step={1}
+                            disabled={isSubmittingGrowthFeedback}
+                            className="mt-2 mb-1
+                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:shadow-md"
+                          />
+                          <div className="text-center text-sm font-semibold text-indigo-600">{businessModelRating}</div>
+                          {businessModelRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What doesn't feel right about it? (optional)</Label>
+                              <Textarea value={businessModelNote} onChange={(e) => setBusinessModelNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* --- Core Features (conditional) — shown together, rated once --- */}
+                      {venture.growth_data.selected_categories.includes('core_features') && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Core Features</p>
+                          <div className="space-y-2 mb-3">
+                            {venture.growth_data.core_features.map((f) => (
+                              <div key={f.id} className="border border-gray-200 rounded-lg p-3">
+                                <p className="font-semibold text-gray-900">{f.name}</p>
+                                <p className="text-sm text-gray-500">{f.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <Label className="text-sm">How well do these features support what this product is meant to do? (1-10)</Label>
+                          <Slider
+                            value={[coreFeaturesRating]}
+                            onValueChange={(value) => setCoreFeaturesRating(value[0])}
+                            max={10} min={1} step={1}
+                            disabled={isSubmittingGrowthFeedback}
+                            className="mt-2 mb-1
+                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:shadow-md"
+                          />
+                          <div className="text-center text-sm font-semibold text-indigo-600">{coreFeaturesRating}</div>
+                          {coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What feels wrong, missing, or unnecessary? (optional)</Label>
+                              <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* --- Value Proposition (conditional) --- */}
+                      {venture.growth_data.selected_categories.includes('value_proposition') && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <Label className="text-sm">How accurately does this statement describe the product you just saw? (1-10)</Label>
+                          <p className="text-xs text-gray-400 mb-1">Referring to the headline above: "{venture.growth_data.headline}"</p>
+                          <Slider
+                            value={[valuePropRating]}
+                            onValueChange={(value) => setValuePropRating(value[0])}
+                            max={10} min={1} step={1}
+                            disabled={isSubmittingGrowthFeedback}
+                            className="mt-2 mb-1
+                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:shadow-md"
+                          />
+                          <div className="text-center text-sm font-semibold text-indigo-600">{valuePropRating}</div>
+                          {valuePropRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What would you change? (optional)</Label>
+                              <Textarea value={valuePropNote} onChange={(e) => setValuePropNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* --- Product Definition (conditional) --- */}
+                      {venture.growth_data.selected_categories.includes('product_definition') && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <Label className="text-sm">How clearly and accurately is this product defined? (1-10)</Label>
+                          <p className="text-xs text-gray-400 mb-1">Referring to the description above.</p>
+                          <Slider
+                            value={[productDefinitionRating]}
+                            onValueChange={(value) => setProductDefinitionRating(value[0])}
+                            max={10} min={1} step={1}
+                            disabled={isSubmittingGrowthFeedback}
+                            className="mt-2 mb-1
+                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:shadow-md"
+                          />
+                          <div className="text-center text-sm font-semibold text-indigo-600">{productDefinitionRating}</div>
+                          {productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What feels unclear or inaccurate? (optional)</Label>
+                              <Textarea value={productDefinitionNote} onChange={(e) => setProductDefinitionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* --- Always included, but ONLY when there's a product to visit --- */}
+                      {/* [FIX per implementation plan Stage 2] A founder who
+                          reached Growth through the normal journey may not
+                          have a live product yet (only an MLP-style demo).
+                          This whole question is meaningless without a
+                          product_url, so it's gated on that rather than
+                          always shown. */}
+                      {venture.growth_data.product_url && (
+                      <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                        <Label className="text-sm">Did you visit the actual product?</Label>
+                        <div className="flex gap-2 mt-2">
+                          {['yes', 'no'].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setVisitedProduct(opt)}
+                              disabled={isSubmittingGrowthFeedback}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium ${visitedProduct === opt ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                            >
+                              {opt === 'yes' ? 'Yes' : 'No'}
+                            </button>
+                          ))}
+                        </div>
+
+                        {visitedProduct === 'yes' && (
+                          <div className="mt-4">
+                            <Label className="text-sm">Now that you've seen the actual product, how well did it match what you expected from the description and demo? (1-10)</Label>
+                            <Slider
+                              value={[productMatchRating]}
+                              onValueChange={(value) => setProductMatchRating(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-indigo-600">{productMatchRating}</div>
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What was different from what you expected? (optional)</Label>
+                              <Textarea value={productMatchDiffText} onChange={(e) => setProductMatchDiffText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      )}
+
+                      {/* --- Final open question, always shown regardless of category selection --- */}
+                      <div>
+                        <Label htmlFor="growth-final-change">If you could change one thing about how this product is defined, what would it be?</Label>
+                        <Textarea id="growth-final-change" value={finalChangeText}
+                          onChange={(e) => setFinalChangeText(e.target.value)}
+                          className="min-h-[80px] mt-2" disabled={isSubmittingGrowthFeedback} />
+                      </div>
+
+                      {currentUser && (
+                        <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                          <input
+                            type="checkbox"
+                            checked={wantsToFollowGrowth}
+                            onChange={(e) => setWantsToFollowGrowth(e.target.checked)}
+                            disabled={isSubmittingGrowthFeedback}
+                            className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span>
+                            <span className="font-medium text-gray-800">Become a Follower</span>
+                            <br />
+                            <span className="text-xs text-gray-400">Get invited to future feedback rounds.</span>
+                          </span>
+                        </label>
+                      )}
+
+                      {/* [FIX] Only require visitedProduct when there's a
+                          product_url — matches the same gate applied to the
+                          question itself and to handleGrowthFeedbackSubmit. */}
+                      <Button type="submit" disabled={isSubmittingGrowthFeedback || (venture.growth_data.product_url && !visitedProduct)}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700">
+                        {isSubmittingGrowthFeedback
                           ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
                           : <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
                         }
