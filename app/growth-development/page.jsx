@@ -365,8 +365,8 @@ export default function GrowthDevelopment() {
           {/* [CHANGED] Two tabs instead of three. */}
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Venture Profile</TabsTrigger>
-              <TabsTrigger value="feedback">Feedback</TabsTrigger>
+              <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Venture Profile</TabsTrigger>
+              <TabsTrigger value="feedback" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Feedback</TabsTrigger>
             </TabsList>
 
             {/* ===================== VENTURE PROFILE ===================== */}

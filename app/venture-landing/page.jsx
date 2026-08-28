@@ -66,7 +66,15 @@ const ReadMoreText = ({ text, maxLength = 300 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!text) return null;
   if (text.length <= maxLength) return <p className="text-gray-700 leading-relaxed">{text}</p>;
-  const displayedText = isExpanded ? text : `${text.substring(0, maxLength)}...`;
+  // [FIX] Was cutting mid-word (substring at a raw character count) — now
+  // trims back to the last complete word before maxLength, so truncated
+  // text always ends cleanly.
+  const truncateAtWord = (str, len) => {
+    const cut = str.slice(0, len);
+    const lastSpace = cut.lastIndexOf(' ');
+    return lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+  };
+  const displayedText = isExpanded ? text : `${truncateAtWord(text, maxLength)}...`;
   return (
     <div>
       <p className="text-gray-700 leading-relaxed">{displayedText}</p>
@@ -77,7 +85,11 @@ const ReadMoreText = ({ text, maxLength = 300 }) => {
   );
 };
 
-const renderFile = (file, index, htmlContents) => {
+// [FIX — scoped to Growth only, via the new optional 4th param] The
+// filename header ("idea-to-product-ring.html") was showing above every
+// file — fine for MVP/MLP where it's unchanged, but Growth explicitly
+// doesn't want it. Defaults to false so MVP/MLP call sites are untouched.
+const renderFile = (file, index, htmlContents, hideFileName = false) => {
   const fileName = file?.name || "";
   const fileUrl = file?.url || "";
   const fileExt = fileName.split(".").pop()?.toLowerCase();
@@ -90,9 +102,11 @@ const renderFile = (file, index, htmlContents) => {
     if (content) {
       return (
         <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-          <div className="bg-gray-100 px-4 py-2 border-b">
-            <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-          </div>
+          {!hideFileName && (
+            <div className="bg-gray-100 px-4 py-2 border-b">
+              <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+            </div>
+          )}
           <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
         </div>
@@ -108,9 +122,11 @@ const renderFile = (file, index, htmlContents) => {
   if (isImage) {
     return (
       <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-        <div className="bg-gray-100 px-4 py-2 border-b">
-          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-        </div>
+        {!hideFileName && (
+          <div className="bg-gray-100 px-4 py-2 border-b">
+            <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+          </div>
+        )}
         <div className="p-4">
           <img src={fileUrl} alt={fileName} className="w-full h-auto" />
         </div>
@@ -120,9 +136,11 @@ const renderFile = (file, index, htmlContents) => {
   if (isPDF) {
     return (
       <div key={index} className="border-2 rounded-xl overflow-hidden shadow-lg bg-white">
-        <div className="bg-gray-100 px-4 py-2 border-b">
-          <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
-        </div>
+        {!hideFileName && (
+          <div className="bg-gray-100 px-4 py-2 border-b">
+            <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
+          </div>
+        )}
         <iframe src={fileUrl} className="w-full h-[600px] border-0" title={fileName} />
       </div>
     );
@@ -900,11 +918,11 @@ export default function VentureLanding() {
             </>
           ) : isGrowthMode ? (
             <>
-              {/* Header — venture name, then Slogan prominently as part of
-                  the "profile" area. [FIX] Removed the bordered box around
-                  "About this product" per explicit feedback — the profile
-                  area should read as one clean block, not a series of
-                  boxed panels. */}
+              {/* Header — venture name + social icons together, then
+                  Slogan. [FIX] Social links were floating awkwardly below
+                  the "Visit the actual product" button — moved to sit
+                  right next to the venture name instead, where identity
+                  info belongs. */}
               <div className="text-center pb-6 mb-8">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
@@ -912,6 +930,35 @@ export default function VentureLanding() {
                     <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
                     </span>
+                  )}
+                  {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
+                    <div className="flex items-center gap-2.5">
+                      {venture.growth_data.social_links.linkedin && (
+                        <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="LinkedIn">
+                          <Linkedin className="w-4 h-4" />
+                        </a>
+                      )}
+                      {venture.growth_data.social_links.facebook && (
+                        <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Facebook">
+                          <Facebook className="w-4 h-4" />
+                        </a>
+                      )}
+                      {venture.growth_data.social_links.twitter && (
+                        <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Twitter / X">
+                          <Twitter className="w-4 h-4" />
+                        </a>
+                      )}
+                      {venture.growth_data.social_links.instagram && (
+                        <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Instagram">
+                          <Instagram className="w-4 h-4" />
+                        </a>
+                      )}
+                      {venture.growth_data.social_links.website && (
+                        <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Website">
+                          <Globe className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
                 {venture.growth_data.headline && (
@@ -935,44 +982,11 @@ export default function VentureLanding() {
                 </div>
               )}
 
-              {/* [NEW] Social links — social_links existed in growth_data
-                  already but nothing rendered them. Only shows platforms
-                  that were actually filled in. */}
-              {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
-                <div className="flex items-center justify-center gap-4 mb-8">
-                  {venture.growth_data.social_links.linkedin && (
-                    <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="LinkedIn">
-                      <Linkedin className="w-5 h-5" />
-                    </a>
-                  )}
-                  {venture.growth_data.social_links.facebook && (
-                    <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Facebook">
-                      <Facebook className="w-5 h-5" />
-                    </a>
-                  )}
-                  {venture.growth_data.social_links.twitter && (
-                    <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Twitter / X">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                  )}
-                  {venture.growth_data.social_links.instagram && (
-                    <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Instagram">
-                      <Instagram className="w-5 h-5" />
-                    </a>
-                  )}
-                  {venture.growth_data.social_links.website && (
-                    <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Website">
-                      <Globe className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-              )}
-
+              {/* [FIX] "Demo" heading removed per explicit request. */}
               {venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Demo</h3>
                   <div className="space-y-4">
-                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, growthHtmlContents))}
+                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, growthHtmlContents, true))}
                   </div>
                 </div>
               )}
@@ -1018,7 +1032,7 @@ export default function VentureLanding() {
                             <HelpCircle className="w-5 h-5 text-violet-600" />
                             <p className="text-xs font-bold uppercase tracking-wide text-violet-700">A question from the founder</p>
                           </div>
-                          <MobileQuestionSheet label="Founder's Question" summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
                             <p className="text-sm font-medium text-gray-900 mb-2">{venture.growth_data.custom_question}</p>
                             <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
                           </MobileQuestionSheet>
