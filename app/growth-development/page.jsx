@@ -107,7 +107,7 @@ const CATEGORY_EXPLANATIONS = {
   product_definition: "This only affects whether reviewers are asked to rate your description's clarity — your description itself is always shown regardless. Useful if you're unsure your description is landing the way you intend it to.",
 };
 
-const ALWAYS_INCLUDED_EXPLANATION = "This section only affects what feedback is collected — it doesn't change what's shown on your public page. Every reviewer is asked whether they visited the real product, and one open question at the very end, no matter which categories above you turned on.";
+const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"). And at the very end, regardless of which categories above you selected: \"If you could change one thing about how this product is defined, what would it be?\" This doesn't change what's shown on your public page — it only affects what feedback is collected.";
 
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
@@ -138,23 +138,16 @@ export default function GrowthDevelopment() {
     // Budget/etc. from the full revenue simulator are deliberately excluded,
     // per this session's explicit confirmation ("רק סוג מודל ומחירים").
     //
-    // [FIX] Subscription and Freemium originally had identical fields, which
-    // defeated the point of picking a model type. Two changes: (1) every
-    // price now has a paired description of what it includes, not just a
-    // number; (2) Freemium gets its own differentiator — an optional ad
-    // revenue field — since this codebase's own definition of Freemium
-    // (BUSINESS_MODEL_GUIDANCE in revenue-modeling-experience) is explicitly
-    // "free users generate ad revenue, a subset converts to paid", not just
-    // "same as Subscription but cheaper". This is my proposed fix, not
-    // something confirmed word-for-word — easy to drop the ad revenue field
-    // if it's not wanted.
+    // Every price now has a paired description of what it includes, not
+    // just a number — Subscription and Freemium share this same shape;
+    // no invented differentiator field between them beyond the model_type
+    // label itself.
     business_model_data: {
       model_type: '',              // 'subscription' | 'freemium' | 'transactional' | 'ad-driven'
       tier1_price: '',             // subscription, freemium
       tier1_description: '',       // what Tier 1 includes
       tier2_price: '',             // subscription, freemium — optional premium tier
       tier2_description: '',       // what Tier 2 includes
-      freemium_ad_revenue_note: '', // freemium only — free tier is ad-supported; optional note on how (e.g. "in-app banner ads")
       transaction_fee_description: '', // transactional — kept as free text since fees are sometimes % and sometimes flat
       // ad-driven: no price field at all — the product is free, that's the whole model.
     },
@@ -190,7 +183,6 @@ export default function GrowthDevelopment() {
             tier1_description: loaded.business_model_data?.tier1_description || '',
             tier2_price: loaded.business_model_data?.tier2_price || '',
             tier2_description: loaded.business_model_data?.tier2_description || '',
-            freemium_ad_revenue_note: loaded.business_model_data?.freemium_ad_revenue_note || '',
             transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
           };
           loaded.social_links = {
@@ -262,7 +254,8 @@ export default function GrowthDevelopment() {
         const fileExt = file.name.split('.').pop().toLowerCase();
         const isHTML = ['html', 'htm'].includes(fileExt);
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
-        return { type: isHTML ? 'html' : (isImage ? 'image' : 'other'), name: file.name, url: result.file_url };
+        const isVideo = ['mp4', 'mov', 'webm'].includes(fileExt);
+        return { type: isHTML ? 'html' : (isImage ? 'image' : (isVideo ? 'video' : 'other')), name: file.name, url: result.file_url };
       }));
       setGrowthData(prev => ({ ...prev, uploaded_files: [...prev.uploaded_files, ...uploadedResults] }));
       showToast(`${uploadedResults.length} file(s) uploaded successfully!`);
@@ -308,7 +301,8 @@ export default function GrowthDevelopment() {
   const valuePropReady = !growthData.selected_categories.includes('value_proposition') || isHeadlineComplete;
   const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
 
-  const canSave = hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady;
+  const hasDemoFile = growthData.uploaded_files.length > 0;
+  const canSave = hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady && hasDemoFile;
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
   if (!venture) return (
@@ -454,14 +448,6 @@ export default function GrowthDevelopment() {
                           </>
                         )}
 
-                        {bmd.model_type === 'freemium' && (
-                          <div>
-                            <Label className="text-xs">Free tier — how is it ad-supported? (optional note)</Label>
-                            <Input value={bmd.freemium_ad_revenue_note} onChange={(e) => handleBusinessModelChange('freemium_ad_revenue_note', e.target.value)} placeholder="e.g., banner ads between sessions" />
-                            <p className="text-xs text-gray-400 mt-1">This is what makes Freemium different from Subscription — a free, ad-supported tier alongside the paid one(s) above.</p>
-                          </div>
-                        )}
-
                         {bmd.model_type === 'transactional' && (
                           <div>
                             <Label className="text-xs">Fee / commission per transaction</Label>
@@ -550,7 +536,7 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
-              {/* Fixed, non-optional, shown for visibility only — not a toggle */}
+              {/* Fixed, non-optional — full detail lives behind the "?" click, nothing shown by default */}
               <Card className="shadow-lg border-emerald-200">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center">
@@ -558,26 +544,25 @@ export default function GrowthDevelopment() {
                     <ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} />
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm text-gray-700">
-                  <p>"Did you visit the actual product?" — Yes / No. If Yes: "How well did it match what you expected?" + optional "What was different?"</p>
-                  <p>Final question, regardless of category selection: "If you could change one thing about how this product is defined, what would it be?"</p>
-                </CardContent>
               </Card>
             </TabsContent>
 
             {/* ===================== DEMO & LINKS ===================== */}
             <TabsContent value="demo" className="space-y-6">
-              <Card className="shadow-lg">
+              <Card className={growthData.uploaded_files.length > 0 ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle>Demo Files</CardTitle>
-                  <CardDescription>Optional if you provided a Product Link. Files accumulate — new uploads don't remove earlier ones.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    {growthData.uploaded_files.length > 0 && <CheckCircle className="w-5 h-5 text-green-500" />}
+                    Demo
+                  </CardTitle>
+                  <CardDescription>Add a demo — a few important screens, or a short video that explains the product. Don't upload every screen, just the ones that matter. Files accumulate — new uploads don't remove earlier ones.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
                       <span>Upload file(s)</span>
-                      <Input id="growth-file-upload" type="file" multiple className="sr-only" onChange={handleFileUpload} accept="image/*,.html" disabled={isUploading} />
+                      <Input id="growth-file-upload" type="file" multiple className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
                     </Label>
                     {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
                   </div>
