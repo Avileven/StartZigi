@@ -14,6 +14,7 @@ import {
   Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
   DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X,
+  Linkedin, Facebook, Twitter, Instagram, Globe,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
@@ -900,10 +901,11 @@ export default function VentureLanding() {
           ) : isGrowthMode ? (
             <>
               {/* Header — venture name, then Slogan prominently as part of
-                  the "profile" area (moved here per explicit request — it
-                  used to sit lower, in its own plain box, which felt
-                  disconnected from the venture identity at the top). */}
-              <div className="text-center border-b border-gray-200 pb-6 mb-10">
+                  the "profile" area. [FIX] Removed the bordered box around
+                  "About this product" per explicit feedback — the profile
+                  area should read as one clean block, not a series of
+                  boxed panels. */}
+              <div className="text-center pb-6 mb-8">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
                   {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
@@ -917,18 +919,14 @@ export default function VentureLanding() {
                 )}
               </div>
 
-              {/* [ALWAYS SHOWN — not gated by selected_categories] Per this
-                  session's explicit correction: the description is context
-                  every reviewer needs regardless of which categories the
-                  founder turned on for feedback. */}
+              {/* [ALWAYS SHOWN — not gated by selected_categories] */}
               {venture.growth_data.description && (
-                <div className="mb-10 border border-gray-200 rounded-xl p-6">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">About this product</p>
+                <div className="mb-8 max-w-2xl mx-auto text-center">
                   <ReadMoreText text={venture.growth_data.description} />
                 </div>
               )}
               {venture.growth_data.product_url && (
-                <div className="text-center mb-10">
+                <div className="text-center mb-8">
                   <a href={venture.growth_data.product_url} target="_blank" rel="noopener noreferrer">
                     <Button className="bg-indigo-600 hover:bg-indigo-700">
                       <ExternalLink className="w-4 h-4 mr-2" /> Visit the actual product
@@ -936,6 +934,40 @@ export default function VentureLanding() {
                   </a>
                 </div>
               )}
+
+              {/* [NEW] Social links — social_links existed in growth_data
+                  already but nothing rendered them. Only shows platforms
+                  that were actually filled in. */}
+              {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
+                <div className="flex items-center justify-center gap-4 mb-8">
+                  {venture.growth_data.social_links.linkedin && (
+                    <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="LinkedIn">
+                      <Linkedin className="w-5 h-5" />
+                    </a>
+                  )}
+                  {venture.growth_data.social_links.facebook && (
+                    <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Facebook">
+                      <Facebook className="w-5 h-5" />
+                    </a>
+                  )}
+                  {venture.growth_data.social_links.twitter && (
+                    <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Twitter / X">
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  )}
+                  {venture.growth_data.social_links.instagram && (
+                    <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Instagram">
+                      <Instagram className="w-5 h-5" />
+                    </a>
+                  )}
+                  {venture.growth_data.social_links.website && (
+                    <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Website">
+                      <Globe className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
+              )}
+
               {venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
                 <div className="mb-10">
                   <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Demo</h3>

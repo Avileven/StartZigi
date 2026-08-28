@@ -1,30 +1,26 @@
 // app/growth-development/page.jsx
 //
-// [v4 — builds on v3] Changes this round, all explicitly confirmed:
-//   1. "Value Proposition" renamed to "Slogan" everywhere in the UI (display
-//      text only — the underlying selected_categories key stays
-//      'value_proposition' to avoid breaking already-saved test data from
-//      v3; only what the founder SEES changed).
-//   2. Venture name field added, and — critically — this page can now
-//      CREATE a venture from scratch if the founder has none yet. This
-//      matters because a founder bringing an existing external product may
-//      never have gone through createventure/page.jsx at all. Mirrors
-//      createventure's real insert payload (verified against that file this
-//      session), minus the score fields (team_score/opportunity_score/
-//      status_score/total_score) — confirmed nullable in the real schema
-//      and not meaningful for someone skipping the journey.
-//   3. Optional founder-authored custom question (one, open text), stored
-//      in growth_data.custom_question, shown FIRST on the public page.
-//   4. Mobile: tapping a field opens it in a fullscreen editor, then
-//      returns to the list — built fresh via MobileFieldWrapper below (no
-//      reference file was available to copy from this session).
+// [v5 — restructure, all explicitly confirmed]
+//   1. Down to TWO tabs: "Venture Profile" (identity — name, slogan,
+//      description, product link, demo, social links) and "Feedback"
+//      (everything about what's collected — categories, custom question,
+//      always-included info). Was 3 tabs (Page Content / Feedback
+//      Categories / Demo & Links) — that split scattered identity content
+//      (Product Link, Demo) away from where a founder naturally thinks
+//      about "my profile".
+//   2. "Your Own Question" moved from the old Page Content tab into
+//      Feedback — it's a feedback-collection concern, not profile content.
+//   3. Facebook added to social_links alongside linkedin/twitter/
+//      instagram/website, each with an icon.
+//   4. Product Link vs. "Website" (in social links) clarified via
+//      placeholder copy: Product Link is the specific thing being
+//      reviewed; Website is the company/general site, a different link.
+//      No dedup logic added — just distinct copy so a founder doesn't
+//      confuse the two while filling the form.
 //
-// DB DEPENDENCY (still pending, unchanged from v3):
-//   ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
-// DB DEPENDENCY (new this round):
-//   ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
-//
-// STILL NOT FIXED (explicit, not an oversight): no venture.phase guard.
+// DB DEPENDENCY (pending, unchanged): ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
+// DB DEPENDENCY (pending, unchanged): ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
+// STILL NOT FIXED (explicit): no venture.phase guard.
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -38,28 +34,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon, Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion } from 'lucide-react';
+import {
+  Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
+  Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion,
+  Linkedin, Facebook, Twitter, Instagram, Globe,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
 
-// ============================================================================
-// Mobile fullscreen field editor. On desktop, renders children inline as
-// normal. On mobile, renders a compact tappable summary row; tapping it
-// opens the same children in a fullscreen overlay with a "Done" button to
-// return to the list. This is the reusable building block for requirement
-// #4 — wrap any field/section with it to get the fullscreen-on-mobile
-// behavior without duplicating each field's markup.
-// ============================================================================
 function MobileFieldWrapper({ label, summary, isMobile, children }) {
   const [open, setOpen] = useState(false);
   if (!isMobile) return <>{children}</>;
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left">
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-900">{label}</p>
           {summary ? <p className="text-xs text-gray-500 truncate">{summary}</p> : <p className="text-xs text-gray-400">Tap to fill in</p>}
@@ -70,9 +58,7 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="font-semibold text-gray-900">{label}</h3>
-            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">
-              Done <X className="w-4 h-4" />
-            </button>
+            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">{children}</div>
         </div>
@@ -133,12 +119,13 @@ export default function GrowthDevelopment() {
   const isMobile = useIsMobile();
 
   const [growthData, setGrowthData] = useState({
-    name: '',               // [NEW] only relevant if creating a fresh venture
-    headline: '',           // Slogan
+    name: '',
+    headline: '',
     description: '',
     product_url: '',
     uploaded_files: [],
-    social_links: { linkedin: '', twitter: '', instagram: '', website: '' },
+    // [CHANGED] facebook added alongside the existing four.
+    social_links: { linkedin: '', facebook: '', twitter: '', instagram: '', website: '' },
     is_imported: false,
     selected_categories: [],
     core_features: [],
@@ -146,7 +133,7 @@ export default function GrowthDevelopment() {
       model_type: '', tier1_price: '', tier1_description: '',
       tier2_price: '', tier2_description: '', transaction_fee_description: '',
     },
-    custom_question: '', // [NEW] optional, shown first on the public page
+    custom_question: '',
   });
 
   const [newFeatureName, setNewFeatureName] = useState('');
@@ -184,15 +171,14 @@ export default function GrowthDevelopment() {
           transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
         };
         loaded.social_links = {
-          linkedin: loaded.social_links?.linkedin || '', twitter: loaded.social_links?.twitter || '',
-          instagram: loaded.social_links?.instagram || '', website: loaded.social_links?.website || '',
+          linkedin: loaded.social_links?.linkedin || '',
+          facebook: loaded.social_links?.facebook || '',
+          twitter: loaded.social_links?.twitter || '',
+          instagram: loaded.social_links?.instagram || '',
+          website: loaded.social_links?.website || '',
         };
         setGrowthData(prev => ({ ...prev, ...loaded }));
       }
-      // [NEW] No venture found at all — this is the "brought an existing
-      // product, never went through createventure" case. Leave venture as
-      // null; the form still renders (with the new name field required),
-      // and handleSave creates the venture from scratch.
     } catch (error) {
       console.error("Error loading venture:", error);
     }
@@ -202,7 +188,7 @@ export default function GrowthDevelopment() {
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    if (!venture) return; // no autosave until a real venture exists
+    if (!venture) return;
     const interval = setInterval(async () => {
       try {
         await Venture.update(venture.id, { growth_data: growthData });
@@ -257,17 +243,11 @@ export default function GrowthDevelopment() {
   };
   const removeUploadedFile = (index) => setGrowthData(prev => ({ ...prev, uploaded_files: prev.uploaded_files.filter((_, i) => i !== index) }));
 
-  // [NEW] Creates a venture from scratch, mirroring createventure/page.jsx's
-  // real insert payload (verified against that file), minus score fields
-  // (nullable, meaningless for someone skipping the journey — confirmed
-  // this session).
   const createVentureFromScratch = async () => {
     const { data: existing, error: checkError } = await supabase
       .from('ventures').select('id').eq('name', growthData.name.trim()).limit(1);
     if (checkError) throw checkError;
-    if (existing && existing.length > 0) {
-      throw new Error(`NAME_TAKEN`);
-    }
+    if (existing && existing.length > 0) throw new Error('NAME_TAKEN');
     const venturePayload = {
       name: growthData.name.trim(),
       description: growthData.description,
@@ -321,7 +301,6 @@ export default function GrowthDevelopment() {
           throw err;
         }
       } else if (growthData.name.trim() !== targetVenture.name) {
-        // Founder edited the name of an existing venture — update it too.
         await Venture.update(targetVenture.id, { name: growthData.name.trim() });
       }
       await Venture.update(targetVenture.id, { growth_data: growthData });
@@ -383,15 +362,15 @@ export default function GrowthDevelopment() {
             </Card>
           )}
 
-          <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="content">Page Content</TabsTrigger>
-              <TabsTrigger value="categories">Feedback Categories</TabsTrigger>
-              <TabsTrigger value="demo">Demo &amp; Links</TabsTrigger>
+          {/* [CHANGED] Two tabs instead of three. */}
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile">Venture Profile</TabsTrigger>
+              <TabsTrigger value="feedback">Feedback</TabsTrigger>
             </TabsList>
 
-            {/* ===================== PAGE CONTENT ===================== */}
-            <TabsContent value="content" className="space-y-6">
+            {/* ===================== VENTURE PROFILE ===================== */}
+            <TabsContent value="profile" className="space-y-6">
               {!venture && (
                 <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                   <CardHeader>
@@ -409,7 +388,7 @@ export default function GrowthDevelopment() {
               <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">{isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Slogan</CardTitle>
-                  <CardDescription>Your hero line — what the Slogan category will test.</CardDescription>
+                  <CardDescription>Your hero line.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile}>
@@ -421,7 +400,7 @@ export default function GrowthDevelopment() {
               <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Short Description</CardTitle>
-                  <CardDescription>What the product is and who it's for — what the Product Definition category will test.</CardDescription>
+                  <CardDescription>What the product is and who it's for.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
@@ -431,7 +410,12 @@ export default function GrowthDevelopment() {
               </Card>
 
               <Card className="shadow-lg">
-                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle>
+                  {/* [CLARIFIED] Distinct from "Website" below — this is the
+                      specific thing reviewers are being asked about. */}
+                  <CardDescription>The specific product or demo you want feedback on — different from your general company website below.</CardDescription>
+                </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile}>
                     <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
@@ -439,10 +423,52 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
+              <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}Demo</CardTitle>
+                  <CardDescription>A few important screens, or a short video that explains the product. Files accumulate.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
+                      <span>Upload file(s)</span>
+                      <Input id="growth-file-upload" type="file" multiple className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
+                    </Label>
+                    {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
+                  </div>
+                  {growthData.uploaded_files.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                      <p className="font-medium text-sm">{file.name}</p>
+                      <Button variant="ghost" size="icon" onClick={() => removeUploadedFile(index)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* [CHANGED] Facebook added, icons per platform. */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Social Links</CardTitle>
+                  <CardDescription>Shown on your public Growth page.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2"><Linkedin className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} /></div>
+                  <div className="flex items-center gap-2"><Facebook className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Facebook URL" value={growthData.social_links.facebook} onChange={(e) => handleSocialLinkChange('facebook', e.target.value)} /></div>
+                  <div className="flex items-center gap-2"><Twitter className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} /></div>
+                  <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} /></div>
+                  <div className="flex items-center gap-2"><Globe className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Website URL (company site, not the product itself)" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} /></div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ===================== FEEDBACK ===================== */}
+            <TabsContent value="feedback" className="space-y-6">
+              {/* [MOVED here from the old Page Content tab] */}
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><MessageCircleQuestion className="w-5 h-5 text-emerald-600" />Your Own Question (optional)</CardTitle>
-                  <CardDescription>Ask reviewers anything you want, in your own words. Shown first on your page, before everything else.</CardDescription>
+                  <CardDescription>Ask reviewers anything you want, in your own words. Shown first, before everything else.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile}>
@@ -450,10 +476,7 @@ export default function GrowthDevelopment() {
                   </MobileFieldWrapper>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            {/* ===================== FEEDBACK CATEGORIES ===================== */}
-            <TabsContent value="categories" className="space-y-6">
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className={hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose which categories appear on your page</CardTitle>
@@ -542,7 +565,7 @@ export default function GrowthDevelopment() {
                       </span>
                     </label>
                     <p className="text-xs text-gray-500 mt-1 pl-8">Your slogan is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product.</p>
-                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your slogan in the Page Content tab first.</p>}
+                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your slogan in the Venture Profile tab first.</p>}
                   </div>
 
                   <div className={`border rounded-lg p-4 ${definitionReady && growthData.selected_categories.includes('product_definition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
@@ -554,49 +577,13 @@ export default function GrowthDevelopment() {
                       </span>
                     </label>
                     <p className="text-xs text-gray-500 mt-1 pl-8">Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is.</p>
-                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Page Content tab first (min 50 characters).</p>}
+                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Venture Profile tab first (min 50 characters).</p>}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg border-emerald-200">
                 <CardHeader><CardTitle className="text-base flex items-center">Always included (not optional)<ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} /></CardTitle></CardHeader>
-              </Card>
-            </TabsContent>
-
-            {/* ===================== DEMO & LINKS ===================== */}
-            <TabsContent value="demo" className="space-y-6">
-              <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}Demo</CardTitle>
-                  <CardDescription>Add a demo — a few important screens, or a short video that explains the product. Don't upload every screen, just the ones that matter. Files accumulate.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
-                      <span>Upload file(s)</span>
-                      <Input id="growth-file-upload" type="file" multiple className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
-                    </Label>
-                    {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
-                  </div>
-                  {growthData.uploaded_files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm">{file.name}</p>
-                      <Button variant="ghost" size="icon" onClick={() => removeUploadedFile(index)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader><CardTitle>Social Links</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} />
-                  <Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} />
-                  <Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} />
-                  <Input placeholder="Website URL" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} />
-                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
