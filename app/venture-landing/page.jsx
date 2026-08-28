@@ -13,11 +13,53 @@ import { createClient } from "@supabase/supabase-js";
 import {
   Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
+  DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
 import { ProductFeedback as ProductFeedbackEntity } from "@/api/entities";
+
+// [NEW — mobile fullscreen field editing, requirement #6 this session]
+// Same pattern built for growth-development/page.jsx: on mobile, a slider
+// question renders as a compact tappable summary; tapping opens the actual
+// slider/textarea in a fullscreen sheet. On desktop, renders inline as
+// before — this wrapper changes nothing there.
+function useIsMobileViewport() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
+function MobileQuestionSheet({ label, summary, isMobile, children }) {
+  const [open, setOpen] = useState(false);
+  if (!isMobile) return <>{children}</>;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 bg-white rounded-lg text-left">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
+          {summary != null && <p className="text-xs text-indigo-600 font-semibold">{summary}</p>}
+        </div>
+        <span className="text-xs text-indigo-600 font-medium flex-shrink-0 ml-2">Answer →</span>
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+            <h3 className="font-semibold text-gray-900 text-sm">{label}</h3>
+            <button type="button" onClick={() => setOpen(false)} className="text-indigo-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        </div>
+      )}
+    </>
+  );
+}
 
 const ReadMoreText = ({ text, maxLength = 300 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -99,6 +141,7 @@ const renderFile = (file, index, htmlContents) => {
 };
 
 export default function VentureLanding() {
+  const isMobileViewport = useIsMobileViewport();
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -143,6 +186,8 @@ export default function VentureLanding() {
   const [productMatchRating, setProductMatchRating] = useState(5);
   const [productMatchDiffText, setProductMatchDiffText] = useState('');
   const [finalChangeText, setFinalChangeText] = useState('');
+  // [NEW] Answer to the founder's own optional custom question (growth_data.custom_question).
+  const [customQuestionAnswer, setCustomQuestionAnswer] = useState('');
   const [wantsToFollowGrowth, setWantsToFollowGrowth] = useState(false);
   const [isSubmittingGrowthFeedback, setIsSubmittingGrowthFeedback] = useState(false);
   const [growthFeedbackSubmitted, setGrowthFeedbackSubmitted] = useState(false);
@@ -542,6 +587,7 @@ export default function VentureLanding() {
         product_match_rating: gd.product_url && visitedProduct === 'yes' ? productMatchRating : null,
         product_match_diff_text: gd.product_url && visitedProduct === 'yes' ? (productMatchDiffText.trim() || null) : null,
         final_change_text: finalChangeText.trim() || null,
+        custom_question_answer: gd.custom_question ? (customQuestionAnswer.trim() || null) : null,
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
         campaign_id: campaignId || null,
@@ -853,7 +899,10 @@ export default function VentureLanding() {
             </>
           ) : isGrowthMode ? (
             <>
-              {/* Header — same pattern as MLP mode above */}
+              {/* Header — venture name, then Slogan prominently as part of
+                  the "profile" area (moved here per explicit request — it
+                  used to sit lower, in its own plain box, which felt
+                  disconnected from the venture identity at the top). */}
               <div className="text-center border-b border-gray-200 pb-6 mb-10">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
@@ -863,22 +912,15 @@ export default function VentureLanding() {
                     </span>
                   )}
                 </div>
-                <p className="text-base md:text-lg font-medium text-indigo-600 max-w-xl mx-auto">{venture.description}</p>
+                {venture.growth_data.headline && (
+                  <p className="text-lg md:text-xl font-semibold text-indigo-700 max-w-xl mx-auto">{venture.growth_data.headline}</p>
+                )}
               </div>
 
               {/* [ALWAYS SHOWN — not gated by selected_categories] Per this
-                  session's explicit correction: the headline and description
-                  are context every reviewer needs regardless of which
-                  categories the founder turned on for feedback. This is
-                  venture.growth_data.headline/description, distinct from
-                  venture.description used in the header above (which is the
-                  venture's general description from earlier stages, not the
-                  Growth-page-specific one authored in growth-development). */}
-              {venture.growth_data.headline && (
-                <div className="mb-10 border border-gray-200 rounded-xl p-6 text-center">
-                  <p className="text-xl font-semibold text-gray-900">{venture.growth_data.headline}</p>
-                </div>
-              )}
+                  session's explicit correction: the description is context
+                  every reviewer needs regardless of which categories the
+                  founder turned on for feedback. */}
               {venture.growth_data.description && (
                 <div className="mb-10 border border-gray-200 rounded-xl p-6">
                   <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-3">About this product</p>
@@ -935,27 +977,45 @@ export default function VentureLanding() {
                       <p className="text-gray-500 text-sm mt-1">Your response helps the founder communicate this product more accurately.</p>
                     </div>
                   ) : (
-                    <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-6">
+                    <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-5">
+
+                      {/* --- Founder's own custom question — shown FIRST, per explicit request --- */}
+                      {venture.growth_data.custom_question && (
+                        <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <HelpCircle className="w-5 h-5 text-violet-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">A question from the founder</p>
+                          </div>
+                          <MobileQuestionSheet label="Founder's Question" summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
+                            <p className="text-sm font-medium text-gray-900 mb-2">{venture.growth_data.custom_question}</p>
+                            <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
+                          </MobileQuestionSheet>
+                        </div>
+                      )}
 
                       {/* --- Business Model (conditional on founder selection) --- */}
                       {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
-                        <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <DollarSign className="w-5 h-5 text-emerald-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Business Model</p>
+                          </div>
                           {(() => {
                             const bmd = venture.growth_data.business_model_data;
                             const modelLabels = { subscription: 'Subscription', freemium: 'Freemium', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
                             return (
                               <div className="mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Business Model: {modelLabels[bmd.model_type] || bmd.model_type}</p>
+                                <p className="text-xs font-semibold text-gray-500 mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
                                 {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
                                   <div className="grid sm:grid-cols-2 gap-3">
                                     {bmd.tier1_price && (
-                                      <div className="border border-gray-200 rounded-lg p-3">
+                                      <div className="border border-emerald-200 bg-white rounded-lg p-3">
                                         <p className="font-semibold text-gray-900">{bmd.tier1_price}</p>
                                         <p className="text-sm text-gray-500">{bmd.tier1_description}</p>
                                       </div>
                                     )}
                                     {bmd.tier2_price && (
-                                      <div className="border border-gray-200 rounded-lg p-3">
+                                      <div className="border border-emerald-200 bg-white rounded-lg p-3">
                                         <p className="font-semibold text-gray-900">{bmd.tier2_price}</p>
                                         <p className="text-sm text-gray-500">{bmd.tier2_description}</p>
                                       </div>
@@ -971,94 +1031,115 @@ export default function VentureLanding() {
                               </div>
                             );
                           })()}
-                          <Label className="text-sm">How well does this business model fit the product and the value it provides? (1-10)</Label>
-                          <Slider
-                            value={[businessModelRating]}
-                            onValueChange={(value) => setBusinessModelRating(value[0])}
-                            max={10} min={1} step={1}
-                            disabled={isSubmittingGrowthFeedback}
-                            className="mt-2 mb-1
-                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
-                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
-                              [&_[role=slider]]:shadow-md"
-                          />
-                          <div className="text-center text-sm font-semibold text-indigo-600">{businessModelRating}</div>
-                          {businessModelRating < GROWTH_LOW_SCORE_THRESHOLD && (
-                            <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What doesn't feel right about it? (optional)</Label>
-                              <Textarea value={businessModelNote} onChange={(e) => setBusinessModelNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
-                            </div>
-                          )}
+                          <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={isMobileViewport}>
+                            <Label className="text-sm">How well does this business model fit the product and the value it provides? (1-10)</Label>
+                            <Slider
+                              value={[businessModelRating]}
+                              onValueChange={(value) => setBusinessModelRating(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-emerald-600 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-emerald-600
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-emerald-700">{businessModelRating}</div>
+                            {businessModelRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">What doesn't feel right about it? (optional)</Label>
+                                <Textarea value={businessModelNote} onChange={(e) => setBusinessModelNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              </div>
+                            )}
+                          </MobileQuestionSheet>
                         </div>
                       )}
 
                       {/* --- Core Features (conditional) — shown together, rated once --- */}
                       {venture.growth_data.selected_categories.includes('core_features') && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
-                        <div className="border border-gray-200 rounded-xl p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">Core Features</p>
+                        <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Layers className="w-5 h-5 text-sky-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Core Features</p>
+                          </div>
                           <div className="space-y-2 mb-3">
                             {venture.growth_data.core_features.map((f) => (
-                              <div key={f.id} className="border border-gray-200 rounded-lg p-3">
+                              <div key={f.id} className="border border-sky-200 bg-white rounded-lg p-3">
                                 <p className="font-semibold text-gray-900">{f.name}</p>
                                 <p className="text-sm text-gray-500">{f.description}</p>
                               </div>
                             ))}
                           </div>
-                          <Label className="text-sm">How well do these features support what this product is meant to do? (1-10)</Label>
-                          <Slider
-                            value={[coreFeaturesRating]}
-                            onValueChange={(value) => setCoreFeaturesRating(value[0])}
-                            max={10} min={1} step={1}
-                            disabled={isSubmittingGrowthFeedback}
-                            className="mt-2 mb-1
-                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
-                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
-                              [&_[role=slider]]:shadow-md"
-                          />
-                          <div className="text-center text-sm font-semibold text-indigo-600">{coreFeaturesRating}</div>
-                          {coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && (
-                            <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What feels wrong, missing, or unnecessary? (optional)</Label>
-                              <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
-                            </div>
-                          )}
+                          <MobileQuestionSheet label="Do these features fit?" summary={coreFeaturesRating} isMobile={isMobileViewport}>
+                            <Label className="text-sm">How well do these features support what this product is meant to do? (1-10)</Label>
+                            <Slider
+                              value={[coreFeaturesRating]}
+                              onValueChange={(value) => setCoreFeaturesRating(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-sky-600 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-sky-600
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-sky-700">{coreFeaturesRating}</div>
+                            {coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">What would you add, remove, or change about these features? (optional)</Label>
+                                <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              </div>
+                            )}
+                          </MobileQuestionSheet>
                         </div>
                       )}
 
-                      {/* --- Value Proposition (conditional) --- */}
+                      {/* --- Slogan (was "Value Proposition") — slogan shown again here, not just referenced --- */}
                       {venture.growth_data.selected_categories.includes('value_proposition') && (
-                        <div className="border border-gray-200 rounded-xl p-4">
-                          <Label className="text-sm">How accurately does this statement describe the product you just saw? (1-10)</Label>
-                          <p className="text-xs text-gray-400 mb-1">Referring to the headline above: "{venture.growth_data.headline}"</p>
-                          <Slider
-                            value={[valuePropRating]}
-                            onValueChange={(value) => setValuePropRating(value[0])}
-                            max={10} min={1} step={1}
-                            disabled={isSubmittingGrowthFeedback}
-                            className="mt-2 mb-1
-                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
-                              [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
-                              [&_[role=slider]]:shadow-md"
-                          />
-                          <div className="text-center text-sm font-semibold text-indigo-600">{valuePropRating}</div>
-                          {valuePropRating < GROWTH_LOW_SCORE_THRESHOLD && (
-                            <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What would you change? (optional)</Label>
-                              <Textarea value={valuePropNote} onChange={(e) => setValuePropNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
-                            </div>
-                          )}
+                        <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Megaphone className="w-5 h-5 text-amber-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Slogan</p>
+                          </div>
+                          <blockquote className="border-l-4 border-amber-400 bg-white rounded-r-lg p-3 mb-3 italic text-gray-800">
+                            "{venture.growth_data.headline}"
+                          </blockquote>
+                          <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={isMobileViewport}>
+                            <Label className="text-sm">How accurately does this statement describe the product you just saw? (1-10)</Label>
+                            <Slider
+                              value={[valuePropRating]}
+                              onValueChange={(value) => setValuePropRating(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-amber-500 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-amber-500
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-amber-700">{valuePropRating}</div>
+                            {valuePropRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">What would you change? (optional)</Label>
+                                <Textarea value={valuePropNote} onChange={(e) => setValuePropNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              </div>
+                            )}
+                          </MobileQuestionSheet>
                         </div>
                       )}
 
                       {/* --- Product Definition (conditional) --- */}
+
                       {venture.growth_data.selected_categories.includes('product_definition') && (
-                        <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="border border-rose-200 bg-rose-50/40 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <FileText className="w-5 h-5 text-rose-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Product Definition</p>
+                          </div>
+                          <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={isMobileViewport}>
                           <Label className="text-sm">How clearly and accurately is this product defined? (1-10)</Label>
                           <p className="text-xs text-gray-400 mb-1">Referring to the description above.</p>
                           <Slider
@@ -1068,18 +1149,19 @@ export default function VentureLanding() {
                             disabled={isSubmittingGrowthFeedback}
                             className="mt-2 mb-1
                               [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                              [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                              [&>span>span]:bg-rose-500 [&>span>span]:rounded-full
                               [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-rose-500
                               [&_[role=slider]]:shadow-md"
                           />
-                          <div className="text-center text-sm font-semibold text-indigo-600">{productDefinitionRating}</div>
+                          <div className="text-center text-sm font-semibold text-rose-700">{productDefinitionRating}</div>
                           {productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                             <div className="mt-2">
                               <Label className="text-xs text-gray-500">What feels unclear or inaccurate? (optional)</Label>
                               <Textarea value={productDefinitionNote} onChange={(e) => setProductDefinitionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                           )}
+                          </MobileQuestionSheet>
                         </div>
                       )}
 
@@ -1091,7 +1173,11 @@ export default function VentureLanding() {
                           product_url, so it's gated on that rather than
                           always shown. */}
                       {venture.growth_data.product_url && (
-                      <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                      <div className="border border-teal-200 bg-teal-50/40 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Compass className="w-5 h-5 text-teal-600" />
+                          <p className="text-xs font-bold uppercase tracking-wide text-teal-700">The Real Thing</p>
+                        </div>
                         <Label className="text-sm">Did you visit the actual product?</Label>
                         <div className="flex gap-2 mt-2">
                           {['yes', 'no'].map((opt) => (
@@ -1100,7 +1186,7 @@ export default function VentureLanding() {
                               type="button"
                               onClick={() => setVisitedProduct(opt)}
                               disabled={isSubmittingGrowthFeedback}
-                              className={`px-4 py-2 rounded-lg border text-sm font-medium ${visitedProduct === opt ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium ${visitedProduct === opt ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                             >
                               {opt === 'yes' ? 'Yes' : 'No'}
                             </button>
@@ -1108,6 +1194,7 @@ export default function VentureLanding() {
                         </div>
 
                         {visitedProduct === 'yes' && (
+                          <MobileQuestionSheet label="Did it match your expectations?" summary={productMatchRating} isMobile={isMobileViewport}>
                           <div className="mt-4">
                             <Label className="text-sm">Now that you've seen the actual product, how well did it match what you expected from the description and demo? (1-10)</Label>
                             <Slider
@@ -1117,27 +1204,34 @@ export default function VentureLanding() {
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-2 mb-1
                                 [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-indigo-600 [&>span>span]:rounded-full
+                                [&>span>span]:bg-teal-600 [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-600
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-teal-600
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-indigo-600">{productMatchRating}</div>
+                            <div className="text-center text-sm font-semibold text-teal-700">{productMatchRating}</div>
                             <div className="mt-2">
                               <Label className="text-xs text-gray-500">What was different from what you expected? (optional)</Label>
                               <Textarea value={productMatchDiffText} onChange={(e) => setProductMatchDiffText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                           </div>
+                          </MobileQuestionSheet>
                         )}
                       </div>
                       )}
 
                       {/* --- Final open question, always shown regardless of category selection --- */}
-                      <div>
+                      <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ClipboardList className="w-5 h-5 text-gray-500" />
+                          <p className="text-xs font-bold uppercase tracking-wide text-gray-600">One Last Thing</p>
+                        </div>
+                        <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={isMobileViewport}>
                         <Label htmlFor="growth-final-change">If you could change one thing about how this product is defined, what would it be?</Label>
                         <Textarea id="growth-final-change" value={finalChangeText}
                           onChange={(e) => setFinalChangeText(e.target.value)}
                           className="min-h-[80px] mt-2" disabled={isSubmittingGrowthFeedback} />
+                        </MobileQuestionSheet>
                       </div>
 
                       {currentUser && (

@@ -1,56 +1,36 @@
 // app/growth-development/page.jsx
 //
-// [v3 — REPLACES v2 entirely] Rebuilt directly from the "צמיחה (1).docx"
-// spec, not from earlier brainstorming. The core reframe from this session:
+// [v4 — builds on v3] Changes this round, all explicitly confirmed:
+//   1. "Value Proposition" renamed to "Slogan" everywhere in the UI (display
+//      text only — the underlying selected_categories key stays
+//      'value_proposition' to avoid breaking already-saved test data from
+//      v3; only what the founder SEES changed).
+//   2. Venture name field added, and — critically — this page can now
+//      CREATE a venture from scratch if the founder has none yet. This
+//      matters because a founder bringing an existing external product may
+//      never have gone through createventure/page.jsx at all. Mirrors
+//      createventure's real insert payload (verified against that file this
+//      session), minus the score fields (team_score/opportunity_score/
+//      status_score/total_score) — confirmed nullable in the real schema
+//      and not meaningful for someone skipping the journey.
+//   3. Optional founder-authored custom question (one, open text), stored
+//      in growth_data.custom_question, shown FIRST on the public page.
+//   4. Mobile: tapping a field opens it in a fullscreen editor, then
+//      returns to the list — built fresh via MobileFieldWrapper below (no
+//      reference file was available to copy from this session).
 //
-//   This page does NOT measure whether the product is good/interesting —
-//   that's already measured by whether visitors click through and sign up.
-//   It measures whether the FOUNDER is communicating accurately: does the
-//   headline land, is the description clear, do the chosen features support
-//   the product's purpose, does the pricing fit the value. A low score means
-//   "the message isn't landing the way you think it is", not "your product
-//   is bad". This framing is shown to the founder up front, and a "?" icon
-//   next to each module reveals the same framing at the point of use.
-//
-// FOUR FOUNDER-SELECTABLE CATEGORIES (from the doc, verbatim intent):
-//   1. Business Model   — founder defines pricing packages (MLP-style).
-//   2. Core Features     — founder defines UP TO 3 features (not 3-5 — this
-//      session narrowed it from the doc's "3–5" to 3, per explicit request).
-//      Reviewer rates them together, ONCE — never per-feature. This is a
-//      deliberate departure from the MVP per-feature rating mechanism.
-//   3. Value Proposition — reuses growthData.headline (already collected in
-//      the Page Content tab) rather than a duplicate field. Tests whether
-//      the headline/slogan accurately represents the product.
-//   4. Product Definition — reuses growthData.description (already collected
-//      in Page Content) rather than a duplicate field. Tests whether the
-//      description is clear and accurate.
-//
-// FIXED, NOT SELECTABLE (always shown to every reviewer, regardless of which
-// of the 4 categories the founder turned on):
-//   - "Did you visit the actual product?" Yes / No.
-//     If Yes: "How well did it match what you expected?" slider + optional
-//     "What was different from what you expected?" text.
-//   - Final open question: "If you could change one thing about how this
-//     product is defined, what would it be?"
-//
-// REMOVED FROM v2 ENTIRELY (was wrong direction, not part of the real spec):
-//   Look & Feel, User Experience, per-feature MVP-style rating, Referral/NPS,
-//   Competitor Substitute, Friction, Testimonial Request. None of these are
-//   in the "צמיחה" doc. Deleted rather than kept-and-unchecked, since keeping
-//   wrong options around invites confusion later.
-//
-// DB DEPENDENCY (proposed, not yet confirmed to exist):
+// DB DEPENDENCY (still pending, unchanged from v3):
 //   ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
+// DB DEPENDENCY (new this round):
+//   ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
 //
-// STILL NOT FIXED (explicit, not an oversight): no venture.phase guard on
-// this page. Verified this session that mlp-development-center has none
-// either — consistent with the rest of the codebase as it stands, not a new
-// hole introduced here. Do not add without separate approval.
+// STILL NOT FIXED (explicit, not an oversight): no venture.phase guard.
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { UploadFile } from '@/api/integrations';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,41 +38,60 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon, Plus, HelpCircle } from 'lucide-react';
+import { Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon, Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
 
 // ============================================================================
-// Small reusable "?" icon that reveals an explanation on click. No shared
-// Tooltip/Popover component was seen anywhere in the files read this
-// session, so this is a plain local-state toggle, not a new dependency.
+// Mobile fullscreen field editor. On desktop, renders children inline as
+// normal. On mobile, renders a compact tappable summary row; tapping it
+// opens the same children in a fullscreen overlay with a "Done" button to
+// return to the list. This is the reusable building block for requirement
+// #4 — wrap any field/section with it to get the fullscreen-on-mobile
+// behavior without duplicating each field's markup.
 // ============================================================================
-function ExplainToggle({ text }) {
+function MobileFieldWrapper({ label, summary, isMobile, children }) {
   const [open, setOpen] = useState(false);
+  if (!isMobile) return <>{children}</>;
   return (
-    <span className="inline-block align-middle ml-1.5">
+    <>
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:text-emerald-600"
-        aria-label="Why this question?"
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left"
       >
-        <HelpCircle className="w-4 h-4" />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900">{label}</p>
+          {summary ? <p className="text-xs text-gray-500 truncate">{summary}</p> : <p className="text-xs text-gray-400">Tap to fill in</p>}
+        </div>
+        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
       </button>
       {open && (
-        <span className="block mt-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2 max-w-md">
-          {text}
-        </span>
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+            <h3 className="font-semibold text-gray-900">{label}</h3>
+            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">
+              Done <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        </div>
       )}
-    </span>
+    </>
   );
 }
 
-const FRAMING_TEXT = "This isn't a popularity contest for your product. Whether people find it interesting enough to click through and sign up is a separate signal you'll already see for yourself. This page measures whether you're communicating it accurately — a low score means something isn't landing the way you think it is, not that the product is bad.";
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
 
-// [REUSED verbatim from revenue-modeling-experience/page.jsx's MODEL_OPTIONS]
-// Same 4 values and descriptions, so a founder sees the same model names
-// here as they would in the revenue simulator elsewhere in the app.
 const BUSINESS_MODEL_TYPES = [
   { value: 'subscription', name: 'Subscription', description: 'Monthly/Annual recurring fees.' },
   { value: 'freemium', name: 'Freemium', description: 'Ad-supported free tier with paid conversion.' },
@@ -103,54 +102,51 @@ const BUSINESS_MODEL_TYPES = [
 const CATEGORY_EXPLANATIONS = {
   business_model: "Tests whether your pricing feels like it fits the value you're offering — not whether this reviewer personally thinks it's cheap or expensive.",
   core_features: "Tests whether the features you chose to highlight actually support what you say the product does — not whether reviewers find each feature exciting.",
-  value_proposition: "This only affects whether reviewers are asked to rate your headline's accuracy — your headline itself is always shown regardless. Useful if you're unsure your headline is landing the way you intend it to.",
+  value_proposition: "This only affects whether reviewers are asked to rate your slogan's accuracy — your slogan itself is always shown regardless. Useful if you're unsure your slogan is landing the way you intend it to.",
   product_definition: "This only affects whether reviewers are asked to rate your description's clarity — your description itself is always shown regardless. Useful if you're unsure your description is landing the way you intend it to.",
 };
 
-const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"). And at the very end, regardless of which categories above you selected: \"If you could change one thing about how this product is defined, what would it be?\" This doesn't change what's shown on your public page — it only affects what feedback is collected.";
+const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"), but only if you provided a product link. And at the very end, regardless of which categories above you selected: \"If you could change one thing about how this product is defined, what would it be?\" This doesn't change what's shown on your public page — it only affects what feedback is collected.";
+
+const ExplainToggle = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="inline-block align-middle ml-1.5">
+      <button type="button" onClick={() => setOpen(o => !o)} className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:text-emerald-600" aria-label="Why this question?">
+        <HelpCircle className="w-4 h-4" />
+      </button>
+      {open && <span className="block mt-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2 max-w-md">{text}</span>}
+    </span>
+  );
+};
+
+const FRAMING_TEXT = "This isn't a popularity contest for your product. Whether people find it interesting enough to click through and sign up is a separate signal you'll already see for yourself. This page measures whether you're communicating it accurately — a low score means something isn't landing the way you think it is, not that the product is bad.";
 
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [nameError, setNameError] = useState('');
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const [growthData, setGrowthData] = useState({
-    headline: '',          // also serves as the Value Proposition module's content
-    description: '',       // also serves as the Product Definition module's content
+    name: '',               // [NEW] only relevant if creating a fresh venture
+    headline: '',           // Slogan
+    description: '',
     product_url: '',
-    uploaded_files: [],    // accumulates, never replaces
+    uploaded_files: [],
     social_links: { linkedin: '', twitter: '', instagram: '', website: '' },
     is_imported: false,
-
-    // Which of the 4 categories the founder turned on. Can be changed any
-    // time per the doc ("They can add, remove, or change categories at any
-    // time"venturemessage — no lock-in once published).
-    selected_categories: [], // subset of: business_model, core_features, value_proposition, product_definition
-
-    core_features: [],       // [{ id, name, description }], max 3
-
-    // [CHANGED — was a generic pricing_packages list] Reuses the exact 4
-    // model types from revenue-modeling-experience/page.jsx (MODEL_OPTIONS),
-    // not a SaaS-only assumption. Only price fields relevant to a reviewer
-    // judging "does this fit the product" are kept — CAC/Churn/Marketing
-    // Budget/etc. from the full revenue simulator are deliberately excluded,
-    // per this session's explicit confirmation ("רק סוג מודל ומחירים").
-    //
-    // Every price now has a paired description of what it includes, not
-    // just a number — Subscription and Freemium share this same shape;
-    // no invented differentiator field between them beyond the model_type
-    // label itself.
+    selected_categories: [],
+    core_features: [],
     business_model_data: {
-      model_type: '',              // 'subscription' | 'freemium' | 'transactional' | 'ad-driven'
-      tier1_price: '',             // subscription, freemium
-      tier1_description: '',       // what Tier 1 includes
-      tier2_price: '',             // subscription, freemium — optional premium tier
-      tier2_description: '',       // what Tier 2 includes
-      transaction_fee_description: '', // transactional — kept as free text since fees are sometimes % and sometimes flat
-      // ad-driven: no price field at all — the product is free, that's the whole model.
+      model_type: '', tier1_price: '', tier1_description: '',
+      tier2_price: '', tier2_description: '', transaction_fee_description: '',
     },
+    custom_question: '', // [NEW] optional, shown first on the public page
   });
 
   const [newFeatureName, setNewFeatureName] = useState('');
@@ -166,34 +162,37 @@ export default function GrowthDevelopment() {
     setIsLoading(true);
     try {
       const user = await User.me();
+      setCurrentUser(user);
       const ventures = await Venture.filter({ created_by: user.email }, "-created_date");
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
-        if (currentVenture.growth_data) {
-          const loaded = { ...currentVenture.growth_data };
-          loaded.product_url = loaded.product_url || '';
-          loaded.uploaded_files = loaded.uploaded_files || [];
-          loaded.is_imported = loaded.is_imported === true;
-          loaded.selected_categories = loaded.selected_categories || [];
-          loaded.core_features = loaded.core_features || [];
-          loaded.business_model_data = {
-            model_type: loaded.business_model_data?.model_type || '',
-            tier1_price: loaded.business_model_data?.tier1_price || '',
-            tier1_description: loaded.business_model_data?.tier1_description || '',
-            tier2_price: loaded.business_model_data?.tier2_price || '',
-            tier2_description: loaded.business_model_data?.tier2_description || '',
-            transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
-          };
-          loaded.social_links = {
-            linkedin: loaded.social_links?.linkedin || '',
-            twitter: loaded.social_links?.twitter || '',
-            instagram: loaded.social_links?.instagram || '',
-            website: loaded.social_links?.website || '',
-          };
-          setGrowthData(prev => ({ ...prev, ...loaded }));
-        }
+        const loaded = { ...(currentVenture.growth_data || {}) };
+        loaded.name = currentVenture.name || '';
+        loaded.product_url = loaded.product_url || '';
+        loaded.uploaded_files = loaded.uploaded_files || [];
+        loaded.is_imported = loaded.is_imported === true;
+        loaded.selected_categories = loaded.selected_categories || [];
+        loaded.core_features = loaded.core_features || [];
+        loaded.custom_question = loaded.custom_question || '';
+        loaded.business_model_data = {
+          model_type: loaded.business_model_data?.model_type || '',
+          tier1_price: loaded.business_model_data?.tier1_price || '',
+          tier1_description: loaded.business_model_data?.tier1_description || '',
+          tier2_price: loaded.business_model_data?.tier2_price || '',
+          tier2_description: loaded.business_model_data?.tier2_description || '',
+          transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
+        };
+        loaded.social_links = {
+          linkedin: loaded.social_links?.linkedin || '', twitter: loaded.social_links?.twitter || '',
+          instagram: loaded.social_links?.instagram || '', website: loaded.social_links?.website || '',
+        };
+        setGrowthData(prev => ({ ...prev, ...loaded }));
       }
+      // [NEW] No venture found at all — this is the "brought an existing
+      // product, never went through createventure" case. Leave venture as
+      // null; the form still renders (with the new name field required),
+      // and handleSave creates the venture from scratch.
     } catch (error) {
       console.error("Error loading venture:", error);
     }
@@ -203,7 +202,7 @@ export default function GrowthDevelopment() {
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    if (!venture) return;
+    if (!venture) return; // no autosave until a real venture exists
     const interval = setInterval(async () => {
       try {
         await Venture.update(venture.id, { growth_data: growthData });
@@ -216,33 +215,23 @@ export default function GrowthDevelopment() {
   const handleChange = (field, value) => setGrowthData(prev => ({ ...prev, [field]: value }));
   const handleSocialLinkChange = (platform, value) =>
     setGrowthData(prev => ({ ...prev, social_links: { ...prev.social_links, [platform]: value } }));
+  const handleBusinessModelChange = (field, value) =>
+    setGrowthData(prev => ({ ...prev, business_model_data: { ...prev.business_model_data, [field]: value } }));
 
   const toggleCategory = (key) => {
     setGrowthData(prev => {
       const has = prev.selected_categories.includes(key);
-      const selected_categories = has
-        ? prev.selected_categories.filter(k => k !== key)
-        : [...prev.selected_categories, key];
+      const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
       return { ...prev, selected_categories };
     });
   };
 
-  // --- Core Features sub-form (max 3, per this session's explicit narrowing from the doc's 3–5) ---
   const addFeature = () => {
     if (!newFeatureName.trim() || growthData.core_features.length >= 3) return;
-    setGrowthData(prev => ({
-      ...prev,
-      core_features: [...prev.core_features, { id: `feat_${Date.now()}`, name: newFeatureName.trim(), description: newFeatureDesc.trim() }],
-    }));
-    setNewFeatureName('');
-    setNewFeatureDesc('');
+    setGrowthData(prev => ({ ...prev, core_features: [...prev.core_features, { id: `feat_${Date.now()}`, name: newFeatureName.trim(), description: newFeatureDesc.trim() }] }));
+    setNewFeatureName(''); setNewFeatureDesc('');
   };
-  const removeFeature = (id) =>
-    setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
-
-  // --- Business model sub-form ---
-  const handleBusinessModelChange = (field, value) =>
-    setGrowthData(prev => ({ ...prev, business_model_data: { ...prev.business_model_data, [field]: value } }));
+  const removeFeature = (id) => setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -266,14 +255,76 @@ export default function GrowthDevelopment() {
     setIsUploading(false);
     e.target.value = '';
   };
-  const removeUploadedFile = (index) =>
-    setGrowthData(prev => ({ ...prev, uploaded_files: prev.uploaded_files.filter((_, i) => i !== index) }));
+  const removeUploadedFile = (index) => setGrowthData(prev => ({ ...prev, uploaded_files: prev.uploaded_files.filter((_, i) => i !== index) }));
+
+  // [NEW] Creates a venture from scratch, mirroring createventure/page.jsx's
+  // real insert payload (verified against that file), minus score fields
+  // (nullable, meaningless for someone skipping the journey — confirmed
+  // this session).
+  const createVentureFromScratch = async () => {
+    const { data: existing, error: checkError } = await supabase
+      .from('ventures').select('id').eq('name', growthData.name.trim()).limit(1);
+    if (checkError) throw checkError;
+    if (existing && existing.length > 0) {
+      throw new Error(`NAME_TAKEN`);
+    }
+    const venturePayload = {
+      name: growthData.name.trim(),
+      description: growthData.description,
+      phase: "growth",
+      virtual_capital: 0,
+      monthly_burn_rate: 0,
+      founder_user_ids: [String(currentUser.id)],
+      founders_count: 1,
+      likes_count: 0,
+      messages_count: 0,
+      business_plan_completion: 0,
+      mvp_uploaded: false,
+      revenue_model_completed: false,
+      mlp_completed: false,
+      mlp_development_completed: false,
+      pitch_created: false,
+      funding_plan_completed: false,
+      mvp_feedback_count: 0,
+      pressure_challenge_completed: false,
+      created_by: currentUser.email,
+      created_by_id: String(currentUser.id),
+    };
+    const { data: newVenture, error: createError } = await supabase
+      .from('ventures').insert([venturePayload]).select().single();
+    if (createError) {
+      if (createError.code === '23505') throw new Error('NAME_TAKEN');
+      throw createError;
+    }
+    return newVenture;
+  };
 
   const handleSave = async () => {
-    if (!venture) return;
+    setNameError('');
+    if (!venture && !growthData.name.trim()) {
+      setNameError('Venture name is required.');
+      return;
+    }
     setIsSaving(true);
     try {
-      await Venture.update(venture.id, { growth_data: growthData });
+      let targetVenture = venture;
+      if (!targetVenture) {
+        try {
+          targetVenture = await createVentureFromScratch();
+          setVenture(targetVenture);
+        } catch (err) {
+          if (err.message === 'NAME_TAKEN') {
+            setNameError(`The name "${growthData.name}" is already taken. Please choose a different name.`);
+            setIsSaving(false);
+            return;
+          }
+          throw err;
+        }
+      } else if (growthData.name.trim() !== targetVenture.name) {
+        // Founder edited the name of an existing venture — update it too.
+        await Venture.update(targetVenture.id, { name: growthData.name.trim() });
+      }
+      await Venture.update(targetVenture.id, { growth_data: growthData });
       showToast("Growth page saved!");
       router.push(createPageUrl("Dashboard"));
     } catch (error) {
@@ -283,6 +334,7 @@ export default function GrowthDevelopment() {
     setIsSaving(false);
   };
 
+  const isNameComplete = growthData.name.trim().length >= 2;
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
   const hasAtLeastOneCategory = growthData.selected_categories.length > 0;
@@ -291,33 +343,23 @@ export default function GrowthDevelopment() {
   const businessModelReady = (() => {
     if (!growthData.selected_categories.includes('business_model')) return true;
     if (!bmd.model_type) return false;
-    if (bmd.model_type === 'subscription' || bmd.model_type === 'freemium') {
-      return bmd.tier1_price.trim().length > 0 && bmd.tier1_description.trim().length > 0;
-    }
+    if (bmd.model_type === 'subscription' || bmd.model_type === 'freemium') return bmd.tier1_price.trim().length > 0 && bmd.tier1_description.trim().length > 0;
     if (bmd.model_type === 'transactional') return bmd.transaction_fee_description.trim().length > 0;
-    if (bmd.model_type === 'ad-driven') return true; // no price field needed
+    if (bmd.model_type === 'ad-driven') return true;
     return false;
   })();
   const valuePropReady = !growthData.selected_categories.includes('value_proposition') || isHeadlineComplete;
   const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
-
   const hasDemoFile = growthData.uploaded_files.length > 0;
-  const canSave = hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady && hasDemoFile;
+
+  const canSave = isNameComplete && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady && hasDemoFile;
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
-  if (!venture) return (
-    <div className="p-8 text-center">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">No Venture Found</h1>
-      <p className="text-gray-600">Please create a venture first to access this page.</p>
-    </div>
-  );
 
   return (
     <>
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
-          {toast.message}
-        </div>
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{toast.message}</div>
       )}
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
@@ -329,12 +371,17 @@ export default function GrowthDevelopment() {
             <h1 className="text-3xl font-bold text-gray-900">Growth Development Center</h1>
           </div>
 
-          {/* Framing, shown once up front — same text also available per-category via the "?" icon */}
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
-            <CardContent className="p-5">
-              <p className="text-sm text-emerald-900 leading-relaxed">{FRAMING_TEXT}</p>
-            </CardContent>
+            <CardContent className="p-5"><p className="text-sm text-emerald-900 leading-relaxed">{FRAMING_TEXT}</p></CardContent>
           </Card>
+
+          {!venture && (
+            <Card className="shadow-sm border-amber-200 bg-amber-50">
+              <CardContent className="p-4 text-sm text-amber-800">
+                You don't have a venture yet — that's fine if you're bringing an existing product. Fill in a name below and we'll create it for you when you save.
+              </CardContent>
+            </Card>
+          )}
 
           <Tabs defaultValue="content" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
@@ -345,39 +392,62 @@ export default function GrowthDevelopment() {
 
             {/* ===================== PAGE CONTENT ===================== */}
             <TabsContent value="content" className="space-y-6">
+              {!venture && (
+                <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">{isNameComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Venture Name *</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile}>
+                      <Input value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet" />
+                      {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
+                    </MobileFieldWrapper>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}
-                    Headline / Slogan
-                  </CardTitle>
-                  <CardDescription>Your hero line — what the Value Proposition category will test.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">{isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Slogan</CardTitle>
+                  <CardDescription>Your hero line — what the Slogan category will test.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
+                  <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile}>
+                    <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
+                  </MobileFieldWrapper>
                 </CardContent>
               </Card>
 
               <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}
-                    Short Description
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Short Description</CardTitle>
                   <CardDescription>What the product is and who it's for — what the Product Definition category will test.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Textarea value={growthData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Describe what the product does and who it's for..." className="h-28" />
+                  <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
+                    <Textarea value={growthData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Describe what the product does and who it's for..." className="h-28" />
+                  </MobileFieldWrapper>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle></CardHeader>
+                <CardContent>
+                  <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile}>
+                    <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
+                  </MobileFieldWrapper>
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle>
-                  <CardDescription>If your product already exists outside StartZig, link to it here.</CardDescription>
+                  <CardTitle className="flex items-center gap-2"><MessageCircleQuestion className="w-5 h-5 text-emerald-600" />Your Own Question (optional)</CardTitle>
+                  <CardDescription>Ask reviewers anything you want, in your own words. Shown first on your page, before everything else.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
+                  <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile}>
+                    <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?" />
+                  </MobileFieldWrapper>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -386,22 +456,17 @@ export default function GrowthDevelopment() {
             <TabsContent value="categories" className="space-y-6">
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className={hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>
-                    {hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}
-                    Choose which categories appear on your page
-                  </CardTitle>
+                  <CardTitle className={hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose which categories appear on your page</CardTitle>
                   <CardDescription>Pick at least one. You can change this anytime, even after your page is live.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
 
-                  {/* --- Business Model --- */}
                   <div className={`border rounded-lg p-4 ${businessModelReady && growthData.selected_categories.includes('business_model') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {businessModelReady && growthData.selected_categories.includes('business_model') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Business Model
-                        <ExplainToggle text={CATEGORY_EXPLANATIONS.business_model} />
+                        Business Model<ExplainToggle text={CATEGORY_EXPLANATIONS.business_model} />
                       </span>
                     </label>
                     {growthData.selected_categories.includes('business_model') && (
@@ -410,68 +475,41 @@ export default function GrowthDevelopment() {
                           <Label className="text-xs">Business model</Label>
                           <div className="grid grid-cols-2 gap-2 mt-1">
                             {BUSINESS_MODEL_TYPES.map((m) => (
-                              <button
-                                type="button"
-                                key={m.value}
-                                onClick={() => handleBusinessModelChange('model_type', m.value)}
-                                className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}
-                              >
+                              <button type="button" key={m.value} onClick={() => handleBusinessModelChange('model_type', m.value)}
+                                className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
                                 <p className="font-medium text-gray-900">{m.name}</p>
                                 <p className="text-xs text-gray-500">{m.description}</p>
                               </button>
                             ))}
                           </div>
                         </div>
-
                         {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
                           <>
                             <div className="flex gap-2">
-                              <div className="w-28">
-                                <Label className="text-xs">Tier 1 price (monthly)</Label>
-                                <Input value={bmd.tier1_price} onChange={(e) => handleBusinessModelChange('tier1_price', e.target.value)} placeholder="$9.99" />
-                              </div>
-                              <div className="flex-1">
-                                <Label className="text-xs">What's included in Tier 1</Label>
-                                <Input value={bmd.tier1_description} onChange={(e) => handleBusinessModelChange('tier1_description', e.target.value)} placeholder="e.g., Unlimited trips, no ads" />
-                              </div>
+                              <div className="w-28"><Label className="text-xs">Tier 1 price</Label><Input value={bmd.tier1_price} onChange={(e) => handleBusinessModelChange('tier1_price', e.target.value)} placeholder="$9.99" /></div>
+                              <div className="flex-1"><Label className="text-xs">What's included</Label><Input value={bmd.tier1_description} onChange={(e) => handleBusinessModelChange('tier1_description', e.target.value)} placeholder="e.g., Unlimited trips" /></div>
                             </div>
                             <div className="flex gap-2">
-                              <div className="w-28">
-                                <Label className="text-xs">Tier 2 price (optional)</Label>
-                                <Input value={bmd.tier2_price} onChange={(e) => handleBusinessModelChange('tier2_price', e.target.value)} placeholder="$29.99" />
-                              </div>
-                              <div className="flex-1">
-                                <Label className="text-xs">What's included in Tier 2</Label>
-                                <Input value={bmd.tier2_description} onChange={(e) => handleBusinessModelChange('tier2_description', e.target.value)} placeholder="e.g., Team seats, priority support" />
-                              </div>
+                              <div className="w-28"><Label className="text-xs">Tier 2 price (optional)</Label><Input value={bmd.tier2_price} onChange={(e) => handleBusinessModelChange('tier2_price', e.target.value)} placeholder="$29.99" /></div>
+                              <div className="flex-1"><Label className="text-xs">What's included</Label><Input value={bmd.tier2_description} onChange={(e) => handleBusinessModelChange('tier2_description', e.target.value)} placeholder="e.g., Team seats" /></div>
                             </div>
                           </>
                         )}
-
                         {bmd.model_type === 'transactional' && (
-                          <div>
-                            <Label className="text-xs">Fee / commission per transaction</Label>
-                            <Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking, or $2 flat fee" />
-                          </div>
+                          <div><Label className="text-xs">Fee / commission per transaction</Label><Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking" /></div>
                         )}
-
-                        {bmd.model_type === 'ad-driven' && (
-                          <p className="text-xs text-gray-500">Free to use — no pricing input needed for this model.</p>
-                        )}
-
+                        {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
                         {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
                       </div>
                     )}
                   </div>
 
-                  {/* --- Core Features --- */}
                   <div className={`border rounded-lg p-4 ${featuresReady && growthData.selected_categories.includes('core_features') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('core_features')} onCheckedChange={() => toggleCategory('core_features')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {featuresReady && growthData.selected_categories.includes('core_features') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Core Features (up to 3)
-                        <ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
+                        Core Features (up to 3)<ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
                       </span>
                     </label>
                     {growthData.selected_categories.includes('core_features') && (
@@ -495,67 +533,43 @@ export default function GrowthDevelopment() {
                     )}
                   </div>
 
-                  {/* --- Value Proposition --- */}
-                  {/* [FIX] Your headline is ALWAYS shown to every reviewer as
-                      part of the venture summary — otherwise they can't tell
-                      what they're looking at. This checkbox does NOT control
-                      whether it's shown. It controls whether we also ask
-                      reviewers a specific question rating how accurate it is. */}
                   <div className={`border rounded-lg p-4 ${valuePropReady && growthData.selected_categories.includes('value_proposition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('value_proposition')} onCheckedChange={() => toggleCategory('value_proposition')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {valuePropReady && growthData.selected_categories.includes('value_proposition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Value Proposition
-                        <ExplainToggle text={CATEGORY_EXPLANATIONS.value_proposition} />
+                        Get feedback on my Slogan<ExplainToggle text={CATEGORY_EXPLANATIONS.value_proposition} />
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 pl-8">Your headline is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product.</p>
-                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && (
-                      <p className="text-xs text-red-500 mt-1 pl-8">Fill in your headline in the Page Content tab first.</p>
-                    )}
+                    <p className="text-xs text-gray-500 mt-1 pl-8">Your slogan is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product.</p>
+                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your slogan in the Page Content tab first.</p>}
                   </div>
 
-                  {/* --- Product Definition --- */}
-                  {/* [FIX] Same principle: the description is always shown as
-                      context. Checkbox only opts into a rating question. */}
                   <div className={`border rounded-lg p-4 ${definitionReady && growthData.selected_categories.includes('product_definition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('product_definition')} onCheckedChange={() => toggleCategory('product_definition')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {definitionReady && growthData.selected_categories.includes('product_definition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Product Definition
-                        <ExplainToggle text={CATEGORY_EXPLANATIONS.product_definition} />
+                        Get feedback on my Product Definition<ExplainToggle text={CATEGORY_EXPLANATIONS.product_definition} />
                       </span>
                     </label>
                     <p className="text-xs text-gray-500 mt-1 pl-8">Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is.</p>
-                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && (
-                      <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Page Content tab first (min 50 characters).</p>
-                    )}
+                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Page Content tab first (min 50 characters).</p>}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Fixed, non-optional — full detail lives behind the "?" click, nothing shown by default */}
               <Card className="shadow-lg border-emerald-200">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center">
-                    Always included (not optional)
-                    <ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} />
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-base flex items-center">Always included (not optional)<ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} /></CardTitle></CardHeader>
               </Card>
             </TabsContent>
 
             {/* ===================== DEMO & LINKS ===================== */}
             <TabsContent value="demo" className="space-y-6">
-              <Card className={growthData.uploaded_files.length > 0 ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+              <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {growthData.uploaded_files.length > 0 && <CheckCircle className="w-5 h-5 text-green-500" />}
-                    Demo
-                  </CardTitle>
-                  <CardDescription>Add a demo — a few important screens, or a short video that explains the product. Don't upload every screen, just the ones that matter. Files accumulate — new uploads don't remove earlier ones.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}Demo</CardTitle>
+                  <CardDescription>Add a demo — a few important screens, or a short video that explains the product. Don't upload every screen, just the ones that matter. Files accumulate.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
