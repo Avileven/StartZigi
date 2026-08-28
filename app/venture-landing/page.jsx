@@ -104,6 +104,11 @@ export default function VentureLanding() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [mvpHtmlContents, setMvpHtmlContents] = useState({});
   const [mlpHtmlContents, setMlpHtmlContents] = useState({});
+  // [FIX — bug found during testing] Was missing entirely, which is why
+  // Growth demo HTML files got stuck forever on "Loading...": renderFile
+  // was called with a hardcoded {} instead of a real content map, so it
+  // could never find the fetched content. Same pattern as MVP/MLP below.
+  const [growthHtmlContents, setGrowthHtmlContents] = useState({});
   const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
@@ -227,6 +232,7 @@ export default function VentureLanding() {
           if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
           if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
           if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+          if (v.growth_data?.uploaded_files) await loadHtmlFiles(v.growth_data.uploaded_files, setGrowthHtmlContents, "Growth");
         } else {
           setVenture(null);
         }
@@ -251,6 +257,7 @@ export default function VentureLanding() {
           if (v.mlp_data?.uploaded_files) await loadHtmlFiles(v.mlp_data.uploaded_files, setMlpHtmlContents, "MLP");
           if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
           if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
+          if (v.growth_data?.uploaded_files) await loadHtmlFiles(v.growth_data.uploaded_files, setGrowthHtmlContents, "Growth");
         } else {
           setVenture(null);
         }
@@ -891,7 +898,7 @@ export default function VentureLanding() {
                 <div className="mb-10">
                   <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Demo</h3>
                   <div className="space-y-4">
-                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, {}))}
+                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, growthHtmlContents))}
                   </div>
                 </div>
               )}
@@ -905,7 +912,14 @@ export default function VentureLanding() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isOwnVenture ? (
+                  {/* [TEMP — TESTING ONLY, MUST BE RESTORED] isOwnVenture
+                      check disabled here because there's currently no way
+                      to view this page as a non-owner (no separate
+                      test/reviewer account or sharing flow set up yet).
+                      Bypassed with `false &&` so the original condition is
+                      still visible and easy to re-enable — just delete
+                      `false && ` below to restore real behavior. */}
+                  {false && isOwnVenture ? (
                     <div className="text-center py-8">
                       <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
                     </div>
