@@ -1,5 +1,9 @@
 
 // app/promotion-center/ 100826 UPDATE
+// [GROWTH] This session split the shared "isBetaPhase" (beta || growth)
+// logic into isBetaPhase and isGrowthPhase — Growth ventures were getting
+// Beta-signup copy and a "beta_testing" invitation_type, which routes to
+// the wrong destination. Search "[GROWTH]" below for every touch point.
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -65,10 +69,14 @@ export default function PromotionCenter() {
   const router = useRouter();
 
   // [CHANGED] Phase detection — drives all UI text and routing logic in this page.
-  // isBetaPhase: true for beta and growth phases (both use beta testing flow).
+  // isBetaPhase: true ONLY for beta phase now.
+  // [GROWTH] isGrowthPhase: new, separate flag — was previously merged into
+  // isBetaPhase, which meant Growth ventures got Beta-testing copy and
+  // routing everywhere below.
   // isFeedbackPhase: true for mvp and mlp phases (both use feedback flow).
   // isEarlyPhase: true for idea and business_plan — promotion not available yet.
-  const isBetaPhase = venture?.phase === 'beta' || venture?.phase === 'growth';
+  const isBetaPhase = venture?.phase === 'beta';
+  const isGrowthPhase = venture?.phase === 'growth';
   const isFeedbackPhase = venture?.phase === 'mvp' || venture?.phase === 'mlp';
 
   // [ADDED] Phase-based intro message — shown at top of page to explain what the user is sending.
@@ -95,8 +103,12 @@ export default function PromotionCenter() {
       badgeColor: "bg-green-600"
     };
     if (venture?.phase === 'growth') return {
+      // [GROWTH] Copy fixed — was describing "beta testing community",
+      // leftover from when this branch shared logic with Beta. Growth is
+      // about feedback on the Growth page (slogan/business model/features/
+      // product definition), not beta signups.
       title: "You're in the Growth Phase",
-      description: "Keep growing your beta testing community. Invite more users to try your product and provide valuable feedback.",
+      description: "Invite other founders on the platform to review your Growth page and give you structured feedback. You can also invite external contacts via email.",
       badge: "Growth",
       color: "bg-emerald-50 border-emerald-200 text-emerald-800",
       badgeColor: "bg-emerald-600"
@@ -175,11 +187,21 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
       );
       setCampaigns(campaignsWithCounts);
 
-      // [2026-01-10] FIX: load ONLY external_feedback invitations (so it won’t mix with cofounder invitations)
-      const invites = await CoFounderInvitation.filter(
-        { venture_id: currentVenture.id, invitation_type: "external_feedback" },
-        "-created_date"
-      );
+      // [2026-01-10] FIX: load ONLY external_feedback invitations (so it won't mix with cofounder invitations)
+      // [GROWTH] Now also includes growth_feedback invites — previously
+      // Growth invites (type "beta_testing", inherited from the old shared
+      // isBetaPhase logic) never showed up here at all; with Growth now
+      // having its own "growth_feedback" type, it belongs in this same
+      // "sent invites" list for symmetry with MVP/MLP. Uses supabase
+      // directly since CoFounderInvitation.filter() only supports exact-
+      // match, not an IN-style multi-value filter.
+      const { data: invites, error: invitesError } = await supabase
+        .from("co_founder_invitations")
+        .select("*")
+        .eq("venture_id", currentVenture.id)
+        .in("invitation_type", ["external_feedback", "growth_feedback"])
+        .order("created_date", { ascending: false });
+      if (invitesError) throw invitesError;
       setFeedbackInvites(invites || []);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -252,7 +274,10 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
 
         // [2026-01-10] FIX: critical - mark type so this invite is treated as external feedback
         // UPDATED: Auto-detect based on venture phase (beta_testing or external_feedback)
-        invitation_type: isBetaPhase ? "beta_testing" : "external_feedback",
+        // [GROWTH] Growth now gets its own type instead of inheriting
+        // "beta_testing" from the old shared isBetaPhase check — this was
+        // literally sending Growth invitees down the Beta signup path.
+        invitation_type: isBetaPhase ? "beta_testing" : (isGrowthPhase ? "growth_feedback" : "external_feedback"),
 
         status: "pending",
         created_by_id: user.id,
@@ -275,7 +300,12 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
 
           // [2026-01-10] FIX: pass type so server can generate the correct link if you support it there
           // UPDATED: Send beta_testing or external_feedback based on phase
-          type: isBetaPhase ? "beta_testing" : "external_feedback",
+          // [GROWTH] IMPORTANT — NOT YET VERIFIED: this "growth_feedback"
+          // type needs a matching case in /api/send-invite (that file was
+          // not available this session) to actually build a link to
+          // /venture-landing?id=... instead of falling through to whatever
+          // the default case does there. Flagging rather than assuming.
+          type: isBetaPhase ? "beta_testing" : (isGrowthPhase ? "growth_feedback" : "external_feedback"),
         }),
       });
 

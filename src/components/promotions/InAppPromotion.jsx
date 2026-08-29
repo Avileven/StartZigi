@@ -1,5 +1,10 @@
 
 // C:\STRARTZIG\InAppPromotion 300326
+// [GROWTH] This session split the old shared "beta || growth" branch into
+// two separate branches — Growth ventures were being sent to the Beta
+// signup page (/beta-testing) with "beta tester" copy, instead of to the
+// venture-landing page with the Growth feedback categories built earlier
+// this session. Search "[GROWTH]" below for every touch point.
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -160,9 +165,16 @@ if (campaignErr) throw campaignErr;
         messageContent = `${tagline}\n\nThey're looking for feedback on their ${
           venture.phase === "mvp" ? "MVP" : "MLP"
         }. Visit their page and share your thoughts!`;
-      } else if (venture.phase === "beta" || venture.phase === "growth") {
+      } else if (venture.phase === "beta") {
         messageTitle = `🚀 Join ${venture.name}'s Beta Program!`;
         messageContent = `${tagline}\n\nThey're looking for beta testers! Sign up to be among the first to try their product.`;
+      } else if (venture.phase === "growth") {
+        // [GROWTH] Was sharing the "beta || growth" branch above (wrong —
+        // sent people to sign up as beta testers instead of giving feedback
+        // on the Growth page). Separate branch, feedback-oriented copy
+        // matching the MVP/MLP tone rather than the Beta signup tone.
+        messageTitle = `🌱 Check out ${venture.name}!`;
+        messageContent = `${tagline}\n\nThey're looking for feedback on their product. Visit their page and share your thoughts!`;
       } else {
         messageTitle = `✨ Discover ${venture.name}!`;
         messageContent = `${tagline}\n\nCheck out what they're building!`;
@@ -170,14 +182,23 @@ if (campaignErr) throw campaignErr;
 
       // [CHANGED] Build the correct feedback URL based on venture phase.
       // MVP/MLP → /venture-feedback?id=X&from=TARGET_ID (dedicated feedback page, no auth conflict)
-      // Beta/Growth → /beta-testing?id=X&campaign=CAMPAIGN_ID (public beta sign-up page)
-      // [ADDED] campaign param in beta URL — lets beta-testing page save campaign_id with each sign-up
+      // Beta → /beta-testing?id=X&campaign=CAMPAIGN_ID (public beta sign-up page)
+      // [GROWTH] Growth → /venture-landing?id=X&campaign=CAMPAIGN_ID — a
+      // separate case, no longer falling into the Beta branch above. No
+      // invitation token needed here: venture-landing is fully public by
+      // id, same principle as beta-testing already being public by id
+      // (confirmed this session — neither page requires a token).
       const getFeedbackUrl = (targetVentureId) => {
         if (venture.phase === "mvp" || venture.phase === "mlp") {
           // [FIX 020826] Was missing &campaign=... entirely — this is why
           // feedback received via in-app rounds could never be linked back
           // to the campaign that generated it.
           return `/venture-feedback?id=${venture.id}&from=${targetVentureId}&campaign=${campaign.id}`;
+        }
+        if (venture.phase === "growth") {
+          // [GROWTH] New branch — previously fell through to the
+          // /beta-testing return below by accident.
+          return `/venture-landing?id=${venture.id}&campaign=${campaign.id}`;
         }
         return `/beta-testing?id=${venture.id}&campaign=${campaign.id}`;
       };
