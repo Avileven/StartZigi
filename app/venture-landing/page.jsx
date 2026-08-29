@@ -1,7 +1,7 @@
 // app/venture-landing/page.jsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,25 +62,32 @@ function MobileQuestionSheet({ label, summary, isMobile, children }) {
   );
 }
 
-const ReadMoreText = ({ text, maxLength = 300 }) => {
+// [FIX — replaces character-count truncation entirely] Was cutting at a
+// raw character count (300), which left an awkward single trailing word
+// on its own line. Now uses a real 3-line CSS clamp, and only shows
+// "Read More" when the text is actually overflowing those 3 lines
+// (measured via scrollHeight vs clientHeight) — no arbitrary length guess.
+const ReadMoreText = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const textRef = useRef(null);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsTruncated(textRef.current.scrollHeight > textRef.current.clientHeight + 1);
+    }
+  }, [text]);
+
   if (!text) return null;
-  if (text.length <= maxLength) return <p className="text-gray-700 leading-relaxed">{text}</p>;
-  // [FIX] Was cutting mid-word (substring at a raw character count) — now
-  // trims back to the last complete word before maxLength, so truncated
-  // text always ends cleanly.
-  const truncateAtWord = (str, len) => {
-    const cut = str.slice(0, len);
-    const lastSpace = cut.lastIndexOf(' ');
-    return lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
-  };
-  const displayedText = isExpanded ? text : `${truncateAtWord(text, maxLength)}...`;
+
   return (
     <div>
-      <p className="text-gray-700 leading-relaxed">{displayedText}</p>
-      <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 h-auto text-blue-600">
-        {isExpanded ? "Read Less" : "Read More"}
-      </Button>
+      <p ref={textRef} className={`text-gray-700 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>{text}</p>
+      {isTruncated && (
+        <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 h-auto text-blue-600">
+          {isExpanded ? "Read Less" : "Read More"}
+        </Button>
+      )}
     </div>
   );
 };
@@ -207,6 +214,11 @@ export default function VentureLanding() {
   const [finalChangeText, setFinalChangeText] = useState('');
   // [NEW] Answer to the founder's own optional custom question (growth_data.custom_question).
   const [customQuestionAnswer, setCustomQuestionAnswer] = useState('');
+  // [NEW] Toggle to show the description inline next to the Product
+  // Definition question — the description already appears at the top of
+  // the page, but reviewers didn't reliably remember it by the time they
+  // reached this question further down.
+  const [showDescriptionInline, setShowDescriptionInline] = useState(false);
   const [wantsToFollowGrowth, setWantsToFollowGrowth] = useState(false);
   const [isSubmittingGrowthFeedback, setIsSubmittingGrowthFeedback] = useState(false);
   const [growthFeedbackSubmitted, setGrowthFeedbackSubmitted] = useState(false);
@@ -934,27 +946,27 @@ export default function VentureLanding() {
                   {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
                     <div className="flex items-center gap-2.5">
                       {venture.growth_data.social_links.linkedin && (
-                        <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="LinkedIn">
+                        <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="LinkedIn">
                           <Linkedin className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.facebook && (
-                        <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Facebook">
+                        <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Facebook">
                           <Facebook className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.twitter && (
-                        <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Twitter / X">
+                        <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Twitter / X">
                           <Twitter className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.instagram && (
-                        <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Instagram">
+                        <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Instagram">
                           <Instagram className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.website && (
-                        <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-600" aria-label="Website">
+                        <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Website">
                           <Globe className="w-4 h-4" />
                         </a>
                       )}
@@ -1028,10 +1040,6 @@ export default function VentureLanding() {
                       {/* --- Founder's own custom question — shown FIRST, per explicit request --- */}
                       {venture.growth_data.custom_question && (
                         <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <HelpCircle className="w-5 h-5 text-violet-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">A question from the founder</p>
-                          </div>
                           <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
                             <p className="text-sm font-medium text-gray-900 mb-2">{venture.growth_data.custom_question}</p>
                             <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
@@ -1048,25 +1056,27 @@ export default function VentureLanding() {
                           </div>
                           {(() => {
                             const bmd = venture.growth_data.business_model_data;
-                            const modelLabels = { subscription: 'Subscription', freemium: 'Freemium', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
+                            const modelLabels = { subscription: 'Subscription', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
                             return (
                               <div className="mb-3">
                                 <p className="text-xs font-semibold text-gray-500 mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
-                                {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
-                                  <div className="grid sm:grid-cols-2 gap-3">
-                                    {bmd.tier1_price && (
-                                      <div className="border border-emerald-200 bg-white rounded-lg p-3">
-                                        <p className="font-semibold text-gray-900">{bmd.tier1_price}</p>
-                                        <p className="text-sm text-gray-500">{bmd.tier1_description}</p>
+                                {bmd.model_type === 'subscription' && (
+                                  <>
+                                    {bmd.has_free_tier && bmd.free_tier_description && (
+                                      <p className="text-sm text-gray-600 mb-2">Free tier: {bmd.free_tier_description}</p>
+                                    )}
+                                    {/* [FIX] Any number of packages now (not just 2), shown in one compact row */}
+                                    {bmd.packages && bmd.packages.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {bmd.packages.map((p) => (
+                                          <div key={p.id} className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
+                                            <span className="font-semibold text-gray-900">{p.name} — {p.price}</span>
+                                            {p.description && <span className="text-sm text-gray-500"> · {p.description}</span>}
+                                          </div>
+                                        ))}
                                       </div>
                                     )}
-                                    {bmd.tier2_price && (
-                                      <div className="border border-emerald-200 bg-white rounded-lg p-3">
-                                        <p className="font-semibold text-gray-900">{bmd.tier2_price}</p>
-                                        <p className="text-sm text-gray-500">{bmd.tier2_description}</p>
-                                      </div>
-                                    )}
-                                  </div>
+                                  </>
                                 )}
                                 {bmd.model_type === 'transactional' && (
                                   <p className="text-sm text-gray-600">{bmd.transaction_fee_description}</p>
@@ -1153,7 +1163,7 @@ export default function VentureLanding() {
                             "{venture.growth_data.headline}"
                           </blockquote>
                           <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={isMobileViewport}>
-                            <Label className="text-sm">How accurately does this statement describe the product you just saw? (1-10)</Label>
+                            <Label className="text-sm">How accurately does this statement describe the product? (1-10)</Label>
                             <Slider
                               value={[valuePropRating]}
                               onValueChange={(value) => setValuePropRating(value[0])}
@@ -1186,8 +1196,17 @@ export default function VentureLanding() {
                             <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Product Definition</p>
                           </div>
                           <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={isMobileViewport}>
-                          <Label className="text-sm">How clearly and accurately is this product defined? (1-10)</Label>
-                          <p className="text-xs text-gray-400 mb-1">Referring to the description above.</p>
+                          <Label className="text-sm">How clear is this description of the product? (1-10)</Label>
+                          <button
+                            type="button"
+                            onClick={() => setShowDescriptionInline(s => !s)}
+                            className="text-xs text-rose-600 hover:text-rose-700 underline block mb-1"
+                          >
+                            {showDescriptionInline ? "Hide description" : "Show description"}
+                          </button>
+                          {showDescriptionInline && (
+                            <p className="text-sm text-gray-700 bg-white border border-rose-200 rounded-lg p-3 mb-2">{venture.growth_data.description}</p>
+                          )}
                           <Slider
                             value={[productDefinitionRating]}
                             onValueChange={(value) => setProductDefinitionRating(value[0])}
@@ -1273,7 +1292,7 @@ export default function VentureLanding() {
                           <p className="text-xs font-bold uppercase tracking-wide text-gray-600">One Last Thing</p>
                         </div>
                         <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={isMobileViewport}>
-                        <Label htmlFor="growth-final-change">If you could change one thing about how this product is defined, what would it be?</Label>
+                        <Label htmlFor="growth-final-change">What's the one thing you'd improve about this product?</Label>
                         <Textarea id="growth-final-change" value={finalChangeText}
                           onChange={(e) => setFinalChangeText(e.target.value)}
                           className="min-h-[80px] mt-2" disabled={isSubmittingGrowthFeedback} />

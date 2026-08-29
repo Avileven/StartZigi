@@ -1,22 +1,17 @@
 // app/growth-development/page.jsx
 //
-// [v5 — restructure, all explicitly confirmed]
-//   1. Down to TWO tabs: "Venture Profile" (identity — name, slogan,
-//      description, product link, demo, social links) and "Feedback"
-//      (everything about what's collected — categories, custom question,
-//      always-included info). Was 3 tabs (Page Content / Feedback
-//      Categories / Demo & Links) — that split scattered identity content
-//      (Product Link, Demo) away from where a founder naturally thinks
-//      about "my profile".
-//   2. "Your Own Question" moved from the old Page Content tab into
-//      Feedback — it's a feedback-collection concern, not profile content.
-//   3. Facebook added to social_links alongside linkedin/twitter/
-//      instagram/website, each with an icon.
-//   4. Product Link vs. "Website" (in social links) clarified via
-//      placeholder copy: Product Link is the specific thing being
-//      reviewed; Website is the company/general site, a different link.
-//      No dedup logic added — just distinct copy so a founder doesn't
-//      confuse the two while filling the form.
+// [v6 — all changes explicitly confirmed this round]
+//   1. Business Model: Subscription and Freemium MERGED into one option.
+//      No more two near-identical model types. Now: a "Free tier
+//      available" checkbox (+ description if checked) plus an unlimited
+//      list of paid packages (name + description + price, "+" to add more
+//      — not capped at 2 like the old Tier 1/Tier 2). Transactional and
+//      Ad-Driven unchanged.
+//   2. Demo: exactly ONE file, replaces on new upload (not accumulating
+//      anymore — that was a v4/v5 change nobody asked for). Small note
+//      about supported formats and the one-file limit.
+//   3. Copy fixes: "Product Link" description now just "Link to your
+//      product" (the previous explanatory sentence was never asked for).
 //
 // DB DEPENDENCY (pending, unchanged): ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
 // DB DEPENDENCY (pending, unchanged): ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
@@ -78,9 +73,10 @@ function useIsMobile() {
   return isMobile;
 }
 
+// [CHANGED] Down to 3 model types — Subscription now covers what used to
+// be two separate (and functionally identical) options.
 const BUSINESS_MODEL_TYPES = [
-  { value: 'subscription', name: 'Subscription', description: 'Monthly/Annual recurring fees.' },
-  { value: 'freemium', name: 'Freemium', description: 'Ad-supported free tier with paid conversion.' },
+  { value: 'subscription', name: 'Subscription', description: 'Recurring fees, with an optional free tier.' },
   { value: 'transactional', name: 'Transactional', description: 'Per-transaction fees or commissions.' },
   { value: 'ad-driven', name: 'Ad-Driven', description: 'Free product, revenue solely from ads.' },
 ];
@@ -92,7 +88,7 @@ const CATEGORY_EXPLANATIONS = {
   product_definition: "This only affects whether reviewers are asked to rate your description's clarity — your description itself is always shown regardless. Useful if you're unsure your description is landing the way you intend it to.",
 };
 
-const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"), but only if you provided a product link. And at the very end, regardless of which categories above you selected: \"If you could change one thing about how this product is defined, what would it be?\" This doesn't change what's shown on your public page — it only affects what feedback is collected.";
+const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"), but only if you provided a product link. And at the very end, regardless of which categories above you selected, one open question. This doesn't change what's shown on your public page — it only affects what feedback is collected.";
 
 const ExplainToggle = ({ text }) => {
   const [open, setOpen] = useState(false);
@@ -123,21 +119,29 @@ export default function GrowthDevelopment() {
     headline: '',
     description: '',
     product_url: '',
-    uploaded_files: [],
-    // [CHANGED] facebook added alongside the existing four.
+    uploaded_files: [], // [CHANGED] capped at 1 item now, see handleFileUpload
     social_links: { linkedin: '', facebook: '', twitter: '', instagram: '', website: '' },
     is_imported: false,
     selected_categories: [],
     core_features: [],
+    // [CHANGED — merged model] Subscription now covers the old
+    // Subscription+Freemium split. packages replaces tier1/tier2 with an
+    // unlimited list.
     business_model_data: {
-      model_type: '', tier1_price: '', tier1_description: '',
-      tier2_price: '', tier2_description: '', transaction_fee_description: '',
+      model_type: '',
+      has_free_tier: false,
+      free_tier_description: '',
+      packages: [], // [{ id, name, description, price }]
+      transaction_fee_description: '',
     },
     custom_question: '',
   });
 
   const [newFeatureName, setNewFeatureName] = useState('');
   const [newFeatureDesc, setNewFeatureDesc] = useState('');
+  const [newPackageName, setNewPackageName] = useState('');
+  const [newPackageDesc, setNewPackageDesc] = useState('');
+  const [newPackagePrice, setNewPackagePrice] = useState('');
 
   const [toast, setToast] = useState(null);
   const showToast = (message, type = 'success') => {
@@ -157,17 +161,16 @@ export default function GrowthDevelopment() {
         const loaded = { ...(currentVenture.growth_data || {}) };
         loaded.name = currentVenture.name || '';
         loaded.product_url = loaded.product_url || '';
-        loaded.uploaded_files = loaded.uploaded_files || [];
+        loaded.uploaded_files = (loaded.uploaded_files || []).slice(0, 1); // enforce single-file cap even on old data
         loaded.is_imported = loaded.is_imported === true;
         loaded.selected_categories = loaded.selected_categories || [];
         loaded.core_features = loaded.core_features || [];
         loaded.custom_question = loaded.custom_question || '';
         loaded.business_model_data = {
           model_type: loaded.business_model_data?.model_type || '',
-          tier1_price: loaded.business_model_data?.tier1_price || '',
-          tier1_description: loaded.business_model_data?.tier1_description || '',
-          tier2_price: loaded.business_model_data?.tier2_price || '',
-          tier2_description: loaded.business_model_data?.tier2_description || '',
+          has_free_tier: loaded.business_model_data?.has_free_tier || false,
+          free_tier_description: loaded.business_model_data?.free_tier_description || '',
+          packages: loaded.business_model_data?.packages || [],
           transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
         };
         loaded.social_links = {
@@ -219,21 +222,41 @@ export default function GrowthDevelopment() {
   };
   const removeFeature = (id) => setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
 
+  // [NEW] Unlimited packages, replacing the old fixed Tier 1/Tier 2 fields.
+  const addPackage = () => {
+    if (!newPackageName.trim()) return;
+    setGrowthData(prev => ({
+      ...prev,
+      business_model_data: {
+        ...prev.business_model_data,
+        packages: [...prev.business_model_data.packages, {
+          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(),
+        }],
+      },
+    }));
+    setNewPackageName(''); setNewPackageDesc(''); setNewPackagePrice('');
+  };
+  const removePackage = (id) => setGrowthData(prev => ({
+    ...prev,
+    business_model_data: { ...prev.business_model_data, packages: prev.business_model_data.packages.filter(p => p.id !== id) },
+  }));
+
+  // [FIX] Single file only — replaces the previous one instead of
+  // accumulating. The old "files accumulate" behavior was never requested;
+  // this reverts to a one-file cap per explicit instruction.
   const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const file = e.target.files[0];
+    if (!file) return;
     setIsUploading(true);
     try {
-      const uploadedResults = await Promise.all(files.map(async (file) => {
-        const result = await UploadFile({ file });
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const isHTML = ['html', 'htm'].includes(fileExt);
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
-        const isVideo = ['mp4', 'mov', 'webm'].includes(fileExt);
-        return { type: isHTML ? 'html' : (isImage ? 'image' : (isVideo ? 'video' : 'other')), name: file.name, url: result.file_url };
-      }));
-      setGrowthData(prev => ({ ...prev, uploaded_files: [...prev.uploaded_files, ...uploadedResults] }));
-      showToast(`${uploadedResults.length} file(s) uploaded successfully!`);
+      const result = await UploadFile({ file });
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const isHTML = ['html', 'htm'].includes(fileExt);
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
+      const isVideo = ['mp4', 'mov', 'webm'].includes(fileExt);
+      const uploaded = { type: isHTML ? 'html' : (isImage ? 'image' : (isVideo ? 'video' : 'other')), name: file.name, url: result.file_url };
+      setGrowthData(prev => ({ ...prev, uploaded_files: [uploaded] })); // replaces, not appends
+      showToast('File uploaded successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
       showToast('Error uploading file. Please try again.', 'error');
@@ -241,7 +264,7 @@ export default function GrowthDevelopment() {
     setIsUploading(false);
     e.target.value = '';
   };
-  const removeUploadedFile = (index) => setGrowthData(prev => ({ ...prev, uploaded_files: prev.uploaded_files.filter((_, i) => i !== index) }));
+  const removeUploadedFile = () => setGrowthData(prev => ({ ...prev, uploaded_files: [] }));
 
   const createVentureFromScratch = async () => {
     const { data: existing, error: checkError } = await supabase
@@ -322,7 +345,11 @@ export default function GrowthDevelopment() {
   const businessModelReady = (() => {
     if (!growthData.selected_categories.includes('business_model')) return true;
     if (!bmd.model_type) return false;
-    if (bmd.model_type === 'subscription' || bmd.model_type === 'freemium') return bmd.tier1_price.trim().length > 0 && bmd.tier1_description.trim().length > 0;
+    if (bmd.model_type === 'subscription') {
+      const packagesOk = bmd.packages.length > 0 && bmd.packages.every(p => p.name.trim() && p.price.trim());
+      const freeTierOk = !bmd.has_free_tier || bmd.free_tier_description.trim().length > 0;
+      return packagesOk && freeTierOk;
+    }
     if (bmd.model_type === 'transactional') return bmd.transaction_fee_description.trim().length > 0;
     if (bmd.model_type === 'ad-driven') return true;
     return false;
@@ -362,7 +389,6 @@ export default function GrowthDevelopment() {
             </Card>
           )}
 
-          {/* [CHANGED] Two tabs instead of three. */}
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Venture Profile</TabsTrigger>
@@ -412,9 +438,8 @@ export default function GrowthDevelopment() {
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle>
-                  {/* [CLARIFIED] Distinct from "Website" below — this is the
-                      specific thing reviewers are being asked about. */}
-                  <CardDescription>The specific product or demo you want feedback on — different from your general company website below.</CardDescription>
+                  {/* [FIX] Was a longer explanatory sentence never asked for — now just this. */}
+                  <CardDescription>Link to your product</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile}>
@@ -423,30 +448,31 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
+              {/* [FIX] Single file only now, replaces on new upload. */}
               <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}Demo</CardTitle>
-                  <CardDescription>A few important screens, or a short video that explains the product. Files accumulate.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
-                      <span>Upload file(s)</span>
-                      <Input id="growth-file-upload" type="file" multiple className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
-                    </Label>
-                    {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
-                  </div>
-                  {growthData.uploaded_files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm">{file.name}</p>
-                      <Button variant="ghost" size="icon" onClick={() => removeUploadedFile(index)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                  {!hasDemoFile ? (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
+                        <span>Upload a file</span>
+                        <Input id="growth-file-upload" type="file" className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
+                      </Label>
+                      {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                      <p className="font-medium text-sm">{growthData.uploaded_files[0].name}</p>
+                      <Button variant="ghost" size="icon" onClick={removeUploadedFile}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400">Supports images or a short video. One file only, to keep it focused for reviewers.</p>
                 </CardContent>
               </Card>
 
-              {/* [CHANGED] Facebook added, icons per platform. */}
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle>Social Links</CardTitle>
@@ -464,7 +490,6 @@ export default function GrowthDevelopment() {
 
             {/* ===================== FEEDBACK ===================== */}
             <TabsContent value="feedback" className="space-y-6">
-              {/* [MOVED here from the old Page Content tab] */}
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><MessageCircleQuestion className="w-5 h-5 text-emerald-600" />Your Own Question (optional)</CardTitle>
@@ -484,6 +509,7 @@ export default function GrowthDevelopment() {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
+                  {/* --- Business Model (merged Subscription/Freemium) --- */}
                   <div className={`border rounded-lg p-4 ${businessModelReady && growthData.selected_categories.includes('business_model') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
@@ -496,7 +522,7 @@ export default function GrowthDevelopment() {
                       <div className="mt-3 pl-8 space-y-3">
                         <div>
                           <Label className="text-xs">Business model</Label>
-                          <div className="grid grid-cols-2 gap-2 mt-1">
+                          <div className="grid grid-cols-3 gap-2 mt-1">
                             {BUSINESS_MODEL_TYPES.map((m) => (
                               <button type="button" key={m.value} onClick={() => handleBusinessModelChange('model_type', m.value)}
                                 className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
@@ -506,15 +532,32 @@ export default function GrowthDevelopment() {
                             ))}
                           </div>
                         </div>
-                        {(bmd.model_type === 'subscription' || bmd.model_type === 'freemium') && (
+
+                        {bmd.model_type === 'subscription' && (
                           <>
-                            <div className="flex gap-2">
-                              <div className="w-28"><Label className="text-xs">Tier 1 price</Label><Input value={bmd.tier1_price} onChange={(e) => handleBusinessModelChange('tier1_price', e.target.value)} placeholder="$9.99" /></div>
-                              <div className="flex-1"><Label className="text-xs">What's included</Label><Input value={bmd.tier1_description} onChange={(e) => handleBusinessModelChange('tier1_description', e.target.value)} placeholder="e.g., Unlimited trips" /></div>
-                            </div>
-                            <div className="flex gap-2">
-                              <div className="w-28"><Label className="text-xs">Tier 2 price (optional)</Label><Input value={bmd.tier2_price} onChange={(e) => handleBusinessModelChange('tier2_price', e.target.value)} placeholder="$29.99" /></div>
-                              <div className="flex-1"><Label className="text-xs">What's included</Label><Input value={bmd.tier2_description} onChange={(e) => handleBusinessModelChange('tier2_description', e.target.value)} placeholder="e.g., Team seats" /></div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <Checkbox checked={bmd.has_free_tier} onCheckedChange={(checked) => handleBusinessModelChange('has_free_tier', checked === true)} />
+                              <span className="text-sm text-gray-800">Free tier available</span>
+                            </label>
+                            {bmd.has_free_tier && (
+                              <Input value={bmd.free_tier_description} onChange={(e) => handleBusinessModelChange('free_tier_description', e.target.value)} placeholder="What's included in the free tier" />
+                            )}
+
+                            <div className="space-y-2">
+                              <Label className="text-xs">Paid packages</Label>
+                              {bmd.packages.map((p) => (
+                                <div key={p.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
+                                  <div><p className="text-sm font-medium">{p.name} — {p.price}</p><p className="text-xs text-gray-500">{p.description}</p></div>
+                                  <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                                </div>
+                              ))}
+                              <div className="flex gap-2 items-end">
+                                <div className="flex-1"><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
+                                <div className="w-24"><Label className="text-xs">Price</Label><Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="$9/mo" /></div>
+                                <div className="flex-1"><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
+                                <Button size="sm" onClick={addPackage}><Plus className="w-4 h-4" /></Button>
+                              </div>
+                              {bmd.packages.length === 0 && <p className="text-xs text-red-500">Add at least one package.</p>}
                             </div>
                           </>
                         )}
