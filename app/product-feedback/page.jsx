@@ -184,16 +184,16 @@ function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
   );
 }
 
-// [GROWTH — redesign] Every stat now lives in its own colored, centered
-// card (title + count in the header, gauge below) — replaces the old
-// single row of gauges with no per-category framing, per the approved
-// mockup ("a category for each question, not lumped together").
-function GrowthStatCard({ title, count, value, color, bg }) {
+// [GROWTH — redesign, corrected] The 4 stats are ONE category sharing ONE
+// background — distinguished from each other only by ring color, not by
+// separate card backgrounds. (Separate colored backgrounds are reserved
+// for genuinely separate categories/questions below.)
+function GrowthStatItem({ title, count, value, color }) {
   if (value == null) return null;
   return (
-    <div style={{ background: bg }} className="rounded-xl p-4 text-center">
-      <p className="text-sm font-medium mb-3" style={{ color }}>
-        {title}{count > 0 && <span className="font-normal"> ({count})</span>}
+    <div className="flex flex-col items-center gap-1">
+      <p className="text-sm font-medium text-gray-700 text-center">
+        {title}{count > 0 && <span className="font-normal text-gray-400"> ({count})</span>}
       </p>
       <CircularGauge value={value} color={color} showLabel={false} />
     </div>
@@ -1156,37 +1156,48 @@ export default function ProductFeedbackPage() {
                 </div>
               )}
 
-              {/* Stat cards — one per category, each its own colored card. */}
+              {/* Stats — one shared category/background; only the ring
+                  colors differ between the four. */}
               {growthStats && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                  <GrowthStatCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} color="#0F6E56" bg="#E1F5EE" />
-                  <GrowthStatCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} color="#0369A1" bg="#E0F2FE" />
-                  <GrowthStatCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} color="#B45309" bg="#FEF3C7" />
-                  <GrowthStatCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} color="#BE123C" bg="#FFE4E6" />
+                <div className="rounded-xl p-4 mb-3" style={{ background: '#F1F0F9' }}>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <GrowthStatItem title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} color="#0F6E56" />
+                    <GrowthStatItem title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} color="#0369A1" />
+                    <GrowthStatItem title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} color="#B45309" />
+                    <GrowthStatItem title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} color="#BE123C" />
+                  </div>
                 </div>
               )}
 
-              {/* One centered, colored card per open-text question — replaces
-                  the old single "Written answers" card that lumped every
-                  question together. */}
-              {questionsWithAnswers.map((q) => (
+              {/* [FIX] Each question is its own category with its own
+                  distinct background color (cycling through a palette) —
+                  left-aligned title with a subtle (non-colorful) icon,
+                  count next to the title. Was: all questions sharing one
+                  purple background, centered text. */}
+              {questionsWithAnswers.map((q, qIndex) => {
+                const QUESTION_BG_COLORS = ['#EEEDFE', '#FCE7F3', '#FEF3C7', '#DBEAFE', '#D1FAE5', '#FFE4E6', '#E0E7FF'];
+                const bg = QUESTION_BG_COLORS[qIndex % QUESTION_BG_COLORS.length];
+                return (
                 <div key={q.key} className="mb-3">
                   <button
                     type="button"
                     onClick={() => toggleGrowthQ(q.key)}
-                    className="w-full text-center rounded-xl p-4"
-                    style={{ background: '#EEEDFE' }}
+                    className="w-full text-left rounded-xl p-4 flex items-center justify-between gap-3"
+                    style={{ background: bg }}
                   >
-                    <p className="text-sm font-medium flex items-center justify-center gap-2 flex-wrap" style={{ color: '#26215C' }}>
-                      {q.label}
-                      <span className="font-normal" style={{ color: '#534AB7' }}>({q.answers.length})</span>
-                      <ChevronDown className={`w-4 h-4 transition-transform flex-shrink-0`} style={{ color: '#534AB7', transform: expandedGrowthQ[q.key] ? 'rotate(180deg)' : 'none' }} />
-                    </p>
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-800">
+                        {q.label}
+                        <span className="font-normal text-gray-500"> ({q.answers.length})</span>
+                      </span>
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: expandedGrowthQ[q.key] ? 'rotate(180deg)' : 'none' }} />
                   </button>
                   {expandedGrowthQ[q.key] && (
                     <div className="mt-2 space-y-2 px-2">
                       {q.answers.map((fb) => (
-                        <div key={fb.id} className="border-l-2 pl-3" style={{ borderColor: '#C7C2F0' }}>
+                        <div key={fb.id} className="border-l-2 border-gray-200 pl-3">
                           <div className="flex items-center justify-between mb-0.5">
                             {fb.created_by_id ? (
                               <FounderHoverCard
@@ -1207,7 +1218,8 @@ export default function ProductFeedbackPage() {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
 
               {/* Individual responses — its own card too, same style family. */}
               {growthFilteredFeedbacks.length > 0 && (
