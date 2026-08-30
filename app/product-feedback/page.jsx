@@ -160,7 +160,7 @@ function RingBadge({ value, label, stroke, text, small }) {
 // number, put it in a circle/gauge"). Distinct from RingBadge above (which
 // is a fixed-style profile badge, not a proportional gauge) — this one's
 // fill percentage actually represents the rating value out of 10.
-function CircularGauge({ value, label, color = '#059669' }) {
+function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
   const size = 72;
   const r = 30;
   const c = 2 * Math.PI * r;
@@ -179,7 +179,23 @@ function CircularGauge({ value, label, color = '#059669' }) {
         </svg>
         <span className="font-bold text-gray-900" style={{ fontSize: 15 }}>{value}</span>
       </div>
-      <span className="text-xs text-gray-500 text-center">{label}</span>
+      {showLabel && <span className="text-xs text-gray-500 text-center">{label}</span>}
+    </div>
+  );
+}
+
+// [GROWTH — redesign] Every stat now lives in its own colored, centered
+// card (title + count in the header, gauge below) — replaces the old
+// single row of gauges with no per-category framing, per the approved
+// mockup ("a category for each question, not lumped together").
+function GrowthStatCard({ title, count, value, color, bg }) {
+  if (value == null) return null;
+  return (
+    <div style={{ background: bg }} className="rounded-xl p-4 text-center">
+      <p className="text-sm font-medium mb-3" style={{ color }}>
+        {title}{count > 0 && <span className="font-normal"> ({count})</span>}
+      </p>
+      <CircularGauge value={value} color={color} showLabel={false} />
     </div>
   );
 }
@@ -307,6 +323,11 @@ export default function ProductFeedbackPage() {
   // each question expand independently instead of one all-or-nothing toggle.
   const [expandedGrowthQ, setExpandedGrowthQ] = useState({});
   const toggleGrowthQ = (key) => setExpandedGrowthQ((prev) => ({ ...prev, [key]: !prev[key] }));
+  // [FIX — campaign-first view] null = "not explicitly chosen yet", which
+  // means "use the latest campaign" (computed at render time below, not
+  // stored here — avoids a load-order race with campaignsById/growthFeedbacks).
+  // '__all__' is the explicit "View all campaigns" (cumulative) choice.
+  const [growthSelectedCampaign, setGrowthSelectedCampaign] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -609,11 +630,11 @@ export default function ProductFeedbackPage() {
     return { features: avg('features_rating'), lookFeel: avg('look_feel_rating'), ux: avg('ux_rating') };
   })();
 
-  // [GROWTH] Mirrors mlpAverages exactly, for the four category ratings
-  // that can appear on a Growth feedback row (only the categories the
-  // founder selected in growth-development will ever be non-null, per row).
-  const growthAverages = (() => {
-    const withRatings = growthFeedbacks.filter(fb =>
+  // [FIX — campaign-first view] Converted from a fixed constant (computed
+  // once over all growthFeedbacks) into a function, so it can be
+  // recomputed for whichever campaign's subset is currently selected.
+  const computeGrowthAverages = (feedbackArr) => {
+    const withRatings = feedbackArr.filter(fb =>
       fb.business_model_rating != null || fb.core_features_rating != null ||
       fb.value_prop_rating != null || fb.product_definition_rating != null
     );
@@ -623,12 +644,12 @@ export default function ProductFeedbackPage() {
       return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
     };
     return {
-      businessModel: avg('business_model_rating'),
-      coreFeatures: avg('core_features_rating'),
-      valueProp: avg('value_prop_rating'),
-      productDefinition: avg('product_definition_rating'),
+      businessModel: { value: avg('business_model_rating'), count: withRatings.filter(fb => fb.business_model_rating != null).length },
+      coreFeatures: { value: avg('core_features_rating'), count: withRatings.filter(fb => fb.core_features_rating != null).length },
+      valueProp: { value: avg('value_prop_rating'), count: withRatings.filter(fb => fb.value_prop_rating != null).length },
+      productDefinition: { value: avg('product_definition_rating'), count: withRatings.filter(fb => fb.product_definition_rating != null).length },
     };
-  })();
+  };
 
   // [FIX — campaign grouping] Shared helper: groups any feedback array (must
   // have a `campaign_id` field) into per-campaign buckets using
@@ -671,6 +692,11 @@ export default function ProductFeedbackPage() {
         </div>
 
         {/* AI Analysis */}
+        {/* [GROWTH] This whole block (title, "Get Product Insights" button,
+            and any existing analysis) is MVP/MLP-oriented and not built for
+            Growth data yet — hidden for a Growth-phase venture per explicit
+            request. Same pattern as hiding the 4 summary cards below. */}
+        {venture.phase !== 'growth' && (
         <div className="mb-10">
           {/* [FIX 020826] Part G.7.3 — renamed "Mentor" to "Get Product
               Insights," per both source specs' explicit instruction: "Use:
@@ -725,6 +751,7 @@ export default function ProductFeedbackPage() {
             );
           })()}
         </div>
+        )}
 
         {/* Stats */}
         {/* [GROWTH FIX] These 4 cards (Features Analyzed, Beta Sign-ups,
@@ -796,7 +823,8 @@ export default function ProductFeedbackPage() {
         {/* ===================== MVP ===================== */}
         {reachedMVP && (
           <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">MVP</p>
+            {/* [FIX] Visible "MVP" label removed per explicit request — the
+                comment marker above still identifies this section in code. */}
 
             {/* [ADDED 020826] Part G.6 — product-level feedback, shown first
                 (matches the order reviewers actually answer it in: mockup
@@ -1038,197 +1066,213 @@ export default function ProductFeedbackPage() {
         )}
 
         {/* ===================== GROWTH ===================== */}
-        {/* [GROWTH] New section, mirrors the MLP section's structure exactly
-            (averages row, expand/collapse toggle, FounderHoverCard with the
-            same anonymous-fallback pattern). This did not exist before this
-            session — Growth feedback was being collected but never shown
-            anywhere on this page. */}
-        {reachedGrowth && (
-          <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">GROWTH</p>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-5">
-                {growthAverages && (
-                  <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-100">
-                    {growthAverages.businessModel != null && (
-                      <CircularGauge value={growthAverages.businessModel} label="Business Model" color="#059669" />
-                    )}
-                    {growthAverages.coreFeatures != null && (
-                      <CircularGauge value={growthAverages.coreFeatures} label="Core Features" color="#0284c7" />
-                    )}
-                    {growthAverages.valueProp != null && (
-                      <CircularGauge value={growthAverages.valueProp} label="Slogan" color="#d97706" />
-                    )}
-                    {growthAverages.productDefinition != null && (
-                      <CircularGauge value={growthAverages.productDefinition} label="Product Definition" color="#e11d48" />
+        {/* [GROWTH — redesign] Rebuilt per the approved mockup:
+            campaign-first view (latest campaign shown by default, "View all
+            campaigns" switches to the cumulative view), every stat and every
+            open-text question in its own centered, colored card (not lumped
+            together), and no visible section label (removed per request). */}
+        {reachedGrowth && (() => {
+          // Build the list of campaigns actually present in growth feedback,
+          // newest first, plus whether any "direct" (no campaign) responses exist.
+          const growthCampaignOptions = (() => {
+            const ids = new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean));
+            return Array.from(ids)
+              .map(id => ({ id, tagline: campaignsById[id]?.tagline || 'Untitled campaign', date: campaignsById[id]?.created_date }))
+              .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+          })();
+          const growthHasDirect = growthFeedbacks.some(fb => !fb.campaign_id);
+          const defaultGrowthCampaignId = growthCampaignOptions[0]?.id || (growthHasDirect ? '__direct__' : null);
+          const effectiveGrowthCampaignId = growthSelectedCampaign ?? defaultGrowthCampaignId;
+          const growthViewAll = growthSelectedCampaign === '__all__';
+          const growthFilteredFeedbacks = growthViewAll
+            ? growthFeedbacks
+            : growthFeedbacks.filter(fb => (fb.campaign_id || '__direct__') === effectiveGrowthCampaignId);
+
+          const growthStats = computeGrowthAverages(growthFilteredFeedbacks);
+
+          const qualQuestions = [
+            { key: 'business_model_note', label: "What doesn't feel right about the business model?" },
+            { key: 'core_features_note', label: "What would you add, remove, or change about these features?" },
+            { key: 'value_prop_note', label: "What would you change about the slogan?" },
+            { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?" },
+            { key: 'product_match_diff_text', label: "What was different from what you expected?" },
+            ...(venture.growth_data?.custom_question
+              ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question }]
+              : []),
+            { key: 'final_change_text', label: "What's the one thing you'd improve about this product?" },
+          ];
+          const questionsWithAnswers = qualQuestions
+            .map(q => ({ ...q, answers: growthFilteredFeedbacks.filter(fb => fb[q.key] && fb[q.key].trim()) }))
+            .filter(q => q.answers.length > 0);
+
+          const responseRows = growthViewAll ? groupByCampaign(growthFilteredFeedbacks) : null;
+
+          return (
+            <div className="mb-10">
+              {/* Campaign selector — default is the latest campaign; "View
+                  all campaigns" switches to the cumulative view across every
+                  campaign (and direct responses). */}
+              {(growthCampaignOptions.length > 0 || growthHasDirect) && (
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {growthCampaignOptions.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setGrowthSelectedCampaign(c.id)}
+                        className={`text-xs font-medium px-3.5 py-1.5 rounded-full border ${
+                          !growthViewAll && effectiveGrowthCampaignId === c.id
+                            ? 'bg-blue-50 text-blue-800 border-blue-300'
+                            : 'bg-white text-gray-500 border-gray-200'
+                        }`}
+                      >
+                        {c.tagline}{c.date && ` · ${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                      </button>
+                    ))}
+                    {growthHasDirect && (
+                      <button
+                        type="button"
+                        onClick={() => setGrowthSelectedCampaign('__direct__')}
+                        className={`text-xs font-medium px-3.5 py-1.5 rounded-full border ${
+                          !growthViewAll && effectiveGrowthCampaignId === '__direct__'
+                            ? 'bg-blue-50 text-blue-800 border-blue-300'
+                            : 'bg-white text-gray-500 border-gray-200'
+                        }`}
+                      >
+                        Direct (no campaign)
+                      </button>
                     )}
                   </div>
-                )}
+                  {(growthCampaignOptions.length + (growthHasDirect ? 1 : 0)) > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setGrowthSelectedCampaign('__all__')}
+                      className="text-xs font-medium text-gray-500 flex items-center gap-1"
+                    >
+                      View all campaigns
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${growthViewAll ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+                </div>
+              )}
 
-                {/* [GROWTH — NEW] Qualitative feedback block. Per this
-                    session's explicit request: below the numeric stats,
-                    every open-text question gets its own row — the
-                    question itself, how many people actually answered it,
-                    and a button that expands just that question's answers.
-                    Distinct from the flat per-response list below, which
-                    still shows everything mixed together per person. */}
-                {(() => {
-                  // Built dynamically because the custom question's TEXT
-                  // varies per venture (whatever the founder typed in
-                  // growth-development), unlike the other five which are
-                  // fixed copy defined once in venture-landing.
-                  const qualQuestions = [
-                    { key: 'business_model_note', label: "What doesn't feel right about the business model?" },
-                    { key: 'core_features_note', label: "What would you add, remove, or change about these features?" },
-                    { key: 'value_prop_note', label: "What would you change about the slogan?" },
-                    { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?" },
-                    { key: 'product_match_diff_text', label: "What was different from what you expected?" },
-                    ...(venture.growth_data?.custom_question
-                      ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question }]
-                      : []),
-                    { key: 'final_change_text', label: "What's the one thing you'd improve about this product?" },
-                  ];
-                  const questionsWithAnswers = qualQuestions
-                    .map(q => ({ ...q, answers: growthFeedbacks.filter(fb => fb[q.key] && fb[q.key].trim()) }))
-                    .filter(q => q.answers.length > 0);
+              {/* Stat cards — one per category, each its own colored card. */}
+              {growthStats && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  <GrowthStatCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} color="#0F6E56" bg="#E1F5EE" />
+                  <GrowthStatCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} color="#0369A1" bg="#E0F2FE" />
+                  <GrowthStatCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} color="#B45309" bg="#FEF3C7" />
+                  <GrowthStatCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} color="#BE123C" bg="#FFE4E6" />
+                </div>
+              )}
 
-                  if (questionsWithAnswers.length === 0) return null;
-
-                  return (
-                    <div className="mb-4 pb-4 border-b border-gray-100 space-y-2">
-                      <p className="text-xs font-semibold text-gray-500 mb-1">Written answers</p>
-                      {questionsWithAnswers.map((q) => (
-                        <div key={q.key}>
-                          <button
-                            type="button"
-                            onClick={() => toggleGrowthQ(q.key)}
-                            className="w-full flex items-center justify-between text-left py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2"
-                          >
-                            <span className="text-sm text-gray-800">{q.label}</span>
-                            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 flex-shrink-0 ml-3">
-                              {q.answers.length} response{q.answers.length !== 1 ? 's' : ''}
-                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedGrowthQ[q.key] ? 'rotate-180' : ''}`} />
+              {/* One centered, colored card per open-text question — replaces
+                  the old single "Written answers" card that lumped every
+                  question together. */}
+              {questionsWithAnswers.map((q) => (
+                <div key={q.key} className="mb-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleGrowthQ(q.key)}
+                    className="w-full text-center rounded-xl p-4"
+                    style={{ background: '#EEEDFE' }}
+                  >
+                    <p className="text-sm font-medium flex items-center justify-center gap-2 flex-wrap" style={{ color: '#26215C' }}>
+                      {q.label}
+                      <span className="font-normal" style={{ color: '#534AB7' }}>({q.answers.length})</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform flex-shrink-0`} style={{ color: '#534AB7', transform: expandedGrowthQ[q.key] ? 'rotate(180deg)' : 'none' }} />
+                    </p>
+                  </button>
+                  {expandedGrowthQ[q.key] && (
+                    <div className="mt-2 space-y-2 px-2">
+                      {q.answers.map((fb) => (
+                        <div key={fb.id} className="border-l-2 pl-3" style={{ borderColor: '#C7C2F0' }}>
+                          <div className="flex items-center justify-between mb-0.5">
+                            {fb.created_by_id ? (
+                              <FounderHoverCard
+                                founderId={fb.created_by_id}
+                                name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
+                                profile={founderProfiles[fb.created_by_id]}
+                              />
+                            ) : fb.created_by ? (
+                              <p className="text-xs text-gray-500">{fb.created_by}</p>
+                            ) : <span />}
+                            <span className="text-xs text-gray-400">
+                              {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                             </span>
-                          </button>
-                          {expandedGrowthQ[q.key] && (
-                            <div className="pl-2 pb-2 space-y-2">
-                              {q.answers.map((fb) => (
-                                <div key={fb.id} className="border-l-2 border-emerald-200 pl-3">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    {fb.created_by_id ? (
-                                      <FounderHoverCard
-                                        founderId={fb.created_by_id}
-                                        name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
-                                        profile={founderProfiles[fb.created_by_id]}
-                                      />
-                                    ) : fb.created_by ? (
-                                      <p className="text-xs text-gray-500">{fb.created_by}</p>
-                                    ) : <span />}
-                                    <span className="text-xs text-gray-400">
-                                      {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-gray-700">{fb[q.key]}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          </div>
+                          <p className="text-sm text-gray-700">{fb[q.key]}</p>
                         </div>
                       ))}
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
+              ))}
 
-                <button
-                  type="button"
-                  onClick={() => toggle('growth')}
-                  className="flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700"
-                >
-                  {growthFeedbacks.length} response{growthFeedbacks.length !== 1 ? 's' : ''}
-                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded.growth ? 'rotate-180' : ''}`} />
-                </button>
-                {expanded.growth && (
-                  <div className="mt-3 space-y-4 border-t border-gray-100 pt-3">
-                    {/* [FIX — campaign grouping] Responses grouped by which
-                        campaign brought them in (name + start date), with a
-                        "Direct" bucket for anyone who reached the page
-                        without an invitation campaign. */}
-                    {groupByCampaign(growthFeedbacks).map((group) => (
+              {/* Individual responses — its own card too, same style family. */}
+              {growthFilteredFeedbacks.length > 0 && (
+                <div className="rounded-xl p-4" style={{ background: '#FAECE7' }}>
+                  <p className="text-sm font-medium text-center mb-3" style={{ color: '#4A1B0C' }}>
+                    Individual responses <span className="font-normal">({growthFilteredFeedbacks.length})</span>
+                  </p>
+                  <div className="space-y-3">
+                    {(growthViewAll ? responseRows : [{ campaignId: 'single', campaignName: null, campaignDate: null, items: growthFilteredFeedbacks }]).map((group) => (
                       <div key={group.campaignId}>
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <p className="text-xs font-semibold text-gray-600">{group.campaignName}</p>
-                          {group.campaignDate && (
-                            <p className="text-xs text-gray-400">
-                              started {new Date(group.campaignDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-3">
-                    {group.items.map((fb) => {
-                      const hasRatings = fb.business_model_rating != null || fb.core_features_rating != null ||
-                        fb.value_prop_rating != null || fb.product_definition_rating != null;
-                      return (
-                        <div key={fb.id} className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <TrendingUp className="w-4 h-4 text-emerald-500" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              {/* Same anonymous-fallback pattern as MLP above:
-                                  a visitor without a platform account (no
-                                  created_by_id) still shows up, just without
-                                  a hover-card profile link. */}
-                              {fb.created_by_id ? (
-                                <FounderHoverCard
-                                  founderId={fb.created_by_id}
-                                  name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
-                                  profile={founderProfiles[fb.created_by_id]}
-                                />
-                              ) : fb.created_by ? (
-                                <p className="text-xs text-gray-500">{fb.created_by}</p>
-                              ) : null}
-                              <span className="text-xs text-gray-400">
-                                {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                              </span>
-                            </div>
-                            {hasRatings ? (
-                              <div className="flex flex-wrap gap-4">
-                                {fb.business_model_rating != null && <span className="text-sm"><span className="text-gray-400">Business Model:</span> <span className="font-semibold text-emerald-600">{fb.business_model_rating}/10</span></span>}
-                                {fb.core_features_rating != null && <span className="text-sm"><span className="text-gray-400">Core Features:</span> <span className="font-semibold text-emerald-600">{fb.core_features_rating}/10</span></span>}
-                                {fb.value_prop_rating != null && <span className="text-sm"><span className="text-gray-400">Slogan:</span> <span className="font-semibold text-emerald-600">{fb.value_prop_rating}/10</span></span>}
-                                {fb.product_definition_rating != null && <span className="text-sm"><span className="text-gray-400">Product Definition:</span> <span className="font-semibold text-emerald-600">{fb.product_definition_rating}/10</span></span>}
-                              </div>
-                            ) : (
-                              <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">
-                                No category ratings
-                              </span>
-                            )}
-                            {fb.business_model_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Business Model note:</span> {fb.business_model_note}</p>}
-                            {fb.core_features_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Core Features note:</span> {fb.core_features_note}</p>}
-                            {fb.value_prop_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Slogan note:</span> {fb.value_prop_note}</p>}
-                            {fb.product_definition_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Product Definition note:</span> {fb.product_definition_note}</p>}
-                            {fb.visited_product && (
-                              <p className="text-gray-700 mt-1 text-sm">
-                                <span className="text-gray-400">Visited actual product:</span> {fb.visited_product === 'yes' ? 'Yes' : 'No'}
-                                {fb.product_match_rating != null && <> — <span className="font-semibold text-emerald-600">{fb.product_match_rating}/10</span> match to expectations</>}
+                        {growthViewAll && (
+                          <div className="flex items-baseline gap-2 mb-2">
+                            <p className="text-xs font-semibold text-gray-600">{group.campaignName}</p>
+                            {group.campaignDate && (
+                              <p className="text-xs text-gray-400">
+                                started {new Date(group.campaignDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                               </p>
                             )}
-                            {fb.product_match_diff_text && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">What was different:</span> {fb.product_match_diff_text}</p>}
-                            {fb.custom_question_answer && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Answer to your question:</span> {fb.custom_question_answer}</p>}
-                            {fb.final_change_text && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">One thing they'd improve:</span> {fb.final_change_text}</p>}
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                        <div className="space-y-2">
+                          {group.items.map((fb) => (
+                            <div key={fb.id} className="flex items-start gap-3 bg-white rounded-lg p-3">
+                              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <TrendingUp className="w-4 h-4 text-orange-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  {fb.created_by_id ? (
+                                    <FounderHoverCard
+                                      founderId={fb.created_by_id}
+                                      name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
+                                      profile={founderProfiles[fb.created_by_id]}
+                                    />
+                                  ) : fb.created_by ? (
+                                    <p className="text-xs text-gray-500">{fb.created_by}</p>
+                                  ) : null}
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-3 text-sm">
+                                  {fb.business_model_rating != null && <span><span className="text-gray-400">Business Model:</span> <span className="font-semibold text-emerald-700">{fb.business_model_rating}/10</span></span>}
+                                  {fb.core_features_rating != null && <span><span className="text-gray-400">Core Features:</span> <span className="font-semibold text-sky-700">{fb.core_features_rating}/10</span></span>}
+                                  {fb.value_prop_rating != null && <span><span className="text-gray-400">Slogan:</span> <span className="font-semibold text-amber-700">{fb.value_prop_rating}/10</span></span>}
+                                  {fb.product_definition_rating != null && <span><span className="text-gray-400">Product Definition:</span> <span className="font-semibold text-rose-700">{fb.product_definition_rating}/10</span></span>}
+                                </div>
+                                {fb.visited_product && (
+                                  <p className="text-gray-600 mt-1 text-sm">
+                                    Visited actual product: {fb.visited_product === 'yes' ? 'Yes' : 'No'}
+                                    {fb.product_match_rating != null && <> — <span className="font-semibold text-emerald-700">{fb.product_match_rating}/10</span> match</>}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ===================== BETA ===================== */}
         {reachedBeta && betaTesters.length > 0 && (() => {

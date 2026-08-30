@@ -609,7 +609,7 @@ export default function VentureLanding() {
         business_model_rating: selected.includes('business_model') ? businessModelRating : null,
         business_model_note: selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD ? (businessModelNote.trim() || null) : null,
         core_features_rating: selected.includes('core_features') ? coreFeaturesRating : null,
-        core_features_note: selected.includes('core_features') && coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD ? (coreFeaturesNote.trim() || null) : null,
+        core_features_note: selected.includes('core_features') ? (coreFeaturesNote.trim() || null) : null,
         value_prop_rating: selected.includes('value_proposition') ? valuePropRating : null,
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (valuePropNote.trim() || null) : null,
         product_definition_rating: selected.includes('product_definition') ? productDefinitionRating : null,
@@ -1142,12 +1142,12 @@ export default function VentureLanding() {
                                 [&_[role=slider]]:shadow-md"
                             />
                             <div className="text-center text-sm font-semibold text-sky-700">{coreFeaturesRating}</div>
-                            {coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && (
-                              <div className="mt-2">
-                                <Label className="text-xs text-gray-500">What would you add, remove, or change about these features? (optional)</Label>
-                                <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
-                              </div>
-                            )}
+                            {/* [FIX] Always shown now, not just below the
+                                score threshold — per explicit request. */}
+                            <div className="mt-2">
+                              <Label className="text-xs text-gray-500">What would you add, remove, or change about these features? (optional)</Label>
+                              <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
                           </MobileQuestionSheet>
                         </div>
                       )}
