@@ -167,6 +167,10 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
       // count per campaign — counted across all feedback tables now linked
       // via campaign_id, plus beta sign-ups (which already had campaign_id
       // wired in beta-testing/page.jsx before this session).
+      // [GROWTH] Confirmed real occurrence this session: a founder submitted
+      // Growth feedback successfully (got their Insight Credits) but the
+      // sender's campaign count stayed at 0, because growth_feedback wasn't
+      // in this list at all.
       const campaignsWithCounts = await Promise.all(
         (ventureCampaigns || []).map(async (c) => {
           // [FIX 020826] mvp_feature_feedback is queried for real rows (not
@@ -174,14 +178,15 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
           // 5 rows — counting rows would inflate "Feedback Received" to look
           // like 5 people responded. Counting distinct submission_id values
           // instead gives the actual number of people.
-          const [mvpRows, suggestions, mlp, beta] = await Promise.all([
+          const [mvpRows, suggestions, mlp, beta, growth] = await Promise.all([
             supabase.from('mvp_feature_feedback').select('submission_id').eq('campaign_id', c.id),
             supabase.from('suggested_features').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
             supabase.from('product_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
             supabase.from('beta_testers').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
+            supabase.from('growth_feedback').select('id', { count: 'exact', head: true }).eq('campaign_id', c.id),
           ]);
           const mvpDistinctSubmissions = new Set((mvpRows.data || []).map(r => r.submission_id)).size;
-          const feedbackReceived = mvpDistinctSubmissions + (suggestions.count || 0) + (mlp.count || 0) + (beta.count || 0);
+          const feedbackReceived = mvpDistinctSubmissions + (suggestions.count || 0) + (mlp.count || 0) + (beta.count || 0) + (growth.count || 0);
           return { ...c, feedbackReceived };
         })
       );

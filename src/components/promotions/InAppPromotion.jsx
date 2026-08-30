@@ -25,6 +25,18 @@ import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from "lucide-react";
 
 const MAX_MESSAGES_PER_VENTURE_PER_WEEK = 5; // [FIX 020826] Raised from 3 to 5, per this session's decision (Part D/E discussion).
 
+// [GROWTH — anti-collision safeguard] Confirmed real occurrence this
+// session: a real founder's In-App campaign randomly targeted PocketVet.zig
+// (an example/demo venture, not a real founder). This was flagged as a
+// known open item since the original session-summary doc ("Anti-collision
+// safeguard... not yet implemented") and is now fixed here. ChartSense.zig
+// (the planned Beta-stage example) does not exist yet, so it's not listed —
+// add its id here once it's created.
+const EXAMPLE_VENTURE_IDS = [
+  'ab85b600-875b-4755-b7af-ee155b0bdc34', // PocketVet.zig (MVP example)
+  '3ca810de-a754-412c-8905-94247b9d1e90', // GrandpaSays.zig (MLP example)
+];
+
 export default function InAppPromotion({ goBack }) {
   const [venture, setVenture] = useState(null);
   // [FIX 020826] Replaces selectedPackage — the founder now picks how many of
@@ -91,7 +103,11 @@ export default function InAppPromotion({ goBack }) {
 
       const targetVentures = (allVentures || [])
         .filter((v) => v?.id && v.id !== venture.id)
-        .filter((v) => v.is_sample !== true);
+        .filter((v) => v.is_sample !== true)
+        // [GROWTH — anti-collision safeguard] Confirmed bug fix: without
+        // this, a real founder's campaign could randomly land on an
+        // example/demo venture like PocketVet.zig, as it actually did.
+        .filter((v) => !EXAMPLE_VENTURE_IDS.includes(v.id));
 
       if (targetVentures.length === 0) {
         alert("No other ventures available to promote to at this time.");
@@ -160,24 +176,30 @@ if (campaignErr) throw campaignErr;
       let messageTitle = "";
       let messageContent = "";
 
+      // [FIX] tagline (the founder's internal "Campaign Name", e.g. "test
+      // 1") was being injected verbatim at the start of the message every
+      // recipient sees — confirmed real occurrence this session. tagline
+      // stays as the campaign's internal label (stored on the campaign row,
+      // shown back to the sender in their own launch confirmation below) but
+      // is no longer part of what a recipient reads.
       if (venture.phase === "mvp" || venture.phase === "mlp") {
         messageTitle = `💡 Check out ${venture.name}!`;
-        messageContent = `${tagline}\n\nThey're looking for feedback on their ${
+        messageContent = `They're looking for feedback on their ${
           venture.phase === "mvp" ? "MVP" : "MLP"
         }. Visit their page and share your thoughts!`;
       } else if (venture.phase === "beta") {
         messageTitle = `🚀 Join ${venture.name}'s Beta Program!`;
-        messageContent = `${tagline}\n\nThey're looking for beta testers! Sign up to be among the first to try their product.`;
+        messageContent = `They're looking for beta testers! Sign up to be among the first to try their product.`;
       } else if (venture.phase === "growth") {
         // [GROWTH] Was sharing the "beta || growth" branch above (wrong —
         // sent people to sign up as beta testers instead of giving feedback
         // on the Growth page). Separate branch, feedback-oriented copy
         // matching the MVP/MLP tone rather than the Beta signup tone.
         messageTitle = `🌱 Check out ${venture.name}!`;
-        messageContent = `${tagline}\n\nThey're looking for feedback on their product. Visit their page and share your thoughts!`;
+        messageContent = `They're looking for feedback on their product. Visit their page and share your thoughts!`;
       } else {
         messageTitle = `✨ Discover ${venture.name}!`;
-        messageContent = `${tagline}\n\nCheck out what they're building!`;
+        messageContent = `Check out what they're building!`;
       }
 
       // [CHANGED] Build the correct feedback URL based on venture phase.

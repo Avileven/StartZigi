@@ -233,6 +233,11 @@ export default function ProductFeedbackPage() {
   const [followers, setFollowers] = useState([]);
   const [userPlan, setUserPlan] = useState(null);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
+  // [GROWTH] New — mirrors productFeedbacks exactly. Was entirely missing
+  // before this session: Growth feedback was being collected successfully
+  // (confirmed — a founder submitted it and got Insight Credits) but never
+  // displayed anywhere on this page, because this table was never queried.
+  const [growthFeedbacks, setGrowthFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
   // [ADDED 020826] Part G.6 — the product-level question's aggregated
@@ -248,7 +253,7 @@ export default function ProductFeedbackPage() {
   // (FounderHoverCard) no longer needs click-based open/close state.
 
   // [ADDED 020826] expand/collapse state for the detail lists under each summary
-  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false });
+  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false });
   const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
@@ -295,6 +300,16 @@ export default function ProductFeedbackPage() {
           const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
           console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
           setProductFeedbacks(pfeedback);
+
+          // [GROWTH] No entity wrapper exists for this new table (same
+          // situation as venture_followers above), queried directly.
+          const { data: growthRows } = await supabase
+            .from('growth_feedback')
+            .select('*')
+            .eq('venture_id', currentVenture.id)
+            .order('created_date', { ascending: false });
+          console.log('[FeedbackHub] Growth feedbacks:', (growthRows || []).length);
+          setGrowthFeedbacks(growthRows || []);
 
           const bp = await businessPlan.filter({ venture_id: currentVenture.id });
           if (bp.length > 0) setBusinessPlanData(bp[0]);
@@ -351,6 +366,10 @@ export default function ProductFeedbackPage() {
           pfeedback.forEach(f => f.created_by_id && founderIds.add(f.created_by_id));
           testers.forEach(t => t.created_by_id && founderIds.add(t.created_by_id));
           (followerRows || []).forEach(f => f.user_id && founderIds.add(f.user_id));
+          // [GROWTH] Added — without this, anyone who gave Growth feedback
+          // while logged in would show up unattributed (no hover card),
+          // same bug pattern already fixed for beta testers previously.
+          (growthRows || []).forEach(g => g.created_by_id && founderIds.add(g.created_by_id));
           if (founderIds.size > 0) {
             // [FIX 020826] Was a direct user_profiles query — blocked by RLS
             // (user_profiles_select_own only allows id = auth.uid()), so it
@@ -506,7 +525,12 @@ export default function ProductFeedbackPage() {
   // No empty placeholders for phases not yet reached.
   const reachedMVP = Boolean(venture.mvp_uploaded) || Object.keys(analytics).length > 0 || suggestedFeatures.length > 0;
   const reachedMLP = Boolean(venture.mlp_completed || venture.mlp_development_completed) || productFeedbacks.length > 0;
-  const reachedBeta = venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0;
+  // [GROWTH FIX] Was `venture.phase === 'beta' || venture.phase === 'growth' || betaTesters.length > 0`
+  // — a Growth-phase venture was falling into the Beta section (showing
+  // beta signups, not Growth feedback) because this flag never
+  // distinguished the two. Confirmed as the actual cause this session.
+  const reachedBeta = venture.phase === 'beta' || betaTesters.length > 0;
+  const reachedGrowth = venture.phase === 'growth' || growthFeedbacks.length > 0;
 
 
   // [ADDED 020826] MLP average ratings across all responses, for the summary row.
@@ -518,6 +542,27 @@ export default function ProductFeedbackPage() {
       return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
     };
     return { features: avg('features_rating'), lookFeel: avg('look_feel_rating'), ux: avg('ux_rating') };
+  })();
+
+  // [GROWTH] Mirrors mlpAverages exactly, for the four category ratings
+  // that can appear on a Growth feedback row (only the categories the
+  // founder selected in growth-development will ever be non-null, per row).
+  const growthAverages = (() => {
+    const withRatings = growthFeedbacks.filter(fb =>
+      fb.business_model_rating != null || fb.core_features_rating != null ||
+      fb.value_prop_rating != null || fb.product_definition_rating != null
+    );
+    if (withRatings.length === 0) return null;
+    const avg = (key) => {
+      const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
+      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
+    };
+    return {
+      businessModel: avg('business_model_rating'),
+      coreFeatures: avg('core_features_rating'),
+      valueProp: avg('value_prop_rating'),
+      productDefinition: avg('product_definition_rating'),
+    };
   })();
 
   return (
@@ -879,6 +924,106 @@ export default function ProductFeedbackPage() {
           </div>
         )}
 
+        {/* ===================== GROWTH ===================== */}
+        {/* [GROWTH] New section, mirrors the MLP section's structure exactly
+            (averages row, expand/collapse toggle, FounderHoverCard with the
+            same anonymous-fallback pattern). This did not exist before this
+            session — Growth feedback was being collected but never shown
+            anywhere on this page. */}
+        {reachedGrowth && (
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">GROWTH</p>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                {growthAverages && (
+                  <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-100">
+                    {growthAverages.businessModel != null && (
+                      <div><p className="text-xs text-gray-400">Business Model</p><p className="text-lg font-bold text-gray-900">{growthAverages.businessModel}/10</p></div>
+                    )}
+                    {growthAverages.coreFeatures != null && (
+                      <div><p className="text-xs text-gray-400">Core Features</p><p className="text-lg font-bold text-gray-900">{growthAverages.coreFeatures}/10</p></div>
+                    )}
+                    {growthAverages.valueProp != null && (
+                      <div><p className="text-xs text-gray-400">Slogan</p><p className="text-lg font-bold text-gray-900">{growthAverages.valueProp}/10</p></div>
+                    )}
+                    {growthAverages.productDefinition != null && (
+                      <div><p className="text-xs text-gray-400">Product Definition</p><p className="text-lg font-bold text-gray-900">{growthAverages.productDefinition}/10</p></div>
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggle('growth')}
+                  className="flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                >
+                  {growthFeedbacks.length} response{growthFeedbacks.length !== 1 ? 's' : ''}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${expanded.growth ? 'rotate-180' : ''}`} />
+                </button>
+                {expanded.growth && (
+                  <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+                    {growthFeedbacks.map((fb) => {
+                      const hasRatings = fb.business_model_rating != null || fb.core_features_rating != null ||
+                        fb.value_prop_rating != null || fb.product_definition_rating != null;
+                      return (
+                        <div key={fb.id} className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              {/* Same anonymous-fallback pattern as MLP above:
+                                  a visitor without a platform account (no
+                                  created_by_id) still shows up, just without
+                                  a hover-card profile link. */}
+                              {fb.created_by_id ? (
+                                <FounderHoverCard
+                                  founderId={fb.created_by_id}
+                                  name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
+                                  profile={founderProfiles[fb.created_by_id]}
+                                />
+                              ) : fb.created_by ? (
+                                <p className="text-xs text-gray-500">{fb.created_by}</p>
+                              ) : null}
+                              <span className="text-xs text-gray-400">
+                                {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            {hasRatings ? (
+                              <div className="flex flex-wrap gap-4">
+                                {fb.business_model_rating != null && <span className="text-sm"><span className="text-gray-400">Business Model:</span> <span className="font-semibold text-emerald-600">{fb.business_model_rating}/10</span></span>}
+                                {fb.core_features_rating != null && <span className="text-sm"><span className="text-gray-400">Core Features:</span> <span className="font-semibold text-emerald-600">{fb.core_features_rating}/10</span></span>}
+                                {fb.value_prop_rating != null && <span className="text-sm"><span className="text-gray-400">Slogan:</span> <span className="font-semibold text-emerald-600">{fb.value_prop_rating}/10</span></span>}
+                                {fb.product_definition_rating != null && <span className="text-sm"><span className="text-gray-400">Product Definition:</span> <span className="font-semibold text-emerald-600">{fb.product_definition_rating}/10</span></span>}
+                              </div>
+                            ) : (
+                              <span className="inline-block text-[10px] uppercase tracking-wide text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">
+                                No category ratings
+                              </span>
+                            )}
+                            {fb.business_model_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Business Model note:</span> {fb.business_model_note}</p>}
+                            {fb.core_features_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Core Features note:</span> {fb.core_features_note}</p>}
+                            {fb.value_prop_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Slogan note:</span> {fb.value_prop_note}</p>}
+                            {fb.product_definition_note && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Product Definition note:</span> {fb.product_definition_note}</p>}
+                            {fb.visited_product && (
+                              <p className="text-gray-700 mt-1 text-sm">
+                                <span className="text-gray-400">Visited actual product:</span> {fb.visited_product === 'yes' ? 'Yes' : 'No'}
+                                {fb.product_match_rating != null && <> — <span className="font-semibold text-emerald-600">{fb.product_match_rating}/10</span> match to expectations</>}
+                              </p>
+                            )}
+                            {fb.product_match_diff_text && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">What was different:</span> {fb.product_match_diff_text}</p>}
+                            {fb.custom_question_answer && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">Answer to your question:</span> {fb.custom_question_answer}</p>}
+                            {fb.final_change_text && <p className="text-gray-700 mt-1 text-sm"><span className="text-gray-400">One thing they'd improve:</span> {fb.final_change_text}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ===================== BETA ===================== */}
         {reachedBeta && betaTesters.length > 0 && (() => {
           const exportCSV = () => {
@@ -975,7 +1120,7 @@ export default function ProductFeedbackPage() {
         })()}
 
         {/* Empty state */}
-        {!reachedMVP && !reachedMLP && !reachedBeta && (
+        {!reachedMVP && !reachedMLP && !reachedBeta && !reachedGrowth && (
           <Card className="border-0 shadow-sm">
             <CardContent className="p-12 text-center">
               <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
