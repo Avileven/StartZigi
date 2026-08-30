@@ -123,6 +123,15 @@ function RingBadge({ value, label, stroke, text, small }) {
   const size = small ? 56 : 64;
   const r = small ? 24 : 28;
   const c = 2 * Math.PI * r;
+  // [FIX — confirmed real bug via screenshot] Values like "25 days" or
+  // "3 month" (7 chars) were staying at fontSize 12 because the old
+  // threshold only dropped to 9 above 8 characters — at 12px, a 7-character
+  // two-word value doesn't actually fit inside a 56px circle on one line.
+  // Now: any value with a space splits onto two stacked lines (number on
+  // top, unit below), which fits far better than shrinking font size ever
+  // could. Single-word values keep the old shrink-if-long behavior.
+  const parts = value.includes(' ') ? value.split(' ') : null;
+  const fontSize = value.length > 8 ? 9 : 12;
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -130,11 +139,47 @@ function RingBadge({ value, label, stroke, text, small }) {
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
         </svg>
-        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 8 ? 9 : 12 }}>
-          {value}
-        </span>
+        {parts ? (
+          <span className="font-medium text-center leading-tight flex flex-col" style={{ color: text, fontSize: small ? 10 : 12 }}>
+            <span>{parts[0]}</span>
+            <span style={{ fontSize: small ? 8 : 10 }}>{parts.slice(1).join(' ')}</span>
+          </span>
+        ) : (
+          <span className="font-medium text-center leading-tight" style={{ color: text, fontSize }}>
+            {value}
+          </span>
+        )}
       </div>
       <span className="text-[11px] text-gray-400">{label}</span>
+    </div>
+  );
+}
+
+// [GROWTH — visual stats] Replaces plain "5.5/10" text with a filled
+// progress ring, per explicit request ("don't show statistics as a boring
+// number, put it in a circle/gauge"). Distinct from RingBadge above (which
+// is a fixed-style profile badge, not a proportional gauge) — this one's
+// fill percentage actually represents the rating value out of 10.
+function CircularGauge({ value, label, color = '#059669' }) {
+  const size = 72;
+  const r = 30;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, Number(value) / 10));
+  const offset = c * (1 - pct);
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="6" />
+          <circle
+            cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="6"
+            strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+          />
+        </svg>
+        <span className="font-bold text-gray-900" style={{ fontSize: 15 }}>{value}</span>
+      </div>
+      <span className="text-xs text-gray-500 text-center">{label}</span>
     </div>
   );
 }
@@ -238,6 +283,8 @@ export default function ProductFeedbackPage() {
   // (confirmed — a founder submitted it and got Insight Credits) but never
   // displayed anywhere on this page, because this table was never queried.
   const [growthFeedbacks, setGrowthFeedbacks] = useState([]);
+  // [FIX — campaign grouping] { [campaign_id]: { id, tagline, created_date } }
+  const [campaignsById, setCampaignsById] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({});
   // [ADDED 020826] Part G.6 — the product-level question's aggregated
@@ -318,6 +365,19 @@ export default function ProductFeedbackPage() {
 
           const bp = await businessPlan.filter({ venture_id: currentVenture.id });
           if (bp.length > 0) setBusinessPlanData(bp[0]);
+
+          // [FIX — campaign grouping] Loads every campaign this venture has
+          // run, so feedback lists below can be grouped by "campaign name +
+          // start date" instead of shown as one flat list. No entity
+          // wrapper needed — same direct-supabase pattern already used for
+          // venture_followers/growth_feedback above.
+          const { data: campaignRows } = await supabase
+            .from('promotion_campaigns')
+            .select('id, tagline, created_date')
+            .eq('venture_id', currentVenture.id);
+          const campaignMap = {};
+          (campaignRows || []).forEach(c => { campaignMap[c.id] = c; });
+          setCampaignsById(campaignMap);
 
           // [ADDED 020826] Part G.6 — the product-level question is stored as
           // a sentinel row (feature_id: 'product_overall') in the same
@@ -570,6 +630,33 @@ export default function ProductFeedbackPage() {
     };
   })();
 
+  // [FIX — campaign grouping] Shared helper: groups any feedback array (must
+  // have a `campaign_id` field) into per-campaign buckets using
+  // campaignsById, sorted newest campaign first, with a "Direct" bucket
+  // (no campaign_id — e.g. someone found the page on their own) always last.
+  const groupByCampaign = (items) => {
+    const groups = {};
+    items.forEach((item) => {
+      const cid = item.campaign_id || '__direct__';
+      if (!groups[cid]) groups[cid] = [];
+      groups[cid].push(item);
+    });
+    const campaignGroups = Object.entries(groups)
+      .filter(([cid]) => cid !== '__direct__')
+      .map(([cid, groupItems]) => ({
+        campaignId: cid,
+        campaignName: campaignsById[cid]?.tagline || 'Untitled campaign',
+        campaignDate: campaignsById[cid]?.created_date || null,
+        items: groupItems,
+      }))
+      .sort((a, b) => new Date(b.campaignDate || 0) - new Date(a.campaignDate || 0));
+    const direct = groups['__direct__'];
+    if (direct && direct.length > 0) {
+      campaignGroups.push({ campaignId: '__direct__', campaignName: 'Direct (no campaign)', campaignDate: null, items: direct });
+    }
+    return campaignGroups;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
@@ -640,6 +727,11 @@ export default function ProductFeedbackPage() {
         </div>
 
         {/* Stats */}
+        {/* [GROWTH FIX] These 4 cards (Features Analyzed, Beta Sign-ups,
+            etc.) are MVP/MLP/Beta-specific and don't apply to a venture in
+            Growth phase — confirmed as not wanted there. Growth has its own
+            stats (the circular gauges) inside its own section below. */}
+        {venture.phase !== 'growth' && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
             { label: 'Total Feedback', value: totalFeedback, icon: <MessageSquare className="w-5 h-5 text-indigo-500" />, bg: 'bg-indigo-50' },
@@ -658,6 +750,7 @@ export default function ProductFeedbackPage() {
             </Card>
           ))}
         </div>
+        )}
 
         {/* ===================== FOLLOWERS ===================== */}
         {/* [FIX 020826] Moved out of the MLP-gated section — Followers can
@@ -876,8 +969,20 @@ export default function ProductFeedbackPage() {
                   <ChevronDown className={`w-4 h-4 transition-transform ${expanded.mlp ? 'rotate-180' : ''}`} />
                 </button>
                 {expanded.mlp && (
-                  <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-                    {productFeedbacks.map((fb) => {
+                  <div className="mt-3 space-y-4 border-t border-gray-100 pt-3">
+                    {/* [FIX — campaign grouping] Same pattern as Growth below. */}
+                    {groupByCampaign(productFeedbacks).map((group) => (
+                      <div key={group.campaignId}>
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <p className="text-xs font-semibold text-gray-600">{group.campaignName}</p>
+                          {group.campaignDate && (
+                            <p className="text-xs text-gray-400">
+                              started {new Date(group.campaignDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                    {group.items.map((fb) => {
                       const hasRatings = fb.features_rating != null || fb.look_feel_rating != null || fb.ux_rating != null;
                       return (
                         <div key={fb.id} className="flex items-start gap-3">
@@ -922,6 +1027,9 @@ export default function ProductFeedbackPage() {
                         </div>
                       );
                     })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -943,16 +1051,16 @@ export default function ProductFeedbackPage() {
                 {growthAverages && (
                   <div className="flex flex-wrap gap-6 mb-4 pb-4 border-b border-gray-100">
                     {growthAverages.businessModel != null && (
-                      <div><p className="text-xs text-gray-400">Business Model</p><p className="text-lg font-bold text-gray-900">{growthAverages.businessModel}/10</p></div>
+                      <CircularGauge value={growthAverages.businessModel} label="Business Model" color="#059669" />
                     )}
                     {growthAverages.coreFeatures != null && (
-                      <div><p className="text-xs text-gray-400">Core Features</p><p className="text-lg font-bold text-gray-900">{growthAverages.coreFeatures}/10</p></div>
+                      <CircularGauge value={growthAverages.coreFeatures} label="Core Features" color="#0284c7" />
                     )}
                     {growthAverages.valueProp != null && (
-                      <div><p className="text-xs text-gray-400">Slogan</p><p className="text-lg font-bold text-gray-900">{growthAverages.valueProp}/10</p></div>
+                      <CircularGauge value={growthAverages.valueProp} label="Slogan" color="#d97706" />
                     )}
                     {growthAverages.productDefinition != null && (
-                      <div><p className="text-xs text-gray-400">Product Definition</p><p className="text-lg font-bold text-gray-900">{growthAverages.productDefinition}/10</p></div>
+                      <CircularGauge value={growthAverages.productDefinition} label="Product Definition" color="#e11d48" />
                     )}
                   </div>
                 )}
@@ -1040,8 +1148,23 @@ export default function ProductFeedbackPage() {
                   <ChevronDown className={`w-4 h-4 transition-transform ${expanded.growth ? 'rotate-180' : ''}`} />
                 </button>
                 {expanded.growth && (
-                  <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-                    {growthFeedbacks.map((fb) => {
+                  <div className="mt-3 space-y-4 border-t border-gray-100 pt-3">
+                    {/* [FIX — campaign grouping] Responses grouped by which
+                        campaign brought them in (name + start date), with a
+                        "Direct" bucket for anyone who reached the page
+                        without an invitation campaign. */}
+                    {groupByCampaign(growthFeedbacks).map((group) => (
+                      <div key={group.campaignId}>
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <p className="text-xs font-semibold text-gray-600">{group.campaignName}</p>
+                          {group.campaignDate && (
+                            <p className="text-xs text-gray-400">
+                              started {new Date(group.campaignDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                    {group.items.map((fb) => {
                       const hasRatings = fb.business_model_rating != null || fb.core_features_rating != null ||
                         fb.value_prop_rating != null || fb.product_definition_rating != null;
                       return (
@@ -1097,6 +1220,9 @@ export default function ProductFeedbackPage() {
                         </div>
                       );
                     })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -1157,10 +1283,20 @@ export default function ProductFeedbackPage() {
                     <ChevronDown className={`w-4 h-4 transition-transform ${expanded.beta ? 'rotate-180' : ''}`} />
                   </button>
                   {expanded.beta && (
-                    <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-                      {betaTesters
-                        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-                        .map((tester) => (
+                    <div className="mt-3 space-y-4 border-t border-gray-100 pt-3">
+                      {/* [FIX — campaign grouping] Same pattern as MLP/Growth. */}
+                      {groupByCampaign(betaTesters.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))).map((group) => (
+                        <div key={group.campaignId}>
+                          <div className="flex items-baseline gap-2 mb-2">
+                            <p className="text-xs font-semibold text-gray-600">{group.campaignName}</p>
+                            {group.campaignDate && (
+                              <p className="text-xs text-gray-400">
+                                started {new Date(group.campaignDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-3">
+                      {group.items.map((tester) => (
                           <div key={tester.id} className="flex items-start gap-3">
                             <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-purple-700">
                               {tester.full_name?.[0]?.toUpperCase() || '?'}
@@ -1191,6 +1327,9 @@ export default function ProductFeedbackPage() {
                             </div>
                           </div>
                         ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
