@@ -209,7 +209,11 @@ export default function VentureLanding() {
   const [productDefinitionNote, setProductDefinitionNote] = useState('');
   const GROWTH_LOW_SCORE_THRESHOLD = 6; // same threshold convention as PRICING_SCORE_THRESHOLD below
   const [visitedProduct, setVisitedProduct] = useState(null); // 'yes' | 'no' | null (unanswered)
-  const [productMatchRating, setProductMatchRating] = useState(5);
+  // [FIX] Replaced the 1-10 "how well did it match expectations" slider
+  // with a categorical choice — per explicit request, a vague slider score
+  // doesn't tell the founder WHY someone didn't convert (interest vs.
+  // attractiveness vs. they actually did sign up).
+  const [productMatchChoice, setProductMatchChoice] = useState(null);
   const [productMatchDiffText, setProductMatchDiffText] = useState('');
   const [finalChangeText, setFinalChangeText] = useState('');
   // [NEW] Answer to the founder's own optional custom question (growth_data.custom_question).
@@ -615,7 +619,10 @@ export default function VentureLanding() {
         product_definition_rating: selected.includes('product_definition') ? productDefinitionRating : null,
         product_definition_note: selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (productDefinitionNote.trim() || null) : null,
         visited_product: gd.product_url ? visitedProduct : null,
-        product_match_rating: gd.product_url && visitedProduct === 'yes' ? productMatchRating : null,
+        // [FIX] DB DEPENDENCY: growth_feedback needs a new text column
+        // `product_match_choice` — the old `product_match_rating` (integer)
+        // is no longer written to by new submissions.
+        product_match_choice: gd.product_url && visitedProduct === 'yes' ? productMatchChoice : null,
         product_match_diff_text: gd.product_url && visitedProduct === 'yes' ? (productMatchDiffText.trim() || null) : null,
         final_change_text: finalChangeText.trim() || null,
         custom_question_answer: gd.custom_question ? (customQuestionAnswer.trim() || null) : null,
@@ -1259,24 +1266,28 @@ export default function VentureLanding() {
                         </div>
 
                         {visitedProduct === 'yes' && (
-                          <MobileQuestionSheet label="Did it match your expectations?" summary={productMatchRating} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Which of these describes you best?" summary={productMatchChoice ? 'Answered' : null} isMobile={isMobileViewport}>
                           <div className="mt-4">
-                            <Label className="text-sm">Now that you've seen the actual product, how well did it match what you expected from the description and demo? (1-10)</Label>
-                            <Slider
-                              value={[productMatchRating]}
-                              onValueChange={(value) => setProductMatchRating(value[0])}
-                              max={10} min={1} step={1}
-                              disabled={isSubmittingGrowthFeedback}
-                              className="mt-2 mb-1
-                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-teal-600 [&>span>span]:rounded-full
-                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-teal-600
-                                [&_[role=slider]]:shadow-md"
-                            />
-                            <div className="text-center text-sm font-semibold text-teal-700">{productMatchRating}</div>
+                            <Label className="text-sm">Which of these describes you best?</Label>
+                            <div className="mt-2 space-y-2">
+                              {[
+                                { key: 'signed_up', label: 'I signed up / created an account' },
+                                { key: 'not_focus', label: "It looks great, but it's not something I need right now" },
+                                { key: 'not_attractive', label: "It doesn't feel attractive/convincing enough yet" },
+                              ].map((opt) => (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() => setProductMatchChoice(opt.key)}
+                                  disabled={isSubmittingGrowthFeedback}
+                                  className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm ${productMatchChoice === opt.key ? 'border-teal-600 bg-teal-50 text-teal-800 font-medium' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What was different from what you expected? (optional)</Label>
+                              <Label className="text-xs text-gray-500">Anything else you want to add? (optional)</Label>
                               <Textarea value={productMatchDiffText} onChange={(e) => setProductMatchDiffText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                           </div>

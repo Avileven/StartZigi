@@ -25,7 +25,7 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -161,8 +161,8 @@ function RingBadge({ value, label, stroke, text, small }) {
 // is a fixed-style profile badge, not a proportional gauge) — this one's
 // fill percentage actually represents the rating value out of 10.
 function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
-  const size = 72;
-  const r = 30;
+  const size = 60;
+  const r = 24;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, Number(value) / 10));
   const offset = c * (1 - pct);
@@ -1091,15 +1091,15 @@ export default function ProductFeedbackPage() {
           const growthStats = computeGrowthAverages(growthFilteredFeedbacks);
 
           const qualQuestions = [
-            { key: 'business_model_note', label: "What doesn't feel right about the business model?" },
-            { key: 'core_features_note', label: "What would you add, remove, or change about these features?" },
-            { key: 'value_prop_note', label: "What would you change about the slogan?" },
-            { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?" },
-            { key: 'product_match_diff_text', label: "What was different from what you expected?" },
+            { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
+            { key: 'core_features_note', label: "What would you add, remove, or change about these features?", icon: Layers },
+            { key: 'value_prop_note', label: "What would you change about the slogan?", icon: Megaphone },
+            { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?", icon: FileText },
+            { key: 'product_match_diff_text', label: "What was different from what you expected?", icon: Compass },
             ...(venture.growth_data?.custom_question
-              ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question }]
+              ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question, icon: HelpCircle }]
               : []),
-            { key: 'final_change_text', label: "What's the one thing you'd improve about this product?" },
+            { key: 'final_change_text', label: "What's the one thing you'd improve about this product?", icon: ClipboardList },
           ];
           const questionsWithAnswers = qualQuestions
             .map(q => ({ ...q, answers: growthFilteredFeedbacks.filter(fb => fb[q.key] && fb[q.key].trim()) }))
@@ -1177,17 +1177,22 @@ export default function ProductFeedbackPage() {
               {questionsWithAnswers.map((q, qIndex) => {
                 const QUESTION_BG_COLORS = ['#EEEDFE', '#FCE7F3', '#FEF3C7', '#DBEAFE', '#D1FAE5', '#FFE4E6', '#E0E7FF'];
                 const bg = QUESTION_BG_COLORS[qIndex % QUESTION_BG_COLORS.length];
+                const QIcon = q.icon || MessageSquare;
                 return (
                 <div key={q.key} className="mb-3">
+                  {/* [FIX] Larger vertical padding + bigger title, so this
+                      card's height roughly matches the stats card's height
+                      (which we also shrank slightly) — was noticeably
+                      shorter/thinner before, looked inconsistent. */}
                   <button
                     type="button"
                     onClick={() => toggleGrowthQ(q.key)}
-                    className="w-full text-left rounded-xl p-4 flex items-center justify-between gap-3"
+                    className="w-full text-left rounded-xl px-5 py-6 flex items-center justify-between gap-3 min-h-[92px]"
                     style={{ background: bg }}
                   >
-                    <span className="flex items-center gap-2.5 min-w-0">
-                      <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-800">
+                    <span className="flex items-center gap-3 min-w-0">
+                      <QIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                      <span className="text-base font-medium text-gray-800">
                         {q.label}
                         <span className="font-normal text-gray-500"> ({q.answers.length})</span>
                       </span>
@@ -1221,12 +1226,28 @@ export default function ProductFeedbackPage() {
                 );
               })}
 
-              {/* Individual responses — its own card too, same style family. */}
+              {/* [FIX] Now behaves like the question cards: collapsed by
+                  default, shows only a count, click to expand. Was always
+                  showing everything immediately. Same height/padding
+                  treatment for visual consistency. */}
               {growthFilteredFeedbacks.length > 0 && (
-                <div className="rounded-xl p-4" style={{ background: '#FAECE7' }}>
-                  <p className="text-sm font-medium text-center mb-3" style={{ color: '#4A1B0C' }}>
-                    Individual responses <span className="font-normal">({growthFilteredFeedbacks.length})</span>
-                  </p>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGrowthQ('__individual__')}
+                    className="w-full text-left rounded-xl px-5 py-6 flex items-center justify-between gap-3 min-h-[92px]"
+                    style={{ background: '#FAECE7' }}
+                  >
+                    <span className="flex items-center gap-3 min-w-0">
+                      <Users className="w-5 h-5 flex-shrink-0" style={{ color: '#9A5B3A' }} />
+                      <span className="text-base font-medium" style={{ color: '#4A1B0C' }}>
+                        Individual responses <span className="font-normal">({growthFilteredFeedbacks.length})</span>
+                      </span>
+                    </span>
+                    <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform" style={{ color: '#9A5B3A', transform: expandedGrowthQ['__individual__'] ? 'rotate(180deg)' : 'none' }} />
+                  </button>
+                  {expandedGrowthQ['__individual__'] && (
+                  <div className="rounded-xl p-4 mt-2" style={{ background: '#FAECE7' }}>
                   <div className="space-y-3">
                     {(growthViewAll ? responseRows : [{ campaignId: 'single', campaignName: null, campaignDate: null, items: growthFilteredFeedbacks }]).map((group) => (
                       <div key={group.campaignId}>
@@ -1270,7 +1291,11 @@ export default function ProductFeedbackPage() {
                                 {fb.visited_product && (
                                   <p className="text-gray-600 mt-1 text-sm">
                                     Visited actual product: {fb.visited_product === 'yes' ? 'Yes' : 'No'}
-                                    {fb.product_match_rating != null && <> — <span className="font-semibold text-emerald-700">{fb.product_match_rating}/10</span> match</>}
+                                    {/* [FIX] Was product_match_rating (old 1-10 slider, no longer
+                                        written). Now shows the categorical choice instead. */}
+                                    {fb.product_match_choice && <> — <span className="font-semibold text-emerald-700">
+                                      {{ signed_up: 'Signed up', not_focus: 'Interesting, not their focus', not_attractive: 'Not attractive enough yet' }[fb.product_match_choice] || fb.product_match_choice}
+                                    </span></>}
                                   </p>
                                 )}
                               </div>
@@ -1280,6 +1305,8 @@ export default function ProductFeedbackPage() {
                       </div>
                     ))}
                   </div>
+                  </div>
+                  )}
                 </div>
               )}
             </div>
