@@ -255,6 +255,11 @@ export default function ProductFeedbackPage() {
   // [ADDED 020826] expand/collapse state for the detail lists under each summary
   const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false });
   const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  // [GROWTH — qualitative Q&A block] Separate expand state, one entry per
+  // open-text question, keyed by the field name on growth_feedback. Lets
+  // each question expand independently instead of one all-or-nothing toggle.
+  const [expandedGrowthQ, setExpandedGrowthQ] = useState({});
+  const toggleGrowthQ = (key) => setExpandedGrowthQ((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
     const loadData = async () => {
@@ -951,6 +956,81 @@ export default function ProductFeedbackPage() {
                     )}
                   </div>
                 )}
+
+                {/* [GROWTH — NEW] Qualitative feedback block. Per this
+                    session's explicit request: below the numeric stats,
+                    every open-text question gets its own row — the
+                    question itself, how many people actually answered it,
+                    and a button that expands just that question's answers.
+                    Distinct from the flat per-response list below, which
+                    still shows everything mixed together per person. */}
+                {(() => {
+                  // Built dynamically because the custom question's TEXT
+                  // varies per venture (whatever the founder typed in
+                  // growth-development), unlike the other five which are
+                  // fixed copy defined once in venture-landing.
+                  const qualQuestions = [
+                    { key: 'business_model_note', label: "What doesn't feel right about the business model?" },
+                    { key: 'core_features_note', label: "What would you add, remove, or change about these features?" },
+                    { key: 'value_prop_note', label: "What would you change about the slogan?" },
+                    { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?" },
+                    { key: 'product_match_diff_text', label: "What was different from what you expected?" },
+                    ...(venture.growth_data?.custom_question
+                      ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question }]
+                      : []),
+                    { key: 'final_change_text', label: "What's the one thing you'd improve about this product?" },
+                  ];
+                  const questionsWithAnswers = qualQuestions
+                    .map(q => ({ ...q, answers: growthFeedbacks.filter(fb => fb[q.key] && fb[q.key].trim()) }))
+                    .filter(q => q.answers.length > 0);
+
+                  if (questionsWithAnswers.length === 0) return null;
+
+                  return (
+                    <div className="mb-4 pb-4 border-b border-gray-100 space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">Written answers</p>
+                      {questionsWithAnswers.map((q) => (
+                        <div key={q.key}>
+                          <button
+                            type="button"
+                            onClick={() => toggleGrowthQ(q.key)}
+                            className="w-full flex items-center justify-between text-left py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2"
+                          >
+                            <span className="text-sm text-gray-800">{q.label}</span>
+                            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 flex-shrink-0 ml-3">
+                              {q.answers.length} response{q.answers.length !== 1 ? 's' : ''}
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedGrowthQ[q.key] ? 'rotate-180' : ''}`} />
+                            </span>
+                          </button>
+                          {expandedGrowthQ[q.key] && (
+                            <div className="pl-2 pb-2 space-y-2">
+                              {q.answers.map((fb) => (
+                                <div key={fb.id} className="border-l-2 border-emerald-200 pl-3">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    {fb.created_by_id ? (
+                                      <FounderHoverCard
+                                        founderId={fb.created_by_id}
+                                        name={getDisplayName(founderProfiles[fb.created_by_id], fb.created_by)}
+                                        profile={founderProfiles[fb.created_by_id]}
+                                      />
+                                    ) : fb.created_by ? (
+                                      <p className="text-xs text-gray-500">{fb.created_by}</p>
+                                    ) : <span />}
+                                    <span className="text-xs text-gray-400">
+                                      {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-700">{fb[q.key]}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 <button
                   type="button"
                   onClick={() => toggle('growth')}
