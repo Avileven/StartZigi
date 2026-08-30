@@ -323,6 +323,21 @@ export default function ProductFeedbackPage() {
   // each question expand independently instead of one all-or-nothing toggle.
   const [expandedGrowthQ, setExpandedGrowthQ] = useState({});
   const toggleGrowthQ = (key) => setExpandedGrowthQ((prev) => ({ ...prev, [key]: !prev[key] }));
+  // [NEW — testimonials] Toggling is a write action (unlike everything else
+  // on this page, which is read-only) — updates growth_feedback directly,
+  // then reflects the change locally so the button updates immediately
+  // without a full data reload.
+  const toggleTestimonialFeatured = async (feedbackId, currentValue) => {
+    const { error } = await supabase
+      .from('growth_feedback')
+      .update({ is_featured_testimonial: !currentValue })
+      .eq('id', feedbackId);
+    if (error) {
+      console.error('Could not update testimonial:', error);
+      return;
+    }
+    setGrowthFeedbacks((prev) => prev.map((fb) => fb.id === feedbackId ? { ...fb, is_featured_testimonial: !currentValue } : fb));
+  };
   // [FIX — campaign-first view] null = "not explicitly chosen yet", which
   // means "use the latest campaign" (computed at render time below, not
   // stored here — avoids a load-order race with campaignsById/growthFeedbacks).
@@ -1092,7 +1107,7 @@ export default function ProductFeedbackPage() {
 
           const qualQuestions = [
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
-            { key: 'core_features_note', label: "What would you add, remove, or change about these features?", icon: Layers },
+            { key: 'core_features_note', label: "Features people would add", icon: Layers },
             { key: 'value_prop_note', label: "What would you change about the slogan?", icon: Megaphone },
             { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?", icon: FileText },
             { key: 'product_match_diff_text', label: "What was different from what you expected?", icon: Compass },
@@ -1230,6 +1245,60 @@ export default function ProductFeedbackPage() {
                   default, shows only a count, click to expand. Was always
                   showing everything immediately. Same height/padding
                   treatment for visual consistency. */}
+              {/* [NEW — testimonials] Distinct from the qualitative
+                  question cards above: this one is actionable (the founder
+                  can feature/unfeature), not just readable, so it gets its
+                  own dedicated card rather than being folded into the
+                  generic Q&A list. */}
+              {(() => {
+                const withTestimonials = growthFilteredFeedbacks.filter(fb => fb.testimonial_text && fb.testimonial_text.trim());
+                if (withTestimonials.length === 0) return null;
+                return (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleGrowthQ('__testimonials__')}
+                      className="w-full text-left rounded-xl px-5 py-6 flex items-center justify-between gap-3 min-h-[92px]"
+                      style={{ background: '#FFF7ED' }}
+                    >
+                      <span className="flex items-center gap-3 min-w-0">
+                        <Star className="w-5 h-5 flex-shrink-0" style={{ color: '#C2620A' }} />
+                        <span className="text-base font-medium text-gray-800">
+                          Testimonials <span className="font-normal text-gray-500">({withTestimonials.length})</span>
+                        </span>
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: expandedGrowthQ['__testimonials__'] ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                    {expandedGrowthQ['__testimonials__'] && (
+                      <div className="mt-2 space-y-2 px-2">
+                        {withTestimonials.map((fb) => (
+                          <div key={fb.id} className="border-l-2 border-orange-200 pl-3 py-1">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <p className="text-xs font-medium text-gray-700">{fb.testimonial_author_name || 'Anonymous'}</p>
+                              <span className="text-xs text-gray-400">
+                                {new Date(fb.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 italic mb-2">"{fb.testimonial_text}"</p>
+                            <button
+                              type="button"
+                              onClick={() => toggleTestimonialFeatured(fb.id, fb.is_featured_testimonial)}
+                              className={`text-xs font-medium px-3 py-1 rounded-full border ${
+                                fb.is_featured_testimonial
+                                  ? 'bg-orange-100 text-orange-800 border-orange-300'
+                                  : 'bg-white text-gray-500 border-gray-200'
+                              }`}
+                            >
+                              {fb.is_featured_testimonial ? '★ Featured on your page' : 'Feature on your page'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {growthFilteredFeedbacks.length > 0 && (
                 <div>
                   <button

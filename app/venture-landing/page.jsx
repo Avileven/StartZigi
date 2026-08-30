@@ -178,6 +178,9 @@ export default function VentureLanding() {
   // was called with a hardcoded {} instead of a real content map, so it
   // could never find the fetched content. Same pattern as MVP/MLP below.
   const [growthHtmlContents, setGrowthHtmlContents] = useState({});
+  // [NEW — testimonials] Loaded once per venture load, alongside everything
+  // else — only rows the founder explicitly marked is_featured_testimonial.
+  const [featuredTestimonials, setFeaturedTestimonials] = useState([]);
   const [revenueHtmlContents, setRevenueHtmlContents] = useState({});
   const [businessPlanHtmlContents, setbusinessPlanHtmlContents] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
@@ -214,6 +217,21 @@ export default function VentureLanding() {
   // doesn't tell the founder WHY someone didn't convert (interest vs.
   // attractiveness vs. they actually did sign up).
   const [productMatchChoice, setProductMatchChoice] = useState(null);
+  // [NEW — testimonials] Shown only after "visited product = yes". The
+  // visitor writes this themselves (not a separate "give me a quote"
+  // request) — the founder later decides whether to feature it publicly.
+  // DB DEPENDENCY: growth_feedback needs `testimonial_text`,
+  // `testimonial_author_name`, and `is_featured_testimonial` columns.
+  const [testimonialText, setTestimonialText] = useState('');
+  const [testimonialAuthorName, setTestimonialAuthorName] = useState('');
+  // [NEW — testimonials] Defaults the display name to the visitor's account
+  // name once loaded, editable afterward (per explicit request — not
+  // locked to their account name).
+  useEffect(() => {
+    if (currentUser && !testimonialAuthorName) {
+      setTestimonialAuthorName(currentUser.full_name || currentUser.email || '');
+    }
+  }, [currentUser]);
   const [productMatchDiffText, setProductMatchDiffText] = useState('');
   const [finalChangeText, setFinalChangeText] = useState('');
   // [NEW] Answer to the founder's own optional custom question (growth_data.custom_question).
@@ -313,6 +331,8 @@ export default function VentureLanding() {
           if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
           if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
           if (v.growth_data?.uploaded_files) await loadHtmlFiles(v.growth_data.uploaded_files, setGrowthHtmlContents, "Growth");
+          const { data: testimonials } = await supabase.from("growth_feedback").select("testimonial_text, testimonial_author_name, created_date").eq("venture_id", v.id).eq("is_featured_testimonial", true).order("created_date", { ascending: false });
+          setFeaturedTestimonials(testimonials || []);
         } else {
           setVenture(null);
         }
@@ -338,6 +358,8 @@ export default function VentureLanding() {
           if (v.revenue_model_data?.uploaded_files) await loadHtmlFiles(v.revenue_model_data.uploaded_files, setRevenueHtmlContents, "Revenue");
           if (v.business_plan_data?.uploaded_files) await loadHtmlFiles(v.business_plan_data.uploaded_files, setbusinessPlanHtmlContents, "BP");
           if (v.growth_data?.uploaded_files) await loadHtmlFiles(v.growth_data.uploaded_files, setGrowthHtmlContents, "Growth");
+          const { data: testimonials } = await supabase.from("growth_feedback").select("testimonial_text, testimonial_author_name, created_date").eq("venture_id", v.id).eq("is_featured_testimonial", true).order("created_date", { ascending: false });
+          setFeaturedTestimonials(testimonials || []);
         } else {
           setVenture(null);
         }
@@ -623,6 +645,9 @@ export default function VentureLanding() {
         // `product_match_choice` — the old `product_match_rating` (integer)
         // is no longer written to by new submissions.
         product_match_choice: gd.product_url && visitedProduct === 'yes' ? productMatchChoice : null,
+        testimonial_text: gd.product_url && visitedProduct === 'yes' ? (testimonialText.trim() || null) : null,
+        testimonial_author_name: gd.product_url && visitedProduct === 'yes' && testimonialText.trim() ? (testimonialAuthorName.trim() || null) : null,
+        is_featured_testimonial: false,
         product_match_diff_text: gd.product_url && visitedProduct === 'yes' ? (productMatchDiffText.trim() || null) : null,
         final_change_text: finalChangeText.trim() || null,
         custom_question_answer: gd.custom_question ? (customQuestionAnswer.trim() || null) : null,
@@ -1010,6 +1035,25 @@ export default function VentureLanding() {
                 </div>
               )}
 
+              {/* [NEW — testimonials] Only rows the founder explicitly
+                  chose to feature. Not shown at all if there are none —
+                  no empty-state placeholder needed here. */}
+              {featuredTestimonials.length > 0 && (
+                <div className="mb-10">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">What people are saying</h3>
+                  <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                    {featuredTestimonials.map((t, i) => (
+                      <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
+                        <p className="text-gray-700 text-sm italic">"{t.testimonial_text}"</p>
+                        {t.testimonial_author_name && (
+                          <p className="text-xs font-semibold text-gray-500 mt-3">— {t.testimonial_author_name}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Growth Feedback Form */}
               <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
                 <CardHeader>
@@ -1152,7 +1196,7 @@ export default function VentureLanding() {
                             {/* [FIX] Always shown now, not just below the
                                 score threshold — per explicit request. */}
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What would you add, remove, or change about these features? (optional)</Label>
+                              <Label className="text-xs text-gray-500">What feature do you think would add value to the product? (optional)</Label>
                               <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                           </MobileQuestionSheet>
@@ -1289,6 +1333,20 @@ export default function VentureLanding() {
                             <div className="mt-2">
                               <Label className="text-xs text-gray-500">Anything else you want to add? (optional)</Label>
                               <Textarea value={productMatchDiffText} onChange={(e) => setProductMatchDiffText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                            </div>
+                            {/* [NEW — testimonials] Same field the visitor
+                                already writes — the founder decides later,
+                                on their own dashboard, whether to feature it
+                                publicly. No separate "give a quote" ask. */}
+                            <div className="mt-3 pt-3 border-t border-teal-100">
+                              <Label className="text-xs text-gray-500">Want to say something about your experience? (optional, may be shown publicly with your name)</Label>
+                              <Textarea value={testimonialText} onChange={(e) => setTestimonialText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your experience with the product..." />
+                              {testimonialText.trim() && (
+                                <div className="mt-2">
+                                  <Label className="text-xs text-gray-500">Name to show (editable)</Label>
+                                  <Input value={testimonialAuthorName} onChange={(e) => setTestimonialAuthorName(e.target.value)} className="mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                                </div>
+                              )}
                             </div>
                           </div>
                           </MobileQuestionSheet>
