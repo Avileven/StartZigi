@@ -25,7 +25,7 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList, Home, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -1096,7 +1096,19 @@ export default function ProductFeedbackPage() {
               .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
           })();
           const growthHasDirect = growthFeedbacks.some(fb => !fb.campaign_id);
-          const defaultGrowthCampaignId = growthCampaignOptions[0]?.id || (growthHasDirect ? '__direct__' : null);
+          // [FIX — real bug caught during testing] Was always preferring
+          // "any campaign" over "Direct", even when a Direct response was
+          // actually the most recent one — a founder testing via Preview
+          // (no campaign) couldn't see their own new feedback by default
+          // because an older campaign was still selected. Now picks
+          // whichever bucket contains the single most recent feedback row,
+          // by the feedback's own created_date — not by campaign creation
+          // date, and not by "campaigns always win".
+          const defaultGrowthCampaignId = (() => {
+            if (growthFeedbacks.length === 0) return null;
+            const mostRecent = [...growthFeedbacks].sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+            return mostRecent.campaign_id || '__direct__';
+          })();
           const effectiveGrowthCampaignId = growthSelectedCampaign ?? defaultGrowthCampaignId;
           const growthViewAll = growthSelectedCampaign === '__all__';
           const growthFilteredFeedbacks = growthViewAll
@@ -1109,8 +1121,8 @@ export default function ProductFeedbackPage() {
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
             { key: 'core_features_note', label: "Features people would add", icon: Layers },
             { key: 'value_prop_note', label: "What would you change about the slogan?", icon: Megaphone },
-            { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?", icon: FileText },
-            { key: 'product_match_diff_text', label: "What was different from what you expected?", icon: Compass },
+            { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?", icon: Target },
+            { key: 'product_match_diff_text', label: "What was different from what you expected?", icon: Home },
             ...(venture.growth_data?.custom_question
               ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question, icon: HelpCircle }]
               : []),
@@ -1183,6 +1195,50 @@ export default function ProductFeedbackPage() {
                   </div>
                 </div>
               )}
+
+              {/* [NEW — Product Experience] The one piece of data collected
+                  on the public form that had NO summary category anywhere —
+                  "did you visit the product?" and the follow-up choice were
+                  only visible buried inside each individual response. This
+                  is the third data "shape" on this page (not a number like
+                  the gauges, not free text like the question cards — a set
+                  of categorical choices), so it gets its own summary style:
+                  counts per choice, not an average and not a text list. */}
+              {(() => {
+                const withVisit = growthFilteredFeedbacks.filter(fb => fb.visited_product);
+                if (withVisit.length === 0) return null;
+                const yesCount = withVisit.filter(fb => fb.visited_product === 'yes').length;
+                const noCount = withVisit.filter(fb => fb.visited_product === 'no').length;
+                const choiceCounts = { signed_up: 0, not_focus: 0, not_attractive: 0 };
+                withVisit.forEach(fb => { if (fb.product_match_choice && choiceCounts[fb.product_match_choice] != null) choiceCounts[fb.product_match_choice]++; });
+                const choiceLabels = { signed_up: 'Signed up', not_focus: 'Interesting, not their focus', not_attractive: 'Not attractive enough yet' };
+                return (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleGrowthQ('__product_experience__')}
+                      className="w-full text-left rounded-xl px-5 py-6 flex items-center justify-between gap-3 min-h-[92px]"
+                      style={{ background: '#CFFAFE' }}
+                    >
+                      <span className="flex items-center gap-3 min-w-0">
+                        <Home className="w-5 h-5 text-cyan-700 flex-shrink-0" />
+                        <span className="text-base font-medium text-gray-800">
+                          Product Experience <span className="font-normal text-gray-500">({withVisit.length})</span>
+                        </span>
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-cyan-700 flex-shrink-0 transition-transform" style={{ transform: expandedGrowthQ['__product_experience__'] ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                    {expandedGrowthQ['__product_experience__'] && (
+                      <div className="mt-2 px-4 py-3 rounded-lg bg-cyan-50/60 text-sm text-gray-700 space-y-1">
+                        <p><span className="font-semibold text-cyan-800">{yesCount}</span> visited the actual product, <span className="font-semibold text-cyan-800">{noCount}</span> did not.</p>
+                        {Object.entries(choiceCounts).filter(([, c]) => c > 0).map(([key, count]) => (
+                          <p key={key}>· <span className="font-semibold text-cyan-800">{count}</span> {choiceLabels[key]}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* [FIX] Each question is its own category with its own
                   distinct background color (cycling through a palette) —

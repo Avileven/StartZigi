@@ -13,7 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
-  DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X,
+  DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X, Home, Focus,
   Linkedin, Facebook, Twitter, Instagram, Globe,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
@@ -114,8 +114,20 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
               <h4 className="text-sm font-medium text-gray-900">{fileName}</h4>
             </div>
           )}
-          <iframe srcDoc={content} className="w-full h-[600px] border-0" title={fileName}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
+          {/* [FIX] Was a fixed h-[600px] regardless of actual content
+              height, leaving large empty white space below short content
+              (confirmed via screenshot — the Zig Loop demo is far shorter
+              than 600px). Now starts small and resizes to fit the real
+              content once loaded, capped so it can't blow up the page. */}
+          <iframe srcDoc={content} className="w-full border-0" style={{ height: '300px', maxHeight: '80vh' }} title={fileName}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy"
+            onLoad={(e) => {
+              try {
+                const doc = e.target.contentWindow.document;
+                const h = doc.documentElement.scrollHeight;
+                if (h > 0) e.target.style.height = Math.min(h, window.innerHeight * 0.8) + 'px';
+              } catch (err) { /* cross-origin content, leave default height */ }
+            }} />
         </div>
       );
     }
@@ -1054,14 +1066,14 @@ export default function VentureLanding() {
                 </div>
               )}
 
+              {/* [FIX] "Share Your Feedback" is now its own prominent,
+                  centered heading — was a small CardTitle buried inside the
+                  form card, easy to miss. Matches the visual weight of the
+                  slogan heading at the top of the page. */}
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-6">Share Your Feedback</h2>
+
               {/* Growth Feedback Form */}
               <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-indigo-800">
-                    <MessageSquare className="w-5 h-5 text-indigo-600" />
-                    Share Your Feedback
-                  </CardTitle>
-                </CardHeader>
                 <CardContent>
                   {/* [TEMP — TESTING ONLY, MUST BE RESTORED] isOwnVenture
                       check disabled here because there's currently no way
@@ -1089,10 +1101,17 @@ export default function VentureLanding() {
                     <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-5">
 
                       {/* --- Founder's own custom question — shown FIRST, per explicit request --- */}
+                      {/* [FIX] Icon added per request, but NOT a text label
+                          like "A question from the founder" — that exact
+                          label was explicitly rejected earlier as redundant.
+                          Icon sits inline with the question text itself. */}
                       {venture.growth_data.custom_question && (
                         <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
                           <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
-                            <p className="text-sm font-medium text-gray-900 mb-2">{venture.growth_data.custom_question}</p>
+                            <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
+                              <HelpCircle className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                              {venture.growth_data.custom_question}
+                            </p>
                             <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
                           </MobileQuestionSheet>
                         </div>
@@ -1113,20 +1132,26 @@ export default function VentureLanding() {
                                 <p className="text-xs font-semibold text-gray-500 mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
                                 {bmd.model_type === 'subscription' && (
                                   <>
+                                    {/* [FIX] "Free" now renders as a package-style
+                                    box, same row as paid packages — was
+                                    plain text ("Free tier: ...") that looked
+                                    inconsistent next to the boxed packages. */}
+                                {(bmd.has_free_tier || (bmd.packages && bmd.packages.length > 0)) && (
+                                  <div className="flex flex-wrap gap-2">
                                     {bmd.has_free_tier && bmd.free_tier_description && (
-                                      <p className="text-sm text-gray-600 mb-2">Free tier: {bmd.free_tier_description}</p>
-                                    )}
-                                    {/* [FIX] Any number of packages now (not just 2), shown in one compact row */}
-                                    {bmd.packages && bmd.packages.length > 0 && (
-                                      <div className="flex flex-wrap gap-2">
-                                        {bmd.packages.map((p) => (
-                                          <div key={p.id} className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
-                                            <span className="font-semibold text-gray-900">{p.name} — {p.price}</span>
-                                            {p.description && <span className="text-sm text-gray-500"> · {p.description}</span>}
-                                          </div>
-                                        ))}
+                                      <div className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
+                                        <span className="font-semibold text-gray-900">Free</span>
+                                        <span className="text-sm text-gray-500"> · {bmd.free_tier_description}</span>
                                       </div>
                                     )}
+                                    {bmd.packages && bmd.packages.map((p) => (
+                                      <div key={p.id} className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
+                                        <span className="font-semibold text-gray-900">{p.name} — {p.price}</span>
+                                        {p.description && <span className="text-sm text-gray-500"> · {p.description}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                                   </>
                                 )}
                                 {bmd.model_type === 'transactional' && (
@@ -1243,7 +1268,7 @@ export default function VentureLanding() {
                       {venture.growth_data.selected_categories.includes('product_definition') && (
                         <div className="border border-rose-200 bg-rose-50/40 rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <FileText className="w-5 h-5 text-rose-600" />
+                            <Target className="w-5 h-5 text-rose-600" />
                             <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Product Definition</p>
                           </div>
                           <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={isMobileViewport}>
@@ -1291,7 +1316,7 @@ export default function VentureLanding() {
                       {venture.growth_data.product_url && (
                       <div className="border border-teal-200 bg-teal-50/40 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
-                          <Compass className="w-5 h-5 text-teal-600" />
+                          <Home className="w-5 h-5 text-teal-600" />
                           <p className="text-xs font-bold uppercase tracking-wide text-teal-700">The Real Thing</p>
                         </div>
                         <Label className="text-sm">Did you visit the actual product?</Label>
@@ -1355,10 +1380,13 @@ export default function VentureLanding() {
                       )}
 
                       {/* --- Final open question, always shown regardless of category selection --- */}
-                      <div className="border border-gray-200 rounded-xl p-4">
+                      {/* [FIX] Was the only category with no color (plain
+                          gray border, gray text) — inconsistent with every
+                          other card on the page. Given its own color now. */}
+                      <div className="border border-cyan-200 bg-cyan-50/40 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <ClipboardList className="w-5 h-5 text-gray-500" />
-                          <p className="text-xs font-bold uppercase tracking-wide text-gray-600">One Last Thing</p>
+                          <Focus className="w-5 h-5 text-cyan-600" />
+                          <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">One Last Thing</p>
                         </div>
                         <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={isMobileViewport}>
                         <Label htmlFor="growth-final-change">What's the one thing you'd improve about this product?</Label>
