@@ -24,6 +24,7 @@ import {
   UserCircle,
   Info,
   Bell,
+  Rocket,
 } from "lucide-react";
 
 import {
@@ -62,13 +63,25 @@ const getNavigationItems = (venture) => {
 url: venture ? `/beta-testing?id=${venture.id}` : "#",
 
       icon: FlaskConical,
-      phases: ["beta", "growth"],
+      // [FIX] Removed "growth" — per the confirmed Growth navigation list
+      // (Home, Dashboard, My Account, Landing Page only), Beta Page no
+      // longer belongs here once a venture reaches Growth.
+      phases: ["beta"],
+    },
+    {
+      // [NEW] Was missing entirely — a venture in Growth had no nav item
+      // pointing to growth-development at all.
+      title: "Growth Page",
+      url: createPageUrl("growth-development"),
+      icon: Rocket,
+      phases: ["growth"],
     },
     {
       title: "Angel Arena",
       url: createPageUrl("angel-arena"),
       icon: Users,
-      phases: ["mvp", "mlp", "beta", "growth"],
+      // [FIX] Removed "growth" — not part of the confirmed Growth nav list.
+      phases: ["mvp", "mlp", "beta"],
     },
     {
       title: "VC Marketplace",

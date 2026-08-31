@@ -34,6 +34,10 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
   const [showExplanation, setShowExplanation] = useState(false);
 
   const showContinueToPlan = venture?.phase === 'idea' || venture?.phase === 'business_plan';
+  // [NEW] Mirrors showContinueToPlan exactly — was completely missing, so
+  // a founder reaching Growth on mobile had no way in from this screen at
+  // all except the generic "go to desktop" text below (also being fixed).
+  const showContinueToGrowth = venture?.phase === 'growth';
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -56,7 +60,11 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
       {showExplanation && (
         <p className="text-xs text-gray-400 mb-4 text-left leading-relaxed px-2">
           Your mobile companion. Track updates and progress on the go.
-          {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && (
+          {/* [FIX] Growth removed from this condition — mobile now has
+              real functionality for Growth (growth-development is fully
+              usable on mobile), so it no longer belongs in the "you're all
+              set here, go to desktop" list. */}
+          {venture?.phase && venture.phase !== 'idea' && venture.phase !== 'business_plan' && venture.phase !== 'growth' && (
             <> You are all set on mobile. Head to desktop to continue building your {PHASE_LABELS[venture.phase]}.</>
           )}
         </p>
@@ -72,7 +80,12 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
 
       {/* [FIX 020826] Clock enlarged back up (was 160, shrinking it earlier
           made it illegible/pointless — reverted, closer to original size). */}
-      {venture?.phase && (
+      {/* [FIX] JourneyClock skipped for growth — per explicit request, a
+          venture in Growth is no longer "on the journey" (Idea→...→Beta),
+          so showing a clock pointing back at that journey (and the
+          confirmed "Next: IDEA" wrap-around bug that came with it) doesn't
+          make sense here. */}
+      {venture?.phase && venture.phase !== 'growth' && (
         <div className="mb-4 flex justify-center">
           <JourneyClock currentPhase={venture.phase} maxWidth={260} />
         </div>
@@ -90,6 +103,20 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
             <p className="font-semibold text-gray-900">Complete your Plan</p>
           </div>
           <span className="text-indigo-600">→</span>
+        </button>
+      )}
+
+      {/* [NEW] Mirrors the Plan button above exactly. */}
+      {showContinueToGrowth && (
+        <button
+          onClick={() => router.push('/growth-development')}
+          className="w-full text-left bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between mb-4"
+        >
+          <div>
+            <p className="text-xs text-emerald-600 mb-0.5">Continue</p>
+            <p className="font-semibold text-gray-900">Set up your Growth page</p>
+          </div>
+          <span className="text-emerald-600">→</span>
         </button>
       )}
 

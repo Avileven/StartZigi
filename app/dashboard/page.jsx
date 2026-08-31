@@ -1254,8 +1254,13 @@ const getGreeting = (username) => {
         title: 'Promotion Center',
         icon: Megaphone,
         page: 'promotion-center', // createPageUrl will convert to /promotioncenter
-        // [HIGHLIGHT] highlight Promotion Center in mvp (before revenue done) and mlp phases
-        highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp'
+        // [FIX — duplication bug] Extended to also cover beta, since the
+        // separate 'promotion_center_beta' push further down (same title,
+        // different id) was never deduplicated against this one — both
+        // rendered simultaneously for beta AND growth (both cumulative
+        // checks overlap there), showing "Promotion Center" twice. Removed
+        // that duplicate block entirely instead of patching it in two places.
+        highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
       });
     }
 
@@ -1276,16 +1281,19 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('mvp')) {
     title: 'ZigForge Studio',
     icon: Zap,
     page: 'zigforge',
-    // [HIGHLIGHT] highlight ZigForge in mvp and mlp phases
-    highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp'
+    // [FIX — duplication bug] Same reasoning as promotion_center above —
+    // extended to cover beta, the separate 'zigforge_beta' duplicate
+    // removed entirely.
+    highlighted: currentVenture.phase === 'mvp' || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
   });
   assets.push({
     id: 'product_feedback',
     title: 'Product Feedback',
     icon: MessageSquare,
     page: 'product-feedback',
-    // [HIGHLIGHT] highlight Product Feedback in mvp (after upload) and mlp and beta phases
-    highlighted: (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded) || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta'
+    // [FIX] Added growth — this is exactly where all Growth feedback lives
+    // now, it was an oversight that growth wasn't already included here.
+    highlighted: (currentVenture.phase === 'mvp' && currentVenture.mvp_uploaded) || currentVenture.phase === 'mlp' || currentVenture.phase === 'beta' || currentVenture.phase === 'growth'
   });
 }
 if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
@@ -1331,7 +1339,13 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
       });
     }
 
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
+    // [FIX] Was `currentPhaseIndex >= PHASES_ORDER.indexOf('beta')` — a
+    // cumulative check that's also true for growth, so Beta Testing Page
+    // and Venture Pitch were showing up in Growth's toolbox even though
+    // they were never meant to be there per the confirmed Growth toolbox
+    // list (Promotion Center / ZigForge Studio / Product Feedback / Growth
+    // Development only). Changed to an exact phase match.
+    if (currentVenture.phase === 'beta') {
       assets.push({
         id: 'beta_development',
         title: 'Beta Testing Page',
@@ -1346,29 +1360,21 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
         title: 'Venture Pitch',
         icon: TrendingUp,
         page: 'venture-pitch', // createPageUrl will convert to /venturepitch
-        // [HIGHLIGHT] highlight Venture Pitch when in beta or growth phase
-        highlighted: currentVenture.phase === 'beta' || currentVenture.phase === 'growth'
-      });
-
-      assets.push({
-        id: 'promotion_center_beta',
-        title: 'Promotion Center',
-        icon: Megaphone,
-        page: 'promotion-center',
-        // [HIGHLIGHT] highlight Promotion Center in beta phase
+        // [FIX] Was highlighted for beta OR growth, but the item itself is
+        // no longer shown in growth at all (see the exact-match condition
+        // above) — kept as beta-only for consistency.
         highlighted: currentVenture.phase === 'beta'
       });
 
-      assets.push({
-        id: 'zigforge_beta',
-        title: 'ZigForge Studio',
-        icon: Zap,
-        page: 'zigforge',
-        // [HIGHLIGHT] highlight ZigForge in beta phase
-        highlighted: currentVenture.phase === 'beta'
-      });
+      // [FIX — duplication bug] promotion_center_beta / zigforge_beta
+      // removed entirely — they duplicated 'promotion_center' / 'zigforge'
+      // pushed earlier in this function (same title, different id, never
+      // deduplicated). Those earlier items' highlight conditions were
+      // extended to cover beta instead, so nothing is lost.
     }
-    if (currentPhaseIndex >= PHASES_ORDER.indexOf('beta')) {
+    // [FIX] Same exact-match reasoning as beta_development above —
+    // Business Deck isn't part of Growth's toolbox either.
+    if (currentVenture.phase === 'beta') {
     assets.push({
       id: 'business_deck',
       title: 'Business Deck',
@@ -1376,6 +1382,41 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
       page: 'business-deck'
     });
   }
+
+    // [NEW] Growth Development Center — was completely missing; this was
+    // the actual entry point gap for anyone who reached Growth through the
+    // normal journey (the "skip to Growth" external path already links to
+    // it directly from createventure, but nothing in the dashboard itself
+    // pointed here before).
+    if (currentVenture.phase === 'growth') {
+      assets.push({
+        id: 'growth_development',
+        title: 'Growth Development',
+        icon: Rocket,
+        // [FLAG — not fully verified] A stale comment elsewhere in this
+        // same function claims createPageUrl strips hyphens (e.g.
+        // 'beta-development' → '/betadevelopment'), but the real folder
+        // this session directly confirmed is hyphenated
+        // (C:\STARTZIG\app\beta-development). Using the hyphenated slug
+        // here to match the real route — verify this resolves correctly,
+        // since createPageUrl's actual implementation wasn't available.
+        page: 'growth-development',
+        highlighted: true
+      });
+    }
+
+    // [FIX — safety net] Several earlier blocks use a cumulative
+    // "currentPhaseIndex >= PHASES_ORDER.indexOf(X)" check (business_plan,
+    // mvp thresholds), which are also true once phase reaches growth —
+    // this is how 'Plan' and 'Invite Co-Founder' were leaking into
+    // Growth's toolbox too, beyond just the beta-block items already fixed
+    // above. Rather than patch every cumulative condition individually
+    // (easy to miss one), Growth's toolbox is filtered down to exactly the
+    // confirmed list as a final step.
+    if (currentVenture.phase === 'growth') {
+      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development'];
+      return assets.filter(a => growthAllowedIds.includes(a.id));
+    }
 
     return assets;
   };

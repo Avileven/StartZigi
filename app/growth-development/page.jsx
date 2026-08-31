@@ -299,7 +299,16 @@ export default function GrowthDevelopment() {
       if (createError.code === '23505') throw new Error('NAME_TAKEN');
       throw createError;
     }
-    return newVenture;
+    // [FIX — confirmed real gap] createventure/page.jsx sets this
+    // right after venture creation for the normal journey; this
+    // skip-the-journey path never did, which would leave the sidebar's
+    // "Landing Page" nav item pointing at "#" (broken) for any venture
+    // created directly through Growth. Same URL pattern as createventure.
+    const landingPageUrl = `${window.location.origin}/venture-landing?id=${newVenture.id}`;
+    const { error: landingUpdateError } = await supabase
+      .from('ventures').update({ landing_page_url: landingPageUrl }).eq('id', newVenture.id);
+    if (landingUpdateError) console.error('Could not set landing_page_url:', landingUpdateError);
+    return { ...newVenture, landing_page_url: landingPageUrl };
   };
 
   const handleSave = async () => {
