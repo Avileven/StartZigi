@@ -1415,7 +1415,11 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     // confirmed list as a final step.
     if (currentVenture.phase === 'growth') {
       const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development'];
-      return assets.filter(a => growthAllowedIds.includes(a.id));
+      // [FIX] Was inconsistent — promotion_center/zigforge's highlighted
+      // conditions never included growth, while product_feedback/
+      // growth_development did, so only some cards appeared highlighted
+      // (confirmed via screenshot). All 4 are now highlighted equally.
+      return assets.filter(a => growthAllowedIds.includes(a.id)).map(a => ({ ...a, highlighted: true }));
     }
 
     return assets;
@@ -1952,6 +1956,11 @@ if (showToS) {
              
             </div>
 
+            {/* [FIX] Venture profile card (messages/founders/age/balance/
+                valuation) hidden for Growth — per explicit request, this
+                snapshot isn't relevant once a venture is in Growth. */}
+            {currentVenture.phase !== 'growth' && (
+              <>
             {onboardingStep === 2 && (
               <div className="mb-2 bg-white border-2 border-orange-500 rounded-lg px-3 py-2 text-sm font-medium text-orange-600 shadow-lg">
                 Your venture at a glance.
@@ -1999,6 +2008,8 @@ if (showToS) {
               </CardHeader>
             </Card>
             </div>
+              </>
+            )}
 
             <div className="relative">
               {onboardingStep === 3 && (

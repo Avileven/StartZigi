@@ -9,8 +9,10 @@
 // Corrections applied during review: "Your set up" -> "You've set up"
 // (MVP), a comma splice fixed with a period ("...your first step. You
 // built..." — MLP), and a double space removed ("continue  collecting" ->
-// "continue collecting" — MLP). Growth has no content yet in the source
-// doc — intentionally left out, not guessed at.
+// "continue collecting" — MLP).
+//
+// [NEW] Growth content added this session — not from the source doc (which
+// had none), written to match the same voice/structure as the others.
 //
 // [FIX 020826] No JourneyClock here — it's already shown on the Home page
 // (MobileHome.jsx); duplicating it here added nothing.
@@ -34,6 +36,13 @@ const PHASE_CONTENT = {
   beta: {
     title: "You've made it to Beta!",
     body: "This page is not your product, it's your beta sign-up page. Its job is to attract early users, convince them to join your beta program, and collect their sign-ups. The more compelling it is, the more testers you'll attract.\n\nYou need 50 beta sign-ups to move to the Growth phase. Use the Promotion Center to share this page.",
+  },
+  // [NEW] Growth had no content in the source doc — this is drafted in the
+  // same voice/structure as the other stages (title + short paragraphs,
+  // ending with a practical next step), not copied from any source doc.
+  growth: {
+    title: "You've reached Growth!",
+    body: "You've completed the founder journey — Growth is where you take what you've built out into the real world.\n\nDefine your Growth page with as many details as you'd like, and come back to update it anytime as you learn more.\n\nThen put it to the test: head to the Promotion Center to launch a campaign and get it in front of real people. Track the results and feedback you collect on the Product Feedback page.",
   },
 };
 

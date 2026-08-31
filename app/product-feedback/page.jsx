@@ -206,6 +206,12 @@ function FounderHoverCard({ founderId, name, profile }) {
     // attribution fix, or anonymous visitor) — nothing clickable to show.
     return null;
   }
+  // [FIX — real mobile bug found this session] Was pure CSS `group-hover`,
+  // which never triggers on touch devices at all — this popup was
+  // completely inaccessible on mobile, with no way to see it. Added a
+  // click/tap toggle that works everywhere; hover still also works on
+  // desktop as a bonus, not a replacement.
+  const [isOpen, setIsOpen] = useState(false);
   const initial = name[0].toUpperCase();
   const journeyTag = getJourneyTag(profile?.current_phase);
   const zigAge = getZigAge(profile?.joined_date);
@@ -215,14 +221,15 @@ function FounderHoverCard({ founderId, name, profile }) {
     <span className="relative inline-block group">
       <button
         type="button"
+        onClick={() => setIsOpen((o) => !o)}
         className="inline-flex items-center gap-1.5 border border-gray-200 bg-white rounded-full pl-1.5 pr-2.5 py-1 text-xs text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
       >
         <UserCircle2 className="w-4 h-4" />
         {name}
       </button>
 
-      {/* Hover card — hidden by default, shown on hover via the `group` above */}
-      <div className="hidden group-hover:block absolute z-50 top-full left-0 mt-2 w-80">
+      {/* Hover card — shown on desktop hover (group-hover) OR mobile tap (isOpen) */}
+      <div className={`${isOpen ? 'block' : 'hidden'} group-hover:block absolute z-50 top-full left-0 mt-2 w-80`}>
         <Card className="border-2 border-indigo-200 shadow-xl bg-white">
           <CardContent className="p-4 bg-white rounded-lg">
             <div className="flex items-center gap-3">
@@ -240,7 +247,7 @@ function FounderHoverCard({ founderId, name, profile }) {
                 Early Adopter
               </Badge>
             )}
-            <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-100">
               <RingBadge
                 value={journeyTag || '—'}
                 label="Stage"

@@ -34,10 +34,11 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
   const [showExplanation, setShowExplanation] = useState(false);
 
   const showContinueToPlan = venture?.phase === 'idea' || venture?.phase === 'business_plan';
-  // [NEW] Mirrors showContinueToPlan exactly — was completely missing, so
-  // a founder reaching Growth on mobile had no way in from this screen at
-  // all except the generic "go to desktop" text below (also being fixed).
   const showContinueToGrowth = venture?.phase === 'growth';
+  // [NEW] "Setup complete" signal for Growth — matches the same field
+  // (selected_categories) used elsewhere to determine whether the founder
+  // has actually finished configuring their Growth page.
+  const growthSetupComplete = venture?.growth_data?.selected_categories?.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -106,8 +107,10 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
         </button>
       )}
 
-      {/* [NEW] Mirrors the Plan button above exactly. */}
-      {showContinueToGrowth && (
+      {/* [FIX] Only shown if setup isn't done yet — per explicit feedback,
+          showing "Set up your Growth page" after it's already configured
+          was confusing (looked like nothing had been saved). */}
+      {showContinueToGrowth && !growthSetupComplete && (
         <button
           onClick={() => router.push('/growth-development')}
           className="w-full text-left bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between mb-4"
@@ -120,11 +123,53 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
         </button>
       )}
 
+      {/* [NEW] Growth navigation — once setup is done, this replaces the
+          Venture Profile card below with a compact profile + 3 links to
+          the tools actually used day-to-day in Growth. Neither
+          promotion-center nor product-feedback have their own dedicated
+          mobile screens, so these just deep-link to them (marked
+          "best-effort responsive" — see those files' own fixes). */}
+      {showContinueToGrowth && growthSetupComplete && (
+        <>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm text-center">
+            <p className="font-semibold text-blue-600">{venture.name}</p>
+            {venture.growth_data?.headline && (
+              <p className="text-sm text-gray-500 mt-1">{venture.growth_data.headline}</p>
+            )}
+          </div>
+          <div className="space-y-2 mb-4">
+            <button
+              onClick={() => router.push('/promotion-center')}
+              className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between"
+            >
+              <p className="font-semibold text-gray-900">Promotion Center</p>
+              <span className="text-amber-600">→</span>
+            </button>
+            <button
+              onClick={() => router.push('/growth-development')}
+              className="w-full text-left bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between"
+            >
+              <p className="font-semibold text-gray-900">Growth Page</p>
+              <span className="text-emerald-600">→</span>
+            </button>
+            <button
+              onClick={() => router.push('/product-feedback')}
+              className="w-full text-left bg-sky-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between"
+            >
+              <p className="font-semibold text-gray-900">Product Feedback</p>
+              <span className="text-sky-600">→</span>
+            </button>
+          </div>
+        </>
+      )}
+
       {/* [FIX 020826] Venture Profile card — was styled like plain printed
           text; each creation-field now has a colored icon + label heading,
           matching the visual language already used everywhere else in the
           app (Problem/Solution sections on the landing page, etc.). */}
-      {venture && (
+      {/* [FIX] Skipped once the Growth-specific compact profile above is
+          shown — avoids showing two venture profile blocks stacked. */}
+      {venture && !(showContinueToGrowth && growthSetupComplete) && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
           <p className="font-semibold text-blue-600 mb-2">{venture.name}</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 mb-1">

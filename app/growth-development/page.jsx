@@ -487,12 +487,16 @@ export default function GrowthDevelopment() {
                   <CardTitle>Social Links</CardTitle>
                   <CardDescription>Shown on your public Growth page.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2"><Linkedin className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} /></div>
-                  <div className="flex items-center gap-2"><Facebook className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Facebook URL" value={growthData.social_links.facebook} onChange={(e) => handleSocialLinkChange('facebook', e.target.value)} /></div>
-                  <div className="flex items-center gap-2"><Twitter className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} /></div>
-                  <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} /></div>
-                  <div className="flex items-center gap-2"><Globe className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Website URL (company site, not the product itself)" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} /></div>
+                <CardContent>
+                  <MobileFieldWrapper label="Social Links" summary={Object.values(growthData.social_links).some(v => v) ? 'Some links added' : null} isMobile={isMobile}>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2"><Linkedin className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} /></div>
+                    <div className="flex items-center gap-2"><Facebook className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Facebook URL" value={growthData.social_links.facebook} onChange={(e) => handleSocialLinkChange('facebook', e.target.value)} /></div>
+                    <div className="flex items-center gap-2"><Twitter className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} /></div>
+                    <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} /></div>
+                    <div className="flex items-center gap-2"><Globe className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Website URL (company site, not the product itself)" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} /></div>
+                  </div>
+                  </MobileFieldWrapper>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -528,10 +532,11 @@ export default function GrowthDevelopment() {
                       </span>
                     </label>
                     {growthData.selected_categories.includes('business_model') && (
+                      <MobileFieldWrapper label="Business Model" summary={bmd.model_type || null} isMobile={isMobile}>
                       <div className="mt-3 pl-8 space-y-3">
                         <div>
                           <Label className="text-xs">Business model</Label>
-                          <div className="grid grid-cols-3 gap-2 mt-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
                             {BUSINESS_MODEL_TYPES.map((m) => (
                               <button type="button" key={m.value} onClick={() => handleBusinessModelChange('model_type', m.value)}
                                 className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
@@ -560,11 +565,14 @@ export default function GrowthDevelopment() {
                                   <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                                 </div>
                               ))}
-                              <div className="flex gap-2 items-end">
+                              {/* [FIX] Stacks vertically on small screens — was
+                                  3 inputs crammed side by side, unusable on a
+                                  phone even inside the fullscreen sheet. */}
+                              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                                 <div className="flex-1"><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
-                                <div className="w-24"><Label className="text-xs">Price</Label><Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="$9/mo" /></div>
+                                <div className="sm:w-24"><Label className="text-xs">Price</Label><Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="$9/mo" /></div>
                                 <div className="flex-1"><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
-                                <Button size="sm" onClick={addPackage}><Plus className="w-4 h-4" /></Button>
+                                <Button size="sm" onClick={addPackage} className="w-full sm:w-auto">Add package</Button>
                               </div>
                               {bmd.packages.length === 0 && <p className="text-xs text-red-500">Add at least one package.</p>}
                             </div>
@@ -576,6 +584,7 @@ export default function GrowthDevelopment() {
                         {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
                         {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
                       </div>
+                      </MobileFieldWrapper>
                     )}
                   </div>
 
@@ -588,6 +597,7 @@ export default function GrowthDevelopment() {
                       </span>
                     </label>
                     {growthData.selected_categories.includes('core_features') && (
+                      <MobileFieldWrapper label="Core Features" summary={growthData.core_features.length > 0 ? `${growthData.core_features.length} added` : null} isMobile={isMobile}>
                       <div className="mt-3 pl-8 space-y-2">
                         <p className="text-xs text-gray-500">Reviewers see all of these together and rate them once — not one score per feature.</p>
                         {growthData.core_features.map((f) => (
@@ -597,14 +607,15 @@ export default function GrowthDevelopment() {
                           </div>
                         ))}
                         {growthData.core_features.length < 3 && (
-                          <div className="flex gap-2 items-end">
+                          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                             <div className="flex-1"><Label className="text-xs">Feature name</Label><Input value={newFeatureName} onChange={(e) => setNewFeatureName(e.target.value)} placeholder="e.g., Smart itinerary builder" /></div>
                             <div className="flex-1"><Label className="text-xs">Short description</Label><Input value={newFeatureDesc} onChange={(e) => setNewFeatureDesc(e.target.value)} placeholder="What it does" /></div>
-                            <Button size="sm" onClick={addFeature}><Plus className="w-4 h-4" /></Button>
+                            <Button size="sm" onClick={addFeature} className="w-full sm:w-auto">Add feature</Button>
                           </div>
                         )}
                         {growthData.core_features.length === 0 && <p className="text-xs text-red-500">Add at least one feature.</p>}
                       </div>
+                      </MobileFieldWrapper>
                     )}
                   </div>
 
