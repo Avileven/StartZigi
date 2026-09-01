@@ -705,11 +705,17 @@ export default function ProductFeedbackPage() {
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
+        {/* [FIX] "Hub" removed from the title per explicit request; icon and
+            title now share one row instead of icon-above-title (which took
+            up much more vertical space than needed), title shrunk and
+            colored purple to match the icon. */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <BarChart3 className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-purple-700">Venture Feedback</h1>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Venture Feedback Hub</h1>
           <p className="text-gray-500 text-lg">All feedback collected across your startup journey</p>
         </div>
 
@@ -1146,45 +1152,38 @@ export default function ProductFeedbackPage() {
               {/* Campaign selector — default is the latest campaign; "View
                   all campaigns" switches to the cumulative view across every
                   campaign (and direct responses). */}
+              {/* [FIX] "View all campaigns" removed entirely per explicit
+                  request — the chevron looked like a dropdown toggle but
+                  wasn't one, which was confusing with no clear payoff.
+                  Default (last campaign) is now the only view. Pills
+                  centered and enlarged per explicit request too. */}
               {(growthCampaignOptions.length > 0 || growthHasDirect) && (
-                <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {growthCampaignOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setGrowthSelectedCampaign(c.id)}
-                        className={`text-xs font-medium px-3.5 py-1.5 rounded-full border ${
-                          !growthViewAll && effectiveGrowthCampaignId === c.id
-                            ? 'bg-blue-50 text-blue-800 border-blue-300'
-                            : 'bg-white text-gray-500 border-gray-200'
-                        }`}
-                      >
-                        {c.tagline}{c.date && ` · ${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                      </button>
-                    ))}
-                    {growthHasDirect && (
-                      <button
-                        type="button"
-                        onClick={() => setGrowthSelectedCampaign('__direct__')}
-                        className={`text-xs font-medium px-3.5 py-1.5 rounded-full border ${
-                          !growthViewAll && effectiveGrowthCampaignId === '__direct__'
-                            ? 'bg-blue-50 text-blue-800 border-blue-300'
-                            : 'bg-white text-gray-500 border-gray-200'
-                        }`}
-                      >
-                        Direct (no campaign)
-                      </button>
-                    )}
-                  </div>
-                  {(growthCampaignOptions.length + (growthHasDirect ? 1 : 0)) > 1 && (
+                <div className="flex items-center justify-center flex-wrap gap-2.5 mb-4">
+                  {growthCampaignOptions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setGrowthSelectedCampaign(c.id)}
+                      className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
+                        effectiveGrowthCampaignId === c.id
+                          ? 'bg-blue-50 text-blue-800 border-blue-300'
+                          : 'bg-white text-gray-500 border-gray-200'
+                      }`}
+                    >
+                      {c.tagline}{c.date && ` · ${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                    </button>
+                  ))}
+                  {growthHasDirect && (
                     <button
                       type="button"
-                      onClick={() => setGrowthSelectedCampaign('__all__')}
-                      className="text-xs font-medium text-gray-500 flex items-center gap-1"
+                      onClick={() => setGrowthSelectedCampaign('__direct__')}
+                      className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
+                        effectiveGrowthCampaignId === '__direct__'
+                          ? 'bg-blue-50 text-blue-800 border-blue-300'
+                          : 'bg-white text-gray-500 border-gray-200'
+                      }`}
                     >
-                      View all campaigns
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${growthViewAll ? 'rotate-180' : ''}`} />
+                      Direct (no campaign)
                     </button>
                   )}
                 </div>

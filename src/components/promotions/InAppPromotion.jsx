@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.j
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Megaphone, AlertTriangle, ChevronRight, X } from "lucide-react";
+import { Loader2, Megaphone, AlertTriangle, ChevronRight, X, CheckCircle } from "lucide-react";
 
 // [NEW — mobile fix] This file had no mobile treatment at all — tapping a
 // field didn't open it fullscreen, unlike growth-development/venture-landing
@@ -49,11 +49,22 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="font-semibold text-gray-900">{label}</h3>
-            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
+            {/* [FIX] Same fix as growth-development — "Done ✕" replaced
+                with "Save" so it feels like changes are actually saved. */}
+            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-semibold flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" /> Save
+            </button>
           </div>
-          {/* Same fix as growth-development's version — forces any nested
-              textarea to actually fill the screen instead of staying tiny. */}
-          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh] [&_input]:min-h-[35vh] [&_input]:text-2xl [&_input]:p-6">{children}</div>
+          {/* [FIX — same final version as growth-development] Border/shadow/
+              ring/rounded stripped from every input and textarea so there's
+              no visible "box" anywhere; font stays normal-size everywhere;
+              only textarea gets a generous min-height (a real writing
+              field), input keeps its natural single-line height. */}
+          <div className="flex-1 overflow-y-auto p-4
+            [&_textarea]:min-h-[50vh] [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:shadow-none [&_textarea]:ring-0 [&_textarea]:focus:ring-0 [&_textarea]:focus-visible:ring-0 [&_textarea]:p-0
+            [&_input]:border-0 [&_input]:rounded-none [&_input]:shadow-none [&_input]:ring-0 [&_input]:focus:ring-0 [&_input]:focus-visible:ring-0 [&_input]:px-0 [&_input]:border-b [&_input]:border-b-gray-200 [&_input]:rounded-none">
+            {children}
+          </div>
         </div>
       )}
     </>

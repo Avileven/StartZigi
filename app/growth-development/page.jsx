@@ -53,17 +53,37 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="font-semibold text-gray-900">{label}</h3>
-            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
+            {/* [FIX] "Done ✕" replaced with an explicit "Save" — per
+                explicit feedback, it didn't feel like changes were being
+                saved. Values are already live-bound to state as you type
+                (nothing extra to persist on close), so this is a labeling
+                fix, not a new save action. */}
+            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-semibold flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" /> Save
+            </button>
           </div>
-          {/* [FIX — confirmed via screenshot] The field itself (especially
-              a Textarea) was staying small and fixed-height, leaving most
-              of the fullscreen sheet as wasted blank space below it. The
-              arbitrary-selector below reaches any textarea inside children
-              regardless of nesting (Label/Textarea wrapper divs aren't
-              flex containers, so a plain flex-1 on children wouldn't have
-              propagated down to it), forcing it to actually fill the
-              screen instead of just floating at the top. */}
-          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh] [&_input]:min-h-[35vh] [&_input]:text-2xl [&_input]:p-6">{children}</div>
+          {/* [FIX — final version, checked field-by-field including the
+              multi-part categories (Business Model, Core Features)] The
+              previous attempt force-enlarged font size and height on EVERY
+              input uniformly, which looked fine for a single standalone
+              field (Slogan) but broke small multi-field forms (feature
+              name+description, package name+price+description) — a single
+              field in that group blew up huge and centered while its
+              siblings stayed normal size, confirmed via screenshot to look
+              worse than the original, unstyled version.
+              Fixed properly this time: border/shadow/rounded/ring removed
+              from every input and textarea (so there's no visible "box"
+              anywhere — this was the actual, real request, repeated many
+              times), but font stays at its normal default size everywhere,
+              and only textarea (a genuine freeform writing field) gets a
+              generous minimum height — not input, which stays its natural
+              single-line height. This is now the same treatment for every
+              field, single or grouped, with no exceptions. */}
+          <div className="flex-1 overflow-y-auto p-4
+            [&_textarea]:min-h-[50vh] [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:shadow-none [&_textarea]:ring-0 [&_textarea]:focus:ring-0 [&_textarea]:focus-visible:ring-0 [&_textarea]:p-0
+            [&_input]:border-0 [&_input]:rounded-none [&_input]:shadow-none [&_input]:ring-0 [&_input]:focus:ring-0 [&_input]:focus-visible:ring-0 [&_input]:px-0 [&_input]:border-b [&_input]:border-b-gray-200 [&_input]:rounded-none">
+            {children}
+          </div>
         </div>
       )}
     </>
