@@ -31,7 +31,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
-  Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion,
+  Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion, ChevronDown,
   Linkedin, Facebook, Twitter, Instagram, Globe,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -63,7 +63,7 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
               flex containers, so a plain flex-1 on children wouldn't have
               propagated down to it), forcing it to actually fill the
               screen instead of just floating at the top. */}
-          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh]">{children}</div>
+          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh] [&_input]:min-h-[35vh] [&_input]:text-2xl [&_input]:p-6">{children}</div>
         </div>
       )}
     </>
@@ -110,13 +110,20 @@ const ExplainToggle = ({ text }) => {
   );
 };
 
-const FRAMING_TEXT = "This isn't a popularity contest for your product. Whether people find it interesting enough to click through and sign up is a separate signal you'll already see for yourself. This page measures whether you're communicating it accurately — a low score means something isn't landing the way you think it is, not that the product is bad.";
+// [FIX — full rewrite] Replaces the old "not a popularity contest" framing,
+// which read like a napkin note, not a real welcome message for someone
+// who just reached this stage. Short version always shown (~3 lines);
+// GROWTH_FRAMING_MORE is the same welcome content used in info-mobile,
+// revealed behind the expand toggle.
+const GROWTH_FRAMING_SHORT = "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This also exposes your live product to the community, helping you grow your first users.";
+const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your campaign, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Insight Credits, which you can use toward your own feedback requests.";
 
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [nameError, setNameError] = useState('');
   const router = useRouter();
@@ -395,7 +402,21 @@ export default function GrowthDevelopment() {
           </div>
 
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
-            <CardContent className="p-5"><p className="text-sm text-emerald-900 leading-relaxed">{FRAMING_TEXT}</p></CardContent>
+            <CardContent className="p-5">
+              <p className="text-base font-bold text-emerald-700 mb-2">Welcome to the Growth stage</p>
+              <p className="text-sm text-emerald-900 leading-relaxed">{GROWTH_FRAMING_SHORT}</p>
+              {showFramingMore && GROWTH_FRAMING_MORE.split('\n\n').map((para, i) => (
+                <p key={i} className="text-sm text-emerald-900 leading-relaxed mt-3">{para}</p>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowFramingMore(v => !v)}
+                className="text-xs font-medium text-emerald-700 mt-3 flex items-center gap-1"
+              >
+                {showFramingMore ? 'Show less' : 'Read more'}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFramingMore ? 'rotate-180' : ''}`} />
+              </button>
+            </CardContent>
           </Card>
 
           {!venture && (
@@ -663,7 +684,7 @@ export default function GrowthDevelopment() {
               unnecessary, and was also pushing the Save button off-screen
               on mobile (confirmed via screenshot) since both shared one
               row with no wrapping. Save now gets the full row. */}
-          <div className="flex justify-end items-center pt-6">
+          <div className="flex justify-center items-center pt-6">
             <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
               {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save Growth Page<CheckCircle className="w-4 h-4 ml-2" /></>)}
             </Button>

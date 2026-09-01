@@ -37,12 +37,13 @@ const PHASE_CONTENT = {
     title: "You've made it to Beta!",
     body: "This page is not your product, it's your beta sign-up page. Its job is to attract early users, convince them to join your beta program, and collect their sign-ups. The more compelling it is, the more testers you'll attract.\n\nYou need 50 beta sign-ups to move to the Growth phase. Use the Promotion Center to share this page.",
   },
-  // [NEW] Growth had no content in the source doc — this is drafted in the
-  // same voice/structure as the other stages (title + short paragraphs,
-  // ending with a practical next step), not copied from any source doc.
+  // [FIX — full rewrite, several rounds of correction this session] The
+  // previous version ("You've completed the founder journey!") was
+  // explicitly rejected — it read like the founder's journey was over,
+  // which is wrong framing. This is the final, explicitly approved content.
   growth: {
-    title: "You've reached Growth!",
-    body: "You've completed the founder journey — Growth is where you take what you've built out into the real world.\n\nDefine your Growth page with as many details as you'd like, and come back to update it anytime as you learn more.\n\nThen put it to the test: head to the Promotion Center to launch a campaign and get it in front of real people. Track the results and feedback you collect on the Product Feedback page.",
+    title: "Welcome to the Growth stage",
+    body: "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This page also exposes viewers to your live product, helping you grow your first user community.\n\nThis is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your campaign, and choose how many users to reach.\n\nAfter that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Insight Credits, which you can use toward your own feedback requests.\n\nHave a successful Zig!",
   },
 };
 
@@ -88,7 +89,7 @@ export default function InfoMobilePage() {
 
       {content ? (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h1 className="font-bold text-lg text-gray-900 mb-3">{content.title}</h1>
+          <h1 className={`font-bold text-lg mb-3 ${venture.phase === 'growth' ? 'text-emerald-700' : 'text-gray-900'}`}>{content.title}</h1>
           {content.body.split('\n\n').map((para, i) => (
             <p key={i} className="text-sm text-gray-600 leading-relaxed mb-3 last:mb-0">{para}</p>
           ))}

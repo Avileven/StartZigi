@@ -53,7 +53,7 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
           </div>
           {/* Same fix as growth-development's version — forces any nested
               textarea to actually fill the screen instead of staying tiny. */}
-          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh]">{children}</div>
+          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh] [&_input]:min-h-[35vh] [&_input]:text-2xl [&_input]:p-6">{children}</div>
         </div>
       )}
     </>
@@ -381,20 +381,38 @@ if (campaignErr) throw campaignErr;
                 </ol>
               </div>
 
-              <div>
+              <div className="text-center">
                 <h3 className="font-semibold text-lg mb-2">Feedback Requests Remaining</h3>
-                <p className="text-3xl font-bold text-indigo-600 mb-4">{venture.feedback_request_pool ?? 20}</p>
-                <Label htmlFor="requests-to-use">How many would you like to use for this round?</Label>
+                {/* [FIX] Was left-aligned with the number on its own line —
+                    now centered, with the number in a bordered box, matching
+                    the visual weight of other "stat" numbers in the app. */}
+                <div className="inline-block border-2 border-indigo-200 rounded-xl px-6 py-3 mb-4">
+                  <p className="text-3xl font-bold text-indigo-600">{venture.feedback_request_pool ?? 20}</p>
+                </div>
+                <Label htmlFor="requests-to-use" className="block">How many would you like to use for this round?</Label>
                 <MobileFieldWrapper label="Requests to use" summary={String(requestsToUse)} isMobile={isMobile}>
-                  <Input
-                    id="requests-to-use"
-                    type="number"
-                    min={1}
-                    max={venture.feedback_request_pool ?? 20}
-                    value={requestsToUse}
-                    onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="mt-2 max-w-[140px]"
-                  />
+                  {/* [FIX] Native number-input spin arrows don't render on
+                      mobile browsers at all — replaced with explicit +/-
+                      buttons that work everywhere. */}
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <Button
+                      type="button" variant="outline" size="icon"
+                      onClick={() => setRequestsToUse(v => Math.max(1, v - 1))}
+                    >-</Button>
+                    <Input
+                      id="requests-to-use"
+                      type="number"
+                      min={1}
+                      max={venture.feedback_request_pool ?? 20}
+                      value={requestsToUse}
+                      onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      className="max-w-[100px] text-center"
+                    />
+                    <Button
+                      type="button" variant="outline" size="icon"
+                      onClick={() => setRequestsToUse(v => Math.min(venture.feedback_request_pool ?? 20, v + 1))}
+                    >+</Button>
+                  </div>
                 </MobileFieldWrapper>
                 {/* [FIX 020826] Earn-more framing (Part E.7/E.8) instead of a
                     "buy more" purchase flow — Insight Credits transfer 1:1

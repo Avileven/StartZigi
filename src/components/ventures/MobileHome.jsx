@@ -48,7 +48,7 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
         <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         </div>
-        <span className="font-extrabold text-gray-900 text-base tracking-tight">StartZig Mobile Companion</span>
+        <span className="font-extrabold text-purple-700 text-lg tracking-tight">StartZig Mobile Companion</span>
       </button>
 
       {/* [FIX 020826] Explanation is now collapsible (was always shown
@@ -139,6 +139,7 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
               text dumped in at once. */}
           {venture.growth_data?.description && (
             <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600 mb-1.5">Profile</p>
               <p className="text-sm text-gray-600">
                 {showGrowthDescription ? venture.growth_data.description : `${venture.growth_data.description.slice(0, 100)}${venture.growth_data.description.length > 100 ? '…' : ''}`}
               </p>
