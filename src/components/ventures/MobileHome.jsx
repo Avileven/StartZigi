@@ -39,6 +39,7 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
   // (selected_categories) used elsewhere to determine whether the founder
   // has actually finished configuring their Growth page.
   const growthSetupComplete = venture?.growth_data?.selected_categories?.length > 0;
+  const [showGrowthDescription, setShowGrowthDescription] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -131,12 +132,27 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
           "best-effort responsive" — see those files' own fixes). */}
       {showContinueToGrowth && growthSetupComplete && (
         <>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm text-center">
-            <p className="font-semibold text-blue-600">{venture.name}</p>
-            {venture.growth_data?.headline && (
-              <p className="text-sm text-gray-500 mt-1">{venture.growth_data.headline}</p>
-            )}
-          </div>
+          {/* [FIX] Venture name removed — already shown above ("Fugkthesys
+              / Growth"), duplicating it here was pointless. Shows a
+              snippet of the description instead (not the slogan), so the
+              card isn't empty, with a toggle for the rest — not the whole
+              text dumped in at once. */}
+          {venture.growth_data?.description && (
+            <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
+              <p className="text-sm text-gray-600">
+                {showGrowthDescription ? venture.growth_data.description : `${venture.growth_data.description.slice(0, 100)}${venture.growth_data.description.length > 100 ? '…' : ''}`}
+              </p>
+              {venture.growth_data.description.length > 100 && (
+                <button
+                  onClick={() => setShowGrowthDescription(v => !v)}
+                  className="text-xs font-medium text-indigo-600 mt-1 flex items-center gap-1"
+                >
+                  {showGrowthDescription ? 'Less' : 'More'}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showGrowthDescription ? 'rotate-180' : ''}`} />
+                </button>
+              )}
+            </div>
+          )}
           <div className="space-y-2 mb-4">
             <button
               onClick={() => router.push('/promotion-center')}

@@ -79,6 +79,18 @@ export default function PromotionCenter() {
   const isGrowthPhase = venture?.phase === 'growth';
   const isFeedbackPhase = venture?.phase === 'mvp' || venture?.phase === 'mlp';
 
+  // [NEW] Per explicit request: in Growth specifically, the "Invite a
+  // Friend (Email)" option is skipped entirely — someone reaching out to an
+  // external contact doesn't need our system for that, and offering it here
+  // "just confuses them." So Growth skips the whole choice screen and goes
+  // straight to In-App Promotion. Uses replace (not push) so the skipped
+  // screen doesn't sit in browser history.
+  useEffect(() => {
+    if (isGrowthPhase) {
+      router.replace(createPageUrl("Promotion?type=in-app"));
+    }
+  }, [isGrowthPhase, router]);
+
   // [ADDED] Phase-based intro message — shown at top of page to explain what the user is sending.
   const getPhaseIntro = () => {
     if (venture?.phase === 'mvp') return {
@@ -375,6 +387,17 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
             Create Venture
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // [NEW] Brief loading state while the Growth auto-redirect (above) fires
+  // — avoids flashing the choice screen (with the email option we're
+  // deliberately skipping for Growth) before it navigates away.
+  if (isGrowthPhase) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }

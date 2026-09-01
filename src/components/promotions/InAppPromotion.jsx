@@ -16,7 +16,49 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.j
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Megaphone, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Megaphone, AlertTriangle, ChevronRight, X } from "lucide-react";
+
+// [NEW — mobile fix] This file had no mobile treatment at all — tapping a
+// field didn't open it fullscreen, unlike growth-development/venture-landing
+// which already have this pattern. Same MobileFieldWrapper implementation,
+// copied here since this is a standalone file (not shared via import).
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
+function MobileFieldWrapper({ label, summary, isMobile, children }) {
+  const [open, setOpen] = useState(false);
+  if (!isMobile) return <>{children}</>;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900">{label}</p>
+          {summary ? <p className="text-xs text-gray-500 truncate">{summary}</p> : <p className="text-xs text-gray-400">Tap to fill in</p>}
+        </div>
+        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+            <h3 className="font-semibold text-gray-900">{label}</h3>
+            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
+          </div>
+          {/* Same fix as growth-development's version — forces any nested
+              textarea to actually fill the screen instead of staying tiny. */}
+          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh]">{children}</div>
+        </div>
+      )}
+    </>
+  );
+}
 
 // [FIX 020826] Removed the 3-tier package picker (20/50/100 reach for
 // $1,000/$1,500/$2,000 virtual_capital) — replaced by the Feedback Request
@@ -38,6 +80,7 @@ const EXAMPLE_VENTURE_IDS = [
 ];
 
 export default function InAppPromotion({ goBack }) {
+  const isMobile = useIsMobile();
   const [venture, setVenture] = useState(null);
   // [FIX 020826] Replaces selectedPackage — the founder now picks how many of
   // their remaining Feedback Request Pool to spend on this round, not a fixed
@@ -309,10 +352,10 @@ if (campaignErr) throw campaignErr;
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={goBack} className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Promotion Center
-        </Button>
+        {/* [FIX] "Back to Promotion Center" removed per explicit request —
+            with the Growth auto-redirect now skipping the choice screen,
+            you're conceptually already inside Promotion Center, so there's
+            nowhere meaningful to "go back" to. */}
 
         <Card className="shadow-xl">
           <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
@@ -342,15 +385,17 @@ if (campaignErr) throw campaignErr;
                 <h3 className="font-semibold text-lg mb-2">Feedback Requests Remaining</h3>
                 <p className="text-3xl font-bold text-indigo-600 mb-4">{venture.feedback_request_pool ?? 20}</p>
                 <Label htmlFor="requests-to-use">How many would you like to use for this round?</Label>
-                <Input
-                  id="requests-to-use"
-                  type="number"
-                  min={1}
-                  max={venture.feedback_request_pool ?? 20}
-                  value={requestsToUse}
-                  onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  className="mt-2 max-w-[140px]"
-                />
+                <MobileFieldWrapper label="Requests to use" summary={String(requestsToUse)} isMobile={isMobile}>
+                  <Input
+                    id="requests-to-use"
+                    type="number"
+                    min={1}
+                    max={venture.feedback_request_pool ?? 20}
+                    value={requestsToUse}
+                    onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="mt-2 max-w-[140px]"
+                  />
+                </MobileFieldWrapper>
                 {/* [FIX 020826] Earn-more framing (Part E.7/E.8) instead of a
                     "buy more" purchase flow — Insight Credits transfer 1:1
                     into this pool, they aren't spent on it. */}
@@ -362,13 +407,15 @@ if (campaignErr) throw campaignErr;
               {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
               <div>
                 <Label htmlFor="tagline">Campaign Name *</Label>
-                <Textarea
-                  id="tagline"
-                  value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
-                  placeholder="Give your campaign a name — this will appear in the invitation message..."
-                  className="mt-2 min-h-[100px]"
-                />
+                <MobileFieldWrapper label="Campaign Name" summary={tagline} isMobile={isMobile}>
+                  <Textarea
+                    id="tagline"
+                    value={tagline}
+                    onChange={(e) => setTagline(e.target.value)}
+                    placeholder="Give your campaign a name — this will appear in the invitation message..."
+                    className="mt-2 min-h-[100px]"
+                  />
+                </MobileFieldWrapper>
               </div>
 
               {/* [FIX 020826] Button active when: tagline filled, at least 1

@@ -55,7 +55,15 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
             <h3 className="font-semibold text-gray-900">{label}</h3>
             <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-medium flex items-center gap-1">Done <X className="w-4 h-4" /></button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4">{children}</div>
+          {/* [FIX — confirmed via screenshot] The field itself (especially
+              a Textarea) was staying small and fixed-height, leaving most
+              of the fullscreen sheet as wasted blank space below it. The
+              arbitrary-selector below reaches any textarea inside children
+              regardless of nesting (Label/Textarea wrapper divs aren't
+              flex containers, so a plain flex-1 on children wouldn't have
+              propagated down to it), forcing it to actually fill the
+              screen instead of just floating at the top. */}
+          <div className="flex-1 overflow-y-auto p-4 [&_textarea]:min-h-[55vh]">{children}</div>
         </div>
       )}
     </>
@@ -651,8 +659,11 @@ export default function GrowthDevelopment() {
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-between items-center pt-6">
-            <Button variant="outline" onClick={() => router.push(createPageUrl("Dashboard"))}><ArrowLeft className="w-4 h-4 mr-2" />Back to Dashboard</Button>
+          {/* [FIX] "Back to Dashboard" removed per explicit request —
+              unnecessary, and was also pushing the Save button off-screen
+              on mobile (confirmed via screenshot) since both shared one
+              row with no wrapping. Save now gets the full row. */}
+          <div className="flex justify-end items-center pt-6">
             <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
               {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save Growth Page<CheckCircle className="w-4 h-4 ml-2" /></>)}
             </Button>
