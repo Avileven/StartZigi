@@ -34,8 +34,16 @@ export default function Pricing() {
       alert("You're already on the Builder plan as an Early Adopter — enjoy your free month!");
       return;
     }
-    if (planKey === 'pro_founder' || planKey === 'unicorn') {
+    if (planKey === 'pro_founder') {
       alert('Available after launch. Stay tuned!');
+      return;
+    }
+    // [NEW] Growth isn't purchased here at all — it's assigned
+    // automatically the moment a venture reaches the Growth stage (via the
+    // regular journey or by registering with an existing product). This
+    // card is informational only.
+    if (planKey === 'growth') {
+      alert('Growth is included automatically when your venture reaches the Growth stage — nothing to select here.');
       return;
     }
 
@@ -133,24 +141,25 @@ export default function Pricing() {
       featured: true,
     },
     {
-      key: 'unicorn',
-      name: 'Unicorn',
-      emoji: '🦄',
-      price: '$28',
-      sixMonthPrice: '$19',
+      key: 'growth',
+      name: 'Growth',
+      emoji: '🚀',
+      // [FIX] Growth shows a normal, real price — no "free" messaging on
+      // the pricing page itself; the temporary benefit is communicated
+      // separately, after registration. Same value for both toggle states
+      // (not tied to the 6-month "full journey" commitment — Growth is the
+      // end of the journey, not a stage you commit to in advance).
+      isGrowthTier: true,
+      price: '$29',
+      sixMonthPrice: '$29',
       priceNote: '/ month',
-      subtitle: 'For high-usage users running advanced simulations and testing at scale',
-      description: 'Maximum AI power, advanced beta tools, and full platform visibility for founders scaling to the top.',
+      subtitle: 'Automatically included when your venture reaches the Growth stage',
+      description: 'Your product gets its own landing page, and the community can visit it and give feedback.',
       features: [
-        'Full startup journey',
-        'Community & investment marketplace browsing',
-        '500 AI credits',
-        'Business Deck — AI-generated investor business plan',
-        'ZigPlan — AI-generated Product Requirements Document',
-        'Founder badge — visible to community and invited guests',
-        'Beta — advanced tools for real beta management (tester list, export & more)',
+        'Product landing page',
+        '30 feedback requests a month',
       ],
-      cta: 'Get Unicorn',
+      cta: 'Get Growth',
       featured: false,
     },
   ];
