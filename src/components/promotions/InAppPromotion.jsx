@@ -61,8 +61,8 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
               only textarea gets a generous min-height (a real writing
               field), input keeps its natural single-line height. */}
           <div className="flex-1 overflow-y-auto p-4
-            [&_textarea]:min-h-[50vh] [&_textarea]:border-0 [&_textarea]:rounded-none [&_textarea]:shadow-none [&_textarea]:ring-0 [&_textarea]:focus:ring-0 [&_textarea]:focus-visible:ring-0 [&_textarea]:p-0
-            [&_input]:border-0 [&_input]:rounded-none [&_input]:shadow-none [&_input]:ring-0 [&_input]:focus:ring-0 [&_input]:focus-visible:ring-0 [&_input]:px-0 [&_input]:border-b [&_input]:border-b-gray-200 [&_input]:rounded-none">
+            [&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0
+            [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:!px-0 [&_input]:!border-b [&_input]:!border-b-gray-200">
             {children}
           </div>
         </div>
