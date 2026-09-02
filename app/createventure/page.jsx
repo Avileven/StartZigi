@@ -493,6 +493,27 @@ function CreateVentureForm() {
           </Card>
         )}
 
+        {/* [NEW] Mirrors the Ideas Bank card above exactly — same
+            structure, different destination. A founder who already has a
+            real product skips the whole Idea→Plan→MVP→MLP→Beta journey
+            and goes straight to Growth Development Center. */}
+        {!searchParams.get('name') && (
+          <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Rocket className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Already have a product?</h3>
+              </div>
+              <Button onClick={() => router.push('/growth-development')} className="w-full bg-emerald-600 hover:bg-emerald-700" size="sm">
+                <Rocket className="w-4 h-4 mr-2" />
+                Skip to Growth
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <h1 className="text-xl font-bold text-gray-900 mb-4">Create your venture</h1>
 
         <div className="space-y-2 mb-6">
@@ -635,6 +656,30 @@ function CreateVentureForm() {
                   >
                     <Lightbulb className="w-4 h-4 mr-2" />
                     Browse Ideas Bank
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* [NEW] Mirrors the Ideas Bank card above exactly. */}
+              <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 mt-4">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Rocket className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900">
+                      Already have a product?
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Skip the journey and bring your existing product straight to the community for feedback.
+                  </p>
+                  <Button 
+                    onClick={() => router.push('/growth-development')}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Rocket className="w-4 h-4 mr-2" />
+                    Skip to Growth
                   </Button>
                 </CardContent>
               </Card>
