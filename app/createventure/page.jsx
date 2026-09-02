@@ -46,6 +46,12 @@ function CreateVentureForm() {
   // handleChange, flattened to one field at a time.
   const [isMobile, setIsMobile] = useState(false);
   const [expandedField, setExpandedField] = useState(null);
+  // [NEW] Entry choice gate — null shows the two big cards; 'idea' reveals
+  // the existing form below; 'product' navigates straight to
+  // growth-development (handled in the click handler, not by setting this).
+  // Defaults straight to 'idea' when arriving from Ideas Bank (name param
+  // already set) — that's already an explicit choice, no need to ask again.
+  const [entryChoice, setEntryChoice] = useState(searchParams.get('name') ? 'idea' : null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -473,6 +479,44 @@ function CreateVentureForm() {
           </div>
         )}
 
+        {/* [NEW] Entry choice gate — replaces the old small "Skip to
+            Growth" side card entirely. Everything else (form, Ideas Bank)
+            is hidden until a choice is made. */}
+        {entryChoice === null ? (
+          <div className="space-y-3 mt-6">
+            <h1 className="text-xl font-bold text-gray-900 mb-4 text-center">How would you like to start?</h1>
+            <button
+              onClick={() => setEntryChoice('idea')}
+              className="w-full text-left border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-5 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">I have an idea</p>
+                <p className="text-xs text-gray-500">Shape it, share it, and grow a community around it.</p>
+              </div>
+            </button>
+            <button
+              onClick={() => router.push('/growth-development')}
+              className="w-full text-left border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <Rocket className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">I have a product</p>
+                <p className="text-xs text-gray-500">Skip ahead and bring it straight to the community.</p>
+              </div>
+            </button>
+          </div>
+        ) : (
+        <>
+        {/* [NEW] Back to the choice screen. */}
+        <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-sm text-gray-500 mb-3">
+          <ArrowRight className="w-4 h-4 rotate-180" /> Back
+        </button>
+
         {/* [FIX 020826] Ideas Bank moved to the top on mobile — was below
             the form, easy to miss since it required scrolling past the
             whole form first. */}
@@ -488,27 +532,6 @@ function CreateVentureForm() {
               <Button onClick={() => router.push('/ideas')} className="w-full bg-indigo-600 hover:bg-indigo-700" size="sm">
                 <Lightbulb className="w-4 h-4 mr-2" />
                 Browse Ideas Bank
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* [NEW] Mirrors the Ideas Bank card above exactly — same
-            structure, different destination. A founder who already has a
-            real product skips the whole Idea→Plan→MVP→MLP→Beta journey
-            and goes straight to Growth Development Center. */}
-        {!searchParams.get('name') && (
-          <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 mb-4">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Rocket className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-sm font-semibold text-gray-900">Already have a product?</h3>
-              </div>
-              <Button onClick={() => router.push('/growth-development')} className="w-full bg-emerald-600 hover:bg-emerald-700" size="sm">
-                <Rocket className="w-4 h-4 mr-2" />
-                Skip to Growth
               </Button>
             </CardContent>
           </Card>
@@ -550,6 +573,8 @@ function CreateVentureForm() {
         >
           {isLoading ? "Creating..." : "Launch Venture"}
         </Button>
+        </>
+        )}
       </div>
     );
   }
@@ -557,6 +582,41 @@ function CreateVentureForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8 pt-20">
       <div className="max-w-5xl mx-auto">
+        {/* [NEW] Entry choice gate — replaces the old small "Skip to
+            Growth" side card entirely. Everything else (form, Ideas Bank)
+            is hidden until a choice is made. */}
+        {entryChoice === null ? (
+          <div className="max-w-2xl mx-auto mt-12">
+            <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">How would you like to start?</h1>
+            <div className="grid md:grid-cols-2 gap-6">
+              <button
+                onClick={() => setEntryChoice('idea')}
+                className="text-left border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 hover:shadow-lg transition-shadow"
+              >
+                <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                  <Lightbulb className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-lg font-semibold text-gray-900 mb-1">I have an idea</p>
+                <p className="text-sm text-gray-600">Shape it, share it with a real community, and grow your first audience.</p>
+              </button>
+              <button
+                onClick={() => router.push('/growth-development')}
+                className="text-left border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 hover:shadow-lg transition-shadow"
+              >
+                <div className="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <Rocket className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-lg font-semibold text-gray-900 mb-1">I have a product</p>
+                <p className="text-sm text-gray-600">Skip the journey and bring it straight to the community for feedback.</p>
+              </button>
+            </div>
+          </div>
+        ) : (
+        <>
+        {/* [NEW] Back to the choice screen. */}
+        <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-sm text-gray-500 mb-4">
+          <ArrowRight className="w-4 h-4 rotate-180" /> Back
+        </button>
         <div className="flex flex-col md:flex-row gap-6 items-start">
 
           {/* עמודה ראשית - Create Your Venture */}
@@ -659,34 +719,12 @@ function CreateVentureForm() {
                   </Button>
                 </CardContent>
               </Card>
-
-              {/* [NEW] Mirrors the Ideas Bank card above exactly. */}
-              <Card className="border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 mt-4">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Rocket className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900">
-                      Already have a product?
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Skip the journey and bring your existing product straight to the community for feedback.
-                  </p>
-                  <Button 
-                    onClick={() => router.push('/growth-development')}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    <Rocket className="w-4 h-4 mr-2" />
-                    Skip to Growth
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           )}
 
         </div>
+        </>
+        )}
       </div>
     </div>
   );

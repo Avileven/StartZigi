@@ -534,6 +534,7 @@ export default function GrowthDevelopment() {
                     </div>
                   )}
                   <p className="text-xs text-gray-400">Supports images or a short video. One file only, to keep it focused for reviewers.</p>
+                  {!hasDemoFile && <p className="text-xs text-red-500">Required — upload one file before you can save.</p>}
                 </CardContent>
               </Card>
 
@@ -574,6 +575,7 @@ export default function GrowthDevelopment() {
                 <CardHeader>
                   <CardTitle className={hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose which categories appear on your page</CardTitle>
                   <CardDescription>Pick at least one. You can change this anytime, even after your page is live.</CardDescription>
+                  {!hasAtLeastOneCategory && <p className="text-xs text-red-500 mt-1">Required — select at least one category before you can save.</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
 
@@ -609,15 +611,21 @@ export default function GrowthDevelopment() {
                               <span className="text-sm text-gray-800">Free tier available</span>
                             </label>
                             {bmd.has_free_tier && (
-                              <Input value={bmd.free_tier_description} onChange={(e) => handleBusinessModelChange('free_tier_description', e.target.value)} placeholder="What's included in the free tier" />
+                              <div>
+                                <Input value={bmd.free_tier_description} onChange={(e) => handleBusinessModelChange('free_tier_description', e.target.value)} placeholder="What's included in the free tier" />
+                                {!bmd.free_tier_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe the free tier, or uncheck it above.</p>}
+                              </div>
                             )}
 
                             <div className="space-y-2">
                               <Label className="text-xs">Paid packages</Label>
                               {bmd.packages.map((p) => (
-                                <div key={p.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                                  <div><p className="text-sm font-medium">{p.name} — {p.price}</p><p className="text-xs text-gray-500">{p.description}</p></div>
-                                  <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                                <div key={p.id}>
+                                  <div className="flex items-center justify-between bg-gray-50 rounded p-2">
+                                    <div><p className="text-sm font-medium">{p.name} — {p.price}</p><p className="text-xs text-gray-500">{p.description}</p></div>
+                                    <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                                  </div>
+                                  {!p.price.trim() && <p className="text-xs text-red-500 mt-1">This package is missing a price.</p>}
                                 </div>
                               ))}
                               {/* [FIX] Stacks vertically on small screens — was
@@ -634,7 +642,9 @@ export default function GrowthDevelopment() {
                           </>
                         )}
                         {bmd.model_type === 'transactional' && (
-                          <div><Label className="text-xs">Fee / commission per transaction</Label><Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking" /></div>
+                          <div><Label className="text-xs">Fee / commission per transaction</Label><Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking" />
+                            {!bmd.transaction_fee_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe your fee before you can save.</p>}
+                          </div>
                         )}
                         {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
                         {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
