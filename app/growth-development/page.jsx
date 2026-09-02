@@ -37,15 +37,32 @@ import {
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
 
-function MobileFieldWrapper({ label, summary, isMobile, children }) {
+// [FIX — real root cause, not styling] A native <input> can never wrap
+// text to a second line or scroll vertically, no matter what CSS is
+// applied — text just keeps extending sideways and scrolls out of view.
+// That's what "gets stuck in the middle, can't see what you're typing" was
+// — a fundamental HTML constraint, not a border/sizing bug. When value/
+// onChange are passed, this component now owns the editing surface itself
+// and always renders a real <textarea>, regardless of what element the
+// caller's `children` uses on desktop. `children` is only used for the
+// multi-field categories (Business Model, Core Features, Social Links)
+// where several short inputs sit together — those still render as-is,
+// with border removed but no forced full-screen height, since forcing
+// full height there breaks a multi-field layout (confirmed by screenshot
+// last round) more than it helps a genuinely short field like a price.
+function MobileFieldWrapper({ label, summary, isMobile, children, value, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
   if (!isMobile) return <>{children}</>;
+  const useOwnTextarea = value !== undefined && onChange !== undefined;
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left">
+      {/* [FIX] mt-2 added — was sitting flush against the Label above it. */}
+      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left mt-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900">{label}</p>
-          {summary ? <p className="text-xs text-gray-500 truncate">{summary}</p> : <p className="text-xs text-gray-400">Tap to fill in</p>}
+          {/* [FIX] Was showing {label} again here too, duplicating the
+              Label already rendered above this component by the caller.
+              Shows only the current value now (or the empty-state hint). */}
+          {summary ? <p className="text-sm text-gray-900 truncate">{summary}</p> : <p className="text-sm text-gray-400">Tap to fill in</p>}
         </div>
         <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
       </button>
@@ -53,36 +70,25 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="font-semibold text-gray-900">{label}</h3>
-            {/* [FIX] "Done ✕" replaced with an explicit "Save" — per
-                explicit feedback, it didn't feel like changes were being
-                saved. Values are already live-bound to state as you type
-                (nothing extra to persist on close), so this is a labeling
-                fix, not a new save action. */}
             <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-semibold flex items-center gap-1">
               <CheckCircle className="w-4 h-4" /> Save
             </button>
           </div>
-          {/* [FIX — final version, checked field-by-field including the
-              multi-part categories (Business Model, Core Features)] The
-              previous attempt force-enlarged font size and height on EVERY
-              input uniformly, which looked fine for a single standalone
-              field (Slogan) but broke small multi-field forms (feature
-              name+description, package name+price+description) — a single
-              field in that group blew up huge and centered while its
-              siblings stayed normal size, confirmed via screenshot to look
-              worse than the original, unstyled version.
-              Fixed properly this time: border/shadow/rounded/ring removed
-              from every input and textarea (so there's no visible "box"
-              anywhere — this was the actual, real request, repeated many
-              times), but font stays at its normal default size everywhere,
-              and only textarea (a genuine freeform writing field) gets a
-              generous minimum height — not input, which stays its natural
-              single-line height. This is now the same treatment for every
-              field, single or grouped, with no exceptions. */}
-          <div className="flex-1 overflow-y-auto p-4
-            [&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0 [&_textarea]:!text-xl
-            [&_input]:!min-h-[50vh] [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:!p-0 [&_input]:!text-xl [&_input]:!bg-transparent">
-            {children}
+          <div className="flex-1 overflow-y-auto p-4">
+            {useOwnTextarea ? (
+              <textarea
+                autoFocus
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className="w-full h-full min-h-[60vh] text-xl leading-relaxed border-0 focus:ring-0 focus:outline-none resize-none bg-transparent"
+              />
+            ) : (
+              <div className="[&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0 [&_textarea]:!text-xl
+                [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0">
+                {children}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -461,7 +467,7 @@ export default function GrowthDevelopment() {
                     <CardTitle className="flex items-center gap-2">{isNameComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Venture Name *</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile}>
+                    <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile} value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet">
                       <Input value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet" />
                       {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
                     </MobileFieldWrapper>
@@ -475,7 +481,7 @@ export default function GrowthDevelopment() {
                   <CardDescription>Your hero line.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile}>
+                  <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile} value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip">
                     <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
                   </MobileFieldWrapper>
                 </CardContent>
@@ -500,7 +506,7 @@ export default function GrowthDevelopment() {
                   <CardDescription>Link to your product</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile}>
+                  <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile} value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com">
                     <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
                   </MobileFieldWrapper>
                 </CardContent>
@@ -558,7 +564,7 @@ export default function GrowthDevelopment() {
                   <CardDescription>Ask reviewers anything you want, in your own words. Shown first, before everything else.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile}>
+                  <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?">
                     <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?" />
                   </MobileFieldWrapper>
                 </CardContent>

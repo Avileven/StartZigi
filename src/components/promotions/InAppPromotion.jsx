@@ -33,15 +33,21 @@ function useIsMobile() {
   return isMobile;
 }
 
-function MobileFieldWrapper({ label, summary, isMobile, children }) {
+// [FIX — real root cause, not styling] Same fix as growth-development: a
+// native <input> can never wrap/scroll vertically — text just extends
+// sideways and disappears off-screen, no CSS fixes that. When value/
+// onChange are passed, this renders a real <textarea> for editing instead.
+function MobileFieldWrapper({ label, summary, isMobile, children, value, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
   if (!isMobile) return <>{children}</>;
+  const useOwnTextarea = value !== undefined && onChange !== undefined;
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left">
+      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left mt-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900">{label}</p>
-          {summary ? <p className="text-xs text-gray-500 truncate">{summary}</p> : <p className="text-xs text-gray-400">Tap to fill in</p>}
+          {/* [FIX] No longer repeats {label} here — was duplicating the
+              Label already shown above by the caller. */}
+          {summary ? <p className="text-sm text-gray-900 truncate">{summary}</p> : <p className="text-sm text-gray-400">Tap to fill in</p>}
         </div>
         <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
       </button>
@@ -49,21 +55,25 @@ function MobileFieldWrapper({ label, summary, isMobile, children }) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
             <h3 className="font-semibold text-gray-900">{label}</h3>
-            {/* [FIX] Same fix as growth-development — "Done ✕" replaced
-                with "Save" so it feels like changes are actually saved. */}
             <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-semibold flex items-center gap-1">
               <CheckCircle className="w-4 h-4" /> Save
             </button>
           </div>
-          {/* [FIX — same final version as growth-development] Border/shadow/
-              ring/rounded stripped from every input and textarea so there's
-              no visible "box" anywhere; font stays normal-size everywhere;
-              only textarea gets a generous min-height (a real writing
-              field), input keeps its natural single-line height. */}
-          <div className="flex-1 overflow-y-auto p-4
-            [&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0 [&_textarea]:!text-xl
-            [&_input]:!min-h-[50vh] [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:!p-0 [&_input]:!text-xl [&_input]:!bg-transparent">
-            {children}
+          <div className="flex-1 overflow-y-auto p-4">
+            {useOwnTextarea ? (
+              <textarea
+                autoFocus
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className="w-full h-full min-h-[60vh] text-xl leading-relaxed border-0 focus:ring-0 focus:outline-none resize-none bg-transparent"
+              />
+            ) : (
+              <div className="[&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0 [&_textarea]:!text-xl
+                [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0">
+                {children}
+              </div>
+            )}
           </div>
         </div>
       )}
