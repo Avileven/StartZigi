@@ -642,7 +642,10 @@ if (userVentures.length === 0) {
                 venture_id: activeVenture.id,
                 message_type: 'phase_welcome',
                 title: '📈 Welcome to Growth!',
-                content: `It's time to scale your startup. Focus on growing your user base and securing funding.`,
+                // [FIX] Replaced the old generic "scale your startup...
+                // securing funding" copy with the explicitly approved
+                // message for this stage.
+                content: `Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.`,
                 phase: 'growth',
               });
               }

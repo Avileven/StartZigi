@@ -494,7 +494,7 @@ function CreateVentureForm() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">I have an idea</p>
-                <p className="text-xs text-gray-500">Shape it, share it, and grow a community around it.</p>
+                <p className="text-xs text-gray-500">Start your full journey and become involved in StartZig's community</p>
               </div>
             </button>
             <button
@@ -506,7 +506,7 @@ function CreateVentureForm() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">I have a product</p>
-                <p className="text-xs text-gray-500">Skip ahead and bring it straight to the community.</p>
+                <p className="text-xs text-gray-500">Invite the community to visit your product</p>
               </div>
             </button>
           </div>
@@ -597,7 +597,7 @@ function CreateVentureForm() {
                   <Lightbulb className="w-7 h-7 text-white" />
                 </div>
                 <p className="text-lg font-semibold text-gray-900 mb-1">I have an idea</p>
-                <p className="text-sm text-gray-600">Shape it, share it with a real community, and grow your first audience.</p>
+                <p className="text-sm text-gray-600">Start your full journey and become involved in StartZig's community</p>
               </button>
               <button
                 onClick={() => router.push('/growth-development')}
@@ -607,7 +607,7 @@ function CreateVentureForm() {
                   <Rocket className="w-7 h-7 text-white" />
                 </div>
                 <p className="text-lg font-semibold text-gray-900 mb-1">I have a product</p>
-                <p className="text-sm text-gray-600">Skip the journey and bring it straight to the community for feedback.</p>
+                <p className="text-sm text-gray-600">Invite the community to visit your product</p>
               </button>
             </div>
           </div>

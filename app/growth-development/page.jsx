@@ -19,6 +19,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
+import { VentureMessage } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
 import { UploadFile } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
@@ -361,6 +362,7 @@ export default function GrowthDevelopment() {
     setIsSaving(true);
     try {
       let targetVenture = venture;
+      const isNewVenture = !targetVenture;
       if (!targetVenture) {
         try {
           targetVenture = await createVentureFromScratch();
@@ -377,6 +379,21 @@ export default function GrowthDevelopment() {
         await Venture.update(targetVenture.id, { name: growthData.name.trim() });
       }
       await Venture.update(targetVenture.id, { growth_data: growthData });
+      // [FIX — real gap, caught after the fact] This is the primary path
+      // this whole feature exists for (someone with an existing product
+      // coming straight to Growth), and it was the ONE path that never
+      // sent the "Welcome to Growth" message — only the regular
+      // Beta→Growth automatic transition did. Same exact title/content,
+      // sent once, only on first creation (not on every subsequent save).
+      if (isNewVenture) {
+        await VentureMessage.create({
+          venture_id: targetVenture.id,
+          message_type: 'phase_welcome',
+          title: '📈 Welcome to Growth!',
+          content: `Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.`,
+          phase: 'growth',
+        });
+      }
       showToast("Growth page saved!");
       router.push(createPageUrl("Dashboard"));
     } catch (error) {
@@ -445,13 +462,10 @@ export default function GrowthDevelopment() {
             </CardContent>
           </Card>
 
-          {!venture && (
-            <Card className="shadow-sm border-amber-200 bg-amber-50">
-              <CardContent className="p-4 text-sm text-amber-800">
-                You don't have a venture yet — that's fine if you're bringing an existing product. Fill in a name below and we'll create it for you when you save.
-              </CardContent>
-            </Card>
-          )}
+          {/* [FIX] "You don't have a venture yet..." message removed
+              entirely — the only way to reach this page without a venture
+              is by explicitly choosing "I have a product" on the entry
+              screen, so re-explaining that here was redundant. */}
 
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
