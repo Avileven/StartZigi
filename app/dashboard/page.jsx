@@ -1631,22 +1631,9 @@ if (showToS) {
 
   return (
     <>
-      {/* [MOBILE] Recommend desktop for the full data-dense dashboard experience, dismissible */}
-      {showMobileNotice && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-start gap-3">
-          <span className="text-amber-500 text-lg leading-none">💡</span>
-          <div className="flex-1 text-sm text-amber-800">
-           Despite our efforts to optimize this dashboard for mobile,The volume of information it displays still makes desktop the recommended way to work.We apologize for any inconvenience. 
-          </div>
-          <button
-            onClick={dismissMobileNotice}
-            className="text-amber-500 hover:text-amber-700 flex-shrink-0"
-            aria-label="Dismiss"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* [FIX] Mobile notice banner removed entirely per explicit request —
+          was also triggering incorrectly on desktop with a narrow/zoomed
+          browser window, not just real mobile devices. */}
 
       <RejectionDetailsModal
         isOpen={showRejectionDetails}
