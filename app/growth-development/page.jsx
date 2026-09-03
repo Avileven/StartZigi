@@ -393,24 +393,6 @@ export default function GrowthDevelopment() {
           content: `Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.`,
           phase: 'growth',
         });
-        // [NEW] Same email as the regular-journey Beta→Growth transition
-        // (dashboard-page.jsx) — via the existing generic
-        // /api/send-phase-transition route. Non-blocking.
-        try {
-          await fetch("/api/send-phase-transition", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: currentUser.email,
-              founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
-              ventureName: targetVenture.name,
-              newPhaseTitle: "📈 Welcome to Growth!",
-              newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package. No commitment or credit card required.",
-            }),
-          });
-        } catch (emailErr) {
-          console.error("Growth welcome email failed (non-critical):", emailErr);
-        }
       }
       showToast("Growth page saved!");
       router.push(createPageUrl("Dashboard"));
