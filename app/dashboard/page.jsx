@@ -648,6 +648,26 @@ if (userVentures.length === 0) {
                 content: `Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.`,
                 phase: 'growth',
               });
+              // [NEW] Email via the existing generic /api/send-phase-transition
+              // route (same one already used for other phase transitions,
+              // per this session's confirmation) — non-blocking, matching
+              // the pattern already used for the welcome email in
+              // createventure/page.jsx.
+              try {
+                await fetch("/api/send-phase-transition", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: currentUser.email,
+                    founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
+                    ventureName: activeVenture.name,
+                    newPhaseTitle: "📈 Welcome to Growth!",
+                    newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package. No commitment or credit card required.",
+                  }),
+                });
+              } catch (emailErr) {
+                console.error("Growth welcome email failed (non-critical):", emailErr);
+              }
               }
               activeVenture.phase = 'growth';
             }
