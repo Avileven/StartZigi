@@ -35,6 +35,20 @@ export default function Pricing() {
   const [activeTab, setActiveTab] = useState('idea');
   const router = useRouter();
 
+  // [FIX] Renders a trailing "[N]" footnote marker as a smaller, muted
+  // superscript-style span — was plain text, making it read like part of
+  // the sentence/feature itself instead of a reference.
+  const renderWithFootnote = (text) => {
+    const match = text.match(/^(.*)\s(\[\d+\])$/);
+    if (!match) return text;
+    return (
+      <>
+        {match[1]}
+        <sup className="text-[10px] text-gray-400 ml-0.5">{match[2]}</sup>
+      </>
+    );
+  };
+
   const handleSelectPlan = async (planKey) => {
     if (planKey === 'builder') {
       router.push('/dashboard');
@@ -107,8 +121,8 @@ export default function Pricing() {
       features: [
         'Full startup journey',
         'Free use of a variety of product development tools',
-        '20 feedback requests a month [1]',
-        '100 AI credits a month [2]',
+        '20 feedback requests a month [2]',
+        '100 AI credits a month [1]',
       ],
       cta: 'Start Free',
       featured: false,
@@ -125,7 +139,7 @@ export default function Pricing() {
       features: [
         'Full startup journey',
         'Free use of a variety of product development tools',
-        '30 feedback requests a month [1]',
+        '30 feedback requests a month [2]',
         '300 AI credits a month',
       ],
       cta: 'Get Builder Boost',
@@ -145,7 +159,7 @@ export default function Pricing() {
       description: 'Expose your product to the community and collect feedback on it.',
       features: [
         'Product landing page',
-        '20 feedback requests a month [1]',
+        '20 feedback requests a month [2]',
         '100 AI credits a month',
       ],
       cta: 'Get Growth',
@@ -162,7 +176,7 @@ export default function Pricing() {
       description: 'More visibility, more feedback, more support for products actively growing their user base.',
       features: [
         'Product landing page',
-        '50 feedback requests a month [1]',
+        '50 feedback requests a month [2]',
         '200 AI credits a month',
       ],
       cta: 'Get Growth Boost',
@@ -179,7 +193,7 @@ export default function Pricing() {
             approved quote from the pricing doc, shown as an italic intro
             line rather than a giant styled heading. */}
         <p className="text-lg md:text-xl italic text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed">
-          Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out [2].
+          {renderWithFootnote("Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out [1].")}
         </p>
 
         {/* [NEW] Tabs — Build an Idea / Grow a Product */}
@@ -267,7 +281,7 @@ export default function Pricing() {
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3 text-gray-700">
                       <Check className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-                      <span>{feature}</span>
+                      <span>{renderWithFootnote(feature)}</span>
                     </li>
                   ))}
                 </ul>
@@ -286,14 +300,15 @@ export default function Pricing() {
           ))}
         </div>
 
-        {/* [FIX] Numbered footnotes instead of a single asterisk — [1] for
-            the existing Insight Credits note, [2] new: clarifies the free
-            Builder plan's AI credits are time-limited (per explicit
-            concern about someone sitting on the free plan for years while
-            still drawing AI credits every month). */}
+        {/* [FIX] Numbered footnotes — [1] now matches the reference in the
+            main quote up top (AI credits time limit), [2] matches the
+            feedback-requests line in the cards — was reversed before (a
+            [2] appeared on screen before any [1]). Em dashes removed per
+            explicit request; "another product" changed to "another
+            founder" since this covers both the idea and product stages. */}
         <div className="text-xs text-gray-400 mt-8 max-w-2xl mx-auto text-left space-y-1">
-          <p>[1] You can scale up your feedback balance by earning Insight Credits — each time you give feedback to another product.</p>
-          <p>[2] AI credits are included for your first 6 months — enough to complete your product definition journey. After that, you can continue the journey for free, without new AI credits.</p>
+          <p>[1] AI credits are included for your first 6 months, enough to complete your product definition journey. After that, you can continue the journey for free, without new AI credits.</p>
+          <p>[2] You can scale up your feedback balance by earning Insight Credits, each time you give feedback to another founder.</p>
         </div>
       </div>
     </div>
