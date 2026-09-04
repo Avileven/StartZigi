@@ -662,7 +662,7 @@ if (userVentures.length === 0) {
                     founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
                     ventureName: activeVenture.name,
                     newPhaseTitle: "📈 Welcome to Growth!",
-                    newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package. No commitment or credit card required.",
+                    newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package.",
                   }),
                 });
               } catch (emailErr) {
