@@ -1,5 +1,12 @@
 // pricing page - updated
 // UPDATE 200426: Block plan downgrade — user cannot select a plan lower than their current one.
+// [FULL REBUILD] Per "New pricing.docx" — replaced the flat 4-tier grid
+// with two tabs (Build an Idea / Grow a Product), each with a free-ish and
+// a "Boost" tier. Pro Founder and Unicorn are gone entirely. The 6-month
+// price still uses the existing separate Monthly/6-Months toggle (not
+// embedded in the card text, despite how the doc formatted it) — confirmed
+// explicitly this session. "Most Popular" replaced with "Recommended",
+// and only Growth Boost carries it now.
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -9,32 +16,33 @@ import { useRouter } from 'next/navigation';
 
 // [CREDITS] credit limits per plan
 const PLAN_CREDITS = {
-  explorer: 5,
   builder: 100,
-  pro_founder: 300,
-  unicorn: 500,
+  builder_boost: 300,
+  growth: 100,
+  growth_boost: 200,
 };
 
-// [DOWNGRADE] Plan hierarchy — used to block downgrades
-const PLAN_ORDER = { explorer: 0, builder: 1, pro_founder: 2, unicorn: 3 };
+// [DOWNGRADE] Plan hierarchy — used to block downgrades. Only meaningful
+// within a track (Idea vs Growth); the two Growth tiers don't currently
+// reach this check at all (see handleSelectPlan — both are launch-locked
+// or informational), kept here only for the Idea track / future use.
+const PLAN_ORDER = { builder: 0, builder_boost: 1 };
 
 export default function Pricing() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState('sixMonth'); // 'monthly' | 'sixMonth'
+  // [NEW] Tab state — 'idea' (Build an Idea) or 'product' (Grow a Product).
+  const [activeTab, setActiveTab] = useState('idea');
   const router = useRouter();
 
   const handleSelectPlan = async (planKey) => {
-    if (planKey === 'explorer') {
+    if (planKey === 'builder') {
       router.push('/dashboard');
       return;
     }
 
     // [LAUNCH LOCK] During launch period — paid plans are locked
-    if (planKey === 'builder') {
-      alert("You're already on the Builder plan as an Early Adopter — enjoy your free month!");
-      return;
-    }
-    if (planKey === 'pro_founder') {
+    if (planKey === 'builder_boost') {
       alert('Available after launch. Stay tuned!');
       return;
     }
@@ -44,6 +52,10 @@ export default function Pricing() {
     // card is informational only.
     if (planKey === 'growth') {
       alert('Growth is included automatically when your venture reaches the Growth stage — nothing to select here.');
+      return;
+    }
+    if (planKey === 'growth_boost') {
+      alert('Available after launch. Stay tuned!');
       return;
     }
 
@@ -82,96 +94,114 @@ export default function Pricing() {
     setIsUpdating(false);
   };
 
-  const tiers = [
+  const ideaTiers = [
     {
-      key: 'explorer',
-      name: 'Explorer',
-      emoji: '🧭',
+      key: 'builder',
+      name: 'Builder',
+      emoji: '🔨',
       price: '$0',
       sixMonthPrice: '$0',
       priceNote: 'forever',
       subtitle: 'Try it out, no pressure',
-      description: 'StartZig is free to explore forever. No credit card, no pressure. Use the simulator, play with ideas, learn how startups work.',
+      description: "StartZig's journey is free forever. No credit card, no pressure. Develop your idea and get feedback from the community.",
       features: [
         'Full startup journey',
-        'Community & investment marketplace browsing',
-        '5 AI credits',
-        'Beta — simulation tools',
+        'Free use of a variety of product development tools',
+        '20 feedback requests a month (at least)*',
+        '100 AI credits a month',
       ],
       cta: 'Start Free',
       featured: false,
     },
     {
-      key: 'builder',
-      name: 'Builder',
-      emoji: '🔨',
-      price: '$9',
-      sixMonthPrice: '$7',
+      key: 'builder_boost',
+      name: 'Builder Boost',
+      emoji: '⚡',
+      price: '$12',
+      sixMonthPrice: '$9',
       priceNote: '/ month',
-      subtitle: 'For users starting to seriously validate ideas',
-      description: 'When you\'re ready to get serious, we give you the tools to think, plan, and move like a real founder — without bureaucracy or upfront costs.',
+      subtitle: 'For founders who rely on AI regularly',
+      description: 'Built for founders who want to move faster — more AI support for continuous building, planning, and validating.',
       features: [
         'Full startup journey',
-        'Community & investment marketplace browsing',
-        '100 AI credits',
-        'Beta — simulation tools',
+        'Free use of a variety of product development tools',
+        '30 feedback requests a month (at least)*',
+        '300 AI credits a month',
       ],
-      cta: 'Get Builder',
-      featured: false,
-    },
-    {
-      key: 'pro_founder',
-      name: 'Pro Founder',
-      emoji: '🚀',
-      price: '$19',
-      sixMonthPrice: '$15',
-      priceNote: '/ month',
-      subtitle: 'Designed for continuous building with AI support',
-      description: 'Built for users who rely on the coach regularly and are serious about growing a real venture.',
-      features: [
-        'Full startup journey',
-        'Community & investment marketplace browsing',
-        '300 AI credits',
-        'Beta — simulation tools',
-        'Business Deck — AI-generated investor business plan',
-        'ZigPlan — AI-generated Product Requirements Document',
-        'Founder badge — visible to community and invited guests',
-      ],
-      cta: 'Get Pro Founder',
-      featured: true,
-    },
-    {
-      key: 'growth',
-      name: 'Growth',
-      emoji: '🚀',
-      // [FIX] Growth shows a normal, real price — no "free" messaging on
-      // the pricing page itself; the temporary benefit is communicated
-      // separately, after registration. Same value for both toggle states
-      // (not tied to the 6-month "full journey" commitment — Growth is the
-      // end of the journey, not a stage you commit to in advance).
-      isGrowthTier: true,
-      price: '$29',
-      sixMonthPrice: '$29',
-      priceNote: '/ month',
-      subtitle: 'For founders who already have a product',
-      description: 'Expose your product to the community and collect feedback on it',
-      features: [
-        'Product landing page',
-        '30 feedback requests a month',
-        '100 AI credits',
-        'Founder badge — visible to community and invited guests',
-      ],
-      cta: 'Get Growth',
+      cta: 'Get Builder Boost',
       featured: false,
     },
   ];
 
+  const growthTiers = [
+    {
+      key: 'growth',
+      name: 'Growth',
+      emoji: '🚀',
+      price: '$35',
+      sixMonthPrice: '$28',
+      priceNote: '/ month',
+      subtitle: 'For founders who already have a product',
+      description: 'Expose your product to the community and collect feedback on it.',
+      features: [
+        'Product landing page',
+        '20 feedback requests a month (at least)*',
+        '100 AI credits a month',
+      ],
+      cta: 'Get Growth',
+      featured: false,
+    },
+    {
+      key: 'growth_boost',
+      name: 'Growth Boost',
+      emoji: '🚀',
+      price: '$49',
+      sixMonthPrice: '$39',
+      priceNote: '/ month',
+      subtitle: 'For founders who need more reach',
+      description: 'More visibility, more feedback, more support for products actively growing their user base.',
+      features: [
+        'Product landing page',
+        '50 feedback requests a month (at least)*',
+        '200 AI credits a month',
+      ],
+      cta: 'Get Growth Boost',
+      featured: true,
+    },
+  ];
+
+  const tiers = activeTab === 'idea' ? ideaTiers : growthTiers;
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-4 leading-loose">
-          Start your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent italic inline-block pt-2 pb-2">journey for free</span> and upgrade when you need more power.
-        </h1>
+        {/* [FIX — full rebuild] Replaced the old gradient headline with the
+            approved quote from the pricing doc, shown as an italic intro
+            line rather than a giant styled heading. */}
+        <p className="text-lg md:text-xl italic text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed">
+          Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out.
+        </p>
+
+        {/* [NEW] Tabs — Build an Idea / Grow a Product */}
+        <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mb-6">
+          <button
+            onClick={() => setActiveTab('idea')}
+            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              activeTab === 'idea' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Build an Idea
+          </button>
+          <button
+            onClick={() => setActiveTab('product')}
+            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              activeTab === 'product' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Grow a Product
+          </button>
+        </div>
+
         <p className="text-gray-600 text-sm mb-4">
           All plans include monthly credits. Need more? Top up anytime.
         </p>
@@ -195,7 +225,9 @@ export default function Pricing() {
           </button>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6 mt-12">
+        {/* [FIX] max-w-3xl + 2-column grid — was 4-column, now only 2 tiers
+            per tab, a 4-column grid would leave two empty columns. */}
+        <div className="grid md:grid-cols-2 gap-6 mt-12 max-w-3xl mx-auto">
           {tiers.map((tier) => (
             <div
               key={tier.key}
@@ -207,8 +239,10 @@ export default function Pricing() {
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xl font-bold text-left text-gray-900">{tier.name}</h3>
+                {/* [FIX] "Most Popular" replaced with "Recommended", per
+                    explicit request — only Growth Boost carries it now. */}
                 {tier.featured && (
-                  <span className="bg-blue-600 text-white text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Most Popular</span>
+                  <span className="bg-blue-600 text-white text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Recommended</span>
                 )}
               </div>
 
@@ -251,6 +285,12 @@ export default function Pricing() {
             </div>
           ))}
         </div>
+
+        {/* [NEW] Footnote from the doc, explaining the "(at least)*" marker
+            on feedback request counts. */}
+        <p className="text-xs text-gray-400 mt-8 max-w-2xl mx-auto">
+          * You can scale up your feedback balance by earning Insight Credits — each time you give feedback to another product.
+        </p>
       </div>
     </div>
   );
