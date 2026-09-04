@@ -102,13 +102,13 @@ export default function Pricing() {
       price: '$0',
       sixMonthPrice: '$0',
       priceNote: 'forever',
-      subtitle: 'Try it out, no pressure',
+      subtitle: 'Develop your idea for free',
       description: "StartZig's journey is free forever. No credit card, no pressure. Develop your idea and get feedback from the community.",
       features: [
         'Full startup journey',
         'Free use of a variety of product development tools',
-        '20 feedback requests a month (at least)*',
-        '100 AI credits a month',
+        '20 feedback requests a month [1]',
+        '100 AI credits a month [2]',
       ],
       cta: 'Start Free',
       featured: false,
@@ -120,12 +120,12 @@ export default function Pricing() {
       price: '$12',
       sixMonthPrice: '$9',
       priceNote: '/ month',
-      subtitle: 'For founders who rely on AI regularly',
+      subtitle: 'For founders who need an AI boost',
       description: 'Built for founders who want to move faster — more AI support for continuous building, planning, and validating.',
       features: [
         'Full startup journey',
         'Free use of a variety of product development tools',
-        '30 feedback requests a month (at least)*',
+        '30 feedback requests a month [1]',
         '300 AI credits a month',
       ],
       cta: 'Get Builder Boost',
@@ -141,11 +141,11 @@ export default function Pricing() {
       price: '$35',
       sixMonthPrice: '$28',
       priceNote: '/ month',
-      subtitle: 'For founders who already have a product',
+      subtitle: 'For founders who want to grow their community',
       description: 'Expose your product to the community and collect feedback on it.',
       features: [
         'Product landing page',
-        '20 feedback requests a month (at least)*',
+        '20 feedback requests a month [1]',
         '100 AI credits a month',
       ],
       cta: 'Get Growth',
@@ -158,11 +158,11 @@ export default function Pricing() {
       price: '$49',
       sixMonthPrice: '$39',
       priceNote: '/ month',
-      subtitle: 'For founders who need more reach',
+      subtitle: 'For rapid market reach',
       description: 'More visibility, more feedback, more support for products actively growing their user base.',
       features: [
         'Product landing page',
-        '50 feedback requests a month (at least)*',
+        '50 feedback requests a month [1]',
         '200 AI credits a month',
       ],
       cta: 'Get Growth Boost',
@@ -179,7 +179,7 @@ export default function Pricing() {
             approved quote from the pricing doc, shown as an italic intro
             line rather than a giant styled heading. */}
         <p className="text-lg md:text-xl italic text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed">
-          Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out.
+          Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out [2].
         </p>
 
         {/* [NEW] Tabs — Build an Idea / Grow a Product */}
@@ -286,11 +286,15 @@ export default function Pricing() {
           ))}
         </div>
 
-        {/* [NEW] Footnote from the doc, explaining the "(at least)*" marker
-            on feedback request counts. */}
-        <p className="text-xs text-gray-400 mt-8 max-w-2xl mx-auto">
-          * You can scale up your feedback balance by earning Insight Credits — each time you give feedback to another product.
-        </p>
+        {/* [FIX] Numbered footnotes instead of a single asterisk — [1] for
+            the existing Insight Credits note, [2] new: clarifies the free
+            Builder plan's AI credits are time-limited (per explicit
+            concern about someone sitting on the free plan for years while
+            still drawing AI credits every month). */}
+        <div className="text-xs text-gray-400 mt-8 max-w-2xl mx-auto text-left space-y-1">
+          <p>[1] You can scale up your feedback balance by earning Insight Credits — each time you give feedback to another product.</p>
+          <p>[2] AI credits are included for your first 6 months — enough to complete your product definition journey. After that, you can continue the journey for free, without new AI credits.</p>
+        </div>
       </div>
     </div>
   );
