@@ -155,7 +155,7 @@ export default function Pricing() {
       price: '$35',
       sixMonthPrice: '$28',
       priceNote: '/ month',
-      subtitle: 'For founders who want to grow their community',
+      subtitle: "Expose your product to StartZig's community",
       description: 'Expose your product to the community and collect feedback on it.',
       features: [
         'Product landing page',
@@ -172,7 +172,7 @@ export default function Pricing() {
       price: '$49',
       sixMonthPrice: '$39',
       priceNote: '/ month',
-      subtitle: 'For rapid market reach',
+      subtitle: "A boost of exposure to StartZig's community",
       description: 'More visibility, more feedback, more support for products actively growing their user base.',
       features: [
         'Product landing page',
@@ -180,7 +180,7 @@ export default function Pricing() {
         '200 AI credits a month',
       ],
       cta: 'Get Growth Boost',
-      featured: true,
+      featured: false,
     },
   ];
 
@@ -196,12 +196,12 @@ export default function Pricing() {
           {renderWithFootnote("Our objective is to help early stage founders. That's why the entire journey, from idea to demo, is free. No credit card, no trial that runs out [1].")}
         </p>
 
-        {/* [NEW] Tabs — Build an Idea / Grow a Product */}
+        {/* [NEW] Tabs — Build an Idea / Grow a Product, color-coded */}
         <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mb-6">
           <button
             onClick={() => setActiveTab('idea')}
             className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'idea' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'idea' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Build an Idea
@@ -209,7 +209,7 @@ export default function Pricing() {
           <button
             onClick={() => setActiveTab('product')}
             className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'product' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'product' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Grow a Product
@@ -241,23 +241,21 @@ export default function Pricing() {
 
         {/* [FIX] max-w-3xl + 2-column grid — was 4-column, now only 2 tiers
             per tab, a 4-column grid would leave two empty columns. */}
+        {/* [FIX] "Recommended" badge and featured-tier styling removed
+            entirely per explicit request — no special-casing any card
+            anymore ("I don't connect to these gimmicks"). Cards are now
+            color-themed by tab instead: green for Build an Idea, blue for
+            Grow a Product. */}
         <div className="grid md:grid-cols-2 gap-6 mt-12 max-w-3xl mx-auto">
           {tiers.map((tier) => (
             <div
               key={tier.key}
               className={`relative flex flex-col p-8 rounded-3xl border transition-all ${
-                tier.featured
-                  ? 'bg-blue-50 border-blue-300 shadow-xl scale-105 z-10'
-                  : 'bg-gray-50 border-gray-200'
+                activeTab === 'idea' ? 'bg-emerald-50 border-emerald-200' : 'bg-blue-50 border-blue-200'
               }`}
             >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-bold text-left text-gray-900">{tier.name}</h3>
-                {/* [FIX] "Most Popular" replaced with "Recommended", per
-                    explicit request — only Growth Boost carries it now. */}
-                {tier.featured && (
-                  <span className="bg-blue-600 text-white text-[10px] uppercase px-2 py-1 rounded-full font-bold whitespace-nowrap">Recommended</span>
-                )}
+                <h3 className={`text-xl font-bold text-left ${activeTab === 'idea' ? 'text-emerald-700' : 'text-blue-700'}`}>{tier.name}</h3>
               </div>
 
               <p className="text-xs text-blue-600 italic text-left mb-4">{tier.subtitle}</p>
@@ -291,7 +289,7 @@ export default function Pricing() {
                 onClick={() => handleSelectPlan(tier.key)}
                 disabled={isUpdating}
                 className={`mt-10 w-full py-3 rounded-xl font-bold transition-all ${
-                  tier.featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-900 hover:bg-gray-800 text-white'
+                  activeTab === 'idea' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
                 } disabled:opacity-50`}
               >
                 {isUpdating ? 'Updating...' : tier.cta}
