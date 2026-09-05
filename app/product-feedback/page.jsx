@@ -102,6 +102,10 @@ const STAGE_RING_COLORS = {
   Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
   Shape: { stroke: '#5DCAA5', text: '#0F6E56' },
   Beta: { stroke: '#1D9E75', text: '#04342C' },
+  // [FIX] Was missing entirely — same bug as my-account.jsx, found by
+  // searching every file with this same ring-color pattern instead of
+  // fixing reactively one at a time.
+  Growth: { stroke: '#0C5132', text: '#04342C' },
 };
 // Insight status uses its own (amber) ramp — deliberately different from
 // Stage's (green/teal) so the two badges are never confused for the same
@@ -132,7 +136,9 @@ function RingBadge({ value, label, stroke, text, small }) {
   // top, unit below), which fits far better than shrinking font size ever
   // could. Single-word values keep the old shrink-if-long behavior.
   const parts = value.includes(' ') ? value.split(' ') : null;
-  const fontSize = value.length > 8 ? 9 : 12;
+  // [FIX] Threshold lowered from >8 to >5 — "Growth" (6 chars) didn't fit
+  // at the larger size, same issue confirmed via screenshot in my-account.jsx.
+  const fontSize = value.length > 5 ? 9 : 12;
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>

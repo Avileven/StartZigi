@@ -53,7 +53,10 @@ const STAGE_RING_COLORS = {
   // instead of silently reusing 'Beta', this key needs its own color or
   // the ring falls back to plain gray. Continues the existing green
   // progression, one step further than Beta (the final stage).
-  Growth: { stroke: '#0C5132', text: '#ECFDF5' },
+  // [FIX] Text color was too light (#ECFDF5, near-white) against the ring's
+  // white background — invisible, confirmed via screenshot. Every other
+  // stage here uses dark text; matches that pattern now.
+  Growth: { stroke: '#0C5132', text: '#04342C' },
 };
 const INSIGHT_RING_COLORS = {
   'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
@@ -75,7 +78,11 @@ function RingBadge({ value, label, stroke, text }) {
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
         </svg>
-        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 8 ? 9 : 12 }}>
+        {/* [FIX] Threshold lowered from >8 to >5 — "Growth" (6 chars) was
+            staying at the larger 12px size and not fitting the ring,
+            confirmed via screenshot, even though it's only one character
+            longer than "Spark"/"Shape" (likely just wider letterforms). */}
+        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 5 ? 9 : 12 }}>
           {value}
         </span>
       </div>
