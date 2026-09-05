@@ -1,7 +1,31 @@
 "use client";
 import React from 'react';
 import Link from "next/link";
-import { Rocket, MessageSquare, Briefcase, ArrowRight } from 'lucide-react';
+import { Rocket, MessageSquare, Briefcase, ArrowRight, UserCircle2, ArrowRight as ArrowRightIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// [NEW] Ring component for the Zig Profile guide section below — same
+// visual pattern used in my-account.jsx and product-feedback-page.jsx, so
+// the preview here matches what founders actually see on their profile.
+function RingPreview({ value, label, stroke, text }) {
+  const size = 56;
+  const r = 24;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth="5" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset="0" />
+        </svg>
+        <span className="font-medium text-center leading-tight" style={{ color: text, fontSize: value.length > 5 ? 9 : 12 }}>
+          {value}
+        </span>
+      </div>
+      <span className="text-[11px] text-gray-400">{label}</span>
+    </div>
+  );
+}
 
 const projectUpdates = [
   {
@@ -75,6 +99,127 @@ export default function Community() {
               </Link>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* [NEW] Zig Profile guide — explains the public profile rings and
+          the Insight Credits system, per explicit request to place this
+          content inside the existing Community page rather than a
+          separate route. */}
+      <section className="max-w-3xl mx-auto px-6 pb-24">
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserCircle2 className="w-7 h-7 text-indigo-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Zig Profile</h2>
+          <p className="text-gray-500 max-w-xl mx-auto">
+            A quick guide to what's shown on your public profile, and how the Insight system works.
+          </p>
+        </div>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <UserCircle2 className="w-5 h-5 text-indigo-600" />
+              What is the Zig Profile?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              This is the public side of your account — the part other founders in the StartZig community can see
+              when you give feedback on their product, or when they check out your own venture. It shows four
+              things at a glance: your Stage, your Status, your Zig age, and how many Ideas you've explored.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">The four rings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+
+            <div className="flex items-start gap-4">
+              <RingPreview value="Growth" label="Stage" stroke="#0C5132" text="#04342C" />
+              <div>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Stage</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Where your venture is on the founder journey right now: Spark → Plan → Shape → Beta → Growth.
+                  This always reflects your current stage — it's not something you set yourself, it updates
+                  automatically as you move forward.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <RingPreview value="Seeker" label="Status" stroke="#FAEEDA" text="#633806" />
+              <div>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Status</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Your standing in the feedback community, based on how many times you've given feedback to other
+                  founders: Insight Seeker (0) → Insight Starter (1+) → Insight Builder (5+) → Insight Champion
+                  (20+) → Insight Master (50+). Give feedback to move up.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <RingPreview value="14d" label="Zig age" stroke="#378ADD" text="#185FA5" />
+              <div>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Zig age</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Simply how many days it's been since you joined StartZig.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <RingPreview value="3" label="Ideas" stroke="#378ADD" text="#185FA5" />
+              <div>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Ideas</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  How many ventures you've explored or started on StartZig.
+                </p>
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageSquare className="w-5 h-5 text-amber-600" />
+              What are Insight Credits?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Insight Credits are what you earn for helping other founders. Every time you give real, thoughtful
+              feedback on someone else's product, you earn <strong>3 Insight Credits</strong>.
+            </p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-amber-900 mb-1">What can you do with them?</p>
+              <p className="text-sm text-amber-800 leading-relaxed">
+                Convert Insight Credits into feedback requests for your own venture — <strong>1 credit = 3
+                requests</strong>. Feedback requests are what let you invite the community to review your own
+                product through the Promotion Center.
+              </p>
+            </div>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              In short: the more you help other founders, the more feedback you can bring back to your own
+              product. It's built to go both ways.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-8">
+          <Link href="/my-account" className="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm hover:text-indigo-700">
+            Go to your account
+            <ArrowRightIcon className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     </div>
