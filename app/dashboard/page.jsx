@@ -155,7 +155,10 @@ function getNewStageTag(phase, messageType) {
 // product-feedback-page.jsx and my-account-page.jsx, kept in sync so the
 // profile preview reads identically everywhere.
 function getJourneyTag(rawPhase) {
-  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Beta' };
+  // [FIX] Was mapping growth -> 'Beta' (a venture in Growth phase
+  // displayed "Beta" in its public Zig Profile stage badge, hiding that it
+  // had actually reached Growth). Now shows its real stage.
+  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Growth' };
   return map[rawPhase] || null;
 }
 function getInsightStatus(count) {
@@ -667,6 +670,17 @@ if (userVentures.length === 0) {
                 });
               } catch (emailErr) {
                 console.error("Growth welcome email failed (non-critical):", emailErr);
+              }
+              // [NEW] Assigns the account's plan to Growth automatically —
+              // per explicit confirmation, a founder never has more than
+              // one venture, so there's no conflict to resolve between a
+              // venture's phase and the account's plan. Displayed as
+              // "GrowthZig" in my-account.jsx (that file's own display
+              // mapping needs updating separately — not touched here).
+              try {
+                await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 100 }).eq('id', currentUser.id);
+              } catch (planErr) {
+                console.error("Growth plan assignment failed (non-critical):", planErr);
               }
               }
               activeVenture.phase = 'growth';

@@ -50,13 +50,14 @@ function getDisplayName(profile, emailFallback) {
 // both mvp and mlp (the demo keeps evolving through MLP); growth falls back
 // to Beta since Group 1 has no tag of its own for it.
 function getJourneyTag(rawPhase) {
+  // [FIX] Same fix as dashboard-page.jsx — was mapping growth -> 'Beta'.
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
     mvp: 'Shape',
     mlp: 'Shape',
     beta: 'Beta',
-    growth: 'Beta',
+    growth: 'Growth',
   };
   return map[rawPhase] || null;
 }

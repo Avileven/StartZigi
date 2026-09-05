@@ -14,13 +14,16 @@ import { Input } from '@/components/ui/input';
 // [ADDED 020826] Same phase-to-tag mapping used in the founder hover card
 // (Part A.2) — kept in sync so "Stage" reads the same everywhere.
 function getJourneyTag(rawPhase) {
+  // [FIX] Same fix as dashboard-page.jsx and product-feedback-page.jsx —
+  // was mapping growth -> 'Beta', hiding that the venture had reached
+  // Growth. Third separate copy of this function found in this file.
   const map = {
     idea: 'Spark',
     business_plan: 'Plan',
     mvp: 'Shape',
     mlp: 'Shape',
     beta: 'Beta',
-    growth: 'Beta',
+    growth: 'Growth',
   };
   return map[rawPhase] || null;
 }
@@ -46,6 +49,11 @@ const STAGE_RING_COLORS = {
   Plan: { stroke: '#9FE1CB', text: '#0F6E56' },
   Shape: { stroke: '#5DCAA5', text: '#0F6E56' },
   Beta: { stroke: '#1D9E75', text: '#04342C' },
+  // [NEW] Was missing — after fixing getJourneyTag to return 'Growth'
+  // instead of silently reusing 'Beta', this key needs its own color or
+  // the ring falls back to plain gray. Continues the existing green
+  // progression, one step further than Beta (the final stage).
+  Growth: { stroke: '#0C5132', text: '#ECFDF5' },
 };
 const INSIGHT_RING_COLORS = {
   'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
