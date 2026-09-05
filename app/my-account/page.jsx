@@ -77,18 +77,33 @@ function RingBadge({ value, label, stroke, text }) {
 }
 
 // [MY ACCOUNT] מיפוי תכניות לקרדיטים
+// [FIX — full pricing model update] Old tiers (explorer/pro_founder/
+// unicorn) are gone — replaced with the new two-track model (Build an
+// Idea: builder/builder_boost, Grow a Product: growth/growth_boost).
 const PLAN_CREDITS = {
-  explorer: 5,
   builder: 100,
-  pro_founder: 300,
-  unicorn: 500,
+  builder_boost: 300,
+  growth: 100,
+  growth_boost: 200,
 };
 
 const PLAN_PRICES = {
-  explorer: '$0/month',
-  builder: '$9/month',
-  pro_founder: '$18/month',
-  unicorn: '$28/month',
+  builder: '$0/month',
+  builder_boost: '$12/month',
+  growth: '$35/month',
+  growth_boost: '$49/month',
+};
+
+// [NEW] Display names — the raw plan key doesn't render well on its own
+// (`builder_boost` isn't a sentence, `growth` alone would read the same as
+// the venture's own "Growth" phase shown elsewhere on this account, which
+// is confusing since they're different things). "GrowthZig" is the
+// confirmed display name for the Growth plan specifically.
+const PLAN_DISPLAY_NAMES = {
+  builder: 'Builder',
+  builder_boost: 'Builder Boost',
+  growth: 'GrowthZig',
+  growth_boost: 'GrowthZig Boost',
 };
 
 export default function MyAccount() {
@@ -212,9 +227,12 @@ export default function MyAccount() {
     }
   };
 
-  const plan = profile?.plan || 'free';
+  // [FIX] Was defaulting to the literal string 'free', which was never
+  // actually a real plan key (old or new) — now defaults to the actual
+  // free-tier key.
+  const plan = profile?.plan || 'builder';
   const creditsUsed = profile?.credits_used || 0;
-  const creditsLimit = profile?.credits_limit || PLAN_CREDITS[plan] || 5;
+  const creditsLimit = profile?.credits_limit || PLAN_CREDITS[plan] || PLAN_CREDITS.builder;
   const creditsLeft = creditsLimit - creditsUsed;
   const resetDate = profile?.credits_reset_date
     ? new Date(profile.credits_reset_date)
@@ -370,7 +388,7 @@ export default function MyAccount() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-3xl font-bold text-gray-900 capitalize">{plan}</p>
+          <p className="text-3xl font-bold text-gray-900">{PLAN_DISPLAY_NAMES[plan] || plan}</p>
           <p className="text-gray-500 text-sm">
             {PLAN_PRICES[plan] || '$0/month'}
           </p>

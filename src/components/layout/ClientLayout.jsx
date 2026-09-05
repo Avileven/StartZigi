@@ -98,6 +98,18 @@ url: createPageUrl("vc-marketplace"),
   });
 };
 
+// [FIX] Same display-name mapping as my-account.jsx — was showing the raw
+// DB key with just a CSS `capitalize` (which only capitalizes the first
+// letter, doesn't insert spaces for keys like "builder_boost", and would
+// show "Growth" instead of the confirmed "GrowthZig" — inconsistent with
+// my-account.jsx showing the same field for the same user).
+const PLAN_DISPLAY_NAMES = {
+  builder: 'Builder',
+  builder_boost: 'Builder Boost',
+  growth: 'GrowthZig',
+  growth_boost: 'GrowthZig Boost',
+};
+
 export default function ClientLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -474,8 +486,8 @@ pathname === "/"
                 
                 {/* [CREDITS] תצוגת תכנית וקרדיטים - ברירת מחדל Free */}
                 <p className="text-xs truncate mt-0.5">
-                  <span className="text-indigo-500 font-medium capitalize">
-                    {credits?.plan || 'Free'} Plan
+                  <span className="text-indigo-500 font-medium">
+                    {(credits?.plan && PLAN_DISPLAY_NAMES[credits.plan]) || 'Free'} Plan
                   </span>
                 </p>
                 
