@@ -64,6 +64,12 @@ export default function Navbar() {
               <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Why StartZig
               </Link>
+              {/* [NEW] FounderSynergy — moved out of the Resources dropdown
+                  into a top-level nav item, per explicit request. Same
+                  route (/community), just a different label and position. */}
+              <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                FounderSynergy
+              </Link>
               <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Pricing
               </Link>
@@ -91,9 +97,6 @@ export default function Navbar() {
                     </Link>
                     <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
                       How it Works
-                    </Link>
-                    <Link href="/community" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
-                      Community
                     </Link>
                   </div>
                 )}
@@ -136,7 +139,7 @@ export default function Navbar() {
             Why StartZig
           </Link>
           <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
-            Community
+            FounderSynergy
           </Link>
           <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             Pricing
