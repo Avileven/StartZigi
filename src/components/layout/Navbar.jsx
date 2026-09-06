@@ -66,8 +66,11 @@ export default function Navbar() {
               </Link>
               {/* [NEW] FounderSynergy — moved out of the Resources dropdown
                   into a top-level nav item, per explicit request. Same
-                  route (/community), just a different label and position. */}
-              <Link href="/community" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              {/* [FIX] Points to the new dedicated page the user created
+                  (app/FounderSynergy/page.jsx) — was pointing at /community
+                  by mistake, since that's where this content used to live
+                  before it was moved to its own page. */}
+              <Link href="/FounderSynergy" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 FounderSynergy
               </Link>
               <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
@@ -138,7 +141,7 @@ export default function Navbar() {
           <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             Why StartZig
           </Link>
-          <Link href="/community" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+          <Link href="/FounderSynergy" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
             FounderSynergy
           </Link>
           <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
