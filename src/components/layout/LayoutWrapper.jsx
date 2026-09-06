@@ -13,7 +13,7 @@ export default function LayoutWrapper({ children }) {
     "/",
     "/why-startzig",
     "/pricing",
-    "/community",
+    "/FounderSynergy",
     "/how-it-works",
     "/terms",
     "/privacypolicy",
