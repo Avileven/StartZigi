@@ -1579,64 +1579,14 @@ if (showToS) {
 
 
   if (!currentVenture) {
+    // [FIX] Was showing a whole intermediate screen ("Create Your First
+    // Venture" + explanation + 3 info cards) before the user could even
+    // get to createventure — per explicit request, removed entirely.
+    // Redirects straight there instead, no in-between step.
+    router.push(createPageUrl("createVenture"));
     return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {getGreeting(user?.username)}
-            </h1>
-            <p className="text-lg text-gray-600">Ready to start your entrepreneurial journey?</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <div className="w-24 h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lightbulb className="w-12 h-12 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Create Your First Venture</h2>
-            <p className="text-gray-600 mb-6">
-              Transform your ideas into reality. Our platform will guide you through every step of building a successful startup.
-            </p>
-            <Link href={createPageUrl("createVenture")}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-lg px-8 py-3">
-                <Plus className="w-5 h-5 mr-2" />
-                Start Your Venture
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 text-left">
-            <Card>
-              <CardHeader>
-                <Lightbulb className="w-8 h-8 text-yellow-500 mb-2" />
-                <CardTitle className="text-lg">Idea Phase</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Start with your concept and create a compelling landing page</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <FileText className="w-8 h-8 text-blue-500 mb-2" />
-                <CardTitle className="text-lg">Plan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Develop a comprehensive strategy and business model</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <DollarSign className="w-8 h-8 text-green-500 mb-2" />
-                <CardTitle className="text-lg">Get Funded</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Connect with angels and VCs to secure investment</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }
