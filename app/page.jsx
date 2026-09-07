@@ -1,4 +1,4 @@
-// Home page - 010826
+// Home page - 070926
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -243,9 +243,6 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          {/* [NEW] Large standalone logo above the headline, not constrained
-              by navbar height, per explicit reference (Coordius). */}
-          <img src="/startzig-logo-transparent.png" alt="StartZig" className="h-32 w-32 md:h-40 md:w-40 object-contain mx-auto mb-6" />
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
             <span
