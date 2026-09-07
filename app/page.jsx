@@ -322,33 +322,32 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Intro, not just another AI tool for startups */}
+          {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">SPARK. SHAPE. SHARE.</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">What if your product and your audience could grow together.</span>
             </h3>
-            <p className="text-lg text-gray-600 mb-4">
-              You shouldn't have to wait until you've built your first version to discover you got the product wrong, or until launch to start building your first audience. Start with your startup idea, shape and define the product, share it with a real community, and use structured feedback to make better product decisions. As the product evolves, the people who engage with it can become the beginning of your audience and your first potential users.
-            </p>
             <p className="text-lg text-gray-600">
-              StartZig is more than just an AI tool, a founder community, or a business plan generator. It's an ecosystem that brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
+              Most founders build first and look for customers later. StartZig takes a different approach. If you're starting with an idea, bring potential users into the journey from the beginning. If you already have a product live, bring them in now. Let people discover what you're building, give structured feedback, follow its progress and engage with new versions as your product evolves. Your product and your community grow side by side.
             </p>
           </div>
 
-          {/* Built for Different Starting Points */}
+          {/* Built for Different Starting Points — [FIX] reordered
+              (Founders first, then Inventors, then Explorers) and
+              Founders/Inventors copy updated per explicit content review. */}
           <div className="mb-10">
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Built for Different Starting Points</span>
             </h3>
             <div className="space-y-4">
               <p className="text-lg text-gray-600">
+                <strong className="text-gray-900">Founders.</strong> Already have a product live? Expose it to the community and collect feedback to refine it.
+              </p>
+              <p className="text-lg text-gray-600">
+                <strong className="text-gray-900">Inventors.</strong> Have an idea? Give it structure, build it into something real, and use the community to shape it along the way.
+              </p>
+              <p className="text-lg text-gray-600">
                 <strong className="text-gray-900">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Inventors.</strong> Have an idea? Give it structure, explore possibilities, and turn it into something people can see and react to.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Founders.</strong> Already building something? Develop your product, get structured feedback, make better decisions, and start building your first community of users.
               </p>
             </div>
           </div>
@@ -362,6 +361,16 @@ export default function Home() {
                 Start Your Journey
               </button>
             </Link>
+          </div>
+
+          {/* [NEW] From First Interaction to Long Term Loyalty */}
+          <div className="mb-10 mt-10">
+            <h3 className="text-3xl md:text-4xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">From First Interaction to Long Term Loyalty</span>
+            </h3>
+            <p className="text-lg text-gray-600">
+              Getting someone to try your product once is only the beginning. Someone who has interacted with your product, contributed feedback, followed its development and seen it evolve has a different relationship with it. They have context. Familiarity. A reason to care about what happens next. That can lead to stronger engagement, repeat usage, continued feedback and recommendations that bring new people into the product. StartZig helps founders begin building those relationships before launch and continue developing them after it.
+            </p>
           </div>
 
           {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, staged reveal */}
