@@ -39,7 +39,19 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">StartZig</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer inline-flex items-baseline">
+                StartZ
+                <span className="relative inline-block">
+                  ı
+                  <svg className="absolute left-1/2 -translate-x-1/2" style={{ top: "-3px", width: "11px", height: "11px" }} viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="46" fill="white" stroke="#2952d4" strokeWidth="6" />
+                    <circle cx="50" cy="50" r="30" fill="#3457D5" />
+                    <circle cx="50" cy="50" r="16" fill="#0a1440" />
+                    <circle cx="43" cy="43" r="6" fill="white" />
+                  </svg>
+                </span>
+                g
+              </span>
             </Link>
           </div>
 
