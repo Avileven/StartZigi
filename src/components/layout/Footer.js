@@ -21,7 +21,7 @@ export default function Footer() {
             <li><Link href="/the-toolkit" className="hover:text-white transition-colors">The Toolkit</Link></li>
             <li><Link href="/why-startzig" className="hover:text-white transition-colors">Why StartZig</Link></li>
             <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-            <li><Link href="/community" className="hover:text-white transition-colors">Community</Link></li>
+            <li><Link href="/FounderSynergy" className="hover:text-white transition-colors">FounderSynergy</Link></li>
             <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
           </ul>
         </nav>
