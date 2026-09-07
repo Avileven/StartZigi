@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
-import Link from "next/link";
-import { MessageSquare, ArrowRight as ArrowRightIcon, UserCircle2, Megaphone, BarChart3 } from 'lucide-react';
+import { MessageSquare, UserCircle2, Megaphone, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // [NEW] Ring component for the Zig Profile guide section below — same
@@ -27,7 +26,7 @@ function RingPreview({ value, label, stroke, text }) {
   );
 }
 
-export default function Community() {
+export default function FounderSynergy() {
   return (
     <div className="bg-white text-gray-900 min-h-screen font-sans">
 
@@ -37,7 +36,7 @@ export default function Community() {
           <h1 className="text-5xl md:text-6xl font-black mb-8">
             Founders <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">to</span> Founders
           </h1>
-          <div className="space-y-5 text-left md:text-center">
+          <div className="space-y-5 text-left">
             <p className="text-lg text-gray-700 leading-relaxed">
               StartZig brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
             </p>
@@ -202,13 +201,6 @@ export default function Community() {
             </p>
           </CardContent>
         </Card>
-
-        <div className="text-center mt-8">
-          <Link href="/my-account" className="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm hover:text-indigo-700">
-            Go to your account
-            <ArrowRightIcon className="w-4 h-4" />
-          </Link>
-        </div>
       </section>
     </div>
   );

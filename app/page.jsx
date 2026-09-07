@@ -1,4 +1,4 @@
-// Home page - 010826
+// Home page - 070926
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -136,37 +136,13 @@ function SparkShapeShip() {
   );
 }
 
-// [ADDED] Staged heading reveal, Human Insight. AI Intelligence. Founder Decisions. appears in three parts, one second apart, triggered once the heading enters the viewport
+// [FIX] Staged reveal animation removed per explicit request — now renders
+// statically, all at once, same visual style.
 function HumanInsightHeading() {
-  const [step, setStep] = useState(0);
-  const hasStarted = useRef(false);
-  const sectionRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasStarted.current) {
-            hasStarted.current = true;
-            setStep(1);
-            setTimeout(() => setStep(2), 1000);
-            setTimeout(() => setStep(3), 2000);
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <h3 ref={sectionRef} className="text-3xl md:text-4xl font-bold mb-6" style={{ minHeight: "1.2em" }}>
+    <h3 className="text-3xl md:text-4xl font-bold mb-6">
       <span className="text-blue-600 inline-block leading-relaxed pb-2">
-        {step >= 1 && <>Human Insight. </>}
-        {step >= 2 && <>AI Intelligence. </>}
-        {step >= 3 && <>Founder Decisions.</>}
+        Human Insight. AI Intelligence. Founder Decisions.
       </span>
     </h3>
   );
@@ -325,7 +301,7 @@ export default function Home() {
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">What if your product and your audience could grow together.</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">What if your product and its community could take shape together.</span>
             </h3>
             <p className="text-lg text-gray-600">
               Most founders build first and look for customers later. StartZig takes a different approach. If you're starting with an idea, bring potential users into the journey from the beginning. If you already have a product live, bring them in now. Let people discover what you're building, give structured feedback, follow its progress and engage with new versions as your product evolves. Your product and your community grow side by side.
@@ -339,15 +315,18 @@ export default function Home() {
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Built for Different Starting Points</span>
             </h3>
+            <p className="text-lg text-gray-600 mb-6">
+              Our community is a meeting point for a wide range of peers, at different stages of the founder journey.
+            </p>
             <div className="space-y-4">
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Founders.</strong> Already have a product live? Expose it to the community and collect feedback to refine it.
+                <strong className="text-blue-600">Founders.</strong> Already have a product live? Expose it to the community and collect feedback to refine it.
               </p>
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Inventors.</strong> Have an idea? Give it structure, build it into something real, and use the community to shape it along the way.
+                <strong className="text-blue-600">Inventors.</strong> Have an idea? Give it structure, build it into something real, and use the community to shape it along the way.
               </p>
               <p className="text-lg text-gray-600">
-                <strong className="text-gray-900">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
+                <strong className="text-blue-600">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
               </p>
             </div>
           </div>
