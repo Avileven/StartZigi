@@ -39,7 +39,9 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/startzig-logo-transparent.png" alt="StartZig" className="h-16 w-16 object-contain" />
+              <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                <img src="/startzig-logo-transparent.png" alt="StartZig" className="h-9 w-9 object-contain" />
+              </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent cursor-pointer">StartZig</span>
             </Link>
           </div>
