@@ -39,7 +39,7 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/startzig-wordmark.png" alt="StartZig" className="h-16 object-contain cursor-pointer" />
+              <img src="/startzig-wordmark.png" alt="StartZig" className="h-[70px] md:h-16 object-contain cursor-pointer" />
             </Link>
           </div>
 
