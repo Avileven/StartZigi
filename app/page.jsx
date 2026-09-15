@@ -372,10 +372,10 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
-            Don't just start up.{" "}
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp flex flex-col items-center gap-2">
+            <span>Don't just start up.</span>
             <AnimatedZIcon
-              className="inline-block w-12 h-12 md:w-16 md:h-16 align-middle mx-1"
+              className="w-20 h-20 md:w-28 md:h-28"
               onComplete={() => setShowStartZig(true)}
             />
             {showStartZig && (
@@ -388,10 +388,9 @@ export default function Home() {
                 }}
                 className="fade-in-startzig"
               >
-                StartZig
+                StartZig.
               </span>
             )}
-            .
           </h1>
           <p
             className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
