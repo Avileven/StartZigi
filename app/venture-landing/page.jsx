@@ -14,7 +14,7 @@ import {
   Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
   DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X, Home, Focus,
-  Linkedin, Facebook, Twitter, Instagram, Globe,
+  Linkedin, Facebook, Twitter, Instagram, Globe, Users,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
@@ -177,6 +177,134 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
     </div>
   );
 };
+
+// [NEW] Same helper already used (and fixed) in dashboard-page.jsx /
+// product-feedback-page.jsx / my-account-page.jsx — growth maps to
+// 'Growth', not 'Beta'.
+function getJourneyTag(rawPhase) {
+  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Growth' };
+  return map[rawPhase] || null;
+}
+
+// [NEW — Followers project, step 1] Follower count + list on the venture's
+// public profile. Reuses the get_public_founder_profile RPC (same one
+// already used in dashboard-page.jsx / product-feedback-page.jsx /
+// my-account-page.jsx) to safely show each follower's public info.
+function FollowersBadge({ ventureId }) {
+  const [count, setCount] = useState(0);
+  const [showList, setShowList] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const [isLoadingList, setIsLoadingList] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!ventureId) return;
+    (async () => {
+      const { count: c } = await supabase
+        .from('venture_followers')
+        .select('id', { count: 'exact', head: true })
+        .eq('venture_id', ventureId);
+      setCount(c || 0);
+    })();
+  }, [ventureId]);
+
+  const openList = async () => {
+    setShowList(true);
+    if (followers.length > 0) return; // already loaded
+    setIsLoadingList(true);
+    try {
+      const { data: rows } = await supabase
+        .from('venture_followers')
+        .select('user_id')
+        .eq('venture_id', ventureId);
+      const ids = (rows || []).map(r => r.user_id);
+      const profiles = await Promise.all(
+        ids.map(id => supabase.rpc('get_public_founder_profile', { profile_id: id }))
+      );
+      setFollowers(profiles.map((p, i) => p.data?.[0] ? { ...p.data[0], user_id: ids[i] } : null).filter(Boolean));
+    } catch (err) {
+      console.error('Could not load followers list:', err);
+    } finally {
+      setIsLoadingList(false);
+    }
+  };
+
+  const openFollowerProfile = async (userId) => {
+    setIsLoadingProfile(true);
+    setSelectedProfile({});
+    try {
+      const { data } = await supabase.rpc('get_public_founder_profile', { profile_id: userId });
+      setSelectedProfile(data?.[0] || null);
+    } catch (err) {
+      console.error('Could not load follower profile:', err);
+      setSelectedProfile(null);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  if (count === 0) return null;
+
+  return (
+    <>
+      <button
+        onClick={openList}
+        className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full hover:bg-gray-50"
+      >
+        <Users className="w-3.5 h-3.5" />
+        {count} {count === 1 ? 'Follower' : 'Followers'}
+      </button>
+
+      {showList && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setShowList(false); setSelectedProfile(null); }}>
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[70vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Followers</h3>
+              <button onClick={() => { setShowList(false); setSelectedProfile(null); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {isLoadingList ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+            ) : selectedProfile !== null ? (
+              <div>
+                <button onClick={() => setSelectedProfile(null)} className="text-xs text-indigo-600 mb-3">← Back to list</button>
+                {isLoadingProfile ? (
+                  <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+                ) : selectedProfile ? (
+                  <div className="text-center py-2">
+                    <p className="font-semibold text-gray-900">{selectedProfile.username || 'Founder'}</p>
+                    <p className="text-xs text-gray-500 mt-1">{getJourneyTag(selectedProfile.current_phase) || ''}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4">Profile unavailable.</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {followers.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">No followers yet.</p>
+                ) : (
+                  followers.map((f) => (
+                    <button
+                      key={f.user_id}
+                      onClick={() => openFollowerProfile(f.user_id)}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-800"
+                    >
+                      {f.username || 'Founder'}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function VentureLanding() {
   const isMobileViewport = useIsMobileViewport();
@@ -766,6 +894,7 @@ export default function VentureLanding() {
               <div className="text-center border-b border-gray-200 pb-6 mb-10">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  <FollowersBadge ventureId={venture.id} />
                   {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
                     <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
@@ -982,6 +1111,7 @@ export default function VentureLanding() {
               <div className="text-center pb-6 mb-8">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  <FollowersBadge ventureId={venture.id} />
                   {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
                     <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
@@ -1440,6 +1570,7 @@ export default function VentureLanding() {
               <div className="text-center border-b border-gray-200 pb-6 mb-8">
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
                   <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  <FollowersBadge ventureId={venture.id} />
                   {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
                     <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
