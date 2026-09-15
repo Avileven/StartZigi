@@ -317,6 +317,19 @@ export default function Home() {
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showStartZig, setShowStartZig] = useState(false); // [ADDED] reveal "StartZig" only after the Z icon finishes
+  const [wordCount, setWordCount] = useState(0); // [ADDED] how many words of the subtitle are revealed
+  const [showCTA, setShowCTA] = useState(false); // [ADDED] reveal the CTA button only after the subtitle finishes
+  const SUBTITLE_WORDS = "Your Idea. Your Community. Your Next Zig.".split(" ");
+
+  useEffect(() => {
+    if (!showStartZig) return;
+    if (wordCount >= SUBTITLE_WORDS.length) {
+      const t = setTimeout(() => setShowCTA(true), 300);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setWordCount((c) => c + 1), 220);
+    return () => clearTimeout(t);
+  }, [showStartZig, wordCount]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -382,7 +395,7 @@ export default function Home() {
             <span
               className="inline-block leading-tight pb-2"
               style={{
-                background: "linear-gradient(to right, #8B5CF6, #4C2E9E)",
+                background: "linear-gradient(to right, #B39DFF, #4C1D95)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -409,17 +422,32 @@ export default function Home() {
             </span>
           </h1>
           <p
-            className="text-xl md:text-2xl text-gray-600 mb-6 max-w-3xl mx-auto italic"
-            style={{ opacity: showStartZig ? 1 : 0, transition: "opacity 0.6s ease 0.2s" }}
+            className="text-xl md:text-2xl mb-6 max-w-3xl mx-auto"
+            style={{
+              background: "linear-gradient(to right, #B39DFF, #4C1D95)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
           >
-            Your Idea. Your Community. Your Next Zig.
+            {SUBTITLE_WORDS.map((word, i) => (
+              <span
+                key={i}
+                style={{
+                  opacity: i < wordCount ? 1 : 0,
+                  transition: "opacity 0.3s ease",
+                }}
+              >
+                {word}{" "}
+              </span>
+            ))}
           </p>
           <div
             className="flex flex-col gap-4 items-center"
             style={{
-              opacity: showStartZig ? 1 : 0,
-              transition: "opacity 0.6s ease 0.4s",
-              pointerEvents: showStartZig ? "auto" : "none",
+              opacity: showCTA ? 1 : 0,
+              transition: "opacity 0.6s ease",
+              pointerEvents: showCTA ? "auto" : "none",
             }}
           >
             {user ? (
