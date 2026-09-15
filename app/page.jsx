@@ -379,15 +379,28 @@ export default function Home() {
       <div className="relative flex items-start justify-center pt-4 md:pt-8 px-6 pb-10">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight flex flex-col items-center gap-0">
-            <span style={{ color: "#6D42D9" }}>Don't just start up.</span>
+            <span
+              className="inline-block leading-tight pb-2"
+              style={{
+                background: "linear-gradient(to right, #8B5CF6, #4C2E9E)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Don't just start up.
+            </span>
             <AnimatedZIcon
               className="w-16 md:w-24 aspect-[14/9] mt-10 md:mt-14 mb-0"
               onComplete={() => setShowStartZig(true)}
             />
             <span
-              className="inline-block leading-none pb-1"
+              className="inline-block leading-tight pb-2"
               style={{
-                color: "#F0A020",
+                background: "linear-gradient(to right, #8B5CF6, #F0A020)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
                 opacity: showStartZig ? 1 : 0,
                 transition: "opacity 0.6s ease",
               }}
