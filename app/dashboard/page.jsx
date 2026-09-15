@@ -228,6 +228,7 @@ export default function Dashboard() {
   // [ADDED 020826] Followers project — lightweight profile-preview modal,
   // opened from a "follower_joined" message.
   const [followerProfile, setFollowerProfile] = useState(null);
+  const [followerFollowingCount, setFollowerFollowingCount] = useState(0);
   const [isLoadingFollowerProfile, setIsLoadingFollowerProfile] = useState(false);
   const [liveBalance, setLiveBalance] = useState(0);
   //new valuation
@@ -868,10 +869,19 @@ if (userVentures.length === 0) {
     if (!userId) return;
     setIsLoadingFollowerProfile(true);
     setFollowerProfile({});
+    setFollowerFollowingCount(0);
     try {
       const { data, error } = await supabase.rpc('get_public_founder_profile', { profile_id: userId });
       if (error) throw error;
       setFollowerProfile(data?.[0] || null);
+      // [NEW — Followers project, step 1] Following count for this person,
+      // shown alongside their profile — same info now also shown in the
+      // public Zig Profile card (my-account-page.jsx).
+      const { count: flc } = await supabase
+        .from('venture_followers')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      setFollowerFollowingCount(flc || 0);
     } catch (error) {
       console.error('Could not load follower profile:', error);
       setFollowerProfile(null);
@@ -1681,6 +1691,11 @@ if (showToS) {
                     <p className="text-[11px] text-gray-400">Zig age</p>
                   </div>
                 </div>
+                {/* [NEW — Followers project] Following count — gives a
+                    sense of how active/engaged this person is. */}
+                <p className="text-xs text-gray-400 text-center pt-3">
+                  Following {followerFollowingCount} {followerFollowingCount === 1 ? 'venture' : 'ventures'}
+                </p>
               </>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">Could not load this profile.</p>

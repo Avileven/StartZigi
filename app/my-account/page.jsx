@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { User } from '@/api/entities';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight, Rocket, MessageSquare, Clock, Star, AlertTriangle, Loader2 } from 'lucide-react';
+import { UserCircle, CreditCard, Calendar, Zap, ArrowUpRight, Rocket, MessageSquare, Clock, Star, AlertTriangle, Loader2, Users, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -129,6 +129,14 @@ export default function MyAccount() {
   // [ADDED 020826] Multi-venture reset ("Start a New Idea") — see the
   // separate project-definition doc for full scope/decisions.
   const [venture, setVenture] = useState(null);
+  // [NEW — Followers project] Followers of my venture, and ventures I
+  // follow. Counts only fetched here; the actual lists are lazy-loaded
+  // when the person opens them, same pattern as elsewhere.
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followListOpen, setFollowListOpen] = useState(null); // 'followers' | 'following' | null
+  const [followListItems, setFollowListItems] = useState([]);
+  const [isLoadingFollowList, setIsLoadingFollowList] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -181,6 +189,22 @@ export default function MyAccount() {
           .order('created_date', { ascending: false })
           .limit(1);
         if (ventures?.[0]) setVenture(ventures[0]);
+
+        // [NEW — Followers project] Followers of my venture (if I have
+        // one), and ventures I follow. Simple counts only — lists are
+        // loaded lazily when the person clicks to expand.
+        if (ventures?.[0]) {
+          const { count: fc } = await supabase
+            .from('venture_followers')
+            .select('id', { count: 'exact', head: true })
+            .eq('venture_id', ventures[0].id);
+          setFollowersCount(fc || 0);
+        }
+        const { count: flc } = await supabase
+          .from('venture_followers')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id);
+        setFollowingCount(flc || 0);
       } catch (error) {
         console.error('Error loading profile:', error);
       }
@@ -219,6 +243,45 @@ export default function MyAccount() {
   // active venture's Feedback Request Pool via the atomic RPC (checks
   // balance, decrements credits, increments pool — all server-side, no
   // read-then-write race condition from the client).
+  // [NEW — Followers project] Loads either the "who follows my venture"
+  // list or the "which ventures I follow" list, lazily on open.
+  const openFollowList = async (kind) => {
+    setFollowListOpen(kind);
+    setIsLoadingFollowList(true);
+    setFollowListItems([]);
+    try {
+      if (kind === 'followers') {
+        if (!venture) { setFollowListItems([]); return; }
+        const { data: rows } = await supabase
+          .from('venture_followers')
+          .select('user_id')
+          .eq('venture_id', venture.id);
+        const ids = (rows || []).map(r => r.user_id);
+        const profiles = await Promise.all(
+          ids.map(id => supabase.rpc('get_public_founder_profile', { profile_id: id }))
+        );
+        setFollowListItems(profiles.map(p => p.data?.[0]).filter(Boolean));
+      } else {
+        const { data: rows } = await supabase
+          .from('venture_followers')
+          .select('venture_id')
+          .eq('user_id', user.id);
+        const ids = (rows || []).map(r => r.venture_id);
+        if (ids.length === 0) { setFollowListItems([]); return; }
+        const { data: ventureRows } = await supabase
+          .from('ventures')
+          .select('id, name')
+          .in('id', ids);
+        setFollowListItems(ventureRows || []);
+      }
+    } catch (error) {
+      console.error('Error loading follow list:', error);
+      setFollowListItems([]);
+    } finally {
+      setIsLoadingFollowList(false);
+    }
+  };
+
   const handleConvertCredits = async () => {
     if (!venture || !creditsToConvert || creditsToConvert < 1) return;
     setIsConverting(true);
@@ -344,8 +407,40 @@ export default function MyAccount() {
               text={ZIG_AGE_RING_COLOR.text}
             />
           </div>
+          {/* [NEW — Followers project] Following count, part of the public
+              profile — gives a sense of how active/engaged the founder is
+              in the community, per explicit request. */}
+          <button
+            onClick={() => openFollowList('following')}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 pt-1"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Following {followingCount} {followingCount === 1 ? 'venture' : 'ventures'}
+          </button>
         </CardContent>
       </Card>
+
+      {/* [NEW — Followers project] Followers of my own venture — separate
+          card since this is venture-level info, not part of the personal
+          public profile above. Only rendered if a venture exists. */}
+      {venture && (
+        <Card className="border-t-4 border-t-sky-400 shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <Users className="w-4 h-4" /> Followers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <button
+              onClick={() => openFollowList('followers')}
+              className="text-2xl font-bold text-gray-900 hover:text-indigo-600"
+            >
+              {followersCount}
+            </button>
+            <p className="text-xs text-gray-400 mt-1">People following {venture.name}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* [ADDED 020826] Insight Credits, step 3 — balance + conversion to
           Feedback Request Pool. Lives here (not the public Zig Profile card
@@ -535,6 +630,39 @@ export default function MyAccount() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* [NEW — Followers project] Followers / Following list modal —
+          shared for both, switches content based on followListOpen. */}
+      {followListOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setFollowListOpen(null)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[70vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">
+                {followListOpen === 'followers' ? 'Followers' : 'Following'}
+              </h3>
+              <button onClick={() => setFollowListOpen(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {isLoadingFollowList ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+            ) : followListItems.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">
+                {followListOpen === 'followers' ? 'No followers yet.' : "You're not following any ventures yet."}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {followListItems.map((item) => (
+                  <div key={item.id || item.user_id} className="px-3 py-2 rounded-lg text-sm text-gray-800">
+                    {followListOpen === 'followers' ? (item.username || 'Founder') : item.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

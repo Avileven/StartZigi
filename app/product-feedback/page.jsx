@@ -223,6 +223,20 @@ function FounderHoverCard({ founderId, name, profile }) {
   const journeyTag = getJourneyTag(profile?.current_phase);
   const zigAge = getZigAge(profile?.joined_date);
   const insightStatus = getInsightStatus(profile?.feedback_count ?? 0);
+  // [NEW — Followers project] Following count — fetched locally (not part
+  // of the get_public_founder_profile RPC payload), only once when the
+  // card is actually opened, to avoid firing a query per hover-card render.
+  const [followingCount, setFollowingCount] = useState(null);
+  useEffect(() => {
+    if (!isOpen || followingCount !== null) return;
+    (async () => {
+      const { count } = await supabase
+        .from('venture_followers')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', founderId);
+      setFollowingCount(count || 0);
+    })();
+  }, [isOpen, founderId, followingCount]);
 
   return (
     <span className="relative inline-block group">
@@ -289,6 +303,10 @@ function FounderHoverCard({ founderId, name, profile }) {
                 small
               />
             </div>
+            {/* [NEW — Followers project] Following count. */}
+            <p className="text-[11px] text-gray-400 pt-2 text-center">
+              Following {followingCount ?? '—'} {followingCount === 1 ? 'venture' : 'ventures'}
+            </p>
           </CardContent>
         </Card>
       </div>
