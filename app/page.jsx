@@ -376,21 +376,18 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative min-h-screen flex items-start justify-center pt-8 md:pt-12 px-6">
+      <div className="relative flex items-start justify-center pt-4 md:pt-8 px-6 pb-10">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp flex flex-col items-center gap-2">
-            <span>Don't just start up.</span>
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight animate-slideUp flex flex-col items-center gap-1">
+            <span style={{ color: "#6D42D9" }}>Don't just start up.</span>
             <AnimatedZIcon
-              className="w-20 h-20 md:w-28 md:h-28"
+              className="w-28 md:w-40 aspect-[14/9]"
               onComplete={() => setShowStartZig(true)}
             />
             <span
               className="inline-block leading-relaxed pb-2"
               style={{
-                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                color: "#F0A020",
                 opacity: showStartZig ? 1 : 0,
                 transition: "opacity 0.6s ease",
               }}
@@ -399,7 +396,7 @@ export default function Home() {
             </span>
           </h1>
           <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto italic"
+            className="text-xl md:text-2xl text-gray-600 mb-6 max-w-3xl mx-auto italic"
             style={{ opacity: showStartZig ? 1 : 0, transition: "opacity 0.6s ease 0.2s" }}
           >
             Your Idea. Your Community. Your Next Zig.
