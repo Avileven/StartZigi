@@ -41,7 +41,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold cursor-pointer">
                 <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Start</span>
-                <span style={{ color: "#f0c869" }}>Zig</span>
+                <span className="bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">Zig</span>
               </span>
             </Link>
           </div>
