@@ -378,14 +378,14 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative flex items-start justify-center pt-4 md:pt-8 px-6 pb-10">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight animate-slideUp flex flex-col items-center gap-0">
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight flex flex-col items-center gap-0">
             <span style={{ color: "#6D42D9" }}>Don't just start up.</span>
             <AnimatedZIcon
-              className="w-16 md:w-24 aspect-[14/9] mt-4 md:mt-6 mb-0"
+              className="w-16 md:w-24 aspect-[14/9] mt-10 md:mt-14 mb-0"
               onComplete={() => setShowStartZig(true)}
             />
             <span
-              className="inline-block leading-relaxed pb-2"
+              className="inline-block leading-none pb-1"
               style={{
                 color: "#F0A020",
                 opacity: showStartZig ? 1 : 0,
