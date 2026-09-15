@@ -376,7 +376,7 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative min-h-screen flex items-center justify-start pt-24 md:pt-32 px-6">
+      <div className="relative min-h-screen flex items-start justify-center pt-8 md:pt-12 px-6">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp flex flex-col items-center gap-2">
             <span>Don't just start up.</span>
@@ -385,6 +385,7 @@ export default function Home() {
               onComplete={() => setShowStartZig(true)}
             />
             <span
+              className="inline-block leading-relaxed pb-2"
               style={{
                 background: "linear-gradient(to right, #3457D5, #6E5AD6)",
                 WebkitBackgroundClip: "text",
