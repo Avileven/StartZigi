@@ -327,7 +327,7 @@ export default function Home() {
       const t = setTimeout(() => setShowCTA(true), 300);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setWordCount((c) => c + 1), 220);
+    const t = setTimeout(() => setWordCount((c) => c + 1), 450);
     return () => clearTimeout(t);
   }, [showStartZig, wordCount]);
 
