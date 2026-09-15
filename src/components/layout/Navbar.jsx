@@ -38,8 +38,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
 
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/startzig-navbar-icon.png" alt="" className="h-9 object-contain" />
+            <Link href="/" className="flex items-center gap-1">
+              <img src="/startzig-navbar-icon.png" alt="" className="h-9 object-contain mt-1" />
               <span className="text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent cursor-pointer">StartZig</span>
             </Link>
           </div>
