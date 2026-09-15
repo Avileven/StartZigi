@@ -42,7 +42,7 @@ export default function Navbar() {
               <img src="/startzig-navbar-icon.png" alt="" className="h-9 object-contain mt-1" />
               <span className="text-2xl font-bold cursor-pointer">
                 <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Start</span>
-                <span style={{ color: "#e5ae28" }}>Zig</span>
+                <span style={{ color: "#f0c869" }}>Zig</span>
               </span>
             </Link>
           </div>
