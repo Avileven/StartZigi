@@ -7,7 +7,8 @@ export default function Footer() {
         
         {/* Logo - Back to Home */}
         <div className="mb-8">
-          <Link href="/">
+          <Link href="/" className="inline-flex items-center gap-1 justify-center">
+            <img src="/startzig-navbar-icon.png" alt="" className="h-9 object-contain mt-1" />
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity cursor-pointer">
               StartZig
             </span>
