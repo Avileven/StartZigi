@@ -17,7 +17,7 @@ export default function Footer() {
 
         {/* Main Navigation Links */}
         <nav className="mb-6">
-          <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-gray-400">
+          <ul className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium" style={{ color: "#c084fc" }}>
             <li><Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
             <li><Link href="/the-toolkit" className="hover:text-white transition-colors">The Toolkit</Link></li>
             <li><Link href="/why-startzig" className="hover:text-white transition-colors">Why StartZig</Link></li>
@@ -29,10 +29,10 @@ export default function Footer() {
 
         {/* Legal Links */}
         <nav className="mb-8">
-          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
-            <li><Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link></li>
-            <li><Link href="/privacypolicy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link></li>
-            <li><Link href="/disclaimer" className="hover:text-gray-300 transition-colors">Disclaimer</Link></li>
+          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs" style={{ color: "#f0c869" }}>
+            <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+            <li><Link href="/privacypolicy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+            <li><Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link></li>
           </ul>
         </nav>
 
