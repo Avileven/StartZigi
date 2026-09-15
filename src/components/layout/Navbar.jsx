@@ -39,9 +39,16 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold cursor-pointer">
-                <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Start</span>
-                <span className="bg-gradient-to-r from-yellow-200 via-amber-400 to-orange-600 bg-clip-text text-transparent">Zig</span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{
+                  background: "linear-gradient(to right, #c084fc 0%, #a78bfa 55%, #f0c869 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                StartZig
               </span>
             </Link>
           </div>
