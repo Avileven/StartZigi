@@ -9,7 +9,7 @@ import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 // [ADDED] Animated StartZig "Z" icon.
 // Plays once on mount: draws in slowly (top bar -> diagonal -> bottom bar + glow dot),
 // holds briefly, then fades out completely and stays hidden.
-function AnimatedZIcon({ className = "w-14 h-14" }) {
+function AnimatedZIcon({ className = "w-14 h-14", onComplete }) {
   const topClipRef = useRef(null);
   const botClipRef = useRef(null);
   const diagRef = useRef(null);
@@ -36,51 +36,54 @@ function AnimatedZIcon({ className = "w-14 h-14" }) {
     pDot.style.opacity = "0";
     botClipRect.style.transition = "none";
     botClipRect.setAttribute("width", "0");
-    wrap.style.transition = "none";
     wrap.style.opacity = "1";
 
     const timers = [];
     const raf1 = requestAnimationFrame(() => {
       const raf2 = requestAnimationFrame(() => {
-        topClipRect.style.transition = "width 1.4s ease-in-out";
+        // top bar
+        topClipRect.style.transition = "width 0.5s ease-in-out";
         topClipRect.setAttribute("width", "160");
       });
       timers.push(raf2);
     });
 
+    // diagonal
     timers.push(
       setTimeout(() => {
-        pDiag.style.transition = "stroke-dashoffset 1.2s ease-in-out";
+        pDiag.style.transition = "stroke-dashoffset 0.4s ease-in-out";
         pDiag.style.strokeDashoffset = "0";
-      }, 1500)
+      }, 600)
     );
 
+    // glow dot
     timers.push(
       setTimeout(() => {
-        pDot.style.transition = "opacity 0.8s ease";
+        pDot.style.transition = "opacity 0.3s ease";
         pDot.style.opacity = "1";
-      }, 2500)
+      }, 1050)
     );
 
+    // bottom bar + arrow
     timers.push(
       setTimeout(() => {
-        botClipRect.style.transition = "width 1.4s ease-in-out";
+        botClipRect.style.transition = "width 0.5s ease-in-out";
         botClipRect.setAttribute("width", "265");
-      }, 2800)
+      }, 1150)
     );
 
+    // done — stays visible, just notify the parent
     timers.push(
       setTimeout(() => {
-        wrap.style.transition = "opacity 1s ease-in";
-        wrap.style.opacity = "0";
-      }, 5200)
+        if (onComplete) onComplete();
+      }, 1700)
     );
 
     return () => {
       cancelAnimationFrame(raf1);
       timers.forEach((t) => (typeof t === "number" ? clearTimeout(t) : cancelAnimationFrame(t)));
     };
-  }, []);
+  }, [onComplete]);
 
   return (
     <div ref={wrapRef} className={className} aria-hidden="true">
@@ -307,6 +310,7 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showStartZig, setShowStartZig] = useState(false); // [ADDED] reveal "StartZig" only after the Z icon finishes
 
   useEffect(() => {
     const checkUser = async () => {
@@ -367,23 +371,26 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-28 md:w-40 md:h-40">
-          <AnimatedZIcon className="w-full h-full" />
-        </div>
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
-            <span
-              style={{
-                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-              className="fade-in-startzig"
-            >
-              StartZig
-            </span>
+            <AnimatedZIcon
+              className="inline-block w-12 h-12 md:w-16 md:h-16 align-middle mx-1"
+              onComplete={() => setShowStartZig(true)}
+            />
+            {showStartZig && (
+              <span
+                style={{
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+                className="fade-in-startzig"
+              >
+                StartZig
+              </span>
+            )}
             .
           </h1>
           <p
