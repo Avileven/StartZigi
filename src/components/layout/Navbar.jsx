@@ -41,7 +41,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold cursor-pointer">
                 <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Start</span>
-                <span className="bg-gradient-to-r from-yellow-200 to-orange-600 bg-clip-text text-transparent">Zig</span>
+                <span className="bg-gradient-to-r from-yellow-200 via-amber-400 to-orange-600 bg-clip-text text-transparent">Zig</span>
               </span>
             </Link>
           </div>
