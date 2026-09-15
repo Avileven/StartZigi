@@ -6,6 +6,131 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 
+// [ADDED] Animated StartZig "Z" icon.
+// Plays once on mount: draws in slowly (top bar -> diagonal -> bottom bar + glow dot),
+// holds briefly, then fades out completely and stays hidden.
+function AnimatedZIcon({ className = "w-14 h-14" }) {
+  const topClipRef = useRef(null);
+  const botClipRef = useRef(null);
+  const diagRef = useRef(null);
+  const dotRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const topClipRect = topClipRef.current;
+    const botClipRect = botClipRef.current;
+    const pDiag = diagRef.current;
+    const pDot = dotRef.current;
+    const wrap = wrapRef.current;
+    if (!topClipRect || !botClipRect || !pDiag || !pDot || !wrap) return;
+
+    const lDiag = pDiag.getTotalLength();
+
+    // Initial (hidden) state
+    topClipRect.style.transition = "none";
+    topClipRect.setAttribute("width", "0");
+    pDiag.style.transition = "none";
+    pDiag.style.strokeDasharray = String(lDiag);
+    pDiag.style.strokeDashoffset = String(lDiag);
+    pDot.style.transition = "none";
+    pDot.style.opacity = "0";
+    botClipRect.style.transition = "none";
+    botClipRect.setAttribute("width", "0");
+    wrap.style.transition = "none";
+    wrap.style.opacity = "1";
+
+    const timers = [];
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => {
+        topClipRect.style.transition = "width 1.4s ease-in-out";
+        topClipRect.setAttribute("width", "160");
+      });
+      timers.push(raf2);
+    });
+
+    timers.push(
+      setTimeout(() => {
+        pDiag.style.transition = "stroke-dashoffset 1.2s ease-in-out";
+        pDiag.style.strokeDashoffset = "0";
+      }, 1500)
+    );
+
+    timers.push(
+      setTimeout(() => {
+        pDot.style.transition = "opacity 0.8s ease";
+        pDot.style.opacity = "1";
+      }, 2500)
+    );
+
+    timers.push(
+      setTimeout(() => {
+        botClipRect.style.transition = "width 1.4s ease-in-out";
+        botClipRect.setAttribute("width", "265");
+      }, 2800)
+    );
+
+    timers.push(
+      setTimeout(() => {
+        wrap.style.transition = "opacity 1s ease-in";
+        wrap.style.opacity = "0";
+      }, 5200)
+    );
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      timers.forEach((t) => (typeof t === "number" ? clearTimeout(t) : cancelAnimationFrame(t)));
+    };
+  }, []);
+
+  return (
+    <div ref={wrapRef} className={className} aria-hidden="true">
+      <svg width="100%" height="100%" viewBox="0 0 280 180" role="img" aria-label="StartZig">
+        <defs>
+          <linearGradient id="zGradTop" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#F0A020" />
+            <stop offset="35%" stopColor="#8B5CF6" />
+            <stop offset="100%" stopColor="#4C2E9E" />
+          </linearGradient>
+          <linearGradient id="zGradBot" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#3A1E8A" />
+            <stop offset="55%" stopColor="#8B5CF6" />
+            <stop offset="100%" stopColor="#F0A020" />
+          </linearGradient>
+          <radialGradient id="zDotGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#F0A020" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#F0A020" stopOpacity="0" />
+          </radialGradient>
+          <clipPath id="zTopClip">
+            <rect ref={topClipRef} x="18" y="8" width="0" height="44" />
+          </clipPath>
+          <clipPath id="zBotClip">
+            <rect ref={botClipRef} x="8" y="120" width="0" height="60" />
+          </clipPath>
+        </defs>
+        <path
+          d="M40 10 L170 10 L170 50 L40 50 A20 20 0 1 1 40 10 Z"
+          fill="url(#zGradTop)"
+          clipPath="url(#zTopClip)"
+        />
+        <path
+          ref={diagRef}
+          d="M170 30 L30 150"
+          fill="none"
+          stroke="#9B7CF0"
+          strokeWidth="40"
+          strokeLinecap="round"
+        />
+        <ellipse ref={dotRef} cx="100" cy="90" rx="16" ry="13" fill="url(#zDotGlow)" opacity="0" />
+        <path
+          d="M30 130 L205 130 L260 150 L205 170 L30 170 A20 20 0 1 1 30 130 Z"
+          fill="url(#zGradBot)"
+          clipPath="url(#zBotClip)"
+        />
+      </svg>
+    </div>
+  );
+}
+
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
 const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
@@ -242,6 +367,9 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-14 h-14">
+          <AnimatedZIcon className="w-full h-full" />
+        </div>
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
