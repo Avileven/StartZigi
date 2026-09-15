@@ -367,7 +367,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-14 h-14">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-28 md:w-40 md:h-40">
           <AnimatedZIcon className="w-full h-full" />
         </div>
         <div className="relative z-10 text-center max-w-4xl mx-auto">
