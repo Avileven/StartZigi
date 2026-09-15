@@ -15,6 +15,12 @@ function AnimatedZIcon({ className = "w-14 h-14", onComplete }) {
   const diagRef = useRef(null);
   const dotRef = useRef(null);
   const wrapRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+
+  // keep the latest onComplete without making the animation effect re-run
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const topClipRect = topClipRef.current;
@@ -75,7 +81,7 @@ function AnimatedZIcon({ className = "w-14 h-14", onComplete }) {
     // done — stays visible, just notify the parent
     timers.push(
       setTimeout(() => {
-        if (onComplete) onComplete();
+        if (onCompleteRef.current) onCompleteRef.current();
       }, 1700)
     );
 
@@ -83,7 +89,7 @@ function AnimatedZIcon({ className = "w-14 h-14", onComplete }) {
       cancelAnimationFrame(raf1);
       timers.forEach((t) => (typeof t === "number" ? clearTimeout(t) : cancelAnimationFrame(t)));
     };
-  }, [onComplete]);
+  }, []); // run once on mount only — never restart on parent re-renders
 
   return (
     <div ref={wrapRef} className={className} aria-hidden="true">
@@ -370,7 +376,7 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
+      <div className="relative min-h-screen flex items-center justify-start pt-24 md:pt-32 px-6">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp flex flex-col items-center gap-2">
             <span>Don't just start up.</span>
@@ -378,29 +384,32 @@ export default function Home() {
               className="w-20 h-20 md:w-28 md:h-28"
               onComplete={() => setShowStartZig(true)}
             />
-            {showStartZig && (
-              <span
-                style={{
-                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-                className="fade-in-startzig"
-              >
-                StartZig.
-              </span>
-            )}
+            <span
+              style={{
+                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                opacity: showStartZig ? 1 : 0,
+                transition: "opacity 0.6s ease",
+              }}
+            >
+              StartZig.
+            </span>
           </h1>
           <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
-            style={{ animationDelay: "0.2s" }}
+            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto italic"
+            style={{ opacity: showStartZig ? 1 : 0, transition: "opacity 0.6s ease 0.2s" }}
           >
             Your Idea. Your Community. Your Next Zig.
           </p>
           <div
-            className="flex flex-col gap-4 items-center animate-slideUp"
-            style={{ animationDelay: "0.4s" }}
+            className="flex flex-col gap-4 items-center"
+            style={{
+              opacity: showStartZig ? 1 : 0,
+              transition: "opacity 0.6s ease 0.4s",
+              pointerEvents: showStartZig ? "auto" : "none",
+            }}
           >
             {user ? (
               hasVenture ? (
