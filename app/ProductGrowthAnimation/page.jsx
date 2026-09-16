@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 const BLUE = "#2563EB"; // primary accent (idea / product)
 const ORANGE = "#F97316"; // feedback / insights
 const GREEN = "#10B981"; // users
+const PURPLE = "#9333EA"; // accent variety in the feature rows
 const GRAY = "#9CA3AF"; // passive watchers
 const SURFACE = "#FFFFFF"; // card background
 const BORDER = "#E9E9F0"; // card border / lines
@@ -35,6 +36,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
   const bulbOnRef = useRef(null);
 
   const frameRef = useRef(null);
+  const finalBorderRef = useRef(null);
   const headerBarRef = useRef(null);
   const block1Ref = useRef(null);
   const block2Ref = useRef(null);
@@ -75,6 +77,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
     const bulbOn = bulbOnRef.current;
 
     const frame = frameRef.current;
+    const finalBorder = finalBorderRef.current;
     const headerBar = headerBarRef.current;
     const block1 = block1Ref.current;
     const block2 = block2Ref.current;
@@ -89,7 +92,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
 
     if (
       !person || !eyesClosed || !eyesOpen || !bulbOff || !bulbOn ||
-      !frame || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
+      !frame || !finalBorder || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
       !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
       return;
@@ -140,14 +143,20 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           [{ transform: "scale(0.9)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }],
           { duration: 500, easing: "ease-out" }
         );
+        showCounter("PRODUCT IDEA", BLUE);
       }, 2200);
     }
     function hideIdea() {
       person.style.transition = "opacity 0.6s ease";
       person.style.opacity = "0";
+      eyesClosed.style.transition = "opacity 0.6s ease";
+      eyesClosed.style.opacity = "0";
+      eyesOpen.style.transition = "opacity 0.6s ease";
+      eyesOpen.style.opacity = "0";
       bulbOff.style.opacity = "0";
       bulbOn.style.transition = "opacity 0.6s ease";
       bulbOn.style.opacity = "0";
+      hideCounter();
     }
 
     /* ===== shared builders ===== */
@@ -228,7 +237,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       g.appendChild(body);
       return g;
     }
-    function makeRow(y) {
+    function makeRow(y, accent) {
       const g = document.createElementNS(svgns, "g");
       g.style.opacity = "0";
       g.style.transition = "opacity 0.5s ease, transform 0.5s ease";
@@ -237,7 +246,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       dot.setAttribute("cx", 289);
       dot.setAttribute("cy", y);
       dot.setAttribute("r", 5);
-      dot.setAttribute("fill", BLUE);
+      dot.setAttribute("fill", accent);
       g.appendChild(dot);
       const line1 = document.createElementNS(svgns, "rect");
       line1.setAttribute("x", 300);
@@ -245,7 +254,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       line1.setAttribute("width", 66);
       line1.setAttribute("height", 6);
       line1.setAttribute("rx", 3);
-      line1.setAttribute("fill", TEXT_PRIMARY);
+      line1.setAttribute("fill", accent);
       g.appendChild(line1);
       const line2 = document.createElementNS(svgns, "rect");
       line2.setAttribute("x", 300);
@@ -393,7 +402,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
     /* ===== STAGE 4: one more feature — its own separate stage ===== */
     function addFeature(callback) {
       rowY.forEach((y, i) => {
-        const row = makeRow(y);
+        const row = makeRow(y, i % 2 === 0 ? BLUE : PURPLE);
         rowsG.appendChild(row);
         T(() => {
           row.style.opacity = "1";
@@ -408,6 +417,8 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       eyeEls = [];
       feedbackIconsG.innerHTML = "";
       hideCounter();
+      finalBorder.style.transition = "none";
+      finalBorder.style.opacity = "0";
       frame.style.transition = "none";
       frame.style.opacity = "0";
       headerBar.style.transition = "none";
@@ -467,8 +478,32 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
                               frame.style.transition = "opacity 0.8s ease";
                               frame.style.opacity = "1";
                               T(() => {
+                                finalBorder.style.transition = "opacity 0.7s ease";
+                                finalBorder.style.opacity = "1";
+
+                                const flash = (el) =>
+                                  el.animate(
+                                    [{ opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }],
+                                    { duration: 500, iterations: 2 }
+                                  );
+
+                                showCounter("Your Idea.", PURPLE);
+                                flash(headerBar);
+
+                                T(() => {
+                                  showCounter("Your Community.", PURPLE);
+                                  flash(feedbackIconsG);
+                                }, 1300);
+
+                                T(() => {
+                                  showCounter("Your Next Zig.", PURPLE);
+                                  flash(pChart);
+                                  flash(rowsG);
+                                }, 2600);
+                              }, 500);
+                              T(() => {
                                 if (!cancelled) setFinished(true);
-                              }, 400);
+                              }, 4400);
                             }, 700);
                           });
                         }, 2000);
@@ -533,20 +568,20 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
-        {/* Person: head + a classic flat-shoulder pictogram body, not a snowman */}
+        {/* Person: just a larger face, no body */}
         <g ref={personRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
-          <path d="M 314 300 L 366 300 L 373 360 L 307 360 Z" fill="currentColor" />
-          <circle cx="340" cy="258" r="16" fill="currentColor" />
+          <circle cx="340" cy="278" r="28" fill="currentColor" />
         </g>
         <g ref={eyesClosedRef} style={{ transition: "opacity 0.25s ease" }}>
-          <line x1="329" y1="254" x2="337" y2="254" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
-          <line x1="343" y1="254" x2="351" y2="254" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
+          <line x1="324" y1="270" x2="333" y2="270" stroke={SURFACE} strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="347" y1="270" x2="356" y2="270" stroke={SURFACE} strokeWidth="2.5" strokeLinecap="round" />
         </g>
         <g ref={eyesOpenRef} style={{ opacity: 0, transition: "opacity 0.25s ease" }}>
-          <circle cx="333" cy="254" r="3.4" fill={SURFACE} />
-          <circle cx="347" cy="254" r="3.4" fill={SURFACE} />
-          <circle cx="333" cy="254" r="1.4" fill="#FBBF24" />
-          <circle cx="347" cy="254" r="1.4" fill="#FBBF24" />
+          <circle cx="328" cy="270" r="4.4" fill={SURFACE} />
+          <circle cx="352" cy="270" r="4.4" fill={SURFACE} />
+          <circle cx="328" cy="270" r="1.8" fill="#FBBF24" />
+          <circle cx="352" cy="270" r="1.8" fill="#FBBF24" />
+          <path d="M 325 289 Q 340 300 355 289" fill="none" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round" />
         </g>
 
         {/* Lightbulb above his head: almost invisible while he thinks, then lights up */}
@@ -569,6 +604,9 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           })}
         </g>
 
+        <g ref={finalBorderRef} style={{ opacity: 0, transition: "opacity 0.7s ease" }}>
+          <rect x="258" y="88" width="164" height="229" rx="24" fill="none" stroke={ORANGE} strokeWidth="2" opacity="0.55" />
+        </g>
         <g ref={frameRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
           <rect x="265" y="95" width="150" height="215" rx="18" fill={SURFACE} stroke="currentColor" strokeWidth="2" />
           <rect ref={headerBarRef} x="283" y="112" width="90" height="14" rx="4" fill={BLUE} opacity="0.7" />
@@ -589,13 +627,13 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           <text
             ref={counterLabelRef}
             x="340"
-            y="350"
+            y="352"
             textAnchor="middle"
             fill={ORANGE}
             fontFamily={FONT}
-            fontWeight="700"
-            fontSize="11"
-            letterSpacing="0.03em"
+            fontWeight="800"
+            fontSize="17"
+            letterSpacing="0.02em"
           >
             PRODUCT INSIGHT
           </text>
