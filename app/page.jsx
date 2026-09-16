@@ -408,7 +408,7 @@ export default function Home() {
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-16">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block leading-relaxed pb-2">
               Frequently Asked Questions
             </span>
           </h2>
