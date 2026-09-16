@@ -6,140 +6,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 
-// [ADDED] Animated StartZig "Z" icon.
-// Plays once on mount: draws in slowly (top bar -> diagonal -> bottom bar + glow dot),
-// holds briefly, then fades out completely and stays hidden.
-function AnimatedZIcon({ className = "w-14 h-14", onComplete }) {
-  const topClipRef = useRef(null);
-  const botClipRef = useRef(null);
-  const diagRef = useRef(null);
-  const dotRef = useRef(null);
-  const wrapRef = useRef(null);
-  const onCompleteRef = useRef(onComplete);
-
-  // keep the latest onComplete without making the animation effect re-run
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    const topClipRect = topClipRef.current;
-    const botClipRect = botClipRef.current;
-    const pDiag = diagRef.current;
-    const pDot = dotRef.current;
-    const wrap = wrapRef.current;
-    if (!topClipRect || !botClipRect || !pDiag || !pDot || !wrap) return;
-
-    const lDiag = pDiag.getTotalLength();
-
-    // Initial (hidden) state
-    topClipRect.style.transition = "none";
-    topClipRect.setAttribute("width", "0");
-    pDiag.style.transition = "none";
-    pDiag.style.strokeDasharray = String(lDiag);
-    pDiag.style.strokeDashoffset = String(lDiag);
-    pDot.style.transition = "none";
-    pDot.style.opacity = "0";
-    botClipRect.style.transition = "none";
-    botClipRect.setAttribute("width", "0");
-    wrap.style.opacity = "1";
-
-    const timers = [];
-    const raf1 = requestAnimationFrame(() => {
-      const raf2 = requestAnimationFrame(() => {
-        // top bar
-        topClipRect.style.transition = "width 0.5s ease-in-out";
-        topClipRect.setAttribute("width", "160");
-      });
-      timers.push(raf2);
-    });
-
-    // diagonal
-    timers.push(
-      setTimeout(() => {
-        pDiag.style.transition = "stroke-dashoffset 0.4s ease-in-out";
-        pDiag.style.strokeDashoffset = "0";
-      }, 600)
-    );
-
-    // glow dot
-    timers.push(
-      setTimeout(() => {
-        pDot.style.transition = "opacity 0.3s ease";
-        pDot.style.opacity = "1";
-      }, 1050)
-    );
-
-    // bottom bar + arrow
-    timers.push(
-      setTimeout(() => {
-        botClipRect.style.transition = "width 0.5s ease-in-out";
-        botClipRect.setAttribute("width", "265");
-      }, 1150)
-    );
-
-    // done — stays visible, just notify the parent
-    timers.push(
-      setTimeout(() => {
-        if (onCompleteRef.current) onCompleteRef.current();
-      }, 1700)
-    );
-
-    return () => {
-      cancelAnimationFrame(raf1);
-      timers.forEach((t) => (typeof t === "number" ? clearTimeout(t) : cancelAnimationFrame(t)));
-    };
-  }, []); // run once on mount only — never restart on parent re-renders
-
-  return (
-    <div ref={wrapRef} className={className} aria-hidden="true">
-      <svg width="100%" height="100%" viewBox="0 0 280 180" role="img" aria-label="StartZig">
-        <defs>
-          <linearGradient id="zGradTop" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#F0A020" />
-            <stop offset="35%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#4C2E9E" />
-          </linearGradient>
-          <linearGradient id="zGradBot" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3A1E8A" />
-            <stop offset="55%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#F0A020" />
-          </linearGradient>
-          <radialGradient id="zDotGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F0A020" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#F0A020" stopOpacity="0" />
-          </radialGradient>
-          <clipPath id="zTopClip">
-            <rect ref={topClipRef} x="18" y="8" width="0" height="44" />
-          </clipPath>
-          <clipPath id="zBotClip">
-            <rect ref={botClipRef} x="8" y="120" width="0" height="60" />
-          </clipPath>
-        </defs>
-        <path
-          d="M40 10 L170 10 L170 50 L40 50 A20 20 0 1 1 40 10 Z"
-          fill="url(#zGradTop)"
-          clipPath="url(#zTopClip)"
-        />
-        <path
-          ref={diagRef}
-          d="M170 30 L30 150"
-          fill="none"
-          stroke="#9B7CF0"
-          strokeWidth="40"
-          strokeLinecap="round"
-        />
-        <ellipse ref={dotRef} cx="100" cy="90" rx="16" ry="13" fill="url(#zDotGlow)" opacity="0" />
-        <path
-          d="M30 130 L205 130 L260 150 L205 170 L30 170 A20 20 0 1 1 30 130 Z"
-          fill="url(#zGradBot)"
-          clipPath="url(#zBotClip)"
-        />
-      </svg>
-    </div>
-  );
-}
-
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
 const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
@@ -316,20 +182,6 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showStartZig, setShowStartZig] = useState(false); // [ADDED] reveal "StartZig" only after the Z icon finishes
-  const [wordCount, setWordCount] = useState(0); // [ADDED] how many words of the subtitle are revealed
-  const [showCTA, setShowCTA] = useState(false); // [ADDED] reveal the CTA button only after the subtitle finishes
-  const SUBTITLE_WORDS = "Your Idea. Your Community. Your Next Zig.".split(" ");
-
-  useEffect(() => {
-    if (!showStartZig) return;
-    if (wordCount >= SUBTITLE_WORDS.length) {
-      const t = setTimeout(() => setShowCTA(true), 300);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setWordCount((c) => c + 1), 450);
-    return () => clearTimeout(t);
-  }, [showStartZig, wordCount]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -389,66 +241,32 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative flex items-start justify-center pt-4 md:pt-8 px-6 pb-10">
+      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight flex flex-col items-center gap-0">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
+            Don't just start up.{" "}
             <span
-              className="inline-block leading-tight pb-2"
               style={{
-                background: "linear-gradient(to right, #B39DFF, #4C1D95)",
+                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
+              className="fade-in-startzig"
             >
-              Don't just start up.
+              StartZig
             </span>
-            <AnimatedZIcon
-              className="w-16 md:w-24 aspect-[14/9] mt-10 md:mt-14 mb-0"
-              onComplete={() => setShowStartZig(true)}
-            />
-            <span
-              className="inline-block leading-tight pb-2"
-              style={{
-                background: "linear-gradient(to right, #8B5CF6, #F0A020)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                opacity: showStartZig ? 1 : 0,
-                transition: "opacity 0.6s ease",
-              }}
-            >
-              StartZig.
-            </span>
+            .
           </h1>
           <p
-            className="text-xl md:text-2xl mb-6 max-w-3xl mx-auto"
-            style={{
-              background: "linear-gradient(to right, #B39DFF, #4C1D95)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
+            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
+            style={{ animationDelay: "0.2s" }}
           >
-            {SUBTITLE_WORDS.map((word, i) => (
-              <span
-                key={i}
-                style={{
-                  opacity: i < wordCount ? 1 : 0,
-                  transition: "opacity 0.3s ease",
-                }}
-              >
-                {word}{" "}
-              </span>
-            ))}
+            Your Idea. Your Community. Your Next Zig.
           </p>
           <div
-            className="flex flex-col gap-4 items-center"
-            style={{
-              opacity: showCTA ? 1 : 0,
-              transition: "opacity 0.6s ease",
-              pointerEvents: showCTA ? "auto" : "none",
-            }}
+            className="flex flex-col gap-4 items-center animate-slideUp"
+            style={{ animationDelay: "0.4s" }}
           >
             {user ? (
               hasVenture ? (
