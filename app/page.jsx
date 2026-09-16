@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
+import ProductGrowthAnimation from "./ProductGrowthAnimation"; // [ADDED] idea-to-product-to-users animation
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
@@ -303,6 +304,7 @@ export default function Home() {
             <h3 className="text-3xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">What if your product and its community could take shape together.</span>
             </h3>
+            <ProductGrowthAnimation className="w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
               Most founders build first and look for customers later. StartZig takes a different approach. If you're starting with an idea, bring potential users into the journey from the beginning. If you already have a product live, bring them in now. Let people discover what you're building, give structured feedback, follow its progress and engage with new versions as your product evolves. Your product and your community grow side by side.
             </p>
