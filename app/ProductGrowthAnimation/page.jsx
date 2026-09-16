@@ -12,7 +12,7 @@ const TEXT_PRIMARY = "#111827";
 const FONT = "Inter, sans-serif";
 
 // Five distinct stages, each finishing fully before the next begins, with a pause in between:
-// 1. Idea      - a person has an idea: a thought bubble with a lightning-bolt spark, eyes open.
+// 1. Idea      - a person thinks; a faint lightbulb above his head lights up the moment his eyes open.
 // 2. Feedback   - a demo app appears, surrounded by many gray eyes, all sitting still first.
 //                Some light up orange one at a time, lean in, and turn into feedback bubbles
 //                inside it, while an "Insights" counter rises.
@@ -31,11 +31,8 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
   const personRef = useRef(null);
   const eyesClosedRef = useRef(null);
   const eyesOpenRef = useRef(null);
-  const tb1Ref = useRef(null);
-  const tb2Ref = useRef(null);
-  const cloudRef = useRef(null);
-  const ideaDotRef = useRef(null);
-  const boltRef = useRef(null);
+  const bulbOffRef = useRef(null);
+  const bulbOnRef = useRef(null);
 
   const frameRef = useRef(null);
   const headerBarRef = useRef(null);
@@ -74,11 +71,8 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
     const person = personRef.current;
     const eyesClosed = eyesClosedRef.current;
     const eyesOpen = eyesOpenRef.current;
-    const tb1 = tb1Ref.current;
-    const tb2 = tb2Ref.current;
-    const cloud = cloudRef.current;
-    const ideaDot = ideaDotRef.current;
-    const bolt = boltRef.current;
+    const bulbOff = bulbOffRef.current;
+    const bulbOn = bulbOnRef.current;
 
     const frame = frameRef.current;
     const headerBar = headerBarRef.current;
@@ -94,7 +88,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
     const feedbackIconsG = feedbackIconsRef.current;
 
     if (
-      !person || !eyesClosed || !eyesOpen || !tb1 || !tb2 || !cloud || !ideaDot || !bolt ||
+      !person || !eyesClosed || !eyesOpen || !bulbOff || !bulbOn ||
       !frame || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
       !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
@@ -117,18 +111,11 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       person.style.opacity = "0";
       eyesClosed.style.opacity = "1";
       eyesOpen.style.opacity = "0";
-      tb1.style.transition = "none";
-      tb1.style.opacity = "0";
-      tb2.style.transition = "none";
-      tb2.style.opacity = "0";
-      cloud.style.transition = "none";
-      cloud.style.opacity = "0";
-      ideaDot.style.transition = "none";
-      ideaDot.style.opacity = "0";
-      ideaDot.setAttribute("r", "3");
-      bolt.style.transition = "none";
-      bolt.style.opacity = "0";
-      bolt.style.transform = "scale(0.35)";
+      bulbOff.style.transition = "none";
+      bulbOff.style.opacity = "0";
+      bulbOn.style.transition = "none";
+      bulbOn.style.opacity = "0";
+      bulbOn.style.transform = "scale(0.9)";
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -136,50 +123,31 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           person.style.opacity = "1";
         });
       });
+      // The bulb sits there almost invisible while he's thinking.
       T(() => {
-        tb1.style.transition = "opacity 0.3s ease";
-        tb1.style.opacity = "1";
+        bulbOff.style.transition = "opacity 0.8s ease";
+        bulbOff.style.opacity = "0.28";
       }, 700);
+      // The moment his eyes open, the bulb lights up.
       T(() => {
-        tb2.style.transition = "opacity 0.3s ease";
-        tb2.style.opacity = "1";
-      }, 1000);
-      T(() => {
-        cloud.style.transition = "opacity 0.5s ease";
-        cloud.style.opacity = "1";
-      }, 1350);
-      T(() => {
-        ideaDot.style.transition = "opacity 0.3s ease";
-        ideaDot.style.opacity = "1";
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            ideaDot.style.transition = "r 0.8s ease-in-out";
-            ideaDot.setAttribute("r", "6");
-          });
-        });
-      }, 2000);
-      T(() => {
-        ideaDot.style.opacity = "0";
-        bolt.style.opacity = "1";
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            bolt.style.transition = "transform 1.6s ease-in-out";
-            bolt.style.transform = "scale(1)";
-          });
-        });
         eyesClosed.style.opacity = "0";
         eyesOpen.style.opacity = "1";
-      }, 2800);
+        bulbOff.style.transition = "opacity 0.3s ease";
+        bulbOff.style.opacity = "0";
+        bulbOn.style.transition = "opacity 0.3s ease";
+        bulbOn.style.opacity = "1";
+        bulbOn.animate(
+          [{ transform: "scale(0.9)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }],
+          { duration: 500, easing: "ease-out" }
+        );
+      }, 2200);
     }
     function hideIdea() {
       person.style.transition = "opacity 0.6s ease";
       person.style.opacity = "0";
-      tb1.style.opacity = "0";
-      tb2.style.opacity = "0";
-      cloud.style.transition = "opacity 0.6s ease";
-      cloud.style.opacity = "0";
-      bolt.style.transition = "opacity 0.6s ease";
-      bolt.style.opacity = "0";
+      bulbOff.style.opacity = "0";
+      bulbOn.style.transition = "opacity 0.6s ease";
+      bulbOn.style.opacity = "0";
     }
 
     /* ===== shared builders ===== */
@@ -335,7 +303,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       });
     }
 
-    function runMoverEye(eye, pos, insidePos, color, makeIcon, iconTarget, done) {
+    function runMoverEye(eye, pos, insidePos, color, makeIcon, iconTarget, speed, done) {
       const leanX = cx + (pos.x - cx) * 0.55;
       const leanY = cy + (pos.y - cy) * 0.55;
       const leanT = `translate(${leanX}px,${leanY}px) scale(1.35)`;
@@ -351,20 +319,20 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           { transform: eye.g.style.transform.replace("scale(0.85)", "scale(1.15)") },
           { transform: eye.g.style.transform },
         ],
-        { duration: 450, easing: "ease-out" }
+        { duration: 450 * speed, easing: "ease-out" }
       );
 
       // Only after lighting up, it leans in.
       T(() => {
         eye.g.style.transform = `translate(${pos.x}px,${pos.y}px) scale(1)`;
         T(() => {
-          eye.g.style.transition = "transform 0.7s cubic-bezier(.4,0,.2,1)";
+          eye.g.style.transition = `transform ${0.7 * speed}s cubic-bezier(.4,0,.2,1)`;
           eye.g.style.transform = leanT;
-        }, 30);
-      }, 500);
+        }, 20);
+      }, 500 * speed);
 
       T(() => {
-        eye.g.style.transition = "opacity 0.35s ease";
+        eye.g.style.transition = "opacity 0.25s ease";
         eye.g.style.opacity = "0";
         const icon = makeIcon(insidePos.x, insidePos.y);
         iconTarget.appendChild(icon);
@@ -373,11 +341,11 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
             icon.style.opacity = "1";
           });
         });
-      }, 1350);
+      }, 1350 * speed);
 
-      T(() => done(), 1850);
+      T(() => done(), 1850 * speed);
     }
-    function runMovers(color, makeIcon, iconTarget, callback) {
+    function runMovers(color, makeIcon, iconTarget, speed, callback) {
       const movers = [];
       ringItems.forEach((it, i) => {
         if (it.isMover) movers.push({ pos: it, eye: eyeEls[i] });
@@ -391,7 +359,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         const m = movers[idx];
         const off = insideOffsets[idx % insideOffsets.length];
         idx++;
-        runMoverEye(m.eye, { x: m.pos.x, y: m.pos.y }, { x: cx + off[0], y: cy + off[1] }, color, makeIcon, iconTarget, next);
+        runMoverEye(m.eye, { x: m.pos.x, y: m.pos.y }, { x: cx + off[0], y: cy + off[1] }, color, makeIcon, iconTarget, speed, next);
       }
       next();
     }
@@ -473,7 +441,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           showAllEyesGray();
           // Eyes settle and sit still for a beat before any of them light up.
           T(() => {
-            runMovers(ORANGE, makeFeedbackIcon, feedbackIconsG, () => {
+            runMovers(ORANGE, makeFeedbackIcon, feedbackIconsG, 0.55, () => {
               hideAllEyes();
               hideCounter();
 
@@ -492,7 +460,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
                         T(() => {
                           frame.style.transition = "opacity 0.8s ease";
                           frame.style.opacity = "0.45";
-                          runMovers(GREEN, makeUserIcon, feedbackIconsG, () => {
+                          runMovers(GREEN, makeUserIcon, feedbackIconsG, 0.35, () => {
                             T(() => {
                               hideAllEyes();
                               hideCounter();
@@ -512,7 +480,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
             });
           }, 2000);
         }, 900);
-      }, 3600);
+      }, 4200);
     }
 
     playRef.current = playOnce;
@@ -551,10 +519,10 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
 
   return (
     <div ref={wrapRef} className={className} style={{ position: "relative" }}>
-      <svg width="100%" viewBox="0 0 680 400" role="img" style={{ display: "block" }}>
+      <svg width="100%" viewBox="0 0 680 380" role="img" style={{ display: "block" }}>
         <title>Idea to product to users</title>
         <desc>
-          A person has an idea, shown as a thought bubble with a lightning bolt and their eyes
+          A person thinks, with a faint lightbulb above his head. The moment his eyes
           opening. A demo app frame then appears, surrounded by many gray eye icons that all sit
           still first; some then light up orange, lean in, and turn into feedback speech-bubble
           icons inside the frame while an insights counter rises. As a separate stage, the frame
@@ -571,35 +539,35 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           <circle cx="340" cy="258" r="16" fill="currentColor" />
         </g>
         <g ref={eyesClosedRef} style={{ transition: "opacity 0.25s ease" }}>
-          <line x1="329" y1="261" x2="337" y2="261" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
-          <line x1="343" y1="261" x2="351" y2="261" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
+          <line x1="329" y1="254" x2="337" y2="254" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
+          <line x1="343" y1="254" x2="351" y2="254" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
         </g>
         <g ref={eyesOpenRef} style={{ opacity: 0, transition: "opacity 0.25s ease" }}>
-          <circle cx="333" cy="261" r="3.4" fill={SURFACE} />
-          <circle cx="347" cy="261" r="3.4" fill={SURFACE} />
-          <circle cx="333" cy="261" r="1.4" fill={BLUE} />
-          <circle cx="347" cy="261" r="1.4" fill={BLUE} />
+          <circle cx="333" cy="254" r="3.4" fill={SURFACE} />
+          <circle cx="347" cy="254" r="3.4" fill={SURFACE} />
+          <circle cx="333" cy="254" r="1.4" fill="#FBBF24" />
+          <circle cx="347" cy="254" r="1.4" fill="#FBBF24" />
         </g>
-        <circle ref={tb1Ref} cx="360" cy="234" r="4" fill={BORDER} style={{ opacity: 0, transition: "opacity 0.3s ease" }} />
-        <circle ref={tb2Ref} cx="371" cy="216" r="6" fill={BORDER} style={{ opacity: 0, transition: "opacity 0.3s ease" }} />
-        <ellipse
-          ref={cloudRef}
-          cx="390"
-          cy="174"
-          rx="46"
-          ry="30"
-          fill={SURFACE}
-          stroke={BORDER}
-          strokeWidth="1.5"
-          style={{ opacity: 0, transition: "opacity 0.5s ease" }}
-        />
-        <circle ref={ideaDotRef} cx="390" cy="174" r="4" fill={BLUE} style={{ opacity: 0, transition: "opacity 0.4s ease" }} />
-        <path
-          ref={boltRef}
-          d="M 394 158 L 380 176 L 388 176 L 383 190 L 402 168 L 392 168 Z"
-          fill={ORANGE}
-          style={{ opacity: 0, transition: "opacity 0.35s ease", transformOrigin: "390px 174px" }}
-        />
+
+        {/* Lightbulb above his head: almost invisible while he thinks, then lights up */}
+        <g ref={bulbOffRef} style={{ opacity: 0, transition: "opacity 0.8s ease", transformOrigin: "340px 216px" }}>
+          <circle cx="340" cy="210" r="15" fill="none" stroke={GRAY} strokeWidth="1.5" />
+          <rect x="332" y="222" width="16" height="9" rx="2" fill="none" stroke={GRAY} strokeWidth="1.5" />
+          <line x1="334" y1="226" x2="346" y2="226" stroke={GRAY} strokeWidth="1" />
+        </g>
+        <g ref={bulbOnRef} style={{ opacity: 0, transition: "opacity 0.3s ease", transformOrigin: "340px 216px" }}>
+          <circle cx="340" cy="210" r="15" fill="#FBBF24" />
+          <rect x="332" y="222" width="16" height="9" rx="2" fill="#FBBF24" />
+          <line x1="334" y1="226" x2="346" y2="226" stroke="#B45309" strokeWidth="1" />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
+            const rad = (deg * Math.PI) / 180;
+            const x1 = 340 + Math.cos(rad) * 19;
+            const y1 = 210 + Math.sin(rad) * 19;
+            const x2 = 340 + Math.cos(rad) * 26;
+            const y2 = 210 + Math.sin(rad) * 26;
+            return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />;
+          })}
+        </g>
 
         <g ref={frameRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
           <rect x="265" y="95" width="150" height="215" rx="18" fill={SURFACE} stroke="currentColor" strokeWidth="2" />
