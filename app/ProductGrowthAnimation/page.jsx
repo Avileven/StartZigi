@@ -47,7 +47,6 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
 
   const counterRef = useRef(null);
   const counterLabelRef = useRef(null);
-  const counterNumRef = useRef(null);
   const eyeHolderRef = useRef(null);
   const feedbackIconsRef = useRef(null);
 
@@ -91,14 +90,13 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
 
     const counter = counterRef.current;
     const counterLabel = counterLabelRef.current;
-    const counterNum = counterNumRef.current;
     const eyeHolder = eyeHolderRef.current;
     const feedbackIconsG = feedbackIconsRef.current;
 
     if (
       !person || !eyesClosed || !eyesOpen || !tb1 || !tb2 || !cloud || !ideaDot || !bolt ||
       !frame || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
-      !counter || !counterLabel || !counterNum || !eyeHolder || !feedbackIconsG
+      !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
       return;
     }
@@ -303,33 +301,13 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       });
     }
 
-    let countValue = 0;
     function showCounter(label, color) {
-      countValue = 0;
       counterLabel.textContent = label;
       counterLabel.setAttribute("fill", color);
-      counterNum.setAttribute("fill", color);
-      counterNum.textContent = "0";
-      counterNum.setAttribute("y", "365");
-      counterNum.style.opacity = "1";
       counter.style.opacity = "1";
     }
     function hideCounter() {
       counter.style.opacity = "0";
-    }
-    function bumpCounter() {
-      countValue++;
-      counterNum.style.transition = "none";
-      counterNum.setAttribute("y", "378");
-      counterNum.style.opacity = "0";
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          counterNum.textContent = countValue;
-          counterNum.style.transition = "y 0.35s ease-out, opacity 0.35s ease-out";
-          counterNum.setAttribute("y", "365");
-          counterNum.style.opacity = "1";
-        });
-      });
     }
 
     let eyeEls = [];
@@ -393,7 +371,6 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             icon.style.opacity = "1";
-            bumpCounter();
           });
         });
       }, 1350);
@@ -492,7 +469,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         T(() => {
           frame.style.transition = "opacity 0.6s ease";
           frame.style.opacity = "1";
-          showCounter("Insights", ORANGE);
+          showCounter("PRODUCT INSIGHT", ORANGE);
           showAllEyesGray();
           // Eyes settle and sit still for a beat before any of them light up.
           T(() => {
@@ -501,12 +478,16 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
               hideCounter();
 
               T(() => {
+                showCounter("PRODUCT SCALE", BLUE);
                 fillProduct(() => {
                   T(() => {
                     addFeature(() => {
                       T(() => {
+                        hideCounter();
+                      }, 0);
+                      T(() => {
                         feedbackIconsG.innerHTML = "";
-                        showCounter("Users", GREEN);
+                        showCounter("NEW USERS", GREEN);
                         showAllEyesGray();
                         T(() => {
                           frame.style.transition = "opacity 0.8s ease";
@@ -584,10 +565,10 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
-        {/* Person: head + a shoulder/torso dome, not a snowman */}
+        {/* Person: head + a classic flat-shoulder pictogram body, not a snowman */}
         <g ref={personRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
-          <path d="M 308 358 C 308 314 320 292 340 292 C 360 292 372 314 372 358 Z" fill="currentColor" />
-          <circle cx="340" cy="262" r="18" fill="currentColor" />
+          <path d="M 314 300 L 366 300 L 373 360 L 307 360 Z" fill="currentColor" />
+          <circle cx="340" cy="258" r="16" fill="currentColor" />
         </g>
         <g ref={eyesClosedRef} style={{ transition: "opacity 0.25s ease" }}>
           <line x1="329" y1="261" x2="337" y2="261" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
@@ -637,11 +618,18 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         </g>
 
         <g ref={counterRef} style={{ opacity: 0, transition: "opacity 0.5s ease" }}>
-          <text ref={counterLabelRef} x="340" y="345" textAnchor="middle" fill={ORANGE} fontFamily={FONT} fontWeight="700" fontSize="14">
-            Insights
-          </text>
-          <text ref={counterNumRef} x="340" y="365" textAnchor="middle" fill={ORANGE} fontFamily={FONT} fontWeight="800" fontSize="20">
-            0
+          <text
+            ref={counterLabelRef}
+            x="340"
+            y="350"
+            textAnchor="middle"
+            fill={ORANGE}
+            fontFamily={FONT}
+            fontWeight="700"
+            fontSize="11"
+            letterSpacing="0.03em"
+          >
+            PRODUCT INSIGHT
           </text>
         </g>
 
