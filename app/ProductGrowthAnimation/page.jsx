@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 // Colors matched to the real site palette (same family as PhaseClock's colors).
 const BLUE = "#2563EB"; // primary accent (idea / product)
@@ -9,19 +9,25 @@ const GRAY = "#9CA3AF"; // passive watchers
 const SURFACE = "#FFFFFF"; // card background
 const BORDER = "#E9E9F0"; // card border / lines
 const TEXT_PRIMARY = "#111827";
-const TEXT_SECONDARY = "#6B7280";
 const FONT = "Inter, sans-serif";
 
 // Five distinct stages, each finishing fully before the next begins, with a pause in between:
-// 1. Idea      - a thinking figure, a thought bubble, and a lightning-bolt spark; their eyes open.
-// 2. Feedback   - a demo app appears, surrounded by many gray eyes; some light up orange, lean in,
-//                and turn into feedback speech-bubble icons inside it, while an "Insights" counter rises.
+// 1. Idea      - a person has an idea: a thought bubble with a lightning-bolt spark, eyes open.
+// 2. Feedback   - a demo app appears, surrounded by many gray eyes, all sitting still first.
+//                Some light up orange one at a time, lean in, and turn into feedback bubbles
+//                inside it, while an "Insights" counter rises.
 // 3. Product    - the demo fills in for real: header -> two colored blocks -> a bar chart. Ends here.
 // 4. Feature    - as its own separate stage, one more feature (a small list of rows) is added below.
-// 5. Users      - fresh eyes appear again; the app goes semi-transparent, some eyes light up green,
-//                lean in, and turn into person-shaped user icons, while a "Users" counter rises to 8.
-// Then it loops back to the idea stage.
+// 5. Users      - fresh eyes appear again, all sitting still first; the app goes semi-transparent,
+//                some eyes light up green, lean in, and turn into person-shaped user icons, while
+//                a "Users" counter rises to 8.
+// Runs once when scrolled into view, then shows a Replay button.
 export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx-auto" }) {
+  const wrapRef = useRef(null);
+  const [finished, setFinished] = useState(false);
+  const playRef = useRef(null); // holds the "play once" function once the effect sets it up
+  const hasStartedRef = useRef(false);
+
   const personRef = useRef(null);
   const eyesClosedRef = useRef(null);
   const eyesOpenRef = useRef(null);
@@ -45,6 +51,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
   const eyeHolderRef = useRef(null);
   const feedbackIconsRef = useRef(null);
 
+  // Build the whole "play once" sequence, wire it to playRef, then start it via IntersectionObserver.
   useEffect(() => {
     const svgns = "http://www.w3.org/2000/svg";
     const cx = 340,
@@ -96,9 +103,12 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       return;
     }
 
+    let cancelled = false;
     const timers = [];
     const T = (fn, ms) => {
-      const id = setTimeout(fn, ms);
+      const id = setTimeout(() => {
+        if (!cancelled) fn();
+      }, ms);
       timers.push(id);
       return id;
     };
@@ -323,6 +333,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
     }
 
     let eyeEls = [];
+    // Eyes fade in and settle in place first; nothing moves yet.
     function showAllEyesGray() {
       eyeHolder.innerHTML = "";
       eyeEls = [];
@@ -330,7 +341,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         const eye = makeEye();
         eyeHolder.appendChild(eye.g);
         eye.g.style.transform = `translate(${it.x}px,${it.y}px) scale(0.85)`;
-        eye.g.style.transitionDelay = `${i * 0.04}s`;
+        eye.g.style.transitionDelay = `${i * 0.05}s`;
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             eye.g.style.opacity = "0.5";
@@ -351,19 +362,28 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       const leanY = cy + (pos.y - cy) * 0.55;
       const leanT = `translate(${leanX}px,${leanY}px) scale(1.35)`;
 
+      // Light up in place first — still not moving yet.
       eye.g.style.color = color;
       eye.g.style.transitionDelay = "0s";
       eye.g.style.transition = "opacity 0.35s ease";
       eye.g.style.opacity = "1";
       eye.g.animate(
-        [{ transform: "scale(1)" }, { transform: "scale(1.5)" }, { transform: "scale(1)" }],
-        { duration: 400, easing: "ease-out" }
+        [
+          { transform: eye.g.style.transform },
+          { transform: eye.g.style.transform.replace("scale(0.85)", "scale(1.15)") },
+          { transform: eye.g.style.transform },
+        ],
+        { duration: 450, easing: "ease-out" }
       );
 
+      // Only after lighting up, it leans in.
       T(() => {
-        eye.g.style.transition = "transform 0.7s cubic-bezier(.4,0,.2,1)";
-        eye.g.style.transform = leanT;
-      }, 350);
+        eye.g.style.transform = `translate(${pos.x}px,${pos.y}px) scale(1)`;
+        T(() => {
+          eye.g.style.transition = "transform 0.7s cubic-bezier(.4,0,.2,1)";
+          eye.g.style.transform = leanT;
+        }, 30);
+      }, 500);
 
       T(() => {
         eye.g.style.transition = "opacity 0.35s ease";
@@ -376,9 +396,9 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
             bumpCounter();
           });
         });
-      }, 1150);
+      }, 1350);
 
-      T(() => done(), 1650);
+      T(() => done(), 1850);
     }
     function runMovers(color, makeIcon, iconTarget, callback) {
       const movers = [];
@@ -460,7 +480,9 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
       rowsG.innerHTML = "";
     }
 
-    function runLoop() {
+    // Runs the whole thing exactly once, then flips `finished` to true (no looping).
+    function playOnce() {
+      cancelled = false;
       resetAll();
 
       playIdea();
@@ -472,6 +494,7 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
           frame.style.opacity = "1";
           showCounter("Insights", ORANGE);
           showAllEyesGray();
+          // Eyes settle and sit still for a beat before any of them light up.
           T(() => {
             runMovers(ORANGE, makeFeedbackIcon, feedbackIconsG, () => {
               hideAllEyes();
@@ -494,47 +517,77 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
                               hideCounter();
                               frame.style.transition = "opacity 0.8s ease";
                               frame.style.opacity = "1";
-                              T(runLoop, 1800);
+                              T(() => {
+                                if (!cancelled) setFinished(true);
+                              }, 400);
                             }, 700);
                           });
-                        }, 1600);
+                        }, 2000);
                       }, 900);
                     });
                   }, 900);
                 });
               }, 900);
             });
-          }, 1600);
+          }, 2000);
         }, 900);
       }, 3600);
     }
 
-    runLoop();
+    playRef.current = playOnce;
 
     return () => {
+      cancelled = true;
       timers.forEach((id) => clearTimeout(id));
     };
   }, []);
 
+  // Start automatically the first time this section is ~50% visible on screen.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStartedRef.current && playRef.current) {
+            hasStartedRef.current = true;
+            setFinished(false);
+            playRef.current();
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  function handleReplay() {
+    setFinished(false);
+    if (playRef.current) playRef.current();
+  }
+
   return (
-    <div className={className}>
+    <div ref={wrapRef} className={className} style={{ position: "relative" }}>
       <svg width="100%" viewBox="0 0 680 400" role="img" style={{ display: "block" }}>
         <title>Idea to product to users</title>
         <desc>
-          A person figure has an idea, shown as a thought bubble with a lightning bolt and their eyes
-          opening. A demo app frame then appears, surrounded by many gray eye icons; some light up
-          orange, lean in, and turn into feedback speech-bubble icons inside the frame while an
-          insights counter rises. As a separate stage, the frame fills in with a header, colorful
-          blocks and a bar chart. As another separate stage after that, one more feature, a small
-          list of rows, is added below. Finally, new eyes appear around the finished app; the app
-          becomes semi-transparent, and some eyes light up green, lean in, and turn into
-          person-shaped user icons inside it while a green users counter rises to eight. This
-          repeats in a loop.
+          A person has an idea, shown as a thought bubble with a lightning bolt and their eyes
+          opening. A demo app frame then appears, surrounded by many gray eye icons that all sit
+          still first; some then light up orange, lean in, and turn into feedback speech-bubble
+          icons inside the frame while an insights counter rises. As a separate stage, the frame
+          fills in with a header, colorful blocks and a bar chart. As another separate stage after
+          that, one more feature, a small list of rows, is added below. Finally, new eyes appear
+          around the finished app and sit still first; the app becomes semi-transparent, and some
+          eyes light up green, lean in, and turn into person-shaped user icons inside it while a
+          green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
+        {/* Person: head + a shoulder/torso dome, not a snowman */}
         <g ref={personRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
-          <rect x="308" y="286" width="64" height="72" rx="30" fill="currentColor" />
-          <circle cx="340" cy="262" r="17" fill="currentColor" />
+          <path d="M 308 358 C 308 314 320 292 340 292 C 360 292 372 314 372 358 Z" fill="currentColor" />
+          <circle cx="340" cy="262" r="18" fill="currentColor" />
         </g>
         <g ref={eyesClosedRef} style={{ transition: "opacity 0.25s ease" }}>
           <line x1="329" y1="261" x2="337" y2="261" stroke={SURFACE} strokeWidth="2" strokeLinecap="round" />
@@ -584,28 +637,10 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         </g>
 
         <g ref={counterRef} style={{ opacity: 0, transition: "opacity 0.5s ease" }}>
-          <text
-            ref={counterLabelRef}
-            x="340"
-            y="345"
-            textAnchor="middle"
-            fill={ORANGE}
-            fontFamily={FONT}
-            fontWeight="700"
-            fontSize="14"
-          >
+          <text ref={counterLabelRef} x="340" y="345" textAnchor="middle" fill={ORANGE} fontFamily={FONT} fontWeight="700" fontSize="14">
             Insights
           </text>
-          <text
-            ref={counterNumRef}
-            x="340"
-            y="365"
-            textAnchor="middle"
-            fill={ORANGE}
-            fontFamily={FONT}
-            fontWeight="800"
-            fontSize="20"
-          >
+          <text ref={counterNumRef} x="340" y="365" textAnchor="middle" fill={ORANGE} fontFamily={FONT} fontWeight="800" fontSize="20">
             0
           </text>
         </g>
@@ -613,6 +648,29 @@ export default function ProductGrowthAnimation({ className = "w-full max-w-xl mx
         <g ref={feedbackIconsRef} />
         <g ref={eyeHolderRef} />
       </svg>
+
+      {finished && (
+        <button
+          onClick={handleReplay}
+          style={{
+            position: "absolute",
+            bottom: 8,
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "8px 18px",
+            borderRadius: 999,
+            border: `1px solid ${BORDER}`,
+            background: SURFACE,
+            color: BLUE,
+            fontFamily: FONT,
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          ↻ Replay
+        </button>
+      )}
     </div>
   );
 }
