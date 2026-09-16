@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
-import ProductGrowthAnimation from "./ProductGrowthAnimation"; // [ADDED] idea-to-product-to-users animation
+import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] idea-to-product-to-users animation
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
