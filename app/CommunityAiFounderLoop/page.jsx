@@ -48,6 +48,9 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
   const founderLabelRef = useRef(null);
   const travelDotRef = useRef(null);
   const visLineRef = useRef(null);
+  const finalLine1Ref = useRef(null);
+  const finalLine2Ref = useRef(null);
+  const finalLine3Ref = useRef(null);
 
   useEffect(() => {
     const icons = {
@@ -60,13 +63,14 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
     const founderLabel = founderLabelRef.current;
     const travelDot = travelDotRef.current;
     const visLine = visLineRef.current;
+    const finalLines = [finalLine1Ref.current, finalLine2Ref.current, finalLine3Ref.current];
     const miniHeader = miniHeaderRef.current;
     const miniBars = [miniBar1Ref.current, miniBar2Ref.current, miniBar3Ref.current];
 
     if (
       !icons.community.el || !icons.ai.el || !icons.product.el ||
       !wheel || !wheelRotator || !founderLabel || !travelDot || !visLine ||
-      !miniHeader || miniBars.some((b) => !b)
+      !miniHeader || miniBars.some((b) => !b) || finalLines.some((l) => !l)
     ) {
       return;
     }
@@ -169,6 +173,10 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
         b.setAttribute("height", "0");
         b.setAttribute("y", "14");
       });
+      finalLines.forEach((l) => {
+        l.style.transition = "none";
+        l.style.opacity = "0";
+      });
       visLine.setAttribute("d", "");
       travelDot.setAttribute("cx", NODE_POS.community.x);
       travelDot.setAttribute("cy", NODE_POS.community.y);
@@ -210,10 +218,19 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
           const isLastSegment = segIdx === SEGMENTS.length - 1;
 
           if (isLastSegment) {
-            // Finish with all three lit together, not just the last one.
+            // Finish with all three lit together, connected by persistent colored lines.
             setActive("community", true);
             setActive("ai", true);
             setActive("product", true);
+            SEGMENTS.forEach((s, i) => {
+              const line = finalLines[i];
+              const p1 = quadPoint(s.from, s.ctrl, s.to, 0.12);
+              const p2 = quadPoint(s.from, s.ctrl, s.to, 0.88);
+              line.setAttribute("d", "M " + p1.x + " " + p1.y + " Q " + s.ctrl.x + " " + s.ctrl.y + " " + p2.x + " " + p2.y);
+              line.setAttribute("stroke", COLORS[s.nextKey]);
+              line.style.transition = "opacity 0.5s ease";
+              line.style.opacity = "0.7";
+            });
             T(() => {
               if (!cancelled) setFinished(true);
             }, holdMs);
@@ -390,6 +407,9 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
 
         <circle ref={travelDotRef} cx="200" cy="320" r="7" fill={COLORS.community} />
         <path ref={visLineRef} d="" fill="none" strokeWidth="2.5" strokeLinecap="round" />
+        <path ref={finalLine1Ref} d="" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0 }} />
+        <path ref={finalLine2Ref} d="" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0 }} />
+        <path ref={finalLine3Ref} d="" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0 }} />
       </svg>
 
       {finished && (
