@@ -39,7 +39,8 @@ function PhaseClock() {
 
   return (
     <div className="flex flex-col items-center py-10">
-      <svg width="320" height="320" viewBox="0 0 320 320">
+      <div className="w-[55vw] max-w-[320px] sm:w-[320px] mx-auto">
+      <svg width="100%" height="auto" viewBox="0 0 320 320">
         <circle cx="160" cy="160" r="140" fill="#F6F7FB" stroke="#E9E9F0" strokeWidth="1.5" />
         <circle
           cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
@@ -67,6 +68,7 @@ function PhaseClock() {
         />
         <circle cx="160" cy="160" r="6" fill="#3457D5" />
       </svg>
+      </div>
       <p className="text-gray-500 text-sm mt-2">The clock is ticking. Ready to Zig?</p>
     </div>
   );
