@@ -58,7 +58,7 @@ export default function ProductGrowthAnimation({ className = "w-[94vw] sm:w-full
     const rowY = [258, 275, 292];
     const N = 18;
     const moverSlots = [2, 4, 6, 9, 11, 13, 15, 17];
-    const ringRadius = 175;
+    const ringRadius = 128;
     const insideOffsets = [
       [-34, 36],
       [0, 32],
@@ -554,7 +554,7 @@ export default function ProductGrowthAnimation({ className = "w-[94vw] sm:w-full
 
   return (
     <div ref={wrapRef} className={className} style={{ position: "relative" }}>
-      <svg width="100%" viewBox="0 0 680 380" role="img" style={{ display: "block" }}>
+      <svg width="100%" viewBox="95 35 490 345" role="img" style={{ display: "block" }}>
         <title>Idea to product to users</title>
         <desc>
           A person thinks, with a faint lightbulb above his head. The moment his eyes
