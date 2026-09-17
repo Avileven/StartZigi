@@ -31,6 +31,9 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
 
   const bulbRef = useRef(null);
   const bulbFillRef = useRef(null);
+  const ideaContent1Ref = useRef(null);
+  const ideaContent2Ref = useRef(null);
+  const ideaContent3Ref = useRef(null);
 
   const frameRef = useRef(null);
   const finalBorderRef = useRef(null);
@@ -69,6 +72,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
 
     const bulb = bulbRef.current;
     const bulbFill = bulbFillRef.current;
+    const ideaContent = [ideaContent1Ref.current, ideaContent2Ref.current, ideaContent3Ref.current];
 
     const frame = frameRef.current;
     const finalBorder = finalBorderRef.current;
@@ -85,7 +89,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     const feedbackIconsG = feedbackIconsRef.current;
 
     if (
-      !bulb || !bulbFill ||
+      !bulb || !bulbFill || ideaContent.some((c) => !c) ||
       !frame || !finalBorder || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
       !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
@@ -102,30 +106,52 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
       return id;
     };
 
-    /* ===== STAGE 1: idea — a bulb fills up with yellow light ===== */
+    /* ===== STAGE 1: idea — a bulb fills up with yellow light and a bit of content ===== */
     function playIdea() {
       bulb.style.transition = "none";
       bulb.style.opacity = "1";
       bulb.setAttribute("color", GRAY);
       bulbFill.style.transition = "none";
-      bulbFill.setAttribute("y", "256");
+      bulbFill.setAttribute("y", "250");
       bulbFill.setAttribute("height", "0");
+      ideaContent.forEach((c) => {
+        c.style.transition = "none";
+        c.style.opacity = "0";
+      });
 
       T(() => {
         bulbFill.style.transition = "y 1.1s cubic-bezier(.3,.8,.4,1), height 1.1s cubic-bezier(.3,.8,.4,1)";
-        bulbFill.setAttribute("y", "160");
-        bulbFill.setAttribute("height", "74");
+        bulbFill.setAttribute("y", "150");
+        bulbFill.setAttribute("height", "100");
       }, 700);
 
       T(() => {
         bulb.style.transition = "color 0.3s ease";
         bulb.setAttribute("color", "#FACC15");
-        showCounter("PRODUCT IDEA", BLUE);
+        showCounter("PRODUCT IDEA", BLUE, "312");
       }, 1750);
+
+      ideaContent.forEach((c, i) => {
+        T(() => {
+          c.style.transition = "opacity 0.35s ease";
+          c.style.opacity = "1";
+        }, 1850 + i * 150);
+      });
     }
     function hideIdea() {
       bulb.style.transition = "opacity 0.6s ease";
       bulb.style.opacity = "0";
+      bulbFill.style.transition = "opacity 0.6s ease";
+      bulbFill.style.opacity = "0";
+      T(() => {
+        bulbFill.style.transition = "none";
+        bulbFill.style.opacity = "1";
+        bulbFill.setAttribute("height", "0");
+      }, 650);
+      ideaContent.forEach((c) => {
+        c.style.transition = "opacity 0.4s ease";
+        c.style.opacity = "0";
+      });
       hideCounter();
     }
 
@@ -248,9 +274,10 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
       });
     }
 
-    function showCounter(label, color) {
+    function showCounter(label, color, y) {
       counterLabel.textContent = label;
       counterLabel.setAttribute("fill", color);
+      counterLabel.setAttribute("y", y || "352");
       counter.style.opacity = "1";
     }
     function hideCounter() {
@@ -538,14 +565,14 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
           green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
-        {/* Idea: a large lightbulb with a proper screw base, yellow light rising to fill it */}
+        {/* Idea: a large lightbulb with a proper screw base, yellow light rising to fill it, and a bit of content forming inside */}
         <defs>
           <clipPath id="ideaBulbGlassClip">
-            <circle cx="340" cy="195" r="34" />
+            <circle cx="340" cy="200" r="50" />
           </clipPath>
         </defs>
         <g ref={bulbRef} color={GRAY} style={{ transition: "color 0.3s ease" }}>
-          <g transform="translate(340,195) scale(0.38) translate(-200,-175)">
+          <g transform="translate(340,200) scale(0.55) translate(-200,-175)">
             <circle cx="200" cy="175" r="90" fill="none" stroke="currentColor" strokeWidth="7" />
             <path d="M 168 245 L 178 275 L 222 275 L 232 245" fill="none" stroke="currentColor" strokeWidth="7" strokeLinejoin="round" />
             <rect x="178" y="275" width="44" height="45" fill="none" stroke="currentColor" strokeWidth="7" />
@@ -553,10 +580,15 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
             <line x1="178" y1="299" x2="222" y2="299" stroke="currentColor" strokeWidth="5" />
             <line x1="178" y1="310" x2="222" y2="310" stroke="currentColor" strokeWidth="5" />
             <path d="M 190 320 L 190 330 Q 190 336 200 336 Q 210 336 210 330 L 210 320" fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
-            <path d="M 180 245 L 184 210 L 172 180 L 200 145 L 228 180 L 216 210 L 220 245" fill="none" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
           </g>
         </g>
-        <rect ref={bulbFillRef} x="306" y="256" width="68" height="0" fill="#FACC15" clipPath="url(#ideaBulbGlassClip)" />
+        <rect ref={bulbFillRef} x="290" y="250" width="100" height="0" fill="#FACC15" clipPath="url(#ideaBulbGlassClip)" />
+        <g clipPath="url(#ideaBulbGlassClip)">
+          <circle ref={ideaContent1Ref} cx="322" cy="188" r="6" fill={BLUE} style={{ opacity: 0 }} />
+          <circle ref={ideaContent2Ref} cx="340" cy="172" r="6" fill={ORANGE} style={{ opacity: 0 }} />
+          <circle ref={ideaContent3Ref} cx="358" cy="188" r="6" fill={GREEN} style={{ opacity: 0 }} />
+        </g>
+
 
         <g ref={finalBorderRef} style={{ opacity: 0, transition: "opacity 0.7s ease" }}>
           <rect x="258" y="88" width="164" height="229" rx="24" fill="none" stroke={ORANGE} strokeWidth="2" opacity="0.55" />
