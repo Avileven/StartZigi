@@ -23,7 +23,7 @@ const FONT = "Inter, sans-serif";
 //                some eyes light up green, lean in, and turn into person-shaped user icons, while
 //                a "Users" counter rises to 8.
 // Runs once when scrolled into view, then shows a Replay button.
-export default function ProductGrowthAnimation({ className = "w-[88vw] sm:w-full max-w-xl mx-auto" }) {
+export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full max-w-xl mx-auto" }) {
   const wrapRef = useRef(null);
   const [finished, setFinished] = useState(false);
   const playRef = useRef(null); // holds the "play once" function once the effect sets it up
@@ -58,7 +58,7 @@ export default function ProductGrowthAnimation({ className = "w-[88vw] sm:w-full
     const rowY = [258, 275, 292];
     const N = 12;
     const moverSlots = [1, 3, 5, 7, 9, 11];
-    const ringRadius = 92;
+    const ringRadius = 148; // card half-width (incl. border) is 82 — this leaves a real 66px gap
     const insideOffsets = [
       [-34, 36],
       [0, 32],
