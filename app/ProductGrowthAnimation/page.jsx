@@ -29,11 +29,8 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
   const playRef = useRef(null); // holds the "play once" function once the effect sets it up
   const hasStartedRef = useRef(false);
 
-  const personRef = useRef(null);
-  const eyesClosedRef = useRef(null);
-  const eyesOpenRef = useRef(null);
-  const bulbOffRef = useRef(null);
-  const bulbOnRef = useRef(null);
+  const bulbRef = useRef(null);
+  const bulbFillRef = useRef(null);
 
   const frameRef = useRef(null);
   const finalBorderRef = useRef(null);
@@ -70,11 +67,8 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
       [18, 84],
     ];
 
-    const person = personRef.current;
-    const eyesClosed = eyesClosedRef.current;
-    const eyesOpen = eyesOpenRef.current;
-    const bulbOff = bulbOffRef.current;
-    const bulbOn = bulbOnRef.current;
+    const bulb = bulbRef.current;
+    const bulbFill = bulbFillRef.current;
 
     const frame = frameRef.current;
     const finalBorder = finalBorderRef.current;
@@ -91,7 +85,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     const feedbackIconsG = feedbackIconsRef.current;
 
     if (
-      !person || !eyesClosed || !eyesOpen || !bulbOff || !bulbOn ||
+      !bulb || !bulbFill ||
       !frame || !finalBorder || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
       !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
@@ -108,54 +102,30 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
       return id;
     };
 
-    /* ===== STAGE 1: idea ===== */
+    /* ===== STAGE 1: idea — a bulb fills up with yellow light ===== */
     function playIdea() {
-      person.style.transition = "none";
-      person.style.opacity = "0";
-      eyesClosed.style.opacity = "1";
-      eyesOpen.style.opacity = "0";
-      bulbOff.style.transition = "none";
-      bulbOff.style.opacity = "0";
-      bulbOn.style.transition = "none";
-      bulbOn.style.opacity = "0";
-      bulbOn.style.transform = "scale(0.9)";
+      bulb.style.transition = "none";
+      bulb.style.opacity = "1";
+      bulb.setAttribute("color", GRAY);
+      bulbFill.style.transition = "none";
+      bulbFill.setAttribute("y", "256");
+      bulbFill.setAttribute("height", "0");
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          person.style.transition = "opacity 0.6s ease";
-          person.style.opacity = "1";
-        });
-      });
-      // The bulb sits there almost invisible while he's thinking.
       T(() => {
-        bulbOff.style.transition = "opacity 0.8s ease";
-        bulbOff.style.opacity = "0.28";
+        bulbFill.style.transition = "y 1.1s cubic-bezier(.3,.8,.4,1), height 1.1s cubic-bezier(.3,.8,.4,1)";
+        bulbFill.setAttribute("y", "160");
+        bulbFill.setAttribute("height", "74");
       }, 700);
-      // The moment his eyes open, the bulb lights up.
+
       T(() => {
-        eyesClosed.style.opacity = "0";
-        eyesOpen.style.opacity = "1";
-        bulbOff.style.transition = "opacity 0.3s ease";
-        bulbOff.style.opacity = "0";
-        bulbOn.style.transition = "opacity 0.3s ease";
-        bulbOn.style.opacity = "1";
-        bulbOn.animate(
-          [{ transform: "scale(0.9)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }],
-          { duration: 500, easing: "ease-out" }
-        );
+        bulb.style.transition = "color 0.3s ease";
+        bulb.setAttribute("color", "#FACC15");
         showCounter("PRODUCT IDEA", BLUE);
-      }, 2200);
+      }, 1750);
     }
     function hideIdea() {
-      person.style.transition = "opacity 0.6s ease";
-      person.style.opacity = "0";
-      eyesClosed.style.transition = "opacity 0.6s ease";
-      eyesClosed.style.opacity = "0";
-      eyesOpen.style.transition = "opacity 0.6s ease";
-      eyesOpen.style.opacity = "0";
-      bulbOff.style.opacity = "0";
-      bulbOn.style.transition = "opacity 0.6s ease";
-      bulbOn.style.opacity = "0";
+      bulb.style.transition = "opacity 0.6s ease";
+      bulb.style.opacity = "0";
       hideCounter();
     }
 
@@ -515,7 +485,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
             });
           }, 2000);
         }, 900);
-      }, 4200);
+      }, 3400);
     }
 
     playRef.current = playOnce;
@@ -568,41 +538,25 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
           green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
-        {/* Person: just a larger face, no body */}
-        <g ref={personRef} style={{ opacity: 0, transition: "opacity 0.6s ease", color: BLUE }}>
-          <circle cx="340" cy="278" r="28" fill="currentColor" />
+        {/* Idea: a large lightbulb with a proper screw base, yellow light rising to fill it */}
+        <defs>
+          <clipPath id="ideaBulbGlassClip">
+            <circle cx="340" cy="195" r="34" />
+          </clipPath>
+        </defs>
+        <g ref={bulbRef} color={GRAY} style={{ transition: "color 0.3s ease" }}>
+          <g transform="translate(340,195) scale(0.38) translate(-200,-175)">
+            <circle cx="200" cy="175" r="90" fill="none" stroke="currentColor" strokeWidth="7" />
+            <path d="M 168 245 L 178 275 L 222 275 L 232 245" fill="none" stroke="currentColor" strokeWidth="7" strokeLinejoin="round" />
+            <rect x="178" y="275" width="44" height="45" fill="none" stroke="currentColor" strokeWidth="7" />
+            <line x1="178" y1="288" x2="222" y2="288" stroke="currentColor" strokeWidth="5" />
+            <line x1="178" y1="299" x2="222" y2="299" stroke="currentColor" strokeWidth="5" />
+            <line x1="178" y1="310" x2="222" y2="310" stroke="currentColor" strokeWidth="5" />
+            <path d="M 190 320 L 190 330 Q 190 336 200 336 Q 210 336 210 330 L 210 320" fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
+            <path d="M 180 245 L 184 210 L 172 180 L 200 145 L 228 180 L 216 210 L 220 245" fill="none" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+          </g>
         </g>
-        <g ref={eyesClosedRef} style={{ transition: "opacity 0.25s ease" }}>
-          <line x1="324" y1="270" x2="333" y2="270" stroke={SURFACE} strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="347" y1="270" x2="356" y2="270" stroke={SURFACE} strokeWidth="2.5" strokeLinecap="round" />
-        </g>
-        <g ref={eyesOpenRef} style={{ opacity: 0, transition: "opacity 0.25s ease" }}>
-          <circle cx="328" cy="270" r="4.4" fill={SURFACE} />
-          <circle cx="352" cy="270" r="4.4" fill={SURFACE} />
-          <circle cx="328" cy="270" r="1.8" fill="#FBBF24" />
-          <circle cx="352" cy="270" r="1.8" fill="#FBBF24" />
-          <path d="M 325 289 Q 340 300 355 289" fill="none" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round" />
-        </g>
-
-        {/* Lightbulb above his head: almost invisible while he thinks, then lights up */}
-        <g ref={bulbOffRef} style={{ opacity: 0, transition: "opacity 0.8s ease", transformOrigin: "340px 216px" }}>
-          <circle cx="340" cy="210" r="15" fill="none" stroke={GRAY} strokeWidth="1.5" />
-          <rect x="332" y="222" width="16" height="9" rx="2" fill="none" stroke={GRAY} strokeWidth="1.5" />
-          <line x1="334" y1="226" x2="346" y2="226" stroke={GRAY} strokeWidth="1" />
-        </g>
-        <g ref={bulbOnRef} style={{ opacity: 0, transition: "opacity 0.3s ease", transformOrigin: "340px 216px" }}>
-          <circle cx="340" cy="210" r="15" fill="#FBBF24" />
-          <rect x="332" y="222" width="16" height="9" rx="2" fill="#FBBF24" />
-          <line x1="334" y1="226" x2="346" y2="226" stroke="#B45309" strokeWidth="1" />
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
-            const rad = (deg * Math.PI) / 180;
-            const x1 = 340 + Math.cos(rad) * 19;
-            const y1 = 210 + Math.sin(rad) * 19;
-            const x2 = 340 + Math.cos(rad) * 26;
-            const y2 = 210 + Math.sin(rad) * 26;
-            return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />;
-          })}
-        </g>
+        <rect ref={bulbFillRef} x="306" y="256" width="68" height="0" fill="#FACC15" clipPath="url(#ideaBulbGlassClip)" />
 
         <g ref={finalBorderRef} style={{ opacity: 0, transition: "opacity 0.7s ease" }}>
           <rect x="258" y="88" width="164" height="229" rx="24" fill="none" stroke={ORANGE} strokeWidth="2" opacity="0.55" />
