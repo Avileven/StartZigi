@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const BORDER = "#E9E9F0";
 const TEXT_PRIMARY = "#111827";
@@ -23,11 +23,16 @@ const SEGMENTS = [
   { from: NODE_POS.product, ctrl: { x: 220, y: 160 }, to: NODE_POS.community, key: "product", nextKey: "community" },
 ];
 
-// A traveling dot loops between three icons — community, AI, product — each with its own
+// A traveling dot loops once around three icons — community, AI, product — each with its own
 // color. The line it crosses lights up in the destination's color, that icon shakes and
 // changes color on arrival, and a steering wheel labeled "Founder" rotates to point at the
-// active icon. Runs continuously.
+// active icon. Starts only when scrolled into view, runs one full lap, then shows a Replay button.
 export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full max-w-xl mx-auto" }) {
+  const wrapRef = useRef(null);
+  const [finished, setFinished] = useState(false);
+  const playRef = useRef(null);
+  const hasStartedRef = useRef(false);
+
   const iconCommunityRef = useRef(null);
   const iconAiRef = useRef(null);
   const iconProductRef = useRef(null);
@@ -110,51 +115,83 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
       return { x, y };
     }
 
-    let segIdx = 0;
-    let start = null;
+    let rafId = null;
     const travelMs = 1000;
     const holdMs = 700;
-    let rafId = null;
 
-    function animateSegment(ts) {
-      if (cancelled) return;
-      const seg = SEGMENTS[segIdx];
-      if (!start) {
-        start = ts;
-        visLine.setAttribute("stroke", COLORS[seg.nextKey]);
-        travelDot.setAttribute("fill", COLORS[seg.nextKey]);
-      }
-      const t = Math.min((ts - start) / travelMs, 1);
-      const pos = quadPoint(seg.from, seg.ctrl, seg.to, t);
-      travelDot.setAttribute("cx", pos.x);
-      travelDot.setAttribute("cy", pos.y);
-
-      let d = "M " + seg.from.x + " " + seg.from.y;
-      const steps = 24;
-      for (let i = 1; i <= steps * t; i++) {
-        const p = quadPoint(seg.from, seg.ctrl, seg.to, i / steps);
-        d += " L " + p.x + " " + p.y;
-      }
-      visLine.setAttribute("d", d);
-
-      if (t < 1) {
-        rafId = requestAnimationFrame(animateSegment);
-      } else {
-        visLine.setAttribute("d", "");
-        setActive(seg.nextKey, true);
-        setActive(seg.key, false);
-        T(() => {
-          segIdx = (segIdx + 1) % SEGMENTS.length;
-          start = null;
-          rafId = requestAnimationFrame(animateSegment);
-        }, holdMs);
-      }
+    function resetAll() {
+      icons.community.el.setAttribute("color", BORDER);
+      icons.ai.el.setAttribute("color", BORDER);
+      icons.product.el.setAttribute("color", BORDER);
+      icons.community.label.style.opacity = "0";
+      icons.ai.label.style.opacity = "0";
+      icons.product.label.style.opacity = "0";
+      wheel.setAttribute("color", BORDER);
+      wheelRotator.style.transform = "rotate(0deg)";
+      founderLabel.setAttribute("fill", BORDER);
+      visLine.setAttribute("d", "");
+      travelDot.setAttribute("cx", NODE_POS.community.x);
+      travelDot.setAttribute("cy", NODE_POS.community.y);
     }
 
-    setActive("community", true);
-    T(() => {
-      rafId = requestAnimationFrame(animateSegment);
-    }, holdMs);
+    // Runs exactly one full lap (all three segments), then calls onDone.
+    function playOnce() {
+      cancelled = false;
+      resetAll();
+
+      let segIdx = 0;
+      let start = null;
+
+      function animateSegment(ts) {
+        if (cancelled) return;
+        const seg = SEGMENTS[segIdx];
+        if (!start) {
+          start = ts;
+          visLine.setAttribute("stroke", COLORS[seg.nextKey]);
+          travelDot.setAttribute("fill", COLORS[seg.nextKey]);
+        }
+        const t = Math.min((ts - start) / travelMs, 1);
+        const pos = quadPoint(seg.from, seg.ctrl, seg.to, t);
+        travelDot.setAttribute("cx", pos.x);
+        travelDot.setAttribute("cy", pos.y);
+
+        let d = "M " + seg.from.x + " " + seg.from.y;
+        const steps = 24;
+        for (let i = 1; i <= steps * t; i++) {
+          const p = quadPoint(seg.from, seg.ctrl, seg.to, i / steps);
+          d += " L " + p.x + " " + p.y;
+        }
+        visLine.setAttribute("d", d);
+
+        if (t < 1) {
+          rafId = requestAnimationFrame(animateSegment);
+        } else {
+          visLine.setAttribute("d", "");
+          setActive(seg.nextKey, true);
+          setActive(seg.key, false);
+
+          const isLastSegment = segIdx === SEGMENTS.length - 1;
+          if (isLastSegment) {
+            T(() => {
+              if (!cancelled) setFinished(true);
+            }, holdMs);
+          } else {
+            T(() => {
+              segIdx += 1;
+              start = null;
+              rafId = requestAnimationFrame(animateSegment);
+            }, holdMs);
+          }
+        }
+      }
+
+      setActive("community", true);
+      T(() => {
+        rafId = requestAnimationFrame(animateSegment);
+      }, holdMs);
+    }
+
+    playRef.current = playOnce;
 
     return () => {
       cancelled = true;
@@ -163,8 +200,34 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
     };
   }, []);
 
+  // Start automatically the first time this section is ~50% visible on screen.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStartedRef.current && playRef.current) {
+            hasStartedRef.current = true;
+            setFinished(false);
+            playRef.current();
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  function handleReplay() {
+    setFinished(false);
+    if (playRef.current) playRef.current();
+  }
+
   return (
-    <div className={className}>
+    <div ref={wrapRef} className={className} style={{ position: "relative" }}>
       <svg width="100%" viewBox="120 20 440 400" role="img" style={{ display: "block" }}>
         <title>Community, AI, product loop with founder at center</title>
         <desc>
@@ -264,7 +327,7 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
           fill={BORDER}
           style={{ opacity: 0, transition: "opacity 0.4s ease, fill 0.4s ease" }}
         >
-          Pattern analysis
+          AI analysis
         </text>
         <text
           ref={labelProductRef}
@@ -283,6 +346,29 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
         <circle ref={travelDotRef} cx="200" cy="320" r="7" fill={COLORS.community} />
         <path ref={visLineRef} d="" fill="none" strokeWidth="2.5" strokeLinecap="round" />
       </svg>
+
+      {finished && (
+        <button
+          onClick={handleReplay}
+          style={{
+            position: "absolute",
+            bottom: 8,
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "8px 18px",
+            borderRadius: 999,
+            border: `1px solid ${BORDER}`,
+            background: "#FFFFFF",
+            color: "#2563EB",
+            fontFamily: FONT,
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          ↻ Replay
+        </button>
+      )}
     </div>
   );
 }
