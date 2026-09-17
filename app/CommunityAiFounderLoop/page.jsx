@@ -36,6 +36,10 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
   const iconCommunityRef = useRef(null);
   const iconAiRef = useRef(null);
   const iconProductRef = useRef(null);
+  const miniHeaderRef = useRef(null);
+  const miniBar1Ref = useRef(null);
+  const miniBar2Ref = useRef(null);
+  const miniBar3Ref = useRef(null);
   const labelCommunityRef = useRef(null);
   const labelAiRef = useRef(null);
   const labelProductRef = useRef(null);
@@ -56,10 +60,13 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
     const founderLabel = founderLabelRef.current;
     const travelDot = travelDotRef.current;
     const visLine = visLineRef.current;
+    const miniHeader = miniHeaderRef.current;
+    const miniBars = [miniBar1Ref.current, miniBar2Ref.current, miniBar3Ref.current];
 
     if (
       !icons.community.el || !icons.ai.el || !icons.product.el ||
-      !wheel || !wheelRotator || !founderLabel || !travelDot || !visLine
+      !wheel || !wheelRotator || !founderLabel || !travelDot || !visLine ||
+      !miniHeader || miniBars.some((b) => !b)
     ) {
       return;
     }
@@ -94,6 +101,31 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
       );
     }
 
+    const MINI_BAR_HEIGHTS = [9, 14, 6];
+    function growMiniProduct() {
+      miniHeader.style.transition = "none";
+      miniHeader.style.opacity = "0";
+      miniBars.forEach((b) => {
+        b.style.transition = "none";
+        b.setAttribute("height", "0");
+        b.setAttribute("y", "14");
+      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          miniHeader.style.transition = "opacity 0.25s ease";
+          miniHeader.style.opacity = "1";
+        });
+      });
+      miniBars.forEach((b, i) => {
+        T(() => {
+          const h = MINI_BAR_HEIGHTS[i];
+          b.style.transition = "height 0.3s ease-out, y 0.3s ease-out";
+          b.setAttribute("height", h);
+          b.setAttribute("y", 14 - h);
+        }, 220 + i * 160);
+      });
+    }
+
     function setActive(key, active) {
       const n = icons[key];
       n.label.style.opacity = active ? "1" : "0";
@@ -104,6 +136,7 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
         wheelRotator.style.transform = "rotate(" + angleTo(key) + "deg)";
         founderLabel.setAttribute("fill", COLORS[key]);
         shake(n.el, BASE_TRANSFORM[key]);
+        if (key === "product") growMiniProduct();
       } else {
         n.el.setAttribute("color", BORDER);
       }
@@ -129,6 +162,13 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
       wheel.setAttribute("color", BORDER);
       wheelRotator.style.transform = "rotate(0deg)";
       founderLabel.setAttribute("fill", BORDER);
+      miniHeader.style.transition = "none";
+      miniHeader.style.opacity = "0";
+      miniBars.forEach((b) => {
+        b.style.transition = "none";
+        b.setAttribute("height", "0");
+        b.setAttribute("y", "14");
+      });
       visLine.setAttribute("d", "");
       travelDot.setAttribute("cx", NODE_POS.community.x);
       travelDot.setAttribute("cy", NODE_POS.community.y);
@@ -167,15 +207,19 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
           rafId = requestAnimationFrame(animateSegment);
         } else {
           visLine.setAttribute("d", "");
-          setActive(seg.nextKey, true);
-          setActive(seg.key, false);
-
           const isLastSegment = segIdx === SEGMENTS.length - 1;
+
           if (isLastSegment) {
+            // Finish with all three lit together, not just the last one.
+            setActive("community", true);
+            setActive("ai", true);
+            setActive("product", true);
             T(() => {
               if (!cancelled) setFinished(true);
             }, holdMs);
           } else {
+            setActive(seg.nextKey, true);
+            setActive(seg.key, false);
             T(() => {
               segIdx += 1;
               start = null;
@@ -271,12 +315,13 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
           <circle cx="0" cy="0" r="5.5" fill="currentColor" />
         </g>
 
-        {/* Product icon: small screen */}
+        {/* Product icon: small screen with a mini "features growing" sequence inside */}
         <g ref={iconProductRef} color={BORDER} style={{ transition: "color 0.3s ease" }} transform="translate(340,100)">
           <rect x="-22" y="-22" width="44" height="44" rx="6" fill="none" stroke="currentColor" strokeWidth="2.2" />
-          <line x1="-13" y1="-9" x2="13" y2="-9" stroke="currentColor" strokeWidth="2.2" />
-          <line x1="-13" y1="1" x2="6" y2="1" stroke="currentColor" strokeWidth="2.2" />
-          <line x1="-13" y1="11" x2="-2" y2="11" stroke="currentColor" strokeWidth="2.2" />
+          <rect ref={miniHeaderRef} x="-13" y="-15" width="26" height="4" rx="1.5" fill="currentColor" style={{ opacity: 0, transition: "opacity 0.25s ease" }} />
+          <rect ref={miniBar1Ref} x="-11" y="14" width="6" height="0" rx="1" fill="currentColor" />
+          <rect ref={miniBar2Ref} x="-2" y="14" width="6" height="0" rx="1" fill="currentColor" />
+          <rect ref={miniBar3Ref} x="7" y="14" width="6" height="0" rx="1" fill="currentColor" />
         </g>
 
         {/* Founder: steering wheel, center, rotates toward active icon */}
