@@ -23,7 +23,7 @@ const FONT = "Inter, sans-serif";
 //                some eyes light up green, lean in, and turn into person-shaped user icons, while
 //                a "Users" counter rises to 8.
 // Runs once when scrolled into view, then shows a Replay button.
-export default function ProductGrowthAnimation({ className = "w-[94vw] sm:w-full max-w-xl mx-auto" }) {
+export default function ProductGrowthAnimation({ className = "w-[88vw] sm:w-full max-w-xl mx-auto" }) {
   const wrapRef = useRef(null);
   const [finished, setFinished] = useState(false);
   const playRef = useRef(null); // holds the "play once" function once the effect sets it up
@@ -554,7 +554,7 @@ export default function ProductGrowthAnimation({ className = "w-[94vw] sm:w-full
 
   return (
     <div ref={wrapRef} className={className} style={{ position: "relative" }}>
-      <svg width="100%" viewBox="95 35 490 345" role="img" style={{ display: "block" }}>
+      <svg width="100%" viewBox="80 35 520 345" role="img" style={{ display: "block" }}>
         <title>Idea to product to users</title>
         <desc>
           A person thinks, with a faint lightbulb above his head. The moment his eyes
