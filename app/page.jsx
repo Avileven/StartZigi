@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] idea-to-product-to-users animation
-import CommunityAiFounderLoop from "./CommunityAiFounderLoop"; // [ADDED] community/AI/founder loop animation
+import CommunityAiFounderLoop from "./CommunityAiFounderLoop/page"; // [ADDED] community/AI/founder loop animation
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
