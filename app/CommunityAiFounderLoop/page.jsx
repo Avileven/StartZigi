@@ -165,7 +165,7 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
 
   return (
     <div className={className}>
-      <svg width="100%" viewBox="0 0 680 420" role="img" style={{ display: "block" }}>
+      <svg width="100%" viewBox="120 20 440 400" role="img" style={{ display: "block" }}>
         <title>Community, AI, product loop with founder at center</title>
         <desc>
           Three icons, a connected-people network for community, a chip for AI, and a small
