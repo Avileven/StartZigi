@@ -56,9 +56,9 @@ export default function ProductGrowthAnimation({ className = "w-[88vw] sm:w-full
       cy = 175;
     const barHeights = [22, 34, 16, 40, 28];
     const rowY = [258, 275, 292];
-    const N = 18;
-    const moverSlots = [2, 4, 6, 9, 11, 13, 15, 17];
-    const ringRadius = 128;
+    const N = 12;
+    const moverSlots = [1, 3, 5, 7, 9, 11];
+    const ringRadius = 92;
     const insideOffsets = [
       [-34, 36],
       [0, 32],
