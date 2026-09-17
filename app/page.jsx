@@ -126,7 +126,7 @@ function SparkShapeShip() {
   };
 
   return (
-    <h2 ref={sectionRef} className="text-4xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
+    <h2 ref={sectionRef} className="text-3xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
       <span className="text-blue-600">
         <span style={{ fontWeight: 300 }}>{w1}</span>
         <span style={{ fontWeight: 500 }}>{w2}</span>
@@ -141,7 +141,7 @@ function SparkShapeShip() {
 // statically, all at once, same visual style.
 function HumanInsightHeading() {
   return (
-    <h3 className="text-3xl md:text-4xl font-bold mb-6">
+    <h3 className="text-2xl md:text-4xl font-bold mb-6">
       <span className="text-blue-600 inline-block leading-relaxed pb-2">
         Human Insight. AI Intelligence. Founder Decisions.
       </span>
@@ -158,7 +158,7 @@ function FAQItems() {
     { q: "How does Zig Profile work?", a: "Every founder has a Zig Profile, visible to other founders you interact with. It shows your current stage (Spark, Plan, Shape, or Beta), your Insight status based on how much feedback you've given other founders, your Zig Age (how long you've been part of the community), and how many ideas you've started. You can view your own profile from My Account, and click on any founder's name to see theirs." },
     { q: "How long does the journey take?", a: "It depends on how intensively you work. A single idea's journey, from first spark to a validated, demo-ready product, takes about 6 months on average. But your journey on StartZig doesn't end there. Once you're ready, you can start a new idea, and stay active in between by giving feedback to other founders." },
     { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information. StartZig does not accept liability for data breaches. You choose when and with whom to share it, whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "What's the difference between the plans?", a: "All plans include the full startup journey. The main differences are the number of monthly AI credits (5 / 100 / 300 / 500) and access to advanced tools like Business Deck and ZigPlan, available on Pro Founder and Unicorn." },
+    { q: "What is an Insight?", a: "In our community, every piece of structured feedback members give each other is an Insight. When you give feedback, you build up an Insight balance, which you can use to invite others to your venture. Your Insight balance stays with you throughout your journey." },
     { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
   ];
   return (
@@ -244,7 +244,7 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
+          <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
             <span
               style={{
@@ -301,12 +301,12 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Get Insights from the community at every stage of your product, and gain new customers.</span>
+            <h3 className="text-2xl md:text-4xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Get Insights from our community at every stage of your product, and gain new customers.</span>
             </h3>
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
-              Most founders build first and look for customers later. StartZig takes a different approach. If you're starting with an idea, bring potential users into the journey from the beginning. If you already have a product live, bring them in now. Let people discover what you're building, give structured feedback, follow its progress and engage with new versions as your product evolves. Your product and your community grow side by side.
+              From idea to live product, benefit from structured feedback from our community at every stage of your entrepreneurial journey. Use it to refine your product and plan your next features. Some community members will discover your product early, and join as users.
             </p>
           </div>
 
@@ -314,7 +314,7 @@ export default function Home() {
               (Founders first, then Inventors, then Explorers) and
               Founders/Inventors copy updated per explicit content review. */}
           <div className="mb-10">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6">
+            <h3 className="text-2xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Built for Different Starting Points</span>
             </h3>
             <p className="text-lg text-gray-600 mb-6">
@@ -346,7 +346,7 @@ export default function Home() {
 
           {/* [NEW] From First Interaction to Long Term Loyalty */}
           <div className="mb-10 mt-10">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6">
+            <h3 className="text-2xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">From First Interaction to Long Term Loyalty</span>
             </h3>
             <p className="text-lg text-gray-600">
@@ -364,7 +364,7 @@ export default function Home() {
 
           {/* Our DNA, heading for the feature list below */}
           <div>
-            <h3 className="text-3xl md:text-4xl font-bold mb-6 mt-20">
+            <h3 className="text-2xl md:text-4xl font-bold mb-6 mt-20">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
             </h3>
 
@@ -409,7 +409,7 @@ export default function Home() {
       {/* [ADDED] FAQ Section */}
       <div className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold mb-16">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block leading-relaxed pb-2">
               Frequently Asked Questions
             </span>
