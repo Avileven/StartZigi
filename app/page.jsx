@@ -187,6 +187,7 @@ export default function Home() {
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const zigRef = useRef(null); // [ADDED] "Zig" color-wave animation target
+  const [showRest, setShowRest] = useState(false); // [ADDED] reveal subtitle+CTA only after Zig finishes
 
   // [ADDED] One-time color wave through "Zig" on load, then it stops.
   useEffect(() => {
@@ -199,8 +200,10 @@ export default function Home() {
       });
       el._raf2 = raf2;
     });
+    const revealTimer = setTimeout(() => setShowRest(true), 2200);
     return () => {
       cancelAnimationFrame(raf1);
+      clearTimeout(revealTimer);
     };
   }, []);
 
@@ -297,17 +300,16 @@ export default function Home() {
                 Zig
               </span>
             </span>
-            .
           </h1>
           <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-slideUp italic"
-            style={{ animationDelay: "0.2s" }}
+            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto italic"
+            style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease" }}
           >
-            Your Idea. Your Community. Your Next Zig.
+            Your Idea. Your Community.<br className="sm:hidden" /> Your Next Zig.
           </p>
           <div
-            className="flex flex-col gap-4 items-center animate-slideUp"
-            style={{ animationDelay: "0.4s" }}
+            className="flex flex-col gap-4 items-center"
+            style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: showRest ? "auto" : "none" }}
           >
             {user ? (
               hasVenture ? (
