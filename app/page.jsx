@@ -266,9 +266,12 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
-            <span className="fade-in-startzig">
+            <span className="fade-in-startzig" style={{ whiteSpace: "nowrap" }}>
               <span
                 style={{
+                  display: "inline-block",
+                  lineHeight: 1.4,
+                  paddingBottom: "0.15em",
                   background: "linear-gradient(to right, #3457D5, #6E5AD6)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -281,6 +284,8 @@ export default function Home() {
                 ref={zigRef}
                 style={{
                   display: "inline-block",
+                  lineHeight: 1.4,
+                  paddingBottom: "0.15em",
                   backgroundImage: "linear-gradient(90deg, #3457D5, #F0A020, #6E5AD6, #3457D5)",
                   backgroundSize: "300% 100%",
                   backgroundPosition: "100% 0%",
