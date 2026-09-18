@@ -30,10 +30,11 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
   const hasStartedRef = useRef(false);
 
   const bulbRef = useRef(null);
-  const bulbFillRef = useRef(null);
-  const ideaContent1Ref = useRef(null);
-  const ideaContent2Ref = useRef(null);
-  const ideaContent3Ref = useRef(null);
+  const filamentRef = useRef(null);
+  const mockupWrapRef = useRef(null);
+  const note1WrapRef = useRef(null);
+  const note2WrapRef = useRef(null);
+  const loginWrapRef = useRef(null);
 
   const frameRef = useRef(null);
   const finalBorderRef = useRef(null);
@@ -71,8 +72,8 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     ];
 
     const bulb = bulbRef.current;
-    const bulbFill = bulbFillRef.current;
-    const ideaContent = [ideaContent1Ref.current, ideaContent2Ref.current, ideaContent3Ref.current];
+    const filament = filamentRef.current;
+    const wraps = [mockupWrapRef.current, note1WrapRef.current, note2WrapRef.current, loginWrapRef.current];
 
     const frame = frameRef.current;
     const finalBorder = finalBorderRef.current;
@@ -89,7 +90,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     const feedbackIconsG = feedbackIconsRef.current;
 
     if (
-      !bulb || !bulbFill || ideaContent.some((c) => !c) ||
+      !bulb || !filament || wraps.some((w) => !w) ||
       !frame || !finalBorder || !headerBar || !block1 || !block2 || !pChart || !rowsG ||
       !counter || !counterLabel || !eyeHolder || !feedbackIconsG
     ) {
@@ -106,52 +107,49 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
       return id;
     };
 
-    /* ===== STAGE 1: idea — a bulb fills up with yellow light and a bit of content ===== */
+    /* ===== STAGE 1: idea — content rises from the filament, then the bulb lights up ===== */
+    const WRAP_STARTS = [
+      "translate(0px,12px) scale(0.25)",
+      "translate(64px,-18px) scale(0.25)",
+      "translate(-64px,-18px) scale(0.25)",
+      "translate(0px,-52px) scale(0.25)",
+    ];
     function playIdea() {
       bulb.style.transition = "none";
       bulb.style.opacity = "1";
       bulb.setAttribute("color", GRAY);
-      bulbFill.style.transition = "none";
-      bulbFill.setAttribute("y", "250");
-      bulbFill.setAttribute("height", "0");
-      ideaContent.forEach((c) => {
-        c.style.transition = "none";
-        c.style.opacity = "0";
+      filament.style.transition = "none";
+      filament.style.opacity = "1";
+      wraps.forEach((w, i) => {
+        w.style.transition = "none";
+        w.style.opacity = "0";
+        w.style.transform = WRAP_STARTS[i];
+      });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          filament.style.transition = "opacity 0.35s ease";
+          filament.style.opacity = "0";
+
+          wraps.forEach((w, i) => {
+            T(() => {
+              w.style.transition = "opacity 0.45s ease, transform 0.55s cubic-bezier(.2,.7,.3,1)";
+              w.style.opacity = "1";
+              w.style.transform = "translate(0px,0px) scale(1)";
+            }, 400 + i * 500);
+          });
+        });
       });
 
       T(() => {
-        bulbFill.style.transition = "y 1.1s cubic-bezier(.3,.8,.4,1), height 1.1s cubic-bezier(.3,.8,.4,1)";
-        bulbFill.setAttribute("y", "150");
-        bulbFill.setAttribute("height", "100");
-      }, 700);
-
-      T(() => {
-        bulb.style.transition = "color 0.3s ease";
+        bulb.style.transition = "color 0.4s ease";
         bulb.setAttribute("color", "#FACC15");
         showCounter("PRODUCT IDEA", BLUE, "312");
-      }, 1750);
-
-      ideaContent.forEach((c, i) => {
-        T(() => {
-          c.style.transition = "opacity 0.35s ease";
-          c.style.opacity = "1";
-        }, 1850 + i * 150);
-      });
+      }, 2900);
     }
     function hideIdea() {
       bulb.style.transition = "opacity 0.6s ease";
       bulb.style.opacity = "0";
-      bulbFill.style.transition = "opacity 0.6s ease";
-      bulbFill.style.opacity = "0";
-      T(() => {
-        bulbFill.style.transition = "none";
-        bulbFill.style.opacity = "1";
-        bulbFill.setAttribute("height", "0");
-      }, 650);
-      ideaContent.forEach((c) => {
-        c.style.transition = "opacity 0.4s ease";
-        c.style.opacity = "0";
-      });
       hideCounter();
     }
 
@@ -512,7 +510,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
             });
           }, 2000);
         }, 900);
-      }, 3400);
+      }, 4200);
     }
 
     playRef.current = playOnce;
@@ -565,13 +563,13 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
           green users counter rises to eight. Plays once, with a replay button at the end.
         </desc>
 
-        {/* Idea: a large lightbulb with a proper screw base, yellow light rising to fill it, and a bit of content forming inside */}
+        {/* Idea: a large lightbulb with a proper screw base; content rises from the filament, then everything lights up yellow */}
         <defs>
-          <clipPath id="ideaBulbGlassClip">
-            <circle cx="340" cy="200" r="50" />
+          <clipPath id="ideaBulbGlassClipLocal">
+            <circle cx="200" cy="175" r="90" />
           </clipPath>
         </defs>
-        <g ref={bulbRef} color={GRAY} style={{ transition: "color 0.3s ease" }}>
+        <g ref={bulbRef} color={GRAY} style={{ transition: "color 0.4s ease" }}>
           <g transform="translate(340,200) scale(0.55) translate(-200,-175)">
             <circle cx="200" cy="175" r="90" fill="none" stroke="currentColor" strokeWidth="7" />
             <path d="M 168 245 L 178 275 L 222 275 L 232 245" fill="none" stroke="currentColor" strokeWidth="7" strokeLinejoin="round" />
@@ -580,22 +578,48 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
             <line x1="178" y1="299" x2="222" y2="299" stroke="currentColor" strokeWidth="5" />
             <line x1="178" y1="310" x2="222" y2="310" stroke="currentColor" strokeWidth="5" />
             <path d="M 190 320 L 190 330 Q 190 336 200 336 Q 210 336 210 330 L 210 320" fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
-          </g>
-        </g>
-        <rect ref={bulbFillRef} x="290" y="250" width="100" height="0" fill="#FACC15" clipPath="url(#ideaBulbGlassClip)" />
-        <g clipPath="url(#ideaBulbGlassClip)" color={BLUE}>
-          <g ref={ideaContent1Ref} style={{ opacity: 0 }}>
-            <line x1="312" y1="180" x2="326" y2="180" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="308" cy="180" r="2" fill="currentColor" />
-          </g>
-          <g ref={ideaContent2Ref} style={{ opacity: 0 }}>
-            <rect x="325" y="192" width="30" height="22" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-            <line x1="329" y1="196" x2="351" y2="210" stroke="currentColor" strokeWidth="1.6" />
-            <line x1="351" y1="196" x2="329" y2="210" stroke="currentColor" strokeWidth="1.6" />
-          </g>
-          <g ref={ideaContent3Ref} style={{ opacity: 0 }}>
-            <line x1="352" y1="222" x2="366" y2="222" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="370" cy="222" r="2" fill="currentColor" />
+
+            <g clipPath="url(#ideaBulbGlassClipLocal)">
+              <path
+                ref={filamentRef}
+                d="M 190 205 L 194 185 L 185 170 L 200 150 L 215 170 L 206 185 L 210 205"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                style={{ opacity: 1 }}
+              />
+
+              <g ref={mockupWrapRef} style={{ opacity: 0, transformOrigin: "200px 163px" }}>
+                <rect x="160" y="123" width="80" height="55" rx="4" fill="none" stroke="currentColor" strokeWidth="3" />
+                <line x1="160" y1="136" x2="240" y2="136" stroke="currentColor" strokeWidth="3" />
+                <circle cx="168" cy="130" r="1.8" fill="currentColor" />
+                <circle cx="175" cy="130" r="1.8" fill="currentColor" />
+                <rect x="188" y="146" width="24" height="22" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <circle cx="196" cy="153" r="2.5" fill="none" stroke="currentColor" strokeWidth="2" />
+                <line x1="190" y1="166" x2="210" y2="157" stroke="currentColor" strokeWidth="2" />
+              </g>
+
+              <g ref={note1WrapRef} style={{ opacity: 0, transformOrigin: "136px 193px" }}>
+                <rect x="118" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <line x1="124" y1="189" x2="148" y2="189" stroke="currentColor" strokeWidth="2" />
+                <line x1="124" y1="196" x2="142" y2="196" stroke="currentColor" strokeWidth="2" />
+              </g>
+
+              <g ref={note2WrapRef} style={{ opacity: 0, transformOrigin: "264px 193px" }}>
+                <rect x="246" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <line x1="252" y1="189" x2="276" y2="189" stroke="currentColor" strokeWidth="2" />
+                <line x1="252" y1="196" x2="270" y2="196" stroke="currentColor" strokeWidth="2" />
+              </g>
+
+              <g ref={loginWrapRef} style={{ opacity: 0, transformOrigin: "200px 227px" }}>
+                <rect x="174" y="217" width="52" height="20" rx="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <text x="200" y="231" textAnchor="middle" fontFamily={FONT} fontWeight="700" fontSize="9" letterSpacing="0.04em" fill="currentColor">
+                  LOGIN
+                </text>
+              </g>
+            </g>
           </g>
         </g>
 
