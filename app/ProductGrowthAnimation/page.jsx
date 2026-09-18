@@ -110,13 +110,13 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     /* ===== STAGE 1: idea — content rises from the filament, then the bulb lights up ===== */
     const WRAP_STARTS = [
       "translate(0px,12px) scale(0.25)",
-      "translate(64px,-18px) scale(0.25)",
-      "translate(-64px,-18px) scale(0.25)",
+      "translate(52px,-18px) scale(0.25)",
+      "translate(-52px,-18px) scale(0.25)",
       "translate(0px,-52px) scale(0.25)",
     ];
     function playIdea() {
       bulb.style.transition = "none";
-      bulb.style.opacity = "1";
+      bulb.style.opacity = "0";
       bulb.setAttribute("color", GRAY);
       filament.style.transition = "none";
       filament.style.opacity = "1";
@@ -126,26 +126,52 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
         w.style.transform = WRAP_STARTS[i];
       });
 
+      // The bulb (with its filament) fades in as one unit first.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          filament.style.transition = "opacity 0.35s ease";
-          filament.style.opacity = "0";
-
-          wraps.forEach((w, i) => {
-            T(() => {
-              w.style.transition = "opacity 0.45s ease, transform 0.55s cubic-bezier(.2,.7,.3,1)";
-              w.style.opacity = "1";
-              w.style.transform = "translate(0px,0px) scale(1)";
-            }, 400 + i * 500);
-          });
+          bulb.style.transition = "opacity 0.5s ease";
+          bulb.style.opacity = "1";
         });
       });
 
+      // Hold for a beat before anything starts happening inside.
+      const startObjects = 1500;
+
+      T(() => {
+        filament.style.transition = "opacity 0.35s ease";
+        filament.style.opacity = "0";
+
+        wraps.forEach((w, i) => {
+          T(() => {
+            w.style.transition = "opacity 0.45s ease, transform 0.55s cubic-bezier(.2,.7,.3,1)";
+            w.style.opacity = "1";
+            w.style.transform = "translate(0px,0px) scale(1)";
+          }, 400 + i * 500);
+        });
+      }, startObjects);
+
+      const lastObjectSettled = startObjects + 400 + 3 * 500 + 550; // ~3950
+      // A little tremble once everything has landed.
+      T(() => {
+        bulb.animate(
+          [
+            { transform: "translate(0,0)" },
+            { transform: "translate(-3px,0)" },
+            { transform: "translate(3px,0)" },
+            { transform: "translate(-2px,0)" },
+            { transform: "translate(2px,0)" },
+            { transform: "translate(0,0)" },
+          ],
+          { duration: 400, easing: "ease-in-out" }
+        );
+      }, lastObjectSettled);
+
+      // A second after the shake, the bulb lights up and the title appears.
       T(() => {
         bulb.style.transition = "color 0.4s ease";
         bulb.setAttribute("color", "#FACC15");
         showCounter("PRODUCT IDEA", BLUE, "312");
-      }, 2900);
+      }, lastObjectSettled + 400 + 1000);
     }
     function hideIdea() {
       bulb.style.transition = "opacity 0.6s ease";
@@ -510,7 +536,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
             });
           }, 2000);
         }, 900);
-      }, 4200);
+      }, 6600);
     }
 
     playRef.current = playOnce;
@@ -601,16 +627,16 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
                 <line x1="190" y1="166" x2="210" y2="157" stroke="currentColor" strokeWidth="2" />
               </g>
 
-              <g ref={note1WrapRef} style={{ opacity: 0, transformOrigin: "136px 193px" }}>
-                <rect x="118" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                <line x1="124" y1="189" x2="148" y2="189" stroke="currentColor" strokeWidth="2" />
-                <line x1="124" y1="196" x2="142" y2="196" stroke="currentColor" strokeWidth="2" />
+              <g ref={note1WrapRef} style={{ opacity: 0, transformOrigin: "148px 193px" }}>
+                <rect x="130" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <line x1="136" y1="189" x2="160" y2="189" stroke="currentColor" strokeWidth="2" />
+                <line x1="136" y1="196" x2="154" y2="196" stroke="currentColor" strokeWidth="2" />
               </g>
 
-              <g ref={note2WrapRef} style={{ opacity: 0, transformOrigin: "264px 193px" }}>
-                <rect x="246" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                <line x1="252" y1="189" x2="276" y2="189" stroke="currentColor" strokeWidth="2" />
-                <line x1="252" y1="196" x2="270" y2="196" stroke="currentColor" strokeWidth="2" />
+              <g ref={note2WrapRef} style={{ opacity: 0, transformOrigin: "252px 193px" }}>
+                <rect x="234" y="180" width="36" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                <line x1="240" y1="189" x2="264" y2="189" stroke="currentColor" strokeWidth="2" />
+                <line x1="240" y1="196" x2="258" y2="196" stroke="currentColor" strokeWidth="2" />
               </g>
 
               <g ref={loginWrapRef} style={{ opacity: 0, transformOrigin: "200px 227px" }}>
