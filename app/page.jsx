@@ -186,6 +186,23 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasVenture, setHasVenture] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const zigRef = useRef(null); // [ADDED] "Zig" color-wave animation target
+
+  // [ADDED] One-time color wave through "Zig" on load, then it stops.
+  useEffect(() => {
+    const el = zigRef.current;
+    if (!el) return;
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => {
+        el.style.transition = "background-position 2s ease-in-out";
+        el.style.backgroundPosition = "0% 0%";
+      });
+      el._raf2 = raf2;
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+    };
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -249,16 +266,31 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight animate-slideUp">
             Don't just start up.{" "}
-            <span
-              style={{
-                background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-              className="fade-in-startzig"
-            >
-              StartZig
+            <span className="fade-in-startzig">
+              <span
+                style={{
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Start
+              </span>
+              <span
+                ref={zigRef}
+                style={{
+                  display: "inline-block",
+                  backgroundImage: "linear-gradient(90deg, #3457D5, #F0A020, #6E5AD6, #3457D5)",
+                  backgroundSize: "300% 100%",
+                  backgroundPosition: "100% 0%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Zig
+              </span>
             </span>
             .
           </h1>
