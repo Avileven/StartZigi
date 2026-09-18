@@ -583,10 +583,20 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
           </g>
         </g>
         <rect ref={bulbFillRef} x="290" y="250" width="100" height="0" fill="#FACC15" clipPath="url(#ideaBulbGlassClip)" />
-        <g clipPath="url(#ideaBulbGlassClip)">
-          <circle ref={ideaContent1Ref} cx="322" cy="188" r="6" fill={BLUE} style={{ opacity: 0 }} />
-          <circle ref={ideaContent2Ref} cx="340" cy="172" r="6" fill={ORANGE} style={{ opacity: 0 }} />
-          <circle ref={ideaContent3Ref} cx="358" cy="188" r="6" fill={GREEN} style={{ opacity: 0 }} />
+        <g clipPath="url(#ideaBulbGlassClip)" color={BLUE}>
+          <g ref={ideaContent1Ref} style={{ opacity: 0 }}>
+            <line x1="312" y1="180" x2="326" y2="180" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="308" cy="180" r="2" fill="currentColor" />
+          </g>
+          <g ref={ideaContent2Ref} style={{ opacity: 0 }}>
+            <rect x="325" y="192" width="30" height="22" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+            <line x1="329" y1="196" x2="351" y2="210" stroke="currentColor" strokeWidth="1.6" />
+            <line x1="351" y1="196" x2="329" y2="210" stroke="currentColor" strokeWidth="1.6" />
+          </g>
+          <g ref={ideaContent3Ref} style={{ opacity: 0 }}>
+            <line x1="352" y1="222" x2="366" y2="222" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="370" cy="222" r="2" fill="currentColor" />
+          </g>
         </g>
 
 
