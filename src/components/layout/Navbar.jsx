@@ -38,10 +38,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
 
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center" style={{ whiteSpace: "nowrap" }}>
               <span
                 className="text-2xl font-bold cursor-pointer"
                 style={{
+                  display: "inline-block",
+                  lineHeight: 1.4,
+                  paddingBottom: "0.15em",
                   background: "linear-gradient(to right, #3457D5, #6E5AD6)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -53,7 +56,10 @@ export default function Navbar() {
               <span
                 className="text-2xl font-bold cursor-pointer"
                 style={{
-                  background: "linear-gradient(to right, #3457D5, #F0A020, #6E5AD6)",
+                  display: "inline-block",
+                  lineHeight: 1.4,
+                  paddingBottom: "0.15em",
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
