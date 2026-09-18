@@ -290,7 +290,7 @@ export default function ProductGrowthAnimation({ className = "w-[82vw] sm:w-full
     const ringItems = [];
     for (let i = 0; i < N; i++) {
       const isMover = moverSlots.indexOf(i) !== -1;
-      const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+      const angle = ((i + 0.5) / N) * Math.PI * 2 - Math.PI / 2;
       ringItems.push({
         x: cx + Math.cos(angle) * ringRadius,
         y: cy + Math.sin(angle) * ringRadius + 25,
