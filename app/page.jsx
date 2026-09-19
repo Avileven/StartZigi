@@ -193,21 +193,24 @@ export default function Home() {
   useEffect(() => {
     const el = zigRef.current;
     if (!el) return;
-    const startReveal = setTimeout(() => {
-      const raf1 = requestAnimationFrame(() => {
-        const raf2 = requestAnimationFrame(() => {
-          el.style.transition = "clip-path 1.4s steps(8, end)";
-          el.style.clipPath = "inset(0 0% 0 0)";
-        });
-        el._raf2 = raf2;
-      });
-      el._raf1 = raf1;
-    }, 500);
-    const revealTimer = setTimeout(() => setShowRest(true), 2400);
-    return () => {
-      clearTimeout(startReveal);
-      clearTimeout(revealTimer);
-    };
+    const letters = Array.from(el.children);
+    const timers = [];
+    letters.forEach((letter, i) => {
+      const isZig = i >= 5; // "Zig" starts at index 5 (Z)
+      const t1 = setTimeout(() => {
+        letter.style.filter = "brightness(1.7)";
+      }, 500 + i * 180);
+      const t2 = setTimeout(() => {
+        letter.style.filter = "brightness(1)";
+        if (isZig) {
+          letter.style.color = letter.getAttribute("data-final");
+        }
+      }, 500 + i * 180 + 220);
+      timers.push(t1, t2);
+    });
+    const revealTimer = setTimeout(() => setShowRest(true), 500 + 8 * 180 + 500);
+    timers.push(revealTimer);
+    return () => timers.forEach((t) => clearTimeout(t));
   }, []);
 
   useEffect(() => {
@@ -272,38 +275,25 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Don't just start up{" "}
-            <span
-              ref={zigRef}
-              style={{
-                display: "inline-block",
-                whiteSpace: "nowrap",
-                lineHeight: 1.4,
-                paddingBottom: "0.15em",
-                clipPath: "inset(0 100% 0 0)",
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Start
-              </span>
-              <span
-                style={{
-                  display: "inline-block",
-                  background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Zig
-              </span>
+            <span ref={zigRef} style={{ display: "inline-block", whiteSpace: "nowrap", lineHeight: 1.4, paddingBottom: "0.15em" }}>
+              {[
+                { ch: "S", rest: "#3457D5", final: "#3457D5" },
+                { ch: "t", rest: "#4358D5", final: "#4358D5" },
+                { ch: "a", rest: "#5159D6", final: "#5159D6" },
+                { ch: "r", rest: "#5F59D6", final: "#5F59D6" },
+                { ch: "t", rest: "#6E5AD6", final: "#6E5AD6" },
+                { ch: "Z", rest: "#6E5AD6", final: "#6E5AD6" },
+                { ch: "i", rest: "#6E5AD6", final: "#AF7D7B" },
+                { ch: "g", rest: "#6E5AD6", final: "#F0A020" },
+              ].map((letter, i) => (
+                <span
+                  key={i}
+                  data-final={letter.final}
+                  style={{ display: "inline-block", color: letter.rest, transition: "color 0.35s ease, filter 0.35s ease" }}
+                >
+                  {letter.ch}
+                </span>
+              ))}
             </span>
           </h1>
           <p
