@@ -189,23 +189,24 @@ export default function Home() {
   const zigRef = useRef(null); // [ADDED] "Zig" color-wave animation target
   const [showRest, setShowRest] = useState(false); // [ADDED] reveal subtitle+CTA only after Zig finishes
 
-  // [ADDED] "StartZig" starts plain/dark, then the whole word crossfades to its gradient colors, then stops.
+  // [ADDED] "StartZig" builds in left-to-right like typing, already in its gradient colors (no plain/dark stage).
   useEffect(() => {
     const el = zigRef.current;
-    if (!el) return;
-    const startFade = setTimeout(() => {
-      const raf1b = requestAnimationFrame(() => {
+    if (!el || !el.firstChild) return;
+    const fullWidth = el.firstChild.scrollWidth;
+    const startReveal = setTimeout(() => {
+      const raf1 = requestAnimationFrame(() => {
         const raf2 = requestAnimationFrame(() => {
-          el.style.transition = "opacity 2.4s ease-in-out";
-          el.style.opacity = "1";
+          el.style.transition = "width 1.4s steps(8, end)";
+          el.style.width = fullWidth + "px";
         });
         el._raf2 = raf2;
       });
-      el._raf1b = raf1b;
+      el._raf1 = raf1;
     }, 500);
-    const revealTimer = setTimeout(() => setShowRest(true), 3500);
+    const revealTimer = setTimeout(() => setShowRest(true), 2400);
     return () => {
-      clearTimeout(startFade);
+      clearTimeout(startReveal);
       clearTimeout(revealTimer);
     };
   }, []);
@@ -273,45 +274,45 @@ export default function Home() {
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Don't just start up{" "}
             <span style={{ position: "relative", display: "inline-block", whiteSpace: "nowrap" }}>
-              {/* Base layer: plain dark text, establishes layout and is visible first */}
-              <span style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em" }}>
-                StartZig
-              </span>
-              {/* Overlay layer: gradient version, fades in over the whole word */}
               <span
                 ref={zigRef}
                 style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
                   display: "inline-block",
-                  lineHeight: 1.4,
-                  paddingBottom: "0.15em",
-                  whiteSpace: "nowrap",
-                  opacity: 0,
+                  overflow: "hidden",
+                  width: 0,
+                  verticalAlign: "bottom",
                 }}
               >
                 <span
                   style={{
                     display: "inline-block",
-                    background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.4,
+                    paddingBottom: "0.15em",
                   }}
                 >
-                  Start
-                </span>
-                <span
-                  style={{
-                    display: "inline-block",
-                    background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Start
+                  </span>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
                   Zig
+                </span>
                 </span>
               </span>
             </span>
