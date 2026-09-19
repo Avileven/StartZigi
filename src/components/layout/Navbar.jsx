@@ -55,17 +55,21 @@ export default function Navbar() {
               </span>
               <span
                 className="text-2xl font-bold cursor-pointer"
-                style={{
-                  display: "inline-block",
-                  lineHeight: 1.4,
-                  paddingBottom: "0.15em",
-                  background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 0.4 }}
               >
-                Zig
+                Z
+              </span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 0.7 }}
+              >
+                i
+              </span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 1 }}
+              >
+                g
               </span>
             </Link>
           </div>
