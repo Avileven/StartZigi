@@ -336,7 +336,7 @@ export default function Home() {
       </div>
 
       {/* ── Why StartZig ── */}
-      <div className="pt-2 pb-16 px-6">
+      <div className="pt-2 pb-16 px-6 -mt-32 sm:mt-0">
         <div className="max-w-4xl mx-auto">
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
