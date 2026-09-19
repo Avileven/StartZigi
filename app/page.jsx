@@ -204,6 +204,7 @@ export default function Home() {
         letter.style.filter = "brightness(1)";
         if (isZig) {
           letter.style.color = letter.getAttribute("data-final");
+          letter.style.opacity = letter.getAttribute("data-final-opacity");
         }
       }, 500 + i * 180 + 220);
       timers.push(t1, t2);
@@ -282,14 +283,15 @@ export default function Home() {
                 { ch: "a", rest: "#5159D6", final: "#5159D6" },
                 { ch: "r", rest: "#5F59D6", final: "#5F59D6" },
                 { ch: "t", rest: "#6E5AD6", final: "#6E5AD6" },
-                { ch: "Z", rest: "#6E5AD6", final: "#E8B87A" },
-                { ch: "i", rest: "#6E5AD6", final: "#F0A020" },
-                { ch: "g", rest: "#6E5AD6", final: "#C2670A" },
+                { ch: "Z", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 0.4 },
+                { ch: "i", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 0.7 },
+                { ch: "g", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 1 },
               ].map((letter, i) => (
                 <span
                   key={i}
                   data-final={letter.final}
-                  style={{ display: "inline-block", color: letter.rest, transition: "color 0.35s ease, filter 0.35s ease" }}
+                  data-final-opacity={letter.finalOpacity !== undefined ? letter.finalOpacity : 1}
+                  style={{ display: "inline-block", color: letter.rest, opacity: 1, transition: "color 0.35s ease, filter 0.35s ease, opacity 0.35s ease" }}
                 >
                   {letter.ch}
                 </span>
