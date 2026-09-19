@@ -283,8 +283,8 @@ export default function Home() {
                 { ch: "r", rest: "#5F59D6", final: "#5F59D6" },
                 { ch: "t", rest: "#6E5AD6", final: "#6E5AD6" },
                 { ch: "Z", rest: "#6E5AD6", final: "#6E5AD6" },
-                { ch: "i", rest: "#6E5AD6", final: "#AF7D7B" },
-                { ch: "g", rest: "#6E5AD6", final: "#F0A020" },
+                { ch: "i", rest: "#6E5AD6", final: "#82446B" },
+                { ch: "g", rest: "#6E5AD6", final: "#7A1F32" },
               ].map((letter, i) => (
                 <span
                   key={i}
