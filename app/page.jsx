@@ -272,7 +272,7 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative flex items-center justify-center px-6 pt-4 md:min-h-screen">
+      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Don't just start up{" "}
