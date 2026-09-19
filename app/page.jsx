@@ -1,242 +1,24 @@
-// Home page - 070926
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
-import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] idea-to-product-to-users animation
-import CommunityAiFounderLoop from "./CommunityAiFounderLoop/page"; // [ADDED] community/AI/founder loop animation
 
-// [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
-const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
-const CLOCK_LABELS = ['IDEA', 'PLAN', 'MVP', 'MLP', 'BETA', 'GROWTH'];
-const CLOCK_POSITIONS = [{ x: 160, y: 64 }, { x: 247, y: 112 }, { x: 247, y: 216 }, { x: 160, y: 260 }, { x: 73, y: 216 }, { x: 73, y: 112 }];
-const CLOCK_ROTATIONS = [0, 60, 120, 180, 240, 300];
-const CLOCK_COLORS = {
-  idea: "#10b981",
-  business_plan: "#f97316",
-  mvp: "#3b82f6",
-  mlp: "#a855f7",
-  beta: "#ec4899",
-  growth: "#eab308",
-};
-
-function PhaseClock() {
-  const [phaseIndex, setPhaseIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPhaseIndex((prev) => (prev + 1) % CLOCK_PHASES.length);
-    }, 2200);
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentPhase = CLOCK_PHASES[phaseIndex];
-  const activeColor = CLOCK_COLORS[currentPhase];
-  const seg = 879 / 6;
-  const arcOffset = 879 - seg * (phaseIndex + 1);
-  const rotation = CLOCK_ROTATIONS[phaseIndex];
-
-  return (
-    <div className="flex flex-col items-center py-10">
-      <div className="w-[55vw] max-w-[320px] sm:w-[320px] mx-auto">
-      <svg width="100%" height="auto" viewBox="0 0 320 320">
-        <circle cx="160" cy="160" r="140" fill="#F6F7FB" stroke="#E9E9F0" strokeWidth="1.5" />
-        <circle
-          cx="160" cy="160" r="140" fill="none" stroke={activeColor} strokeWidth="12" strokeLinecap="round"
-          strokeDasharray="879" strokeDashoffset={arcOffset}
-          style={{ transform: "rotate(-90deg)", transformOrigin: "160px 160px", transition: "stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1), stroke 1.5s ease" }}
-        />
-        <circle cx="160" cy="160" r="60" fill="#EFEFF7" />
-        {CLOCK_LABELS.map((label, i) => (
-          <text
-            key={i}
-            x={CLOCK_POSITIONS[i].x} y={CLOCK_POSITIONS[i].y}
-            fontSize={CLOCK_PHASES[i] === currentPhase ? "13" : "11"}
-            fill={CLOCK_PHASES[i] === currentPhase ? CLOCK_COLORS[CLOCK_PHASES[i]] : "#9CA3AF"}
-            textAnchor="middle"
-            fontWeight={CLOCK_PHASES[i] === currentPhase ? "800" : "600"}
-            fontFamily="Inter, sans-serif"
-          >
-            {label}
-          </text>
-        ))}
-        <path
-          fill="#4C3FA8"
-          d="M158 160 L162 160 L162 75 L158 75 Z"
-          style={{ transform: `rotate(${rotation}deg)`, transformOrigin: "160px 160px", transition: "transform 1.5s cubic-bezier(0.4,0,0.2,1)" }}
-        />
-        <circle cx="160" cy="160" r="6" fill="#3457D5" />
-      </svg>
-      </div>
-      <p className="text-gray-500 text-sm mt-2">The clock is ticking. Ready to Zig?</p>
-    </div>
-  );
-}
-
-// [ADDED] "Spark Shape Ship" typewriter, types once, weight increases per word
-function SparkShapeShip() {
-  const [w1, setW1] = useState("");
-  const [w2, setW2] = useState("");
-  const [w3, setW3] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
-  const hasStarted = useRef(false);
-  const sectionRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasStarted.current) {
-            hasStarted.current = true;
-            startTyping();
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const startTyping = () => {
-    const words = [
-      { text: "Spark ", setter: setW1 },
-      { text: "Shape ", setter: setW2 },
-      { text: "Ship", setter: setW3 },
-    ];
-    let wIdx = 0;
-    let cIdx = 0;
-    function tick() {
-      if (wIdx >= words.length) {
-        setShowCursor(false);
-        return;
-      }
-      const current = words[wIdx];
-      if (cIdx <= current.text.length) {
-        current.setter(current.text.slice(0, cIdx));
-        cIdx++;
-        setTimeout(tick, 120);
-      } else {
-        wIdx++;
-        cIdx = 0;
-        setTimeout(tick, 120);
-      }
-    }
-    tick();
-  };
-
-  return (
-    <h2 ref={sectionRef} className="text-3xl md:text-5xl mb-6" style={{ minHeight: "1.2em" }}>
-      <span className="text-blue-600">
-        <span style={{ fontWeight: 300 }}>{w1}</span>
-        <span style={{ fontWeight: 500 }}>{w2}</span>
-        <span style={{ fontWeight: 700 }}>{w3}</span>
-        {showCursor && <span style={{ borderRight: "2px solid #2563EB" }}>&nbsp;</span>}
-      </span>
-    </h2>
-  );
-}
-
-// [FIX] Staged reveal animation removed per explicit request — now renders
-// statically, all at once, same visual style.
-function HumanInsightHeading() {
-  return (
-    <h3 className="text-2xl md:text-4xl font-bold mb-6">
-      <span className="text-blue-600 inline-block leading-relaxed pb-2">
-        Human Insight. AI Intelligence. Founder Decisions.
-      </span>
-    </h3>
-  );
-}
-
-// [ADDED] FAQ accordion component
-function FAQItems() {
-  const [openFaq, setOpenFaq] = useState(null);
-  const FAQS = [
-    { q: "Do I need technical knowledge to use StartZig?", a: "No. StartZig is designed for founders, not developers. The tools guide you step by step through idea validation, business planning, MVP thinking, and investor preparation." },
-    { q: "Can I switch to a different idea or product?", a: "Yes, at any time. StartZig keeps you focused on one active idea at a time, so go to My Account and choose \"Start a New Idea.\" Your current idea will be permanently deleted, but your profile, reputation, feedback history, and AI credits all stay with you for whatever you build next." },
-    { q: "How does Zig Profile work?", a: "Every founder has a Zig Profile, visible to other founders you interact with. It shows your current stage (Spark, Plan, Shape, or Beta), your Insight status based on how much feedback you've given other founders, your Zig Age (how long you've been part of the community), and how many ideas you've started. You can view your own profile from My Account, and click on any founder's name to see theirs." },
-    { q: "How long does the journey take?", a: "It depends on how intensively you work. A single idea's journey, from first spark to a validated, demo-ready product, takes about 6 months on average. But your journey on StartZig doesn't end there. Once you're ready, you can start a new idea, and stay active in between by giving feedback to other founders." },
-    { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information. StartZig does not accept liability for data breaches. You choose when and with whom to share it, whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "What is an Insight?", a: "In our community, every piece of structured feedback members give each other is an Insight. When you give feedback, you build up an Insight balance, which you can use to invite others to your venture. Your Insight balance stays with you throughout your journey." },
-    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
-  ];
-  return (
-    <div className="space-y-3">
-      {FAQS.map((item, i) => (
-        <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
-          <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-6 py-4 text-left text-gray-900 font-semibold text-base hover:bg-gray-50 transition-colors">
-            <span>{item.q}</span>
-            <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
-          </button>
-          {openFaq === i && (
-            <div className="px-6 pb-5 text-gray-500 text-sm leading-relaxed">{item.a}</div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default function Home() {
+export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasVenture, setHasVenture] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const zigRef = useRef(null); // [ADDED] "Zig" color-wave animation target
-  const [showRest, setShowRest] = useState(false); // [ADDED] reveal subtitle+CTA only after Zig finishes
-
-  // [ADDED] "StartZig" builds in left-to-right like typing, already in its gradient colors (no plain/dark stage).
-  useEffect(() => {
-    const el = zigRef.current;
-    if (!el) return;
-    const letters = Array.from(el.children);
-    const timers = [];
-    letters.forEach((letter, i) => {
-      const isZig = i >= 5; // "Zig" starts at index 5 (Z)
-      const t1 = setTimeout(() => {
-        letter.style.filter = "brightness(1.7)";
-      }, 500 + i * 180);
-      const t2 = setTimeout(() => {
-        letter.style.filter = "brightness(1)";
-        if (isZig) {
-          letter.style.color = letter.getAttribute("data-final");
-          letter.style.opacity = letter.getAttribute("data-final-opacity");
-        }
-      }, 500 + i * 180 + 220);
-      timers.push(t1, t2);
-    });
-    const revealTimer = setTimeout(() => setShowRest(true), 500 + 8 * 180 + 500);
-    timers.push(revealTimer);
-    return () => timers.forEach((t) => clearTimeout(t));
-  }, []);
+  const [isResourcesOpen, setIsResourcesOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
-
-        if (currentUser) {
-          const { data: ventures } = await supabase
-            .from("ventures")
-            .select("id")
-            .eq("created_by", currentUser.email)
-            .limit(1);
-          setHasVenture(ventures && ventures.length > 0);
-        }
       } catch (error) {
         setUser(null);
-        setHasVenture(false);
       }
-      setIsLoading(false);
     };
-
     checkUser();
   }, []);
 
@@ -251,212 +33,182 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-white text-gray-900 min-h-screen">
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slideUp {
-          animation: slideUp 0.8s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .fade-in-startzig {
-          animation: fadeIn 2s ease-in forwards;
-        }
-      `}</style>
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-gradient-to-b from-indigo-500 to-black to-75%">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
 
-      {/* Navigation - 2 level gradient */}
-
-      {/* Hero Section */}
-      <div className="relative min-h-screen flex items-end justify-center px-6 pb-10">
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
-            Don't just start up{" "}
-            <span ref={zigRef} style={{ display: "inline-block", whiteSpace: "nowrap", lineHeight: 1.4, paddingBottom: "0.15em" }}>
-              {[
-                { ch: "S", rest: "#3457D5", final: "#3457D5" },
-                { ch: "t", rest: "#4358D5", final: "#4358D5" },
-                { ch: "a", rest: "#5159D6", final: "#5159D6" },
-                { ch: "r", rest: "#5F59D6", final: "#5F59D6" },
-                { ch: "t", rest: "#6E5AD6", final: "#6E5AD6" },
-                { ch: "Z", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 0.4 },
-                { ch: "i", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 0.7 },
-                { ch: "g", rest: "#6E5AD6", final: "#F0A020", finalOpacity: 1 },
-              ].map((letter, i) => (
-                <span
-                  key={i}
-                  data-final={letter.final}
-                  data-final-opacity={letter.finalOpacity !== undefined ? letter.finalOpacity : 1}
-                  style={{ display: "inline-block", color: letter.rest, opacity: 1, transition: "color 0.35s ease, filter 0.35s ease, opacity 0.35s ease" }}
-                >
-                  {letter.ch}
-                </span>
-              ))}
-            </span>
-          </h1>
-          <p
-            className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto italic"
-            style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease" }}
-          >
-            Your Idea. Your Community.<br className="sm:hidden" /> Your Next Zig.
-          </p>
-          <div
-            className="flex flex-col gap-4 items-center"
-            style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: showRest ? "auto" : "none" }}
-          >
-            {user ? (
-              hasVenture ? (
-                <Link href="/dashboard" className="w-full max-w-sm">
-                  <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full">
-                    Go to dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/createventure" className="w-full max-w-sm">
-                  <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full">
-                    Create Your Venture
-                  </Button>
-                </Link>
-              )
-            ) : (
-              <Button
-                onClick={handleLogin}
-                size="lg"
-                className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full w-full max-w-sm"
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center" style={{ whiteSpace: "nowrap" }}>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{
+                  display: "inline-block",
+                  lineHeight: 1.4,
+                  paddingBottom: "0.15em",
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
               >
-                Start Your Journey
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Why StartZig ── */}
-      <div className="pt-2 pb-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
-          <div className="mb-10">
-            <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Get Insights from our community at every stage of your product, and gain new customers.</span>
-            </h3>
-            <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
-            <p className="text-lg text-gray-600">
-              From idea to live product, benefit from structured feedback from our community at every stage of your entrepreneurial journey. Use it to refine your product and plan your next features. Some community members will discover your product early, and join as users.
-            </p>
-          </div>
-
-          {/* Built for Different Starting Points — [FIX] reordered
-              (Founders first, then Inventors, then Explorers) and
-              Founders/Inventors copy updated per explicit content review. */}
-          <div className="mb-10">
-            <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Built for Different Starting Points</span>
-            </h3>
-            <p className="text-lg text-gray-600 mb-6">
-              Our community is a meeting point for a wide range of peers, at different stages of the founder journey.
-            </p>
-            <div className="space-y-4">
-              <p className="text-lg text-gray-600">
-                <strong className="text-blue-600">Founders.</strong> Already have a product live? Expose it to the community and collect feedback to refine it.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-blue-600">Inventors.</strong> Have an idea? Give it structure, build it into something real, and use the community to shape it along the way.
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong className="text-blue-600">Explorers.</strong> Curious about startups? Experience the journey, explore ideas, and learn by doing.
-              </p>
-            </div>
-          </div>
-
-          <PhaseClock />
-
-          {/* CTA, copied from the WhyStartZig page */}
-          <div className="text-center py-6">
-            <Link href="/register">
-              <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full text-lg font-medium transition-all">
-                Start Your Journey
-              </button>
+                Start
+              </span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 0.4 }}
+              >
+                Z
+              </span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 0.7 }}
+              >
+                i
+              </span>
+              <span
+                className="text-2xl font-bold cursor-pointer"
+                style={{ display: "inline-block", lineHeight: 1.4, paddingBottom: "0.15em", color: "#F0A020", opacity: 1 }}
+              >
+                g
+              </span>
             </Link>
           </div>
 
-          {/* [NEW] From First Interaction to Long Term Loyalty */}
-          <div className="mb-10 mt-10">
-            <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">From First Interaction to Long Term Loyalty</span>
-            </h3>
-            <p className="text-lg text-gray-600">
-              Getting someone to try your product once is only the beginning. Someone who has interacted with your product, contributed feedback, followed its development and seen it evolve has a different relationship with it. They have context. Familiarity. A reason to care about what happens next. That can lead to stronger engagement, repeat usage, continued feedback and recommendations that bring new people into the product. StartZig helps founders begin building those relationships before launch and continue developing them after it.
-            </p>
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-300 hover:text-white p-2"
+            >
+              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
 
-          {/* Human Insight. AI Intelligence. Founder Decisions, standalone heading, staged reveal */}
-          <div className="mt-20 mb-10">
-            <HumanInsightHeading />
-            <CommunityAiFounderLoop className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
-            <p className="text-lg text-gray-600">
-              The AI revolution is transforming the way we create, analyze, and make decisions. But AI is still not human, it lacks the intuition, feelings, experience, and judgment that are so important when it comes to understanding products and the people who use them. StartZig developed a multi-layer system that brings community insight, AI intelligence, and founder decision-making into one continuous product-building process. The community provides the perspective. AI finds the patterns. Founders make the decisions. The cycle repeats throughout the journey, turning real community feedback into deeper product insights and helping founders decide what to focus on next.
-            </p>
-          </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <div className="flex items-center space-x-4 border-r border-white/10 pr-4">
+              <Link href="/why-startzig" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Why StartZig
+              </Link>
+              {/* [NEW] FounderSynergy — moved out of the Resources dropdown
+                  into a top-level nav item, per explicit request. Same
+              {/* [FIX] Points to the new dedicated page the user created
+                  (app/FounderSynergy/page.jsx) — was pointing at /community
+                  by mistake, since that's where this content used to live
+                  before it was moved to its own page. */}
+              <Link href="/FounderSynergy" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                FounderSynergy
+              </Link>
+              <Link href="/pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Pricing
+              </Link>
 
-          {/* Our DNA, heading for the feature list below */}
-          <div>
-            <h3 className="text-2xl md:text-4xl font-bold mb-6 mt-20">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Our DNA</span>
-            </h3>
+              {/* Resources Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setIsResourcesOpen(true)}
+                onMouseLeave={() => setIsResourcesOpen(false)}
+              >
+                <button className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                  Resources
+                  <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-            <div className="space-y-6">
-              {[
-                {
-                  title: "Ideas take shape and founders grow.",
-                  body: "StartZig is not a one-time experience. The experience you build today helps your next venture. Every idea you develop, every insight you share, and every founder you help builds your experience and reputation over time.",
-                },
-                {
-                  title: "Think like a product manager",
-                  body: (
-                    <>
-                      StartZig gives you access to professional tools that help you think through your product, especially in the earliest stages. Define your idea. Explore your options. Visualize what you're building. Collect feedback. Understand what users are telling you. Make decisions. The{" "}
-                      <Link href="/the-toolkit" className="text-blue-600 font-semibold hover:underline">Toolkit</Link> brings professional tools, community insight, and AI-powered support together in one place.
-                    </>
-                  ),
-                },
-                {
-                  title: "Visual thinking, at every stage",
-                  body: "Ideas become easier to understand when you can see them. StartZig includes tools for creating mockups and demos that evolve with your idea, giving the community something real to react to and giving you something concrete to improve.",
-                },
-                {
-                  title: "Simple. Transparent.",
-                  body: "Your journey from idea to defined product and demo is free. No trials. No gimmicks. You only pay if you choose additional AI capabilities or advanced features.",
-                },
-                {
-                  title: "You control your ideas",
-                  body: "Your work stays yours. Only you decide what to share, when to share it, and how much exposure you want. You decide when your idea is ready for feedback, what you want the community to see, and how you use the insights you receive. The community contributes. AI finds the patterns. You decide. Then you Zig.",
-                },
-              ].map((item, i) => (
-                <div key={i}>
-                  <h4 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h4>
-                  <p className="text-gray-600 text-base leading-relaxed">{item.body}</p>
-                </div>
-              ))}
+                {isResourcesOpen && (
+                  <div className="absolute top-full left-0 w-48 bg-black/90 border border-white/10 rounded-md py-2 shadow-xl">
+                    <Link href="/blog" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      Blog
+                    </Link>
+                    <Link href="/the-toolkit" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      The Toolkit
+                    </Link>
+                    <Link href="/how-it-works" className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10">
+                      How it Works
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  <Link href="/dashboard">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Go to dashboard
+                    </button>
+                  </Link>
+                  <button onClick={handleLogout} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={handleLogin} className="text-white hover:bg-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Login
+                  </button>
+                  <Link href="/register">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                      Sign Up
+                    </button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* [ADDED] FAQ Section */}
-      <div className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-16">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block leading-relaxed pb-2">
-              Frequently Asked Questions
-            </span>
-          </h2>
-          <FAQItems />
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-gray-900 border-b border-white/10 px-4 pt-2 pb-6 space-y-2">
+          <Link href="/why-startzig" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+            Why StartZig
+          </Link>
+          <Link href="/FounderSynergy" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+            FounderSynergy
+          </Link>
+          <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-3 py-3 rounded-md text-base font-medium">
+            Pricing
+          </Link>
+
+          <div className="text-gray-500 px-3 py-2 text-xs font-bold uppercase">Resources</div>
+          <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+            Blog
+          </Link>
+          <Link href="/the-toolkit" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+            The Toolkit
+          </Link>
+          <Link href="/how-it-works" onClick={() => setIsMenuOpen(false)} className="block text-gray-300 hover:text-white px-6 py-2 rounded-md text-base font-medium">
+            How it Works
+          </Link>
+
+          <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+            {user ? (
+              <>
+                <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full">
+                  <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Go to dashboard</button>
+                </Link>
+                <button onClick={handleLogout} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Logout</button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleLogin} className="w-full text-white bg-gray-700 hover:bg-gray-600 py-3 rounded-md font-medium">Login</button>
+                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full">
+                  <button className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium">Sign Up</button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </nav>
   );
 }
