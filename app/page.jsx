@@ -192,13 +192,12 @@ export default function Home() {
   // [ADDED] "StartZig" builds in left-to-right like typing, already in its gradient colors (no plain/dark stage).
   useEffect(() => {
     const el = zigRef.current;
-    if (!el || !el.firstChild) return;
-    const fullWidth = el.firstChild.scrollWidth;
+    if (!el) return;
     const startReveal = setTimeout(() => {
       const raf1 = requestAnimationFrame(() => {
         const raf2 = requestAnimationFrame(() => {
-          el.style.transition = "width 1.4s steps(8, end)";
-          el.style.width = fullWidth + "px";
+          el.style.transition = "clip-path 1.4s steps(8, end)";
+          el.style.clipPath = "inset(0 0% 0 0)";
         });
         el._raf2 = raf2;
       });
@@ -273,47 +272,37 @@ export default function Home() {
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Don't just start up{" "}
-            <span style={{ position: "relative", display: "inline-block", whiteSpace: "nowrap" }}>
+            <span
+              ref={zigRef}
+              style={{
+                display: "inline-block",
+                whiteSpace: "nowrap",
+                lineHeight: 1.4,
+                paddingBottom: "0.15em",
+                clipPath: "inset(0 100% 0 0)",
+              }}
+            >
               <span
-                ref={zigRef}
                 style={{
                   display: "inline-block",
-                  overflow: "hidden",
-                  width: 0,
-                  verticalAlign: "bottom",
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
                 }}
               >
-                <span
-                  style={{
-                    display: "inline-block",
-                    whiteSpace: "nowrap",
-                    lineHeight: 1.4,
-                    paddingBottom: "0.15em",
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "inline-block",
-                      background: "linear-gradient(to right, #3457D5, #6E5AD6)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    Start
-                  </span>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                  Zig
-                </span>
-                </span>
+                Start
+              </span>
+              <span
+                style={{
+                  display: "inline-block",
+                  background: "linear-gradient(to right, #3457D5, #6E5AD6, #F0A020)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Zig
               </span>
             </span>
           </h1>
