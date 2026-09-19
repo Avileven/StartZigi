@@ -18,9 +18,9 @@ const BASE_TRANSFORM = {
   product: "translate(340px,100px)",
 };
 const SEGMENTS = [
-  { from: NODE_POS.community, ctrl: { x: 340, y: 260 }, to: NODE_POS.ai, key: "community", nextKey: "ai" },
-  { from: NODE_POS.ai, ctrl: { x: 460, y: 160 }, to: NODE_POS.product, key: "ai", nextKey: "product" },
   { from: NODE_POS.product, ctrl: { x: 220, y: 160 }, to: NODE_POS.community, key: "product", nextKey: "community" },
+  { from: NODE_POS.community, ctrl: { x: 340, y: 320 }, to: NODE_POS.ai, key: "community", nextKey: "ai" },
+  { from: NODE_POS.ai, ctrl: { x: 460, y: 160 }, to: NODE_POS.product, key: "ai", nextKey: "product" },
 ];
 
 // A traveling dot loops once around three icons — community, AI, product — each with its own
@@ -178,8 +178,8 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
         l.style.opacity = "0";
       });
       visLine.setAttribute("d", "");
-      travelDot.setAttribute("cx", NODE_POS.community.x);
-      travelDot.setAttribute("cy", NODE_POS.community.y);
+      travelDot.setAttribute("cx", NODE_POS.product.x);
+      travelDot.setAttribute("cy", NODE_POS.product.y);
     }
 
     // Runs exactly one full lap (all three segments), then calls onDone.
@@ -219,9 +219,9 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
 
           if (isLastSegment) {
             // Finish with all three lit together, connected by persistent colored lines.
-            setActive("community", true);
-            setActive("ai", true);
             setActive("product", true);
+            setActive("ai", true);
+            setActive("community", true);
             SEGMENTS.forEach((s, i) => {
               const line = finalLines[i];
               const p1 = quadPoint(s.from, s.ctrl, s.to, 0.12);
@@ -246,7 +246,7 @@ export default function CommunityAiFounderLoop({ className = "w-[82vw] sm:w-full
         }
       }
 
-      setActive("community", true);
+      setActive("product", true);
       T(() => {
         rafId = requestAnimationFrame(animateSegment);
       }, holdMs);
