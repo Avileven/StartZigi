@@ -271,7 +271,7 @@ export default function Home() {
       {/* Navigation - 2 level gradient */}
 
       {/* Hero Section */}
-      <div className="relative min-h-screen flex items-center justify-center px-6 pt-4">
+      <div className="relative min-h-screen flex items-end justify-center px-6 pb-10">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Don't just start up{" "}
@@ -282,9 +282,9 @@ export default function Home() {
                 { ch: "a", rest: "#5159D6", final: "#5159D6" },
                 { ch: "r", rest: "#5F59D6", final: "#5F59D6" },
                 { ch: "t", rest: "#6E5AD6", final: "#6E5AD6" },
-                { ch: "Z", rest: "#6E5AD6", final: "#6E5AD6" },
-                { ch: "i", rest: "#6E5AD6", final: "#82446B" },
-                { ch: "g", rest: "#6E5AD6", final: "#7A1F32" },
+                { ch: "Z", rest: "#6E5AD6", final: "#E8B87A" },
+                { ch: "i", rest: "#6E5AD6", final: "#F0A020" },
+                { ch: "g", rest: "#6E5AD6", final: "#C2670A" },
               ].map((letter, i) => (
                 <span
                   key={i}
