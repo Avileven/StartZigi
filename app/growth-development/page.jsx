@@ -143,7 +143,7 @@ const ExplainToggle = ({ text }) => {
 // GROWTH_FRAMING_MORE is the same welcome content used in info-mobile,
 // revealed behind the expand toggle.
 const GROWTH_FRAMING_SHORT = "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This also exposes your live product to the community, helping you grow your first users.";
-const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your campaign, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Insight Credits, which you can use toward your own feedback requests.";
+const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your brief, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Insight Credits, which you can use toward your own feedback requests.";
 
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
@@ -390,7 +390,7 @@ export default function GrowthDevelopment() {
           venture_id: targetVenture.id,
           message_type: 'phase_welcome',
           title: '📈 Welcome to Growth!',
-          content: `Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.`,
+          content: `Welcome to the Growth stage! It's time to set up your first brief, get feedback from the community and expose your product to more users.`,
           phase: 'growth',
         });
         // [NEW] Same email as the regular-journey Beta→Growth transition
@@ -405,11 +405,19 @@ export default function GrowthDevelopment() {
               founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
               ventureName: targetVenture.name,
               newPhaseTitle: "📈 Welcome to Growth!",
-              newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first campaign, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package.",
+              newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first brief, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package.",
             }),
           });
         } catch (emailErr) {
           console.error("Growth welcome email failed (non-critical):", emailErr);
+        }
+        // [NEW] Same plan assignment as the regular-journey path
+        // (dashboard-page.jsx) — displayed as "GrowthZig" in my-account.jsx
+        // (that file's display mapping needs updating separately).
+        try {
+          await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 100 }).eq('id', currentUser.id);
+        } catch (planErr) {
+          console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
       showToast("Growth page saved!");

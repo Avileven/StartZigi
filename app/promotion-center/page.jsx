@@ -448,7 +448,7 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
         {campaigns.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Campaign Results
+              Brief Results
             </h2>
             <div className="space-y-4">
               {campaigns.map((campaign) => {
@@ -466,11 +466,11 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                           {/* [CHANGED] Shows campaign name (tagline) as title — no type label */}
                           <CardTitle className="text-lg">
                             {campaign.campaign_type === "in-app"
-                              ? (campaign.tagline || "Campaign")
-                              : (campaign.sender_name ? `From: ${campaign.sender_name}` : "Email Campaign")}
+                              ? (campaign.tagline || "Brief")
+                              : (campaign.sender_name ? `From: ${campaign.sender_name}` : "Email Brief")}
                           </CardTitle>
                           <CardDescription>
-                            {campaign.campaign_type === "email" && "Email Campaign"}
+                            {campaign.campaign_type === "email" && "Email Brief"}
                           </CardDescription>
                         </div>
                         {/* [ADDED] Active/Ended badge — green if less than 7 days old, gray otherwise */}
@@ -579,7 +579,7 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
 
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             {/* [CHANGED] Title changes based on phase */}
-            {isBetaPhase ? "Invite to Beta Testing" : "Launch New Campaign"}
+            {isBetaPhase ? "Invite to Beta Testing" : "Launch New Brief"}
           </h2>
         </div>
 

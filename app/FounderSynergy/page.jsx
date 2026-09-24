@@ -181,7 +181,7 @@ export default function FounderSynergy() {
           <CardContent>
             <p className="text-sm text-gray-600 leading-relaxed">
               Every plan includes a monthly quota of feedback requests. To use them, go to the Promotion Center,
-              name your campaign, and choose how many requests to send. Within moments, your venture becomes
+              name your brief, and choose how many requests to send. Within moments, your venture becomes
               visible to the community.
             </p>
           </CardContent>
@@ -197,7 +197,7 @@ export default function FounderSynergy() {
           <CardContent>
             <p className="text-sm text-gray-600 leading-relaxed">
               You can track the responses you receive on the Product Feedback page, where everything is organized
-              by campaign.
+              by brief.
             </p>
           </CardContent>
         </Card>

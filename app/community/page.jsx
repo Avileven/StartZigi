@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import Link from "next/link";
-import { MessageSquare, ArrowRight as ArrowRightIcon, UserCircle2 } from 'lucide-react';
+import { MessageSquare, ArrowRight as ArrowRightIcon, UserCircle2, Megaphone, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // [NEW] Ring component for the Zig Profile guide section below — same
@@ -31,15 +31,23 @@ export default function Community() {
   return (
     <div className="bg-white text-gray-900 min-h-screen font-sans">
 
-      {/* Hero Section */}
+      {/* Founders to Founders — intro section */}
       <section className="pt-40 pb-16 px-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-black mb-6">
-            StartZig <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Feed</span>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-black mb-8">
+            Founders <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">to</span> Founders
           </h1>
-          <p className="text-xl text-gray-600 leading-relaxed">
-            Real-time updates from the StartZig ecosystem: new ventures, pivots, and funding opportunities.
-          </p>
+          <div className="space-y-5 text-left md:text-center">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              StartZig brings product definition, real community feedback, and audience building together from the earliest stages of a startup.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Your journey here doesn't end once you've shaped an idea or promoted a product. This is also the place to give back, to support other founders and the ideas they're building.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Everything you do here is reflected in your public Zig Profile, visible to the rest of the community. When someone gives you feedback on your product, you can see their profile too. Every time you help another founder, you earn Insight, a balance that's saved permanently and can be converted into feedback requests whenever you need them.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -152,6 +160,45 @@ export default function Community() {
             <p className="text-sm text-gray-600 leading-relaxed">
               In short: the more you help other founders, the more feedback you can bring back to your own
               product. It's built to go both ways.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* The Feedback Mechanism */}
+        <div className="text-center mb-10 mt-16">
+          <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Megaphone className="w-7 h-7 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">The Feedback Mechanism</h2>
+        </div>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Megaphone className="w-5 h-5 text-blue-600" />
+              Requesting feedback
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Every plan includes a monthly quota of feedback requests. To use them, go to the Promotion Center,
+              name your brief, and choose how many requests to send. Within moments, your venture becomes
+              visible to the community.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              Tracking responses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              You can track the responses you receive on the Product Feedback page, where everything is organized
+              by brief.
             </p>
           </CardContent>
         </Card>

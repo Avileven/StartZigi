@@ -325,10 +325,10 @@ if (campaignErr) throw campaignErr;
       await VentureMessage.create({
         venture_id: venture.id,
         message_type: "system",
-        title: "📣 Campaign Launched!",
+        title: "📣 Brief Launched!",
         // [CHANGED] Now shows the campaign name (tagline) in the message
         // and points to Promotion Center instead of "Promotion Reports"
-        content: `Your campaign "${tagline}" has been launched successfully. Track results in the Promotion Center.`,
+        content: `Your brief "${tagline}" has been launched successfully. Track results in the Promotion Center.`,
         phase: venture.phase,
         priority: 2,
         created_by: user?.email || null,
@@ -337,11 +337,11 @@ if (campaignErr) throw campaignErr;
       });
 
       // [CHANGED] Alert now shows campaign name
-      alert(`Campaign "${tagline}" launched successfully! Track results in the Promotion Center.`);
+      alert(`Brief "${tagline}" launched successfully! Track results in the Promotion Center.`);
       goBack();
     } catch (error) {
       console.error("Error launching campaign:", error);
-      alert("There was an error launching your campaign. Please try again.");
+      alert("There was an error launching your brief. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -396,7 +396,7 @@ if (campaignErr) throw campaignErr;
                 <h4 className="font-semibold text-blue-900 mb-3">How It Works:</h4>
                 <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5">
                   <li>Choose how many requests to spend from your Feedback Request Pool</li>
-                  <li>Give your campaign a name (tagline)</li>
+                  <li>Give your brief a name (tagline)</li>
                   <li>Launch the round and track results in the Validation Center</li>
                   <li>The round is active for 7 days — after that, invitations expire automatically</li>
                 </ol>
@@ -445,13 +445,13 @@ if (campaignErr) throw campaignErr;
 
               {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
               <div>
-                <Label htmlFor="tagline">Campaign Name *</Label>
-                <MobileFieldWrapper label="Campaign Name" summary={tagline} isMobile={isMobile}>
+                <Label htmlFor="tagline">Brief Name *</Label>
+                <MobileFieldWrapper label="Brief Name" summary={tagline} isMobile={isMobile}>
                   <Textarea
                     id="tagline"
                     value={tagline}
                     onChange={(e) => setTagline(e.target.value)}
-                    placeholder="Give your campaign a name — this will appear in the invitation message..."
+                    placeholder="Give your brief a name — this will appear in the invitation message..."
                     className="mt-2 min-h-[100px]"
                   />
                 </MobileFieldWrapper>
@@ -479,12 +479,12 @@ if (campaignErr) throw campaignErr;
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Launching Campaign...
+                    Launching Brief...
                   </>
                 ) : (
                   <>
                     <Megaphone className="w-4 h-4 mr-2" />
-                    Launch Campaign
+                    Launch Brief
                   </>
                 )}
               </Button>

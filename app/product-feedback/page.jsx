@@ -191,18 +191,30 @@ function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
   );
 }
 
-// [GROWTH — redesign, corrected] The 4 stats are ONE category sharing ONE
-// background — distinguished from each other only by ring color, not by
-// separate card backgrounds. (Separate colored backgrounds are reserved
-// for genuinely separate categories/questions below.)
-function GrowthStatItem({ title, count, value, color }) {
+// [GROWTH — approved design, replaces the shared-background ring layout]
+// Each category gets its own card (own background + colored top border)
+// with a red→yellow→green scale and a marker at the current value, instead
+// of a plain progress ring. Approved via a design-artifact mockup before
+// implementation.
+function GrowthScaleCard({ title, count, value, accent, bg }) {
   if (value == null) return null;
+  const pct = Math.max(0, Math.min(100, Number(value) * 10));
   return (
-    <div className="flex flex-col items-center gap-1">
-      <p className="text-sm font-medium text-gray-700 text-center">
-        {title}{count > 0 && <span className="font-normal text-gray-400"> ({count})</span>}
-      </p>
-      <CircularGauge value={value} color={color} showLabel={false} />
+    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${accent}` }}>
+      <div className="flex justify-between items-baseline">
+        <span className="text-sm font-bold text-gray-700">{title}</span>
+        <span className="text-xs text-gray-400">{count} resp.</span>
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className="text-3xl font-extrabold text-gray-900">{value}</span>
+        <span className="text-sm text-gray-400">/ 10</span>
+      </div>
+      <div className="relative w-full rounded-full" style={{ height: 12, background: 'linear-gradient(to right, #ef4444, #f59e0b, #22c55e)' }}>
+        <div
+          className="absolute rounded-full bg-white"
+          style={{ top: '50%', left: `${pct}%`, transform: 'translate(-50%, -50%)', width: 20, height: 20, border: `4px solid ${accent}`, boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+        />
+      </div>
     </div>
   );
 }
@@ -702,7 +714,12 @@ export default function ProductFeedbackPage() {
   // have a `campaign_id` field) into per-campaign buckets using
   // campaignsById, sorted newest campaign first, with a "Direct" bucket
   // (no campaign_id — e.g. someone found the page on their own) always last.
-  const groupByCampaign = (items) => {
+  // [GROWTH — Brief terminology] Underlying data/queries still use
+  // "campaign" everywhere (no DB/schema rename, explicit decision) — this
+  // helper stays shared with MVP/Beta, which still display "campaign".
+  // Optional label overrides let the Growth section display "Brief"
+  // without touching MVP/Beta's own wording or any query.
+  const groupByCampaign = (items, { untitledLabel = 'Untitled campaign', directLabel = 'Direct (no campaign)' } = {}) => {
     const groups = {};
     items.forEach((item) => {
       const cid = item.campaign_id || '__direct__';
@@ -713,14 +730,14 @@ export default function ProductFeedbackPage() {
       .filter(([cid]) => cid !== '__direct__')
       .map(([cid, groupItems]) => ({
         campaignId: cid,
-        campaignName: campaignsById[cid]?.tagline || 'Untitled campaign',
+        campaignName: campaignsById[cid]?.tagline || untitledLabel,
         campaignDate: campaignsById[cid]?.created_date || null,
         items: groupItems,
       }))
       .sort((a, b) => new Date(b.campaignDate || 0) - new Date(a.campaignDate || 0));
     const direct = groups['__direct__'];
     if (direct && direct.length > 0) {
-      campaignGroups.push({ campaignId: '__direct__', campaignName: 'Direct (no campaign)', campaignDate: null, items: direct });
+      campaignGroups.push({ campaignId: '__direct__', campaignName: directLabel, campaignDate: null, items: direct });
     }
     return campaignGroups;
   };
@@ -1119,34 +1136,27 @@ export default function ProductFeedbackPage() {
         )}
 
         {/* ===================== GROWTH ===================== */}
-        {/* [GROWTH — redesign] Rebuilt per the approved mockup:
-            campaign-first view (latest campaign shown by default, "View all
-            campaigns" switches to the cumulative view), every stat and every
-            open-text question in its own centered, colored card (not lumped
-            together), and no visible section label (removed per request). */}
+        {/* [GROWTH — redesign] Default view is now the AGGREGATED picture
+            across every brief ("All Briefs"), not a single brief — explicit
+            decision so the founder sees the cumulative signal first, with
+            the option to drill into one brief. "Campaign" stays the
+            underlying data/query concept (no DB rename); everything the
+            founder sees here says "Brief" instead. */}
         {reachedGrowth && (() => {
-          // Build the list of campaigns actually present in growth feedback,
-          // newest first, plus whether any "direct" (no campaign) responses exist.
+          // Build the list of briefs actually present in growth feedback,
+          // newest first, plus whether any "direct" (no brief) responses exist.
           const growthCampaignOptions = (() => {
             const ids = new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean));
             return Array.from(ids)
-              .map(id => ({ id, tagline: campaignsById[id]?.tagline || 'Untitled campaign', date: campaignsById[id]?.created_date }))
+              .map(id => ({ id, tagline: campaignsById[id]?.tagline || 'Untitled brief', date: campaignsById[id]?.created_date }))
               .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
           })();
           const growthHasDirect = growthFeedbacks.some(fb => !fb.campaign_id);
-          // [FIX — real bug caught during testing] Was always preferring
-          // "any campaign" over "Direct", even when a Direct response was
-          // actually the most recent one — a founder testing via Preview
-          // (no campaign) couldn't see their own new feedback by default
-          // because an older campaign was still selected. Now picks
-          // whichever bucket contains the single most recent feedback row,
-          // by the feedback's own created_date — not by campaign creation
-          // date, and not by "campaigns always win".
-          const defaultGrowthCampaignId = (() => {
-            if (growthFeedbacks.length === 0) return null;
-            const mostRecent = [...growthFeedbacks].sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
-            return mostRecent.campaign_id || '__direct__';
-          })();
+          // [GROWTH — default changed to All Briefs] Was: default to
+          // whichever brief contains the single most recent feedback row.
+          // Now: default is always the aggregated view across every brief;
+          // a specific brief is only shown once the founder picks one.
+          const defaultGrowthCampaignId = growthFeedbacks.length === 0 ? null : '__all__';
           const effectiveGrowthCampaignId = growthSelectedCampaign ?? defaultGrowthCampaignId;
           const growthViewAll = growthSelectedCampaign === '__all__';
           const growthFilteredFeedbacks = growthViewAll
@@ -1170,20 +1180,27 @@ export default function ProductFeedbackPage() {
             .map(q => ({ ...q, answers: growthFilteredFeedbacks.filter(fb => fb[q.key] && fb[q.key].trim()) }))
             .filter(q => q.answers.length > 0);
 
-          const responseRows = growthViewAll ? groupByCampaign(growthFilteredFeedbacks) : null;
+          const responseRows = growthViewAll
+            ? groupByCampaign(growthFilteredFeedbacks, { untitledLabel: 'Untitled brief', directLabel: 'Direct (no brief)' })
+            : null;
 
           return (
             <div className="mb-10">
-              {/* Campaign selector — default is the latest campaign; "View
-                  all campaigns" switches to the cumulative view across every
-                  campaign (and direct responses). */}
-              {/* [FIX] "View all campaigns" removed entirely per explicit
-                  request — the chevron looked like a dropdown toggle but
-                  wasn't one, which was confusing with no clear payoff.
-                  Default (last campaign) is now the only view. Pills
-                  centered and enlarged per explicit request too. */}
+              {/* Brief selector — "All Briefs" is the default (aggregated
+                  across every brief); picking a specific brief pill filters
+                  down to just that one. */}
               {(growthCampaignOptions.length > 0 || growthHasDirect) && (
                 <div className="flex items-center justify-center flex-wrap gap-2.5 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setGrowthSelectedCampaign('__all__')}
+                    className={`text-sm font-bold px-5 py-2.5 rounded-full ${
+                      effectiveGrowthCampaignId === '__all__' ? 'text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200'
+                    }`}
+                    style={effectiveGrowthCampaignId === '__all__' ? { background: 'linear-gradient(135deg, #6366f1, #9333ea)' } : undefined}
+                  >
+                    All Briefs{growthFeedbacks.length > 0 && ` · ${growthFeedbacks.length} responses`}
+                  </button>
                   {growthCampaignOptions.map((c) => (
                     <button
                       key={c.id}
@@ -1208,21 +1225,24 @@ export default function ProductFeedbackPage() {
                           : 'bg-white text-gray-500 border-gray-200'
                       }`}
                     >
-                      Direct (no campaign)
+                      Direct (no brief)
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Stats — one shared category/background; only the ring
-                  colors differ between the four. */}
+              {/* Stats — approved design: colorful gradient frame wrapping
+                  4 individually-colored scale cards (red→yellow→green),
+                  replacing the old shared-background ring layout. */}
               {growthStats && (
-                <div className="rounded-xl p-4 mb-3" style={{ background: '#F1F0F9' }}>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <GrowthStatItem title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} color="#0F6E56" />
-                    <GrowthStatItem title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} color="#0369A1" />
-                    <GrowthStatItem title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} color="#B45309" />
-                    <GrowthStatItem title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} color="#BE123C" />
+                <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
+                  <div className="rounded-[26px] bg-white p-6 sm:p-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" />
+                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" />
+                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" />
+                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" />
+                    </div>
                   </div>
                 </div>
               )}
