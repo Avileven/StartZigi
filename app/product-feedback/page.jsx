@@ -1158,7 +1158,7 @@ export default function ProductFeedbackPage() {
           // a specific brief is only shown once the founder picks one.
           const defaultGrowthCampaignId = growthFeedbacks.length === 0 ? null : '__all__';
           const effectiveGrowthCampaignId = growthSelectedCampaign ?? defaultGrowthCampaignId;
-          const growthViewAll = growthSelectedCampaign === '__all__';
+          const growthViewAll = effectiveGrowthCampaignId === '__all__';
           const growthFilteredFeedbacks = growthViewAll
             ? growthFeedbacks
             : growthFeedbacks.filter(fb => (fb.campaign_id || '__direct__') === effectiveGrowthCampaignId);
