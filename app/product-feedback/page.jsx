@@ -352,6 +352,14 @@ export default function ProductFeedbackPage() {
   const [productLevelFeedback, setProductLevelFeedback] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
+  // [NEW — Growth AI] Separate from the MVP/MLP AI state above — its own
+  // pipeline, its own storage (growth_brief_analysis).
+  const [isAnalyzingGrowth, setIsAnalyzingGrowth] = useState(false);
+  const [growthAiAnalysis, setGrowthAiAnalysis] = useState(null);
+  const [growthAnalysisMeta, setGrowthAnalysisMeta] = useState(null);
+  const [growthChangesText, setGrowthChangesText] = useState('');
+  const [showGrowthChangesPrompt, setShowGrowthChangesPrompt] = useState(false);
+  const [growthAnalysisError, setGrowthAnalysisError] = useState(null);
   const [businessPlanData, setBusinessPlanData] = useState(null);
 
   // [ADDED 020826] username lookup cache + currently-open profile preview
@@ -458,6 +466,23 @@ export default function ProductFeedbackPage() {
           const campaignMap = {};
           (campaignRows || []).forEach(c => { campaignMap[c.id] = c; });
           setCampaignsById(campaignMap);
+
+          // [NEW — Growth AI] Load whatever analysis was last saved (if any),
+          // so it's shown as-is without re-running anything — per the "only
+          // the Analyze click triggers work" rule (project definition, section 2).
+          if ((campaignRows || []).length > 0) {
+            const campaignIds = campaignRows.map(c => c.id);
+            const { data: analysisRows } = await supabase
+              .from('growth_brief_analysis')
+              .select('*')
+              .in('campaign_id', campaignIds)
+              .order('analyzed_date', { ascending: false })
+              .limit(1);
+            if (analysisRows && analysisRows.length > 0) {
+              setGrowthAiAnalysis(analysisRows[0].analysis || null);
+              setGrowthAnalysisMeta({ campaignId: analysisRows[0].campaign_id, analyzedDate: analysisRows[0].analyzed_date });
+            }
+          }
 
           // [ADDED 020826] Part G.6 — the product-level question is stored as
           // a sentinel row (feature_id: 'product_overall') in the same
@@ -692,22 +717,347 @@ export default function ProductFeedbackPage() {
   // [FIX — campaign-first view] Converted from a fixed constant (computed
   // once over all growthFeedbacks) into a function, so it can be
   // recomputed for whichever campaign's subset is currently selected.
+  // [NEW — Growth AI, project-definition section 3] Signal-strength
+  // classification is always computed in code, never left to the AI —
+  // same "don't let the model grade its own confidence" principle as the
+  // existing MVP confidence-level logic, but combining BOTH response
+  // count and score spread (std. deviation), per the definition doc.
+  // Thresholds below are a first-cut assumption — flag for review once
+  // we see it against real response volumes.
+  const computeSignalStrength = (values) => {
+    if (!values || values.length === 0) return null;
+    const n = values.length;
+    const mean = values.reduce((a, b) => a + b, 0) / n;
+    const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / n;
+    const stdDev = Math.sqrt(variance);
+    if (n >= 6 && stdDev <= 2) return 'Strong';
+    if (n < 3 || stdDev > 3) return 'Weak';
+    return 'Mixed';
+  };
+
+  // [FIX — Growth AI] Extended to also return `signal` per category
+  // (computeSignalStrength above) alongside the existing `value`/`count` —
+  // additive only, GrowthScaleCard still just reads value/count so the
+  // existing UI is unaffected.
   const computeGrowthAverages = (feedbackArr) => {
     const withRatings = feedbackArr.filter(fb =>
       fb.business_model_rating != null || fb.core_features_rating != null ||
       fb.value_prop_rating != null || fb.product_definition_rating != null
     );
     if (withRatings.length === 0) return null;
-    const avg = (key) => {
+    const statsFor = (key) => {
       const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
-      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
+      if (vals.length === 0) return { value: null, count: 0, signal: null };
+      const value = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+      return { value, count: vals.length, signal: computeSignalStrength(vals) };
     };
     return {
-      businessModel: { value: avg('business_model_rating'), count: withRatings.filter(fb => fb.business_model_rating != null).length },
-      coreFeatures: { value: avg('core_features_rating'), count: withRatings.filter(fb => fb.core_features_rating != null).length },
-      valueProp: { value: avg('value_prop_rating'), count: withRatings.filter(fb => fb.value_prop_rating != null).length },
-      productDefinition: { value: avg('product_definition_rating'), count: withRatings.filter(fb => fb.product_definition_rating != null).length },
+      businessModel: statsFor('business_model_rating'),
+      coreFeatures: statsFor('core_features_rating'),
+      valueProp: statsFor('value_prop_rating'),
+      productDefinition: statsFor('product_definition_rating'),
     };
+  };
+
+  // [NEW — Growth AI, project-definition section 5] Pure data assembly for
+  // one Growth AI analysis run — no prompt text, no LLM call. Gathers every
+  // brief of this venture chronologically (each with its own code-computed
+  // snapshot + raw feedback + its saved "what changed" note), the aggregate
+  // snapshot across all briefs, and business context. `targetCampaignId` is
+  // the brief this run will be saved against in `growth_brief_analysis`.
+  const buildGrowthAnalysisInput = async (targetCampaignId) => {
+    const briefIds = Array.from(new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean)));
+    const briefsChronological = briefIds
+      .map(id => ({ id, tagline: campaignsById[id]?.tagline || 'Untitled brief', date: campaignsById[id]?.created_date }))
+      .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+    // Previous "what changed since last brief" notes — fetched fresh from
+    // growth_brief_analysis since that table isn't part of this page's
+    // regular loaded state.
+    let changesById = {};
+    if (briefIds.length > 0) {
+      const { data: pastAnalyses, error } = await supabase
+        .from('growth_brief_analysis')
+        .select('campaign_id, changes_since_last_analysis, analyzed_date')
+        .in('campaign_id', briefIds);
+      if (error) {
+        console.error('Failed to load past growth brief analyses:', error);
+      } else {
+        (pastAnalyses || []).forEach(row => {
+          changesById[row.campaign_id] = {
+            changes: row.changes_since_last_analysis || null,
+            analyzedDate: row.analyzed_date || null,
+          };
+        });
+      }
+    }
+
+    const briefs = briefsChronological.map(b => {
+      const items = growthFeedbacks.filter(fb => fb.campaign_id === b.id);
+      return {
+        campaignId: b.id,
+        tagline: b.tagline,
+        date: b.date,
+        isTarget: b.id === targetCampaignId,
+        changesSinceLastAnalysis: changesById[b.id]?.changes || null,
+        previouslyAnalyzedDate: changesById[b.id]?.analyzedDate || null,
+        snapshot: computeGrowthAverages(items),
+        feedback: items.map(fb => ({
+          id: fb.id,
+          date: fb.created_date,
+          businessModelRating: fb.business_model_rating,
+          businessModelNote: fb.business_model_note,
+          coreFeaturesRating: fb.core_features_rating,
+          coreFeaturesNote: fb.core_features_note,
+          valuePropRating: fb.value_prop_rating,
+          valuePropNote: fb.value_prop_note,
+          productDefinitionRating: fb.product_definition_rating,
+          productDefinitionNote: fb.product_definition_note,
+          productMatchDiffText: fb.product_match_diff_text,
+          customQuestionAnswer: fb.custom_question_answer,
+          finalChangeText: fb.final_change_text,
+          visitedProduct: fb.visited_product,
+          productMatchChoice: fb.product_match_choice,
+        })),
+      };
+    });
+
+    const aggregateSnapshot = computeGrowthAverages(growthFeedbacks);
+
+    const businessContext = businessPlanData
+      ? {
+          mission: businessPlanData.mission || null,
+          problem: businessPlanData.problem || null,
+          solution: businessPlanData.solution || null,
+          targetCustomers: businessPlanData.target_customers || null,
+        }
+      : null;
+
+    return {
+      ventureName: venture?.name || null,
+      businessContext,
+      aggregateSnapshot,
+      briefs,
+      targetCampaignId,
+    };
+  };
+
+  // [NEW — Growth AI] Which brief a fresh Analyze run is saved against —
+  // always the most recently created brief, regardless of which pill the
+  // founder currently has selected in the "All Briefs" view. The aggregate
+  // view is just for browsing; growth_brief_analysis is still 1 row per brief.
+  const getLatestGrowthBriefId = () => {
+    const ids = Array.from(new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean)));
+    if (ids.length === 0) return null;
+    return ids
+      .map(id => ({ id, date: campaignsById[id]?.created_date }))
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))[0].id;
+  };
+
+  // [NEW — Growth AI] The free-text fields tagged by CALL 1, one row per
+  // growth_feedback field that can hold a free-text answer.
+  const GROWTH_TEXT_FIELDS = [
+    { key: 'businessModelNote', label: 'Business model concern' },
+    { key: 'coreFeaturesNote', label: 'Feature suggestion' },
+    { key: 'valuePropNote', label: 'Slogan/value prop feedback' },
+    { key: 'productDefinitionNote', label: 'Product definition feedback' },
+    { key: 'productMatchDiffText', label: 'What was different than expected' },
+    { key: 'customQuestionAnswer', label: 'Custom question answer' },
+    { key: 'finalChangeText', label: 'One thing to improve' },
+  ];
+
+  // [NEW — Growth AI] Count-only signal strength for a tagged theme (no
+  // numeric spread to measure for a categorical tag) — same bands as the
+  // original MVP confidence-level logic. Always code, never the AI.
+  const strengthByCount = (n) => {
+    if (n >= 6) return 'Strong';
+    if (n < 3) return 'Weak';
+    return 'Mixed';
+  };
+
+  // [NEW — Growth AI, project-definition section 3] The full two-call
+  // pipeline: CALL 1 tags free text to themes (semantic judgment only —
+  // no counting, no confidence). CODE counts tags per theme and grades
+  // signal strength. CALL 2 interprets — receives ONLY pre-computed facts
+  // (numeric snapshot + signal, tagged/counted/graded themes, "what
+  // changed" notes, business context) and produces the actual analysis +
+  // action plan. Saves the combined result to growth_brief_analysis.
+  const runGrowthAnalysis = async (changesText) => {
+    setIsAnalyzingGrowth(true);
+    setGrowthAnalysisError(null);
+    try {
+      const targetCampaignId = getLatestGrowthBriefId();
+      if (!targetCampaignId) {
+        setGrowthAnalysisError('No brief to analyze yet.');
+        setIsAnalyzingGrowth(false);
+        return;
+      }
+
+      const input = await buildGrowthAnalysisInput(targetCampaignId);
+
+      // ---------- CALL 1: tag free-text responses to semantic themes ----------
+      const textItems = [];
+      input.briefs.forEach(brief => {
+        brief.feedback.forEach(fb => {
+          GROWTH_TEXT_FIELDS.forEach(({ key, label }) => {
+            const text = fb[key];
+            if (text && text.trim()) {
+              textItems.push({ id: `${fb.id}__${key}`, briefTagline: brief.tagline, fieldLabel: label, text: text.trim() });
+            }
+          });
+        });
+      });
+
+      let themeTags = [];
+      if (textItems.length > 0) {
+        const taggingPrompt = 'You are tagging free-text user feedback responses about a startup, one theme per response.\n\n'
+          + 'Read each response below and assign it ONE short semantic theme (2-5 words, e.g. "lack of social proof", "pricing concern", "onboarding confusion") that captures what the person is really saying — even if it does not match the question that was asked (e.g. a price complaint inside a feature-suggestion field is still a pricing theme).\n'
+          + 'Use the SAME theme label (verbatim) for responses that express the same underlying idea, so they can be counted together. Do not invent a new theme for every response — group similar ones under a shared label.\n\n'
+          + 'RESPONSES:\n'
+          + textItems.map(item => `[${item.id}] (${item.fieldLabel}, brief: "${item.briefTagline}"): "${item.text}"`).join('\n')
+          + '\n\nReturn a tag for every response id listed above.';
+
+        const taggingResult = await InvokeLLM({
+          prompt: taggingPrompt,
+          creditType: 'mentor',
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              tags: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    theme: { type: 'string' },
+                  },
+                  required: ['id', 'theme'],
+                },
+              },
+            },
+            required: ['tags'],
+          },
+        });
+        themeTags = taggingResult?.tags || [];
+      }
+
+      // ---------- CODE: count tags per theme, grade signal strength ----------
+      const tagsById = {};
+      themeTags.forEach(t => { tagsById[t.id] = t.theme; });
+      const themeGroups = {};
+      textItems.forEach(item => {
+        const theme = tagsById[item.id];
+        if (!theme) return;
+        if (!themeGroups[theme]) themeGroups[theme] = [];
+        themeGroups[theme].push(item);
+      });
+      const themes = Object.entries(themeGroups)
+        .map(([theme, items]) => ({
+          theme,
+          count: items.length,
+          signal: strengthByCount(items.length),
+          examples: items.slice(0, 5).map(i => ({ text: i.text, briefTagline: i.briefTagline, fieldLabel: i.fieldLabel })),
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // ---------- CALL 2: interpretation, using only pre-computed facts ----------
+      const briefsSummary = input.briefs.map(b =>
+        `Brief "${b.tagline}" (${b.date || 'no date'})${b.isTarget ? ' [current/most recent]' : ''}:\n`
+        + `  Snapshot: ${b.snapshot ? JSON.stringify(b.snapshot) : 'no ratings yet'}\n`
+        + `  What changed since the previous brief (founder's own words): ${b.changesSinceLastAnalysis || 'not provided'}`
+      ).join('\n\n');
+
+      const themesSummary = themes.length > 0
+        ? themes.map(t => `- "${t.theme}" — ${t.count} response(s), signal: ${t.signal}. Examples: ${t.examples.map(e => `"${e.text}"`).join('; ')}`).join('\n')
+        : 'No free-text themes tagged yet.';
+
+      const analysisPrompt = 'You are a product strategist analyzing Growth-stage startup feedback, following the StartZig Insight Brief methodology.\n\n'
+        + 'You are given ONLY pre-computed facts — numeric averages, response counts, and signal strength (Strong/Mixed/Weak) were already calculated in code. Do NOT invent or restate a confidence/signal level yourself anywhere — always use the ones given to you, phrased in words.\n\n'
+        + 'CRITICAL RULES:\n'
+        + '- Separate Evidence (what was actually said/measured) from Recommendation (your interpretation) explicitly, everywhere.\n'
+        + '- Use the "what changed since last brief" notes to explain real changes between briefs — do not guess a cause the founder did not mention.\n'
+        + '- You do not know implementation cost or founder resources — base "act now" vs "plan for later" ONLY on signal strength and how central the topic is to the business\'s core value proposition, and say so explicitly if relevant.\n'
+        + '- Call out unexpected insights — things mentioned in the wrong field or not asked about at all.\n\n'
+        + 'STARTUP: ' + (input.ventureName || 'Unknown') + '\n\n'
+        + 'BUSINESS CONTEXT:\n' + (input.businessContext ? JSON.stringify(input.businessContext) : 'Not available') + '\n\n'
+        + 'AGGREGATE SNAPSHOT (across all briefs, code-computed):\n' + (input.aggregateSnapshot ? JSON.stringify(input.aggregateSnapshot) : 'No ratings yet') + '\n\n'
+        + 'BRIEFS, CHRONOLOGICAL (oldest to newest):\n' + briefsSummary + '\n\n'
+        + 'TAGGED THEMES FROM FREE-TEXT FEEDBACK (code-counted, code-graded):\n' + themesSummary + '\n\n'
+        + 'Produce a structured analysis covering: patterns, agreement/disagreement, unexpected insights, product clarity, feature insights, changes over time (if more than one brief exists), and a behavior split (visited_product / product_match_choice) if that data is meaningful. Then produce an action plan split into "now" and "later".';
+
+      const analysisResult = await InvokeLLM({
+        prompt: analysisPrompt,
+        creditType: 'mentor',
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            analysis: {
+              type: 'object',
+              properties: {
+                patterns: { type: 'string' },
+                agreement: { type: 'string' },
+                unexpectedInsights: { type: 'string' },
+                productClarity: { type: 'string' },
+                featureInsights: { type: 'string' },
+                changesOverTime: { type: 'string' },
+                behaviorSplit: { type: 'string' },
+              },
+            },
+            actionPlan: {
+              type: 'object',
+              properties: {
+                now: { type: 'array', items: { type: 'string' } },
+                later: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+          required: ['analysis', 'actionPlan'],
+        },
+      });
+
+      const fullAnalysis = {
+        snapshot: input.aggregateSnapshot,
+        themes,
+        analysis: analysisResult?.analysis || null,
+        action_plan: analysisResult?.actionPlan || null,
+      };
+
+      const analyzedDate = new Date().toISOString();
+      const { error: saveError } = await supabase
+        .from('growth_brief_analysis')
+        .upsert({
+          campaign_id: targetCampaignId,
+          changes_since_last_analysis: changesText || null,
+          analysis: fullAnalysis,
+          analyzed_date: analyzedDate,
+        }, { onConflict: 'campaign_id' });
+
+      if (saveError) throw saveError;
+
+      setGrowthAiAnalysis(fullAnalysis);
+      setGrowthAnalysisMeta({ campaignId: targetCampaignId, analyzedDate });
+    } catch (err) {
+      console.error('Growth analysis failed:', err);
+      setGrowthAnalysisError('Something went wrong generating the analysis. Please try again.');
+    }
+    setIsAnalyzingGrowth(false);
+  };
+
+  // [NEW — Growth AI, project-definition section 2] Only asks "what changed
+  // since the last brief" when this isn't the founder's first brief.
+  const handleAnalyzeGrowthClick = () => {
+    const briefIds = Array.from(new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean)));
+    if (briefIds.length > 1) {
+      setShowGrowthChangesPrompt(true);
+    } else {
+      runGrowthAnalysis('');
+    }
+  };
+
+  const submitGrowthChangesAndAnalyze = () => {
+    setShowGrowthChangesPrompt(false);
+    runGrowthAnalysis(growthChangesText);
+    setGrowthChangesText('');
   };
 
   // [FIX — campaign grouping] Shared helper: groups any feedback array (must
@@ -1246,6 +1596,103 @@ export default function ProductFeedbackPage() {
                   </div>
                 </div>
               )}
+
+              {/* [NEW — Growth AI] Nothing here runs until the founder clicks
+                  "Analyze" (project-definition section 2) — a saved analysis
+                  from a previous run is shown as-is otherwise. First-cut UI,
+                  not yet visually polished. */}
+              <div className="mb-6">
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAnalyzeGrowthClick}
+                    disabled={isAnalyzingGrowth || growthFeedbacks.length === 0}
+                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 px-8 py-3 text-base"
+                  >
+                    {isAnalyzingGrowth ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
+                    {isAnalyzingGrowth ? 'Analyzing...' : 'Analyze'}
+                  </Button>
+                </div>
+
+                {growthAnalysisError && (
+                  <p className="text-sm text-red-600 text-center mt-3">{growthAnalysisError}</p>
+                )}
+
+                {showGrowthChangesPrompt && (
+                  <div className="mt-4 max-w-lg mx-auto rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                    <p className="text-sm font-semibold text-indigo-900 mb-2">What did you change since the last brief? (optional)</p>
+                    <textarea
+                      value={growthChangesText}
+                      onChange={(e) => setGrowthChangesText(e.target.value)}
+                      className="w-full rounded-lg border border-indigo-200 p-2 text-sm"
+                      rows={3}
+                      placeholder="e.g. lowered the price, rewrote the slogan, added a demo video..."
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                      <Button type="button" variant="ghost" onClick={() => { setShowGrowthChangesPrompt(false); setGrowthChangesText(''); }}>
+                        Cancel
+                      </Button>
+                      <Button type="button" onClick={submitGrowthChangesAndAnalyze} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {growthAiAnalysis && !showGrowthChangesPrompt && (
+                  <div className="border border-gray-200 rounded-xl overflow-hidden mt-5 max-w-2xl mx-auto">
+                    {growthAnalysisMeta?.analyzedDate && (
+                      <div className="px-5 py-2 bg-gray-50 border-b border-gray-100">
+                        <p className="text-xs text-gray-400">
+                          Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                    )}
+                    {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
+                      .filter(([, text]) => text && String(text).trim())
+                      .map(([key, text]) => (
+                        <div key={key} className="p-5 border-b border-gray-100">
+                          <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
+                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                          </p>
+                          <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+                        </div>
+                      ))}
+                    {growthAiAnalysis.action_plan && (
+                      <div className="p-5">
+                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-emerald-600">Action Plan</p>
+                        {(growthAiAnalysis.action_plan.now || []).length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Now</p>
+                            {growthAiAnalysis.action_plan.now.map((item, i) => (
+                              <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
+                            ))}
+                          </div>
+                        )}
+                        {(growthAiAnalysis.action_plan.later || []).length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Later</p>
+                            {growthAiAnalysis.action_plan.later.map((item, i) => (
+                              <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
+                      <div className="p-5 border-t border-gray-100">
+                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes</p>
+                        {growthAiAnalysis.themes.map((t, i) => (
+                          <p key={i} className="text-sm text-gray-700 mb-1">
+                            <span className="font-medium">{t.theme}</span> — {t.count} response(s), {t.signal}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* [NEW — Product Experience] The one piece of data collected
                   on the public form that had NO summary category anywhere —
