@@ -914,6 +914,17 @@ export default function ProductFeedbackPage() {
 
       const input = await buildGrowthAnalysisInput(targetCampaignId);
 
+      // [FIX — Growth AI] The "what changed" text the founder just typed
+      // describes what changed to arrive at THIS (target) brief — it must
+      // be used in THIS run's analysis, not only saved for the next one.
+      // buildGrowthAnalysisInput only knows about notes already saved from
+      // PAST runs (none exist yet for a brief being analyzed for the first
+      // time), so the freshly-typed text has to be patched in here.
+      if (changesText) {
+        const targetBrief = input.briefs.find(b => b.campaignId === targetCampaignId);
+        if (targetBrief) targetBrief.changesSinceLastAnalysis = changesText;
+      }
+
       // ---------- CALL 1: tag free-text responses to semantic themes ----------
       const textItems = [];
       input.briefs.forEach(brief => {
