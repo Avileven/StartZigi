@@ -875,6 +875,25 @@ export default function ProductFeedbackPage() {
     return 'Mixed';
   };
 
+  // [NEW — Growth AI] InvokeLLM (confirmed from src/api/integrations.js) has
+  // NO structured-output option — it always returns raw Gemini text under
+  // `response`. So every JSON-producing prompt below explicitly asks for
+  // JSON-only text, and this helper parses it back, stripping ``` fences
+  // Gemini sometimes adds despite instructions not to. Returns null (never
+  // throws) on unparseable output, logging the raw text for debugging.
+  const parseJsonFromLLM = (rawText) => {
+    if (!rawText) return null;
+    let cleaned = rawText.trim();
+    const fenceMatch = cleaned.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+    if (fenceMatch) cleaned = fenceMatch[1].trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      console.error('Growth AI: failed to parse JSON from LLM response:', e, '\nRaw text was:', rawText);
+      return null;
+    }
+  };
+
   // [NEW — Growth AI, project-definition section 3] The full two-call
   // pipeline: CALL 1 tags free text to themes (semantic judgment only —
   // no counting, no confidence). CODE counts tags per theme and grades
@@ -915,30 +934,13 @@ export default function ProductFeedbackPage() {
           + 'Use the SAME theme label (verbatim) for responses that express the same underlying idea, so they can be counted together. Do not invent a new theme for every response — group similar ones under a shared label.\n\n'
           + 'RESPONSES:\n'
           + textItems.map(item => `[${item.id}] (${item.fieldLabel}, brief: "${item.briefTagline}"): "${item.text}"`).join('\n')
-          + '\n\nReturn a tag for every response id listed above.';
+          + '\n\nReturn a tag for every response id listed above.\n\n'
+          + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
+          + '{"tags": [{"id": "<response id>", "theme": "<short theme label>"}, ...]}';
 
-        const taggingResult = await InvokeLLM({
-          prompt: taggingPrompt,
-          creditType: 'mentor',
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              tags: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string' },
-                    theme: { type: 'string' },
-                  },
-                  required: ['id', 'theme'],
-                },
-              },
-            },
-            required: ['tags'],
-          },
-        });
-        themeTags = taggingResult?.tags || [];
+        const taggingResult = await InvokeLLM({ prompt: taggingPrompt, creditType: 'mentor' });
+        const taggingParsed = parseJsonFromLLM(taggingResult?.response);
+        themeTags = taggingParsed?.tags || [];
       }
 
       // ---------- CODE: count tags per theme, grade signal strength ----------
@@ -983,43 +985,18 @@ export default function ProductFeedbackPage() {
         + 'AGGREGATE SNAPSHOT (across all briefs, code-computed):\n' + (input.aggregateSnapshot ? JSON.stringify(input.aggregateSnapshot) : 'No ratings yet') + '\n\n'
         + 'BRIEFS, CHRONOLOGICAL (oldest to newest):\n' + briefsSummary + '\n\n'
         + 'TAGGED THEMES FROM FREE-TEXT FEEDBACK (code-counted, code-graded):\n' + themesSummary + '\n\n'
-        + 'Produce a structured analysis covering: patterns, agreement/disagreement, unexpected insights, product clarity, feature insights, changes over time (if more than one brief exists), and a behavior split (visited_product / product_match_choice) if that data is meaningful. Then produce an action plan split into "now" and "later".';
+        + 'Produce a structured analysis covering: patterns, agreement/disagreement, unexpected insights, product clarity, feature insights, changes over time (if more than one brief exists), and a behavior split (visited_product / product_match_choice) if that data is meaningful. Then produce an action plan split into "now" and "later".\n\n'
+        + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
+        + '{"analysis": {"patterns": "...", "agreement": "...", "unexpectedInsights": "...", "productClarity": "...", "featureInsights": "...", "changesOverTime": "...", "behaviorSplit": "..."}, "actionPlan": {"now": ["..."], "later": ["..."]}}';
 
-      const analysisResult = await InvokeLLM({
-        prompt: analysisPrompt,
-        creditType: 'mentor',
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            analysis: {
-              type: 'object',
-              properties: {
-                patterns: { type: 'string' },
-                agreement: { type: 'string' },
-                unexpectedInsights: { type: 'string' },
-                productClarity: { type: 'string' },
-                featureInsights: { type: 'string' },
-                changesOverTime: { type: 'string' },
-                behaviorSplit: { type: 'string' },
-              },
-            },
-            actionPlan: {
-              type: 'object',
-              properties: {
-                now: { type: 'array', items: { type: 'string' } },
-                later: { type: 'array', items: { type: 'string' } },
-              },
-            },
-          },
-          required: ['analysis', 'actionPlan'],
-        },
-      });
+      const analysisResult = await InvokeLLM({ prompt: analysisPrompt, creditType: 'mentor' });
+      const analysisParsed = parseJsonFromLLM(analysisResult?.response);
 
       const fullAnalysis = {
         snapshot: input.aggregateSnapshot,
         themes,
-        analysis: analysisResult?.analysis || null,
-        action_plan: analysisResult?.actionPlan || null,
+        analysis: analysisParsed?.analysis || null,
+        action_plan: analysisParsed?.actionPlan || null,
       };
 
       const analyzedDate = new Date().toISOString();
@@ -1033,6 +1010,13 @@ export default function ProductFeedbackPage() {
         }, { onConflict: 'campaign_id' });
 
       if (saveError) throw saveError;
+
+      // [NEW — Growth AI] Surface a parsing failure explicitly instead of
+      // silently showing an empty result box (this is what happened the
+      // first time, before this check existed).
+      if (!fullAnalysis.analysis && themes.length === 0) {
+        setGrowthAnalysisError('The AI response could not be read. Check the browser console for the raw text, then try again.');
+      }
 
       setGrowthAiAnalysis(fullAnalysis);
       setGrowthAnalysisMeta({ campaignId: targetCampaignId, analyzedDate });
