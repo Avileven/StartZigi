@@ -196,18 +196,37 @@ function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
 // with a red→yellow→green scale and a marker at the current value, instead
 // of a plain progress ring. Approved via a design-artifact mockup before
 // implementation.
-function GrowthScaleCard({ title, count, value, accent, bg }) {
+// [FIX — Growth AI visual layer] Optional `signal` (Strong/Mixed/Weak,
+// code-computed) and `trend` ('up'/'down'/'flat', code-computed by
+// comparing the latest brief to the previous one) — both only present
+// once an AI analysis has been run and saved. Without them the card looks
+// exactly as it did before (plain accent color, no badge, no arrow).
+function GrowthScaleCard({ title, count, value, accent, bg, signal, trend }) {
   if (value == null) return null;
   const pct = Math.max(0, Math.min(100, Number(value) * 10));
+  const signalColors = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
+  const trendArrow = { up: '↑', down: '↓', flat: '→' };
+  const trendColor = { up: '#16a34a', down: '#dc2626', flat: '#9ca3af' };
   return (
-    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${accent}` }}>
+    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${signal ? signalColors[signal] : accent}` }}>
       <div className="flex justify-between items-baseline">
         <span className="text-sm font-bold text-gray-700">{title}</span>
         <span className="text-xs text-gray-400">{count} resp.</span>
       </div>
-      <div className="flex items-baseline gap-1">
+      <div className="flex items-baseline gap-2">
         <span className="text-3xl font-extrabold text-gray-900">{value}</span>
         <span className="text-sm text-gray-400">/ 10</span>
+        {trend && (
+          <span className="text-sm font-bold" style={{ color: trendColor[trend] }}>{trendArrow[trend]}</span>
+        )}
+        {signal && (
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ml-auto"
+            style={{ color: signalColors[signal], background: 'rgba(255,255,255,0.6)' }}
+          >
+            {signal}
+          </span>
+        )}
       </div>
       <div className="relative w-full rounded-full" style={{ height: 12, background: 'linear-gradient(to right, #ef4444, #f59e0b, #22c55e)' }}>
         <div
@@ -360,6 +379,10 @@ export default function ProductFeedbackPage() {
   const [growthChangesText, setGrowthChangesText] = useState('');
   const [showGrowthChangesPrompt, setShowGrowthChangesPrompt] = useState(false);
   const [growthAnalysisError, setGrowthAnalysisError] = useState(null);
+  // [NEW — Growth AI visual layer] Whether the full analysis (themes,
+  // action plan, per-dimension patterns/evidence) is expanded. Collapsed
+  // by default — only the executive summary shows until clicked.
+  const [showGrowthAnalysisDetails, setShowGrowthAnalysisDetails] = useState(false);
   const [businessPlanData, setBusinessPlanData] = useState(null);
 
   // [ADDED 020826] username lookup cache + currently-open profile preview
@@ -996,15 +1019,34 @@ export default function ProductFeedbackPage() {
         + 'AGGREGATE SNAPSHOT (across all briefs, code-computed):\n' + (input.aggregateSnapshot ? JSON.stringify(input.aggregateSnapshot) : 'No ratings yet') + '\n\n'
         + 'BRIEFS, CHRONOLOGICAL (oldest to newest):\n' + briefsSummary + '\n\n'
         + 'TAGGED THEMES FROM FREE-TEXT FEEDBACK (code-counted, code-graded):\n' + themesSummary + '\n\n'
-        + 'Produce a structured analysis covering: patterns, agreement/disagreement, unexpected insights, product clarity, feature insights, changes over time (if more than one brief exists), and a behavior split (visited_product / product_match_choice) if that data is meaningful. Then produce an action plan split into "now" and "later".\n\n'
+        + 'Produce a structured analysis covering: patterns, agreement/disagreement, unexpected insights, product clarity, feature insights, changes over time (if more than one brief exists), and a behavior split (visited_product / product_match_choice) if that data is meaningful. Then produce an action plan split into "now" and "later". Finally, produce a one-to-two sentence executive summary — the single most important finding plus the single most urgent action, in plain language a busy founder can read in 5 seconds. It must not just restate a category name; it must say what to actually do.\n\n'
         + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
-        + '{"analysis": {"patterns": "...", "agreement": "...", "unexpectedInsights": "...", "productClarity": "...", "featureInsights": "...", "changesOverTime": "...", "behaviorSplit": "..."}, "actionPlan": {"now": ["..."], "later": ["..."]}}';
+        + '{"executiveSummary": "...", "analysis": {"patterns": "...", "agreement": "...", "unexpectedInsights": "...", "productClarity": "...", "featureInsights": "...", "changesOverTime": "...", "behaviorSplit": "..."}, "actionPlan": {"now": ["..."], "later": ["..."]}}';
 
       const analysisResult = await InvokeLLM({ prompt: analysisPrompt, creditType: 'mentor' });
       const analysisParsed = parseJsonFromLLM(analysisResult?.response);
 
+      // [NEW — Growth AI visual layer] Trend per category — always code,
+      // never asked of the AI: compares the target brief's own snapshot to
+      // the immediately preceding brief's own snapshot (not the aggregate),
+      // so it's a fair apples-to-apples comparison.
+      const targetIdx = input.briefs.findIndex(b => b.campaignId === targetCampaignId);
+      const prevBrief = targetIdx > 0 ? input.briefs[targetIdx - 1] : null;
+      const targetBrief = targetIdx >= 0 ? input.briefs[targetIdx] : null;
+      const TREND_CATEGORIES = ['businessModel', 'coreFeatures', 'valueProp', 'productDefinition'];
+      const trend = {};
+      TREND_CATEGORIES.forEach(cat => {
+        const curVal = targetBrief?.snapshot?.[cat]?.value;
+        const prevVal = prevBrief?.snapshot?.[cat]?.value;
+        if (curVal == null || prevVal == null) { trend[cat] = null; return; }
+        const diff = parseFloat(curVal) - parseFloat(prevVal);
+        trend[cat] = diff > 0.3 ? 'up' : diff < -0.3 ? 'down' : 'flat';
+      });
+
       const fullAnalysis = {
         snapshot: input.aggregateSnapshot,
+        trend,
+        executive_summary: analysisParsed?.executiveSummary || null,
         themes,
         analysis: analysisParsed?.analysis || null,
         action_plan: analysisParsed?.actionPlan || null,
@@ -1579,18 +1621,27 @@ export default function ProductFeedbackPage() {
               {/* Stats — approved design: colorful gradient frame wrapping
                   4 individually-colored scale cards (red→yellow→green),
                   replacing the old shared-background ring layout. */}
-              {growthStats && (
+              {growthStats && (() => {
+                // [NEW — Growth AI visual layer] The signal-color border and
+                // trend arrow only make sense against the aggregate ("All
+                // Briefs") view, since that's what the saved analysis
+                // actually describes — showing them while a single older
+                // brief is selected would compare unrelated numbers.
+                const aiSnap = (growthViewAll && growthAiAnalysis?.snapshot) ? growthAiAnalysis.snapshot : null;
+                const aiTrend = (growthViewAll && growthAiAnalysis?.trend) ? growthAiAnalysis.trend : null;
+                return (
                 <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
                   <div className="rounded-[26px] bg-white p-6 sm:p-8">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
-                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" />
-                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" />
-                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" />
-                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" />
+                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={aiSnap?.businessModel?.signal} trend={aiTrend?.businessModel} />
+                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={aiSnap?.coreFeatures?.signal} trend={aiTrend?.coreFeatures} />
+                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={aiSnap?.valueProp?.signal} trend={aiTrend?.valueProp} />
+                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={aiSnap?.productDefinition?.signal} trend={aiTrend?.productDefinition} />
                     </div>
                   </div>
                 </div>
-              )}
+                );
+              })()}
 
               {/* [NEW — Growth AI] Nothing here runs until the founder clicks
                   "Analyze" (project-definition section 2) — a saved analysis
@@ -1635,58 +1686,83 @@ export default function ProductFeedbackPage() {
                   </div>
                 )}
 
-                {growthAiAnalysis && !showGrowthChangesPrompt && (
-                  <div className="border border-gray-200 rounded-xl overflow-hidden mt-5 max-w-2xl mx-auto">
-                    {growthAnalysisMeta?.analyzedDate && (
-                      <div className="px-5 py-2 bg-gray-50 border-b border-gray-100">
-                        <p className="text-xs text-gray-400">
-                          Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                {growthAiAnalysis && !showGrowthChangesPrompt && (() => {
+                  const signalDot = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
+                  return (
+                  <div className="max-w-2xl mx-auto mt-5">
+                    {/* [NEW — Growth AI visual layer] Executive summary is the
+                        only thing shown by default — everything else (full
+                        per-dimension analysis, themes, action plan) is one
+                        click away, not shown up front. */}
+                    <button
+                      type="button"
+                      onClick={() => setShowGrowthAnalysisDetails(v => !v)}
+                      className="w-full text-left rounded-xl border border-indigo-200 bg-indigo-50 p-5 flex items-start justify-between gap-3"
+                    >
+                      <div>
+                        {growthAnalysisMeta?.analyzedDate && (
+                          <p className="text-xs text-indigo-400 mb-1">
+                            Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                        )}
+                        <p className="text-sm font-semibold text-indigo-900 leading-relaxed">
+                          {growthAiAnalysis.executive_summary || 'Analysis ready — click to view full details.'}
                         </p>
                       </div>
-                    )}
-                    {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
-                      .filter(([, text]) => text && String(text).trim())
-                      .map(([key, text]) => (
-                        <div key={key} className="p-5 border-b border-gray-100">
-                          <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
-                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
-                          </p>
-                          <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
-                        </div>
-                      ))}
-                    {growthAiAnalysis.action_plan && (
-                      <div className="p-5">
-                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-emerald-600">Action Plan</p>
-                        {(growthAiAnalysis.action_plan.now || []).length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-xs font-semibold text-gray-500 mb-1">Now</p>
-                            {growthAiAnalysis.action_plan.now.map((item, i) => (
-                              <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
-                            ))}
+                      <ChevronDown className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1 transition-transform" style={{ transform: showGrowthAnalysisDetails ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+
+                    {showGrowthAnalysisDetails && (
+                      <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
+                        {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
+                          <div className="p-5 border-b border-gray-100">
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Top Themes</p>
+                            <div className="flex flex-wrap gap-2">
+                              {growthAiAnalysis.themes.map((t, i) => (
+                                <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: signalDot[t.signal] || '#9ca3af' }} />
+                                  {t.theme} · {t.count}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
-                        {(growthAiAnalysis.action_plan.later || []).length > 0 && (
-                          <div>
-                            <p className="text-xs font-semibold text-gray-500 mb-1">Later</p>
-                            {growthAiAnalysis.action_plan.later.map((item, i) => (
-                              <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
-                            ))}
+                        {growthAiAnalysis.action_plan && (
+                          <div className="p-5 border-b border-gray-100">
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-emerald-600">Action Plan</p>
+                            {(growthAiAnalysis.action_plan.now || []).length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold text-gray-500 mb-1">Now</p>
+                                {growthAiAnalysis.action_plan.now.map((item, i) => (
+                                  <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
+                                ))}
+                              </div>
+                            )}
+                            {(growthAiAnalysis.action_plan.later || []).length > 0 && (
+                              <div>
+                                <p className="text-xs font-semibold text-gray-500 mb-1">Later</p>
+                                {growthAiAnalysis.action_plan.later.map((item, i) => (
+                                  <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
-                    {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
-                      <div className="p-5 border-t border-gray-100">
-                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes</p>
-                        {growthAiAnalysis.themes.map((t, i) => (
-                          <p key={i} className="text-sm text-gray-700 mb-1">
-                            <span className="font-medium">{t.theme}</span> — {t.count} response(s), {t.signal}
-                          </p>
-                        ))}
+                        {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
+                          .filter(([, text]) => text && String(text).trim())
+                          .map(([key, text]) => (
+                            <div key={key} className="p-5 border-b border-gray-100 last:border-b-0">
+                              <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
+                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                              </p>
+                              <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+                            </div>
+                          ))}
                       </div>
                     )}
                   </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* [NEW — Product Experience] The one piece of data collected
