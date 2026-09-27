@@ -25,7 +25,7 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
-import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList, Home, Target } from 'lucide-react';
+import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList, Home, Target, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -1705,7 +1705,18 @@ export default function ProductFeedbackPage() {
                         )}
                       </span>
                     </div>
-                    <svg width="100%" viewBox={`0 0 ${chartW + 40} ${chartH + topPad + 40}`} style={{ overflow: 'visible' }}>
+                    {/* [FIX — mobile] A fluid width squeezes the per-brief
+                        labels into unreadable text on narrow screens. Instead
+                        the chart keeps a real minimum width and the wrapper
+                        scrolls horizontally — legible on mobile, unchanged on
+                        desktop where everything already fits. */}
+                    <div className="overflow-x-auto -mx-1 px-1">
+                    <svg
+                      width={Math.max(340, history.length * 110)}
+                      height={chartH + topPad + 40}
+                      viewBox={`0 0 ${chartW + 40} ${chartH + topPad + 40}`}
+                      style={{ overflow: 'visible', display: 'block' }}
+                    >
                       <polyline
                         points={points.map(p => `${p.x + 20},${p.y}`).join(' ')}
                         fill="none"
@@ -1738,26 +1749,78 @@ export default function ProductFeedbackPage() {
                         </g>
                       ))}
                     </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* [NEW — Growth AI visual layer] "Recommended actions" — the
+                  action plan pulled out of the collapsible panel and given
+                  its own colorful table, right under the trend chart, so the
+                  single most useful output of an analysis (what to actually
+                  do) is visible without a click. Only appears once a saved
+                  analysis exists; otherwise the section simply isn't there
+                  yet. */}
+              {growthAiAnalysis?.action_plan && (() => {
+                const rows = [
+                  ...(growthAiAnalysis.action_plan.now || []).map(text => ({ text, priority: 'Now' })),
+                  ...(growthAiAnalysis.action_plan.later || []).map(text => ({ text, priority: 'Later' })),
+                ];
+                if (rows.length === 0) return null;
+                const priorityStyle = {
+                  Now: { color: '#166534', background: '#DCFCE7', border: '#86EFAC', dot: '#16A34A' },
+                  Later: { color: '#9A3412', background: '#FFEDD5', border: '#FDBA74', dot: '#F97316' },
+                };
+                return (
+                  <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden mb-6">
+                    <div className="px-5 sm:px-6 py-4" style={{ background: 'linear-gradient(120deg, #EEF2FF, #FCE7F3)' }}>
+                      <span
+                        className="text-base font-extrabold"
+                        style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                      >
+                        Recommended Actions
+                      </span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {rows.map((r, i) => {
+                        const s = priorityStyle[r.priority];
+                        return (
+                          <div key={i} className="flex items-start gap-3 sm:gap-4 px-5 sm:px-6 py-3.5">
+                            <span
+                              className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex items-center gap-1.5"
+                              style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+                              {r.priority}
+                            </span>
+                            <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })()}
 
               {/* [NEW — Growth AI] Nothing here runs until the founder clicks
-                  "Analyze" (project-definition section 2) — a saved analysis
-                  from a previous run is shown as-is otherwise. First-cut UI,
-                  not yet visually polished. */}
+                  "AI Insight" (project-definition section 2) — a saved
+                  analysis from a previous run is shown as-is otherwise. */}
               <div className="mb-6">
                 <div className="flex justify-center">
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
                     onClick={handleAnalyzeGrowthClick}
                     disabled={isAnalyzingGrowth || growthFeedbacks.length === 0}
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 px-8 py-3 text-base"
+                    className="group relative flex items-center gap-2 rounded-full px-7 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                    style={{ background: 'linear-gradient(120deg, #6366F1, #A855F7, #EC4899)', backgroundSize: '160% 160%' }}
                   >
-                    {isAnalyzingGrowth ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageCircle className="w-5 h-5" />}
-                    {isAnalyzingGrowth ? 'Analyzing...' : 'Analyze'}
-                  </Button>
+                    {isAnalyzingGrowth ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-5 h-5 transition-transform group-hover:rotate-12" />
+                    )}
+                    {isAnalyzingGrowth ? 'Thinking...' : 'AI Insight'}
+                  </button>
                 </div>
 
                 {growthAnalysisError && (
@@ -1813,31 +1876,9 @@ export default function ProductFeedbackPage() {
 
                     {showGrowthAnalysisDetails && (
                       <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
-                        {/* [FIX — per explicit feedback] "Recommended Changes"
-                            (the action plan) is now the headline of the
-                            expanded panel — no raw theme list up front. */}
-                        {growthAiAnalysis.action_plan && (
-                          <div className="p-5 border-b border-gray-100">
-                            <p className="text-sm font-bold text-gray-900 mb-3">What's recommended to change</p>
-                            {(growthAiAnalysis.action_plan.now || []).length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 mb-1">Now</p>
-                                {growthAiAnalysis.action_plan.now.map((item, i) => (
-                                  <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
-                                ))}
-                              </div>
-                            )}
-                            {(growthAiAnalysis.action_plan.later || []).length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Later</p>
-                                {growthAiAnalysis.action_plan.later.map((item, i) => (
-                                  <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
+                        {/* [MOVED] The action plan now has its own colorful
+                            table right under the trend chart, above — this
+                            panel is evidence only, so it isn't repeated here. */}
                         {/* [FIX — per explicit feedback] Themes + the full
                             per-dimension analysis (Patterns/Agreement/etc.)
                             were "too much data, hard to know what to do with
