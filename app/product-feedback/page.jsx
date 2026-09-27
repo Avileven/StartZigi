@@ -197,16 +197,16 @@ function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
 // of a plain progress ring. Approved via a design-artifact mockup before
 // implementation.
 // [FIX — Growth AI visual layer] Optional `signal` (Strong/Mixed/Weak,
-// code-computed) and `trend` ('up'/'down'/'flat', code-computed by
-// comparing the latest brief to the previous one) — both only present
-// once an AI analysis has been run and saved. Without them the card looks
-// exactly as it did before (plain accent color, no badge, no arrow).
-function GrowthScaleCard({ title, count, value, accent, bg, signal, trend }) {
+// code-computed) — only present once an AI analysis has been run and
+// saved. Without it the card looks exactly as it did before (plain accent
+// color). The per-card trend arrow was tried and dropped (confusing,
+// unclear what it meant) — trend now lives in one place: the "Overall
+// Product Satisfaction" chart below the cards, computed straight from the
+// data with no AI involved.
+function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   if (value == null) return null;
   const pct = Math.max(0, Math.min(100, Number(value) * 10));
   const signalColors = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
-  const trendArrow = { up: '↑', down: '↓', flat: '→' };
-  const trendColor = { up: '#16a34a', down: '#dc2626', flat: '#9ca3af' };
   return (
     <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${signal ? signalColors[signal] : accent}` }}>
       <div className="flex justify-between items-baseline">
@@ -216,9 +216,6 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal, trend }) {
       <div className="flex items-baseline gap-2">
         <span className="text-3xl font-extrabold text-gray-900">{value}</span>
         <span className="text-sm text-gray-400">/ 10</span>
-        {trend && (
-          <span className="text-sm font-bold" style={{ color: trendColor[trend] }}>{trendArrow[trend]}</span>
-        )}
         {signal && (
           <span
             className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ml-auto"
@@ -383,6 +380,11 @@ export default function ProductFeedbackPage() {
   // action plan, per-dimension patterns/evidence) is expanded. Collapsed
   // by default — only the executive summary shows until clicked.
   const [showGrowthAnalysisDetails, setShowGrowthAnalysisDetails] = useState(false);
+  // [NEW — Growth AI visual layer] A second, deeper level of disclosure —
+  // the raw supporting evidence (themes + full per-dimension analysis) is
+  // one more click past the recommended changes, per explicit feedback
+  // that showing everything at once was too much data to act on.
+  const [showGrowthEvidence, setShowGrowthEvidence] = useState(false);
   const [businessPlanData, setBusinessPlanData] = useState(null);
 
   // [ADDED 020826] username lookup cache + currently-open profile preview
@@ -1622,24 +1624,121 @@ export default function ProductFeedbackPage() {
                   4 individually-colored scale cards (red→yellow→green),
                   replacing the old shared-background ring layout. */}
               {growthStats && (() => {
-                // [NEW — Growth AI visual layer] The signal-color border and
-                // trend arrow only make sense against the aggregate ("All
-                // Briefs") view, since that's what the saved analysis
-                // actually describes — showing them while a single older
-                // brief is selected would compare unrelated numbers.
+                // [NEW — Growth AI visual layer] The signal-color border
+                // only makes sense against the aggregate ("All Briefs")
+                // view, since that's what the saved analysis actually
+                // describes — showing it while a single older brief is
+                // selected would apply an unrelated signal to its numbers.
                 const aiSnap = (growthViewAll && growthAiAnalysis?.snapshot) ? growthAiAnalysis.snapshot : null;
-                const aiTrend = (growthViewAll && growthAiAnalysis?.trend) ? growthAiAnalysis.trend : null;
                 return (
                 <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
                   <div className="rounded-[26px] bg-white p-6 sm:p-8">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
-                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={aiSnap?.businessModel?.signal} trend={aiTrend?.businessModel} />
-                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={aiSnap?.coreFeatures?.signal} trend={aiTrend?.coreFeatures} />
-                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={aiSnap?.valueProp?.signal} trend={aiTrend?.valueProp} />
-                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={aiSnap?.productDefinition?.signal} trend={aiTrend?.productDefinition} />
+                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={aiSnap?.businessModel?.signal} />
+                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={aiSnap?.coreFeatures?.signal} />
+                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={aiSnap?.valueProp?.signal} />
+                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={aiSnap?.productDefinition?.signal} />
                     </div>
                   </div>
                 </div>
+                );
+              })()}
+
+              {/* [NEW — Growth AI visual layer] "Overall Product
+                  Satisfaction" — a single trend across every brief this
+                  venture has run, computed purely from growth_feedback
+                  (average of the 4 categories per brief). No AI involved
+                  and no dependency on ever having clicked "Analyze" — the
+                  data exists as soon as there are 2+ briefs with ratings. */}
+              {(() => {
+                const BRIEF_COLORS = ['#6366F1', '#EC4899', '#F59E0B', '#10B981', '#0EA5E9', '#8B5CF6', '#EF4444', '#14B8A6'];
+                const history = growthCampaignOptions
+                  .slice()
+                  .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
+                  .map((c, i) => {
+                    const items = growthFeedbacks.filter(fb => fb.campaign_id === c.id);
+                    const stats = computeGrowthAverages(items);
+                    if (!stats) return null;
+                    const vals = [stats.businessModel.value, stats.coreFeatures.value, stats.valueProp.value, stats.productDefinition.value]
+                      .filter(v => v != null)
+                      .map(Number);
+                    if (vals.length === 0) return null;
+                    const overall = vals.reduce((a, b) => a + b, 0) / vals.length;
+                    return { id: c.id, tagline: c.tagline, date: c.date, overall, color: BRIEF_COLORS[i % BRIEF_COLORS.length] };
+                  })
+                  .filter(Boolean);
+
+                if (history.length < 2) return null;
+
+                const chartW = 800;
+                const chartH = 140;
+                const topPad = 16;
+                const stepX = history.length > 1 ? chartW / (history.length - 1) : 0;
+                const points = history.map((h, i) => ({
+                  ...h,
+                  x: i * stepX,
+                  y: topPad + chartH - (h.overall / 10) * chartH,
+                }));
+                const first = history[0].overall;
+                const last = history[history.length - 1].overall;
+                const diff = last - first;
+
+                return (
+                  <div className="rounded-2xl bg-white border border-gray-200 p-6 mb-3">
+                    <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
+                      <span
+                        className="text-base font-extrabold"
+                        style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                      >
+                        Overall Product Satisfaction
+                      </span>
+                      <span className="flex items-baseline gap-2">
+                        <span className="text-2xl font-extrabold text-gray-900">{last.toFixed(1)}</span>
+                        <span className="text-xs text-gray-400">/ 10</span>
+                        {Math.abs(diff) >= 0.1 && (
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={diff > 0 ? { color: '#16A34A', background: '#DCFCE7' } : { color: '#DC2626', background: '#FEE2E2' }}
+                          >
+                            {diff > 0 ? '▲' : '▼'} {Math.abs(diff).toFixed(1)} since first brief
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <svg width="100%" viewBox={`0 0 ${chartW + 40} ${chartH + topPad + 40}`} style={{ overflow: 'visible' }}>
+                      <polyline
+                        points={points.map(p => `${p.x + 20},${p.y}`).join(' ')}
+                        fill="none"
+                        stroke="url(#growthTrendGradient)"
+                        strokeWidth="3"
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                      />
+                      <defs>
+                        <linearGradient id="growthTrendGradient" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#6366F1" />
+                          <stop offset="50%" stopColor="#EC4899" />
+                          <stop offset="100%" stopColor="#F59E0B" />
+                        </linearGradient>
+                      </defs>
+                      {points.map((p, i) => (
+                        <g key={p.id}>
+                          <circle cx={p.x + 20} cy={p.y} r={i === points.length - 1 ? 7 : 5} fill={i === points.length - 1 ? p.color : '#fff'} stroke={p.color} strokeWidth="3" />
+                          <text x={p.x + 20} y={p.y - 12} textAnchor="middle" fontSize="12" fontWeight="700" fill={p.color}>{p.overall.toFixed(1)}</text>
+                          <text
+                            x={p.x + 20}
+                            y={chartH + topPad + 22}
+                            textAnchor="middle"
+                            fontSize="11"
+                            fontWeight={i === points.length - 1 ? '700' : '600'}
+                            fill={p.color}
+                          >
+                            {p.tagline}
+                          </text>
+                        </g>
+                      ))}
+                    </svg>
+                  </div>
                 );
               })()}
 
@@ -1714,25 +1813,15 @@ export default function ProductFeedbackPage() {
 
                     {showGrowthAnalysisDetails && (
                       <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
-                        {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
-                          <div className="p-5 border-b border-gray-100">
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Top Themes</p>
-                            <div className="flex flex-wrap gap-2">
-                              {growthAiAnalysis.themes.map((t, i) => (
-                                <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
-                                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: signalDot[t.signal] || '#9ca3af' }} />
-                                  {t.theme} · {t.count}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {/* [FIX — per explicit feedback] "Recommended Changes"
+                            (the action plan) is now the headline of the
+                            expanded panel — no raw theme list up front. */}
                         {growthAiAnalysis.action_plan && (
                           <div className="p-5 border-b border-gray-100">
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-emerald-600">Action Plan</p>
+                            <p className="text-sm font-bold text-gray-900 mb-3">What's recommended to change</p>
                             {(growthAiAnalysis.action_plan.now || []).length > 0 && (
                               <div className="mb-3">
-                                <p className="text-xs font-semibold text-gray-500 mb-1">Now</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 mb-1">Now</p>
                                 {growthAiAnalysis.action_plan.now.map((item, i) => (
                                   <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
                                 ))}
@@ -1740,7 +1829,7 @@ export default function ProductFeedbackPage() {
                             )}
                             {(growthAiAnalysis.action_plan.later || []).length > 0 && (
                               <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-1">Later</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Later</p>
                                 {growthAiAnalysis.action_plan.later.map((item, i) => (
                                   <p key={i} className="text-sm text-gray-700 mb-1">• {item}</p>
                                 ))}
@@ -1748,16 +1837,48 @@ export default function ProductFeedbackPage() {
                             )}
                           </div>
                         )}
-                        {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
-                          .filter(([, text]) => text && String(text).trim())
-                          .map(([key, text]) => (
-                            <div key={key} className="p-5 border-b border-gray-100 last:border-b-0">
-                              <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
-                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
-                              </p>
-                              <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
-                            </div>
-                          ))}
+
+                        {/* [FIX — per explicit feedback] Themes + the full
+                            per-dimension analysis (Patterns/Agreement/etc.)
+                            were "too much data, hard to know what to do with
+                            it" as a default view — now a second, optional
+                            level of disclosure below the recommendation. */}
+                        <button
+                          type="button"
+                          onClick={() => setShowGrowthEvidence(v => !v)}
+                          className="w-full text-left px-5 py-3 text-xs font-semibold text-gray-400 hover:text-gray-600 flex items-center justify-between"
+                        >
+                          Show supporting evidence
+                          <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthEvidence ? 'rotate(180deg)' : 'none' }} />
+                        </button>
+
+                        {showGrowthEvidence && (
+                          <div className="border-t border-gray-100">
+                            {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
+                              <div className="p-5 border-b border-gray-100">
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes in the feedback</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {growthAiAnalysis.themes.map((t, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: signalDot[t.signal] || '#9ca3af' }} />
+                                      {t.theme} · {t.count}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
+                              .filter(([, text]) => text && String(text).trim())
+                              .map(([key, text]) => (
+                                <div key={key} className="p-5 border-b border-gray-100 last:border-b-0">
+                                  <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                                  </p>
+                                  <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
