@@ -213,18 +213,22 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
         <span className="text-sm font-bold text-gray-700">{title}</span>
         <span className="text-xs text-gray-400">{count} resp.</span>
       </div>
-      <div className="flex items-baseline gap-2">
+      {/* [FIX — real mobile bug] On a narrow 2-column card, value + "/10" +
+          the signal badge on one "ml-auto" row had nowhere to shrink to —
+          the badge ran past the card's edge. The badge now sits on its own
+          line, so the row above never has to fit more than the number. */}
+      <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-3xl font-extrabold text-gray-900">{value}</span>
         <span className="text-sm text-gray-400">/ 10</span>
-        {signal && (
-          <span
-            className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ml-auto"
-            style={{ color: signalColors[signal], background: 'rgba(255,255,255,0.6)' }}
-          >
-            {signal}
-          </span>
-        )}
       </div>
+      {signal && (
+        <span
+          className="self-start text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded -mt-2"
+          style={{ color: signalColors[signal], background: 'rgba(255,255,255,0.6)' }}
+        >
+          {signal}
+        </span>
+      )}
       <div className="relative w-full rounded-full" style={{ height: 12, background: 'linear-gradient(to right, #ef4444, #f59e0b, #22c55e)' }}>
         <div
           className="absolute rounded-full bg-white"
