@@ -1170,13 +1170,9 @@ export default function ProductFeedbackPage() {
             up much more vertical space than needed), title shrunk and
             colored purple to match the icon. */}
         <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-purple-700">Venture Feedback</h1>
-          </div>
-          <p className="text-gray-500 text-lg">All Insight collected across your startup journey</p>
+          {/* [FIX — per explicit feedback] Icon removed per explicit request. */}
+          <h1 className="text-2xl font-extrabold text-purple-700 mb-2">Venture Feedback</h1>
+          <p className="text-lg" style={{ color: '#86EFAC' }}>All Insight collected across your startup journey</p>
         </div>
 
         {/* AI Analysis */}
@@ -1608,8 +1604,11 @@ export default function ProductFeedbackPage() {
                   Growth view — sits above everything else (brief selector,
                   scores, chart, raw feedback, AI zone). */}
               <div className="text-center mb-6">
+                {/* [FIX — per explicit feedback] Same font/size as the
+                    "Venture Feedback" title above (text-2xl font-extrabold),
+                    just with the gradient color kept. */}
                 <span
-                  className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+                  className="text-2xl font-extrabold"
                   style={{ background: 'linear-gradient(90deg, #6366F1, #A855F7, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
                 >
                   INSIGHT DASHBOARD
@@ -1812,9 +1811,13 @@ export default function ProductFeedbackPage() {
                   feedback data (no AI) — a colorful section title, and one
                   master toggle that opens/closes the whole area. Each
                   question inside still has its own drill-down, unchanged. */}
-              <div className="text-center mb-3">
+              {/* [FIX — per explicit feedback] Same font/size as "Venture
+                  Feedback"/"INSIGHT DASHBOARD" (text-2xl font-extrabold), and
+                  more breathing room above/below — was sitting right on top
+                  of the pills/button around it. */}
+              <div className="text-center mb-5 mt-8">
                 <span
-                  className="text-lg font-extrabold"
+                  className="text-2xl font-extrabold"
                   style={{ background: 'linear-gradient(90deg, #0EA5E9, #6366F1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
                 >
                   Feedback Details
@@ -2079,7 +2082,7 @@ export default function ProductFeedbackPage() {
                   here. */}
               <div className="text-center mb-1 mt-8">
                 <span
-                  className="text-lg font-extrabold"
+                  className="text-2xl font-extrabold"
                   style={{ background: 'linear-gradient(90deg, #6366F1, #A855F7, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
                 >
                   AI Insights Analysis
@@ -2223,13 +2226,22 @@ export default function ProductFeedbackPage() {
                             level of disclosure. Renamed per explicit
                             feedback: the short part above is already the
                             analysis summary, so this opens the "full report". */}
+                        {/* [FIX — per explicit feedback] Now styled exactly
+                            like "Recommended Actions" above it (same size,
+                            weight, gradient) instead of small plain gray
+                            text. */}
                         <button
                           type="button"
                           onClick={() => setShowGrowthEvidence(v => !v)}
-                          className="w-full text-left px-5 py-3 text-xs font-semibold text-gray-400 hover:text-gray-600 flex items-center justify-between"
+                          className="w-full text-left px-5 py-3 flex items-center justify-between"
                         >
-                          View full report
-                          <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthEvidence ? 'rotate(180deg)' : 'none' }} />
+                          <span
+                            className="text-sm font-extrabold"
+                            style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                          >
+                            View full report
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: showGrowthEvidence ? 'rotate(180deg)' : 'none' }} />
                         </button>
 
                         {showGrowthEvidence && (
