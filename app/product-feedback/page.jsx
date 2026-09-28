@@ -207,8 +207,12 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   if (value == null) return null;
   const pct = Math.max(0, Math.min(100, Number(value) * 10));
   const signalColors = { Elite: '#7C3AED', Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626', Poor: '#991b1b' };
+  // [FIX — per explicit feedback] Was just a 5px top accent — now a full
+  // border in the signal color, so the card's satisfaction level reads at
+  // a glance, not just as a thin strip along the top edge.
+  const frameColor = signal ? signalColors[signal] : accent;
   return (
-    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${signal ? signalColors[signal] : accent}` }}>
+    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, border: `2px solid ${frameColor}` }}>
       {/* [FIX — per explicit feedback] A long title ("Product Definition")
           wrapped to 2 lines while its neighbors stayed on 1, so that one
           card grew taller and everything below it (down to the meter bar)
@@ -217,7 +221,10 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
           lines up the same regardless of its title length. */}
       <div className="flex justify-between items-start gap-2" style={{ minHeight: '2.3rem' }}>
         <span className="text-sm font-bold text-gray-700 leading-tight">{title}</span>
-        <span className="text-xs text-gray-400 flex-shrink-0">{count} resp.</span>
+        {/* [FIX — per explicit feedback] "23 resp." was long enough to run
+            past the card's right edge on mobile. Shortened to a number +
+            asterisk, explained once in a footnote below all 4 cards. */}
+        <span className="text-xs text-gray-400 flex-shrink-0">{count}*</span>
       </div>
       {/* [FIX — real mobile bug] On a narrow 2-column card, value + "/10" +
           the signal badge on one "ml-auto" row had nowhere to shrink to —
@@ -1677,6 +1684,7 @@ export default function ProductFeedbackPage() {
                       <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
                       <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
                     </div>
+                    <p className="text-[11px] text-gray-400 text-right mt-3">* number of responses this average is based on</p>
                   </div>
                 </div>
                 );
@@ -1713,7 +1721,11 @@ export default function ProductFeedbackPage() {
                 const diff = last - first;
 
                 return (
-                  <div className="rounded-2xl bg-white border border-gray-200 p-6 mb-3">
+                  // [FIX — per explicit feedback] Matches the same purple
+                  // gradient frame used around the 4 score cards above, so
+                  // the two sections read as one visual family.
+                  <div className="rounded-[24px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
+                  <div className="rounded-[22px] bg-white p-6">
                     <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
                       <span
                         className="text-base font-extrabold"
@@ -1774,6 +1786,7 @@ export default function ProductFeedbackPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
                   </div>
                 );
               })()}
