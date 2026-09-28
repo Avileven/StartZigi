@@ -206,12 +206,18 @@ function CircularGauge({ value, label, color = '#059669', showLabel = true }) {
 function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   if (value == null) return null;
   const pct = Math.max(0, Math.min(100, Number(value) * 10));
-  const signalColors = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
+  const signalColors = { Elite: '#7C3AED', Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626', Poor: '#991b1b' };
   return (
     <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, borderTop: `5px solid ${signal ? signalColors[signal] : accent}` }}>
-      <div className="flex justify-between items-baseline">
-        <span className="text-sm font-bold text-gray-700">{title}</span>
-        <span className="text-xs text-gray-400">{count} resp.</span>
+      {/* [FIX — per explicit feedback] A long title ("Product Definition")
+          wrapped to 2 lines while its neighbors stayed on 1, so that one
+          card grew taller and everything below it (down to the meter bar)
+          drifted out of alignment with the row. The title area now always
+          reserves 2 lines of height, wrap or not, so every card in the row
+          lines up the same regardless of its title length. */}
+      <div className="flex justify-between items-start gap-2" style={{ minHeight: '2.3rem' }}>
+        <span className="text-sm font-bold text-gray-700 leading-tight">{title}</span>
+        <span className="text-xs text-gray-400 flex-shrink-0">{count} resp.</span>
       </div>
       {/* [FIX — real mobile bug] On a narrow 2-column card, value + "/10" +
           the signal badge on one "ml-auto" row had nowhere to shrink to —
@@ -384,6 +390,10 @@ export default function ProductFeedbackPage() {
   // action plan, per-dimension patterns/evidence) is expanded. Collapsed
   // by default — only the executive summary shows until clicked.
   const [showGrowthAnalysisDetails, setShowGrowthAnalysisDetails] = useState(false);
+  // [NEW — per explicit request] The per-brief pill list was always shown
+  // in full under "All Briefs" — collapsed by default now, toggled by a
+  // small button next to the "All Briefs" pill.
+  const [showGrowthBriefList, setShowGrowthBriefList] = useState(false);
   // [NEW — Growth AI visual layer] A second, deeper level of disclosure —
   // the raw supporting evidence (themes + full per-dimension analysis) is
   // one more click past the recommended changes, per explicit feedback
@@ -753,21 +763,24 @@ export default function ProductFeedbackPage() {
   // count and score spread (std. deviation), per the definition doc.
   // Thresholds below are a first-cut assumption — flag for review once
   // we see it against real response volumes.
-  const computeSignalStrength = (values) => {
-    if (!values || values.length === 0) return null;
-    const n = values.length;
-    const mean = values.reduce((a, b) => a + b, 0) / n;
-    const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / n;
-    const stdDev = Math.sqrt(variance);
-    if (n >= 6 && stdDev <= 2) return 'Strong';
-    if (n < 3 || stdDev > 3) return 'Weak';
-    return 'Mixed';
+  // [FIX — per explicit feedback] Was confidence-based (response count +
+  // spread of opinions), which read to the founder as if "Strong" meant
+  // "people are satisfied" when it actually meant "we trust this number" —
+  // and the threshold was so loose it showed "Strong" on almost everything.
+  // Now a plain 5-level read of the average itself (1-10 scale), agreed
+  // with the founder: <3 Poor, 3-5 Weak, 5-7.5 Mixed, 7.5-9 Strong, 9+ Elite.
+  const satisfactionLevel = (value) => {
+    if (value == null) return null;
+    const v = Number(value);
+    if (v < 3) return 'Poor';
+    if (v < 5) return 'Weak';
+    if (v < 7.5) return 'Mixed';
+    if (v < 9) return 'Strong';
+    return 'Elite';
   };
 
-  // [FIX — Growth AI] Extended to also return `signal` per category
-  // (computeSignalStrength above) alongside the existing `value`/`count` —
-  // additive only, GrowthScaleCard still just reads value/count so the
-  // existing UI is unaffected.
+  // [FIX — Growth AI] Also returns `signal` per category (satisfactionLevel
+  // above) alongside the existing `value`/`count`.
   const computeGrowthAverages = (feedbackArr) => {
     const withRatings = feedbackArr.filter(fb =>
       fb.business_model_rating != null || fb.core_features_rating != null ||
@@ -778,7 +791,7 @@ export default function ProductFeedbackPage() {
       const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
       if (vals.length === 0) return { value: null, count: 0, signal: null };
       const value = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-      return { value, count: vals.length, signal: computeSignalStrength(vals) };
+      return { value, count: vals.length, signal: satisfactionLevel(value) };
     };
     return {
       businessModel: statsFor('business_model_rating'),
@@ -1151,7 +1164,7 @@ export default function ProductFeedbackPage() {
             </div>
             <h1 className="text-2xl font-extrabold text-purple-700">Venture Feedback</h1>
           </div>
-          <p className="text-gray-500 text-lg">All feedback collected across your startup journey</p>
+          <p className="text-gray-500 text-lg">Insight</p>
         </div>
 
         {/* AI Analysis */}
@@ -1583,43 +1596,64 @@ export default function ProductFeedbackPage() {
                   across every brief); picking a specific brief pill filters
                   down to just that one. */}
               {(growthCampaignOptions.length > 0 || growthHasDirect) && (
-                <div className="flex items-center justify-center flex-wrap gap-2.5 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setGrowthSelectedCampaign('__all__')}
-                    className={`text-sm font-bold px-5 py-2.5 rounded-full ${
-                      effectiveGrowthCampaignId === '__all__' ? 'text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200'
-                    }`}
-                    style={effectiveGrowthCampaignId === '__all__' ? { background: 'linear-gradient(135deg, #6366f1, #9333ea)' } : undefined}
-                  >
-                    All Briefs{growthFeedbacks.length > 0 && ` · ${growthFeedbacks.length} responses`}
-                  </button>
-                  {growthCampaignOptions.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setGrowthSelectedCampaign(c.id)}
-                      className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
-                        effectiveGrowthCampaignId === c.id
-                          ? 'bg-blue-50 text-blue-800 border-blue-300'
-                          : 'bg-white text-gray-500 border-gray-200'
-                      }`}
-                    >
-                      {c.tagline}{c.date && ` · ${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                    </button>
-                  ))}
-                  {growthHasDirect && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-center flex-wrap gap-2.5">
                     <button
                       type="button"
-                      onClick={() => setGrowthSelectedCampaign('__direct__')}
-                      className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
-                        effectiveGrowthCampaignId === '__direct__'
-                          ? 'bg-blue-50 text-blue-800 border-blue-300'
-                          : 'bg-white text-gray-500 border-gray-200'
+                      onClick={() => setGrowthSelectedCampaign('__all__')}
+                      className={`text-sm font-bold px-5 py-2.5 rounded-full ${
+                        effectiveGrowthCampaignId === '__all__' ? 'text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200'
                       }`}
+                      style={effectiveGrowthCampaignId === '__all__' ? { background: 'linear-gradient(135deg, #6366f1, #9333ea)' } : undefined}
                     >
-                      Direct (no brief)
+                      All Briefs{growthFeedbacks.length > 0 && ` · ${growthFeedbacks.length} responses`}
                     </button>
+                    {/* [NEW — per explicit request] The full pill list is
+                        collapsed by default — this toggles it, and its own
+                        label says whether a specific brief is picked so the
+                        button isn't just a bare chevron. */}
+                    <button
+                      type="button"
+                      onClick={() => setShowGrowthBriefList(v => !v)}
+                      className="flex items-center gap-1.5 text-sm font-medium px-4 py-2.5 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    >
+                      {effectiveGrowthCampaignId !== '__all__'
+                        ? (growthCampaignOptions.find(c => c.id === effectiveGrowthCampaignId)?.tagline || 'Direct (no brief)')
+                        : 'Browse briefs'}
+                      <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthBriefList ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                  </div>
+
+                  {showGrowthBriefList && (
+                    <div className="flex items-center justify-center flex-wrap gap-2.5 mt-2.5">
+                      {growthCampaignOptions.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setGrowthSelectedCampaign(c.id); setShowGrowthBriefList(false); }}
+                          className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
+                            effectiveGrowthCampaignId === c.id
+                              ? 'bg-blue-50 text-blue-800 border-blue-300'
+                              : 'bg-white text-gray-500 border-gray-200'
+                          }`}
+                        >
+                          {c.tagline}{c.date && ` · ${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                        </button>
+                      ))}
+                      {growthHasDirect && (
+                        <button
+                          type="button"
+                          onClick={() => { setGrowthSelectedCampaign('__direct__'); setShowGrowthBriefList(false); }}
+                          className={`text-sm font-medium px-5 py-2.5 rounded-full border ${
+                            effectiveGrowthCampaignId === '__direct__'
+                              ? 'bg-blue-50 text-blue-800 border-blue-300'
+                              : 'bg-white text-gray-500 border-gray-200'
+                          }`}
+                        >
+                          Direct (no brief)
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -1628,20 +1662,20 @@ export default function ProductFeedbackPage() {
                   4 individually-colored scale cards (red→yellow→green),
                   replacing the old shared-background ring layout. */}
               {growthStats && (() => {
-                // [NEW — Growth AI visual layer] The signal-color border
-                // only makes sense against the aggregate ("All Briefs")
-                // view, since that's what the saved analysis actually
-                // describes — showing it while a single older brief is
-                // selected would apply an unrelated signal to its numbers.
-                const aiSnap = (growthViewAll && growthAiAnalysis?.snapshot) ? growthAiAnalysis.snapshot : null;
+                // [FIX — per explicit feedback] The badge now reads the
+                // satisfaction level straight off each category's own
+                // average (satisfactionLevel, code-only) — always available,
+                // no dependency on ever having run an AI analysis, and no
+                // longer tied to the "All Briefs" view since it just
+                // describes that number, not an AI finding about the whole.
                 return (
                 <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
                   <div className="rounded-[26px] bg-white p-6 sm:p-8">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
-                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={aiSnap?.businessModel?.signal} />
-                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={aiSnap?.coreFeatures?.signal} />
-                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={aiSnap?.valueProp?.signal} />
-                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={aiSnap?.productDefinition?.signal} />
+                      <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={growthStats.businessModel.signal} />
+                      <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
+                      <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
+                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
                     </div>
                   </div>
                 </div>
@@ -1674,15 +1708,6 @@ export default function ProductFeedbackPage() {
 
                 if (history.length < 2) return null;
 
-                const chartW = 800;
-                const chartH = 140;
-                const topPad = 16;
-                const stepX = history.length > 1 ? chartW / (history.length - 1) : 0;
-                const points = history.map((h, i) => ({
-                  ...h,
-                  x: i * stepX,
-                  y: topPad + chartH - (h.overall / 10) * chartH,
-                }));
                 const first = history[0].overall;
                 const last = history[history.length - 1].overall;
                 const diff = last - first;
@@ -1709,48 +1734,44 @@ export default function ProductFeedbackPage() {
                         )}
                       </span>
                     </div>
-                    {/* [FIX — real mobile bug, 2nd attempt] The horizontal-
-                        scroll version was wrong: it started scrolled to the
-                        left edge with no hint there was more, so it looked
-                        cropped/broken rather than scrollable. Reverted to a
-                        fully fluid, 100%-width chart that always shows the
-                        whole trend, shrinking to fit any screen — nothing is
-                        ever cut off. To stay legible when small, the per-
-                        point number and brief-name labels were moved OUT of
-                        the SVG (where they'd shrink along with the chart)
-                        and into an ordinary HTML legend below it, which wraps
-                        normally like any text instead of scaling down. */}
-                    <svg
-                      width="100%"
-                      viewBox={`0 0 ${chartW + 40} ${chartH + topPad}`}
-                      style={{ display: 'block' }}
-                      preserveAspectRatio="xMidYMid meet"
-                    >
-                      <polyline
-                        points={points.map(p => `${p.x + 20},${p.y}`).join(' ')}
-                        fill="none"
-                        stroke="url(#growthTrendGradient)"
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                      />
-                      <defs>
-                        <linearGradient id="growthTrendGradient" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#6366F1" />
-                          <stop offset="50%" stopColor="#EC4899" />
-                          <stop offset="100%" stopColor="#F59E0B" />
-                        </linearGradient>
-                      </defs>
-                      {points.map((p, i) => (
-                        <circle key={p.id} cx={p.x + 20} cy={p.y} r={i === points.length - 1 ? 7 : 5} fill={i === points.length - 1 ? p.color : '#fff'} stroke={p.color} strokeWidth="3" />
-                      ))}
-                    </svg>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                      {points.map((p, i) => (
-                        <span key={p.id} className="inline-flex items-center gap-1.5 text-xs" style={{ fontWeight: i === points.length - 1 ? 700 : 600, color: p.color }}>
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
-                          {p.tagline} · {p.overall.toFixed(1)}
-                        </span>
+                    {/* [FIX — per explicit feedback] The line chart read as
+                        thin and characterless on any screen, and its legend
+                        ate space with long name+number tags. Switched to a
+                        plain CSS bar chart — no SVG scaling to fight at all,
+                        each bar sized by pure percentage height so it never
+                        crops or shrinks unreadably on mobile, and it reads
+                        as "real data" rather than a faint line. */}
+                    <div className="flex items-end gap-1.5 sm:gap-3" style={{ height: 130 }}>
+                      {history.map((h, i) => {
+                        const isLast = i === history.length - 1;
+                        const heightPct = Math.max(6, (h.overall / 10) * 100);
+                        return (
+                          <div key={h.id} className="flex-1 h-full flex flex-col items-center justify-end min-w-0">
+                            <span className="text-[11px] sm:text-xs font-extrabold mb-1" style={{ color: h.color }}>
+                              {h.overall.toFixed(1)}
+                            </span>
+                            <div
+                              className="w-full rounded-t-lg"
+                              style={{
+                                height: `${heightPct}%`,
+                                background: h.color,
+                                boxShadow: isLast ? `0 0 0 2px white, 0 0 0 4px ${h.color}` : 'none',
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-start gap-1.5 sm:gap-3 mt-2">
+                      {history.map((h) => (
+                        <div
+                          key={h.id}
+                          title={h.tagline}
+                          className="flex-1 min-w-0 text-center text-[10px] sm:text-xs font-semibold truncate"
+                          style={{ color: h.color }}
+                        >
+                          {h.tagline}
+                        </div>
                       ))}
                     </div>
                   </div>
