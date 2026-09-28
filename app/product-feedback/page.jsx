@@ -1709,17 +1709,22 @@ export default function ProductFeedbackPage() {
                         )}
                       </span>
                     </div>
-                    {/* [FIX — mobile] A fluid width squeezes the per-brief
-                        labels into unreadable text on narrow screens. Instead
-                        the chart keeps a real minimum width and the wrapper
-                        scrolls horizontally — legible on mobile, unchanged on
-                        desktop where everything already fits. */}
-                    <div className="overflow-x-auto -mx-1 px-1">
+                    {/* [FIX — real mobile bug, 2nd attempt] The horizontal-
+                        scroll version was wrong: it started scrolled to the
+                        left edge with no hint there was more, so it looked
+                        cropped/broken rather than scrollable. Reverted to a
+                        fully fluid, 100%-width chart that always shows the
+                        whole trend, shrinking to fit any screen — nothing is
+                        ever cut off. To stay legible when small, the per-
+                        point number and brief-name labels were moved OUT of
+                        the SVG (where they'd shrink along with the chart)
+                        and into an ordinary HTML legend below it, which wraps
+                        normally like any text instead of scaling down. */}
                     <svg
-                      width={Math.max(340, history.length * 110)}
-                      height={chartH + topPad + 40}
-                      viewBox={`0 0 ${chartW + 40} ${chartH + topPad + 40}`}
-                      style={{ overflow: 'visible', display: 'block' }}
+                      width="100%"
+                      viewBox={`0 0 ${chartW + 40} ${chartH + topPad}`}
+                      style={{ display: 'block' }}
+                      preserveAspectRatio="xMidYMid meet"
                     >
                       <polyline
                         points={points.map(p => `${p.x + 20},${p.y}`).join(' ')}
@@ -1737,22 +1742,16 @@ export default function ProductFeedbackPage() {
                         </linearGradient>
                       </defs>
                       {points.map((p, i) => (
-                        <g key={p.id}>
-                          <circle cx={p.x + 20} cy={p.y} r={i === points.length - 1 ? 7 : 5} fill={i === points.length - 1 ? p.color : '#fff'} stroke={p.color} strokeWidth="3" />
-                          <text x={p.x + 20} y={p.y - 12} textAnchor="middle" fontSize="12" fontWeight="700" fill={p.color}>{p.overall.toFixed(1)}</text>
-                          <text
-                            x={p.x + 20}
-                            y={chartH + topPad + 22}
-                            textAnchor="middle"
-                            fontSize="11"
-                            fontWeight={i === points.length - 1 ? '700' : '600'}
-                            fill={p.color}
-                          >
-                            {p.tagline}
-                          </text>
-                        </g>
+                        <circle key={p.id} cx={p.x + 20} cy={p.y} r={i === points.length - 1 ? 7 : 5} fill={i === points.length - 1 ? p.color : '#fff'} stroke={p.color} strokeWidth="3" />
                       ))}
                     </svg>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                      {points.map((p, i) => (
+                        <span key={p.id} className="inline-flex items-center gap-1.5 text-xs" style={{ fontWeight: i === points.length - 1 ? 700 : 600, color: p.color }}>
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
+                          {p.tagline} · {p.overall.toFixed(1)}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );
@@ -1771,9 +1770,11 @@ export default function ProductFeedbackPage() {
                   ...(growthAiAnalysis.action_plan.later || []).map(text => ({ text, priority: 'Later' })),
                 ];
                 if (rows.length === 0) return null;
+                // [FIX — per explicit feedback] Orange = urgent, green =
+                // less urgent, swapped from the previous "status" coloring.
                 const priorityStyle = {
-                  Now: { color: '#166534', background: '#DCFCE7', border: '#86EFAC', dot: '#16A34A' },
-                  Later: { color: '#9A3412', background: '#FFEDD5', border: '#FDBA74', dot: '#F97316' },
+                  Now: { color: '#9A3412', background: '#FFEDD5', border: '#FDBA74', dot: '#F97316' },
+                  Later: { color: '#166534', background: '#DCFCE7', border: '#86EFAC', dot: '#16A34A' },
                 };
                 return (
                   <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden mb-6">
