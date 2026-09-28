@@ -401,6 +401,11 @@ export default function ProductFeedbackPage() {
   // in full under "All Briefs" — collapsed by default now, toggled by a
   // small button next to the "All Briefs" pill.
   const [showGrowthBriefList, setShowGrowthBriefList] = useState(false);
+  // [NEW — per explicit request] Page reorganized into two zones: raw
+  // feedback data (collapsed behind one master toggle) and a separate AI
+  // zone (whose Recommended Actions is its own collapsed tab).
+  const [showGrowthFeedbackDetails, setShowGrowthFeedbackDetails] = useState(false);
+  const [showGrowthRecommendedActions, setShowGrowthRecommendedActions] = useState(false);
   // [NEW — Growth AI visual layer] A second, deeper level of disclosure —
   // the raw supporting evidence (themes + full per-dimension analysis) is
   // one more click past the recommended changes, per explicit feedback
@@ -1171,7 +1176,7 @@ export default function ProductFeedbackPage() {
             </div>
             <h1 className="text-2xl font-extrabold text-purple-700">Venture Feedback</h1>
           </div>
-          <p className="text-gray-500 text-lg">Insight</p>
+          <p className="text-gray-500 text-lg">All Insight collected across your startup journey</p>
         </div>
 
         {/* AI Analysis */}
@@ -1599,6 +1604,18 @@ export default function ProductFeedbackPage() {
 
           return (
             <div className="mb-10">
+              {/* [NEW — per explicit request] Section title for the whole
+                  Growth view — sits above everything else (brief selector,
+                  scores, chart, raw feedback, AI zone). */}
+              <div className="text-center mb-6">
+                <span
+                  className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+                  style={{ background: 'linear-gradient(90deg, #6366F1, #A855F7, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                >
+                  INSIGHT DASHBOARD
+                </span>
+              </div>
+
               {/* Brief selector — "All Briefs" is the default (aggregated
                   across every brief); picking a specific brief pill filters
                   down to just that one. */}
@@ -1684,7 +1701,7 @@ export default function ProductFeedbackPage() {
                       <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
                       <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
                     </div>
-                    <p className="text-[11px] text-gray-400 text-right mt-3">* number of responses this average is based on</p>
+                    <p className="text-[11px] text-gray-400 text-left mt-3">* number of responses this average is based on</p>
                   </div>
                 </div>
                 );
@@ -1791,181 +1808,31 @@ export default function ProductFeedbackPage() {
                 );
               })()}
 
-              {/* [NEW — Growth AI visual layer] "Recommended actions" — the
-                  action plan pulled out of the collapsible panel and given
-                  its own colorful table, right under the trend chart, so the
-                  single most useful output of an analysis (what to actually
-                  do) is visible without a click. Only appears once a saved
-                  analysis exists; otherwise the section simply isn't there
-                  yet. */}
-              {growthAiAnalysis?.action_plan && (() => {
-                const rows = [
-                  ...(growthAiAnalysis.action_plan.now || []).map(text => ({ text, priority: 'Now' })),
-                  ...(growthAiAnalysis.action_plan.later || []).map(text => ({ text, priority: 'Later' })),
-                ];
-                if (rows.length === 0) return null;
-                // [FIX — per explicit feedback] Orange = urgent, green =
-                // less urgent, swapped from the previous "status" coloring.
-                const priorityStyle = {
-                  Now: { color: '#9A3412', background: '#FFEDD5', border: '#FDBA74', dot: '#F97316' },
-                  Later: { color: '#166534', background: '#DCFCE7', border: '#86EFAC', dot: '#16A34A' },
-                };
-                return (
-                  <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden mb-6">
-                    <div className="px-5 sm:px-6 py-4" style={{ background: 'linear-gradient(120deg, #EEF2FF, #FCE7F3)' }}>
-                      <span
-                        className="text-base font-extrabold"
-                        style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-                      >
-                        Recommended Actions
-                      </span>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {rows.map((r, i) => {
-                        const s = priorityStyle[r.priority];
-                        return (
-                          <div key={i} className="flex items-start gap-3 sm:gap-4 px-5 sm:px-6 py-3.5">
-                            <span
-                              className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex items-center gap-1.5"
-                              style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-                              {r.priority}
-                            </span>
-                            <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* [NEW — Growth AI] Nothing here runs until the founder clicks
-                  "AI Insight" (project-definition section 2) — a saved
-                  analysis from a previous run is shown as-is otherwise. */}
-              <div className="mb-6">
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleAnalyzeGrowthClick}
-                    disabled={isAnalyzingGrowth || growthFeedbacks.length === 0}
-                    className="group relative flex items-center gap-2 rounded-full px-7 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-                    style={{ background: 'linear-gradient(120deg, #6366F1, #A855F7, #EC4899)', backgroundSize: '160% 160%' }}
-                  >
-                    {isAnalyzingGrowth ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-5 h-5 transition-transform group-hover:rotate-12" />
-                    )}
-                    {isAnalyzingGrowth ? 'Thinking...' : 'AI Insight'}
-                  </button>
-                </div>
-
-                {growthAnalysisError && (
-                  <p className="text-sm text-red-600 text-center mt-3">{growthAnalysisError}</p>
-                )}
-
-                {showGrowthChangesPrompt && (
-                  <div className="mt-4 max-w-lg mx-auto rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                    <p className="text-sm font-semibold text-indigo-900 mb-2">What did you change since the last brief? (optional)</p>
-                    <textarea
-                      value={growthChangesText}
-                      onChange={(e) => setGrowthChangesText(e.target.value)}
-                      className="w-full rounded-lg border border-indigo-200 p-2 text-sm"
-                      rows={3}
-                      placeholder="e.g. lowered the price, rewrote the slogan, added a demo video..."
-                    />
-                    <div className="flex justify-end gap-2 mt-2">
-                      <Button type="button" variant="ghost" onClick={() => { setShowGrowthChangesPrompt(false); setGrowthChangesText(''); }}>
-                        Cancel
-                      </Button>
-                      <Button type="button" onClick={submitGrowthChangesAndAnalyze} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {growthAiAnalysis && !showGrowthChangesPrompt && (() => {
-                  const signalDot = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
-                  return (
-                  <div className="max-w-2xl mx-auto mt-5">
-                    {/* [NEW — Growth AI visual layer] Executive summary is the
-                        only thing shown by default — everything else (full
-                        per-dimension analysis, themes, action plan) is one
-                        click away, not shown up front. */}
-                    <button
-                      type="button"
-                      onClick={() => setShowGrowthAnalysisDetails(v => !v)}
-                      className="w-full text-left rounded-xl border border-indigo-200 bg-indigo-50 p-5 flex items-start justify-between gap-3"
-                    >
-                      <div>
-                        {growthAnalysisMeta?.analyzedDate && (
-                          <p className="text-xs text-indigo-400 mb-1">
-                            Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                          </p>
-                        )}
-                        <p className="text-sm font-semibold text-indigo-900 leading-relaxed">
-                          {growthAiAnalysis.executive_summary || 'Analysis ready — click to view full details.'}
-                        </p>
-                      </div>
-                      <ChevronDown className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1 transition-transform" style={{ transform: showGrowthAnalysisDetails ? 'rotate(180deg)' : 'none' }} />
-                    </button>
-
-                    {showGrowthAnalysisDetails && (
-                      <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
-                        {/* [MOVED] The action plan now has its own colorful
-                            table right under the trend chart, above — this
-                            panel is evidence only, so it isn't repeated here. */}
-                        {/* [FIX — per explicit feedback] Themes + the full
-                            per-dimension analysis (Patterns/Agreement/etc.)
-                            were "too much data, hard to know what to do with
-                            it" as a default view — now a second, optional
-                            level of disclosure below the recommendation. */}
-                        <button
-                          type="button"
-                          onClick={() => setShowGrowthEvidence(v => !v)}
-                          className="w-full text-left px-5 py-3 text-xs font-semibold text-gray-400 hover:text-gray-600 flex items-center justify-between"
-                        >
-                          Show supporting evidence
-                          <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthEvidence ? 'rotate(180deg)' : 'none' }} />
-                        </button>
-
-                        {showGrowthEvidence && (
-                          <div className="border-t border-gray-100">
-                            {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
-                              <div className="p-5 border-b border-gray-100">
-                                <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes in the feedback</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {growthAiAnalysis.themes.map((t, i) => (
-                                    <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
-                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: signalDot[t.signal] || '#9ca3af' }} />
-                                      {t.theme} · {t.count}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
-                              .filter(([, text]) => text && String(text).trim())
-                              .map(([key, text]) => (
-                                <div key={key} className="p-5 border-b border-gray-100 last:border-b-0">
-                                  <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
-                                  </p>
-                                  <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  );
-                })()}
+              {/* [NEW — per explicit request] Everything below is raw
+                  feedback data (no AI) — a colorful section title, and one
+                  master toggle that opens/closes the whole area. Each
+                  question inside still has its own drill-down, unchanged. */}
+              <div className="text-center mb-3">
+                <span
+                  className="text-lg font-extrabold"
+                  style={{ background: 'linear-gradient(90deg, #0EA5E9, #6366F1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                >
+                  Feedback Details
+                </span>
+              </div>
+              <div className="flex justify-center mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowGrowthFeedbackDetails(v => !v)}
+                  className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                >
+                  {showGrowthFeedbackDetails ? 'Hide feedback details' : 'Show feedback details'}
+                  <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthFeedbackDetails ? 'rotate(180deg)' : 'none' }} />
+                </button>
               </div>
 
+              {showGrowthFeedbackDetails && (
+              <div>
               {/* [NEW — Product Experience] The one piece of data collected
                   on the public form that had NO summary category anywhere —
                   "did you visit the product?" and the follow-up choice were
@@ -2204,6 +2071,200 @@ export default function ProductFeedbackPage() {
                   )}
                 </div>
               )}
+              </div>
+              )}
+
+              {/* [NEW — per explicit request] AI zone, fully separate from
+                  the raw feedback above — only what the AI generated lives
+                  here. */}
+              <div className="text-center mb-1 mt-8">
+                <span
+                  className="text-lg font-extrabold"
+                  style={{ background: 'linear-gradient(90deg, #6366F1, #A855F7, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                >
+                  AI Insights Analysis
+                </span>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {growthAnalysisMeta?.analyzedDate
+                    ? `Last analysis: ${new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`
+                    : 'No analysis yet'}
+                </p>
+              </div>
+
+              <div className="mb-6 mt-4">
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeGrowthClick}
+                    disabled={isAnalyzingGrowth || growthFeedbacks.length === 0}
+                    className="group relative flex items-center gap-2 rounded-full px-7 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                    style={{ background: 'linear-gradient(120deg, #6366F1, #A855F7, #EC4899)', backgroundSize: '160% 160%' }}
+                  >
+                    {isAnalyzingGrowth ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-5 h-5 transition-transform group-hover:rotate-12" />
+                    )}
+                    {isAnalyzingGrowth ? 'Thinking...' : 'AI Insight'}
+                  </button>
+                  {/* [NEW — per explicit request] Short line explaining what
+                      the button does. */}
+                  <p className="text-xs text-gray-400 text-center max-w-xs">
+                    Runs an AI read of all your feedback — a short summary and a prioritized list of what to change.
+                  </p>
+                </div>
+
+                {growthAnalysisError && (
+                  <p className="text-sm text-red-600 text-center mt-3">{growthAnalysisError}</p>
+                )}
+
+                {showGrowthChangesPrompt && (
+                  <div className="mt-4 max-w-lg mx-auto rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                    <p className="text-sm font-semibold text-indigo-900 mb-2">What did you change since the last brief? (optional)</p>
+                    <textarea
+                      value={growthChangesText}
+                      onChange={(e) => setGrowthChangesText(e.target.value)}
+                      className="w-full rounded-lg border border-indigo-200 p-2 text-sm"
+                      rows={3}
+                      placeholder="e.g. lowered the price, rewrote the slogan, added a demo video..."
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                      <Button type="button" variant="ghost" onClick={() => { setShowGrowthChangesPrompt(false); setGrowthChangesText(''); }}>
+                        Cancel
+                      </Button>
+                      <Button type="button" onClick={submitGrowthChangesAndAnalyze} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {growthAiAnalysis && !showGrowthChangesPrompt && (() => {
+                  const signalDot = { Strong: '#16a34a', Mixed: '#d97706', Weak: '#dc2626' };
+                  const actionRows = growthAiAnalysis.action_plan ? [
+                    ...(growthAiAnalysis.action_plan.now || []).map(text => ({ text, priority: 'Now' })),
+                    ...(growthAiAnalysis.action_plan.later || []).map(text => ({ text, priority: 'Later' })),
+                  ] : [];
+                  // [FIX — per explicit feedback] Orange = urgent, green =
+                  // less urgent.
+                  const priorityStyle = {
+                    Now: { color: '#9A3412', background: '#FFEDD5', border: '#FDBA74', dot: '#F97316' },
+                    Later: { color: '#166534', background: '#DCFCE7', border: '#86EFAC', dot: '#16A34A' },
+                  };
+                  return (
+                  <div className="max-w-2xl mx-auto mt-5">
+                    {/* [NEW — Growth AI visual layer] Executive summary is the
+                        only thing shown by default — everything else (full
+                        per-dimension analysis, themes, action plan) is one
+                        click away, not shown up front. */}
+                    <button
+                      type="button"
+                      onClick={() => setShowGrowthAnalysisDetails(v => !v)}
+                      className="w-full text-left rounded-xl border border-indigo-200 bg-indigo-50 p-5 flex items-start justify-between gap-3"
+                    >
+                      <div>
+                        {growthAnalysisMeta?.analyzedDate && (
+                          <p className="text-xs text-indigo-400 mb-1">
+                            Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                        )}
+                        <p className="text-sm font-semibold text-indigo-900 leading-relaxed">
+                          {growthAiAnalysis.executive_summary || 'Analysis ready — click to view full details.'}
+                        </p>
+                      </div>
+                      <ChevronDown className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1 transition-transform" style={{ transform: showGrowthAnalysisDetails ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+
+                    {showGrowthAnalysisDetails && (
+                      <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
+                        {/* [NEW — per explicit request] Recommended Actions is
+                            its own collapsed tab inside the AI zone now,
+                            rather than always shown. */}
+                        {actionRows.length > 0 && (
+                          <div className="border-b border-gray-100">
+                            <button
+                              type="button"
+                              onClick={() => setShowGrowthRecommendedActions(v => !v)}
+                              className="w-full text-left px-5 py-3 flex items-center justify-between gap-3"
+                            >
+                              <span
+                                className="text-sm font-extrabold"
+                                style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                              >
+                                Recommended Actions
+                              </span>
+                              <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: showGrowthRecommendedActions ? 'rotate(180deg)' : 'none' }} />
+                            </button>
+                            {showGrowthRecommendedActions && (
+                              <div className="divide-y divide-gray-100 border-t border-gray-100">
+                                {actionRows.map((r, i) => {
+                                  const s = priorityStyle[r.priority];
+                                  return (
+                                    <div key={i} className="flex items-start gap-3 px-5 py-3">
+                                      <span
+                                        className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex items-center gap-1.5"
+                                        style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+                                        {r.priority}
+                                      </span>
+                                      <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* [FIX — per explicit feedback] Themes + the full
+                            per-dimension analysis (Patterns/Agreement/etc.)
+                            were "too much data, hard to know what to do with
+                            it" as a default view — now a second, optional
+                            level of disclosure. Renamed per explicit
+                            feedback: the short part above is already the
+                            analysis summary, so this opens the "full report". */}
+                        <button
+                          type="button"
+                          onClick={() => setShowGrowthEvidence(v => !v)}
+                          className="w-full text-left px-5 py-3 text-xs font-semibold text-gray-400 hover:text-gray-600 flex items-center justify-between"
+                        >
+                          View full report
+                          <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showGrowthEvidence ? 'rotate(180deg)' : 'none' }} />
+                        </button>
+
+                        {showGrowthEvidence && (
+                          <div className="border-t border-gray-100">
+                            {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
+                              <div className="p-5 border-b border-gray-100">
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes in the feedback</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {growthAiAnalysis.themes.map((t, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: signalDot[t.signal] || '#9ca3af' }} />
+                                      {t.theme} · {t.count}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {growthAiAnalysis.analysis && Object.entries(growthAiAnalysis.analysis)
+                              .filter(([, text]) => text && String(text).trim())
+                              .map(([key, text]) => (
+                                <div key={key} className="p-5 border-b border-gray-100 last:border-b-0">
+                                  <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                                  </p>
+                                  <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  );
+                })()}
+              </div>
             </div>
           );
         })()}
