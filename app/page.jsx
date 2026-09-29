@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] idea-to-product-to-users animation
 import CommunityAiFounderLoop from "./CommunityAiFounderLoop/page"; // [ADDED] community/AI/founder loop animation
+import InsightMetricsAnimation from "./InsightMetricsAnimation/page"; // [NEW] Insight Metrics count-up demo (Business Model / Core Features)
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
@@ -346,6 +347,18 @@ export default function Home() {
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
               From idea to live product, benefit from structured feedback from our community at every stage of your entrepreneurial journey. Use it to refine your product and plan your next features. Some community members will discover your product early, and join as users.
+            </p>
+          </div>
+
+          {/* [NEW] Turn Insights Into a Critical Growth Tool — Insight Metrics count-up demo.
+              Explanation paragraph is a placeholder: content to be provided by the user. */}
+          <div className="mb-10">
+            <h3 className="text-2xl md:text-4xl font-bold mb-6">
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Turn Insights Into a Critical Growth Tool for Your Venture.</span>
+            </h3>
+            <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
+            <p className="text-lg text-gray-600">
+              {/* TODO: explanation paragraph — content to be provided by the user */}
             </p>
           </div>
 
