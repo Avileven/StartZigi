@@ -410,6 +410,11 @@ export default function ProductFeedbackPage() {
   // summary box with two smaller tabs nested under it — Summary starts open,
   // the other two start closed.
   const [showGrowthSummaryTab, setShowGrowthSummaryTab] = useState(true);
+  // [NEW — per explicit feedback] Was no confirmation that a fresh "AI
+  // Insight" run actually finished — this flags a checkmark next to "Last
+  // Analysis" for a few seconds right after a run completes (not shown for
+  // an analysis loaded from a previous session).
+  const [growthJustAnalyzed, setGrowthJustAnalyzed] = useState(false);
   // [NEW — Growth AI visual layer] A second, deeper level of disclosure —
   // the raw supporting evidence (themes + full per-dimension analysis) is
   // one more click past the recommended changes, per explicit feedback
@@ -1108,6 +1113,10 @@ export default function ProductFeedbackPage() {
 
       setGrowthAiAnalysis(fullAnalysis);
       setGrowthAnalysisMeta({ campaignId: targetCampaignId, analyzedDate });
+      // [NEW — per explicit feedback] Show the "just analyzed" checkmark for
+      // a few seconds, then let it fade back out on its own.
+      setGrowthJustAnalyzed(true);
+      setTimeout(() => setGrowthJustAnalyzed(false), 5000);
     } catch (err) {
       console.error('Growth analysis failed:', err);
       setGrowthAnalysisError('Something went wrong generating the analysis. Please try again.');
@@ -1176,7 +1185,7 @@ export default function ProductFeedbackPage() {
         <div className="text-center mb-10">
           {/* [FIX — per explicit feedback] Icon removed per explicit request. */}
           <h1 className="text-2xl font-extrabold text-purple-700 mb-2">Venture Feedback</h1>
-          <p className="text-lg" style={{ color: '#15803D' }}>All Insight collected across your startup journey</p>
+          <p className="text-lg" style={{ color: '#15803D' }}>All insight collected and analyzed across your startup journey</p>
         </div>
 
         {/* AI Analysis */}
@@ -1617,7 +1626,7 @@ export default function ProductFeedbackPage() {
                   className="text-xl font-extrabold"
                   style={{ background: 'linear-gradient(90deg, #6366F1, #A855F7, #EC4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
                 >
-                  INSIGHT DASHBOARD
+                  Insight Dashboard
                 </span>
               </div>
 
@@ -2105,11 +2114,12 @@ export default function ProductFeedbackPage() {
                 >
                   AI Insights Analysis
                 </span>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {growthAnalysisMeta?.analyzedDate
-                    ? `Last analysis: ${new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`
-                    : 'No analysis yet'}
-                </p>
+                {/* [FIX — per explicit feedback] The "Last analysis" date
+                    itself moved to its own bigger heading right above the
+                    results below — this just covers the no-analysis case. */}
+                {!growthAnalysisMeta?.analyzedDate && (
+                  <p className="text-xs text-gray-400 mt-0.5">No analysis yet</p>
+                )}
               </div>
 
               <div className="mb-6 mt-4">
@@ -2174,6 +2184,26 @@ export default function ProductFeedbackPage() {
                   };
                   return (
                   <div className="max-w-2xl mx-auto mt-5">
+                    {/* [NEW — per explicit feedback] "Last Analysis" heading
+                        right above the results — same style as the tab
+                        headers below (Summary/Recommended Actions), one size
+                        bigger. The green checkmark only appears for a few
+                        seconds right after a fresh run, not on a reload. */}
+                    {growthAnalysisMeta?.analyzedDate && (
+                      <div className="flex items-center justify-center gap-2 mb-3">
+                        <span
+                          className="text-base font-extrabold"
+                          style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                        >
+                          Last Analysis: {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                        {growthJustAnalyzed && (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 transition-opacity">
+                            ✓ Complete
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {/* [FIX — per explicit feedback] Was a big distinct
                         summary box sitting above two small text-only tabs —
                         now three equal tabs in one consistent list: Summary
