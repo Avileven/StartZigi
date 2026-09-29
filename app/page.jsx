@@ -358,7 +358,7 @@ export default function Home() {
             </h3>
             <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
-              {/* TODO: explanation paragraph — content to be provided by the user */}
+              We've developed a feedback method where the questions are structured and evolve with your product, helping you understand what users value and what needs to improve. Our dashboard and AI turn what you learn into practical direction for making your product more relevant, attracting more users, and growing your venture.
             </p>
           </div>
 

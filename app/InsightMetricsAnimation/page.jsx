@@ -16,6 +16,10 @@
 // ProductGrowthAnimation and CommunityAiFounderLoop), then import it in the
 // home page with:
 //   import InsightMetricsAnimation from "./InsightMetricsAnimation/page";
+//
+// [FIX] Cards stack in one column on mobile (were squeezed side-by-side,
+// causing overflow) and stay side-by-side from sm: up; count-up slowed to
+// 2.6s; number uses tabular-nums so digit width doesn't jitter mid-count.
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -30,7 +34,7 @@ function AnimatedMetricCard({ title, target, accent, bg, signal, signalColor, pl
 
   useEffect(() => {
     if (!play) return;
-    const duration = 1400;
+    const duration = 2600; // [FIX] slowed down per explicit request
     const start = performance.now();
     let raf;
     const tick = (now) => {
@@ -55,7 +59,7 @@ function AnimatedMetricCard({ title, target, accent, bg, signal, signalColor, pl
     <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, border: `2px solid ${signalColor}` }}>
       <span className="text-sm font-bold text-gray-700">{title}</span>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-extrabold text-gray-900">{displayValue}</span>
+        <span className="text-3xl font-extrabold text-gray-900" style={{ fontVariantNumeric: "tabular-nums" }}>{displayValue}</span>
         <span className="text-sm text-gray-400">/ 10</span>
       </div>
       <span
@@ -98,7 +102,9 @@ export default function InsightMetricsAnimation({ className = "" }) {
     <div ref={ref} className={className}>
       <div className="rounded-[28px] p-[2px]" style={{ background: "linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)" }}>
         <div className="rounded-[26px] bg-white p-6 sm:p-8">
-          <div className="grid grid-cols-2 gap-4 sm:gap-5">
+          {/* [FIX] Stacked on mobile (was cramped side-by-side, caused overflow + jitter
+              from the shrinking column width); still side-by-side from sm: up. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             {METRICS.map((m) => (
               <AnimatedMetricCard key={m.title} {...m} play={play} />
             ))}
