@@ -393,10 +393,9 @@ export default function ProductFeedbackPage() {
   const [growthChangesText, setGrowthChangesText] = useState('');
   const [showGrowthChangesPrompt, setShowGrowthChangesPrompt] = useState(false);
   const [growthAnalysisError, setGrowthAnalysisError] = useState(null);
-  // [NEW — Growth AI visual layer] Whether the full analysis (themes,
-  // action plan, per-dimension patterns/evidence) is expanded. Collapsed
-  // by default — only the executive summary shows until clicked.
-  const [showGrowthAnalysisDetails, setShowGrowthAnalysisDetails] = useState(false);
+  // [REMOVED — per explicit feedback] Replaced by the three-tab layout
+  // (Summary / Recommended Actions / View full report) below — each tab now
+  // tracks its own open/closed state instead of one shared "details" flag.
   // [NEW — per explicit request] The per-brief pill list was always shown
   // in full under "All Briefs" — collapsed by default now, toggled by a
   // small button next to the "All Briefs" pill.
@@ -406,6 +405,11 @@ export default function ProductFeedbackPage() {
   // zone (whose Recommended Actions is its own collapsed tab).
   const [showGrowthFeedbackDetails, setShowGrowthFeedbackDetails] = useState(false);
   const [showGrowthRecommendedActions, setShowGrowthRecommendedActions] = useState(false);
+  // [NEW — per explicit feedback] The AI result is now three equal tabs
+  // (Summary / Recommended Actions / View full report) instead of a big
+  // summary box with two smaller tabs nested under it — Summary starts open,
+  // the other two start closed.
+  const [showGrowthSummaryTab, setShowGrowthSummaryTab] = useState(true);
   // [NEW — Growth AI visual layer] A second, deeper level of disclosure —
   // the raw supporting evidence (themes + full per-dimension analysis) is
   // one more click past the recommended changes, per explicit feedback
@@ -1696,6 +1700,14 @@ export default function ProductFeedbackPage() {
                 return (
                 <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
                   <div className="rounded-[26px] bg-white p-6 sm:p-8">
+                    {/* [NEW — per explicit feedback] Matches "Overall Product
+                        Satisfaction" below (same font/size/gradient style). */}
+                    <span
+                      className="text-base font-extrabold block mb-3"
+                      style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                    >
+                      Insight Metrics
+                    </span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
                       <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={growthStats.businessModel.signal} />
                       <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
@@ -2162,80 +2174,83 @@ export default function ProductFeedbackPage() {
                   };
                   return (
                   <div className="max-w-2xl mx-auto mt-5">
-                    {/* [NEW — Growth AI visual layer] Executive summary is the
-                        only thing shown by default — everything else (full
-                        per-dimension analysis, themes, action plan) is one
-                        click away, not shown up front. */}
-                    <button
-                      type="button"
-                      onClick={() => setShowGrowthAnalysisDetails(v => !v)}
-                      className="w-full text-left rounded-xl border border-indigo-200 bg-indigo-50 p-5 flex items-start justify-between gap-3"
-                    >
-                      <div>
-                        {growthAnalysisMeta?.analyzedDate && (
-                          <p className="text-xs text-indigo-400 mb-1">
-                            Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                          </p>
-                        )}
-                        <p className="text-sm font-semibold text-indigo-900 leading-relaxed">
-                          {growthAiAnalysis.executive_summary || 'Analysis ready — click to view full details.'}
-                        </p>
-                      </div>
-                      <ChevronDown className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1 transition-transform" style={{ transform: showGrowthAnalysisDetails ? 'rotate(180deg)' : 'none' }} />
-                    </button>
-
-                    {showGrowthAnalysisDetails && (
-                      <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden -mt-1">
-                        {/* [NEW — per explicit request] Recommended Actions is
-                            its own collapsed tab inside the AI zone now,
-                            rather than always shown. */}
-                        {actionRows.length > 0 && (
-                          <div className="border-b border-gray-100">
-                            <button
-                              type="button"
-                              onClick={() => setShowGrowthRecommendedActions(v => !v)}
-                              className="w-full text-left px-5 py-3 flex items-center justify-between gap-3"
-                            >
-                              <span
-                                className="text-sm font-extrabold"
-                                style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-                              >
-                                Recommended Actions
-                              </span>
-                              <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: showGrowthRecommendedActions ? 'rotate(180deg)' : 'none' }} />
-                            </button>
-                            {showGrowthRecommendedActions && (
-                              <div className="divide-y divide-gray-100 border-t border-gray-100">
-                                {actionRows.map((r, i) => {
-                                  const s = priorityStyle[r.priority];
-                                  return (
-                                    <div key={i} className="flex items-start gap-3 px-5 py-3">
-                                      <span
-                                        className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex items-center gap-1.5"
-                                        style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
-                                      >
-                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-                                        {r.priority}
-                                      </span>
-                                      <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                    {/* [FIX — per explicit feedback] Was a big distinct
+                        summary box sitting above two small text-only tabs —
+                        now three equal tabs in one consistent list: Summary
+                        (open by default), Recommended Actions, View full
+                        report (both closed by default). */}
+                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                      <div className="border-b border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => setShowGrowthSummaryTab(v => !v)}
+                          className="w-full text-left px-5 py-3 flex items-center justify-between gap-3"
+                        >
+                          <span
+                            className="text-sm font-extrabold"
+                            style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                          >
+                            Summary
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: showGrowthSummaryTab ? 'rotate(180deg)' : 'none' }} />
+                        </button>
+                        {showGrowthSummaryTab && (
+                          <div className="px-5 pb-4">
+                            {growthAnalysisMeta?.analyzedDate && (
+                              <p className="text-xs text-gray-400 mb-1">
+                                Last analyzed {new Date(growthAnalysisMeta.analyzedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </p>
                             )}
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {growthAiAnalysis.executive_summary || 'Analysis ready — click to view full details.'}
+                            </p>
                           </div>
                         )}
-                        {/* [FIX — per explicit feedback] Themes + the full
-                            per-dimension analysis (Patterns/Agreement/etc.)
-                            were "too much data, hard to know what to do with
-                            it" as a default view — now a second, optional
-                            level of disclosure. Renamed per explicit
-                            feedback: the short part above is already the
-                            analysis summary, so this opens the "full report". */}
-                        {/* [FIX — per explicit feedback] Now styled exactly
-                            like "Recommended Actions" above it (same size,
-                            weight, gradient) instead of small plain gray
-                            text. */}
+                      </div>
+
+                      {/* [NEW — per explicit request] Recommended Actions is
+                          its own collapsed tab, closed by default. */}
+                      {actionRows.length > 0 && (
+                        <div className="border-b border-gray-100">
+                          <button
+                            type="button"
+                            onClick={() => setShowGrowthRecommendedActions(v => !v)}
+                            className="w-full text-left px-5 py-3 flex items-center justify-between gap-3"
+                          >
+                            <span
+                              className="text-sm font-extrabold"
+                              style={{ background: 'linear-gradient(90deg, #6366F1, #DB2777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                            >
+                              Recommended Actions
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" style={{ transform: showGrowthRecommendedActions ? 'rotate(180deg)' : 'none' }} />
+                          </button>
+                          {showGrowthRecommendedActions && (
+                            <div className="divide-y divide-gray-100 border-t border-gray-100">
+                              {actionRows.map((r, i) => {
+                                const s = priorityStyle[r.priority];
+                                return (
+                                  <div key={i} className="flex items-start gap-3 px-5 py-3">
+                                    <span
+                                      className="flex-shrink-0 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full flex items-center gap-1.5"
+                                      style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+                                      {r.priority}
+                                    </span>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* [FIX — per explicit feedback] Full per-dimension
+                          analysis + themes — closed by default, same tab
+                          style as the two above. */}
+                      <div>
                         <button
                           type="button"
                           onClick={() => setShowGrowthEvidence(v => !v)}
@@ -2278,7 +2293,7 @@ export default function ProductFeedbackPage() {
                           </div>
                         )}
                       </div>
-                    )}
+                    </div>
                   </div>
                   );
                 })()}
