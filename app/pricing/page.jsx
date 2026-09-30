@@ -162,7 +162,7 @@ export default function Pricing() {
       subtitle: "Expose your product to StartZig's community",
       description: 'Expose your product to the community and collect feedback on it.',
       // [NEW] Launch offer — shown only on this tier, right under the price.
-      launchOffer: 'Launch offer — your first three months are free, no commitment. Join by December 1.',
+      launchOffer: 'Launch offer! Try us free for 3 months, no commitment or card. Join by December 1.',
       features: [
         'Product landing page',
         '20 feedback requests a month [2]',
