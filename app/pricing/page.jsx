@@ -7,6 +7,10 @@
 // embedded in the card text, despite how the doc formatted it) — confirmed
 // explicitly this session. "Most Popular" replaced with "Recommended",
 // and only Growth Boost carries it now.
+// [NEW] Growth launch offer — first 3 months free, no commitment, for
+// founders who join by December 1. Shown only on the Growth card, as a
+// standalone line right under the price block (doesn't touch the
+// description's min-height, the features list, or the Growth Boost card).
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -157,6 +161,8 @@ export default function Pricing() {
       priceNote: '/ month',
       subtitle: "Expose your product to StartZig's community",
       description: 'Expose your product to the community and collect feedback on it.',
+      // [NEW] Launch offer — shown only on this tier, right under the price.
+      launchOffer: 'Launch offer — your first three months are free, no commitment. Join by December 1.',
       features: [
         'Product landing page',
         '20 feedback requests a month [2]',
@@ -270,6 +276,13 @@ export default function Pricing() {
                 </span>
                 <span className="text-gray-500 text-sm">{tier.priceNote}</span>
               </div>
+
+              {/* [NEW] Growth launch offer — only rendered when the tier defines one (Growth only) */}
+              {tier.launchOffer && (
+                <p className="text-sm font-bold text-blue-700 text-left -mt-6 mb-8">
+                  {tier.launchOffer}
+                </p>
+              )}
 
               <div className="flex-1">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 text-left">
