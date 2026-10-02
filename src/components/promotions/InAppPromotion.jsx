@@ -5,6 +5,12 @@
 // signup page (/beta-testing) with "beta tester" copy, instead of to the
 // venture-landing page with the Growth feedback categories built earlier
 // this session. Search "[GROWTH]" below for every touch point.
+//
+// [NEW — Followers project] Founders can now choose to send their feedback
+// requests to their own followers first — and pick exactly which followers
+// — before the rest of the requested amount is filled randomly from the
+// general pool, exactly as it worked before this change. Search
+// "[NEW — Followers project]" below for every touch point.
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -16,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.j
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Megaphone, AlertTriangle, ChevronRight, X, CheckCircle } from "lucide-react";
+import { Loader2, Megaphone, AlertTriangle, ChevronRight, X, CheckCircle, Users } from "lucide-react";
 
 // [NEW — mobile fix] This file had no mobile treatment at all — tapping a
 // field didn't open it fullscreen, unlike growth-development/venture-landing
@@ -100,6 +106,21 @@ const EXAMPLE_VENTURE_IDS = [
   '3ca810de-a754-412c-8905-94247b9d1e90', // GrandpaSays.zig (MLP example)
 ];
 
+// [NEW — Followers project] Same phase-to-tag mapping used elsewhere
+// (my-account-page.jsx, dashboard-page.jsx, product-feedback-page.jsx) —
+// each file keeps its own copy, per the existing pattern in this codebase.
+function getJourneyTag(rawPhase) {
+  const map = {
+    idea: 'Spark',
+    business_plan: 'Plan',
+    mvp: 'Shape',
+    mlp: 'Shape',
+    beta: 'Beta',
+    growth: 'Growth',
+  };
+  return map[rawPhase] || null;
+}
+
 export default function InAppPromotion({ goBack }) {
   const isMobile = useIsMobile();
   const [venture, setVenture] = useState(null);
@@ -110,6 +131,12 @@ export default function InAppPromotion({ goBack }) {
   const [tagline, setTagline] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // [NEW — Followers project] Followers of this venture, with enough profile
+  // info to show in the picker; which of them are currently checked (all
+  // checked by default when loaded).
+  const [followers, setFollowers] = useState([]);
+  const [selectedFollowerIds, setSelectedFollowerIds] = useState(new Set());
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
 
   useEffect(() => {
     const loadVenture = async () => {
@@ -138,6 +165,59 @@ export default function InAppPromotion({ goBack }) {
     loadVenture();
   }, []);
 
+  // [NEW — Followers project] Loads this venture's followers and their
+  // public profile (same pattern as my-account-page.jsx's follower list).
+  // All followers start checked, so "send to followers" works by default
+  // without the founder having to pick anyone.
+  useEffect(() => {
+    const loadFollowers = async () => {
+      if (!venture) { setFollowers([]); setSelectedFollowerIds(new Set()); return; }
+      setIsLoadingFollowers(true);
+      try {
+        const { data: rows } = await supabase
+          .from('venture_followers')
+          .select('user_id')
+          .eq('venture_id', venture.id);
+        const ids = (rows || []).map((r) => r.user_id);
+        if (ids.length === 0) {
+          setFollowers([]);
+          setSelectedFollowerIds(new Set());
+          return;
+        }
+        const profiles = await Promise.all(
+          ids.map((id) => supabase.rpc('get_public_founder_profile', { profile_id: id }))
+        );
+        const list = ids.map((id, i) => {
+          const p = profiles[i]?.data?.[0];
+          return {
+            user_id: id,
+            username: p?.username || 'Founder',
+            current_phase: p?.current_phase || null,
+          };
+        });
+        setFollowers(list);
+        setSelectedFollowerIds(new Set(ids));
+      } catch (error) {
+        console.error('Error loading followers:', error);
+        setFollowers([]);
+        setSelectedFollowerIds(new Set());
+      } finally {
+        setIsLoadingFollowers(false);
+      }
+    };
+    loadFollowers();
+  }, [venture]);
+
+  // [NEW — Followers project] Toggles one follower's checkbox.
+  const toggleFollower = (userId) => {
+    setSelectedFollowerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
   const handleLaunchCampaign = async () => {
     if (!requestsToUse || requestsToUse < 1 || !tagline.trim() || !venture) {
       alert("Please choose how many requests to send and provide a tagline.");
@@ -157,9 +237,12 @@ export default function InAppPromotion({ goBack }) {
 
       // ✅ [2026-01-11] FIX: Venture.list doesn't support limit param in your Entity.
       // Use supabase directly to fetch many ventures.
+      // [NEW — Followers project] Added created_by_id and founder_user_ids to
+      // the select — needed to match a selected follower (a user_id) back to
+      // the venture that belongs to them.
       const { data: allVentures, error: venturesErr } = await supabase
         .from("ventures")
-        .select("id,name,phase,landing_page_url,is_sample,created_date")
+        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,founder_user_ids")
         .order("created_date", { ascending: false })
         .limit(1000);
 
@@ -178,6 +261,19 @@ export default function InAppPromotion({ goBack }) {
         setIsSubmitting(false);
         return;
       }
+
+      // [NEW — Followers project] Which of these ventures belong to a
+      // follower the founder has checked — matched by created_by_id or by
+      // being listed as a co-founder (founder_user_ids).
+      const selectedFollowerIdSet = selectedFollowerIds;
+      const followerVentureIds = new Set(
+        targetVentures
+          .filter((v) =>
+            selectedFollowerIdSet.has(v.created_by_id) ||
+            (Array.isArray(v.founder_user_ids) && v.founder_user_ids.some((id) => selectedFollowerIdSet.has(id)))
+          )
+          .map((v) => v.id)
+      );
 
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -210,9 +306,21 @@ export default function InAppPromotion({ goBack }) {
       // [FIX 020826] actualAudienceSize is still tracked internally (useful for
       // future success-rate measurement, Part E.5) but — per Part E.3 — is
       // never shown to the founder anywhere in this file's UI.
+      // [NEW — Followers project] Checked followers' ventures (that are
+      // still eligible under the weekly cap) go first; the rest of the
+      // requested amount is filled randomly from the remaining eligible
+      // pool, exactly as it worked before this change.
+      const eligibleFollowerVentures = eligibleVentures.filter((v) => followerVentureIds.has(v.id));
+      const eligibleRandomPool = eligibleVentures.filter((v) => !followerVentureIds.has(v.id));
+
       const actualAudienceSize = Math.min(requestsToUse, eligibleVentures.length);
-      const shuffled = [...eligibleVentures].sort(() => 0.5 - Math.random());
-      const selectedTargets = shuffled.slice(0, actualAudienceSize);
+      const priorityCount = Math.min(eligibleFollowerVentures.length, actualAudienceSize);
+      const remainingCount = actualAudienceSize - priorityCount;
+      const shuffledRandomPool = [...eligibleRandomPool].sort(() => 0.5 - Math.random());
+      const selectedTargets = [
+        ...eligibleFollowerVentures.slice(0, priorityCount),
+        ...shuffledRandomPool.slice(0, remainingCount),
+      ];
 
       // [FIX] Use supabase directly with a generated id — PromotionCampaign.create()
 // does not auto-generate id, causing not-null constraint violation.
@@ -443,6 +551,44 @@ if (campaignErr) throw campaignErr;
                 </p>
               </div>
 
+              {/* [NEW — Followers project] Only shown when this venture has
+                  followers. All checked by default; unchecking one excludes
+                  them from the priority group for this round only — doesn't
+                  affect who follows the venture. */}
+              {followers.length > 0 && (
+                <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-5">
+                  <h4 className="font-semibold text-indigo-900 mb-1 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Send to your followers first
+                  </h4>
+                  <p className="text-xs text-indigo-700 mb-3">
+                    Checked followers get this round's request first. If you ask for more than you have followers checked, the rest go out randomly as usual.
+                  </p>
+                  {isLoadingFollowers ? (
+                    <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-indigo-400" /></div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {followers.map((f) => (
+                        <label key={f.user_id} className="flex items-center gap-2.5 text-sm text-gray-800 bg-white rounded-lg px-3 py-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={selectedFollowerIds.has(f.user_id)}
+                            onChange={() => toggleFollower(f.user_id)}
+                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="font-medium">{f.username}</span>
+                          {getJourneyTag(f.current_phase) && (
+                            <span className="ml-auto text-xs text-indigo-600 border border-indigo-200 rounded-full px-2 py-0.5">
+                              {getJourneyTag(f.current_phase)}
+                            </span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
               <div>
                 <Label htmlFor="tagline">Brief Name *</Label>
@@ -495,5 +641,4 @@ if (campaignErr) throw campaignErr;
     </div>
   );
 }
-
 
