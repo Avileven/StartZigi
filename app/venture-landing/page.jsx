@@ -271,6 +271,12 @@ export default function VentureLanding() {
   // visitor on this page (currentUser), not a token-invited anonymous one
   // (invitedIdentity only) — there's no account to later invite.
   const [wantsToFollow, setWantsToFollow] = useState(false);
+  // [NEW — Followers fix] Whether this visitor already follows this
+  // venture (checked once venture + currentUser are known, see the
+  // checkAbuseGuards effect below). When true, both feedback forms show
+  // "You already follow this venture" instead of asking again, and the
+  // follow-insert/notification is skipped on submit.
+  const [isAlreadyFollowing, setIsAlreadyFollowing] = useState(false);
   const [isSubmittingMlpFeedback, setIsSubmittingMlpFeedback] = useState(false);
   const [mlpFeedbackSubmitted, setMlpFeedbackSubmitted] = useState(false);
   // [ADDED 020826] Insight Credits project, step 2.
@@ -484,6 +490,19 @@ export default function VentureLanding() {
         ? (venture.created_by_id === currentUser.id || founderIds.includes(currentUser.id))
         : (venture.created_by === invitedIdentity.email);
       setIsOwnVenture(isOwner);
+
+      // [NEW — Followers fix] Only a real logged-in visitor has a user_id
+      // to check against venture_followers; a token-invited anonymous
+      // reviewer has no account, so it can't have followed before.
+      if (currentUser) {
+        const { count: followCount } = await supabase
+          .from('venture_followers')
+          .select('id', { count: 'exact', head: true })
+          .eq('venture_id', venture.id)
+          .eq('user_id', currentUser.id);
+        setIsAlreadyFollowing((followCount || 0) > 0);
+      }
+
       if (isOwner) return;
 
       // [FIX 020826] Duplicate feedback: now scoped by campaign_id, not
@@ -573,7 +592,10 @@ export default function VentureLanding() {
 
       // [ADDED 020826] Follower — same fire-and-forget pattern as
       // venture-feedback/page.jsx. Only for a real logged-in visitor.
-      if (wantsToFollow && currentUser) {
+      // [FIX — Followers] Skip entirely if already following — nothing to
+      // insert (would just hit the 23505 duplicate guard below anyway) and
+      // no reason to send the founder another "New Follower!" notification.
+      if (wantsToFollow && currentUser && !isAlreadyFollowing) {
         supabase.from('venture_followers').insert({
           venture_id: venture.id,
           user_id: currentUser.id,
@@ -671,7 +693,9 @@ export default function VentureLanding() {
       setGrowthFeedbackSubmitted(true);
 
       // Follower — identical pattern to the MLP handler above.
-      if (wantsToFollowGrowth && currentUser) {
+      // [FIX — Followers] Same skip as the MLP handler: already following
+      // means no new insert and no duplicate "New Follower!" notification.
+      if (wantsToFollowGrowth && currentUser && !isAlreadyFollowing) {
         supabase.from('venture_followers').insert({
           venture_id: venture.id,
           user_id: currentUser.id,
@@ -938,20 +962,29 @@ export default function VentureLanding() {
                           token-invited anonymous reviewer has no account to
                           later invite. Always unchecked by default. */}
                       {currentUser && (
-                        <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
-                          <input
-                            type="checkbox"
-                            checked={wantsToFollow}
-                            onChange={(e) => setWantsToFollow(e.target.checked)}
-                            disabled={isSubmittingMlpFeedback}
-                            className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <span>
-                            <span className="font-medium text-gray-800">Become a Follower</span>
-                            <br />
-                            <span className="text-xs text-gray-400">Get invited to future feedback rounds or Beta testing.</span>
-                          </span>
-                        </label>
+                        isAlreadyFollowing ? (
+                          // [NEW — Followers fix] Already following: say so
+                          // instead of asking the same opt-in question again.
+                          <div className="flex items-start gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg p-3 bg-gray-50">
+                            <CheckCircle className="w-4 h-4 mt-0.5 text-indigo-600" />
+                            <span className="font-medium text-gray-800">You already follow this venture</span>
+                          </div>
+                        ) : (
+                          <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                            <input
+                              type="checkbox"
+                              checked={wantsToFollow}
+                              onChange={(e) => setWantsToFollow(e.target.checked)}
+                              disabled={isSubmittingMlpFeedback}
+                              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>
+                              <span className="font-medium text-gray-800">Become a Follower</span>
+                              <br />
+                              <span className="text-xs text-gray-400">Get invited to future feedback rounds or Beta testing.</span>
+                            </span>
+                          </label>
+                        )
                       )}
                       <div>
                         <Label htmlFor="mlp-feedback">Anything specific you want to add? (optional)</Label>
@@ -1397,20 +1430,29 @@ export default function VentureLanding() {
                       </div>
 
                       {currentUser && (
-                        <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
-                          <input
-                            type="checkbox"
-                            checked={wantsToFollowGrowth}
-                            onChange={(e) => setWantsToFollowGrowth(e.target.checked)}
-                            disabled={isSubmittingGrowthFeedback}
-                            className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <span>
-                            <span className="font-medium text-gray-800">Become a Follower</span>
-                            <br />
-                            <span className="text-xs text-gray-400">Get invited to future feedback rounds.</span>
-                          </span>
-                        </label>
+                        isAlreadyFollowing ? (
+                          // [NEW — Followers fix] Already following: say so
+                          // instead of asking the same opt-in question again.
+                          <div className="flex items-start gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg p-3 bg-gray-50">
+                            <CheckCircle className="w-4 h-4 mt-0.5 text-indigo-600" />
+                            <span className="font-medium text-gray-800">You already follow this venture</span>
+                          </div>
+                        ) : (
+                          <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                            <input
+                              type="checkbox"
+                              checked={wantsToFollowGrowth}
+                              onChange={(e) => setWantsToFollowGrowth(e.target.checked)}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>
+                              <span className="font-medium text-gray-800">Become a Follower</span>
+                              <br />
+                              <span className="text-xs text-gray-400">Get invited to future feedback rounds.</span>
+                            </span>
+                          </label>
+                        )
                       )}
 
                       {/* [FIX] Only require visitedProduct when there's a
