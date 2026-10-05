@@ -711,12 +711,19 @@ export default function VentureLanding() {
         : "Part of your written feedback was not saved because it wasn't clear. Your ratings were saved.");
     }
     let credits = null;
+    // Saved on the feedback row (column quality_analysis) for the venture owner
+    // / admin — NOT shown to the giver.
+    const analysis = { text_verdicts: verdicts, dropped_fields: [...dropped], score: null, parts: null, credits: null };
     if (currentUser) {
       const kept = items.filter((it) => !dropped.has(it.key));
       const result = await computeFeedbackCredits({ userId: currentUser.id, ratings, items: kept, verdicts });
       credits = result.credits;
+      analysis.score = Number(result.score.toFixed(3));
+      analysis.parts = result.parts;
+      analysis.credits = credits;
     }
-    return { needsRewrite: false, dropped, credits };
+    console.log('[Feedback quality]', analysis);
+    return { needsRewrite: false, dropped, credits, analysis };
   };
 
   const handleMlpFeedbackSubmit = async (e) => {
@@ -759,6 +766,7 @@ export default function VentureLanding() {
         pricing_note: pricingScore !== null && pricingScore < PRICING_SCORE_THRESHOLD ? (mlpKeep('pricing_note', pricingNote.trim()) || null) : null,
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
+        quality_analysis: mlpQuality.analysis,
       });
       if (insertError) throw insertError;
       setMlpFeedbackSubmitted(true);
@@ -895,6 +903,7 @@ export default function VentureLanding() {
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
         campaign_id: campaignId || null,
+        quality_analysis: growthQuality.analysis,
       });
       if (insertError) throw insertError;
       setGrowthFeedbackSubmitted(true);
