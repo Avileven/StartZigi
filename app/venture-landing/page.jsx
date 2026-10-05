@@ -184,10 +184,25 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
 // the Growth AI pipeline): the AI only CLASSIFIES free text; every score
 // and credit amount is computed in CODE.
 //
-// Credit range is in the same units as the old flat award (which was 3).
-// An "average" quality submission (score 0.5) lands on 3. Change here only.
-const INSIGHT_CREDITS_MIN = 1;
-const INSIGHT_CREDITS_MAX = 5;
+// Credits are "Zigback": 1 Zigback = 1 feedback request. Whole numbers only
+// (the DB column and RPCs are integers), range 0..3 per feedback.
+// Change here only.
+const INSIGHT_CREDITS_MIN = 0;
+const INSIGHT_CREDITS_MAX = 3;
+
+// Human-readable names of the free-text fields, used when asking the giver to rephrase.
+const FQ_FIELD_LABELS = {
+  business_model_note: 'Business Model note',
+  core_features_note: 'Core Features note',
+  value_prop_note: 'Slogan note',
+  product_definition_note: 'Product Definition note',
+  product_match_diff_text: '"What was different?"',
+  testimonial_text: 'Testimonial',
+  custom_question_answer: "your answer to the founder's question",
+  final_change_text: '"One Last Thing"',
+  feedback_text: 'Your feedback',
+  pricing_note: 'Pricing note',
+};
 const LOW_SCORE_THRESHOLD_FOR_EXPLANATION = 6; // same convention as the forms
 
 const FQ_URL_REGEX = /(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|io|co|net|org|app|ai|dev|xyz|me|il)\b)/i;
@@ -701,7 +716,8 @@ export default function VentureLanding() {
     const hasNonsense = flagged.some((it) => verdicts[it.key] === 'nonsense');
     if (hasNonsense && !textWarnedRef.current) {
       textWarnedRef.current = true;
-      return { needsRewrite: true };
+      const names = flagged.filter((it) => verdicts[it.key] === 'nonsense').map((it) => FQ_FIELD_LABELS[it.key] || it.key);
+      return { needsRewrite: true, fieldNames: names };
     }
     const dropped = new Set(flagged.map((it) => it.key));
     if (flagged.length > 0) {
@@ -739,7 +755,7 @@ export default function VentureLanding() {
       ];
       const mlpQuality = await runFeedbackQualityGate(mlpItems, [featuresRating, lookFeelRating, uxRating, pricingScore]);
       if (mlpQuality.needsRewrite) {
-        alert("Some of your written feedback isn't clear. Please rephrase it, or leave it empty, and submit again.");
+        alert(`This part of your feedback isn't clear: ${mlpQuality.fieldNames.join(', ')}. Please rephrase it, or leave it empty, and submit again.`);
         setIsSubmittingMlpFeedback(false);
         return;
       }
@@ -808,8 +824,9 @@ export default function VentureLanding() {
       // only, currentUser null) have no profile to credit.
       if (currentUser) {
         // [NEW — Feedback quality] variable amount instead of the flat 3.
-        const mlpCredits = mlpQuality.credits ?? 3;
-        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: mlpCredits })
+        // 0 Zigback = nothing to award and no "earned" animation.
+        const mlpCredits = mlpQuality.credits ?? 0;
+        if (mlpCredits > 0) supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: mlpCredits })
           .then(() => { setEarnedCredits(mlpCredits); setShowInsightAnimation(true); })
           .catch((err) => console.error('Could not award Insight Credits:', err));
       }
@@ -870,7 +887,7 @@ export default function VentureLanding() {
       ];
       const growthQuality = await runFeedbackQualityGate(growthItems, growthRatings);
       if (growthQuality.needsRewrite) {
-        alert("Some of your written feedback isn't clear. Please rephrase it, or leave it empty, and submit again.");
+        alert(`This part of your feedback isn't clear: ${growthQuality.fieldNames.join(', ')}. Please rephrase it, or leave it empty, and submit again.`);
         setIsSubmittingGrowthFeedback(false);
         return;
       }
@@ -938,8 +955,9 @@ export default function VentureLanding() {
       // Insight Credits — identical pattern to the MLP handler above.
       if (currentUser) {
         // [NEW — Feedback quality] variable amount instead of the flat 3.
-        const growthCredits = growthQuality.credits ?? 3;
-        supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: growthCredits })
+        // 0 Zigback = nothing to award and no "earned" animation.
+        const growthCredits = growthQuality.credits ?? 0;
+        if (growthCredits > 0) supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: growthCredits })
           .then(() => { setEarnedCredits(growthCredits); setShowInsightAnimation(true); })
           .catch((err) => console.error('Could not award Insight Credits:', err));
       }
@@ -1798,9 +1816,9 @@ export default function VentureLanding() {
 
         </main>
       </div>
-      {showInsightAnimation && earnedCredits !== null && (
+      {showInsightAnimation && earnedCredits === INSIGHT_CREDITS_MAX && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[10000] bg-white border border-amber-300 text-amber-700 font-semibold rounded-full px-5 py-2 shadow-lg">
-          +{earnedCredits} Insight Credits earned
+          Great job on your feedback! You earned {earnedCredits} Zigback.
         </div>
       )}
       {showInsightAnimation && (

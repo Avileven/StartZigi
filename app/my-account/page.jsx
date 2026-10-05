@@ -458,11 +458,11 @@ export default function MyAccount() {
             <span className="text-4xl font-bold text-gray-900">{profile?.insight_credits || 0}</span>
             <span className="text-gray-500 text-lg mb-1">available</span>
           </div>
-          <p className="text-xs text-gray-400">Earned by giving feedback to other founders — 3 credits per feedback given.</p>
+          <p className="text-xs text-gray-400">Earned by giving feedback to other founders — the better your feedback, the more you earn (up to 3 per feedback).</p>
 
           {venture && (
             <div className="pt-3 border-t border-gray-100 space-y-2">
-              <p className="text-sm font-medium text-gray-700">Convert to feedback requests <span className="text-gray-400 font-normal">(1 credit = 3 requests)</span></p>
+              <p className="text-sm font-medium text-gray-700">Convert to feedback requests <span className="text-gray-400 font-normal">(1 credit = 1 request)</span></p>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -473,7 +473,7 @@ export default function MyAccount() {
                   className="w-24"
                   disabled={isConverting}
                 />
-                <span className="text-sm text-gray-400">credits → {creditsToConvert * 3} requests</span>
+                <span className="text-sm text-gray-400">credits → {creditsToConvert} requests</span>
                 <Button
                   onClick={handleConvertCredits}
                   disabled={isConverting || !profile?.insight_credits || creditsToConvert > (profile?.insight_credits || 0)}
