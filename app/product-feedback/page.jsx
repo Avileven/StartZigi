@@ -252,6 +252,132 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   );
 }
 
+// [NEW — Community & Reach panel] Four visual tiles for the Growth view:
+// followers (count + growth), requests sent vs responded, feedback quality
+// mix, and the Feedback Request Pool. All numbers are passed in, computed in
+// code from data the page already loads — nothing here calls an AI.
+function ReachRing({ pct, color, size = 96, stroke = 10, children }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c - (c * clamped) / 100}
+        />
+      </svg>
+      <div className="flex flex-col items-center leading-tight">{children}</div>
+    </div>
+  );
+}
+
+function CommunityReachPanel({ followerCount, followerNewThisMonth, followerMonthly, sentCount, respondedCount, qualityMix, poolRemaining, poolUsed }) {
+  const maxMonthly = Math.max(1, ...followerMonthly.map(m => m.total));
+  const responseRate = sentCount > 0 ? Math.round((respondedCount / sentCount) * 100) : null;
+  const qualityTotal = qualityMix ? qualityMix.high + qualityMix.normal + qualityMix.low + qualityMix.unscored : 0;
+  const poolTotal = poolRemaining + poolUsed;
+  const tileCls = 'rounded-2xl p-5 flex flex-col gap-3';
+  return (
+    <div className="rounded-[24px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
+      <div className="rounded-[22px] bg-white p-6 sm:p-8">
+        <span
+          className="text-base font-extrabold block mb-4"
+          style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+        >
+          Community &amp; Reach
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+
+          {/* Followers */}
+          <div className={tileCls} style={{ background: '#EEF2FF', border: '2px solid #6366F1' }}>
+            <span className="text-sm font-bold text-gray-700">Followers</span>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-4xl font-extrabold text-gray-900">{followerCount}</span>
+              {followerNewThisMonth > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ color: '#16A34A', background: '#DCFCE7' }}>
+                  ▲ {followerNewThisMonth} this month
+                </span>
+              )}
+            </div>
+            <div className="flex items-end gap-1.5" style={{ height: 56 }}>
+              {followerMonthly.map((m) => (
+                <div key={m.key} className="flex-1 h-full flex flex-col justify-end items-center min-w-0">
+                  <div className="w-full rounded-t-md" style={{ height: `${Math.max(8, (m.total / maxMonthly) * 100)}%`, background: '#6366F1', opacity: m.isCurrent ? 1 : 0.55 }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-1.5">
+              {followerMonthly.map((m) => (
+                <span key={m.key} className="flex-1 text-center text-[10px] text-gray-400 truncate">{m.label}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Requests sent vs responded */}
+          <div className={tileCls} style={{ background: '#FFF7ED', border: '2px solid #F59E0B' }}>
+            <span className="text-sm font-bold text-gray-700">Requests &amp; Responses</span>
+            {sentCount > 0 ? (
+              <div className="flex items-center gap-4">
+                <ReachRing pct={responseRate} color="#F59E0B">
+                  <span className="text-xl font-extrabold text-gray-900">{responseRate}%</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">responded</span>
+                </ReachRing>
+                <div className="text-sm text-gray-600 leading-snug">
+                  <p><span className="font-extrabold text-gray-900 text-lg">{respondedCount}</span> of <span className="font-bold">{sentCount}</span> reviewers</p>
+                  <p className="text-xs text-gray-400 mt-1">gave feedback on your briefs</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">Launch a brief to see how many reviewers respond.</p>
+            )}
+          </div>
+
+          {/* Feedback quality mix */}
+          <div className={tileCls} style={{ background: '#ECFDF5', border: '2px solid #10B981' }}>
+            <span className="text-sm font-bold text-gray-700">Feedback quality</span>
+            {qualityMix && qualityTotal > 0 ? (
+              <>
+                <div className="flex w-full h-4 rounded-full overflow-hidden bg-gray-100">
+                  {qualityMix.high > 0 && <div style={{ width: `${(qualityMix.high / qualityTotal) * 100}%`, background: '#10B981' }} />}
+                  {qualityMix.normal > 0 && <div style={{ width: `${(qualityMix.normal / qualityTotal) * 100}%`, background: '#6EE7B7' }} />}
+                  {qualityMix.low > 0 && <div style={{ width: `${(qualityMix.low / qualityTotal) * 100}%`, background: '#FCD34D' }} />}
+                  {qualityMix.unscored > 0 && <div style={{ width: `${(qualityMix.unscored / qualityTotal) * 100}%`, background: '#D1D5DB' }} />}
+                </div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
+                  <span><span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: '#10B981' }} />High · <b>{qualityMix.high}</b></span>
+                  <span><span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: '#6EE7B7' }} />Standard · <b>{qualityMix.normal}</b></span>
+                  <span><span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: '#FCD34D' }} />Light · <b>{qualityMix.low}</b></span>
+                  {qualityMix.unscored > 0 && <span><span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: '#D1D5DB' }} />Earlier · <b>{qualityMix.unscored}</b></span>}
+                </div>
+                <p className="text-[11px] text-gray-400">Based on each reviewer's experience and how detailed their answers were.</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400">Quality shows up as new feedback arrives.</p>
+            )}
+          </div>
+
+          {/* Feedback Request Pool */}
+          <div className={tileCls} style={{ background: '#FDF2F8', border: '2px solid #EC4899' }}>
+            <span className="text-sm font-bold text-gray-700">Feedback requests</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold text-gray-900">{poolRemaining}</span>
+              <span className="text-sm text-gray-400">left{poolUsed > 0 ? ` · ${poolUsed} used` : ''}</span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${poolTotal > 0 ? (poolRemaining / poolTotal) * 100 : 0}%`, background: 'linear-gradient(90deg, #EC4899, #F59E0B)' }} />
+            </div>
+            <p className="text-[11px] text-gray-400">Earn more by giving feedback to other founders.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FounderHoverCard({ founderId, name, profile }) {
   if (!founderId || !name) {
     // No attribution available (e.g. legacy feedback given before the
@@ -525,7 +651,7 @@ export default function ProductFeedbackPage() {
           // venture_followers/growth_feedback above.
           const { data: campaignRows } = await supabase
             .from('promotion_campaigns')
-            .select('id, tagline, created_date')
+            .select('id, tagline, created_date, audience_size, cost')
             .eq('venture_id', currentVenture.id);
           const campaignMap = {};
           (campaignRows || []).forEach(c => { campaignMap[c.id] = c; });
@@ -1868,6 +1994,69 @@ export default function ProductFeedbackPage() {
                     </div>
                   </div>
                   </div>
+                );
+              })()}
+
+              {/* [NEW — Community & Reach] Followers, requests vs responses,
+                  feedback quality mix and the request pool, as one visual
+                  panel in the same frame as the sections above. */}
+              {(() => {
+                const now = new Date();
+                const followerMonthly = [];
+                for (let i = 5; i >= 0; i--) {
+                  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                  const next = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+                  followerMonthly.push({
+                    key: `${d.getFullYear()}-${d.getMonth()}`,
+                    label: d.toLocaleString('en-US', { month: 'short' }),
+                    isCurrent: i === 0,
+                    total: followers.filter(f => f.created_date && new Date(f.created_date) < next).length,
+                  });
+                }
+                const followerNewThisMonth = followers.filter(f => f.created_date && new Date(f.created_date) >= new Date(now.getFullYear(), now.getMonth(), 1)).length;
+
+                // Growth campaigns = ones that already received Growth feedback, plus any
+                // campaign created since the first of those (so a brief with 0 responses
+                // still counts as sent). Earlier-phase campaigns are left out.
+                const growthCampaignIds = new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean));
+                const firstGrowthCampaignDate = Array.from(growthCampaignIds)
+                  .map(id => campaignsById[id]?.created_date)
+                  .filter(Boolean)
+                  .sort((a, b) => new Date(a) - new Date(b))[0];
+                const campaignsInView = Object.values(campaignsById).filter(c => {
+                  if (!growthViewAll) return c.id === effectiveGrowthCampaignId;
+                  return growthCampaignIds.has(c.id) || (firstGrowthCampaignDate && new Date(c.created_date) >= new Date(firstGrowthCampaignDate));
+                });
+                const sentCount = campaignsInView.reduce((a, c) => a + (Number(c.audience_size) || Number(c.cost) || 0), 0);
+                const campaignIdsInView = new Set(campaignsInView.map(c => c.id));
+                const respondedCount = growthFilteredFeedbacks.filter(fb => fb.campaign_id && campaignIdsInView.has(fb.campaign_id)).length;
+
+                let qualityMix = null;
+                if (growthHasQualityData) {
+                  qualityMix = { high: 0, normal: 0, low: 0, unscored: 0 };
+                  growthFilteredFeedbacks.forEach(fb => {
+                    const sc = fb.quality_analysis ? fb.quality_analysis.score : null;
+                    if (typeof sc !== 'number') qualityMix.unscored += 1;
+                    else if (sc >= 0.6) qualityMix.high += 1;
+                    else if (sc < 0.3) qualityMix.low += 1;
+                    else qualityMix.normal += 1;
+                  });
+                }
+
+                const poolRemaining = venture?.feedback_request_pool ?? 20;
+                const poolUsed = Object.values(campaignsById).reduce((a, c) => a + (Number(c.cost) || 0), 0);
+
+                return (
+                  <CommunityReachPanel
+                    followerCount={followers.length}
+                    followerNewThisMonth={followerNewThisMonth}
+                    followerMonthly={followerMonthly}
+                    sentCount={sentCount}
+                    respondedCount={respondedCount}
+                    qualityMix={qualityMix}
+                    poolRemaining={poolRemaining}
+                    poolUsed={poolUsed}
+                  />
                 );
               })()}
 
