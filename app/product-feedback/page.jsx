@@ -420,6 +420,10 @@ export default function ProductFeedbackPage() {
   // one more click past the recommended changes, per explicit feedback
   // that showing everything at once was too much data to act on.
   const [showGrowthEvidence, setShowGrowthEvidence] = useState(false);
+  // [NEW — Quality-weighted view] Off by default: the founder sees the plain
+  // averages first, and can switch the 4 Insight Metrics cards to a view
+  // weighted by feedback quality (growth_feedback.quality_analysis.score).
+  const [showWeightedGrowth, setShowWeightedGrowth] = useState(false);
   const [businessPlanData, setBusinessPlanData] = useState(null);
 
   // [ADDED 020826] username lookup cache + currently-open profile preview
@@ -800,19 +804,37 @@ export default function ProductFeedbackPage() {
     return 'Elite';
   };
 
+  // [NEW — Quality-weighted view] Weight of one feedback row: 0.5 to 1.5,
+  // from the quality score saved at submission time (0..1). Rows without a
+  // saved score (older feedback, anonymous reviewers) count normally (1).
+  const growthQualityWeight = (fb) => {
+    const sc = fb && fb.quality_analysis ? fb.quality_analysis.score : null;
+    if (typeof sc !== 'number' || Number.isNaN(sc)) return 1;
+    return 0.5 + Math.max(0, Math.min(1, sc));
+  };
+
   // [FIX — Growth AI] Also returns `signal` per category (satisfactionLevel
   // above) alongside the existing `value`/`count`.
-  const computeGrowthAverages = (feedbackArr) => {
+  // [NEW] Optional `weighted` flag: when true, `value` is a quality-weighted
+  // average. Every existing caller passes nothing and gets the plain average
+  // exactly as before.
+  const computeGrowthAverages = (feedbackArr, weighted = false) => {
     const withRatings = feedbackArr.filter(fb =>
       fb.business_model_rating != null || fb.core_features_rating != null ||
       fb.value_prop_rating != null || fb.product_definition_rating != null
     );
     if (withRatings.length === 0) return null;
     const statsFor = (key) => {
-      const vals = withRatings.map(fb => fb[key]).filter(v => v != null);
-      if (vals.length === 0) return { value: null, count: 0, signal: null };
-      const value = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-      return { value, count: vals.length, signal: satisfactionLevel(value) };
+      const rows = withRatings.filter(fb => fb[key] != null);
+      if (rows.length === 0) return { value: null, count: 0, signal: null };
+      let value;
+      if (weighted) {
+        const totalWeight = rows.reduce((a, fb) => a + growthQualityWeight(fb), 0);
+        value = (rows.reduce((a, fb) => a + fb[key] * growthQualityWeight(fb), 0) / totalWeight).toFixed(1);
+      } else {
+        value = (rows.reduce((a, fb) => a + fb[key], 0) / rows.length).toFixed(1);
+      }
+      return { value, count: rows.length, signal: satisfactionLevel(value) };
     };
     return {
       businessModel: statsFor('business_model_rating'),
@@ -1590,7 +1612,8 @@ export default function ProductFeedbackPage() {
             ? growthFeedbacks
             : growthFeedbacks.filter(fb => (fb.campaign_id || '__direct__') === effectiveGrowthCampaignId);
 
-          const growthStats = computeGrowthAverages(growthFilteredFeedbacks);
+          const growthHasQualityData = growthFilteredFeedbacks.some(fb => fb.quality_analysis && typeof fb.quality_analysis.score === 'number');
+          const growthStats = computeGrowthAverages(growthFilteredFeedbacks, showWeightedGrowth && growthHasQualityData);
 
           const qualQuestions = [
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
@@ -1711,12 +1734,30 @@ export default function ProductFeedbackPage() {
                   <div className="rounded-[26px] bg-white p-6 sm:p-8">
                     {/* [NEW — per explicit feedback] Matches "Overall Product
                         Satisfaction" below (same font/size/gradient style). */}
-                    <span
-                      className="text-base font-extrabold block mb-3"
-                      style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-                    >
-                      Insight Metrics
-                    </span>
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                      <span
+                        className="text-base font-extrabold"
+                        style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                      >
+                        Insight Metrics
+                      </span>
+                      {/* [NEW — Quality-weighted view] Only offered when at least one
+                          response in this view carries a quality score. */}
+                      {growthHasQualityData && (
+                        <button
+                          type="button"
+                          onClick={() => setShowWeightedGrowth(v => !v)}
+                          className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${showWeightedGrowth ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-indigo-600 border-indigo-300 hover:bg-indigo-50'}`}
+                        >
+                          {showWeightedGrowth ? 'Weighted by feedback quality' : 'Weight by feedback quality'}
+                        </button>
+                      )}
+                    </div>
+                    {growthHasQualityData && showWeightedGrowth && (
+                      <p className="text-xs text-gray-500 mb-3">
+                        Weighted view: feedback from reviewers who gave detailed, thoughtful answers and have more experience on StartZig counts for more, and minimal or one-note feedback counts for less. Feedback without a quality score counts as usual. The number of responses stays the same.
+                      </p>
+                    )}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
                       <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={growthStats.businessModel.signal} />
                       <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
