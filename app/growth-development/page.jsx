@@ -379,6 +379,28 @@ export default function GrowthDevelopment() {
         await Venture.update(targetVenture.id, { name: growthData.name.trim() });
       }
       await Venture.update(targetVenture.id, { growth_data: growthData });
+      // [DIAGNOSTIC — save verification] Read the venture back and compare the
+      // fields that were reported as not saving. Shows a red toast naming any
+      // field whose stored value differs from what was just sent.
+      try {
+        const saved = await Venture.get(targetVenture.id);
+        const same = (a, b) => {
+          if (a === b) return true;
+          if (typeof a !== 'object' || typeof b !== 'object' || !a || !b) return false;
+          const ka = Object.keys(a), kb = Object.keys(b);
+          return ka.length === kb.length && ka.every((k) => same(a[k], b[k]));
+        };
+        const checkFields = ['custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description'];
+        const mismatched = checkFields.filter((f) => !same((saved.growth_data || {})[f] ?? '', growthData[f] ?? ''));
+        if (mismatched.length > 0) {
+          console.error('[Save verification] NOT saved:', mismatched, { sent: growthData, stored: saved.growth_data });
+          showToast('Not saved: ' + mismatched.join(', '), 'error');
+          setIsSaving(false);
+          return;
+        }
+      } catch (verifyErr) {
+        console.error('[Save verification] could not read back:', verifyErr);
+      }
       // [FIX — real gap, caught after the fact] This is the primary path
       // this whole feature exists for (someone with an existing product
       // coming straight to Growth), and it was the ONE path that never
