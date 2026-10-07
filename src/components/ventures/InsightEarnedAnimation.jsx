@@ -1,64 +1,72 @@
 "use client";
-// [ADDED 020826] Insight Credits project, step 2 — fires when a logged-in
-// founder successfully submits feedback (MVP or MLP). Deliberately matches
-// StageUnlockAnimation.jsx's visual language (a ring fills in around a
-// short label) so the two feel like the same reward system, not two
-// different UI patterns. Unlike StageUnlockAnimation, this shows no number
-// and no running total — per this session's decision, the balance itself
-// belongs in My Account, not in this confirmation moment. Auto-dismisses
-// after ~4 seconds (shorter than the 10s stage animation — this fires far
-// more often, once per feedback submission, so it needs to be quick and
-// unobtrusive, not a big moment).
+// [REPLACED — Zigback] Shown after a logged-in reviewer submits feedback.
+// The ZigBack logo builds itself ("Zig" first, then "Back"), then a thank-you
+// message shows how many Zigback were earned and stays until the reviewer
+// clicks Continue. The logo is ONE transparent PNG (public/zigback-logo.png)
+// shown through two clipped layers, cut in the empty gap between "g" and "B".
 import React, { useEffect, useState } from "react";
 
-const INSIGHT_COLOR = "#EF9F27";
-const CIRCUMFERENCE = 2 * Math.PI * 52; // r=52, matches the SVG circle below
+const LOGO_SRC = "/zigback-logo.png";
+const CUT = 43.3; // % of the image width where "Zig" ends and "Back" begins
 
-export default function InsightEarnedAnimation({ onComplete, displayMs = 4000 }) {
-  const [dashoffset, setDashoffset] = useState(CIRCUMFERENCE);
+export default function InsightEarnedAnimation({ credits = 1, onComplete }) {
+  // 0 = nothing yet, 1 = "Zig" visible, 2 = "Back" visible, 3 = message visible
+  const [stage, setStage] = useState(0);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setDashoffset(0));
-    });
-    const timeout = setTimeout(() => {
-      onComplete?.();
-    }, displayMs);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(timeout);
-    };
-  }, [displayMs, onComplete]);
+    const t1 = setTimeout(() => setStage(1), 150);
+    const t2 = setTimeout(() => setStage(2), 750);
+    const t3 = setTimeout(() => setStage(3), 1700);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  const layer = (visible, clip, fromX) => ({
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    clipPath: clip,
+    WebkitClipPath: clip,
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateX(0)" : `translateX(${fromX}px)`,
+    transition: "opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)",
+  });
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm"
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-col items-center gap-3 bg-white rounded-2xl shadow-xl border border-gray-100 px-8 py-6 pointer-events-auto">
-        <div className="relative w-28 h-28 flex items-center justify-center">
-          <svg width="112" height="112" className="absolute top-0 left-0 -rotate-90">
-            <circle cx="56" cy="56" r="52" fill="none" stroke="#F1EFE8" strokeWidth="6" />
-            <circle
-              cx="56"
-              cy="56"
-              r="52"
-              fill="none"
-              stroke={INSIGHT_COLOR}
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={dashoffset}
-              style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(0.65, 0, 0.35, 1)" }}
-            />
-          </svg>
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wide">Earned</span>
-            <span className="text-lg font-medium" style={{ color: "#854F0B" }}>
-              Insight
-            </span>
+      <div className="flex flex-col items-center gap-6 px-6 text-center" style={{ maxWidth: 440 }}>
+        {/* Logo: aspect ratio of the cropped PNG is 672 x 180 */}
+        <div className="relative w-[260px] sm:w-[340px]" style={{ aspectRatio: "672 / 180" }}>
+          <img src={LOGO_SRC} alt="" aria-hidden="true" style={layer(stage >= 1, `inset(0 ${100 - CUT}% 0 0)`, -24)} />
+          <img src={LOGO_SRC} alt="ZigBack" style={layer(stage >= 2, `inset(0 0 0 ${CUT}%)`, 24)} />
+        </div>
+
+        <div
+          className="flex flex-col items-center gap-4"
+          style={{
+            opacity: stage >= 3 ? 1 : 0,
+            transform: stage >= 3 ? "translateY(0)" : "translateY(10px)",
+            transition: "opacity 0.5s ease, transform 0.5s ease",
+            pointerEvents: stage >= 3 ? "auto" : "none",
+          }}
+        >
+          <div>
+            <p className="text-xl font-bold text-gray-900">Thank you for your feedback!</p>
+            <p className="text-base text-gray-600 mt-1">
+              You earned <span className="font-extrabold" style={{ color: "#EF9F27" }}>{credits} Zigback</span>
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => onComplete?.()}
+            className="px-6 py-2 rounded-full text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          >
+            Continue
+          </button>
         </div>
       </div>
     </div>

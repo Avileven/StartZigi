@@ -185,9 +185,9 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
 // and credit amount is computed in CODE.
 //
 // Credits are "Zigback": 1 Zigback = 1 feedback request. Whole numbers only
-// (the DB column and RPCs are integers), range 0..3 per feedback.
+// (the DB column and RPCs are integers), range 1..3 per feedback.
 // Change here only.
-const INSIGHT_CREDITS_MIN = 0;
+const INSIGHT_CREDITS_MIN = 1;
 const INSIGHT_CREDITS_MAX = 3;
 
 // Human-readable names of the free-text fields, used when asking the giver to rephrase.
@@ -274,7 +274,7 @@ async function classifyFeedbackTexts(items) {
   return verdicts;
 }
 
-// All components 0..1. Weights: contribution 40%, differentiation/tenure/experience 20% each.
+// All components 0..1. Score = content effort (contribution 65% + differentiation 35%) x profile factor (0.7..1.0).
 async function computeFeedbackCredits({ userId, ratings, items, verdicts }) {
   // Giver's profile (tenure + past feedback count) — same RPC the hover cards use.
   let tenure = 0;
@@ -315,9 +315,13 @@ async function computeFeedbackCredits({ userId, ratings, items, verdicts }) {
   }
   contribution = Math.min(contribution, 1);
 
-  const score = 0.4 * contribution + 0.2 * differentiation + 0.2 * tenure + 0.2 * experience;
+  // The CONTENT of this feedback sets the score; the giver's profile (tenure + experience)
+  // only multiplies it (70%..100%). An empty feedback stays at the minimum even from a veteran.
+  const effort = 0.65 * contribution + 0.35 * differentiation;
+  const profile = (tenure + experience) / 2;
+  const score = effort * (0.7 + 0.3 * profile);
   const credits = Math.round(INSIGHT_CREDITS_MIN + score * (INSIGHT_CREDITS_MAX - INSIGHT_CREDITS_MIN));
-  return { score, credits, parts: { contribution, differentiation, tenure, experience } };
+  return { score, credits, parts: { contribution, differentiation, tenure, experience, effort, profile } };
 }
 
 export default function VentureLanding() {
@@ -824,8 +828,7 @@ export default function VentureLanding() {
       // only, currentUser null) have no profile to credit.
       if (currentUser) {
         // [NEW — Feedback quality] variable amount instead of the flat 3.
-        // 0 Zigback = nothing to award and no "earned" animation.
-        const mlpCredits = mlpQuality.credits ?? 0;
+                const mlpCredits = mlpQuality.credits ?? 0;
         if (mlpCredits > 0) supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: mlpCredits })
           .then(() => { setEarnedCredits(mlpCredits); setShowInsightAnimation(true); })
           .catch((err) => console.error('Could not award Insight Credits:', err));
@@ -955,8 +958,7 @@ export default function VentureLanding() {
       // Insight Credits — identical pattern to the MLP handler above.
       if (currentUser) {
         // [NEW — Feedback quality] variable amount instead of the flat 3.
-        // 0 Zigback = nothing to award and no "earned" animation.
-        const growthCredits = growthQuality.credits ?? 0;
+                const growthCredits = growthQuality.credits ?? 0;
         if (growthCredits > 0) supabase.rpc('increment_insight_credits', { p_user_id: currentUser.id, p_amount: growthCredits })
           .then(() => { setEarnedCredits(growthCredits); setShowInsightAnimation(true); })
           .catch((err) => console.error('Could not award Insight Credits:', err));
@@ -1816,13 +1818,8 @@ export default function VentureLanding() {
 
         </main>
       </div>
-      {showInsightAnimation && earnedCredits === INSIGHT_CREDITS_MAX && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[10000] bg-white border border-amber-300 text-amber-700 font-semibold rounded-full px-5 py-2 shadow-lg">
-          Great job on your feedback! You earned {earnedCredits} Zigback.
-        </div>
-      )}
       {showInsightAnimation && (
-        <InsightEarnedAnimation onComplete={() => { window.location.href = '/dashboard'; }} />
+        <InsightEarnedAnimation credits={earnedCredits ?? 1} onComplete={() => { window.location.href = '/dashboard'; }} />
       )}
     </>
   );
