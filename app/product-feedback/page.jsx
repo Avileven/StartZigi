@@ -281,23 +281,10 @@ function ReachRing({ segments, size = 104, stroke = 10, children }) {
   );
 }
 
-function CommunityReachPanel({ followerCount, sentCount, respondedCount, qualityMix, qualityAvg, poolRemaining, poolUsed }) {
-  // Response rate: more responses than requests sent (e.g. people who came via a direct
-  // link) shows as a full ring with "100%+" instead of a misleading plain 100%.
-  const rawRate = sentCount > 0 ? Math.round((respondedCount / sentCount) * 100) : null;
-  const responseRate = rawRate == null ? null : Math.min(100, rawRate);
-  const responseOver = rawRate != null && rawRate > 100;
-  // Quality: one word + one color, from the average quality of the scored feedback.
-  const qualityLevel = qualityAvg == null ? null
-    : qualityAvg >= 0.65 ? { word: 'High', color: '#10B981' }
-    : qualityAvg >= 0.45 ? { word: 'Good', color: '#84CC16' }
-    : qualityAvg >= 0.3 ? { word: 'Fair', color: '#F59E0B' }
-    : { word: 'Light', color: '#EF4444' };
-  const poolTotal = poolRemaining + poolUsed;
+function CommunityReachPanel({ followerCount, sentCount, respondedCount }) {
+  const fillPct = sentCount > 0 ? Math.min(100, (respondedCount / sentCount) * 100) : 0;
   const cell = 'flex flex-col items-center gap-2 text-center';
   const label = 'text-sm font-bold text-gray-700 leading-tight';
-  const num = 'text-2xl font-extrabold text-gray-900';
-  const sub = 'text-[10px] text-gray-400 uppercase tracking-wide';
   return (
     <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
       <div className="rounded-[26px] bg-white p-6 sm:p-8">
@@ -309,43 +296,24 @@ function CommunityReachPanel({ followerCount, sentCount, respondedCount, quality
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
 
+          {/* Followers — a plain number, no ring (it is not a part of anything). */}
           <div className={cell}>
-            <ReachRing segments={[{ pct: 100, color: '#6366F1' }]}>
-              <span className={num}>{followerCount}</span>
-            </ReachRing>
+            <div className="flex items-center justify-center" style={{ height: 104 }}>
+              <span className="text-5xl font-extrabold text-gray-900">{followerCount}</span>
+            </div>
             <span className={label}>Followers</span>
           </div>
 
-          <div className={cell}>
-            <ReachRing segments={[{ pct: responseRate ?? 0, color: '#F59E0B' }]}>
-              {responseRate != null ? (
-                <>
-                  <span className={num}>{responseRate}%{responseOver ? '+' : ''}</span>
-                  <span className={sub}>responded</span>
-                </>
+          {/* Responses — "received out of sent". The ring fills by exactly that fraction. */}
+          <div className={cell} title={sentCount > 0 ? `${respondedCount} responses from ${sentCount} requests sent` : ''}>
+            <ReachRing segments={[{ pct: fillPct, color: '#F59E0B' }]}>
+              {sentCount > 0 ? (
+                <span className="text-2xl font-extrabold text-gray-900">{respondedCount}/{sentCount}</span>
               ) : (
                 <span className="text-sm text-gray-300">—</span>
               )}
             </ReachRing>
             <span className={label}>Responses</span>
-          </div>
-
-          <div className={cell} title={qualityMix ? `${qualityMix.high} high · ${qualityMix.normal} standard · ${qualityMix.low} light${qualityMix.unscored ? ` · ${qualityMix.unscored} earlier (not scored)` : ''}` : ''}>
-            <ReachRing segments={qualityLevel ? [{ pct: qualityAvg * 100, color: qualityLevel.color }] : []}>
-              {qualityLevel ? (
-                <span className="text-xl font-extrabold" style={{ color: qualityLevel.color }}>{qualityLevel.word}</span>
-              ) : (
-                <span className="text-sm text-gray-300">—</span>
-              )}
-            </ReachRing>
-            <span className={label}>Feedback quality</span>
-          </div>
-
-          <div className={cell}>
-            <ReachRing segments={[{ pct: poolTotal > 0 ? (poolRemaining / poolTotal) * 100 : 0, color: '#EC4899' }]}>
-              <span className={num}>{poolRemaining}</span>
-            </ReachRing>
-            <span className={label}>Requests left</span>
           </div>
 
         </div>
@@ -1993,35 +1961,11 @@ export default function ProductFeedbackPage() {
                 const campaignIdsInView = new Set(campaignsInView.map(c => c.id));
                 const respondedCount = growthFilteredFeedbacks.filter(fb => fb.campaign_id && campaignIdsInView.has(fb.campaign_id)).length;
 
-                let qualityMix = null;
-                if (growthHasQualityData) {
-                  qualityMix = { high: 0, normal: 0, low: 0, unscored: 0 };
-                  growthFilteredFeedbacks.forEach(fb => {
-                    const sc = fb.quality_analysis ? fb.quality_analysis.score : null;
-                    if (typeof sc !== 'number') qualityMix.unscored += 1;
-                    else if (sc >= 0.6) qualityMix.high += 1;
-                    else if (sc < 0.3) qualityMix.low += 1;
-                    else qualityMix.normal += 1;
-                  });
-                }
-
-                const scoredScores = growthFilteredFeedbacks
-                  .map(fb => (fb.quality_analysis ? fb.quality_analysis.score : null))
-                  .filter(sc => typeof sc === 'number' && !Number.isNaN(sc));
-                const qualityAvg = scoredScores.length > 0 ? scoredScores.reduce((a, b) => a + b, 0) / scoredScores.length : null;
-
-                const poolRemaining = venture?.feedback_request_pool ?? 20;
-                const poolUsed = Object.values(campaignsById).reduce((a, c) => a + (Number(c.cost) || 0), 0);
-
                 return (
                   <CommunityReachPanel
                     followerCount={followers.length}
                     sentCount={sentCount}
                     respondedCount={respondedCount}
-                    qualityMix={qualityMix}
-                    qualityAvg={qualityAvg}
-                    poolRemaining={poolRemaining}
-                    poolUsed={poolUsed}
                   />
                 );
               })()}
