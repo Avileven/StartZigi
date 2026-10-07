@@ -190,6 +190,20 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
 const INSIGHT_CREDITS_MIN = 1;
 const INSIGHT_CREDITS_MAX = 3;
 
+// Zigback scoring knobs (see computeFeedbackCredits). Everything is tuned here.
+// Contribution points per kind of verified free text (total capped at 1):
+const FQ_POINTS_FEATURE = 0.5;        // answer to "What feature would add value?"
+const FQ_POINTS_EXPLANATION = 0.3;    // explanation of a rating below 6 (counted up to FQ_MAX_EXPLANATIONS times)
+const FQ_MAX_EXPLANATIONS = 2;
+const FQ_POINTS_OTHER = 0.2;          // any other real answer, incl. "One Last Thing"
+// Minimum text size for a bonus: [words, unique words]
+const FQ_MIN_FEATURE = [2, 2];        // short is fine for a feature idea ("dark mode")
+const FQ_MIN_DEFAULT = [4, 3];
+// Giver profile only scales the score between FQ_PROFILE_FLOOR and 1.0
+const FQ_PROFILE_FLOOR = 0.7;
+const FQ_TENURE_FULL_DAYS = 90;
+const FQ_EXPERIENCE_FULL_COUNT = 10;
+
 // Human-readable names of the free-text fields, used when asking the giver to rephrase.
 const FQ_FIELD_LABELS = {
   business_model_note: 'Business Model note',
@@ -218,7 +232,10 @@ const fqCodeVerdict = (text) => {
   return null;
 };
 
-const fqIsSubstantial = (text) => fqWords(text).length >= 4 && new Set(fqWords(text)).size >= 3;
+const fqIsSubstantial = (text, min = FQ_MIN_DEFAULT) => {
+  const w = fqWords(text);
+  return w.length >= min[0] && new Set(w).size >= min[1];
+};
 
 // items: [{ key, text, kind }] where kind = 'feature' | 'explanation' | 'other' | 'final'
 // Returns { [key]: 'ok' | 'nonsense' | 'offensive' | 'promo' | 'unverified' }
@@ -274,8 +291,12 @@ async function classifyFeedbackTexts(items) {
   return verdicts;
 }
 
-// All components 0..1. Score = content effort (contribution 65% + differentiation 35%) x profile factor (0.7..1.0).
-async function computeFeedbackCredits({ userId, ratings, items, verdicts }) {
+// Score (0..1) = contribution x profile factor.
+//  - contribution: effort shown in verified free text (feature idea > explaining a low rating > other real answers).
+//  - profile factor: giver's tenure + experience, scales between FQ_PROFILE_FLOOR and 1.0.
+// Ratings themselves are NOT scored (a sincere conservative rater giving all 7s is not penalized).
+// Honesty is enforced by the text verdicts: nonsense/offensive/promo never count.
+async function computeFeedbackCredits({ userId, items, verdicts }) {
   // Giver's profile (tenure + past feedback count) — same RPC the hover cards use.
   let tenure = 0;
   let experience = 0;
@@ -286,42 +307,32 @@ async function computeFeedbackCredits({ userId, ratings, items, verdicts }) {
       if (row) {
         if (row.joined_date) {
           const days = (Date.now() - new Date(row.joined_date).getTime()) / 86400000;
-          tenure = Math.max(0, Math.min(days / 90, 1));
+          tenure = Math.max(0, Math.min(days / FQ_TENURE_FULL_DAYS, 1));
         }
-        experience = Math.max(0, Math.min((Number(row.feedback_count) || 0) / 10, 1));
+        experience = Math.max(0, Math.min((Number(row.feedback_count) || 0) / FQ_EXPERIENCE_FULL_COUNT, 1));
       }
     } catch (err) {
       console.warn('Could not load giver profile for scoring:', err);
     }
   }
 
-  // Differentiation: std-dev of the ratings given (all-same = lazy, 0; spread >= 1.5 = full).
-  const nums = (ratings || []).filter((r) => typeof r === 'number' && !Number.isNaN(r));
-  let differentiation = 0.5; // neutral when only one rating was given
-  if (nums.length >= 2) {
-    const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
-    const sd = Math.sqrt(nums.reduce((a, b) => a + (b - mean) ** 2, 0) / nums.length);
-    differentiation = sd >= 1.5 ? 1 : sd < 0.5 ? 0 : (sd - 0.5) / 1.0;
-  }
-
-  // Contribution: only text that was verified ('ok') and substantial counts.
+  // Contribution: only text that was verified ('ok') and long enough counts.
   let contribution = 0;
   let explained = 0;
   for (const it of items) {
-    if (verdicts[it.key] !== 'ok' || !fqIsSubstantial(it.text || '')) continue;
-    if (it.kind === 'feature') contribution += 0.5;          // suggested a feature / improvement
-    else if (it.kind === 'explanation') { if (explained < 2) { contribution += 0.3; explained += 1; } } // explained a low score
-    else contribution += 0.2;                                // any other meaningful answer
+    if (verdicts[it.key] !== 'ok') continue;
+    const min = it.kind === 'feature' ? FQ_MIN_FEATURE : FQ_MIN_DEFAULT;
+    if (!fqIsSubstantial(it.text || '', min)) continue;
+    if (it.kind === 'feature') contribution += FQ_POINTS_FEATURE;
+    else if (it.kind === 'explanation') { if (explained < FQ_MAX_EXPLANATIONS) { contribution += FQ_POINTS_EXPLANATION; explained += 1; } }
+    else contribution += FQ_POINTS_OTHER;
   }
   contribution = Math.min(contribution, 1);
 
-  // The CONTENT of this feedback sets the score; the giver's profile (tenure + experience)
-  // only multiplies it (70%..100%). An empty feedback stays at the minimum even from a veteran.
-  const effort = 0.65 * contribution + 0.35 * differentiation;
   const profile = (tenure + experience) / 2;
-  const score = effort * (0.7 + 0.3 * profile);
+  const score = contribution * (FQ_PROFILE_FLOOR + (1 - FQ_PROFILE_FLOOR) * profile);
   const credits = Math.round(INSIGHT_CREDITS_MIN + score * (INSIGHT_CREDITS_MAX - INSIGHT_CREDITS_MIN));
-  return { score, credits, parts: { contribution, differentiation, tenure, experience, effort, profile } };
+  return { score, credits, parts: { contribution, tenure, experience, profile } };
 }
 
 export default function VentureLanding() {
