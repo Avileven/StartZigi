@@ -258,12 +258,12 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
 // the page already loads — nothing here calls an AI.
 function EngagementStat({ title, color, value, total }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-bold leading-tight" style={{ color }}>{title}</span>
-      <div className="flex items-baseline gap-1.5 flex-wrap">
-        <span className="text-3xl font-extrabold text-gray-900">{value}</span>
-        {total != null && <span className="text-sm text-gray-400">/ {total}</span>}
+    <div className="flex flex-col items-center text-center gap-1">
+      <div className="flex items-baseline justify-center gap-1 whitespace-nowrap">
+        <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">{value}</span>
+        {total != null && <span className="text-xs sm:text-sm text-gray-400">/ {total}</span>}
       </div>
+      <span className="text-xs sm:text-sm font-bold leading-tight" style={{ color }}>{title}</span>
     </div>
   );
 }
@@ -278,7 +278,7 @@ function CommunityReachPanel({ followerCount, sentCount, respondedCount, briefCo
         >
           Engagement
         </span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-3 gap-2 sm:gap-5">
           <EngagementStat title="Followers" color="#6366F1" value={followerCount} />
           <EngagementStat title="Responses" color="#F59E0B" value={respondedCount} total={sentCount > 0 ? sentCount : null} />
           <EngagementStat title="Briefs" color="#EC4899" value={briefCount} />
