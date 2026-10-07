@@ -281,9 +281,18 @@ function ReachRing({ segments, size = 104, stroke = 10, children }) {
   );
 }
 
-function CommunityReachPanel({ followerCount, sentCount, respondedCount, qualityMix, poolRemaining, poolUsed }) {
-  const responseRate = sentCount > 0 ? Math.min(100, Math.round((respondedCount / sentCount) * 100)) : null;
-  const qualityTotal = qualityMix ? qualityMix.high + qualityMix.normal + qualityMix.low + qualityMix.unscored : 0;
+function CommunityReachPanel({ followerCount, sentCount, respondedCount, qualityMix, qualityAvg, poolRemaining, poolUsed }) {
+  // Response rate: more responses than requests sent (e.g. people who came via a direct
+  // link) shows as a full ring with "100%+" instead of a misleading plain 100%.
+  const rawRate = sentCount > 0 ? Math.round((respondedCount / sentCount) * 100) : null;
+  const responseRate = rawRate == null ? null : Math.min(100, rawRate);
+  const responseOver = rawRate != null && rawRate > 100;
+  // Quality: one word + one color, from the average quality of the scored feedback.
+  const qualityLevel = qualityAvg == null ? null
+    : qualityAvg >= 0.65 ? { word: 'High', color: '#10B981' }
+    : qualityAvg >= 0.45 ? { word: 'Good', color: '#84CC16' }
+    : qualityAvg >= 0.3 ? { word: 'Fair', color: '#F59E0B' }
+    : { word: 'Light', color: '#EF4444' };
   const poolTotal = poolRemaining + poolUsed;
   const cell = 'flex flex-col items-center gap-2 text-center';
   const label = 'text-sm font-bold text-gray-700 leading-tight';
@@ -311,8 +320,8 @@ function CommunityReachPanel({ followerCount, sentCount, respondedCount, quality
             <ReachRing segments={[{ pct: responseRate ?? 0, color: '#F59E0B' }]}>
               {responseRate != null ? (
                 <>
-                  <span className={num}>{responseRate}%</span>
-                  <span className={sub}>{respondedCount} of {sentCount}</span>
+                  <span className={num}>{responseRate}%{responseOver ? '+' : ''}</span>
+                  <span className={sub}>responded</span>
                 </>
               ) : (
                 <span className="text-sm text-gray-300">—</span>
@@ -321,20 +330,10 @@ function CommunityReachPanel({ followerCount, sentCount, respondedCount, quality
             <span className={label}>Responses</span>
           </div>
 
-          <div className={cell} title={qualityMix ? `High ${qualityMix.high} · Standard ${qualityMix.normal} · Light ${qualityMix.low}${qualityMix.unscored ? ` · Earlier ${qualityMix.unscored}` : ''}` : ''}>
-            <ReachRing
-              segments={qualityMix && qualityTotal > 0 ? [
-                { pct: (qualityMix.high / qualityTotal) * 100, color: '#10B981' },
-                { pct: (qualityMix.normal / qualityTotal) * 100, color: '#6EE7B7' },
-                { pct: (qualityMix.low / qualityTotal) * 100, color: '#FCD34D' },
-                { pct: (qualityMix.unscored / qualityTotal) * 100, color: '#D1D5DB' },
-              ] : []}
-            >
-              {qualityMix && qualityTotal > 0 ? (
-                <>
-                  <span className={num}>{qualityMix.high}</span>
-                  <span className={sub}>high</span>
-                </>
+          <div className={cell} title={qualityMix ? `${qualityMix.high} high · ${qualityMix.normal} standard · ${qualityMix.low} light${qualityMix.unscored ? ` · ${qualityMix.unscored} earlier (not scored)` : ''}` : ''}>
+            <ReachRing segments={qualityLevel ? [{ pct: qualityAvg * 100, color: qualityLevel.color }] : []}>
+              {qualityLevel ? (
+                <span className="text-xl font-extrabold" style={{ color: qualityLevel.color }}>{qualityLevel.word}</span>
               ) : (
                 <span className="text-sm text-gray-300">—</span>
               )}
@@ -2006,6 +2005,11 @@ export default function ProductFeedbackPage() {
                   });
                 }
 
+                const scoredScores = growthFilteredFeedbacks
+                  .map(fb => (fb.quality_analysis ? fb.quality_analysis.score : null))
+                  .filter(sc => typeof sc === 'number' && !Number.isNaN(sc));
+                const qualityAvg = scoredScores.length > 0 ? scoredScores.reduce((a, b) => a + b, 0) / scoredScores.length : null;
+
                 const poolRemaining = venture?.feedback_request_pool ?? 20;
                 const poolUsed = Object.values(campaignsById).reduce((a, c) => a + (Number(c.cost) || 0), 0);
 
@@ -2015,6 +2019,7 @@ export default function ProductFeedbackPage() {
                     sentCount={sentCount}
                     respondedCount={respondedCount}
                     qualityMix={qualityMix}
+                    qualityAvg={qualityAvg}
                     poolRemaining={poolRemaining}
                     poolUsed={poolUsed}
                   />
