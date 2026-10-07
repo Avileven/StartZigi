@@ -547,7 +547,7 @@ if (campaignErr) throw campaignErr;
                     "buy more" purchase flow — Insight Credits transfer 1:1
                     into this pool, they aren't spent on it. */}
                 <p className="text-xs text-gray-500 mt-2">
-                  Need more? Give feedback to other founders to earn Insight Credits — each one adds a request to this pool.
+                  Need more? Give feedback to other founders to earn Zigback — each one adds a request to this pool.
                 </p>
               </div>
 

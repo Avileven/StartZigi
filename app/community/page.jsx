@@ -45,7 +45,7 @@ export default function Community() {
               Your journey here doesn't end once you've shaped an idea or promoted a product. This is also the place to give back, to support other founders and the ideas they're building.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Everything you do here is reflected in your public Zig Profile, visible to the rest of the community. When someone gives you feedback on your product, you can see their profile too. Every time you help another founder, you earn Insight, a balance that's saved permanently and can be converted into feedback requests whenever you need them.
+              Everything you do here is reflected in your public Zig Profile, visible to the rest of the community. When someone gives you feedback on your product, you can see their profile too. Every time you help another founder, you earn Zigback, a balance that's saved permanently and can be converted into feedback requests whenever you need them.
             </p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function Community() {
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Zig Profile</h2>
           <p className="text-gray-500 max-w-xl mx-auto">
-            A quick guide to what's shown on your public profile, and how the Insight system works.
+            A quick guide to what's shown on your public profile, and how Zigback works.
           </p>
         </div>
 
@@ -139,20 +139,20 @@ export default function Community() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageSquare className="w-5 h-5 text-amber-600" />
-              What are Insight Credits?
+              What is Zigback?
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-600 leading-relaxed">
-              Insight Credits are what you earn for helping other founders. Every time you give real, thoughtful
-              feedback on someone else's product, you earn <strong>3 Insight Credits</strong>.
+              Zigback is what you earn for helping other founders. Every time you give real, thoughtful
+              feedback on someone else's product, you earn <strong>1 to 3 Zigback</strong>, depending on the quality of your feedback.
             </p>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-sm font-semibold text-amber-900 mb-1">What can you do with them?</p>
               <p className="text-sm text-amber-800 leading-relaxed">
-                Convert Insight Credits into feedback requests for your own venture — <strong>1 credit = 3
-                requests</strong>. Feedback requests are what let you invite the community to review your own
+                Convert Zigback into feedback requests for your own venture — <strong>1 Zigback = 1
+                request</strong>. Feedback requests are what let you invite the community to review your own
                 product through the Promotion Center.
               </p>
             </div>

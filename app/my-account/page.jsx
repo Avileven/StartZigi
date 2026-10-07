@@ -148,8 +148,7 @@ export default function MyAccount() {
   // mistakenly showed raw numbers here as if this were a private view.
   const [reputation, setReputation] = useState(null);
   // [ADDED 020826] Insight Credits, step 3 — conversion to Feedback Request
-  // Pool. Ratio is 1:3 (1 credit -> 3 requests), per this session's decision
-  // — updates the earlier 1:1 figure noted in the planning doc.
+  // Pool. Ratio is 1:1 (1 Zigback -> 1 request).
   const [creditsToConvert, setCreditsToConvert] = useState(1);
   const [isConverting, setIsConverting] = useState(false);
   const [convertError, setConvertError] = useState('');
@@ -299,7 +298,7 @@ export default function MyAccount() {
       setCreditsToConvert(1);
     } catch (error) {
       console.error('Error converting Insight Credits:', error);
-      setConvertError(error?.message === 'Not enough Insight Credits' ? "You don't have enough Insight Credits for that." : 'Something went wrong. Please try again.');
+      setConvertError(error?.message === 'Not enough Insight Credits' ? "You don't have enough Zigback for that." : 'Something went wrong. Please try again.');
     } finally {
       setIsConverting(false);
     }
@@ -450,7 +449,7 @@ export default function MyAccount() {
       <Card className="border-t-4 border-t-amber-400 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" /> Insight Credits
+            <MessageSquare className="w-4 h-4" /> Zigback
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -462,7 +461,7 @@ export default function MyAccount() {
 
           {venture && (
             <div className="pt-3 border-t border-gray-100 space-y-2">
-              <p className="text-sm font-medium text-gray-700">Convert to feedback requests <span className="text-gray-400 font-normal">(1 credit = 1 request)</span></p>
+              <p className="text-sm font-medium text-gray-700">Convert to feedback requests <span className="text-gray-400 font-normal">(1 Zigback = 1 request)</span></p>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -473,7 +472,7 @@ export default function MyAccount() {
                   className="w-24"
                   disabled={isConverting}
                 />
-                <span className="text-sm text-gray-400">credits → {creditsToConvert} requests</span>
+                <span className="text-sm text-gray-400">Zigback → {creditsToConvert} requests</span>
                 <Button
                   onClick={handleConvertCredits}
                   disabled={isConverting || !profile?.insight_credits || creditsToConvert > (profile?.insight_credits || 0)}
