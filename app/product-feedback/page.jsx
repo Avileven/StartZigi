@@ -252,39 +252,23 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   );
 }
 
-// [NEW — Community & Reach panel] Four minimal rings in the same 4-column
-// grid and frame as Insight Metrics. All numbers are passed in, computed in
-// code from data the page already loads — nothing here calls an AI.
-function ReachRing({ segments, size = 104, stroke = 10, children }) {
-  // segments: [{ pct (0..100 of the full circle), color }] drawn one after another.
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  let offsetPct = 0;
+// [NEW — Engagement panel] Three plain numbers in the same 4-column grid and
+// frame as Insight Metrics, using the same "big value / small total" layout
+// as the Insight Metrics cards. All numbers are computed in code from data
+// the page already loads — nothing here calls an AI.
+function EngagementStat({ title, color, value, total }) {
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="absolute top-0 left-0 -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1EFE8" strokeWidth={stroke} />
-        {segments.filter(sg => sg.pct > 0).map((sg, i) => {
-          const len = (c * Math.min(100, sg.pct)) / 100;
-          const el = (
-            <circle
-              key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={sg.color} strokeWidth={stroke}
-              strokeLinecap="butt" strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-(c * offsetPct) / 100}
-            />
-          );
-          offsetPct += sg.pct;
-          return el;
-        })}
-      </svg>
-      <div className="flex flex-col items-center leading-tight">{children}</div>
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-bold leading-tight" style={{ color }}>{title}</span>
+      <div className="flex items-baseline gap-1.5 flex-wrap">
+        <span className="text-3xl font-extrabold text-gray-900">{value}</span>
+        {total != null && <span className="text-sm text-gray-400">/ {total}</span>}
+      </div>
     </div>
   );
 }
 
-function CommunityReachPanel({ followerCount, sentCount, respondedCount }) {
-  const fillPct = sentCount > 0 ? Math.min(100, (respondedCount / sentCount) * 100) : 0;
-  const cell = 'flex flex-col items-center gap-2 text-center';
-  const label = 'text-sm font-bold text-gray-700 leading-tight';
+function CommunityReachPanel({ followerCount, sentCount, respondedCount, briefCount }) {
   return (
     <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
       <div className="rounded-[26px] bg-white p-6 sm:p-8">
@@ -292,30 +276,12 @@ function CommunityReachPanel({ followerCount, sentCount, respondedCount }) {
           className="text-base font-extrabold block mb-3"
           style={{ background: 'linear-gradient(90deg, #6366F1, #EC4899, #F59E0B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
         >
-          Community &amp; Reach
+          Engagement
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
-
-          {/* Followers — a plain number, no ring (it is not a part of anything). */}
-          <div className={cell}>
-            <div className="flex items-center justify-center" style={{ height: 104 }}>
-              <span className="text-5xl font-extrabold text-gray-900">{followerCount}</span>
-            </div>
-            <span className={label}>Followers</span>
-          </div>
-
-          {/* Responses — "received out of sent". The ring fills by exactly that fraction. */}
-          <div className={cell} title={sentCount > 0 ? `${respondedCount} responses from ${sentCount} requests sent` : ''}>
-            <ReachRing segments={[{ pct: fillPct, color: '#F59E0B' }]}>
-              {sentCount > 0 ? (
-                <span className="text-2xl font-extrabold text-gray-900">{respondedCount}/{sentCount}</span>
-              ) : (
-                <span className="text-sm text-gray-300">—</span>
-              )}
-            </ReachRing>
-            <span className={label}>Responses</span>
-          </div>
-
+          <EngagementStat title="Followers" color="#6366F1" value={followerCount} />
+          <EngagementStat title="Responses" color="#F59E0B" value={respondedCount} total={sentCount > 0 ? sentCount : null} />
+          <EngagementStat title="Briefs" color="#EC4899" value={briefCount} />
         </div>
       </div>
     </div>
@@ -1966,6 +1932,7 @@ export default function ProductFeedbackPage() {
                     followerCount={followers.length}
                     sentCount={sentCount}
                     respondedCount={respondedCount}
+                    briefCount={campaignsInView.length}
                   />
                 );
               })()}
