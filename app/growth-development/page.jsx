@@ -485,8 +485,8 @@ export default function GrowthDevelopment() {
         await VentureMessage.create({
           venture_id: targetVenture.id,
           message_type: 'phase_welcome',
-          title: '📈 Welcome to Growth!',
-          content: `Welcome to the Growth stage! It's time to set up your first brief, get feedback from the community and expose your product to more users.`,
+          title: '📈 Welcome to ZigPulse!',
+          content: `Welcome to ZigPulse! It's time to set up your first brief, get feedback from the community and expose your product to more users.`,
           phase: 'growth',
         });
         // [NEW] Same email as the regular-journey Beta→Growth transition
@@ -500,8 +500,8 @@ export default function GrowthDevelopment() {
               email: currentUser.email,
               founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
               ventureName: targetVenture.name,
-              newPhaseTitle: "📈 Welcome to Growth!",
-              newPhaseMessage: "Welcome to the Growth stage! It's time to set up your first brief, get feedback from the community and expose your product to more users.\n\nSince we just launched Growth, every founder who joins in the coming month will benefit from three months free on the Growth package.",
+              newPhaseTitle: "📈 Welcome to ZigPulse!",
+              newPhaseMessage: "Welcome to ZigPulse! It's time to set up your first brief, get feedback from the community and expose your product to more users.\n\nSince we just launched ZigPulse, every founder who joins in the coming month will benefit from three months free on the Growth package.",
             }),
           });
         } catch (emailErr) {
@@ -516,7 +516,7 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      showToast("Growth page saved!");
+      showToast("ZigPulse page saved!");
       router.push(createPageUrl("Dashboard"));
     } catch (error) {
       console.error("Error saving growth data:", error);
@@ -567,12 +567,12 @@ export default function GrowthDevelopment() {
             <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Rocket className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Growth Development Center</h1>
+            <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
           </div>
 
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
             <CardContent className="p-5">
-              <p className="text-base font-bold text-emerald-700 mb-2">Welcome to the Growth stage</p>
+              <p className="text-base font-bold text-emerald-700 mb-2">Welcome to ZigPulse</p>
               <p className="text-sm text-emerald-900 leading-relaxed">{GROWTH_FRAMING_SHORT}</p>
               {showFramingMore && GROWTH_FRAMING_MORE.split('\n\n').map((para, i) => (
                 <p key={i} className="text-sm text-emerald-900 leading-relaxed mt-3">{para}</p>
@@ -704,7 +704,7 @@ export default function GrowthDevelopment() {
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle>Social Links</CardTitle>
-                  <CardDescription>Shown on your public Growth page.</CardDescription>
+                  <CardDescription>Shown on your public page.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Social Links" summary={Object.values(growthData.social_links).some(v => v) ? 'Some links added' : null} isMobile={isMobile}>
@@ -910,7 +910,7 @@ export default function GrowthDevelopment() {
               row with no wrapping. Save now gets the full row. */}
           <div className="flex justify-center items-center pt-6">
             <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
-              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save Growth Page<CheckCircle className="w-4 h-4 ml-2" /></>)}
+              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
             </Button>
           </div>
         </div>

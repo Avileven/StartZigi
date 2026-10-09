@@ -24,6 +24,14 @@ const SECTORS = [
   { value: "other", label: "Other" }
 ];
 
+// Product-track names in the logo colors: "Zig" soft orange, the rest purple.
+const ZigName = ({ rest }) => (
+  <><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>{rest}</span></>
+);
+
+const JOURNEY_TEXT = "Build your startup step by step, from idea to growth, with guidance and community feedback at every stage.";
+const PULSE_TEXT = "Get feedback on your product at any stage, from an idea to a product on the market.";
+
 function CreateVentureForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -493,8 +501,8 @@ function CreateVentureForm() {
                 <Lightbulb className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">I have an idea</p>
-                <p className="text-xs text-gray-500">Start your full journey and become involved in StartZig's community</p>
+                <p className="font-semibold text-gray-900"><ZigName rest="Journey" /></p>
+                <p className="text-xs text-gray-500">{JOURNEY_TEXT}</p>
               </div>
             </button>
             <button
@@ -505,8 +513,8 @@ function CreateVentureForm() {
                 <Rocket className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">I have a product</p>
-                <p className="text-xs text-gray-500">Invite the community to visit your product</p>
+                <p className="font-semibold text-gray-900"><ZigName rest="Pulse" /></p>
+                <p className="text-xs text-gray-500">{PULSE_TEXT}</p>
               </div>
             </button>
           </div>
@@ -596,8 +604,8 @@ function CreateVentureForm() {
                 <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
                   <Lightbulb className="w-7 h-7 text-white" />
                 </div>
-                <p className="text-lg font-semibold text-gray-900 mb-1">I have an idea</p>
-                <p className="text-sm text-gray-600">Start your full journey and become involved in StartZig's community</p>
+                <p className="text-lg font-semibold text-gray-900 mb-1"><ZigName rest="Journey" /></p>
+                <p className="text-sm text-gray-600">{JOURNEY_TEXT}</p>
               </button>
               <button
                 onClick={() => router.push('/growth-development')}
@@ -606,8 +614,8 @@ function CreateVentureForm() {
                 <div className="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
                   <Rocket className="w-7 h-7 text-white" />
                 </div>
-                <p className="text-lg font-semibold text-gray-900 mb-1">I have a product</p>
-                <p className="text-sm text-gray-600">Invite the community to visit your product</p>
+                <p className="text-lg font-semibold text-gray-900 mb-1"><ZigName rest="Pulse" /></p>
+                <p className="text-sm text-gray-600">{PULSE_TEXT}</p>
               </button>
             </div>
           </div>
