@@ -116,6 +116,14 @@ const BUSINESS_MODEL_TYPES = [
   { value: 'ad-driven', name: 'Ad-Driven', description: 'Free product, revenue solely from ads.' },
 ];
 
+// [NEW — Quick track] Stage chosen by the founder, stored in growth_data.stage.
+// Existing ventures have no value and are treated as 'product' (unchanged flow).
+const STAGES = [
+  { value: 'idea', name: 'Idea', description: 'You have an idea and want to find out if it is worth pursuing.' },
+  { value: 'prototype', name: 'Prototype', description: 'You have a demo, an interactive sketch or a first prototype and want to know what to improve. A working product is not required.' },
+  { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
+];
+
 const CATEGORY_EXPLANATIONS = {
   business_model: "Tests whether your pricing feels like it fits the value you're offering — not whether this reviewer personally thinks it's cheap or expensive.",
   core_features: "Tests whether the features you chose to highlight actually support what you say the product does — not whether reviewers find each feature exciting.",
@@ -145,6 +153,55 @@ const ExplainToggle = ({ text }) => {
 const GROWTH_FRAMING_SHORT = "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This also exposes your live product to the community, helping you grow your first users.";
 const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your brief, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Zigback, which you can use toward your own feedback requests.";
 
+
+// [NEW — Quick track] Short guide per stage, shown under the stage picker.
+const STAGE_GUIDES = {
+  idea: {
+    title: 'Idea: what matters at this stage',
+    lead: 'Nothing is built yet, so only two things are worth testing: whether the problem is real, and whether people understand what you are proposing.',
+    points: [
+      ['Is the problem real?', 'Check that people feel it, not only that they understand it.'],
+      ['Does anyone already solve it?', 'Knowing the alternatives early can save months of building.'],
+      ['What is missing?', 'Open suggestions often point at something you have not considered.'],
+    ],
+    skip: 'Skip features, design and pricing for now. Reviewers cannot judge them yet, and the answers would mislead you.',
+  },
+  prototype: {
+    title: 'Prototype: what matters at this stage',
+    lead: 'A prototype does not need to be polished or fully working. What matters is whether a stranger sees the value and understands what it does.',
+    points: [
+      ['Do the core features make sense?', 'Rate the few things the product is built around, not every detail.'],
+      ['What is missing?', 'A feature suggestion shows what people expect to find.'],
+      ['Does the business model feel fair?', 'Optional. An early read on whether the value matches how you plan to charge.'],
+    ],
+    skip: 'Skip polish and small details for now. Early feedback should shape your direction.',
+  },
+};
+
+const StageGuide = ({ stage }) => {
+  const [open, setOpen] = useState(false);
+  const g = STAGE_GUIDES[stage];
+  if (!g) return null;
+  return (
+    <div className="mt-3">
+      <button type="button" onClick={() => setOpen(o => !o)} className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+        <HelpCircle className="w-3.5 h-3.5" />Guide
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+          <p className="font-semibold text-gray-900">{g.title}</p>
+          <p className="mt-1">{g.lead}</p>
+          <ol className="list-decimal pl-5 mt-2 space-y-1">
+            {g.points.map(([h, t]) => <li key={h}><span className="font-medium">{h}</span> {t}</li>)}
+          </ol>
+          <p className="mt-2 text-xs italic text-gray-500">{g.skip}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -157,6 +214,7 @@ export default function GrowthDevelopment() {
   const isMobile = useIsMobile();
 
   const [growthData, setGrowthData] = useState({
+    stage: 'product',
     name: '',
     headline: '',
     description: '',
@@ -202,6 +260,7 @@ export default function GrowthDevelopment() {
         setVenture(currentVenture);
         const loaded = { ...(currentVenture.growth_data || {}) };
         loaded.name = currentVenture.name || '';
+        loaded.stage = ['idea', 'prototype', 'product'].includes(loaded.stage) ? loaded.stage : 'product';
         loaded.product_url = loaded.product_url || '';
         loaded.uploaded_files = (loaded.uploaded_files || []).slice(0, 1); // enforce single-file cap even on old data
         loaded.is_imported = loaded.is_imported === true;
@@ -249,7 +308,22 @@ export default function GrowthDevelopment() {
   const handleBusinessModelChange = (field, value) =>
     setGrowthData(prev => ({ ...prev, business_model_data: { ...prev.business_model_data, [field]: value } }));
 
+  // Switching stage resets the category list to what that stage supports.
+  // 'idea_problem' (Idea) and 'core_features' (Prototype) are the required
+  // question of their stage, so they are always present and cannot be unticked.
+  const setStage = (stage) => {
+    setGrowthData(prev => {
+      const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
+      let selected_categories;
+      if (stage === 'idea') selected_categories = ['idea_problem', ...keep(['idea_alternatives', 'idea_value'])];
+      else if (stage === 'prototype') selected_categories = ['core_features', ...keep(['business_model'])];
+      else selected_categories = keep(['business_model', 'core_features', 'value_proposition', 'product_definition']);
+      return { ...prev, stage, selected_categories };
+    });
+  };
+
   const toggleCategory = (key) => {
+    if (key === 'idea_problem' || (growthData.stage === 'prototype' && key === 'core_features')) return;
     setGrowthData(prev => {
       const has = prev.selected_categories.includes(key);
       const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
@@ -451,6 +525,9 @@ export default function GrowthDevelopment() {
     setIsSaving(false);
   };
 
+  const isIdea = growthData.stage === 'idea';
+  const isPrototype = growthData.stage === 'prototype';
+  const isProduct = growthData.stage === 'product';
   const isNameComplete = growthData.name.trim().length >= 2;
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
@@ -473,7 +550,8 @@ export default function GrowthDevelopment() {
   const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
   const hasDemoFile = growthData.uploaded_files.length > 0;
 
-  const canSave = isNameComplete && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady && hasDemoFile;
+  const canSave = isNameComplete && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
+    && (isIdea ? isDescriptionComplete : hasDemoFile);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
@@ -523,6 +601,25 @@ export default function GrowthDevelopment() {
 
             {/* ===================== VENTURE PROFILE ===================== */}
             <TabsContent value="profile" className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Where are you now?</CardTitle>
+                  <CardDescription>This sets the guide, the content you fill in and the questions reviewers see. You can change it anytime.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {STAGES.map((st) => (
+                      <button type="button" key={st.value} onClick={() => setStage(st.value)}
+                        className={`text-left p-3 rounded-lg border text-sm ${growthData.stage === st.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                        <p className="font-semibold text-gray-900">{st.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">{st.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <StageGuide stage={growthData.stage} />
+                </CardContent>
+              </Card>
+
               {!venture && (
                 <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                   <CardHeader>
@@ -537,6 +634,7 @@ export default function GrowthDevelopment() {
                 </Card>
               )}
 
+              {isProduct && (
               <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">{isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Slogan</CardTitle>
@@ -548,11 +646,12 @@ export default function GrowthDevelopment() {
                   </MobileFieldWrapper>
                 </CardContent>
               </Card>
+              )}
 
               <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Short Description</CardTitle>
-                  <CardDescription>What the product is and who it's for.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'The Idea' : 'Short Description'}</CardTitle>
+                  <CardDescription>{isIdea ? 'The problem, who it is for, and your idea.' : "What the product is and who it's for."}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
@@ -561,6 +660,7 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
+              {isProduct && (
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle>
@@ -573,11 +673,12 @@ export default function GrowthDevelopment() {
                   </MobileFieldWrapper>
                 </CardContent>
               </Card>
+              )}
 
               {/* [FIX] Single file only now, replaces on new upload. */}
               <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}Demo</CardTitle>
+                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Image (optional)' : 'Demo'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {!hasDemoFile ? (
@@ -596,7 +697,7 @@ export default function GrowthDevelopment() {
                     </div>
                   )}
                   <p className="text-xs text-gray-400">Supports images or a short video. One file only, to keep it focused for reviewers.</p>
-                  {!hasDemoFile && <p className="text-xs text-red-500">Required — upload one file before you can save.</p>}
+                  {!hasDemoFile && !isIdea && <p className="text-xs text-red-500">Required — upload one file before you can save.</p>}
                 </CardContent>
               </Card>
 
@@ -641,7 +742,29 @@ export default function GrowthDevelopment() {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
+                  {isIdea && (
+                    <>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The problem (always asked)</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"The problem feels relevant and worth solving."</p>
+                      </div>
+                      {[
+                        { key: 'idea_alternatives', label: 'Existing solutions', hint: '"I am aware of existing products or solutions that address this problem."' },
+                        { key: 'idea_value', label: 'What would make it more valuable', hint: 'An open question for suggestions.' },
+                      ].map((q) => (
+                        <div key={q.key} className="border border-gray-200 rounded-lg p-4">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <Checkbox checked={growthData.selected_categories.includes(q.key)} onCheckedChange={() => toggleCategory(q.key)} />
+                            <span className="text-sm font-medium text-gray-900">{q.label}</span>
+                          </label>
+                          <p className="text-xs text-gray-500 mt-1 pl-8">{q.hint}</p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
                   {/* --- Business Model (merged Subscription/Freemium) --- */}
+                  {!isIdea && (<>
                   <div className={`border rounded-lg p-4 ${businessModelReady && growthData.selected_categories.includes('business_model') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
@@ -746,6 +869,7 @@ export default function GrowthDevelopment() {
                     )}
                   </div>
 
+                  {isProduct && (<>
                   <div className={`border rounded-lg p-4 ${valuePropReady && growthData.selected_categories.includes('value_proposition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('value_proposition')} onCheckedChange={() => toggleCategory('value_proposition')} />
@@ -769,11 +893,13 @@ export default function GrowthDevelopment() {
                     <p className="text-xs text-gray-500 mt-1 pl-8">Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is.</p>
                     {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Venture Profile tab first (min 50 characters).</p>}
                   </div>
+                  </>)}
+                  </>)}
                 </CardContent>
               </Card>
 
               <Card className="shadow-lg border-emerald-200">
-                <CardHeader><CardTitle className="text-base flex items-center">Always included (not optional)<ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} /></CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base flex items-center">{isProduct ? 'Always included (not optional)' : 'Also included'}<ExplainToggle text={isProduct ? ALWAYS_INCLUDED_EXPLANATION : "Your own question (above), if you wrote one. Reviewers are not asked about visiting a product or about a slogan at this stage."} /></CardTitle></CardHeader>
               </Card>
             </TabsContent>
           </Tabs>

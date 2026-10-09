@@ -216,6 +216,9 @@ const FQ_FIELD_LABELS = {
   final_change_text: '"One Last Thing"',
   feedback_text: 'Your feedback',
   pricing_note: 'Pricing note',
+  idea_problem_note: 'Problem note',
+  idea_alternatives_which: '"Which ones?"',
+  idea_value_text: '"What would make this idea more valuable?"',
 };
 const LOW_SCORE_THRESHOLD_FOR_EXPLANATION = 6; // same convention as the forms
 
@@ -413,6 +416,14 @@ export default function VentureLanding() {
   const [wantsToFollowGrowth, setWantsToFollowGrowth] = useState(false);
   const [isSubmittingGrowthFeedback, setIsSubmittingGrowthFeedback] = useState(false);
   const [growthFeedbackSubmitted, setGrowthFeedbackSubmitted] = useState(false);
+  // [NEW — Quick track] Idea stage answers. Prototype reuses the Core Features
+  // and Business Model state above; Product is unchanged.
+  const [ideaProblemRating, setIdeaProblemRating] = useState(5);
+  const [ideaProblemUnknown, setIdeaProblemUnknown] = useState(false);
+  const [ideaProblemNote, setIdeaProblemNote] = useState('');
+  const [ideaAwareness, setIdeaAwareness] = useState(null); // 'none' | 'few' | 'many'
+  const [ideaAwareWhich, setIdeaAwareWhich] = useState('');
+  const [ideaValueText, setIdeaValueText] = useState('');
 
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [featuresRating, setFeaturesRating] = useState(5);
@@ -865,10 +876,13 @@ export default function VentureLanding() {
     e.preventDefault();
     if (!venture) return;
     const gd = venture.growth_data || {};
+    const stage = gd.stage || 'product';
+    const isProductStage = stage === 'product';
+    const isIdeaStage = stage === 'idea';
     // [FIX] Only require an answer to "did you visit the product?" when
     // there's actually a product_url to visit — a founder who journeyed
     // here without a live product yet shouldn't have this block submission.
-    if (gd.product_url && !visitedProduct) {
+    if (isProductStage && gd.product_url && !visitedProduct) {
       alert("Please answer whether you visited the actual product.");
       return;
     }
@@ -880,7 +894,9 @@ export default function VentureLanding() {
       const bmLow = selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD;
       const vpLow = selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD;
       const pdLow = selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
-      const productVisited = gd.product_url && visitedProduct === 'yes';
+      const productVisited = isProductStage && gd.product_url && visitedProduct === 'yes';
+      const ideaAnswered = isIdeaStage;
+      const ideaProblemLow = ideaAnswered && !ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD;
       const growthItems = [
         ...(bmLow ? [{ key: 'business_model_note', text: businessModelNote, kind: 'explanation' }] : []),
         ...(selected.includes('core_features') ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
@@ -891,13 +907,17 @@ export default function VentureLanding() {
           { key: 'testimonial_text', text: testimonialText, kind: 'other' },
         ] : []),
         ...(gd.custom_question ? [{ key: 'custom_question_answer', text: customQuestionAnswer, kind: 'other' }] : []),
-        { key: 'final_change_text', text: finalChangeText, kind: 'final' },
+        ...(ideaProblemLow ? [{ key: 'idea_problem_note', text: ideaProblemNote, kind: 'explanation' }] : []),
+        ...(ideaAnswered && selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? [{ key: 'idea_alternatives_which', text: ideaAwareWhich, kind: 'other' }] : []),
+        ...(ideaAnswered && selected.includes('idea_value') ? [{ key: 'idea_value_text', text: ideaValueText, kind: 'feature' }] : []),
+        ...(isProductStage ? [{ key: 'final_change_text', text: finalChangeText, kind: 'final' }] : []),
       ];
       const growthRatings = [
         selected.includes('business_model') ? businessModelRating : null,
         selected.includes('core_features') ? coreFeaturesRating : null,
         selected.includes('value_proposition') ? valuePropRating : null,
         selected.includes('product_definition') ? productDefinitionRating : null,
+        ideaAnswered && !ideaProblemUnknown ? ideaProblemRating : null,
       ];
       const growthQuality = await runFeedbackQualityGate(growthItems, growthRatings);
       if (growthQuality.needsRewrite) {
@@ -920,16 +940,28 @@ export default function VentureLanding() {
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('value_prop_note', valuePropNote.trim()) || null) : null,
         product_definition_rating: selected.includes('product_definition') ? productDefinitionRating : null,
         product_definition_note: selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('product_definition_note', productDefinitionNote.trim()) || null) : null,
-        visited_product: gd.product_url ? visitedProduct : null,
+        visited_product: isProductStage && gd.product_url ? visitedProduct : null,
         // [FIX] DB DEPENDENCY: growth_feedback needs a new text column
         // `product_match_choice` — the old `product_match_rating` (integer)
         // is no longer written to by new submissions.
-        product_match_choice: gd.product_url && visitedProduct === 'yes' ? productMatchChoice : null,
-        testimonial_text: gd.product_url && visitedProduct === 'yes' ? (gKeep('testimonial_text', testimonialText.trim()) || null) : null,
-        testimonial_author_name: gd.product_url && visitedProduct === 'yes' && testimonialText.trim() && !growthQuality.dropped.has('testimonial_text') ? (testimonialAuthorName.trim() || null) : null,
+        product_match_choice: isProductStage && gd.product_url && visitedProduct === 'yes' ? productMatchChoice : null,
+        testimonial_text: isProductStage && gd.product_url && visitedProduct === 'yes' ? (gKeep('testimonial_text', testimonialText.trim()) || null) : null,
+        testimonial_author_name: isProductStage && gd.product_url && visitedProduct === 'yes' && testimonialText.trim() && !growthQuality.dropped.has('testimonial_text') ? (testimonialAuthorName.trim() || null) : null,
         is_featured_testimonial: false,
-        product_match_diff_text: gd.product_url && visitedProduct === 'yes' ? (gKeep('product_match_diff_text', productMatchDiffText.trim()) || null) : null,
-        final_change_text: gKeep('final_change_text', finalChangeText.trim()) || null,
+        product_match_diff_text: isProductStage && gd.product_url && visitedProduct === 'yes' ? (gKeep('product_match_diff_text', productMatchDiffText.trim()) || null) : null,
+        final_change_text: isProductStage ? (gKeep('final_change_text', finalChangeText.trim()) || null) : null,
+        // [NEW — Quick track] DB DEPENDENCY: growth_feedback needs `stage text`
+        // and `idea_answers jsonb`. Only written for Idea / Prototype, so Product
+        // submissions keep working even before the columns exist.
+        ...(!isProductStage ? { stage } : {}),
+        ...(isIdeaStage ? { idea_answers: {
+          problem_rating: ideaProblemUnknown ? null : ideaProblemRating,
+          problem_unknown: ideaProblemUnknown,
+          problem_note: ideaProblemLow ? (gKeep('idea_problem_note', ideaProblemNote.trim()) || null) : null,
+          alternatives: selected.includes('idea_alternatives') ? ideaAwareness : null,
+          alternatives_which: selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? (gKeep('idea_alternatives_which', ideaAwareWhich.trim()) || null) : null,
+          value_text: selected.includes('idea_value') ? (gKeep('idea_value_text', ideaValueText.trim()) || null) : null,
+        } } : {}),
         custom_question_answer: gd.custom_question ? (gKeep('custom_question_answer', customQuestionAnswer.trim()) || null) : null,
         created_by: currentUser ? currentUser.email : (invitedIdentity?.email || null),
         created_by_id: currentUser ? currentUser.id : null,
@@ -1399,6 +1431,81 @@ export default function VentureLanding() {
                         </div>
                       )}
 
+                      {/* --- Idea stage questions (Quick track) --- */}
+                      {(venture.growth_data.stage || 'product') === 'idea' && (
+                        <>
+                          <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Lightbulb className="w-5 h-5 text-amber-600" />
+                              <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Problem</p>
+                            </div>
+                            <MobileQuestionSheet label="Is the problem real?" summary={ideaProblemUnknown ? 'Not sure' : ideaProblemRating} isMobile={isMobileViewport}>
+                              <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
+                              <Slider
+                                value={[ideaProblemRating]}
+                                onValueChange={(value) => { setIdeaProblemRating(value[0]); setIdeaProblemUnknown(false); }}
+                                max={10} min={1} step={1}
+                                disabled={isSubmittingGrowthFeedback}
+                                className="mt-2 mb-1
+                                  [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                  [&>span>span]:bg-amber-500 [&>span>span]:rounded-full
+                                  [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                  [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-amber-500
+                                  [&_[role=slider]]:shadow-md"
+                              />
+                              <div className="text-center text-sm font-semibold text-amber-700">{ideaProblemUnknown ? '-' : ideaProblemRating}</div>
+                              <button type="button" onClick={() => setIdeaProblemUnknown(v => !v)} disabled={isSubmittingGrowthFeedback}
+                                className={`mt-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${ideaProblemUnknown ? 'border-amber-600 bg-amber-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>
+                                Not enough information to answer
+                              </button>
+                              {!ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                                <div className="mt-2">
+                                  <Label className="text-xs text-gray-500">What makes you feel the problem is not relevant or not worth solving? (optional)</Label>
+                                  <Textarea value={ideaProblemNote} onChange={(e) => setIdeaProblemNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                                </div>
+                              )}
+                            </MobileQuestionSheet>
+                          </div>
+
+                          {venture.growth_data.selected_categories.includes('idea_alternatives') && (
+                            <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Compass className="w-5 h-5 text-sky-600" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Existing Solutions</p>
+                              </div>
+                              <MobileQuestionSheet label="Existing solutions" summary={ideaAwareness ? 'Answered' : null} isMobile={isMobileViewport}>
+                                <Label className="text-sm">I am aware of existing products or solutions that address this problem.</Label>
+                                <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                                  {[{ k: 'none', l: 'Not aware of any' }, { k: 'few', l: 'Aware of a few' }, { k: 'many', l: 'Aware of many' }].map((o) => (
+                                    <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
+                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaAwareness === o.k ? 'border-sky-600 bg-sky-600 text-white font-medium' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>{o.l}</button>
+                                  ))}
+                                </div>
+                                {ideaAwareness && ideaAwareness !== 'none' && (
+                                  <div className="mt-2">
+                                    <Label className="text-xs text-gray-500">Which ones? (optional)</Label>
+                                    <Input value={ideaAwareWhich} onChange={(e) => setIdeaAwareWhich(e.target.value)} className="mt-1 text-sm" placeholder="Product names or links" disabled={isSubmittingGrowthFeedback} />
+                                  </div>
+                                )}
+                              </MobileQuestionSheet>
+                            </div>
+                          )}
+
+                          {venture.growth_data.selected_categories.includes('idea_value') && (
+                            <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Layers className="w-5 h-5 text-emerald-600" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Making It Better</p>
+                              </div>
+                              <MobileQuestionSheet label="What would make this idea more valuable?" summary={ideaValueText ? 'Answered' : null} isMobile={isMobileViewport}>
+                                <Label className="text-sm">What would make this idea more valuable? (optional)</Label>
+                                <Textarea value={ideaValueText} onChange={(e) => setIdeaValueText(e.target.value)} className="min-h-[80px] mt-2 text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Share an idea, a missing piece, or a change you would make..." />
+                              </MobileQuestionSheet>
+                            </div>
+                          )}
+                        </>
+                      )}
+
                       {/* --- Business Model (conditional on founder selection) --- */}
                       {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
                         <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
@@ -1595,7 +1702,7 @@ export default function VentureLanding() {
                           This whole question is meaningless without a
                           product_url, so it's gated on that rather than
                           always shown. */}
-                      {venture.growth_data.product_url && (
+                      {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
                       <div className="border border-teal-200 bg-teal-50/40 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                           <Home className="w-5 h-5 text-teal-600" />
@@ -1665,6 +1772,7 @@ export default function VentureLanding() {
                       {/* [FIX] Was the only category with no color (plain
                           gray border, gray text) — inconsistent with every
                           other card on the page. Given its own color now. */}
+                      {(venture.growth_data.stage || 'product') === 'product' && (
                       <div className="border border-cyan-200 bg-cyan-50/40 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Focus className="w-5 h-5 text-cyan-600" />
@@ -1677,6 +1785,7 @@ export default function VentureLanding() {
                           className="min-h-[80px] mt-2" disabled={isSubmittingGrowthFeedback} />
                         </MobileQuestionSheet>
                       </div>
+                      )}
 
                       {currentUser && (
                         isAlreadyFollowing ? (
@@ -1707,7 +1816,7 @@ export default function VentureLanding() {
                       {/* [FIX] Only require visitedProduct when there's a
                           product_url — matches the same gate applied to the
                           question itself and to handleGrowthFeedbackSubmit. */}
-                      <Button type="submit" disabled={isSubmittingGrowthFeedback || (venture.growth_data.product_url && !visitedProduct)}
+                      <Button type="submit" disabled={isSubmittingGrowthFeedback || ((venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && !visitedProduct)}
                         className="w-full bg-indigo-600 hover:bg-indigo-700">
                         {isSubmittingGrowthFeedback
                           ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
