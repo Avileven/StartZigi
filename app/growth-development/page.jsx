@@ -31,7 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Rocket, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
+  Lightbulb, PenTool, Package, ArrowRight, Check, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
   Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion, ChevronDown,
   Linkedin, Facebook, Twitter, Instagram, Globe,
 } from 'lucide-react';
@@ -124,6 +124,13 @@ const STAGES = [
   { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
 ];
 
+// Visual identity per stage (full class names so Tailwind keeps them).
+const STAGE_STYLE = {
+  idea: { Icon: Lightbulb, card: 'bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400', soft: 'bg-amber-50 border-amber-200', iconBg: 'bg-amber-100 text-amber-600', title: 'text-amber-800', chip: 'bg-amber-100 text-amber-800' },
+  prototype: { Icon: PenTool, card: 'bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500', soft: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-100 text-violet-600', title: 'text-violet-800', chip: 'bg-violet-100 text-violet-800' },
+  product: { Icon: Package, card: 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500', soft: 'bg-emerald-50 border-emerald-200', iconBg: 'bg-emerald-100 text-emerald-600', title: 'text-emerald-800', chip: 'bg-emerald-100 text-emerald-800' },
+};
+
 const CATEGORY_EXPLANATIONS = {
   business_model: "Tests whether your pricing feels like it fits the value you're offering — not whether this reviewer personally thinks it's cheap or expensive.",
   core_features: "Tests whether the features you chose to highlight actually support what you say the product does — not whether reviewers find each feature exciting.",
@@ -181,23 +188,30 @@ const STAGE_GUIDES = {
 const StageGuide = ({ stage }) => {
   const [open, setOpen] = useState(false);
   const g = STAGE_GUIDES[stage];
-  if (!g) return null;
+  const st = STAGE_STYLE[stage];
+  if (!g || !st) return null;
+  const Icon = st.Icon;
   return (
-    <div className="mt-3">
-      <button type="button" onClick={() => setOpen(o => !o)} className="text-xs font-medium text-emerald-700 flex items-center gap-1">
-        <HelpCircle className="w-3.5 h-3.5" />Guide
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
-          <p className="font-semibold text-gray-900">{g.title}</p>
-          <p className="mt-1">{g.lead}</p>
-          <ol className="list-decimal pl-5 mt-2 space-y-1">
-            {g.points.map(([h, t]) => <li key={h}><span className="font-medium">{h}</span> {t}</li>)}
-          </ol>
-          <p className="mt-2 text-xs italic text-gray-500">{g.skip}</p>
+    <div className={`rounded-2xl border p-4 md:p-5 ${st.soft}`}>
+      <div className="flex items-start gap-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${st.iconBg}`}><Icon className="w-5 h-5" /></div>
+        <div className="min-w-0">
+          <p className={`font-semibold ${st.title}`}>{g.title}</p>
+          <p className="text-sm text-gray-700 mt-1">{g.lead}</p>
+          <button type="button" onClick={() => setOpen(o => !o)} className={`text-xs font-medium mt-2 flex items-center gap-1 ${st.title}`}>
+            {open ? 'Hide' : 'What to check'}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+          {open && (
+            <div className="mt-2 text-sm text-gray-700">
+              <ol className="list-decimal pl-5 space-y-1">
+                {g.points.map(([h, t]) => <li key={h}><span className="font-medium">{h}</span> {t}</li>)}
+              </ol>
+              <p className="mt-2 text-xs italic text-gray-500">{g.skip}</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -206,6 +220,9 @@ export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // 'stage' = card selection screen, 'build' = the builder for the chosen stage.
+  const [step, setStep] = useState('stage');
+  const [pickedStage, setPickedStage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -282,6 +299,12 @@ export default function GrowthDevelopment() {
           website: loaded.social_links?.website || '',
         };
         setGrowthData(prev => ({ ...prev, ...loaded }));
+        // Already set up before: go straight to the builder for its stage.
+        const gdRaw = currentVenture.growth_data || {};
+        if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
+          setPickedStage(loaded.stage);
+          setStep('build');
+        }
       }
     } catch (error) {
       console.error("Error loading venture:", error);
@@ -555,6 +578,45 @@ export default function GrowthDevelopment() {
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
+  if (step === 'stage') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-4 md:p-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center pt-4 mb-6 md:mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
+            <h2 className="mt-3 text-2xl md:text-3xl font-bold text-gray-900">Where are you now?</h2>
+            <p className="mt-2 text-sm md:text-base text-gray-500">Pick your stage. We will tailor the guide and the questions to it.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {STAGES.map((st) => {
+              const sty = STAGE_STYLE[st.value];
+              const Icon = sty.Icon;
+              const selected = pickedStage === st.value;
+              return (
+                <button type="button" key={st.value} onClick={() => setPickedStage(st.value)}
+                  className={`relative text-left text-white rounded-3xl p-5 md:p-8 md:min-h-[320px] flex md:flex-col items-center md:items-start gap-4 md:gap-6 shadow-lg transition-all ${sty.card} ${selected ? 'ring-4 ring-offset-2 ring-gray-900/70 scale-[1.02]' : pickedStage ? 'opacity-60' : 'hover:shadow-xl'}`}>
+                  {selected && <span className="absolute top-3 right-3 md:top-5 md:right-5 w-7 h-7 rounded-full bg-white flex items-center justify-center"><Check className="w-4 h-4 text-gray-900" /></span>}
+                  <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/25 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-7 h-7 md:w-10 md:h-10 text-white" />
+                  </div>
+                  <div className="min-w-0 pr-8 md:pr-0">
+                    <p className="text-xl md:text-3xl font-bold">{st.name}</p>
+                    <p className="mt-1 md:mt-3 text-sm md:text-base text-white/90 leading-snug">{st.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-8 flex justify-center md:justify-end pb-6">
+            <Button size="lg" disabled={!pickedStage} onClick={() => { setStage(pickedStage); setStep('build'); }} className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-base px-10">
+              Next<ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {toast && (
@@ -564,12 +626,16 @@ export default function GrowthDevelopment() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Rocket className="w-8 h-8 text-white" />
-            </div>
             <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              {(() => { const st = STAGE_STYLE[growthData.stage]; const StageIcon = st.Icon; return (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}><StageIcon className="w-4 h-4" />{STAGES.find(x => x.value === growthData.stage)?.name}</span>
+              ); })()}
+              <button type="button" onClick={() => { setPickedStage(growthData.stage); setStep('stage'); }} className="text-xs text-gray-500 underline">Change</button>
+            </div>
           </div>
 
+          {isProduct && (
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
             <CardContent className="p-5">
               <p className="text-base font-bold text-emerald-700 mb-2">Welcome to ZigPulse</p>
@@ -587,6 +653,9 @@ export default function GrowthDevelopment() {
               </button>
             </CardContent>
           </Card>
+          )}
+
+          {!isProduct && <StageGuide stage={growthData.stage} />}
 
           {/* [FIX] "You don't have a venture yet..." message removed
               entirely — the only way to reach this page without a venture
@@ -601,29 +670,10 @@ export default function GrowthDevelopment() {
 
             {/* ===================== VENTURE PROFILE ===================== */}
             <TabsContent value="profile" className="space-y-6">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Where are you now?</CardTitle>
-                  <CardDescription>This sets the guide, the content you fill in and the questions reviewers see. You can change it anytime.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {STAGES.map((st) => (
-                      <button type="button" key={st.value} onClick={() => setStage(st.value)}
-                        className={`text-left p-3 rounded-lg border text-sm ${growthData.stage === st.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                        <p className="font-semibold text-gray-900">{st.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">{st.description}</p>
-                      </button>
-                    ))}
-                  </div>
-                  <StageGuide stage={growthData.stage} />
-                </CardContent>
-              </Card>
-
-              {!venture && (
+              {(
                 <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">{isNameComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Venture Name *</CardTitle>
+                    <CardTitle className="flex items-center gap-2">{isNameComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Idea Name' : 'Venture Name'} *</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile} value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet">
@@ -701,6 +751,7 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
+              {isProduct && (
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle>Social Links</CardTitle>
@@ -718,6 +769,7 @@ export default function GrowthDevelopment() {
                   </MobileFieldWrapper>
                 </CardContent>
               </Card>
+              )}
             </TabsContent>
 
             {/* ===================== FEEDBACK ===================== */}
