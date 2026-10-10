@@ -172,6 +172,7 @@ const STAGE_GUIDES = {
       ['What is missing?', 'Open suggestions often point at something you have not considered.'],
     ],
     skip: 'Skip features, design and pricing for now. Reviewers cannot judge them yet, and the answers would mislead you.',
+    note: 'You can update your brief at any time and focus on different questions.',
   },
   prototype: {
     title: 'Prototype: what matters at this stage',
@@ -198,6 +199,7 @@ const StageGuide = ({ stage }) => {
         <div className="min-w-0">
           <p className={`font-semibold ${st.title}`}>{g.title}</p>
           <p className="text-sm text-gray-700 mt-1">{g.lead}</p>
+          {g.note && <p className={`text-sm font-medium mt-2 ${st.title}`}>{g.note}</p>}
           <button type="button" onClick={() => setOpen(o => !o)} className={`text-xs font-medium mt-2 flex items-center gap-1 ${st.title}`}>
             {open ? 'Hide' : 'What to check'}
             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -232,6 +234,8 @@ export default function GrowthDevelopment() {
 
   const [growthData, setGrowthData] = useState({
     stage: 'product',
+    need: '',
+    solution: '',
     name: '',
     headline: '',
     description: '',
@@ -278,6 +282,8 @@ export default function GrowthDevelopment() {
         const loaded = { ...(currentVenture.growth_data || {}) };
         loaded.name = currentVenture.name || '';
         loaded.stage = ['idea', 'prototype', 'product'].includes(loaded.stage) ? loaded.stage : 'product';
+        loaded.need = loaded.need || '';
+        loaded.solution = loaded.solution || '';
         loaded.product_url = loaded.product_url || '';
         loaded.uploaded_files = (loaded.uploaded_files || []).slice(0, 1); // enforce single-file cap even on old data
         loaded.is_imported = loaded.is_imported === true;
@@ -332,21 +338,21 @@ export default function GrowthDevelopment() {
     setGrowthData(prev => ({ ...prev, business_model_data: { ...prev.business_model_data, [field]: value } }));
 
   // Switching stage resets the category list to what that stage supports.
-  // 'idea_problem' (Idea) and 'core_features' (Prototype) are the required
-  // question of their stage, so they are always present and cannot be unticked.
+  // 'idea_problem' + 'idea_solution' (Idea) and 'proto_product' (Prototype) are the
+  // always-asked questions of their stage and cannot be unticked.
   const setStage = (stage) => {
     setGrowthData(prev => {
       const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
       let selected_categories;
-      if (stage === 'idea') selected_categories = ['idea_problem', ...keep(['idea_alternatives', 'idea_value'])];
-      else if (stage === 'prototype') selected_categories = ['core_features', ...keep(['business_model'])];
+      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', ...keep(['idea_alternatives', 'idea_value'])];
+      else if (stage === 'prototype') selected_categories = ['proto_product', ...keep(['core_features', 'business_model'])];
       else selected_categories = keep(['business_model', 'core_features', 'value_proposition', 'product_definition']);
       return { ...prev, stage, selected_categories };
     });
   };
 
   const toggleCategory = (key) => {
-    if (key === 'idea_problem' || (growthData.stage === 'prototype' && key === 'core_features')) return;
+    if (['idea_problem', 'idea_solution', 'proto_product'].includes(key)) return;
     setGrowthData(prev => {
       const has = prev.selected_categories.includes(key);
       const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
@@ -412,7 +418,7 @@ export default function GrowthDevelopment() {
     if (existing && existing.length > 0) throw new Error('NAME_TAKEN');
     const venturePayload = {
       name: growthData.name.trim(),
-      description: growthData.description,
+      description: growthData.stage === 'product' ? growthData.description : growthData.solution,
       phase: "growth",
       virtual_capital: 0,
       monthly_burn_rate: 0,
@@ -487,7 +493,7 @@ export default function GrowthDevelopment() {
           const ka = Object.keys(a), kb = Object.keys(b);
           return ka.length === kb.length && ka.every((k) => same(a[k], b[k]));
         };
-        const checkFields = ['custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description'];
+        const checkFields = ['need', 'solution', 'custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description'];
         const mismatched = checkFields.filter((f) => !same((saved.growth_data || {})[f] ?? '', growthData[f] ?? ''));
         if (mismatched.length > 0) {
           console.error('[Save verification] NOT saved:', mismatched, { sent: growthData, stored: saved.growth_data });
@@ -552,6 +558,8 @@ export default function GrowthDevelopment() {
   const isPrototype = growthData.stage === 'prototype';
   const isProduct = growthData.stage === 'product';
   const isNameComplete = growthData.name.trim().length >= 2;
+  const isNeedComplete = growthData.need.trim().length >= 30;
+  const isSolutionComplete = growthData.solution.trim().length >= 30;
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
   const hasAtLeastOneCategory = growthData.selected_categories.length > 0;
@@ -574,7 +582,7 @@ export default function GrowthDevelopment() {
   const hasDemoFile = growthData.uploaded_files.length > 0;
 
   const canSave = isNameComplete && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
-    && (isIdea ? isDescriptionComplete : hasDemoFile);
+    && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete && hasDemoFile) : hasDemoFile);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
@@ -698,10 +706,11 @@ export default function GrowthDevelopment() {
               </Card>
               )}
 
+              {isProduct ? (
               <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'The Idea' : 'Short Description'}</CardTitle>
-                  <CardDescription>{isIdea ? 'The problem, who it is for, and your idea.' : "What the product is and who it's for."}</CardDescription>
+                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Short Description</CardTitle>
+                  <CardDescription>What the product is and who it's for.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
@@ -709,6 +718,32 @@ export default function GrowthDevelopment() {
                   </MobileFieldWrapper>
                 </CardContent>
               </Card>
+              ) : (
+              <>
+              <Card className={isNeedComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">{isNeedComplete && <CheckCircle className="w-5 h-5 text-green-500" />}The Need</CardTitle>
+                  <CardDescription>What need are you addressing, and what is missing in the market today?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
+                    <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
+                  </MobileFieldWrapper>
+                </CardContent>
+              </Card>
+              <Card className={isSolutionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">{isSolutionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Your Solution' : 'The Product'}</CardTitle>
+                  <CardDescription>{isIdea ? 'What is your solution, and who is it for?' : 'Describe your product: what it does and who it is for.'}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
+                    <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
+                  </MobileFieldWrapper>
+                </CardContent>
+              </Card>
+              </>
+              )}
 
               {isProduct && (
               <Card className="shadow-lg">
@@ -797,11 +832,16 @@ export default function GrowthDevelopment() {
                   {isIdea && (
                     <>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The problem (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"The problem feels relevant and worth solving."</p>
+                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The Need (always asked)</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"The need is real and worth solving."</p>
                       </div>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Your Solution (always asked)</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"The solution fits the need and the people it is meant for."</p>
+                      </div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>
                       {[
-                        { key: 'idea_alternatives', label: 'Existing solutions', hint: '"I am aware of existing products or solutions that address this problem."' },
+                        { key: 'idea_alternatives', label: 'Existing solutions', hint: '"I am aware of existing products or solutions that address this need."' },
                         { key: 'idea_value', label: 'What would make it more valuable', hint: 'An open question for suggestions.' },
                       ].map((q) => (
                         <div key={q.key} className="border border-gray-200 rounded-lg p-4">
@@ -814,6 +854,14 @@ export default function GrowthDevelopment() {
                       ))}
                     </>
                   )}
+
+                  {isPrototype && (
+                    <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The Product (always asked)</p>
+                      <p className="text-xs text-gray-500 mt-1 pl-5">"How clearly and accurately is this product defined?"</p>
+                    </div>
+                  )}
+                  {isPrototype && <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>}
 
                   {/* --- Business Model (merged Subscription/Freemium) --- */}
                   {!isIdea && (<>
@@ -950,9 +998,11 @@ export default function GrowthDevelopment() {
                 </CardContent>
               </Card>
 
+              {isProduct && (
               <Card className="shadow-lg border-emerald-200">
-                <CardHeader><CardTitle className="text-base flex items-center">{isProduct ? 'Always included (not optional)' : 'Also included'}<ExplainToggle text={isProduct ? ALWAYS_INCLUDED_EXPLANATION : "Your own question (above), if you wrote one. Reviewers are not asked about visiting a product or about a slogan at this stage."} /></CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base flex items-center">Always included (not optional)<ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} /></CardTitle></CardHeader>
               </Card>
+              )}
             </TabsContent>
           </Tabs>
 

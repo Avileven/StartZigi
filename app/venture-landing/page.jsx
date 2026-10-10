@@ -217,7 +217,8 @@ const FQ_FIELD_LABELS = {
   final_change_text: '"One Last Thing"',
   feedback_text: 'Your feedback',
   pricing_note: 'Pricing note',
-  idea_problem_note: 'Problem note',
+  idea_problem_note: 'The Need note',
+  idea_solution_note: 'Solution note',
   idea_alternatives_which: '"Which ones?"',
   idea_value_text: '"What would make this idea more valuable?"',
 };
@@ -422,6 +423,8 @@ export default function VentureLanding() {
   const [ideaProblemRating, setIdeaProblemRating] = useState(5);
   const [ideaProblemUnknown, setIdeaProblemUnknown] = useState(false);
   const [ideaProblemNote, setIdeaProblemNote] = useState('');
+  const [ideaSolutionRating, setIdeaSolutionRating] = useState(5);
+  const [ideaSolutionNote, setIdeaSolutionNote] = useState('');
   const [ideaAwareness, setIdeaAwareness] = useState(null); // 'none' | 'few' | 'many'
   const [ideaAwareWhich, setIdeaAwareWhich] = useState('');
   const [ideaValueText, setIdeaValueText] = useState('');
@@ -894,10 +897,12 @@ export default function VentureLanding() {
       // are actually saved are checked; "One Last Thing" alone never triggers AI.
       const bmLow = selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD;
       const vpLow = selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD;
-      const pdLow = selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
+      const hasPD = selected.includes('product_definition') || selected.includes('proto_product');
+      const pdLow = hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const productVisited = isProductStage && gd.product_url && visitedProduct === 'yes';
       const ideaAnswered = isIdeaStage;
       const ideaProblemLow = ideaAnswered && !ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD;
+      const ideaSolutionLow = ideaAnswered && ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const growthItems = [
         ...(bmLow ? [{ key: 'business_model_note', text: businessModelNote, kind: 'explanation' }] : []),
         ...(selected.includes('core_features') ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
@@ -909,6 +914,7 @@ export default function VentureLanding() {
         ] : []),
         ...(gd.custom_question ? [{ key: 'custom_question_answer', text: customQuestionAnswer, kind: 'other' }] : []),
         ...(ideaProblemLow ? [{ key: 'idea_problem_note', text: ideaProblemNote, kind: 'explanation' }] : []),
+        ...(ideaSolutionLow ? [{ key: 'idea_solution_note', text: ideaSolutionNote, kind: 'explanation' }] : []),
         ...(ideaAnswered && selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? [{ key: 'idea_alternatives_which', text: ideaAwareWhich, kind: 'other' }] : []),
         ...(ideaAnswered && selected.includes('idea_value') ? [{ key: 'idea_value_text', text: ideaValueText, kind: 'feature' }] : []),
         ...(isProductStage ? [{ key: 'final_change_text', text: finalChangeText, kind: 'final' }] : []),
@@ -917,8 +923,9 @@ export default function VentureLanding() {
         selected.includes('business_model') ? businessModelRating : null,
         selected.includes('core_features') ? coreFeaturesRating : null,
         selected.includes('value_proposition') ? valuePropRating : null,
-        selected.includes('product_definition') ? productDefinitionRating : null,
+        hasPD ? productDefinitionRating : null,
         ideaAnswered && !ideaProblemUnknown ? ideaProblemRating : null,
+        ideaAnswered ? ideaSolutionRating : null,
       ];
       const growthQuality = await runFeedbackQualityGate(growthItems, growthRatings);
       if (growthQuality.needsRewrite) {
@@ -939,8 +946,8 @@ export default function VentureLanding() {
         core_features_note: selected.includes('core_features') ? (gKeep('core_features_note', coreFeaturesNote.trim()) || null) : null,
         value_prop_rating: selected.includes('value_proposition') ? valuePropRating : null,
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('value_prop_note', valuePropNote.trim()) || null) : null,
-        product_definition_rating: selected.includes('product_definition') ? productDefinitionRating : null,
-        product_definition_note: selected.includes('product_definition') && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('product_definition_note', productDefinitionNote.trim()) || null) : null,
+        product_definition_rating: hasPD ? productDefinitionRating : null,
+        product_definition_note: hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('product_definition_note', productDefinitionNote.trim()) || null) : null,
         visited_product: isProductStage && gd.product_url ? visitedProduct : null,
         // [FIX] DB DEPENDENCY: growth_feedback needs a new text column
         // `product_match_choice` — the old `product_match_rating` (integer)
@@ -959,6 +966,8 @@ export default function VentureLanding() {
           problem_rating: ideaProblemUnknown ? null : ideaProblemRating,
           problem_unknown: ideaProblemUnknown,
           problem_note: ideaProblemLow ? (gKeep('idea_problem_note', ideaProblemNote.trim()) || null) : null,
+          solution_rating: ideaSolutionRating,
+          solution_note: ideaSolutionLow ? (gKeep('idea_solution_note', ideaSolutionNote.trim()) || null) : null,
           alternatives: selected.includes('idea_alternatives') ? ideaAwareness : null,
           alternatives_which: selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? (gKeep('idea_alternatives_which', ideaAwareWhich.trim()) || null) : null,
           value_text: selected.includes('idea_value') ? (gKeep('idea_value_text', ideaValueText.trim()) || null) : null,
@@ -1338,9 +1347,26 @@ export default function VentureLanding() {
               </div>
 
               {/* [ALWAYS SHOWN — not gated by selected_categories] */}
-              {venture.growth_data.description && (
-                <div className="mb-8 max-w-2xl mx-auto text-center">
-                  <ReadMoreText text={venture.growth_data.description} />
+              {(venture.growth_data.stage || 'product') === 'product' ? (
+                venture.growth_data.description && (
+                  <div className="mb-8 max-w-2xl mx-auto text-center">
+                    <ReadMoreText text={venture.growth_data.description} />
+                  </div>
+                )
+              ) : (
+                <div className="mb-8 max-w-2xl mx-auto grid gap-4">
+                  {venture.growth_data.need && (
+                    <div className="border border-amber-200 bg-amber-50/50 rounded-xl p-5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-700 mb-2">The Need</p>
+                      <ReadMoreText text={venture.growth_data.need} />
+                    </div>
+                  )}
+                  {venture.growth_data.solution && (
+                    <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-indigo-700 mb-2">{(venture.growth_data.stage || 'product') === 'idea' ? 'The Solution' : 'The Product'}</p>
+                      <ReadMoreText text={venture.growth_data.solution} />
+                    </div>
+                  )}
                 </div>
               )}
               {venture.growth_data.product_url && (
@@ -1438,10 +1464,10 @@ export default function VentureLanding() {
                           <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-3">
                               <Lightbulb className="w-5 h-5 text-amber-600" />
-                              <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Problem</p>
+                              <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Need</p>
                             </div>
-                            <MobileQuestionSheet label="Is the problem real?" summary={ideaProblemUnknown ? 'Not sure' : ideaProblemRating} isMobile={isMobileViewport}>
-                              <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
+                            <MobileQuestionSheet label="Is the need real?" summary={ideaProblemUnknown ? 'Not sure' : ideaProblemRating} isMobile={isMobileViewport}>
+                              <Label className="text-sm">The need is real and worth solving. (1-10)</Label>
                               <Slider
                                 value={[ideaProblemRating]}
                                 onValueChange={(value) => { setIdeaProblemRating(value[0]); setIdeaProblemUnknown(false); }}
@@ -1461,8 +1487,37 @@ export default function VentureLanding() {
                               </button>
                               {!ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">What makes you feel the problem is not relevant or not worth solving? (optional)</Label>
+                                  <Label className="text-xs text-gray-500">What makes you feel the need is not real or not worth solving? (optional)</Label>
                                   <Textarea value={ideaProblemNote} onChange={(e) => setIdeaProblemNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                                </div>
+                              )}
+                            </MobileQuestionSheet>
+                          </div>
+
+                          <div className="border border-indigo-200 bg-indigo-50/40 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Target className="w-5 h-5 text-indigo-600" />
+                              <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">The Solution</p>
+                            </div>
+                            <MobileQuestionSheet label="Does the solution fit?" summary={ideaSolutionRating} isMobile={isMobileViewport}>
+                              <Label className="text-sm">The solution fits the need and the people it is meant for. (1-10)</Label>
+                              <Slider
+                                value={[ideaSolutionRating]}
+                                onValueChange={(value) => setIdeaSolutionRating(value[0])}
+                                max={10} min={1} step={1}
+                                disabled={isSubmittingGrowthFeedback}
+                                className="mt-2 mb-1
+                                  [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                  [&>span>span]:bg-indigo-500 [&>span>span]:rounded-full
+                                  [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                  [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-500
+                                  [&_[role=slider]]:shadow-md"
+                              />
+                              <div className="text-center text-sm font-semibold text-indigo-700">{ideaSolutionRating}</div>
+                              {ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                                <div className="mt-2">
+                                  <Label className="text-xs text-gray-500">What feels off about the solution? (optional)</Label>
+                                  <Textarea value={ideaSolutionNote} onChange={(e) => setIdeaSolutionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
                             </MobileQuestionSheet>
@@ -1475,7 +1530,7 @@ export default function VentureLanding() {
                                 <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Existing Solutions</p>
                               </div>
                               <MobileQuestionSheet label="Existing solutions" summary={ideaAwareness ? 'Answered' : null} isMobile={isMobileViewport}>
-                                <Label className="text-sm">I am aware of existing products or solutions that address this problem.</Label>
+                                <Label className="text-sm">I am aware of existing products or solutions that address this need.</Label>
                                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                   {[{ k: 'none', l: 'Not aware of any' }, { k: 'few', l: 'Aware of a few' }, { k: 'many', l: 'Aware of many' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
@@ -1655,14 +1710,14 @@ export default function VentureLanding() {
 
                       {/* --- Product Definition (conditional) --- */}
 
-                      {venture.growth_data.selected_categories.includes('product_definition') && (
+                      {(venture.growth_data.selected_categories.includes('product_definition') || venture.growth_data.selected_categories.includes('proto_product')) && (
                         <div className="border border-rose-200 bg-rose-50/40 rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <Target className="w-5 h-5 text-rose-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Product Definition</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-rose-700">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
                           </div>
                           <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={isMobileViewport}>
-                          <Label className="text-sm">How clear is this description of the product? (1-10)</Label>
+                          <Label className="text-sm">{(venture.growth_data.stage || 'product') === 'prototype' ? 'How clearly and accurately is this product defined? (1-10)' : 'How clear is this description of the product? (1-10)'}</Label>
                           <button
                             type="button"
                             onClick={() => setShowDescriptionInline(s => !s)}
@@ -1671,7 +1726,7 @@ export default function VentureLanding() {
                             {showDescriptionInline ? "Hide description" : "Show description"}
                           </button>
                           {showDescriptionInline && (
-                            <p className="text-sm text-gray-700 bg-white border border-rose-200 rounded-lg p-3 mb-2">{venture.growth_data.description}</p>
+                            <p className="text-sm text-gray-700 bg-white border border-rose-200 rounded-lg p-3 mb-2">{(venture.growth_data.stage || 'product') === 'prototype' ? venture.growth_data.solution : venture.growth_data.description}</p>
                           )}
                           <Slider
                             value={[productDefinitionRating]}
