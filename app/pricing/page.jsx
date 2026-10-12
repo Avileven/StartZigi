@@ -1,7 +1,9 @@
 // pricing page - updated
+// [PULSE] Tabs renamed ZigJourney / ZigPulse. ZigPulse is free (30 requests + 100 AI credits as a gift,
+// logic for one-time vs monthly still TODO); ZigPulse Boost carries the old Growth price.
 // UPDATE 200426: Block plan downgrade — user cannot select a plan lower than their current one.
 // [FULL REBUILD] Per "New pricing.docx" — replaced the flat 4-tier grid
-// with two tabs (Build an Idea / Grow a Product), each with a free-ish and
+// with two tabs (ZigJourney / ZigPulse), each with a free-ish and
 // a "Boost" tier. Pro Founder and Unicorn are gone entirely. The 6-month
 // price still uses the existing separate Monthly/6-Months toggle (not
 // embedded in the card text, despite how the doc formatted it) — confirmed
@@ -69,7 +71,7 @@ export default function Pricing() {
     // regular journey or by registering with an existing product). This
     // card is informational only.
     if (planKey === 'growth') {
-      alert('Growth is included automatically when your venture reaches the Growth stage — nothing to select here.');
+      router.push('/createventure');
       return;
     }
     if (planKey === 'growth_boost') {
@@ -115,11 +117,11 @@ export default function Pricing() {
   const ideaTiers = [
     {
       key: 'builder',
-      name: 'Builder',
+      name: 'ZigJourney',
       emoji: '🔨',
-      price: '$0',
-      sixMonthPrice: '$0',
-      priceNote: 'forever',
+      price: 'FREE',
+      sixMonthPrice: 'FREE',
+      priceNote: '',
       subtitle: 'Develop your idea for free',
       description: "StartZig's journey is free forever. No credit card, no pressure. Develop your idea and get feedback from the community.",
       features: [
@@ -133,7 +135,7 @@ export default function Pricing() {
     },
     {
       key: 'builder_boost',
-      name: 'Builder Boost',
+      name: 'ZigJourney Boost',
       emoji: '⚡',
       price: '$12',
       sixMonthPrice: '$9',
@@ -146,7 +148,7 @@ export default function Pricing() {
         '30 feedback requests a month [2]',
         '300 AI credits a month',
       ],
-      cta: 'Get Builder Boost',
+      cta: 'Get ZigJourney Boost',
       featured: false,
     },
   ];
@@ -154,38 +156,36 @@ export default function Pricing() {
   const growthTiers = [
     {
       key: 'growth',
-      name: 'Growth',
+      name: 'ZigPulse',
       emoji: '🚀',
-      price: '$35',
-      sixMonthPrice: '$28',
-      priceNote: '/ month',
-      subtitle: "Expose your product to StartZig's community",
-      description: 'Expose your product to the community and collect feedback on it.',
-      // [NEW] Launch offer — shown only on this tier, right under the price.
-      launchOffer: 'Launch offer! Try us free for 3 months, no commitment or card. Join by December 1.',
+      price: 'FREE',
+      sixMonthPrice: 'FREE',
+      priceNote: '',
+      subtitle: 'Choose your stage and get feedback',
+      description: 'Choose your stage and get feedback from the community. Suitable for an idea, a prototype and a live product.',
       features: [
-        'Product landing page',
-        '20 feedback requests a month [2]',
-        '100 AI credits a month',
+        'Landing page for your idea, prototype or product',
+        '30 feedback requests, free [2]',
+        '100 AI credits as a gift',
       ],
-      cta: 'Get Growth',
+      cta: 'Start Free',
       featured: false,
     },
     {
       key: 'growth_boost',
-      name: 'Growth Boost',
+      name: 'ZigPulse Boost',
       emoji: '🚀',
-      price: '$49',
-      sixMonthPrice: '$39',
+      price: '$35',
+      sixMonthPrice: '$28',
       priceNote: '/ month',
       subtitle: "A boost of exposure to StartZig's community",
-      description: 'More visibility, more feedback, more support for products actively growing their user base.',
+      description: 'More visibility, more feedback, more support for ideas and products actively looking for the community.',
       features: [
-        'Product landing page',
+        'Landing page for your idea, prototype or product',
         '50 feedback requests a month [2]',
         '200 AI credits a month',
       ],
-      cta: 'Get Growth Boost',
+      cta: 'Get ZigPulse Boost',
       featured: false,
     },
   ];
@@ -210,7 +210,7 @@ export default function Pricing() {
               activeTab === 'idea' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Build an Idea
+            ZigJourney
           </button>
           <button
             onClick={() => setActiveTab('product')}
@@ -218,12 +218,12 @@ export default function Pricing() {
               activeTab === 'product' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Grow a Product
+            ZigPulse
           </button>
         </div>
 
         <p className="text-gray-600 text-sm mb-4">
-          All plans include monthly credits. Need more? Top up anytime.
+          {activeTab === 'idea' ? 'All plans include monthly credits. Need more? Top up anytime.' : 'ZigPulse includes a one-time gift of requests and AI credits. Boost adds monthly credits. Need more? Top up anytime.'}
         </p>
 
         <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mb-4">
@@ -319,7 +319,7 @@ export default function Pricing() {
             founder" since this covers both the idea and product stages. */}
         <div className="text-xs text-gray-400 mt-8 max-w-2xl mx-auto text-left space-y-1">
           <p>[1] AI credits are included for your first 6 months, enough to complete your product definition journey. After that, you can continue the journey for free, without new AI credits.</p>
-          <p>[2] You can scale up your feedback balance by earning Insight Credits, each time you give feedback to another founder.</p>
+          <p>[2] You can scale up your feedback balance by earning Zigback, each time you give feedback to another founder.</p>
         </div>
       </div>
     </div>
