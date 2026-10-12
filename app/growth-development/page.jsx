@@ -515,7 +515,7 @@ export default function GrowthDevelopment() {
           venture_id: targetVenture.id,
           message_type: 'phase_welcome',
           title: '📈 Welcome to ZigPulse!',
-          content: `Welcome to ZigPulse! It's time to set up your first brief, get feedback from the community and expose your product to more users.`,
+          content: `Your page is ready. Head to the Promotion Center to send it to the community and start collecting feedback. You can update your content and questions at any time.`,
           phase: 'growth',
         });
         // [NEW] Same email as the regular-journey Beta→Growth transition
@@ -530,7 +530,7 @@ export default function GrowthDevelopment() {
               founderName: currentUser.username || currentUser.full_name || currentUser.name || "",
               ventureName: targetVenture.name,
               newPhaseTitle: "📈 Welcome to ZigPulse!",
-              newPhaseMessage: "Welcome to ZigPulse! It's time to set up your first brief, get feedback from the community and expose your product to more users.\n\nSince we just launched ZigPulse, every founder who joins in the coming month will benefit from three months free on the Growth package.",
+              newPhaseMessage: "Your ZigPulse page is ready. Head to the Promotion Center, name your brief and choose how many people to reach. You can follow the results on the Product Feedback page.\n\nWant more feedback requests? You earn them for free by giving feedback to other founders. You can also upgrade to ZigPulse Boost at any time to increase your quota.",
             }),
           });
         } catch (emailErr) {
@@ -833,11 +833,11 @@ export default function GrowthDevelopment() {
                     <>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The Need (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"The need is real and worth solving."</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"The problem feels relevant and worth solving."</p>
                       </div>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Your Solution (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"The solution fits the need and the people it is meant for."</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"The solution offers something meaningful, and its value is clear to me."</p>
                       </div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>
                       {[
