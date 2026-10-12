@@ -104,10 +104,10 @@ url: createPageUrl("vc-marketplace"),
 // show "Growth" instead of the confirmed "GrowthZig" — inconsistent with
 // my-account.jsx showing the same field for the same user).
 const PLAN_DISPLAY_NAMES = {
-  builder: 'Builder',
-  builder_boost: 'Builder Boost',
-  growth: 'GrowthZig',
-  growth_boost: 'GrowthZig Boost',
+  builder: 'ZigJourney',
+  builder_boost: 'ZigJourney Boost',
+  growth: 'ZigPulse',
+  growth_boost: 'ZigPulse Boost',
 };
 
 export default function ClientLayout({ children }) {

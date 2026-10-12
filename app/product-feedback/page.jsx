@@ -57,7 +57,7 @@ function getJourneyTag(rawPhase) {
     mvp: 'Shape',
     mlp: 'Shape',
     beta: 'Beta',
-    growth: 'Growth',
+    growth: 'Pulse',
   };
   return map[rawPhase] || null;
 }
@@ -105,7 +105,7 @@ const STAGE_RING_COLORS = {
   // [FIX] Was missing entirely — same bug as my-account.jsx, found by
   // searching every file with this same ring-color pattern instead of
   // fixing reactively one at a time.
-  Growth: { stroke: '#0C5132', text: '#04342C' },
+  Pulse: { stroke: '#0C5132', text: '#04342C' },
 };
 // Insight status uses its own (amber) ramp — deliberately different from
 // Stage's (green/teal) so the two badges are never confused for the same

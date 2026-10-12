@@ -104,7 +104,7 @@ const PHASE_LABELS = {
   mvp: "MVP",
   mlp: "MLP",
   beta: "Beta",
-  growth: "Growth",
+  growth: "Pulse",
   ma: "M&A",
 };
 
@@ -158,7 +158,7 @@ function getJourneyTag(rawPhase) {
   // [FIX] Was mapping growth -> 'Beta' (a venture in Growth phase
   // displayed "Beta" in its public Zig Profile stage badge, hiding that it
   // had actually reached Growth). Now shows its real stage.
-  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Growth' };
+  const map = { idea: 'Spark', business_plan: 'Plan', mvp: 'Shape', mlp: 'Shape', beta: 'Beta', growth: 'Pulse' };
   return map[rawPhase] || null;
 }
 function getInsightStatus(count) {
@@ -1438,7 +1438,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     if (currentVenture.phase === 'growth') {
       assets.push({
         id: 'growth_development',
-        title: 'Growth Development',
+        title: 'ZigPulse',
         icon: Rocket,
         // [FLAG — not fully verified] A stale comment elsewhere in this
         // same function claims createPageUrl strips hyphens (e.g.

@@ -23,7 +23,7 @@ function getJourneyTag(rawPhase) {
     mvp: 'Shape',
     mlp: 'Shape',
     beta: 'Beta',
-    growth: 'Growth',
+    growth: 'Pulse',
   };
   return map[rawPhase] || null;
 }
@@ -56,7 +56,7 @@ const STAGE_RING_COLORS = {
   // [FIX] Text color was too light (#ECFDF5, near-white) against the ring's
   // white background — invisible, confirmed via screenshot. Every other
   // stage here uses dark text; matches that pattern now.
-  Growth: { stroke: '#0C5132', text: '#04342C' },
+  Pulse: { stroke: '#0C5132', text: '#04342C' },
 };
 const INSIGHT_RING_COLORS = {
   'Insight Seeker': { stroke: '#FAEEDA', text: '#633806' },
@@ -115,10 +115,10 @@ const PLAN_PRICES = {
 // is confusing since they're different things). "GrowthZig" is the
 // confirmed display name for the Growth plan specifically.
 const PLAN_DISPLAY_NAMES = {
-  builder: 'Builder',
-  builder_boost: 'Builder Boost',
-  growth: 'GrowthZig',
-  growth_boost: 'GrowthZig Boost',
+  builder: 'ZigJourney',
+  builder_boost: 'ZigJourney Boost',
+  growth: 'ZigPulse',
+  growth_boost: 'ZigPulse Boost',
 };
 
 export default function MyAccount() {

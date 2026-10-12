@@ -116,7 +116,7 @@ function getJourneyTag(rawPhase) {
     mvp: 'Shape',
     mlp: 'Shape',
     beta: 'Beta',
-    growth: 'Growth',
+    growth: 'Pulse',
   };
   return map[rawPhase] || null;
 }

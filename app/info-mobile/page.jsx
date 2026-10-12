@@ -47,7 +47,7 @@ const PHASE_CONTENT = {
   },
 };
 
-const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Growth' };
+const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Pulse' };
 
 export default function InfoMobilePage() {
   const [venture, setVenture] = useState(null);
