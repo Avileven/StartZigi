@@ -10,14 +10,14 @@
 // /notifications). This file is now just the Home content: venture name +
 // phase, the journey clock, a styled Venture Profile card, and the
 // Continue-to-Plan card.
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { differenceInDays } from 'date-fns';
 import { MessageSquare, Users, Clock, Wallet, BarChart3, ChevronDown, Target, Lightbulb, FileText } from 'lucide-react';
 import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 
-const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Growth' };
+const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Pulse' };
 
 function getVentureAge(venture) {
   if (!venture?.created_date) return 0;
@@ -40,6 +40,13 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
   // has actually finished configuring their Growth page.
   const growthSetupComplete = venture?.growth_data?.selected_categories?.length > 0;
   const [showGrowthDescription, setShowGrowthDescription] = useState(false);
+
+  // [NEW — ZigPulse mobile] Growth ventures have no mobile home: they land
+  // straight on the Product Feedback page (navigation lives in the top bar).
+  useEffect(() => {
+    if (venture?.phase === 'growth') router.replace('/product-feedback');
+  }, [venture?.phase]);
+  if (venture?.phase === 'growth') return null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

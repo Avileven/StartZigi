@@ -25,6 +25,10 @@ import {
   Info,
   Bell,
   Rocket,
+  MessageSquare,
+  Activity,
+  Megaphone,
+  Globe,
 } from "lucide-react";
 
 import {
@@ -505,6 +509,53 @@ pathname === "/"
               MobileHome.jsx — a per-page icon row would disappear the
               moment the user actually navigated away, which was the whole
               problem with the previous version. */}
+          {/* [NEW — ZigPulse mobile] Growth (ZigPulse) ventures get their own
+              top bar: Feedback, ZigPulse page, Promotion Center, public page,
+              account, notifications. No Home / Info (those are for the long
+              journey, which keeps the bar below untouched). */}
+          {venture?.phase === 'growth' ? (
+            <>
+              <div className="md:hidden flex items-center justify-between gap-1 px-3 pt-3 pb-2 bg-gray-50">
+                {[
+                  { key: 'feedback', label: 'Product Feedback', path: '/product-feedback', Icon: MessageSquare },
+                  { key: 'pulse', label: 'ZigPulse', path: '/growth-development', Icon: Activity },
+                  { key: 'promo', label: 'Promotion Center', path: '/promotion-center', Icon: Megaphone },
+                ].map(({ key, label, path, Icon }) => (
+                  <button key={key} aria-label={label} onClick={() => router.push(path)}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                      pathname === path ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+                    }`}>
+                    <Icon className="w-5 h-5" />
+                  </button>
+                ))}
+                <button aria-label="Public page" disabled={!landingPageItem.url || landingPageItem.url === '#'}
+                  onClick={() => window.open(landingPageItem.url, '_blank', 'noopener')}
+                  className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700 disabled:opacity-40">
+                  <Globe className="w-5 h-5" />
+                </button>
+                <button aria-label="My account" onClick={() => router.push('/my-account')}
+                  className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                    pathname === '/my-account' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+                  }`}>
+                  <UserCircle className="w-5 h-5" />
+                </button>
+                <button aria-label="Notifications" onClick={() => router.push('/notifications')}
+                  className={`relative w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+                    pathname === '/notifications' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+                  }`}>
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && pathname !== '/notifications' && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+              <p className="md:hidden text-center text-xs font-semibold text-indigo-700 pb-2 bg-gray-50">
+                {{ '/product-feedback': 'Product Feedback', '/growth-development': 'ZigPulse', '/promotion-center': 'Promotion Center', '/my-account': 'My Account', '/notifications': 'Notifications' }[pathname] || ''}
+              </p>
+            </>
+          ) : (
           <div className="md:hidden flex items-center justify-between gap-2 px-4 pt-3 pb-3 bg-gray-50">
             <button
               onClick={() => router.push('/dashboard')}
@@ -544,6 +595,7 @@ pathname === "/"
               )}
             </button>
           </div>
+          )}
           <div className="md:hidden border-b border-gray-200" />
 
           <div className="flex-1 overflow-auto">{children}</div>
