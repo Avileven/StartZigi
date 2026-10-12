@@ -180,6 +180,70 @@ const renderFile = (file, index, htmlContents, hideFileName = false) => {
   );
 };
 
+// [NEW — ZigPulse demo frame] One fixed-size frame for the single demo file
+// (image / HTML / PDF / video). Fixed height; anything bigger scrolls inside
+// the frame, so the page never stretches and images are never cropped or
+// stretched. Used by the Growth (ZigPulse) page only.
+const renderGrowthMedia = (file, htmlContents) => {
+  if (!file) return null;
+  const fileName = file.name || "";
+  const fileUrl = file.url || "";
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  const isHTML = ["html", "htm"].includes(ext);
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext);
+  const isPDF = ext === "pdf";
+  const isVideo = ["mp4", "webm", "mov"].includes(ext);
+  const label = isHTML ? "Live demo" : isImage ? "Preview" : "Demo";
+  const htmlContent = isHTML ? htmlContents[fileUrl] : null;
+
+  const openFull = () => {
+    if (isHTML) {
+      if (!htmlContent) return;
+      const url = URL.createObjectURL(new Blob([htmlContent], { type: "text/html" }));
+      window.open(url, "_blank", "noopener");
+    } else {
+      window.open(fileUrl, "_blank", "noopener");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50/70">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+        <button type="button" onClick={openFull}
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 min-h-[28px]">
+          <ExternalLink className="w-3.5 h-3.5" /> Open full screen
+        </button>
+      </div>
+      <div className="h-[480px] md:h-[420px] bg-gray-50">
+        {isHTML ? (
+          htmlContent ? (
+            <iframe srcDoc={htmlContent} className="w-full h-full border-0 bg-white" title={fileName}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" loading="lazy" />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center">
+              <Loader2 className="w-7 h-7 animate-spin text-gray-400" />
+            </div>
+          )
+        ) : isImage ? (
+          <div className="h-full overflow-auto flex">
+            <img src={fileUrl} alt={fileName} className="block max-w-full h-auto m-auto" />
+          </div>
+        ) : isPDF ? (
+          <iframe src={fileUrl} className="w-full h-full border-0" title={fileName} />
+        ) : isVideo ? (
+          <video src={fileUrl} controls className="w-full h-full object-contain bg-black" />
+        ) : (
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+            className="h-full flex items-center justify-center gap-3 text-indigo-600 font-medium">
+            <FileText className="w-8 h-8" /> {fileName}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // [NEW — Feedback quality] ============================================
 // Variable Insight Credits based on feedback quality. Principle (same as
 // the Growth AI pipeline): the AI only CLASSIFIES free text; every score
@@ -434,7 +498,6 @@ export default function VentureLanding() {
   // [NEW — Quick track] Idea stage answers. Prototype reuses the Core Features
   // and Business Model state above; Product is unchanged.
   const [ideaProblemRating, setIdeaProblemRating] = useState(5);
-  const [ideaProblemUnknown, setIdeaProblemUnknown] = useState(false);
   const [ideaProblemNote, setIdeaProblemNote] = useState('');
   const [ideaSolutionRating, setIdeaSolutionRating] = useState(5);
   const [ideaSolutionNote, setIdeaSolutionNote] = useState('');
@@ -914,7 +977,7 @@ export default function VentureLanding() {
       const pdLow = hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const productVisited = isProductStage && gd.product_url && visitedProduct === 'yes';
       const ideaAnswered = isIdeaStage;
-      const ideaProblemLow = ideaAnswered && !ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD;
+      const ideaProblemLow = ideaAnswered && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD;
       const ideaSolutionLow = ideaAnswered && ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const growthItems = [
         ...(bmLow ? [{ key: 'business_model_note', text: businessModelNote, kind: 'explanation' }] : []),
@@ -937,7 +1000,7 @@ export default function VentureLanding() {
         selected.includes('core_features') ? coreFeaturesRating : null,
         selected.includes('value_proposition') ? valuePropRating : null,
         hasPD ? productDefinitionRating : null,
-        ideaAnswered && !ideaProblemUnknown ? ideaProblemRating : null,
+        ideaAnswered ? ideaProblemRating : null,
         ideaAnswered ? ideaSolutionRating : null,
       ];
       const growthQuality = await runFeedbackQualityGate(growthItems, growthRatings);
@@ -976,8 +1039,7 @@ export default function VentureLanding() {
         // submissions keep working even before the columns exist.
         ...(!isProductStage ? { stage } : {}),
         ...(isIdeaStage ? { idea_answers: {
-          problem_rating: ideaProblemUnknown ? null : ideaProblemRating,
-          problem_unknown: ideaProblemUnknown,
+          problem_rating: ideaProblemRating,
           problem_note: ideaProblemLow ? (gKeep('idea_problem_note', ideaProblemNote.trim()) || null) : null,
           solution_rating: ideaSolutionRating,
           solution_note: ideaSolutionLow ? (gKeep('idea_solution_note', ideaSolutionNote.trim()) || null) : null,
@@ -1317,8 +1379,11 @@ export default function VentureLanding() {
                   right next to the venture name instead, where identity
                   info belongs. */}
               <div className="text-center pb-6 mb-8">
+                {(() => { const st = venture.growth_data.stage || 'product';
+                  const cls = st === 'idea' ? 'bg-amber-100 text-amber-800' : st === 'prototype' ? 'bg-violet-100 text-violet-800' : 'bg-emerald-100 text-emerald-800';
+                  return <span className={`inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3 ${cls}`}>{st}</span>; })()}
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
-                  <h1 className="text-2xl md:text-3xl font-semibold text-amber-600">{venture.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-amber-600">{venture.name}</h1>
                   {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
                     <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
@@ -1367,17 +1432,21 @@ export default function VentureLanding() {
                   </div>
                 )
               ) : (
-                <div className="mb-8 max-w-2xl mx-auto grid gap-4">
+                <div className={`mb-8 max-w-3xl mx-auto grid gap-4 ${venture.growth_data.need && venture.growth_data.solution ? 'md:grid-cols-2' : ''}`}>
                   {venture.growth_data.need && (
-                    <div className="border border-amber-200 bg-amber-50/50 rounded-xl p-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-amber-700 mb-2">The Need</p>
-                      <ReadMoreText text={venture.growth_data.need} />
+                    <div className="bg-white border border-gray-200 border-l-4 border-l-amber-400 rounded-2xl p-5 md:p-6">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 mb-3">
+                        <Lightbulb className="w-4 h-4" /> The Need
+                      </p>
+                      <div className="text-base leading-relaxed text-gray-800"><ReadMoreText text={venture.growth_data.need} /></div>
                     </div>
                   )}
                   {venture.growth_data.solution && (
-                    <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-indigo-700 mb-2">{(venture.growth_data.stage || 'product') === 'idea' ? 'The Solution' : 'The Product'}</p>
-                      <ReadMoreText text={venture.growth_data.solution} />
+                    <div className="bg-white border border-gray-200 border-l-4 border-l-indigo-500 rounded-2xl p-5 md:p-6">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-700 mb-3">
+                        <Target className="w-4 h-4" /> {(venture.growth_data.stage || 'product') === 'idea' ? 'The Solution' : 'The Product'}
+                      </p>
+                      <div className="text-base leading-relaxed text-gray-800"><ReadMoreText text={venture.growth_data.solution} /></div>
                     </div>
                   )}
                 </div>
@@ -1394,10 +1463,8 @@ export default function VentureLanding() {
 
               {/* [FIX] "Demo" heading removed per explicit request. */}
               {venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
-                <div className="mb-10">
-                  <div className="space-y-4">
-                    {venture.growth_data.uploaded_files.map((file, index) => renderFile(file, index, growthHtmlContents, true))}
-                  </div>
+                <div className="mb-12 max-w-3xl mx-auto">
+                  {renderGrowthMedia(venture.growth_data.uploaded_files[0], growthHtmlContents)}
                 </div>
               )}
 
@@ -1424,7 +1491,9 @@ export default function VentureLanding() {
                   centered heading — was a small CardTitle buried inside the
                   form card, easy to miss. Matches the visual weight of the
                   slogan heading at the top of the page. */}
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-6">Share Your Feedback</h2>
+              <div className="max-w-3xl mx-auto border-t border-gray-200 pt-10 mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center">Share Your Feedback</h2>
+              </div>
 
               {/* Growth Feedback Form */}
               <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
@@ -1479,11 +1548,11 @@ export default function VentureLanding() {
                               <Lightbulb className="w-5 h-5 text-amber-600" />
                               <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Need</p>
                             </div>
-                            <MobileQuestionSheet label="Is the need real?" summary={ideaProblemUnknown ? 'Not sure' : ideaProblemRating} isMobile={isMobileViewport}>
-                              <Label className="text-sm">The need is real and worth solving. (1-10)</Label>
+                            <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={isMobileViewport}>
+                              <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
                               <Slider
                                 value={[ideaProblemRating]}
-                                onValueChange={(value) => { setIdeaProblemRating(value[0]); setIdeaProblemUnknown(false); }}
+                                onValueChange={(value) => setIdeaProblemRating(value[0])}
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
                                 className="mt-2 mb-1
@@ -1493,14 +1562,11 @@ export default function VentureLanding() {
                                   [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-amber-500
                                   [&_[role=slider]]:shadow-md"
                               />
-                              <div className="text-center text-sm font-semibold text-amber-700">{ideaProblemUnknown ? '-' : ideaProblemRating}</div>
-                              <button type="button" onClick={() => setIdeaProblemUnknown(v => !v)} disabled={isSubmittingGrowthFeedback}
-                                className={`mt-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${ideaProblemUnknown ? 'border-amber-600 bg-amber-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>
-                                Not enough information to answer
-                              </button>
-                              {!ideaProblemUnknown && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
+                              <div className="text-center text-sm font-semibold text-amber-700">{ideaProblemRating}</div>
+                              {ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">What makes you feel the need is not real or not worth solving? (optional)</Label>
+                                  <Label className="text-xs text-gray-500">Please explain (optional)</Label>
                                   <Textarea value={ideaProblemNote} onChange={(e) => setIdeaProblemNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
@@ -1512,8 +1578,8 @@ export default function VentureLanding() {
                               <Target className="w-5 h-5 text-indigo-600" />
                               <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">The Solution</p>
                             </div>
-                            <MobileQuestionSheet label="Does the solution fit?" summary={ideaSolutionRating} isMobile={isMobileViewport}>
-                              <Label className="text-sm">The solution fits the need and the people it is meant for. (1-10)</Label>
+                            <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={isMobileViewport}>
+                              <Label className="text-sm">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
                               <Slider
                                 value={[ideaSolutionRating]}
                                 onValueChange={(value) => setIdeaSolutionRating(value[0])}
@@ -1526,10 +1592,11 @@ export default function VentureLanding() {
                                   [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-500
                                   [&_[role=slider]]:shadow-md"
                               />
+                              <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
                               <div className="text-center text-sm font-semibold text-indigo-700">{ideaSolutionRating}</div>
                               {ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">What feels off about the solution? (optional)</Label>
+                                  <Label className="text-xs text-gray-500">Please explain (optional)</Label>
                                   <Textarea value={ideaSolutionNote} onChange={(e) => setIdeaSolutionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
