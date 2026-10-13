@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 // was: "@/src/api/entities"
 import { Venture, User } from "@/api/entities";
 import PhaseCompletionModal from "@/components/ventures/PhaseCompletionModal";
+import Footer from "@/components/layout/Footer";
 
 import {
   LayoutDashboard,
@@ -598,7 +599,13 @@ pathname === "/"
           )}
           <div className="md:hidden border-b border-gray-200" />
 
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex-1 overflow-auto">
+            {children}
+            {/* [NEW — ZigPulse mobile] Footer at the end of every page, mobile only */}
+            {venture?.phase === 'growth' && (
+              <div className="md:hidden"><Footer /></div>
+            )}
+          </div>
         </main>
       </div>
       

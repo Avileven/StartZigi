@@ -16,6 +16,7 @@ import {
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
   DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X, Home, Focus,
   Linkedin, Facebook, Twitter, Instagram, Globe,
+  Activity, Bell, UserCircle,
 } from "lucide-react";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
@@ -1373,6 +1374,39 @@ export default function VentureLanding() {
             </>
           ) : isGrowthMode ? (
             <>
+              {/* [NEW — ZigPulse mobile] Same tab bar as the app, shown only to
+                  the venture's own founder (mobile). This public page is
+                  outside ClientLayout, so the bar is repeated here; the
+                  Public page icon is the active one. */}
+              {isOwnVenture && venture.phase === 'growth' && (
+                <div className="md:hidden -mx-4 mb-6 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center justify-between gap-1 px-3 pt-3 pb-2">
+                    {[
+                      { label: 'Product Feedback', href: '/product-feedback', Icon: MessageSquare },
+                      { label: 'ZigPulse', href: '/growth-development', Icon: Activity },
+                      { label: 'Promotion Center', href: '/promotion-center', Icon: Megaphone },
+                    ].map(({ label, href, Icon }) => (
+                      <a key={href} href={href} aria-label={label}
+                        className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                        <Icon className="w-5 h-5" />
+                      </a>
+                    ))}
+                    <span aria-label="Public page"
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-indigo-600 border-indigo-600 text-white">
+                      <Globe className="w-5 h-5" />
+                    </span>
+                    <a href="/my-account" aria-label="My account"
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                      <UserCircle className="w-5 h-5" />
+                    </a>
+                    <a href="/notifications" aria-label="Notifications"
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                      <Bell className="w-5 h-5" />
+                    </a>
+                  </div>
+                  <p className="text-center text-xs font-semibold text-indigo-700 pb-2">Public Page</p>
+                </div>
+              )}
               {/* Header — venture name + social icons together, then
                   Slogan. [FIX] Social links were floating awkwardly below
                   the "Visit the actual product" button — moved to sit

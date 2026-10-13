@@ -323,7 +323,9 @@ export default function MyAccount() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-2">
+      {/* [ZigPulse mobile] The tab bar already names the page, so the big
+          heading is hidden on mobile for Growth (ZigPulse) ventures. */}
+      <div className={`items-center gap-3 mb-2 ${venture?.phase === 'growth' ? 'hidden md:flex' : 'flex'}`}>
         <UserCircle className="w-8 h-8 text-indigo-600" />
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Account</h1>
       </div>

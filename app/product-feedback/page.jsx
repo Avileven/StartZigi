@@ -1242,7 +1242,16 @@ export default function ProductFeedbackPage() {
             colored purple to match the icon. */}
         <div className="text-center mb-10">
           {/* [FIX — per explicit feedback] Icon removed per explicit request. */}
-          <h1 className="text-2xl font-extrabold text-purple-700 mb-2">Venture Feedback</h1>
+          {/* [ZigPulse mobile] Growth ventures see the venture name here on
+              mobile; desktop and other phases keep "Venture Feedback". */}
+          <h1 className="text-2xl font-extrabold text-purple-700 mb-2">
+            {venture.phase === 'growth' && venture.name ? (
+              <>
+                <span className="md:hidden">{venture.name}</span>
+                <span className="hidden md:inline">Venture Feedback</span>
+              </>
+            ) : 'Venture Feedback'}
+          </h1>
           <p className="text-lg" style={{ color: '#15803D' }}>All insight collected and analyzed across your startup journey</p>
         </div>
 
