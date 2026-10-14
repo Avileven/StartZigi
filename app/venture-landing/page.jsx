@@ -1571,23 +1571,6 @@ export default function VentureLanding() {
                   ) : (
                     <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-5">
 
-                      {/* --- Founder's own custom question — shown FIRST, per explicit request --- */}
-                      {/* [FIX] Icon added per request, but NOT a text label
-                          like "A question from the founder" — that exact
-                          label was explicitly rejected earlier as redundant.
-                          Icon sits inline with the question text itself. */}
-                      {venture.growth_data.custom_question && (
-                        <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
-                          <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
-                            <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
-                              <HelpCircle className="w-4 h-4 text-violet-600 flex-shrink-0" />
-                              {venture.growth_data.custom_question}
-                            </p>
-                            <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
-                          </MobileQuestionSheet>
-                        </div>
-                      )}
-
                       {/* --- Idea stage questions (Quick track) --- */}
                       {(venture.growth_data.stage || 'product') === 'idea' && (
                         <>
@@ -1974,6 +1957,23 @@ export default function VentureLanding() {
                           </MobileQuestionSheet>
                         )}
                       </div>
+                      )}
+
+                      {/* --- Founder's own custom question — shown after the core and chosen questions, per explicit request --- */}
+                      {/* [FIX] Icon added per request, but NOT a text label
+                          like "A question from the founder" — that exact
+                          label was explicitly rejected earlier as redundant.
+                          Icon sits inline with the question text itself. */}
+                      {venture.growth_data.custom_question && (
+                        <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
+                          <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
+                            <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
+                              <HelpCircle className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                              {venture.growth_data.custom_question}
+                            </p>
+                            <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
+                          </MobileQuestionSheet>
+                        </div>
                       )}
 
                       {/* --- Final open question, always shown regardless of category selection --- */}

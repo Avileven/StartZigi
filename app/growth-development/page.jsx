@@ -392,13 +392,26 @@ export default function GrowthDevelopment() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // [NEW] Allowed formats and size limits (Idea: images only).
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    const isHTML = ['html', 'htm'].includes(fileExt);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
+    const isVideo = ['mov', 'mp4', 'webm'].includes(fileExt);
+    const allowed = growthData.stage === 'idea' ? isImage : (isImage || isVideo || isHTML);
+    if (!allowed) {
+      showToast(growthData.stage === 'idea' ? 'Please upload an image: JPG, PNG, GIF, WebP or SVG.' : 'Unsupported file. Use an image, an MP4/MOV/WebM video or an HTML file.', 'error');
+      e.target.value = '';
+      return;
+    }
+    const limitMB = isVideo ? 20 : 5;
+    if (file.size > limitMB * 1024 * 1024) {
+      showToast(`This file is too large. The limit is ${limitMB}MB.`, 'error');
+      e.target.value = '';
+      return;
+    }
     setIsUploading(true);
     try {
       const result = await UploadFile({ file });
-      const fileExt = file.name.split('.').pop().toLowerCase();
-      const isHTML = ['html', 'htm'].includes(fileExt);
-      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
-      const isVideo = ['mp4', 'mov', 'webm'].includes(fileExt);
       const uploaded = { type: isHTML ? 'html' : (isImage ? 'image' : (isVideo ? 'video' : 'other')), name: file.name, url: result.file_url };
       setGrowthData(prev => ({ ...prev, uploaded_files: [uploaded] })); // replaces, not appends
       showToast('File uploaded successfully!');
@@ -771,7 +784,7 @@ export default function GrowthDevelopment() {
                       <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
                         <span>Upload a file</span>
-                        <Input id="growth-file-upload" type="file" className="sr-only" onChange={handleFileUpload} accept="image/*,video/*,.html" disabled={isUploading} />
+                        <Input id="growth-file-upload" type="file" className="sr-only" onChange={handleFileUpload} accept={isIdea ? '.jpg,.jpeg,.png,.gif,.webp,.svg' : '.jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.webm,.html,.htm'} disabled={isUploading} />
                       </Label>
                       {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
                     </div>
@@ -781,7 +794,9 @@ export default function GrowthDevelopment() {
                       <Button variant="ghost" size="icon" onClick={removeUploadedFile}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                     </div>
                   )}
-                  <p className="text-xs text-gray-400">Supports images or a short video. One file only, to keep it focused for reviewers.</p>
+                  <p className="text-xs text-gray-400">{isIdea
+                    ? 'Image: JPG, PNG, GIF, WebP or SVG. Max 5MB. One file only.'
+                    : 'Image (JPG, PNG, GIF, WebP, SVG, max 5MB), video (MP4, MOV, WebM, max 20MB) or HTML file (max 5MB). One file only.'}</p>
                   {!hasDemoFile && !isIdea && <p className="text-xs text-red-500">Required — upload one file before you can save.</p>}
                 </CardContent>
               </Card>
@@ -809,41 +824,52 @@ export default function GrowthDevelopment() {
 
             {/* ===================== FEEDBACK ===================== */}
             <TabsContent value="feedback" className="space-y-6">
-              <Card className="shadow-lg">
+              {/* [RESTRUCTURE] Core questions first (always asked), then the
+                  optional questions to choose from, with the founder's own
+                  question as the last item of that choice card. */}
+              <Card className="shadow-lg border-emerald-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><MessageCircleQuestion className="w-5 h-5 text-emerald-600" />Your Own Question (optional)</CardTitle>
-                  <CardDescription>Ask reviewers anything you want, in your own words. Shown first, before everything else.</CardDescription>
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />Core questions (always asked){isProduct && <ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} />}</CardTitle>
+                  {!isProduct && <CardDescription>These are asked on every page at this stage.</CardDescription>}
                 </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?">
-                    <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?" />
-                  </MobileFieldWrapper>
+                {!isProduct && (
+                <CardContent className="space-y-4">
+                  {isIdea && (
+                    <>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900">The Need</p>
+                        <p className="text-xs text-gray-500 mt-1">"The problem feels relevant and worth solving."</p>
+                      </div>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900">Your Solution</p>
+                        <p className="text-xs text-gray-500 mt-1">"The solution offers something meaningful, and its value is clear to me."</p>
+                      </div>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900">Innovation</p>
+                        <p className="text-xs text-gray-500 mt-1">"Based on what you know, is this idea innovative?"</p>
+                      </div>
+                    </>
+                  )}
+                  {isPrototype && (
+                    <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900">The Product</p>
+                      <p className="text-xs text-gray-500 mt-1">"How clearly and accurately is this product defined?"</p>
+                    </div>
+                  )}
                 </CardContent>
+                )}
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className={hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose which categories appear on your page</CardTitle>
-                  <CardDescription>Pick at least one. You can change this anytime, even after your page is live.</CardDescription>
-                  {!hasAtLeastOneCategory && <p className="text-xs text-red-500 mt-1">Required — select at least one category before you can save.</p>}
+                  <CardTitle className={isProduct && hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{isProduct && hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose additional questions</CardTitle>
+                  <CardDescription>{isProduct ? 'Pick at least one.' : 'Optional.'} You can change this anytime, even after your page is live.</CardDescription>
+                  {isProduct && !hasAtLeastOneCategory && <p className="text-xs text-red-500 mt-1">Required — select at least one category before you can save.</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
 
                   {isIdea && (
                     <>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The Need (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"The problem feels relevant and worth solving."</p>
-                      </div>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Your Solution (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"The solution offers something meaningful, and its value is clear to me."</p>
-                      </div>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Innovation (always asked)</p>
-                        <p className="text-xs text-gray-500 mt-1 pl-5">"Based on what you know, is this idea innovative?"</p>
-                      </div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>
                       {[
                         { key: 'idea_pay', label: 'Willingness to pay', hint: '"Would you pay for a product like this?" Answers appear in Feedback Details.' },
                         { key: 'idea_value', label: 'What would make it more valuable', hint: 'An open question for suggestions.' },
@@ -858,14 +884,6 @@ export default function GrowthDevelopment() {
                       ))}
                     </>
                   )}
-
-                  {isPrototype && (
-                    <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                      <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />The Product (always asked)</p>
-                      <p className="text-xs text-gray-500 mt-1 pl-5">"How clearly and accurately is this product defined?"</p>
-                    </div>
-                  )}
-                  {isPrototype && <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>}
 
                   {/* --- Business Model (merged Subscription/Freemium) --- */}
                   {!isIdea && (<>
@@ -999,14 +1017,16 @@ export default function GrowthDevelopment() {
                   </div>
                   </>)}
                   </>)}
+
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>
+                    <p className="text-xs text-gray-500 mt-1 mb-2">Ask reviewers anything you want, in your own words. It appears after the other questions.</p>
+                    <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?">
+                      <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?" />
+                    </MobileFieldWrapper>
+                  </div>
                 </CardContent>
               </Card>
-
-              {isProduct && (
-              <Card className="shadow-lg border-emerald-200">
-                <CardHeader><CardTitle className="text-base flex items-center">Always included (not optional)<ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} /></CardTitle></CardHeader>
-              </Card>
-              )}
             </TabsContent>
           </Tabs>
 
