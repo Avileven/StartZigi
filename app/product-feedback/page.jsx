@@ -952,6 +952,7 @@ export default function ProductFeedbackPage() {
     idea_solution_note: fb.idea_answers.solution_note || null,
     idea_alternatives_which: fb.idea_answers.alternatives_which || null,
     idea_value_text: fb.idea_answers.value_text || null,
+    idea_pay: fb.idea_answers.pay ? `${{ yes: 'Yes', maybe: 'Maybe', no: 'No' }[fb.idea_answers.pay] || fb.idea_answers.pay}${fb.idea_answers.pay_amount ? ' — ' + fb.idea_answers.pay_amount : ''}` : null,
   } : fb);
 
   // [NEW — Growth AI, project-definition section 5] Pure data assembly for
@@ -1747,6 +1748,7 @@ export default function ProductFeedbackPage() {
               { key: 'idea_solution_note', label: 'Solution note', icon: Target },
               { key: 'idea_alternatives_which', label: 'Similar solutions: Which ones?', icon: Layers },
               { key: 'idea_value_text', label: 'What would make this idea more valuable?', icon: Sparkles },
+              { key: 'idea_pay', label: 'Would you pay for it?', icon: DollarSign },
             ] : []),
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
             { key: 'core_features_note', label: "Features people would add", icon: Layers },

@@ -505,6 +505,8 @@ export default function VentureLanding() {
   const [ideaAwareness, setIdeaAwareness] = useState(null); // 'none' | 'few' | 'many'
   const [ideaAwareWhich, setIdeaAwareWhich] = useState('');
   const [ideaValueText, setIdeaValueText] = useState('');
+  const [ideaPay, setIdeaPay] = useState(null); // 'yes' | 'maybe' | 'no'
+  const [ideaPayAmount, setIdeaPayAmount] = useState('');
 
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
   const [featuresRating, setFeaturesRating] = useState(5);
@@ -968,7 +970,12 @@ export default function VentureLanding() {
       return;
     }
     // [NEW — ZigPulse Idea] Examples are required when the reviewer knows of similar solutions.
-    if (isIdeaStage && (gd.selected_categories || []).includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' && !ideaAwareWhich.trim()) {
+    // Innovation is always asked at the Idea stage, with examples when similar solutions are known.
+    if (isIdeaStage && !ideaAwareness) {
+      alert("Please answer whether you think this idea is innovative.");
+      return;
+    }
+    if (isIdeaStage && ideaAwareness !== 'none' && !ideaAwareWhich.trim()) {
       alert("Please give examples of the similar solutions you know.");
       return;
     }
@@ -997,7 +1004,7 @@ export default function VentureLanding() {
         ...(gd.custom_question ? [{ key: 'custom_question_answer', text: customQuestionAnswer, kind: 'other' }] : []),
         ...(ideaProblemLow ? [{ key: 'idea_problem_note', text: ideaProblemNote, kind: 'explanation' }] : []),
         ...(ideaSolutionLow ? [{ key: 'idea_solution_note', text: ideaSolutionNote, kind: 'explanation' }] : []),
-        ...(ideaAnswered && selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? [{ key: 'idea_alternatives_which', text: ideaAwareWhich, kind: 'names' }] : []),
+        ...(ideaAnswered && ideaAwareness && ideaAwareness !== 'none' ? [{ key: 'idea_alternatives_which', text: ideaAwareWhich, kind: 'names' }] : []),
         ...(ideaAnswered && selected.includes('idea_value') ? [{ key: 'idea_value_text', text: ideaValueText, kind: 'feature' }] : []),
         ...(isProductStage ? [{ key: 'final_change_text', text: finalChangeText, kind: 'final' }] : []),
       ];
@@ -1049,8 +1056,10 @@ export default function VentureLanding() {
           problem_note: ideaProblemLow ? (gKeep('idea_problem_note', ideaProblemNote.trim()) || null) : null,
           solution_rating: ideaSolutionRating,
           solution_note: ideaSolutionLow ? (gKeep('idea_solution_note', ideaSolutionNote.trim()) || null) : null,
-          alternatives: selected.includes('idea_alternatives') ? ideaAwareness : null,
-          alternatives_which: selected.includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' ? (gKeep('idea_alternatives_which', ideaAwareWhich.trim()) || null) : null,
+          alternatives: ideaAwareness,
+          alternatives_which: ideaAwareness && ideaAwareness !== 'none' ? (gKeep('idea_alternatives_which', ideaAwareWhich.trim()) || null) : null,
+          pay: selected.includes('idea_pay') ? ideaPay : null,
+          pay_amount: selected.includes('idea_pay') && ideaPay && ideaPay !== 'no' ? (ideaPayAmount.trim() || null) : null,
           value_text: selected.includes('idea_value') ? (gKeep('idea_value_text', ideaValueText.trim()) || null) : null,
         } } : {}),
         custom_question_answer: gd.custom_question ? (gKeep('custom_question_answer', customQuestionAnswer.trim()) || null) : null,
@@ -1642,7 +1651,7 @@ export default function VentureLanding() {
                             </MobileQuestionSheet>
                           </div>
 
-                          {venture.growth_data.selected_categories.includes('idea_alternatives') && (
+                          {(
                             <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
                                 <Compass className="w-5 h-5 text-sky-600" />
@@ -1660,6 +1669,30 @@ export default function VentureLanding() {
                                   <div className="mt-2">
                                     <Label className="text-xs text-gray-500">Which ones? Please give examples</Label>
                                     <Input value={ideaAwareWhich} onChange={(e) => setIdeaAwareWhich(e.target.value)} className="mt-1 text-sm" placeholder="Product names or links" disabled={isSubmittingGrowthFeedback} />
+                                  </div>
+                                )}
+                              </MobileQuestionSheet>
+                            </div>
+                          )}
+
+                          {venture.growth_data.selected_categories.includes('idea_pay') && (
+                            <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <DollarSign className="w-5 h-5 text-amber-600" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Willingness to Pay</p>
+                              </div>
+                              <MobileQuestionSheet label="Would you pay for it?" summary={ideaPay ? 'Answered' : null} isMobile={isMobileViewport}>
+                                <Label className="text-sm">Would you pay for a product like this?</Label>
+                                <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                                  {[{ k: 'yes', l: 'Yes' }, { k: 'maybe', l: 'Maybe' }, { k: 'no', l: 'No' }].map((o) => (
+                                    <button key={o.k} type="button" onClick={() => setIdeaPay(o.k)} disabled={isSubmittingGrowthFeedback}
+                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaPay === o.k ? 'border-amber-600 bg-amber-600 text-white font-medium' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>{o.l}</button>
+                                  ))}
+                                </div>
+                                {ideaPay && ideaPay !== 'no' && (
+                                  <div className="mt-2">
+                                    <Label className="text-xs text-gray-500">How much, and how often? (optional)</Label>
+                                    <Input value={ideaPayAmount} onChange={(e) => setIdeaPayAmount(e.target.value)} className="mt-1 text-sm" placeholder="e.g. $10 / month, $50 one-time" disabled={isSubmittingGrowthFeedback} />
                                   </div>
                                 )}
                               </MobileQuestionSheet>

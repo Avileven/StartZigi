@@ -168,7 +168,7 @@ const STAGE_GUIDES = {
     lead: 'Nothing is built yet, so only two things are worth testing: whether the problem is real, and whether people understand what you are proposing.',
     points: [
       ['Is the problem real?', 'Check that people feel it, not only that they understand it.'],
-      ['Does anyone already solve it?', 'Knowing the alternatives early can save months of building.'],
+      ['Is it seen as innovative?', 'Find out whether people who know the space see your idea as new, and which similar solutions they already know.'],
       ['What is missing?', 'Open suggestions often point at something you have not considered.'],
     ],
     skip: 'Skip features, design and pricing for now. Reviewers cannot judge them yet, and the answers would mislead you.',
@@ -338,13 +338,13 @@ export default function GrowthDevelopment() {
     setGrowthData(prev => ({ ...prev, business_model_data: { ...prev.business_model_data, [field]: value } }));
 
   // Switching stage resets the category list to what that stage supports.
-  // 'idea_problem' + 'idea_solution' (Idea) and 'proto_product' (Prototype) are the
+  // 'idea_problem' + 'idea_solution' + 'idea_alternatives' (Idea) and 'proto_product' (Prototype) are the
   // always-asked questions of their stage and cannot be unticked.
   const setStage = (stage) => {
     setGrowthData(prev => {
       const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
       let selected_categories;
-      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', ...keep(['idea_alternatives', 'idea_value'])];
+      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value'])];
       else if (stage === 'prototype') selected_categories = ['proto_product', ...keep(['core_features', 'business_model'])];
       else selected_categories = keep(['business_model', 'core_features', 'value_proposition', 'product_definition']);
       return { ...prev, stage, selected_categories };
@@ -352,7 +352,7 @@ export default function GrowthDevelopment() {
   };
 
   const toggleCategory = (key) => {
-    if (['idea_problem', 'idea_solution', 'proto_product'].includes(key)) return;
+    if (['idea_problem', 'idea_solution', 'idea_alternatives', 'proto_product'].includes(key)) return;
     setGrowthData(prev => {
       const has = prev.selected_categories.includes(key);
       const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
@@ -839,9 +839,13 @@ export default function GrowthDevelopment() {
                         <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Your Solution (always asked)</p>
                         <p className="text-xs text-gray-500 mt-1 pl-5">"The solution offers something meaningful, and its value is clear to me."</p>
                       </div>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Innovation (always asked)</p>
+                        <p className="text-xs text-gray-500 mt-1 pl-5">"Based on what you know, is this idea innovative?"</p>
+                      </div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-1">Optional</p>
                       {[
-                        { key: 'idea_alternatives', label: 'Existing solutions', hint: '"I am aware of existing products or solutions that address this need."' },
+                        { key: 'idea_pay', label: 'Willingness to pay', hint: '"Would you pay for a product like this?" Answers appear in Feedback Details.' },
                         { key: 'idea_value', label: 'What would make it more valuable', hint: 'An open question for suggestions.' },
                       ].map((q) => (
                         <div key={q.key} className="border border-gray-200 rounded-lg p-4">
