@@ -880,6 +880,45 @@ export default function ProductFeedbackPage() {
     };
   };
 
+  // [NEW — ZigPulse Idea stage] Idea feedback keeps its answers in
+  // `growth_feedback.idea_answers` (jsonb), not in the four Product columns,
+  // so computeGrowthAverages above never sees it. Code only, no AI: averages
+  // for The Need and The Solution (same weighting + satisfactionLevel as the
+  // other stages) and a plain count of the "Existing solutions" answer.
+  const computeIdeaAverages = (feedbackArr, weighted = false) => {
+    const rows = feedbackArr.filter(fb => fb.idea_answers && (fb.idea_answers.problem_rating != null || fb.idea_answers.solution_rating != null));
+    if (rows.length === 0) return null;
+    const statsFor = (field) => {
+      const withField = rows.filter(fb => fb.idea_answers[field] != null);
+      if (withField.length === 0) return { value: null, count: 0, signal: null };
+      let value;
+      if (weighted) {
+        const totalWeight = withField.reduce((a, fb) => a + growthQualityWeight(fb), 0);
+        value = (withField.reduce((a, fb) => a + fb.idea_answers[field] * growthQualityWeight(fb), 0) / totalWeight).toFixed(1);
+      } else {
+        value = (withField.reduce((a, fb) => a + fb.idea_answers[field], 0) / withField.length).toFixed(1);
+      }
+      return { value, count: withField.length, signal: satisfactionLevel(value) };
+    };
+    const alternatives = { none: 0, few: 0, many: 0, total: 0 };
+    rows.forEach(fb => {
+      const a = fb.idea_answers.alternatives;
+      if (a && alternatives[a] != null) { alternatives[a]++; alternatives.total++; }
+    });
+    return { need: statsFor('problem_rating'), solution: statsFor('solution_rating'), alternatives };
+  };
+
+  // [NEW — ZigPulse Idea stage] Lifts the Idea free-text answers to top-level
+  // keys so the existing "Feedback Details" question list can show them like
+  // any other free-text field.
+  const withIdeaFields = (fb) => (fb.idea_answers ? {
+    ...fb,
+    idea_problem_note: fb.idea_answers.problem_note || null,
+    idea_solution_note: fb.idea_answers.solution_note || null,
+    idea_alternatives_which: fb.idea_answers.alternatives_which || null,
+    idea_value_text: fb.idea_answers.value_text || null,
+  } : fb);
+
   // [NEW — Growth AI, project-definition section 5] Pure data assembly for
   // one Growth AI analysis run — no prompt text, no LLM call. Gathers every
   // brief of this venture chronologically (each with its own code-computed
@@ -1653,14 +1692,27 @@ export default function ProductFeedbackPage() {
           const defaultGrowthCampaignId = growthFeedbacks.length === 0 ? null : '__all__';
           const effectiveGrowthCampaignId = growthSelectedCampaign ?? defaultGrowthCampaignId;
           const growthViewAll = effectiveGrowthCampaignId === '__all__';
-          const growthFilteredFeedbacks = growthViewAll
+          const growthFilteredFeedbacks = (growthViewAll
             ? growthFeedbacks
-            : growthFeedbacks.filter(fb => (fb.campaign_id || '__direct__') === effectiveGrowthCampaignId);
+            : growthFeedbacks.filter(fb => (fb.campaign_id || '__direct__') === effectiveGrowthCampaignId)
+          ).map(withIdeaFields);
 
           const growthHasQualityData = growthFilteredFeedbacks.some(fb => fb.quality_analysis && typeof fb.quality_analysis.score === 'number');
           const growthStats = computeGrowthAverages(growthFilteredFeedbacks, showWeightedGrowth && growthHasQualityData);
+          // [NEW — ZigPulse] The stage is fixed per venture (growth_data.stage;
+          // ventures without one are Product, as before).
+          const ventureStage = venture.growth_data?.stage || 'product';
+          const ideaStats = ventureStage === 'idea'
+            ? computeIdeaAverages(growthFilteredFeedbacks, showWeightedGrowth && growthHasQualityData)
+            : null;
 
           const qualQuestions = [
+            ...(ventureStage === 'idea' ? [
+              { key: 'idea_problem_note', label: 'The Need note', icon: Lightbulb },
+              { key: 'idea_solution_note', label: 'Solution note', icon: Target },
+              { key: 'idea_alternatives_which', label: 'Existing solutions: Which ones?', icon: Layers },
+              { key: 'idea_value_text', label: 'What would make this idea more valuable?', icon: Sparkles },
+            ] : []),
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
             { key: 'core_features_note', label: "Features people would add", icon: Layers },
             { key: 'value_prop_note', label: "What would you change about the slogan?", icon: Megaphone },
@@ -1767,7 +1819,7 @@ export default function ProductFeedbackPage() {
               {/* Stats — approved design: colorful gradient frame wrapping
                   4 individually-colored scale cards (red→yellow→green),
                   replacing the old shared-background ring layout. */}
-              {growthStats && (() => {
+              {(growthStats || ideaStats) && (() => {
                 // [FIX — per explicit feedback] The badge now reads the
                 // satisfaction level straight off each category's own
                 // average (satisfactionLevel, code-only) — always available,
@@ -1803,12 +1855,37 @@ export default function ProductFeedbackPage() {
                         Weighted view: feedback from reviewers who gave detailed, thoughtful answers and have more experience on StartZig counts for more, and minimal or one-note feedback counts for less. Feedback without a quality score counts as usual. The number of responses stays the same.
                       </p>
                     )}
+                    {ideaStats ? (
+                      /* [NEW — ZigPulse Idea] Same card style as the other
+                         stages: The Need, The Solution, and a count-only card
+                         for Existing solutions (what reviewers are aware of —
+                         not a market check; no percentages). */
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                        <GrowthScaleCard title="The Need" count={ideaStats.need.count} value={ideaStats.need.value} accent="#B45309" bg="#FFFBEB" signal={ideaStats.need.signal} />
+                        <GrowthScaleCard title="The Solution" count={ideaStats.solution.count} value={ideaStats.solution.value} accent="#4338CA" bg="#EEF2FF" signal={ideaStats.solution.signal} />
+                        {ideaStats.alternatives.total > 0 && (
+                          <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ background: '#F0F9FF', border: '2px solid #0369A1' }}>
+                            <div className="flex justify-between items-start gap-2" style={{ minHeight: '2.3rem' }}>
+                              <span className="text-sm font-bold text-gray-700 leading-tight">Existing solutions</span>
+                              <span className="text-xs text-gray-400 flex-shrink-0">{ideaStats.alternatives.total}*</span>
+                            </div>
+                            <div className="space-y-1.5 text-sm text-gray-700">
+                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.none}</span> not aware of any</p>
+                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.few}</span> aware of a few</p>
+                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.many}</span> aware of many</p>
+                            </div>
+                            <p className="text-[11px] text-gray-400">What reviewers know about, not a market check</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
                       <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={growthStats.businessModel.signal} />
                       <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
                       <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
-                      <GrowthScaleCard title="Product Definition" count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
+                      <GrowthScaleCard title={ventureStage === 'prototype' ? 'The Product' : 'Product Definition'} count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
                     </div>
+                    )}
                     <p className="text-[11px] text-gray-400 text-left mt-3">* number of responses this average is based on</p>
                   </div>
                 </div>
