@@ -967,6 +967,11 @@ export default function VentureLanding() {
       alert("Please answer whether you visited the actual product.");
       return;
     }
+    // [NEW — ZigPulse Idea] Examples are required when the reviewer knows of similar solutions.
+    if (isIdeaStage && (gd.selected_categories || []).includes('idea_alternatives') && ideaAwareness && ideaAwareness !== 'none' && !ideaAwareWhich.trim()) {
+      alert("Please give examples of the similar solutions you know.");
+      return;
+    }
     setIsSubmittingGrowthFeedback(true);
     try {
       const selected = gd.selected_categories || [];
@@ -1641,19 +1646,19 @@ export default function VentureLanding() {
                             <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
                                 <Compass className="w-5 h-5 text-sky-600" />
-                                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Existing Solutions</p>
+                                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Innovation</p>
                               </div>
-                              <MobileQuestionSheet label="Existing solutions" summary={ideaAwareness ? 'Answered' : null} isMobile={isMobileViewport}>
-                                <Label className="text-sm">I am aware of existing products or solutions that address this need.</Label>
-                                <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                                  {[{ k: 'none', l: 'Not aware of any' }, { k: 'few', l: 'Aware of a few' }, { k: 'many', l: 'Aware of many' }].map((o) => (
+                              <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={isMobileViewport}>
+                                <Label className="text-sm">Based on what you know, is this idea innovative?</Label>
+                                <div className="flex flex-col gap-2 mt-2">
+                                  {[{ k: 'none', l: "Yes, it's innovative – I haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
                                       className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaAwareness === o.k ? 'border-sky-600 bg-sky-600 text-white font-medium' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>{o.l}</button>
                                   ))}
                                 </div>
                                 {ideaAwareness && ideaAwareness !== 'none' && (
                                   <div className="mt-2">
-                                    <Label className="text-xs text-gray-500">Which ones? (optional)</Label>
+                                    <Label className="text-xs text-gray-500">Which ones? Please give examples</Label>
                                     <Input value={ideaAwareWhich} onChange={(e) => setIdeaAwareWhich(e.target.value)} className="mt-1 text-sm" placeholder="Product names or links" disabled={isSubmittingGrowthFeedback} />
                                   </div>
                                 )}

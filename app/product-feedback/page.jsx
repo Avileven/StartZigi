@@ -252,6 +252,41 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   );
 }
 
+// [NEW — ZigPulse Idea] "Novelty" card: a perception spectrum, no score and no
+// middle label. Position = share of respondents who said they know no similar
+// solution (code only). Crowded (orange) on the left, Original (muted green)
+// on the right. Based on what feedback givers perceive, not verified.
+function NoveltyCard({ none, total }) {
+  if (!total) return null;
+  const pct = Math.max(0, Math.min(100, (none / total) * 100));
+  const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+  const from = [234, 138, 59];   // warm orange
+  const to = [108, 160, 128];    // muted green
+  const t = pct / 100;
+  const markerColor = `rgb(${lerp(from[0], to[0], t)}, ${lerp(from[1], to[1], t)}, ${lerp(from[2], to[2], t)})`;
+  return (
+    <div className="rounded-2xl p-5 flex flex-col gap-3.5 sm:col-span-2" style={{ background: '#F8FAFC', border: `2px solid ${markerColor}` }}>
+      <div className="flex justify-between items-start gap-2">
+        <span className="text-sm font-bold text-gray-700 leading-tight">Novelty</span>
+        <span className="text-xs text-gray-400 flex-shrink-0">{total}*</span>
+      </div>
+      <div className="relative w-full rounded-full" style={{ height: 12, background: 'linear-gradient(to right, rgb(234,138,59), rgb(108,160,128))' }}>
+        <div
+          className="absolute rounded-full bg-white"
+          style={{ top: '50%', left: `${pct}%`, transform: 'translate(-50%, -50%)', width: 20, height: 20, border: `4px solid ${markerColor}`, boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+        />
+      </div>
+      <div className="flex justify-between text-xs font-semibold">
+        <span style={{ color: 'rgb(234,138,59)' }}>Crowded</span>
+        <span style={{ color: 'rgb(108,160,128)' }}>Original</span>
+      </div>
+      <p className="text-[11px] text-gray-400 leading-snug">
+        Based on how feedback givers perceive the idea, not verified against the market.
+      </p>
+    </div>
+  );
+}
+
 // [NEW — Engagement panel] Three plain numbers in the same 4-column grid and
 // frame as Insight Metrics, using the same "big value / small total" layout
 // as the Insight Metrics cards. All numbers are computed in code from data
@@ -1710,7 +1745,7 @@ export default function ProductFeedbackPage() {
             ...(ventureStage === 'idea' ? [
               { key: 'idea_problem_note', label: 'The Need note', icon: Lightbulb },
               { key: 'idea_solution_note', label: 'Solution note', icon: Target },
-              { key: 'idea_alternatives_which', label: 'Existing solutions: Which ones?', icon: Layers },
+              { key: 'idea_alternatives_which', label: 'Similar solutions: Which ones?', icon: Layers },
               { key: 'idea_value_text', label: 'What would make this idea more valuable?', icon: Sparkles },
             ] : []),
             { key: 'business_model_note', label: "What doesn't feel right about the business model?", icon: DollarSign },
@@ -1857,26 +1892,13 @@ export default function ProductFeedbackPage() {
                     )}
                     {ideaStats ? (
                       /* [NEW — ZigPulse Idea] Same card style as the other
-                         stages: The Need, The Solution, and a count-only card
-                         for Existing solutions (what reviewers are aware of —
-                         not a market check; no percentages). */
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                         stages: only the two scored questions, The Need and
+                         The Solution. Existing solutions / value text are text
+                         answers, shown in Feedback Details, not in this matrix. */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                         <GrowthScaleCard title="The Need" count={ideaStats.need.count} value={ideaStats.need.value} accent="#B45309" bg="#FFFBEB" signal={ideaStats.need.signal} />
                         <GrowthScaleCard title="The Solution" count={ideaStats.solution.count} value={ideaStats.solution.value} accent="#4338CA" bg="#EEF2FF" signal={ideaStats.solution.signal} />
-                        {ideaStats.alternatives.total > 0 && (
-                          <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ background: '#F0F9FF', border: '2px solid #0369A1' }}>
-                            <div className="flex justify-between items-start gap-2" style={{ minHeight: '2.3rem' }}>
-                              <span className="text-sm font-bold text-gray-700 leading-tight">Existing solutions</span>
-                              <span className="text-xs text-gray-400 flex-shrink-0">{ideaStats.alternatives.total}*</span>
-                            </div>
-                            <div className="space-y-1.5 text-sm text-gray-700">
-                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.none}</span> not aware of any</p>
-                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.few}</span> aware of a few</p>
-                              <p><span className="font-extrabold text-gray-900">{ideaStats.alternatives.many}</span> aware of many</p>
-                            </div>
-                            <p className="text-[11px] text-gray-400">What reviewers know about, not a market check</p>
-                          </div>
-                        )}
+                        <NoveltyCard none={ideaStats.alternatives.none} total={ideaStats.alternatives.total} />
                       </div>
                     ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
