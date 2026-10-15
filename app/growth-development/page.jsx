@@ -881,6 +881,11 @@ export default function GrowthDevelopment() {
                         </div>
                       )}
                       {growthData.core_features.length === 0 && <p className="text-xs text-red-500">Required — add at least one feature before you can save.</p>}
+                      <div className="pt-2 space-y-1 text-xs text-gray-500">
+                        <p>Reviewers are asked:</p>
+                        <p>"How well do these features support what this product is meant to do? (1-10)"</p>
+                        <p>"What feature do you think would add value to the product? (optional)"</p>
+                      </div>
                     </div>
                     </MobileFieldWrapper>
                   </div>

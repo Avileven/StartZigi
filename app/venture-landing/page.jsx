@@ -18,6 +18,7 @@ import {
   Linkedin, Facebook, Twitter, Instagram, Globe,
   Activity, Bell, UserCircle,
 } from "lucide-react";
+import Footer from "@/components/layout/Footer";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
 import InsightEarnedAnimation from "@/components/ventures/InsightEarnedAnimation";
 import InteractiveFeedbackForm from "@/components/ventures/InteractiveFeedbackForm";
@@ -2148,6 +2149,8 @@ export default function VentureLanding() {
 
         </main>
       </div>
+      {/* [NEW] ZigPulse public page: site footer, no sidebar. */}
+      {venture?.phase === 'growth' && <Footer />}
       {showInsightAnimation && (
         <InsightEarnedAnimation credits={earnedCredits ?? 1} onComplete={() => { window.location.href = '/dashboard'; }} />
       )}
