@@ -1579,7 +1579,7 @@ export default function VentureLanding() {
                               <Lightbulb className="w-5 h-5 text-amber-600" />
                               <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Need</p>
                             </div>
-                            <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={isMobileViewport}>
+                            <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={false}>
                               <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
                               <Slider
                                 value={[ideaProblemRating]}
@@ -1609,7 +1609,7 @@ export default function VentureLanding() {
                               <Target className="w-5 h-5 text-indigo-600" />
                               <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">The Solution</p>
                             </div>
-                            <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={isMobileViewport}>
+                            <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={false}>
                               <Label className="text-sm">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
                               <Slider
                                 value={[ideaSolutionRating]}
@@ -1640,7 +1640,7 @@ export default function VentureLanding() {
                                 <Compass className="w-5 h-5 text-sky-600" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Innovation</p>
                               </div>
-                              <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={isMobileViewport}>
+                              <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">Based on what you know, is this idea innovative?</Label>
                                 <div className="flex flex-col gap-2 mt-2">
                                   {[{ k: 'none', l: "Yes, it's innovative – I haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
@@ -1664,7 +1664,7 @@ export default function VentureLanding() {
                                 <DollarSign className="w-5 h-5 text-amber-600" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Willingness to Pay</p>
                               </div>
-                              <MobileQuestionSheet label="Would you pay for it?" summary={ideaPay ? 'Answered' : null} isMobile={isMobileViewport}>
+                              <MobileQuestionSheet label="Would you pay for it?" summary={ideaPay ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">Would you pay for a product like this?</Label>
                                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                   {[{ k: 'yes', l: 'Yes' }, { k: 'maybe', l: 'Maybe' }, { k: 'no', l: 'No' }].map((o) => (
@@ -1688,7 +1688,7 @@ export default function VentureLanding() {
                                 <Layers className="w-5 h-5 text-emerald-600" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Making It Better</p>
                               </div>
-                              <MobileQuestionSheet label="What would make this idea more valuable?" summary={ideaValueText ? 'Answered' : null} isMobile={isMobileViewport}>
+                              <MobileQuestionSheet label="What would make this idea more valuable?" summary={ideaValueText ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">What would make this idea more valuable? (optional)</Label>
                                 <Textarea value={ideaValueText} onChange={(e) => setIdeaValueText(e.target.value)} className="min-h-[80px] mt-2 text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Share an idea, a missing piece, or a change you would make..." />
                               </MobileQuestionSheet>
@@ -1743,7 +1743,7 @@ export default function VentureLanding() {
                               </div>
                             );
                           })()}
-                          <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={false}>
                             <Label className="text-sm">How well does this business model fit the product and the value it provides? (1-10)</Label>
                             <Slider
                               value={[businessModelRating]}
@@ -1783,7 +1783,7 @@ export default function VentureLanding() {
                               </div>
                             ))}
                           </div>
-                          <MobileQuestionSheet label="Do these features fit?" summary={coreFeaturesRating} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Do these features fit?" summary={coreFeaturesRating} isMobile={false}>
                             <Label className="text-sm">How well do these features support what this product is meant to do? (1-10)</Label>
                             <Slider
                               value={[coreFeaturesRating]}
@@ -1818,7 +1818,7 @@ export default function VentureLanding() {
                           <blockquote className="border-l-4 border-amber-400 bg-white rounded-r-lg p-3 mb-3 italic text-gray-800">
                             "{venture.growth_data.headline}"
                           </blockquote>
-                          <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={false}>
                             <Label className="text-sm">How accurately does this statement describe the product? (1-10)</Label>
                             <Slider
                               value={[valuePropRating]}
@@ -1851,7 +1851,7 @@ export default function VentureLanding() {
                             <Target className="w-5 h-5 text-rose-600" />
                             <p className="text-xs font-bold uppercase tracking-wide text-rose-700">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
                           </div>
-                          <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={false}>
                           <Label className="text-sm">{(venture.growth_data.stage || 'product') === 'prototype' ? 'How clearly and accurately is this product defined? (1-10)' : 'How clear is this description of the product? (1-10)'}</Label>
                           <button
                             type="button"
@@ -1915,7 +1915,7 @@ export default function VentureLanding() {
                         </div>
 
                         {visitedProduct === 'yes' && (
-                          <MobileQuestionSheet label="Which of these describes you best?" summary={productMatchChoice ? 'Answered' : null} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label="Which of these describes you best?" summary={productMatchChoice ? 'Answered' : null} isMobile={false}>
                           <div className="mt-4">
                             <Label className="text-sm">Which of these describes you best?</Label>
                             <div className="mt-2 space-y-2">
@@ -1966,7 +1966,7 @@ export default function VentureLanding() {
                           Icon sits inline with the question text itself. */}
                       {venture.growth_data.custom_question && (
                         <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
-                          <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={isMobileViewport}>
+                          <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={false}>
                             <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
                               <HelpCircle className="w-4 h-4 text-violet-600 flex-shrink-0" />
                               {venture.growth_data.custom_question}
@@ -1986,7 +1986,7 @@ export default function VentureLanding() {
                           <Focus className="w-5 h-5 text-cyan-600" />
                           <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">One Last Thing</p>
                         </div>
-                        <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={isMobileViewport}>
+                        <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={false}>
                         <Label htmlFor="growth-final-change">What's the one thing you'd improve about this product?</Label>
                         <Textarea id="growth-final-change" value={finalChangeText}
                           onChange={(e) => setFinalChangeText(e.target.value)}
