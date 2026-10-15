@@ -990,11 +990,13 @@ export default function VentureLanding() {
       const pdLow = hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const productVisited = isProductStage && gd.product_url && visitedProduct === 'yes';
       const ideaAnswered = isIdeaStage;
+      // Core Features is a core question outside Idea (only when the founder defined features).
+      const hasCF = !isIdeaStage && Array.isArray(gd.core_features) && gd.core_features.length > 0;
       const ideaProblemLow = ideaAnswered && ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD;
       const ideaSolutionLow = ideaAnswered && ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const growthItems = [
         ...(bmLow ? [{ key: 'business_model_note', text: businessModelNote, kind: 'explanation' }] : []),
-        ...(selected.includes('core_features') ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
+        ...(hasCF ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
         ...(vpLow ? [{ key: 'value_prop_note', text: valuePropNote, kind: 'explanation' }] : []),
         ...(pdLow ? [{ key: 'product_definition_note', text: productDefinitionNote, kind: 'explanation' }] : []),
         ...(productVisited ? [
@@ -1010,7 +1012,7 @@ export default function VentureLanding() {
       ];
       const growthRatings = [
         selected.includes('business_model') ? businessModelRating : null,
-        selected.includes('core_features') ? coreFeaturesRating : null,
+        hasCF ? coreFeaturesRating : null,
         selected.includes('value_proposition') ? valuePropRating : null,
         hasPD ? productDefinitionRating : null,
         ideaAnswered ? ideaProblemRating : null,
@@ -1031,8 +1033,8 @@ export default function VentureLanding() {
         venture_id: venture.id,
         business_model_rating: selected.includes('business_model') ? businessModelRating : null,
         business_model_note: selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('business_model_note', businessModelNote.trim()) || null) : null,
-        core_features_rating: selected.includes('core_features') ? coreFeaturesRating : null,
-        core_features_note: selected.includes('core_features') ? (gKeep('core_features_note', coreFeaturesNote.trim()) || null) : null,
+        core_features_rating: hasCF ? coreFeaturesRating : null,
+        core_features_note: hasCF ? (gKeep('core_features_note', coreFeaturesNote.trim()) || null) : null,
         value_prop_rating: selected.includes('value_proposition') ? valuePropRating : null,
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('value_prop_note', valuePropNote.trim()) || null) : null,
         product_definition_rating: hasPD ? productDefinitionRating : null,
@@ -1769,7 +1771,7 @@ export default function VentureLanding() {
                       )}
 
                       {/* --- Core Features (conditional) — shown together, rated once --- */}
-                      {venture.growth_data.selected_categories.includes('core_features') && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
+                      {(venture.growth_data.stage || 'product') !== 'idea' && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
                         <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <Layers className="w-5 h-5 text-sky-600" />

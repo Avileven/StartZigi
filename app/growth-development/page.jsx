@@ -289,6 +289,9 @@ export default function GrowthDevelopment() {
         loaded.is_imported = loaded.is_imported === true;
         loaded.selected_categories = loaded.selected_categories || [];
         loaded.core_features = loaded.core_features || [];
+        // [NEW] Core questions are always part of the selection: Core Features outside Idea, Innovation in Idea.
+        if (loaded.stage === 'idea') { if (!loaded.selected_categories.includes('idea_alternatives')) loaded.selected_categories = [...loaded.selected_categories, 'idea_alternatives']; }
+        else if (!loaded.selected_categories.includes('core_features')) loaded.selected_categories = [...loaded.selected_categories, 'core_features'];
         loaded.custom_question = loaded.custom_question || '';
         loaded.business_model_data = {
           model_type: loaded.business_model_data?.model_type || '',
@@ -345,14 +348,14 @@ export default function GrowthDevelopment() {
       const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
       let selected_categories;
       if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value'])];
-      else if (stage === 'prototype') selected_categories = ['proto_product', ...keep(['core_features', 'business_model'])];
-      else selected_categories = keep(['business_model', 'core_features', 'value_proposition', 'product_definition']);
+      else if (stage === 'prototype') selected_categories = ['proto_product', 'core_features', ...keep(['business_model'])];
+      else selected_categories = ['core_features', ...keep(['business_model', 'value_proposition', 'product_definition'])];
       return { ...prev, stage, selected_categories };
     });
   };
 
   const toggleCategory = (key) => {
-    if (['idea_problem', 'idea_solution', 'idea_alternatives', 'proto_product'].includes(key)) return;
+    if (['idea_problem', 'idea_solution', 'idea_alternatives', 'proto_product', 'core_features'].includes(key)) return;
     setGrowthData(prev => {
       const has = prev.selected_categories.includes(key);
       const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
@@ -576,7 +579,7 @@ export default function GrowthDevelopment() {
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
   const hasAtLeastOneCategory = growthData.selected_categories.length > 0;
-  const featuresReady = !growthData.selected_categories.includes('core_features') || growthData.core_features.length > 0;
+  const featuresReady = isIdea || growthData.core_features.length > 0;
   const bmd = growthData.business_model_data;
   const businessModelReady = (() => {
     if (!growthData.selected_categories.includes('business_model')) return true;
@@ -829,10 +832,9 @@ export default function GrowthDevelopment() {
                   question as the last item of that choice card. */}
               <Card className="shadow-lg border-emerald-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />Core questions (always asked){isProduct && <ExplainToggle text={ALWAYS_INCLUDED_EXPLANATION} />}</CardTitle>
-                  {!isProduct && <CardDescription>These are asked on every page at this stage.</CardDescription>}
+                  <CardTitle className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />Core questions (always asked)</CardTitle>
+                  <CardDescription>These are asked on every page at this stage.</CardDescription>
                 </CardHeader>
-                {!isProduct && (
                 <CardContent className="space-y-4">
                   {isIdea && (
                     <>
@@ -856,15 +858,52 @@ export default function GrowthDevelopment() {
                       <p className="text-xs text-gray-500 mt-1">"How clearly and accurately is this product defined?"</p>
                     </div>
                   )}
+                  {!isIdea && (
+                  <div className={`border rounded-lg p-4 ${featuresReady ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
+                    <p className="text-sm font-medium text-gray-900 flex items-center">
+                      {featuresReady && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
+                      Core Features (up to 3)<ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
+                    </p>
+                    <MobileFieldWrapper label="Core Features" summary={growthData.core_features.length > 0 ? `${growthData.core_features.length} added` : null} isMobile={isMobile}>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-gray-500">Reviewers see all of these together and rate them once — not one score per feature.</p>
+                      {growthData.core_features.map((f) => (
+                        <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
+                          <div><p className="text-sm font-medium">{f.name}</p><p className="text-xs text-gray-500">{f.description}</p></div>
+                          <Button variant="ghost" size="icon" onClick={() => removeFeature(f.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                        </div>
+                      ))}
+                      {growthData.core_features.length < 3 && (
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                          <div className="flex-1"><Label className="text-xs">Feature name</Label><Input value={newFeatureName} onChange={(e) => setNewFeatureName(e.target.value)} placeholder="e.g., Smart itinerary builder" /></div>
+                          <div className="flex-1"><Label className="text-xs">Short description</Label><Input value={newFeatureDesc} onChange={(e) => setNewFeatureDesc(e.target.value)} placeholder="What it does" /></div>
+                          <Button size="sm" onClick={addFeature} className="w-full sm:w-auto">Add feature</Button>
+                        </div>
+                      )}
+                      {growthData.core_features.length === 0 && <p className="text-xs text-red-500">Required — add at least one feature before you can save.</p>}
+                    </div>
+                    </MobileFieldWrapper>
+                  </div>
+                  )}
+                  {isProduct && (
+                    <>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900">Product visit</p>
+                        <p className="text-xs text-gray-500 mt-1">"Did you visit the actual product?" Asked only if you added a product link. If yes: "How well did it match what you expected?", "What was different?" (optional) and a testimonial (optional).</p>
+                      </div>
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900">One Last Thing</p>
+                        <p className="text-xs text-gray-500 mt-1">"What's the one thing you'd improve about this product?" Asked at the end.</p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
-                )}
               </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className={isProduct && hasAtLeastOneCategory ? 'flex items-center gap-2' : ''}>{isProduct && hasAtLeastOneCategory && <CheckCircle className="w-5 h-5 text-green-500" />}Choose additional questions</CardTitle>
-                  <CardDescription>{isProduct ? 'Pick at least one.' : 'Optional.'} You can change this anytime, even after your page is live.</CardDescription>
-                  {isProduct && !hasAtLeastOneCategory && <p className="text-xs text-red-500 mt-1">Required — select at least one category before you can save.</p>}
+                  <CardTitle>Choose additional questions</CardTitle>
+                  <CardDescription>Optional. You can change this anytime, even after your page is live.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
 
@@ -955,37 +994,6 @@ export default function GrowthDevelopment() {
                         )}
                         {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
                         {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
-                      </div>
-                      </MobileFieldWrapper>
-                    )}
-                  </div>
-
-                  <div className={`border rounded-lg p-4 ${featuresReady && growthData.selected_categories.includes('core_features') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('core_features')} onCheckedChange={() => toggleCategory('core_features')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {featuresReady && growthData.selected_categories.includes('core_features') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Core Features (up to 3)<ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
-                      </span>
-                    </label>
-                    {growthData.selected_categories.includes('core_features') && (
-                      <MobileFieldWrapper label="Core Features" summary={growthData.core_features.length > 0 ? `${growthData.core_features.length} added` : null} isMobile={isMobile}>
-                      <div className="mt-3 pl-8 space-y-2">
-                        <p className="text-xs text-gray-500">Reviewers see all of these together and rate them once — not one score per feature.</p>
-                        {growthData.core_features.map((f) => (
-                          <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                            <div><p className="text-sm font-medium">{f.name}</p><p className="text-xs text-gray-500">{f.description}</p></div>
-                            <Button variant="ghost" size="icon" onClick={() => removeFeature(f.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                          </div>
-                        ))}
-                        {growthData.core_features.length < 3 && (
-                          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                            <div className="flex-1"><Label className="text-xs">Feature name</Label><Input value={newFeatureName} onChange={(e) => setNewFeatureName(e.target.value)} placeholder="e.g., Smart itinerary builder" /></div>
-                            <div className="flex-1"><Label className="text-xs">Short description</Label><Input value={newFeatureDesc} onChange={(e) => setNewFeatureDesc(e.target.value)} placeholder="What it does" /></div>
-                            <Button size="sm" onClick={addFeature} className="w-full sm:w-auto">Add feature</Button>
-                          </div>
-                        )}
-                        {growthData.core_features.length === 0 && <p className="text-xs text-red-500">Add at least one feature.</p>}
                       </div>
                       </MobileFieldWrapper>
                     )}
