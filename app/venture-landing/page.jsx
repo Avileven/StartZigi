@@ -507,6 +507,7 @@ export default function VentureLanding() {
   const [ideaAwareWhich, setIdeaAwareWhich] = useState('');
   const [ideaValueText, setIdeaValueText] = useState('');
   const [ideaPay, setIdeaPay] = useState(null); // 'yes' | 'maybe' | 'no'
+  const [missingField, setMissingField] = useState(null); // 'proto_note' | 'final' — highlights the required field the reviewer skipped
   const [ideaPayAmount, setIdeaPayAmount] = useState('');
 
   const [mlpFeedbackText, setMlpFeedbackText] = useState("");
@@ -980,6 +981,23 @@ export default function VentureLanding() {
       alert("Please give examples of the similar solutions you know.");
       return;
     }
+    // [NEW] Make sure the reviewer actually did something before sending.
+    // Prototype: a score below 6 (the default 5 included) needs a short explanation.
+    const flagMissing = (key, elementId) => {
+      setMissingField(key);
+      const el = typeof document !== 'undefined' ? document.getElementById(elementId) : null;
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => el.focus && el.focus(), 400); }
+    };
+    if (stage === 'prototype' && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && !productDefinitionNote.trim()) {
+      flagMissing('proto_note', 'growth-pd-note');
+      return;
+    }
+    // Product: the last question is required.
+    if (isProductStage && !finalChangeText.trim()) {
+      flagMissing('final', 'growth-final-change');
+      return;
+    }
+    setMissingField(null);
     setIsSubmittingGrowthFeedback(true);
     try {
       const selected = gd.selected_categories || [];
@@ -1881,8 +1899,8 @@ export default function VentureLanding() {
                           <div className="text-center text-sm font-semibold text-rose-700">{productDefinitionRating}</div>
                           {productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What feels unclear or inaccurate? (optional)</Label>
-                              <Textarea value={productDefinitionNote} onChange={(e) => setProductDefinitionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              <Label className="text-xs text-gray-500">{(venture.growth_data.stage || 'product') === 'prototype' ? <>What feels unclear or inaccurate? <span className="text-red-500 font-semibold">Required</span></> : 'What feels unclear or inaccurate? (optional)'}</Label>
+                              <Textarea id="growth-pd-note" value={productDefinitionNote} onChange={(e) => { setProductDefinitionNote(e.target.value); if (missingField === 'proto_note') setMissingField(null); }} className={`min-h-[60px] mt-1 text-sm ${missingField === 'proto_note' ? 'border-red-500 ring-1 ring-red-500' : ''}`} disabled={isSubmittingGrowthFeedback} />
                             </div>
                           )}
                           </MobileQuestionSheet>
@@ -1990,10 +2008,10 @@ export default function VentureLanding() {
                           <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">One Last Thing</p>
                         </div>
                         <MobileQuestionSheet label="One last thing" summary={finalChangeText ? "Answered" : null} isMobile={false}>
-                        <Label htmlFor="growth-final-change">What's the one thing you'd improve about this product?</Label>
+                        <Label htmlFor="growth-final-change">What's the one thing you'd improve about this product? <span className="text-red-500 text-xs font-semibold">Required</span></Label>
                         <Textarea id="growth-final-change" value={finalChangeText}
-                          onChange={(e) => setFinalChangeText(e.target.value)}
-                          className="min-h-[80px] mt-2" disabled={isSubmittingGrowthFeedback} />
+                          onChange={(e) => { setFinalChangeText(e.target.value); if (missingField === 'final') setMissingField(null); }}
+                          className={`min-h-[80px] mt-2 ${missingField === 'final' ? 'border-red-500 ring-1 ring-red-500' : ''}`} disabled={isSubmittingGrowthFeedback} />
                         </MobileQuestionSheet>
                       </div>
                       )}
