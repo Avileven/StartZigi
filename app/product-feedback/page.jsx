@@ -491,6 +491,7 @@ export default function ProductFeedbackPage() {
   // one more click past the recommended changes, per explicit feedback
   // that showing everything at once was too much data to act on.
   const [showGrowthEvidence, setShowGrowthEvidence] = useState(false);
+  const [showAllCompetitors, setShowAllCompetitors] = useState(false);
   // [NEW — Quality-weighted view] Off by default: the founder sees the plain
   // averages first, and can switch the 4 Insight Metrics cards to a view
   // weighted by feedback quality (growth_feedback.quality_analysis.score).
@@ -961,6 +962,10 @@ export default function ProductFeedbackPage() {
   // snapshot + raw feedback + its saved "what changed" note), the aggregate
   // snapshot across all briefs, and business context. `targetCampaignId` is
   // the brief this run will be saved against in `growth_brief_analysis`.
+  // [NEW — ZigPulse] Stage is fixed per venture; missing = Product.
+  const analysisStage = venture?.growth_data?.stage || 'product';
+  const snapshotFor = (items) => (analysisStage === 'idea' ? computeIdeaAverages(items) : computeGrowthAverages(items));
+
   const buildGrowthAnalysisInput = async (targetCampaignId) => {
     const briefIds = Array.from(new Set(growthFeedbacks.map(fb => fb.campaign_id).filter(Boolean)));
     const briefsChronological = briefIds
@@ -997,8 +1002,14 @@ export default function ProductFeedbackPage() {
         isTarget: b.id === targetCampaignId,
         changesSinceLastAnalysis: changesById[b.id]?.changes || null,
         previouslyAnalyzedDate: changesById[b.id]?.analyzedDate || null,
-        snapshot: computeGrowthAverages(items),
+        snapshot: snapshotFor(items),
         feedback: items.map(fb => ({
+          ideaProblemNote: fb.idea_answers?.problem_note || null,
+          ideaSolutionNote: fb.idea_answers?.solution_note || null,
+          ideaAlternativesWhich: fb.idea_answers?.alternatives_which || null,
+          ideaValueText: fb.idea_answers?.value_text || null,
+          ideaPay: fb.idea_answers?.pay || null,
+          ideaPayAmount: fb.idea_answers?.pay_amount || null,
           id: fb.id,
           date: fb.created_date,
           businessModelRating: fb.business_model_rating,
@@ -1018,9 +1029,14 @@ export default function ProductFeedbackPage() {
       };
     });
 
-    const aggregateSnapshot = computeGrowthAverages(growthFeedbacks);
+    const aggregateSnapshot = snapshotFor(growthFeedbacks);
 
-    const businessContext = businessPlanData
+    // ZigPulse ventures have no business plan: context comes from the
+    // definition page fields. Product keeps the existing behavior.
+    const gd = venture?.growth_data || {};
+    const businessContext = analysisStage !== 'product'
+      ? { need: gd.need || null, solution: gd.solution || null }
+      : businessPlanData
       ? {
           mission: businessPlanData.mission || null,
           problem: businessPlanData.problem || null,
@@ -1052,7 +1068,7 @@ export default function ProductFeedbackPage() {
 
   // [NEW — Growth AI] The free-text fields tagged by CALL 1, one row per
   // growth_feedback field that can hold a free-text answer.
-  const GROWTH_TEXT_FIELDS = [
+  const GROWTH_TEXT_FIELDS_PRODUCT = [
     { key: 'businessModelNote', label: 'Business model concern' },
     { key: 'coreFeaturesNote', label: 'Feature suggestion' },
     { key: 'valuePropNote', label: 'Slogan/value prop feedback' },
@@ -1061,6 +1077,23 @@ export default function ProductFeedbackPage() {
     { key: 'customQuestionAnswer', label: 'Custom question answer' },
     { key: 'finalChangeText', label: 'One thing to improve' },
   ];
+  // [NEW — ZigPulse] Idea: competitor names (ideaAlternativesWhich) are NOT
+  // theme-tagged — they go through a separate extraction call.
+  const GROWTH_TEXT_FIELDS_IDEA = [
+    { key: 'ideaProblemNote', label: 'Why the need is unclear' },
+    { key: 'ideaSolutionNote', label: 'Why the solution is unclear' },
+    { key: 'ideaValueText', label: 'What would make it more valuable' },
+    { key: 'customQuestionAnswer', label: 'Custom question answer' },
+  ];
+  const GROWTH_TEXT_FIELDS_PROTOTYPE = [
+    { key: 'productDefinitionNote', label: 'Product feedback' },
+    { key: 'coreFeaturesNote', label: 'Core features feedback' },
+    { key: 'businessModelNote', label: 'Business model concern' },
+    { key: 'customQuestionAnswer', label: 'Custom question answer' },
+  ];
+  const GROWTH_TEXT_FIELDS = analysisStage === 'idea' ? GROWTH_TEXT_FIELDS_IDEA
+    : analysisStage === 'prototype' ? GROWTH_TEXT_FIELDS_PROTOTYPE
+    : GROWTH_TEXT_FIELDS_PRODUCT;
 
   // [NEW — Growth AI] Count-only signal strength for a tagged theme (no
   // numeric spread to measure for a categorical tag) — same bands as the
@@ -1128,7 +1161,7 @@ export default function ProductFeedbackPage() {
           GROWTH_TEXT_FIELDS.forEach(({ key, label }) => {
             const text = fb[key];
             if (text && text.trim()) {
-              textItems.push({ id: `${fb.id}__${key}`, briefTagline: brief.tagline, fieldLabel: label, text: text.trim() });
+              textItems.push({ id: `${fb.id}__${key}`, key, briefTagline: brief.tagline, fieldLabel: label, text: text.trim() });
             }
           });
         });
@@ -1169,6 +1202,62 @@ export default function ProductFeedbackPage() {
         }))
         .sort((a, b) => b.count - a.count);
 
+      // ---------- [NEW — Idea] CALL 1b: competitor names ----------
+      // The AI only unifies spellings of the same name; code counts mentions
+      // (distinct respondents per name) and ranks them.
+      let competitors = [];
+      if (analysisStage === 'idea') {
+        const compItems = [];
+        input.briefs.forEach(brief => brief.feedback.forEach(fb => {
+          if (fb.ideaAlternativesWhich && fb.ideaAlternativesWhich.trim()) compItems.push({ id: fb.id, text: fb.ideaAlternativesWhich.trim() });
+        }));
+        if (compItems.length > 0) {
+          const compPrompt = 'Below are free-text answers from people asked which similar products or solutions they already know. Extract the product/company/solution names from each answer.\n'
+            + 'Write each name in its canonical form, so the same product always has the exact same spelling across answers (e.g. "Notion", not "notion.so" or "נושן"). Ignore generic words that are not names (e.g. "spreadsheets" is fine as a name only if it is clearly a named solution category the person means; otherwise skip). Do not invent names that are not in the answer.\n\n'
+            + 'ANSWERS:\n' + compItems.map(i => `[${i.id}]: "${i.text}"`).join('\n')
+            + '\n\nRespond with ONLY valid JSON, no markdown, no code fences — exactly this shape:\n'
+            + '{"mentions": [{"id": "<answer id>", "names": ["<canonical name>", ...]}, ...]}';
+          const compResult = await InvokeLLM({ prompt: compPrompt, creditType: 'mentor' });
+          const compParsed = parseJsonFromLLM(compResult?.response);
+          const counts = {};
+          (compParsed?.mentions || []).forEach(m => {
+            const seen = new Set();
+            (m.names || []).forEach(n => {
+              const name = String(n || '').trim();
+              if (!name) return;
+              const k = name.toLowerCase();
+              if (seen.has(k)) return;
+              seen.add(k);
+              if (!counts[k]) counts[k] = { name, count: 0 };
+              counts[k].count++;
+            });
+          });
+          competitors = Object.values(counts).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+        }
+      }
+
+      // ---------- [NEW] Code-computed facts for Idea: gap flag + next checks ----------
+      let ideaFacts = null;
+      if (analysisStage === 'idea') {
+        const snap = input.aggregateSnapshot;
+        const needVal = snap?.need?.value != null ? parseFloat(snap.need.value) : null;
+        const solVal = snap?.solution?.value != null ? parseFloat(snap.solution.value) : null;
+        const gap = needVal != null && solVal != null && (needVal - solVal) >= 2;
+        const alt = snap?.alternatives || { none: 0, few: 0, many: 0, total: 0 };
+        const dominant = alt.total > 0 ? (alt.many >= alt.none && alt.many >= alt.few ? 'many' : alt.none >= alt.few ? 'none' : 'few') : null;
+        const hasNeedNotes = themes.some(t => t.examples.some(e => e.fieldLabel === 'Why the need is unclear'));
+        const hasSolNotes = themes.some(t => t.examples.some(e => e.fieldLabel === 'Why the solution is unclear'));
+        const repeatedValue = themes.some(t => t.count >= 2 && t.examples.some(e => e.fieldLabel === 'What would make it more valuable'));
+        const checks = [];
+        if (competitors.length > 0) checks.push('Learn what each of the most-mentioned competitors does, where it is strong, and where it does not answer the need you are addressing.');
+        if (dominant === 'many') checks.push('Sharpen how the idea is different, and write that difference in one sentence on your page.');
+        if (dominant === 'none') checks.push('Check yourself whether there really are no alternatives: "none" is what respondents know, not a market check.');
+        if ((needVal != null && needVal < 6) || hasNeedNotes) checks.push('Talk to real people from your target audience and sharpen which specific difficulty you solve.');
+        if ((solVal != null && solVal < 6) || hasSolNotes) checks.push('Rewrite how the idea solves the difficulty so it can be understood in two lines.');
+        if (repeatedValue) checks.push('Check whether the value suggestions that repeat can be added to the idea, or whether they point to a different audience.');
+        ideaFacts = { gap, dominant, checks, needVal, solVal };
+      }
+
       // ---------- CALL 2: interpretation, using only pre-computed facts ----------
       const briefsSummary = input.briefs.map(b =>
         `Brief "${b.tagline}" (${b.date || 'no date'})${b.isTarget ? ' [current/most recent]' : ''}:\n`
@@ -1180,7 +1269,7 @@ export default function ProductFeedbackPage() {
         ? themes.map(t => `- "${t.theme}" — ${t.count} response(s), signal: ${t.signal}. Examples: ${t.examples.map(e => `"${e.text}"`).join('; ')}`).join('\n')
         : 'No free-text themes tagged yet.';
 
-      const analysisPrompt = 'You are a product strategist analyzing Growth-stage startup feedback, following the StartZig Insight Brief methodology.\n\n'
+      const productPrompt = 'You are a product strategist analyzing Growth-stage startup feedback, following the StartZig Insight Brief methodology.\n\n'
         + 'You are given ONLY pre-computed facts — numeric averages, response counts, and signal strength (Strong/Mixed/Weak) were already calculated in code. Do NOT invent or restate a confidence/signal level yourself anywhere — always use the ones given to you, phrased in words.\n\n'
         + 'CRITICAL RULES:\n'
         + '- Separate Evidence (what was actually said/measured) from Recommendation (your interpretation) explicitly, everywhere.\n'
@@ -1196,6 +1285,42 @@ export default function ProductFeedbackPage() {
         + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
         + '{"executiveSummary": "...", "analysis": {"patterns": "...", "agreement": "...", "unexpectedInsights": "...", "productClarity": "...", "featureInsights": "...", "changesOverTime": "...", "behaviorSplit": "..."}, "actionPlan": {"now": ["..."], "later": ["..."]}}';
 
+      // [NEW — ZigPulse] Idea / Prototype prompt. Same rules, stage context,
+      // stage-specific JSON. Product keeps productPrompt untouched.
+      const isIdeaStage = analysisStage === 'idea';
+      const stageFacts = isIdeaStage
+        ? 'INNOVATION ANSWERS (respondent counts, none = knows no similar solution, few, many): ' + JSON.stringify(input.aggregateSnapshot?.alternatives || null) + '\n'
+          + 'MOST MENTIONED SIMILAR SOLUTIONS (code-counted, name: respondents): ' + (competitors.length ? competitors.slice(0, 10).map(c => `${c.name}: ${c.count}`).join(', ') : 'none mentioned') + '\n'
+          + 'NEED vs SOLUTION GAP FLAG (code-computed): ' + (ideaFacts?.gap ? 'The Need average is at least 2 points above The Solution average — the need looks strong but the proposed solution is rated weaker.' : 'No significant gap.') + '\n'
+          + 'NEXT CHECKS TRIGGERED BY THE DATA (code-selected, base wording): ' + (ideaFacts?.checks?.length ? JSON.stringify(ideaFacts.checks) : '[]') + '\n\n'
+        : '';
+      const stagePrompt = 'You are a product strategist analyzing ' + (isIdeaStage ? 'IDEA-stage' : 'PROTOTYPE-stage') + ' startup feedback, following the StartZig Insight Brief methodology.\n\n'
+        + 'You are given ONLY pre-computed facts — numeric averages, response counts, and signal strength (Strong/Mixed/Weak, or Poor/Weak/Mixed/Strong/Elite for averages) were already calculated in code. Do NOT invent or restate a confidence/signal level yourself anywhere — use the ones given, phrased in words. Never write percentages.\n\n'
+        + 'CRITICAL RULES:\n'
+        + '- Separate Evidence (what was actually said/measured) from Recommendation (your interpretation) explicitly, everywhere.\n'
+        + '- Use the "what changed since last brief" notes to explain real changes between briefs — do not guess a cause the founder did not mention.\n'
+        + '- You do not know implementation cost or founder resources — base "act now" vs "plan for later" ONLY on signal strength and how central the topic is, and say so explicitly if relevant.\n'
+        + '- Call out unexpected insights — things mentioned in the wrong field or not asked about at all.\n'
+        + (isIdeaStage
+          ? '- This is an IDEA: there is no product yet. Everything respondents say is PERCEPTION — what they know or believe, not what exists in the market. NEVER say the idea is "unique", "has no competitors" or "no alternatives exist". Say things like "respondents know a few alternatives" or "respondents did not name similar solutions".\n'
+            + '- Do NOT give a verdict on whether to continue the idea. Give evidence and what to check next only.\n'
+          : '- This is a PROTOTYPE: only analyze what was asked (The Product, Core Features, and Business Model if present in the snapshot). Do not invent parts that were not asked. There is no product URL, so there is no visit-behavior data.\n')
+        + '\nSTARTUP: ' + (input.ventureName || 'Unknown') + '\n\n'
+        + 'WHAT THE FOUNDER WROTE ON THE DEFINITION PAGE:\n' + (input.businessContext ? JSON.stringify(input.businessContext) : 'Not available') + '\n\n'
+        + 'AGGREGATE SNAPSHOT (across all briefs, code-computed):\n' + (input.aggregateSnapshot ? JSON.stringify(input.aggregateSnapshot) : 'No ratings yet') + '\n\n'
+        + stageFacts
+        + 'BRIEFS, CHRONOLOGICAL (oldest to newest):\n' + briefsSummary + '\n\n'
+        + 'TAGGED THEMES FROM FREE-TEXT FEEDBACK (code-counted, code-graded):\n' + themesSummary + '\n\n'
+        + (isIdeaStage
+          ? 'Produce: needValidation (is the need clear and strong, per the ratings and notes), solutionFit (does the solution look clear and seen as solving the need; mention the gap flag if set), competitiveLandscape (what respondents say they know, perceived wording only), valueSuggestions (what respondents say would make it more valuable), unexpectedInsights, changesOverTime (only if more than one brief; otherwise empty string). Also produce nextChecks: 1-4 specific, concrete checks for THIS startup — rephrase each triggered base check specifically for the startup, and add none that the data did not trigger.\n'
+          : 'Produce: productClarity, featureInsights, businessModel (ONLY if Business Model ratings exist in the snapshot, otherwise empty string), unexpectedInsights, changesOverTime (only if more than one brief; otherwise empty string).\n')
+        + 'Then an action plan split into "now" and "later". Finally a one-to-two sentence executive summary — the single most important finding plus the single most urgent action, in plain language a busy founder can read in 5 seconds. It must say what to actually do.\n\n'
+        + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
+        + (isIdeaStage
+          ? '{"executiveSummary": "...", "analysis": {"needValidation": "...", "solutionFit": "...", "competitiveLandscape": "...", "valueSuggestions": "...", "unexpectedInsights": "...", "changesOverTime": "..."}, "nextChecks": ["..."], "actionPlan": {"now": ["..."], "later": ["..."]}}'
+          : '{"executiveSummary": "...", "analysis": {"productClarity": "...", "featureInsights": "...", "businessModel": "...", "unexpectedInsights": "...", "changesOverTime": "..."}, "actionPlan": {"now": ["..."], "later": ["..."]}}');
+      const analysisPrompt = analysisStage === 'product' ? productPrompt : stagePrompt;
+
       const analysisResult = await InvokeLLM({ prompt: analysisPrompt, creditType: 'mentor' });
       const analysisParsed = parseJsonFromLLM(analysisResult?.response);
 
@@ -1206,7 +1331,7 @@ export default function ProductFeedbackPage() {
       const targetIdx = input.briefs.findIndex(b => b.campaignId === targetCampaignId);
       const prevBrief = targetIdx > 0 ? input.briefs[targetIdx - 1] : null;
       const targetBrief = targetIdx >= 0 ? input.briefs[targetIdx] : null;
-      const TREND_CATEGORIES = ['businessModel', 'coreFeatures', 'valueProp', 'productDefinition'];
+      const TREND_CATEGORIES = analysisStage === 'idea' ? ['need', 'solution'] : ['businessModel', 'coreFeatures', 'valueProp', 'productDefinition'];
       const trend = {};
       TREND_CATEGORIES.forEach(cat => {
         const curVal = targetBrief?.snapshot?.[cat]?.value;
@@ -1217,6 +1342,10 @@ export default function ProductFeedbackPage() {
       });
 
       const fullAnalysis = {
+        stage: analysisStage,
+        competitors: analysisStage === 'idea' ? competitors : undefined,
+        gap: analysisStage === 'idea' ? !!ideaFacts?.gap : undefined,
+        next_checks: analysisStage === 'idea' ? (analysisParsed?.nextChecks || ideaFacts?.checks || []) : undefined,
         snapshot: input.aggregateSnapshot,
         trend,
         executive_summary: analysisParsed?.executiveSummary || null,
@@ -2360,6 +2489,11 @@ export default function ProductFeedbackPage() {
                   <p className="text-xs text-gray-400 text-center max-w-xs">
                     Runs an AI read of all your feedback — a short summary and a prioritized list of what to change.
                   </p>
+                  {growthFeedbacks.length > 0 && growthFeedbacks.length < 5 && (
+                    <p className="text-xs text-amber-600 text-center max-w-xs">
+                      Only {growthFeedbacks.length} response{growthFeedbacks.length !== 1 ? 's' : ''} so far — the read gets more reliable from 5.
+                    </p>
+                  )}
                 </div>
 
                 {growthAnalysisError && (
@@ -2514,6 +2648,34 @@ export default function ProductFeedbackPage() {
 
                         {showGrowthEvidence && (
                           <div className="border-t border-gray-100">
+                            {growthAiAnalysis.stage === 'idea' && growthAiAnalysis.next_checks && growthAiAnalysis.next_checks.length > 0 && (
+                              <div className="p-5 border-b border-gray-100">
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600">What to check next</p>
+                                <ul className="list-disc pl-5 space-y-1">
+                                  {growthAiAnalysis.next_checks.map((c, i) => (
+                                    <li key={i} className="text-sm text-gray-700 leading-relaxed">{c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {growthAiAnalysis.stage === 'idea' && growthAiAnalysis.competitors && growthAiAnalysis.competitors.length > 0 && (
+                              <div className="p-5 border-b border-gray-100">
+                                <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Similar solutions respondents know</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(showAllCompetitors ? growthAiAnalysis.competitors : growthAiAnalysis.competitors.slice(0, 5)).map((c, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                                      {c.name} · {c.count}
+                                    </span>
+                                  ))}
+                                </div>
+                                {growthAiAnalysis.competitors.length > 5 && (
+                                  <button type="button" onClick={() => setShowAllCompetitors(v => !v)} className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                                    {showAllCompetitors ? 'Show less' : `Show all (${growthAiAnalysis.competitors.length})`}
+                                  </button>
+                                )}
+                                <p className="text-xs text-gray-400 mt-2">Based on what respondents know, not a market check.</p>
+                              </div>
+                            )}
                             {growthAiAnalysis.themes && growthAiAnalysis.themes.length > 0 && (
                               <div className="p-5 border-b border-gray-100">
                                 <p className="text-xs font-semibold uppercase tracking-wide mb-2 text-amber-600">Themes in the feedback</p>
