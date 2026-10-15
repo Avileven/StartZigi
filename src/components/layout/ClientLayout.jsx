@@ -118,9 +118,9 @@ const PLAN_DISPLAY_NAMES = {
 export default function ClientLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  // [FIX] ZigPulse bar: normalise the path so a trailing slash or the older
-  // /promotioncenter URL still highlights its icon and shows its label.
-  const growthPath = (pathname || '').replace(/\/+$/, '').replace(/^\/promotioncenter$/, '/promotion-center');
+  // [FIX] ZigPulse bar: normalise the path so a trailing slash, the older
+  // /promotioncenter URL, or /promotion (where Growth is auto-redirected) still highlights its icon and shows its label.
+  const growthPath = (pathname || '').replace(/\/+$/, '').replace(/^\/(promotioncenter|promotion)$/, '/promotion-center');
 
   const [user, setUser] = useState(null);
   const [venture, setVenture] = useState(null);
