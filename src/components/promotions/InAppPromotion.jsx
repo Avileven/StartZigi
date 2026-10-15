@@ -128,6 +128,7 @@ export default function InAppPromotion({ goBack }) {
   // their remaining Feedback Request Pool to spend on this round, not a fixed
   // tier size.
   const [requestsToUse, setRequestsToUse] = useState(1);
+  const [showHow, setShowHow] = useState(false);
   const [tagline, setTagline] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -487,13 +488,6 @@ if (campaignErr) throw campaignErr;
             nowhere meaningful to "go back" to. */}
 
         <Card className="shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardTitle className="flex items-center gap-3 text-2xl">
-              <Megaphone className="w-8 h-8 text-indigo-600" />
-              In-App Promotion Package
-            </CardTitle>
-          </CardHeader>
-
           <CardContent className="p-8">
             <div className="space-y-6">
 
@@ -501,13 +495,18 @@ if (campaignErr) throw campaignErr;
                   number promised to the founder — only how many requests
                   from their pool they're choosing to spend. */}
               <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl">
-                <h4 className="font-semibold text-blue-900 mb-3">How It Works:</h4>
-                <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5">
+                <button type="button" onClick={() => setShowHow(v => !v)} className="w-full flex items-center justify-between font-semibold text-blue-900">
+                  <span>How It Works</span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${showHow ? 'rotate-90' : ''}`} />
+                </button>
+                {showHow && (
+                <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5 mt-3">
                   <li>Choose how many requests to spend from your Feedback Request Pool</li>
                   <li>Give your brief a name (tagline)</li>
                   <li>Launch the round and track results in the Validation Center</li>
                   <li>The round is active for 7 days — after that, invitations expire automatically</li>
                 </ol>
+                )}
               </div>
 
               <div className="text-center">
@@ -547,7 +546,7 @@ if (campaignErr) throw campaignErr;
                     "buy more" purchase flow — Insight Credits transfer 1:1
                     into this pool, they aren't spent on it. */}
                 <p className="text-xs text-gray-500 mt-2">
-                  Need more? Give feedback to other founders to earn Zigback — each one adds a request to this pool.
+                  Need more? You can upgrade to another plan, or go to My Account and convert the Zigback you've earned into feedback requests.
                 </p>
               </div>
 

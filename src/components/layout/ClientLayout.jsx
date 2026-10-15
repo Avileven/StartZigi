@@ -118,6 +118,9 @@ const PLAN_DISPLAY_NAMES = {
 export default function ClientLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  // [FIX] ZigPulse bar: normalise the path so a trailing slash or the older
+  // /promotioncenter URL still highlights its icon and shows its label.
+  const growthPath = (pathname || '').replace(/\/+$/, '').replace(/^\/promotioncenter$/, '/promotion-center');
 
   const [user, setUser] = useState(null);
   const [venture, setVenture] = useState(null);
@@ -524,7 +527,7 @@ pathname === "/"
                 ].map(({ key, label, path, Icon }) => (
                   <button key={key} aria-label={label} onClick={() => router.push(path)}
                     className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
-                      pathname === path ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
+                      growthPath === path ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-700'
                     }`}>
                     <Icon className="w-5 h-5" />
                   </button>
@@ -553,7 +556,7 @@ pathname === "/"
                 </button>
               </div>
               <p className="md:hidden text-center text-xs font-semibold text-indigo-700 pb-2 bg-gray-50">
-                {{ '/product-feedback': 'Product Feedback', '/growth-development': 'ZigPulse', '/promotion-center': 'Promotion Center', '/my-account': 'My Account', '/notifications': 'Notifications' }[pathname] || ''}
+                {{ '/product-feedback': 'Product Feedback', '/growth-development': 'ZigPulse', '/promotion-center': 'Promotion Center', '/my-account': 'My Account', '/notifications': 'Notifications' }[growthPath] || ''}
               </p>
             </>
           ) : (
