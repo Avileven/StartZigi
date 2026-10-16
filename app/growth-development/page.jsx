@@ -453,6 +453,8 @@ export default function GrowthDevelopment() {
       pressure_challenge_completed: false,
       created_by: currentUser.email,
       created_by_id: String(currentUser.id),
+      // ZigPulse free: one-time bank of 30 feedback requests (the column's DB default is 20).
+      feedback_request_pool: 30,
     };
     const { data: newVenture, error: createError } = await supabase
       .from('ventures').insert([venturePayload]).select().single();
