@@ -44,7 +44,11 @@ export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = fal
           const resetDate = new Date(profile.credits_reset_date);
           const now = new Date();
           const nextReset = new Date(resetDate.getFullYear(), resetDate.getMonth() + 1, resetDate.getDate());
-          if (now > nextReset) {
+          // [ZigPulse] The free ZigPulse plan ('growth') is a one-time fixed
+          // bank (Insight Reports) — it never resets. Every other plan keeps
+          // the existing monthly reset (ZigJourney's free bank is not decided
+          // yet, so it is intentionally left as it was).
+          if (profile.plan !== 'growth' && now > nextReset) {
             await supabase.from('user_profiles').update({
               credits_used: 0,
               credits_reset_date: now.toISOString()

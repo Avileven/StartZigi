@@ -438,7 +438,7 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
             <div>
               <p className="text-sm text-gray-500">Feedback Requests Remaining</p>
               <p className="text-2xl font-bold text-green-600">
-                {venture.feedback_request_pool ?? 20}
+                {venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20)}
               </p>
             </div>
           </div>

@@ -1178,7 +1178,8 @@ export default function ProductFeedbackPage() {
           + 'Respond with ONLY valid JSON, no markdown, no code fences, no commentary — exactly this shape:\n'
           + '{"tags": [{"id": "<response id>", "theme": "<short theme label>"}, ...]}';
 
-        const taggingResult = await InvokeLLM({ prompt: taggingPrompt, creditType: 'mentor' });
+        // 'sys' = not charged: one Insight Report = one charge, on the final call below.
+        const taggingResult = await InvokeLLM({ prompt: taggingPrompt, creditType: 'sys' });
         const taggingParsed = parseJsonFromLLM(taggingResult?.response);
         themeTags = taggingParsed?.tags || [];
       }
@@ -1217,7 +1218,7 @@ export default function ProductFeedbackPage() {
             + 'ANSWERS:\n' + compItems.map(i => `[${i.id}]: "${i.text}"`).join('\n')
             + '\n\nRespond with ONLY valid JSON, no markdown, no code fences — exactly this shape:\n'
             + '{"mentions": [{"id": "<answer id>", "names": ["<canonical name>", ...]}, ...]}';
-          const compResult = await InvokeLLM({ prompt: compPrompt, creditType: 'mentor' });
+          const compResult = await InvokeLLM({ prompt: compPrompt, creditType: 'sys' });
           const compParsed = parseJsonFromLLM(compResult?.response);
           const counts = {};
           (compParsed?.mentions || []).forEach(m => {
@@ -1381,7 +1382,9 @@ export default function ProductFeedbackPage() {
       setTimeout(() => setGrowthJustAnalyzed(false), 5000);
     } catch (err) {
       console.error('Growth analysis failed:', err);
-      setGrowthAnalysisError('Something went wrong generating the analysis. Please try again.');
+      setGrowthAnalysisError(err?.message === 'NO_CREDITS'
+        ? 'You have no Insight Reports left.'
+        : 'Something went wrong generating the analysis. Please try again.');
     }
     setIsAnalyzingGrowth(false);
   };

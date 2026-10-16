@@ -556,7 +556,7 @@ export default function GrowthDevelopment() {
         // (dashboard-page.jsx) — displayed as "GrowthZig" in my-account.jsx
         // (that file's display mapping needs updating separately).
         try {
-          await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 100 }).eq('id', currentUser.id);
+          await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 50 }).eq('id', currentUser.id);
         } catch (planErr) {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }

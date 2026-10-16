@@ -24,8 +24,8 @@ import { useRouter } from 'next/navigation';
 const PLAN_CREDITS = {
   builder: 100,
   builder_boost: 300,
-  growth: 100,
-  growth_boost: 200,
+  growth: 50,        // ZigPulse free: one-time bank of Insight Reports
+  growth_boost: 100, // ZigPulse Boost: Insight Reports per month
 };
 
 // [DOWNGRADE] Plan hierarchy — used to block downgrades. Only meaningful
@@ -166,7 +166,7 @@ export default function Pricing() {
       features: [
         'Landing page for your idea, prototype or product',
         '30 feedback requests, free [2]',
-        '100 AI credits as a gift',
+        '50 Insight Reports, free',
       ],
       cta: 'Start Free',
       featured: false,
@@ -183,7 +183,7 @@ export default function Pricing() {
       features: [
         'Landing page for your idea, prototype or product',
         '50 feedback requests a month [2]',
-        '200 AI credits a month',
+        '100 Insight Reports a month',
       ],
       cta: 'Get ZigPulse Boost',
       featured: false,
@@ -223,7 +223,7 @@ export default function Pricing() {
         </div>
 
         <p className="text-gray-600 text-sm mb-4">
-          {activeTab === 'idea' ? 'All plans include monthly credits. Need more? Top up anytime.' : 'ZigPulse includes a one-time gift of requests and AI credits. Boost adds monthly credits. Need more? Top up anytime.'}
+          {activeTab === 'idea' ? 'All plans include monthly credits. Need more? Top up anytime.' : 'ZigPulse includes a one-time bank of feedback requests and Insight Reports. Boost renews them every month. Need more? Top up anytime.'}
         </p>
 
         <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mb-4">

@@ -98,8 +98,8 @@ function RingBadge({ value, label, stroke, text }) {
 const PLAN_CREDITS = {
   builder: 100,
   builder_boost: 300,
-  growth: 100,
-  growth_boost: 200,
+  growth: 50,
+  growth_boost: 100,
 };
 
 const PLAN_PRICES = {
@@ -308,6 +308,7 @@ export default function MyAccount() {
   // actually a real plan key (old or new) — now defaults to the actual
   // free-tier key.
   const plan = profile?.plan || 'builder';
+  const isPulsePlan = plan === 'growth' || plan === 'growth_boost';
   const creditsUsed = profile?.credits_used || 0;
   const creditsLimit = profile?.credits_limit || PLAN_CREDITS[plan] || PLAN_CREDITS.builder;
   const creditsLeft = creditsLimit - creditsUsed;
@@ -510,7 +511,7 @@ export default function MyAccount() {
       <Card className="border-t-4 border-t-green-500 shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <Zap className="w-4 h-4" /> AI Credits
+            <Zap className="w-4 h-4" /> {isPulsePlan ? 'Insight Reports' : 'AI Credits'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -529,7 +530,7 @@ export default function MyAccount() {
             />
           </div>
 
-          {nextReset && (
+          {nextReset && plan !== 'growth' && (
             <p className="text-xs text-gray-500 flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               Resets on {nextReset.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}

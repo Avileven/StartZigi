@@ -679,7 +679,7 @@ if (userVentures.length === 0) {
               // "GrowthZig" in my-account.jsx (that file's own display
               // mapping needs updating separately — not touched here).
               try {
-                await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 100 }).eq('id', currentUser.id);
+                await supabase.from('user_profiles').update({ plan: 'growth', credits_limit: 50 }).eq('id', currentUser.id);
               } catch (planErr) {
                 console.error("Growth plan assignment failed (non-critical):", planErr);
               }
