@@ -303,7 +303,7 @@ export default function Home() {
             className="text-xl md:text-2xl text-gray-600 mb-16 max-w-3xl mx-auto italic"
             style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease" }}
           >
-            Your Idea. Your Community.<br className="sm:hidden" /> Your Next Zig.
+            Build Better. Grow Together.
           </p>
           <div
             className="flex flex-col gap-4 items-center"
@@ -342,11 +342,11 @@ export default function Home() {
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Get Insights from our community at every stage of your product, and gain new customers.</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Turn real feedback into better products and early interest into lasting growth.</span>
             </h3>
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
-              From idea to live product, benefit from structured feedback from our community at every stage of your entrepreneurial journey. Use it to refine your product and plan your next features. Some community members will discover your product early, and join as users.
+              StartZig helps founders build products people actually want by bringing three essential forces together: structured feedback from real people, AI analysis that turns responses into clear product insights, and audience growth that begins before launch and continues as your product evolves. Instead of guessing what to build or waiting until launch to find your audience, learn what matters, decide what to improve, and grow alongside the people you're building for.
             </p>
           </div>
 
@@ -354,12 +354,23 @@ export default function Home() {
               Explanation paragraph is a placeholder: content to be provided by the user. */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Turn Insights Into a Critical Growth Tool for Your Venture.</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">An Intelligent Feedback System That Shapes Better Products</span>
             </h3>
             <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
-            <p className="text-lg text-gray-600">
-              We've developed a feedback method where the questions are structured and evolve with your product, helping you understand what users value and what needs to improve. Our dashboard and AI turn what you learn into practical direction for making your product more relevant, attracting more users, and growing your venture.
-            </p>
+            <div className="space-y-4">
+              <p className="text-lg text-gray-600">
+                Not all feedback is equally useful, and the right questions change as your product evolves.
+              </p>
+              <p className="text-lg text-gray-600">
+                StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights, and suggest what to explore next.
+              </p>
+              <p className="text-lg text-gray-600">
+                Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention, and make more informed decisions about your product.
+              </p>
+              <p className="text-lg text-gray-600">
+                The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
+              </p>
+            </div>
           </div>
 
           {/* Built for Different Starting Points — [FIX] reordered
