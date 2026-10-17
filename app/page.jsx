@@ -303,14 +303,11 @@ export default function Home() {
             className="mb-12 max-w-3xl mx-auto"
             style={{ opacity: showRest ? 1 : 0, transition: "opacity 0.6s ease" }}
           >
-            <p className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">
+            <p className="text-xl md:text-2xl text-gray-600 mb-2 italic">
               Build Better. Grow Together.
             </p>
-            <p className="text-lg md:text-xl text-gray-700 mb-5">
+            <p className="text-xl md:text-2xl text-gray-600 italic">
               Turn real feedback into better products, and early interest into lasting growth.
-            </p>
-            <p className="text-base md:text-lg text-gray-500 leading-relaxed">
-              StartZig helps founders build products people actually want by bringing three essential forces together: structured feedback from real people, AI analysis that turns responses into clear product insights, and audience growth that begins before launch and continues as your product evolves. Instead of guessing what to build or waiting until launch to find your audience, learn what matters, decide what to improve, and grow alongside the people you're building for.
             </p>
           </div>
           <div
@@ -347,6 +344,10 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
+          <p className="text-lg text-gray-600 mb-10">
+            StartZig helps founders build products people actually want by bringing three essential forces together: structured feedback from real people, AI analysis that turns responses into clear product insights, and audience growth that begins before launch and continues as your product evolves. Instead of guessing what to build or waiting until launch to find your audience, learn what matters, decide what to improve, and grow alongside the people you're building for.
+          </p>
+
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
@@ -375,7 +376,7 @@ export default function Home() {
               <p className="text-lg text-gray-600">
                 Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention, and make more informed decisions about your product.
               </p>
-              <p className="text-lg text-gray-900 font-semibold">
+              <p className="text-lg text-gray-600">
                 The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
               </p>
             </div>
