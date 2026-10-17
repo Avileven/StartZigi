@@ -153,8 +153,35 @@ export default function InAppPromotion({ goBack }) {
         // This matches your entities.js special filter for ventures.
         const ventures = await Venture.filter({ founder_user_id: user.id }, "-created_date");
 
-        if (ventures?.length > 0) setVenture(ventures[0]);
-        else setVenture(null);
+        if (ventures?.length > 0) {
+          let v = ventures[0];
+          // [ZigPulse Boost] Monthly refill of feedback requests: once a month,
+          // reset the pool to exactly 50 (unused requests do not carry over).
+          // Needs ventures.feedback_pool_refilled_at; if the column is missing
+          // the update fails and nothing changes.
+          try {
+            if (v.phase === 'growth') {
+              const { data: prof } = await supabase
+                .from('user_profiles').select('plan').eq('id', user.id).single();
+              if (prof?.plan === 'growth_boost') {
+                const last = v.feedback_pool_refilled_at ? new Date(v.feedback_pool_refilled_at) : null;
+                const due = !last || new Date() >= new Date(last.getFullYear(), last.getMonth() + 1, last.getDate());
+                if (due) {
+                  const topped = 50; // reset to exactly 50 — unused requests (even converted Zigback) do not carry over
+                  const { error: refillErr } = await supabase
+                    .from('ventures')
+                    .update({ feedback_request_pool: topped, feedback_pool_refilled_at: new Date().toISOString() })
+                    .eq('id', v.id);
+                  if (!refillErr) v = { ...v, feedback_request_pool: topped, feedback_pool_refilled_at: new Date().toISOString() };
+                  else console.error('Monthly request refill failed:', refillErr);
+                }
+              }
+            }
+          } catch (refillCatch) {
+            console.error('Monthly request refill error:', refillCatch);
+          }
+          setVenture(v);
+        } else setVenture(null);
       } catch (error) {
         console.error("Error loading venture:", error);
         setVenture(null);
@@ -225,7 +252,7 @@ export default function InAppPromotion({ goBack }) {
       return;
     }
 
-    const remainingPool = venture.feedback_request_pool ?? 20;
+    const remainingPool = venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20);
     if (remainingPool < requestsToUse) {
       alert("You don't have enough requests remaining in your Feedback Request Pool for this round.");
       return;
@@ -425,7 +452,7 @@ if (campaignErr) throw campaignErr;
         .select("feedback_request_pool")
         .eq("id", venture.id)
         .single();
-      const freshPool = freshVenture?.feedback_request_pool ?? 20;
+      const freshPool = freshVenture?.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20);
       await supabase
         .from("ventures")
         .update({ feedback_request_pool: freshPool - requestsToUse })
@@ -515,7 +542,7 @@ if (campaignErr) throw campaignErr;
                     now centered, with the number in a bordered box, matching
                     the visual weight of other "stat" numbers in the app. */}
                 <div className="inline-block border-2 border-indigo-200 rounded-xl px-6 py-3 mb-4">
-                  <p className="text-3xl font-bold text-indigo-600">{venture.feedback_request_pool ?? 20}</p>
+                  <p className="text-3xl font-bold text-indigo-600">{venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20)}</p>
                 </div>
                 <Label htmlFor="requests-to-use" className="block">How many would you like to use for this round?</Label>
                 <MobileFieldWrapper label="Requests to use" summary={String(requestsToUse)} isMobile={isMobile}>
@@ -531,14 +558,14 @@ if (campaignErr) throw campaignErr;
                       id="requests-to-use"
                       type="number"
                       min={1}
-                      max={venture.feedback_request_pool ?? 20}
+                      max={venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20)}
                       value={requestsToUse}
                       onChange={(e) => setRequestsToUse(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       className="max-w-[100px] text-center"
                     />
                     <Button
                       type="button" variant="outline" size="icon"
-                      onClick={() => setRequestsToUse(v => Math.min(venture.feedback_request_pool ?? 20, v + 1))}
+                      onClick={() => setRequestsToUse(v => Math.min(venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20), v + 1))}
                     >+</Button>
                   </div>
                 </MobileFieldWrapper>
@@ -612,10 +639,10 @@ if (campaignErr) throw campaignErr;
                   requestsToUse < 1 ||
                   !tagline.trim() ||
                   isSubmitting ||
-                  (venture.feedback_request_pool ?? 20) < requestsToUse
+                  (venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20)) < requestsToUse
                 }
                 className={`w-full transition-all ${
-                  requestsToUse >= 1 && tagline.trim() && (venture.feedback_request_pool ?? 20) >= requestsToUse
+                  requestsToUse >= 1 && tagline.trim() && (venture.feedback_request_pool ?? (venture.phase === 'growth' ? 30 : 20)) >= requestsToUse
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
