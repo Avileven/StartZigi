@@ -162,8 +162,9 @@ function FAQItems() {
     { q: "How does Zig Profile work?", a: "Every founder has a Zig Profile, visible to other founders you interact with. It shows your current stage (Spark, Plan, Shape, or Beta), your Insight status based on how much feedback you've given other founders, your Zig Age (how long you've been part of the community), and how many ideas you've started. You can view your own profile from My Account, and click on any founder's name to see theirs." },
     { q: "How long does the journey take?", a: "It depends on how intensively you work. A single idea's journey, from first spark to a validated, demo-ready product, takes about 6 months on average. But your journey on StartZig doesn't end there. Once you're ready, you can start a new idea, and stay active in between by giving feedback to other founders." },
     { q: "How is my venture data protected and who can see it?", a: "Your venture data is stored securely using industry-standard security practices. We recommend exercising caution about sharing sensitive proprietary information. StartZig does not accept liability for data breaches. You choose when and with whom to share it, whether that's inviting a co-founder, sharing your beta sign-up page to recruit testers, or sharing your venture landing page to collect community feedback." },
-    { q: "What is an Insight?", a: "In our community, every piece of structured feedback members give each other is an Insight. When you give feedback, you build up an Insight balance, which you can use to invite others to your venture. Your Insight balance stays with you throughout your journey." },
-    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Using Zig it costs 1 credit per interaction. Other AI-powered tools specify their credit cost clearly before you use them. Credits are included in your monthly plan and reset each month. You can top up anytime if you need more." },
+    { q: "What is Zigback?", a: "Zigback is what you earn when you give other founders structured feedback. The better your feedback, the more Zigback you get. You can convert it into feedback requests for your own product, and your balance stays with you throughout your journey." },
+    { q: "What is a Feedback Brief?", a: "A Feedback Brief is one round of feedback on your product. You name it, choose what you want to learn, and decide how many feedback requests to spend on it. Each feedback request invites one community member to respond. Your feedback requests come with your plan, and you can add more by earning Zigback. When responses come in, you can turn them into an Insight Report." },
+    { q: "What are credits and how do they work?", a: "Credits power the AI features on StartZig. Each AI-powered tool specifies its credit cost clearly before you use it. Credits are included in your plan, and renew according to it. You can top up anytime if you need more." },
   ];
   return (
     <div className="space-y-3">
@@ -342,7 +343,7 @@ export default function Home() {
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Turn real feedback into better products and early interest into lasting growth.</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">Build Your Product for Success</span>
             </h3>
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
@@ -357,20 +358,9 @@ export default function Home() {
               <span className="text-blue-600 inline-block leading-relaxed pb-2">An Intelligent Feedback System That Shapes Better Products</span>
             </h3>
             <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
-            <div className="space-y-4">
-              <p className="text-lg text-gray-600">
-                Not all feedback is equally useful, and the right questions change as your product evolves.
-              </p>
-              <p className="text-lg text-gray-600">
-                StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights, and suggest what to explore next.
-              </p>
-              <p className="text-lg text-gray-600">
-                Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention, and make more informed decisions about your product.
-              </p>
-              <p className="text-lg text-gray-600">
-                The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
-              </p>
-            </div>
+            <p className="text-lg text-gray-600">
+              Not all feedback is equally useful, and the right questions change as your product evolves. StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights, and suggest what to explore next. Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention, and make more informed decisions about your product. The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
+            </p>
           </div>
 
           {/* Built for Different Starting Points — [FIX] reordered
