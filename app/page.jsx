@@ -343,11 +343,11 @@ export default function Home() {
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
-              <span className="text-blue-600 inline-block leading-relaxed pb-2">Build Your Product for Success</span>
+              <span className="text-blue-600 inline-block leading-relaxed pb-2">What If Your Product Never Takes Off?</span>
             </h3>
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
-              StartZig helps founders build products people actually want by bringing three essential forces together: structured feedback from real people, AI analysis that turns responses into clear product insights, and audience growth that begins before launch and continues as your product evolves. Instead of guessing what to build or waiting until launch to find your audience, learn what matters, decide what to improve, and grow alongside the people you're building for.
+              StartZig helps you increase your chances of success by giving you the tools, insights and community to make better product decisions, reach the right people and build an audience as your product evolves. Don't just build and hope. Learn, improve and grow with people who can help move your product forward.
             </p>
           </div>
 
@@ -359,7 +359,7 @@ export default function Home() {
             </h3>
             <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <p className="text-lg text-gray-600">
-              Not all feedback is equally useful, and the right questions change as your product evolves. StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights, and suggest what to explore next. Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention, and make more informed decisions about your product. The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
+              Not all feedback is equally useful, and the right questions change as your product evolves. StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights and suggest what to explore next. Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention and make more informed decisions about your product. The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
             </p>
           </div>
 
