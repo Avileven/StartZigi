@@ -8,6 +8,7 @@ import { ChevronDown } from "lucide-react"; // [ADDED] FAQ accordion icon
 import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] idea-to-product-to-users animation
 import CommunityAiFounderLoop from "./CommunityAiFounderLoop/page"; // [ADDED] community/AI/founder loop animation
 import InsightMetricsAnimation from "./InsightMetricsAnimation/page"; // [NEW] Insight Metrics count-up demo (Business Model / Core Features)
+import FeedbackEvolutionAnimation from "./FeedbackEvolutionAnimation/page"; // [NEW] feedback-to-product-evolution story
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
@@ -357,7 +358,7 @@ export default function Home() {
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
               <span className="text-blue-600 inline-block leading-relaxed pb-2">An Intelligent Feedback System That Shapes Better Products</span>
             </h3>
-            <InsightMetricsAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
+            <FeedbackEvolutionAnimation className="w-[82vw] sm:w-full max-w-md mx-auto mb-8" />
             <p className="text-lg text-gray-600">
               Not all feedback is equally useful, and the right questions change as your product evolves. StartZig combines structured, adaptable feedback with algorithms designed to assess response quality and AI-powered analysis that helps identify patterns, surface meaningful insights and suggest what to explore next. Go beyond collecting opinions. Understand what people are telling you, identify what deserves closer attention and make more informed decisions about your product. The community provides the perspective. Intelligent analysis helps uncover the insights. You decide what to build next.
             </p>
