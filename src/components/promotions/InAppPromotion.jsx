@@ -270,7 +270,7 @@ export default function InAppPromotion({ goBack }) {
       // the venture that belongs to them.
       const { data: allVentures, error: venturesErr } = await supabase
         .from("ventures")
-        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,founder_user_ids")
+        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,created_by,founder_user_ids")
         .order("created_date", { ascending: false })
         .limit(1000);
 
@@ -442,6 +442,23 @@ if (campaignErr) throw campaignErr;
           created_by_id: user?.id || null,
           is_dismissed: false,
         });
+
+        // [NEW] Email the founder of the selected venture (created_by holds
+        // the founder's email). Non-blocking: a failed email must never stop
+        // the round. Skipped when the venture has no email on record.
+        if (target.created_by) {
+          fetch("/api/send-feedback-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: target.created_by,
+              fromVentureName: venture.name,
+              feedbackUrl: getFeedbackUrl(target.id),
+            }),
+          }).catch((emailErr) => {
+            console.error("Feedback request email failed (non-critical):", emailErr);
+          });
+        }
       }
 
       // [FIX 020826] Deduct from feedback_request_pool instead of
