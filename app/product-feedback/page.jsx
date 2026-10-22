@@ -893,7 +893,8 @@ export default function ProductFeedbackPage() {
   const computeGrowthAverages = (feedbackArr, weighted = false) => {
     const withRatings = feedbackArr.filter(fb =>
       fb.business_model_rating != null || fb.core_features_rating != null ||
-      fb.value_prop_rating != null || fb.product_definition_rating != null
+      fb.value_prop_rating != null || fb.product_definition_rating != null ||
+      fb.media_rating != null
     );
     if (withRatings.length === 0) return null;
     const statsFor = (key) => {
@@ -913,6 +914,7 @@ export default function ProductFeedbackPage() {
       coreFeatures: statsFor('core_features_rating'),
       valueProp: statsFor('value_prop_rating'),
       productDefinition: statsFor('product_definition_rating'),
+      media: statsFor('media_rating'),
     };
   };
 
@@ -1020,6 +1022,8 @@ export default function ProductFeedbackPage() {
           valuePropNote: fb.value_prop_note,
           productDefinitionRating: fb.product_definition_rating,
           productDefinitionNote: fb.product_definition_note,
+          mediaRating: fb.media_rating,
+          mediaNote: fb.media_note,
           productMatchDiffText: fb.product_match_diff_text,
           customQuestionAnswer: fb.custom_question_answer,
           finalChangeText: fb.final_change_text,
@@ -1886,6 +1890,7 @@ export default function ProductFeedbackPage() {
             { key: 'core_features_note', label: "Features people would add", icon: Layers },
             { key: 'value_prop_note', label: "What would you change about the slogan?", icon: Megaphone },
             { key: 'product_definition_note', label: "What feels unclear or inaccurate about the description?", icon: Target },
+            { key: 'media_note', label: "Attached media: please explain how to improve it.", icon: Target },
             { key: 'product_match_diff_text', label: "What was different from what you expected?", icon: Home },
             ...(venture.growth_data?.custom_question
               ? [{ key: 'custom_question_answer', label: venture.growth_data.custom_question, icon: HelpCircle }]
@@ -2040,6 +2045,9 @@ export default function ProductFeedbackPage() {
                       <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
                       <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
                       <GrowthScaleCard title={ventureStage === 'prototype' ? 'The Product' : 'Product Definition'} count={growthStats.productDefinition.count} value={growthStats.productDefinition.value} accent="#BE123C" bg="#FFF1F2" signal={growthStats.productDefinition.signal} />
+                      {growthStats.media.count > 0 && (
+                        <GrowthScaleCard title="Attached media" count={growthStats.media.count} value={growthStats.media.value} accent="#6D28D9" bg="#F5F3FF" signal={growthStats.media.signal} />
+                      )}
                     </div>
                     )}
                     <p className="text-[11px] text-gray-400 text-left mt-3">* number of responses this average is based on</p>
@@ -2428,6 +2436,7 @@ export default function ProductFeedbackPage() {
                                   {fb.core_features_rating != null && <span><span className="text-gray-400">Core Features:</span> <span className="font-semibold text-sky-700">{fb.core_features_rating}/10</span></span>}
                                   {fb.value_prop_rating != null && <span><span className="text-gray-400">Slogan:</span> <span className="font-semibold text-amber-700">{fb.value_prop_rating}/10</span></span>}
                                   {fb.product_definition_rating != null && <span><span className="text-gray-400">Product Definition:</span> <span className="font-semibold text-rose-700">{fb.product_definition_rating}/10</span></span>}
+                                  {fb.media_rating != null && <span><span className="text-gray-400">Attached media:</span> <span className="font-semibold text-violet-700">{fb.media_rating}/10</span></span>}
                                 </div>
                                 {fb.visited_product && (
                                   <p className="text-gray-600 mt-1 text-sm">

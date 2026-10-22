@@ -16,7 +16,7 @@ import {
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
   DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X, Home, Focus,
   Linkedin, Facebook, Twitter, Instagram, Globe,
-  Activity, Bell, UserCircle,
+  Activity, Bell, UserCircle, Image as ImageIcon,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import WelcomeOverlay from "@/components/ventures/WelcomeOverlay";
@@ -278,6 +278,7 @@ const FQ_FIELD_LABELS = {
   core_features_note: 'Core Features note',
   value_prop_note: 'Slogan note',
   product_definition_note: 'Product Definition note',
+  media_note: 'Attached media note',
   product_match_diff_text: '"What was different?"',
   testimonial_text: 'Testimonial',
   custom_question_answer: "your answer to the founder's question",
@@ -463,6 +464,8 @@ export default function VentureLanding() {
   const [valuePropNote, setValuePropNote] = useState('');
   const [productDefinitionRating, setProductDefinitionRating] = useState(5);
   const [productDefinitionNote, setProductDefinitionNote] = useState('');
+  const [mediaRating, setMediaRating] = useState(5);
+  const [mediaNote, setMediaNote] = useState('');
   const GROWTH_LOW_SCORE_THRESHOLD = 6; // same threshold convention as PRICING_SCORE_THRESHOLD below
   const [visitedProduct, setVisitedProduct] = useState(null); // 'yes' | 'no' | null (unanswered)
   // [FIX] Replaced the 1-10 "how well did it match expectations" slider
@@ -1007,6 +1010,9 @@ export default function VentureLanding() {
       const vpLow = selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD;
       const hasPD = selected.includes('product_definition') || selected.includes('proto_product');
       const pdLow = hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD;
+      // Media is only asked when the founder ticked it AND a file is still uploaded.
+      const hasMedia = selected.includes('media') && Array.isArray(gd.uploaded_files) && gd.uploaded_files.length > 0;
+      const mediaLow = hasMedia && mediaRating < GROWTH_LOW_SCORE_THRESHOLD;
       const productVisited = isProductStage && gd.product_url && visitedProduct === 'yes';
       const ideaAnswered = isIdeaStage;
       // Core Features is a core question outside Idea (only when the founder defined features).
@@ -1018,6 +1024,7 @@ export default function VentureLanding() {
         ...(hasCF ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
         ...(vpLow ? [{ key: 'value_prop_note', text: valuePropNote, kind: 'explanation' }] : []),
         ...(pdLow ? [{ key: 'product_definition_note', text: productDefinitionNote, kind: 'explanation' }] : []),
+        ...(mediaLow ? [{ key: 'media_note', text: mediaNote, kind: 'explanation' }] : []),
         ...(productVisited ? [
           { key: 'product_match_diff_text', text: productMatchDiffText, kind: 'other' },
           { key: 'testimonial_text', text: testimonialText, kind: 'other' },
@@ -1034,6 +1041,7 @@ export default function VentureLanding() {
         hasCF ? coreFeaturesRating : null,
         selected.includes('value_proposition') ? valuePropRating : null,
         hasPD ? productDefinitionRating : null,
+        hasMedia ? mediaRating : null,
         ideaAnswered ? ideaProblemRating : null,
         ideaAnswered ? ideaSolutionRating : null,
       ];
@@ -1058,6 +1066,9 @@ export default function VentureLanding() {
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('value_prop_note', valuePropNote.trim()) || null) : null,
         product_definition_rating: hasPD ? productDefinitionRating : null,
         product_definition_note: hasPD && productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('product_definition_note', productDefinitionNote.trim()) || null) : null,
+        // DB DEPENDENCY: growth_feedback needs `media_rating integer` and `media_note text`.
+        media_rating: hasMedia ? mediaRating : null,
+        media_note: mediaLow ? (gKeep('media_note', mediaNote.trim()) || null) : null,
         visited_product: isProductStage && gd.product_url ? visitedProduct : null,
         // [FIX] DB DEPENDENCY: growth_feedback needs a new text column
         // `product_match_choice` — the old `product_match_rating` (integer)
@@ -1903,6 +1914,38 @@ export default function VentureLanding() {
                               <Textarea id="growth-pd-note" value={productDefinitionNote} onChange={(e) => { setProductDefinitionNote(e.target.value); if (missingField === 'proto_note') setMissingField(null); }} className={`min-h-[60px] mt-1 text-sm ${missingField === 'proto_note' ? 'border-red-500 ring-1 ring-red-500' : ''}`} disabled={isSubmittingGrowthFeedback} />
                             </div>
                           )}
+                          </MobileQuestionSheet>
+                        </div>
+                      )}
+
+                      {/* --- Media (conditional: founder ticked it and a file is uploaded) --- */}
+                      {venture.growth_data.selected_categories.includes('media') && venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
+                        <div className="border border-violet-200 bg-violet-50/40 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ImageIcon className="w-5 h-5 text-violet-600" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Attached media</p>
+                          </div>
+                          <MobileQuestionSheet label="Did the media help?" summary={mediaRating} isMobile={false}>
+                            <Label className="text-sm">How clear was the media, and did it help you understand the idea or product? (1-10)</Label>
+                            <Slider
+                              value={[mediaRating]}
+                              onValueChange={(value) => setMediaRating(value[0])}
+                              max={10} min={1} step={1}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="mt-2 mb-1
+                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
+                                [&>span>span]:bg-violet-500 [&>span>span]:rounded-full
+                                [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
+                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-violet-500
+                                [&_[role=slider]]:shadow-md"
+                            />
+                            <div className="text-center text-sm font-semibold text-violet-700">{mediaRating}</div>
+                            {mediaRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-gray-500">Please explain how to improve it. (optional)</Label>
+                                <Textarea value={mediaNote} onChange={(e) => setMediaNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              </div>
+                            )}
                           </MobileQuestionSheet>
                         </div>
                       )}
