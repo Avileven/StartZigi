@@ -242,17 +242,17 @@ const ZIG_IDEA_FIELDS = {
 // (same pattern as the mobile Plan flow).
 const ZigTipsButtons = ({ onZig, onTips }) => (
   <div className="mt-3 grid grid-cols-2 gap-3">
-    <div>
-      <button type="button" onClick={onZig} className="w-full h-11 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 flex items-center justify-center">
-        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '24px', width: 'auto' }} />
+    <div className="flex flex-col items-center text-center">
+      <button type="button" onClick={onZig} className="flex items-center justify-center hover:opacity-80" aria-label="Zig it">
+        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '44px', width: 'auto' }} />
       </button>
-      <p className="text-xs text-gray-400 mt-1 text-center">Get feedback or help on what you wrote</p>
+      <p className="text-xs text-gray-500 mt-1">AI analysis</p>
     </div>
-    <div>
-      <button type="button" onClick={onTips} className="w-full h-11 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 flex items-center justify-center gap-2 text-sm font-medium text-indigo-700">
-        <BookOpen className="w-4 h-4" />Tips
+    <div className="flex flex-col items-center text-center">
+      <button type="button" onClick={onTips} className="flex flex-col items-center justify-center text-indigo-700 hover:opacity-80" aria-label="Tips">
+        <BookOpen style={{ height: '44px', width: '44px' }} strokeWidth={1.5} />
       </button>
-      <p className="text-xs text-gray-400 mt-1 text-center">How to write it, with examples</p>
+      <p className="text-xs text-gray-500 mt-1">Writing tips</p>
     </div>
   </div>
 );
