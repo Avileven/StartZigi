@@ -1131,6 +1131,7 @@ export default function GrowthDevelopment() {
         firstPass={true}
         onUpdateField={(text) => { if (zigField) handleChange(zigField, text); }}
         ventureId={venture?.id}
+        analysisOnly
       />
       <StaticGuidanceViewer
         isOpen={!!tipsField}

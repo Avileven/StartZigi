@@ -167,7 +167,8 @@ export default function MentorModal({
   allFieldValues,    // { [fieldKey]: text } — every field currently in the plan, for cross-field context
   firstPass,         // boolean — has this venture completed Foundation once already?
   onUpdateField,
-  ventureId
+  ventureId,
+  analysisOnly = false // optional — when true, only a single Zig it analysis button is shown (no Feedback / Help me choice)
 }) {
   const [currentText, setCurrentText] = useState('');
   const [isGettingFeedback, setIsGettingFeedback] = useState(false);
@@ -457,6 +458,25 @@ export default function MentorModal({
                 placeholder="Describe your strategy..."
               />
 
+              {analysisOnly ? (
+                <div className="flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={handleGetFeedback}
+                    disabled={isGettingFeedback || isLoadingContext || !currentText.trim()}
+                    className="flex items-center justify-center disabled:opacity-40 hover:opacity-80 transition-opacity"
+                    aria-label="Zig it"
+                  >
+                    {isGettingFeedback ? (
+                      <Loader2 className="animate-spin text-indigo-600" style={{ height: '44px', width: '44px' }} />
+                    ) : (
+                      <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '44px', width: 'auto' }} />
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">AI analysis</p>
+                </div>
+              ) : (
+                <>
               {/* [ADDED 020826] Item 15 — short explanation, first time a
                   founder sees this choice: "Feedback" reacts to what's
                   already written, "Help me" is for when there's nothing to
@@ -511,6 +531,8 @@ export default function MentorModal({
                   Help me
                 </button>
               </div>
+                </>
+              )}
 
               {!isGettingFeedback && !isGettingHelp && (rawFeedback || helpResponse) && (
                 <div className="flex justify-center">
