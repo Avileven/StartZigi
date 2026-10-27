@@ -16,6 +16,14 @@
 // DB DEPENDENCY (pending, unchanged): ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
 // DB DEPENDENCY (pending, unchanged): ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
 // STILL NOT FIXED (explicit): no venture.phase guard.
+//
+// [NEW — Idea stage: Zig it + Tips] Under "The Need" and "Your Solution"
+// (Idea stage only) two buttons were added: "Zig it" opens the existing
+// MentorModal, "Tips" opens the existing StaticGuidanceViewer. No new prompts
+// and no change to MentorModal / zigConfig / StaticGuidance: this reuses the
+// business_plan config ("problem" for The Need, "solution" for Your Solution)
+// and the existing Tips entries (problem_statement, proposed_solution).
+// Imports: MentorModal and StaticGuidanceViewer live in src/components/mentor.
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
@@ -33,10 +41,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Lightbulb, PenTool, Package, ArrowRight, Check, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
   Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion, ChevronDown,
-  Linkedin, Facebook, Twitter, Instagram, Globe,
+  Linkedin, Facebook, Twitter, Instagram, Globe, BookOpen,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
+import MentorModal from '@/components/mentor/MentorModal';
+import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 
 // [FIX — real root cause, not styling] A native <input> can never wrap
 // text to a second line or scroll vertically, no matter what CSS is
@@ -219,6 +229,34 @@ const StageGuide = ({ stage }) => {
   );
 };
 
+// [NEW — Idea stage] Which existing Zig it config / Tips entry each ZigPulse
+// field maps to. 'problem' and 'solution' are the business_plan fields in
+// zigConfig.js; 'problem_statement' and 'proposed_solution' are the Tips
+// entries in StaticGuidance.jsx.
+const ZIG_IDEA_FIELDS = {
+  need: { fieldKey: 'problem', title: 'The Need', tipsId: 'problem_statement' },
+  solution: { fieldKey: 'solution', title: 'Your Solution', tipsId: 'proposed_solution' },
+};
+
+// [NEW — Idea stage] Two equal-width buttons, each with a one-line caption
+// (same pattern as the mobile Plan flow).
+const ZigTipsButtons = ({ onZig, onTips }) => (
+  <div className="mt-3 grid grid-cols-2 gap-3">
+    <div>
+      <button type="button" onClick={onZig} className="w-full h-11 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 flex items-center justify-center">
+        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '24px', width: 'auto' }} />
+      </button>
+      <p className="text-xs text-gray-400 mt-1 text-center">Get feedback or help on what you wrote</p>
+    </div>
+    <div>
+      <button type="button" onClick={onTips} className="w-full h-11 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 flex items-center justify-center gap-2 text-sm font-medium text-indigo-700">
+        <BookOpen className="w-4 h-4" />Tips
+      </button>
+      <p className="text-xs text-gray-400 mt-1 text-center">How to write it, with examples</p>
+    </div>
+  </div>
+);
+
 export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -232,6 +270,9 @@ export default function GrowthDevelopment() {
   const [nameError, setNameError] = useState('');
   const router = useRouter();
   const isMobile = useIsMobile();
+  // [NEW — Idea stage] Which field's Zig it / Tips is open ('need' | 'solution' | null).
+  const [zigField, setZigField] = useState(null);
+  const [tipsField, setTipsField] = useState(null);
 
   const [growthData, setGrowthData] = useState({
     stage: 'product',
@@ -749,6 +790,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
                     <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
                   </MobileFieldWrapper>
+                  {isIdea && <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />}
                 </CardContent>
               </Card>
               <Card className={isSolutionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
@@ -760,6 +802,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
                     <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
                   </MobileFieldWrapper>
+                  {isIdea && <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />}
                 </CardContent>
               </Card>
               </>
@@ -1071,6 +1114,29 @@ export default function GrowthDevelopment() {
           </div>
         </div>
       </div>
+
+      {/* [NEW — Idea stage] Zig it + Tips. MentorModal stays mounted (isOpen
+          toggles) so its in-session score history ("+N from last time") survives
+          between runs, same as in the Plan. Before the first save there is no
+          venture yet, so ventureId is undefined and the modal relies only on the
+          fields passed in. */}
+      <MentorModal
+        isOpen={!!zigField}
+        onClose={() => setZigField(null)}
+        documentType="business_plan"
+        fieldKey={ZIG_IDEA_FIELDS[zigField || 'need'].fieldKey}
+        sectionTitle={ZIG_IDEA_FIELDS[zigField || 'need'].title}
+        fieldValue={zigField ? growthData[zigField] : ''}
+        allFieldValues={{ problem: growthData.need, solution: growthData.solution }}
+        firstPass={true}
+        onUpdateField={(text) => { if (zigField) handleChange(zigField, text); }}
+        ventureId={venture?.id}
+      />
+      <StaticGuidanceViewer
+        isOpen={!!tipsField}
+        onClose={() => setTipsField(null)}
+        sectionId={tipsField ? ZIG_IDEA_FIELDS[tipsField].tipsId : null}
+      />
     </>
   );
 }
