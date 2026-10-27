@@ -41,7 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Lightbulb, PenTool, Package, ArrowRight, Check, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
   Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion, ChevronDown,
-  Linkedin, Facebook, Twitter, Instagram, Globe, BookOpen,
+  Linkedin, Facebook, Twitter, Instagram, Globe,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
@@ -233,10 +233,13 @@ const StageGuide = ({ stage }) => {
 // field maps to. 'problem' and 'solution' are the business_plan fields in
 // zigConfig.js; 'problem_statement' and 'proposed_solution' are the Tips
 // entries in StaticGuidance.jsx.
-const ZIG_IDEA_FIELDS = {
+// Idea: Need + Your Solution. Prototype: Need + The Product (same two page fields).
+const getZigFields = (stage) => ({
   need: { fieldKey: 'problem', title: 'The Need', tipsId: 'problem_statement' },
-  solution: { fieldKey: 'solution', title: 'Your Solution', tipsId: 'proposed_solution' },
-};
+  solution: stage === 'prototype'
+    ? { fieldKey: 'product_details', title: 'The Product', tipsId: 'product_details' }
+    : { fieldKey: 'solution', title: 'Your Solution', tipsId: 'proposed_solution' },
+});
 
 // [NEW — Idea stage] Two equal-width buttons, each with a one-line caption
 // (same pattern as the mobile Plan flow).
@@ -250,9 +253,9 @@ const ZigTipsButtons = ({ onZig, onTips }) => (
     </div>
     <div className="flex flex-col items-center text-center">
       <button type="button" onClick={onTips} className="flex flex-col items-center justify-center text-indigo-700 hover:opacity-80" aria-label="Tips">
-        <BookOpen style={{ height: '44px', width: '44px' }} strokeWidth={1.5} />
+        <Lightbulb style={{ height: '44px', width: '44px' }} strokeWidth={1.5} />
       </button>
-      <p className="text-xs text-gray-500 mt-1">Writing tips</p>
+      <p className="text-xs text-gray-500 mt-1">Tips</p>
     </div>
   </div>
 );
@@ -790,7 +793,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
                     <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
                   </MobileFieldWrapper>
-                  {isIdea && <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />}
+                  {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />}
                 </CardContent>
               </Card>
               <Card className={isSolutionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
@@ -802,7 +805,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
                     <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
                   </MobileFieldWrapper>
-                  {isIdea && <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />}
+                  {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />}
                 </CardContent>
               </Card>
               </>
@@ -1094,8 +1097,8 @@ export default function GrowthDevelopment() {
                   <div className="border border-gray-200 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>
                     <p className="text-xs text-gray-500 mt-1 mb-2">Ask reviewers anything you want, in your own words. It appears after the other questions.</p>
-                    <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?">
-                      <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder="e.g., What almost stopped you from signing up?" />
+                    <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'}>
+                      <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'} />
                     </MobileFieldWrapper>
                   </div>
                 </CardContent>
@@ -1124,10 +1127,10 @@ export default function GrowthDevelopment() {
         isOpen={!!zigField}
         onClose={() => setZigField(null)}
         documentType="business_plan"
-        fieldKey={ZIG_IDEA_FIELDS[zigField || 'need'].fieldKey}
-        sectionTitle={ZIG_IDEA_FIELDS[zigField || 'need'].title}
+        fieldKey={getZigFields(growthData.stage)[zigField || 'need'].fieldKey}
+        sectionTitle={getZigFields(growthData.stage)[zigField || 'need'].title}
         fieldValue={zigField ? growthData[zigField] : ''}
-        allFieldValues={{ problem: growthData.need, solution: growthData.solution }}
+        allFieldValues={isPrototype ? { problem: growthData.need, product_details: growthData.solution } : { problem: growthData.need, solution: growthData.solution }}
         firstPass={true}
         onUpdateField={(text) => { if (zigField) handleChange(zigField, text); }}
         ventureId={venture?.id}
@@ -1136,7 +1139,7 @@ export default function GrowthDevelopment() {
       <StaticGuidanceViewer
         isOpen={!!tipsField}
         onClose={() => setTipsField(null)}
-        sectionId={tipsField ? ZIG_IDEA_FIELDS[tipsField].tipsId : null}
+        sectionId={tipsField ? getZigFields(growthData.stage)[tipsField].tipsId : null}
       />
     </>
   );
