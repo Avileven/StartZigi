@@ -809,10 +809,9 @@ export default function GrowthDevelopment() {
                           type="button"
                           key={sec.value}
                           onClick={() => handleChange('sector', on ? '' : sec.value)}
-                          className={`min-h-[48px] px-3 py-2 rounded-xl border text-sm text-left flex items-center justify-between gap-2 transition-colors ${on ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
+                          className={`min-h-[48px] px-3 py-2 rounded-xl border text-sm text-left flex items-center gap-2 transition-colors ${on ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
                         >
                           <span className="leading-snug">{sec.label}</span>
-                          {on && <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
                         </button>
                       );
                     })}
@@ -823,7 +822,6 @@ export default function GrowthDevelopment() {
                     className={`mt-2 w-full min-h-[48px] px-3 py-2 rounded-xl border text-sm flex items-center justify-center gap-2 transition-colors ${growthData.sector === NOT_SURE.value ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
                   >
                     {NOT_SURE.label}
-                    {growthData.sector === NOT_SURE.value && <Check className="w-4 h-4 text-emerald-600" />}
                   </button>
                 </CardContent>
               </Card>
