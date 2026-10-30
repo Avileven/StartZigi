@@ -134,6 +134,19 @@ const STAGES = [
   { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
 ];
 
+// [NEW] Same industry list as the long track (createventure/page.jsx).
+// Saved to ventures.sector, so promotion can later match by industry.
+const SECTORS = [
+  { value: 'ai_deep_tech', label: 'AI / Deep Tech' },
+  { value: 'fintech', label: 'FinTech' },
+  { value: 'digital_health_biotech', label: 'Digital Health / Biotech' },
+  { value: 'b2b_saas', label: 'B2B SaaS' },
+  { value: 'consumer_apps', label: 'Consumer Apps / Marketplaces' },
+  { value: 'climatetech_energy', label: 'ClimateTech / Energy / AgriTech' },
+  { value: 'web3_blockchain', label: 'Web3 / Blockchain' },
+  { value: 'not_sure', label: 'Not sure yet' },
+];
+
 // Visual identity per stage (full class names so Tailwind keeps them).
 const STAGE_STYLE = {
   idea: { Icon: Lightbulb, card: 'bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400', soft: 'bg-amber-50 border-amber-200', iconBg: 'bg-amber-100 text-amber-600', title: 'text-amber-800', chip: 'bg-amber-100 text-amber-800' },
@@ -279,6 +292,7 @@ export default function GrowthDevelopment() {
 
   const [growthData, setGrowthData] = useState({
     stage: 'product',
+    sector: '',
     need: '',
     solution: '',
     name: '',
@@ -327,6 +341,8 @@ export default function GrowthDevelopment() {
         const loaded = { ...(currentVenture.growth_data || {}) };
         loaded.name = currentVenture.name || '';
         loaded.stage = ['idea', 'prototype', 'product'].includes(loaded.stage) ? loaded.stage : 'product';
+        // 'other' (long track only) is not offered here; it means the same as 'not sure yet'.
+        loaded.sector = currentVenture.sector === 'other' ? 'not_sure' : (currentVenture.sector || '');
         loaded.need = loaded.need || '';
         loaded.solution = loaded.solution || '';
         loaded.product_url = loaded.product_url || '';
@@ -482,6 +498,7 @@ export default function GrowthDevelopment() {
       name: growthData.name.trim(),
       description: growthData.stage === 'product' ? growthData.description : growthData.solution,
       phase: "growth",
+      sector: growthData.sector || 'not_sure',
       virtual_capital: 0,
       monthly_burn_rate: 0,
       founder_user_ids: [String(currentUser.id)],
@@ -544,6 +561,10 @@ export default function GrowthDevelopment() {
         }
       } else if (growthData.name.trim() !== targetVenture.name) {
         await Venture.update(targetVenture.id, { name: growthData.name.trim() });
+      }
+      // [NEW] Industry lives in ventures.sector (same column as the long track).
+      if (!isNewVenture && growthData.sector && growthData.sector !== targetVenture.sector) {
+        await Venture.update(targetVenture.id, { sector: growthData.sector });
       }
       await Venture.update(targetVenture.id, { growth_data: growthData });
       // [DIAGNOSTIC — save verification] Read the venture back and compare the
@@ -645,7 +666,9 @@ export default function GrowthDevelopment() {
   const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
   const hasDemoFile = growthData.uploaded_files.length > 0;
 
-  const canSave = isNameComplete && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
+  const hasSector = !!growthData.sector;
+
+  const canSave = isNameComplete && hasSector && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
     && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete && hasDemoFile) : hasDemoFile);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
@@ -755,6 +778,31 @@ export default function GrowthDevelopment() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* [NEW] Industry — tappable chips, two per row (mobile-first). Optional. */}
+              <Card className={growthData.sector ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">{growthData.sector && <CheckCircle className="w-5 h-5 text-green-500" />}Industry *</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SECTORS.map((sec) => {
+                      const on = growthData.sector === sec.value;
+                      return (
+                        <button
+                          type="button"
+                          key={sec.value}
+                          onClick={() => handleChange('sector', on ? '' : sec.value)}
+                          className={`min-h-[48px] px-3 py-2 rounded-xl border text-sm text-left flex items-center justify-between gap-2 transition-colors ${on ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
+                        >
+                          <span className="leading-snug">{sec.label}</span>
+                          {on && <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
 
               {isProduct && (
               <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
