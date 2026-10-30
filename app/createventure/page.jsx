@@ -12,17 +12,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles, Tag, FileText, Target, Building2 } from "lucide-react";
 
+// Same list as growth-development/page.jsx (the short track).
 const SECTORS = [
-  { value: "not_sure", label: "Not sure yet" },
-  { value: "ai_deep_tech", label: "AI / Deep Tech" },
-  { value: "fintech", label: "FinTech" },
-  { value: "digital_health_biotech", label: "Digital Health / Biotech" },
-  { value: "b2b_saas", label: "B2B SaaS" },
-  { value: "consumer_apps", label: "Consumer Apps / Marketplaces" },
-  { value: "climatetech_energy", label: "ClimateTech / Energy / AgriTech" },
-  { value: "web3_blockchain", label: "Web3 / Blockchain" },
-  { value: "other", label: "Other" }
+  { value: "ai_dev_tools", label: "AI & Developer Tools" },
+  { value: "fintech_web3", label: "FinTech & Web3" },
+  { value: "health_wellness", label: "Health & Wellness" },
+  { value: "education", label: "Education & Learning" },
+  { value: "ecommerce_retail", label: "E-commerce & Retail" },
+  { value: "business_productivity", label: "Business & Productivity" },
+  { value: "media_social_gaming", label: "Media, Social & Gaming" },
+  { value: "lifestyle_travel_realestate", label: "Lifestyle, Travel & Real Estate" },
+  { value: "climate_energy_agri", label: "Climate, Energy & Agriculture" },
+  { value: "hardware_iot", label: "Hardware & IoT" },
+  { value: "not_sure", label: "Not sure yet" }
 ];
+
+// Old values (before the list was shortened) -> current values. Applied to the
+// sector passed in the URL (e.g. from Ideas Bank).
+const LEGACY_SECTORS = {
+  ai_deep_tech: "ai_dev_tools",
+  fintech: "fintech_web3",
+  web3_blockchain: "fintech_web3",
+  digital_health_biotech: "health_wellness",
+  b2b_saas: "business_productivity",
+  climatetech_energy: "climate_energy_agri",
+  consumer_apps: "not_sure",
+  other: "not_sure"
+};
 
 // Product-track names in the logo colors: "Zig" soft orange, the rest purple.
 const ZigName = ({ rest }) => (
@@ -42,7 +58,7 @@ function CreateVentureForm() {
     description: searchParams.get('description') || "",
     problem: searchParams.get('problem') || "",
     solution: searchParams.get('solution') || "",
-    sector: searchParams.get('sector') || ""
+    sector: LEGACY_SECTORS[searchParams.get('sector')] || searchParams.get('sector') || ""
   });
   
   const [isLoading, setIsLoading] = useState(false);

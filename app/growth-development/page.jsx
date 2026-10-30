@@ -134,18 +134,34 @@ const STAGES = [
   { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
 ];
 
-// [NEW] Same industry list as the long track (createventure/page.jsx).
-// Saved to ventures.sector, so promotion can later match by industry.
+// [NEW] Industry list (same list in createventure/page.jsx). Saved to
+// ventures.sector so promotion can match by industry. "Not sure yet" is
+// rendered separately, as its own full-width button.
 const SECTORS = [
-  { value: 'ai_deep_tech', label: 'AI / Deep Tech' },
-  { value: 'fintech', label: 'FinTech' },
-  { value: 'digital_health_biotech', label: 'Digital Health / Biotech' },
-  { value: 'b2b_saas', label: 'B2B SaaS' },
-  { value: 'consumer_apps', label: 'Consumer Apps / Marketplaces' },
-  { value: 'climatetech_energy', label: 'ClimateTech / Energy / AgriTech' },
-  { value: 'web3_blockchain', label: 'Web3 / Blockchain' },
-  { value: 'not_sure', label: 'Not sure yet' },
+  { value: 'ai_dev_tools', label: 'AI & Developer Tools' },
+  { value: 'fintech_web3', label: 'FinTech & Web3' },
+  { value: 'health_wellness', label: 'Health & Wellness' },
+  { value: 'education', label: 'Education & Learning' },
+  { value: 'ecommerce_retail', label: 'E-commerce & Retail' },
+  { value: 'business_productivity', label: 'Business & Productivity' },
+  { value: 'media_social_gaming', label: 'Media, Social & Gaming' },
+  { value: 'lifestyle_travel_realestate', label: 'Lifestyle, Travel & Real Estate' },
+  { value: 'climate_energy_agri', label: 'Climate, Energy & Agriculture' },
+  { value: 'hardware_iot', label: 'Hardware & IoT' },
 ];
+const NOT_SURE = { value: 'not_sure', label: 'Not sure yet' };
+
+// Old long-track values (before the list was shortened) -> current values.
+const LEGACY_SECTORS = {
+  ai_deep_tech: 'ai_dev_tools',
+  fintech: 'fintech_web3',
+  web3_blockchain: 'fintech_web3',
+  digital_health_biotech: 'health_wellness',
+  b2b_saas: 'business_productivity',
+  climatetech_energy: 'climate_energy_agri',
+  consumer_apps: 'not_sure',
+  other: 'not_sure',
+};
 
 // Visual identity per stage (full class names so Tailwind keeps them).
 const STAGE_STYLE = {
@@ -341,8 +357,8 @@ export default function GrowthDevelopment() {
         const loaded = { ...(currentVenture.growth_data || {}) };
         loaded.name = currentVenture.name || '';
         loaded.stage = ['idea', 'prototype', 'product'].includes(loaded.stage) ? loaded.stage : 'product';
-        // 'other' (long track only) is not offered here; it means the same as 'not sure yet'.
-        loaded.sector = currentVenture.sector === 'other' ? 'not_sure' : (currentVenture.sector || '');
+        // Old values are translated; anything unknown shows as nothing selected.
+        loaded.sector = LEGACY_SECTORS[currentVenture.sector] || currentVenture.sector || '';
         loaded.need = loaded.need || '';
         loaded.solution = loaded.solution || '';
         loaded.product_url = loaded.product_url || '';
@@ -801,6 +817,14 @@ export default function GrowthDevelopment() {
                       );
                     })}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleChange('sector', growthData.sector === NOT_SURE.value ? '' : NOT_SURE.value)}
+                    className={`mt-2 w-full min-h-[48px] px-3 py-2 rounded-xl border text-sm flex items-center justify-center gap-2 transition-colors ${growthData.sector === NOT_SURE.value ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
+                  >
+                    {NOT_SURE.label}
+                    {growthData.sector === NOT_SURE.value && <Check className="w-4 h-4 text-emerald-600" />}
+                  </button>
                 </CardContent>
               </Card>
 
