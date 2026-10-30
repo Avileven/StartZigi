@@ -212,7 +212,7 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
   // a glance, not just as a thin strip along the top edge.
   const frameColor = signal ? signalColors[signal] : accent;
   return (
-    <div className="rounded-2xl p-5 flex flex-col gap-3.5" style={{ background: bg, border: `2px solid ${frameColor}` }}>
+    <div className="rounded-2xl p-3.5 sm:p-5 flex flex-col gap-2 sm:gap-3.5" style={{ background: bg, border: `2px solid ${frameColor}` }}>
       {/* [FIX — per explicit feedback] A long title ("Product Definition")
           wrapped to 2 lines while its neighbors stayed on 1, so that one
           card grew taller and everything below it (down to the meter bar)
@@ -221,10 +221,8 @@ function GrowthScaleCard({ title, count, value, accent, bg, signal }) {
           lines up the same regardless of its title length. */}
       <div className="flex justify-between items-start gap-2" style={{ minHeight: '2.3rem' }}>
         <span className="text-sm font-bold text-gray-700 leading-tight">{title}</span>
-        {/* [FIX — per explicit feedback] "23 resp." was long enough to run
-            past the card's right edge on mobile. Shortened to a number +
-            asterisk, explained once in a footnote below all 4 cards. */}
-        <span className="text-xs text-gray-400 flex-shrink-0">{count}*</span>
+        {/* [FIX] The per-card response count was removed (it ran past the card's
+            edge on mobile, and the response count is shown in Engagement). */}
       </div>
       {/* [FIX — real mobile bug] On a narrow 2-column card, value + "/10" +
           the signal badge on one "ml-auto" row had nowhere to shrink to —
@@ -268,7 +266,6 @@ function NoveltyCard({ none, total }) {
     <div className="rounded-2xl p-5 flex flex-col gap-3.5 sm:col-span-2" style={{ background: '#F8FAFC', border: `2px solid ${markerColor}` }}>
       <div className="flex justify-between items-start gap-2">
         <span className="text-sm font-bold text-gray-700 leading-tight">Novelty</span>
-        <span className="text-xs text-gray-400 flex-shrink-0">{total}*</span>
       </div>
       <div className="relative w-full rounded-full" style={{ height: 12, background: 'linear-gradient(to right, rgb(234,138,59), rgb(108,160,128))' }}>
         <div
@@ -2002,7 +1999,7 @@ export default function ProductFeedbackPage() {
                 // describes that number, not an AI finding about the whole.
                 return (
                 <div className="rounded-[28px] p-[2px] mb-3" style={{ background: 'linear-gradient(120deg, #818cf8, #c084fc, #f0abfc)' }}>
-                  <div className="rounded-[26px] bg-white p-6 sm:p-8">
+                  <div className="rounded-[26px] bg-white p-4 sm:p-8">
                     {/* [NEW — per explicit feedback] Matches "Overall Product
                         Satisfaction" below (same font/size/gradient style). */}
                     <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -2040,7 +2037,7 @@ export default function ProductFeedbackPage() {
                         <NoveltyCard none={ideaStats.alternatives.none} total={ideaStats.alternatives.total} />
                       </div>
                     ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-5">
                       <GrowthScaleCard title="Business Model" count={growthStats.businessModel.count} value={growthStats.businessModel.value} accent="#0F6E56" bg="#ECFDF5" signal={growthStats.businessModel.signal} />
                       <GrowthScaleCard title="Core Features" count={growthStats.coreFeatures.count} value={growthStats.coreFeatures.value} accent="#0369A1" bg="#EFF6FF" signal={growthStats.coreFeatures.signal} />
                       <GrowthScaleCard title="Slogan" count={growthStats.valueProp.count} value={growthStats.valueProp.value} accent="#B45309" bg="#FFFBEB" signal={growthStats.valueProp.signal} />
@@ -2050,7 +2047,6 @@ export default function ProductFeedbackPage() {
                       )}
                     </div>
                     )}
-                    <p className="text-[11px] text-gray-400 text-left mt-3">* number of responses this average is based on</p>
                   </div>
                 </div>
                 );
