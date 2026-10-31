@@ -106,8 +106,8 @@ const EXAMPLE_VENTURE_IDS = [
   '3ca810de-a754-412c-8905-94247b9d1e90', // GrandpaSays.zig (MLP example)
 ];
 
-// [NEW — Same industry] Sector values that never count as a match (not chosen,
-// "not sure yet", and the two old long-track values that were folded into it).
+// [NEW — Preferences] Sector values that never count as a match for "Interests"
+// (not chosen, "not sure yet", and the two old long-track values folded into it).
 const NO_MATCH_SECTORS = ['', 'not_sure', 'other', 'consumer_apps'];
 
 // [NEW — Followers project] Same phase-to-tag mapping used elsewhere
@@ -125,6 +125,15 @@ function getJourneyTag(rawPhase) {
   return map[rawPhase] || null;
 }
 
+// [NEW — Preferences] "Same stage" key. ZigPulse ventures (phase growth) are
+// compared by their chosen stage (idea / prototype / product); every other
+// venture by its journey tag (MVP and MLP are both "Shape").
+function getStageKey(v) {
+  if (!v) return null;
+  if (v.phase === 'growth') return 'pulse:' + (v.growth_data?.stage || 'product');
+  return getJourneyTag(v.phase);
+}
+
 export default function InAppPromotion({ goBack }) {
   const isMobile = useIsMobile();
   const [venture, setVenture] = useState(null);
@@ -139,11 +148,14 @@ export default function InAppPromotion({ goBack }) {
   // [NEW — Followers project] Followers of this venture, with enough profile
   // info to show in the picker; which of them are currently checked (all
   // checked by default when loaded).
-  const [followers, setFollowers] = useState([]);
-  const [selectedFollowerIds, setSelectedFollowerIds] = useState(new Set());
-  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
-  // [NEW — Same industry] Off by default: nothing ticked = fully random.
-  const [sameIndustryFirst, setSameIndustryFirst] = useState(false);
+  // [CHANGED — Preferences] Only the follower ids are needed now (the
+  // Followers preference is an on/off switch, not a picker).
+  const [followerIds, setFollowerIds] = useState([]);
+  // [NEW — Preferences] All off by default: nothing on = fully random.
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [prefFollowers, setPrefFollowers] = useState(false);
+  const [prefInterests, setPrefInterests] = useState(false);
+  const [prefJourney, setPrefJourney] = useState(false);
 
   useEffect(() => {
     const loadVenture = async () => {
@@ -199,59 +211,23 @@ export default function InAppPromotion({ goBack }) {
     loadVenture();
   }, []);
 
-  // [NEW — Followers project] Loads this venture's followers and their
-  // public profile (same pattern as my-account-page.jsx's follower list).
-  // [CHANGED] No follower is checked by default: the founder ticks the ones
-  // who should get the request first; with none ticked it stays fully random.
+  // [CHANGED — Preferences] Loads only the ids of this venture's followers.
   useEffect(() => {
     const loadFollowers = async () => {
-      if (!venture) { setFollowers([]); setSelectedFollowerIds(new Set()); return; }
-      setIsLoadingFollowers(true);
+      if (!venture) { setFollowerIds([]); return; }
       try {
         const { data: rows } = await supabase
           .from('venture_followers')
           .select('user_id')
           .eq('venture_id', venture.id);
-        const ids = (rows || []).map((r) => r.user_id);
-        if (ids.length === 0) {
-          setFollowers([]);
-          setSelectedFollowerIds(new Set());
-          return;
-        }
-        const profiles = await Promise.all(
-          ids.map((id) => supabase.rpc('get_public_founder_profile', { profile_id: id }))
-        );
-        const list = ids.map((id, i) => {
-          const p = profiles[i]?.data?.[0];
-          return {
-            user_id: id,
-            username: p?.username || 'Founder',
-            current_phase: p?.current_phase || null,
-          };
-        });
-        setFollowers(list);
-        // [CHANGED] Unchecked by default — nothing ticked means fully random.
-        setSelectedFollowerIds(new Set());
+        setFollowerIds((rows || []).map((r) => r.user_id));
       } catch (error) {
         console.error('Error loading followers:', error);
-        setFollowers([]);
-        setSelectedFollowerIds(new Set());
-      } finally {
-        setIsLoadingFollowers(false);
+        setFollowerIds([]);
       }
     };
     loadFollowers();
   }, [venture]);
-
-  // [NEW — Followers project] Toggles one follower's checkbox.
-  const toggleFollower = (userId) => {
-    setSelectedFollowerIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(userId)) next.delete(userId);
-      else next.add(userId);
-      return next;
-    });
-  };
 
   const handleLaunchCampaign = async () => {
     if (!requestsToUse || requestsToUse < 1 || !tagline.trim() || !venture) {
@@ -277,7 +253,7 @@ export default function InAppPromotion({ goBack }) {
       // the venture that belongs to them.
       const { data: allVentures, error: venturesErr } = await supabase
         .from("ventures")
-        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,created_by,founder_user_ids,sector")
+        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,created_by,founder_user_ids,sector,growth_data")
         .order("created_date", { ascending: false })
         .limit(1000);
 
@@ -300,7 +276,7 @@ export default function InAppPromotion({ goBack }) {
       // [NEW — Followers project] Which of these ventures belong to a
       // follower the founder has checked — matched by created_by_id or by
       // being listed as a co-founder (founder_user_ids).
-      const selectedFollowerIdSet = selectedFollowerIds;
+      const selectedFollowerIdSet = new Set(prefFollowers ? followerIds : []);
       const followerVentureIds = new Set(
         targetVentures
           .filter((v) =>
@@ -345,25 +321,23 @@ export default function InAppPromotion({ goBack }) {
       // still eligible under the weekly cap) go first; the rest of the
       // requested amount is filled randomly from the remaining eligible
       // pool, exactly as it worked before this change.
-      // [NEW — Same industry] Ventures in the sender's industry (only when the
-      // box is ticked and the sender has a real industry). Priority order:
-      // 1) checked follower AND same industry, 2) either one, 3) random fill.
-      const canMatchIndustry = sameIndustryFirst && !NO_MATCH_SECTORS.includes(venture.sector || '');
-      const industryVentureIds = new Set(
-        canMatchIndustry
-          ? targetVentures.filter((v) => v.sector === venture.sector).map((v) => v.id)
-          : []
-      );
+      // [NEW — Preferences] Each switched-on preference adds one point to a
+      // venture it fits: Followers (a follower's venture), Interests (same
+      // sector), Journey (same stage). Highest score first, ties in random
+      // order, then the rest of the requested amount is filled randomly.
+      const senderStageKey = getStageKey(venture);
+      const canInterests = prefInterests && !NO_MATCH_SECTORS.includes(venture.sector || '');
+      const canJourney = prefJourney && !!senderStageKey;
       const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
-      const isBoth = (v) => followerVentureIds.has(v.id) && industryVentureIds.has(v.id);
-      const isPriority = (v) => followerVentureIds.has(v.id) || industryVentureIds.has(v.id);
-      const tierBoth = eligibleVentures.filter((v) => isBoth(v));
-      const tierEither = eligibleVentures.filter((v) => isPriority(v) && !isBoth(v));
-      const eligibleRandomPool = eligibleVentures.filter((v) => !isPriority(v));
-      // Followers only (no industry): same order as before this change.
-      const priorityList = canMatchIndustry
-        ? [...shuffle(tierBoth), ...shuffle(tierEither)]
-        : [...tierBoth, ...tierEither];
+      const scoreOf = (v) =>
+        (prefFollowers && followerVentureIds.has(v.id) ? 1 : 0) +
+        (canInterests && v.sector === venture.sector ? 1 : 0) +
+        (canJourney && getStageKey(v) === senderStageKey ? 1 : 0);
+      const scored = eligibleVentures.map((v) => ({ v, s: scoreOf(v) })).filter((x) => x.s > 0);
+      // Followers only: same order as before this change.
+      const onlyFollowers = prefFollowers && !canInterests && !canJourney;
+      const priorityList = (onlyFollowers ? scored : shuffle(scored).sort((a, b) => b.s - a.s)).map((x) => x.v);
+      const eligibleRandomPool = eligibleVentures.filter((v) => scoreOf(v) === 0);
 
       const actualAudienceSize = Math.min(requestsToUse, eligibleVentures.length);
       const priorityCount = Math.min(priorityList.length, actualAudienceSize);
@@ -618,60 +592,48 @@ if (campaignErr) throw campaignErr;
                 </p>
               </div>
 
-              {/* [NEW — Followers project] Only shown when this venture has
-                  followers. All checked by default; unchecking one excludes
-                  them from the priority group for this round only — doesn't
-                  affect who follows the venture. */}
-              {followers.length > 0 && (
-                <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-5">
-                  <h4 className="font-semibold text-indigo-900 mb-1 flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Send to your followers first
-                  </h4>
-                  <p className="text-xs text-indigo-700 mb-3">
-                    Checked followers get this round's request first. If you ask for more than you have followers checked, the rest go out randomly as usual.
-                  </p>
-                  {isLoadingFollowers ? (
-                    <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-indigo-400" /></div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {followers.map((f) => (
-                        <label key={f.user_id} className="flex items-center gap-2.5 text-sm text-gray-800 bg-white rounded-lg px-3 py-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={selectedFollowerIds.has(f.user_id)}
-                            onChange={() => toggleFollower(f.user_id)}
-                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <span className="font-medium">{f.username}</span>
-                          {getJourneyTag(f.current_phase) && (
-                            <span className="ml-auto text-xs text-indigo-600 border border-indigo-200 rounded-full px-2 py-0.5">
-                              {getJourneyTag(f.current_phase)}
-                            </span>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* [NEW — Same industry] One tick box. Off by default. Disabled when the
-                  sender has no real industry (not chosen / Not sure yet). */}
+              {/* [NEW — Preferences] Collapsed by default. Three on/off switches;
+                  nothing on = fully random. No counts are shown anywhere. */}
               {(() => {
-                const industryDisabled = NO_MATCH_SECTORS.includes(venture.sector || '');
+                const prefs = [
+                  { key: 'followers', title: 'Followers', note: 'Your followers first.', on: prefFollowers, set: setPrefFollowers, disabled: followerIds.length === 0 },
+                  { key: 'interests', title: 'Interests', note: 'People with interests like yours.', on: prefInterests, set: setPrefInterests, disabled: NO_MATCH_SECTORS.includes(venture.sector || '') },
+                  { key: 'journey', title: 'Journey', note: 'People at your stage.', on: prefJourney, set: setPrefJourney, disabled: !getStageKey(venture) },
+                ];
                 return (
-                  <div className={`border border-indigo-100 bg-indigo-50/50 rounded-xl p-5 ${industryDisabled ? 'opacity-50' : ''}`}>
-                    <label className={`flex items-center gap-2.5 text-sm text-gray-800 bg-white rounded-lg px-3 py-2 select-none ${industryDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                      <input
-                        type="checkbox"
-                        checked={sameIndustryFirst && !industryDisabled}
-                        disabled={industryDisabled}
-                        onChange={() => setSameIndustryFirst((v) => !v)}
-                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="font-medium">Same industry first</span>
-                    </label>
+                  <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setShowPrefs((v) => !v)}
+                      className="w-full flex items-center justify-between p-5 font-semibold text-indigo-900"
+                    >
+                      <span>Preferences</span>
+                      <ChevronRight className={`w-4 h-4 transition-transform ${showPrefs ? 'rotate-90' : ''}`} />
+                    </button>
+                    {showPrefs && (
+                      <div className="px-5 pb-5 space-y-2">
+                        {prefs.map((p) => {
+                          const on = p.on && !p.disabled;
+                          return (
+                            <button
+                              type="button"
+                              key={p.key}
+                              disabled={p.disabled}
+                              onClick={() => p.set((v) => !v)}
+                              className={`w-full text-left bg-white rounded-lg px-3 py-3 border transition-colors ${on ? 'border-indigo-500' : 'border-gray-200'} ${p.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-medium text-gray-900">{p.title}</span>
+                                <span className={`relative inline-block w-9 h-5 rounded-full flex-shrink-0 transition-colors ${on ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+                                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">{p.note}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
