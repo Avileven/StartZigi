@@ -106,6 +106,10 @@ const EXAMPLE_VENTURE_IDS = [
   '3ca810de-a754-412c-8905-94247b9d1e90', // GrandpaSays.zig (MLP example)
 ];
 
+// [NEW — Same industry] Sector values that never count as a match (not chosen,
+// "not sure yet", and the two old long-track values that were folded into it).
+const NO_MATCH_SECTORS = ['', 'not_sure', 'other', 'consumer_apps'];
+
 // [NEW — Followers project] Same phase-to-tag mapping used elsewhere
 // (my-account-page.jsx, dashboard-page.jsx, product-feedback-page.jsx) —
 // each file keeps its own copy, per the existing pattern in this codebase.
@@ -138,6 +142,8 @@ export default function InAppPromotion({ goBack }) {
   const [followers, setFollowers] = useState([]);
   const [selectedFollowerIds, setSelectedFollowerIds] = useState(new Set());
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+  // [NEW — Same industry] Off by default: nothing ticked = fully random.
+  const [sameIndustryFirst, setSameIndustryFirst] = useState(false);
 
   useEffect(() => {
     const loadVenture = async () => {
@@ -195,8 +201,8 @@ export default function InAppPromotion({ goBack }) {
 
   // [NEW — Followers project] Loads this venture's followers and their
   // public profile (same pattern as my-account-page.jsx's follower list).
-  // All followers start checked, so "send to followers" works by default
-  // without the founder having to pick anyone.
+  // [CHANGED] No follower is checked by default: the founder ticks the ones
+  // who should get the request first; with none ticked it stays fully random.
   useEffect(() => {
     const loadFollowers = async () => {
       if (!venture) { setFollowers([]); setSelectedFollowerIds(new Set()); return; }
@@ -224,7 +230,8 @@ export default function InAppPromotion({ goBack }) {
           };
         });
         setFollowers(list);
-        setSelectedFollowerIds(new Set(ids));
+        // [CHANGED] Unchecked by default — nothing ticked means fully random.
+        setSelectedFollowerIds(new Set());
       } catch (error) {
         console.error('Error loading followers:', error);
         setFollowers([]);
@@ -270,7 +277,7 @@ export default function InAppPromotion({ goBack }) {
       // the venture that belongs to them.
       const { data: allVentures, error: venturesErr } = await supabase
         .from("ventures")
-        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,created_by,founder_user_ids")
+        .select("id,name,phase,landing_page_url,is_sample,created_date,created_by_id,created_by,founder_user_ids,sector")
         .order("created_date", { ascending: false })
         .limit(1000);
 
@@ -338,15 +345,32 @@ export default function InAppPromotion({ goBack }) {
       // still eligible under the weekly cap) go first; the rest of the
       // requested amount is filled randomly from the remaining eligible
       // pool, exactly as it worked before this change.
-      const eligibleFollowerVentures = eligibleVentures.filter((v) => followerVentureIds.has(v.id));
-      const eligibleRandomPool = eligibleVentures.filter((v) => !followerVentureIds.has(v.id));
+      // [NEW — Same industry] Ventures in the sender's industry (only when the
+      // box is ticked and the sender has a real industry). Priority order:
+      // 1) checked follower AND same industry, 2) either one, 3) random fill.
+      const canMatchIndustry = sameIndustryFirst && !NO_MATCH_SECTORS.includes(venture.sector || '');
+      const industryVentureIds = new Set(
+        canMatchIndustry
+          ? targetVentures.filter((v) => v.sector === venture.sector).map((v) => v.id)
+          : []
+      );
+      const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
+      const isBoth = (v) => followerVentureIds.has(v.id) && industryVentureIds.has(v.id);
+      const isPriority = (v) => followerVentureIds.has(v.id) || industryVentureIds.has(v.id);
+      const tierBoth = eligibleVentures.filter((v) => isBoth(v));
+      const tierEither = eligibleVentures.filter((v) => isPriority(v) && !isBoth(v));
+      const eligibleRandomPool = eligibleVentures.filter((v) => !isPriority(v));
+      // Followers only (no industry): same order as before this change.
+      const priorityList = canMatchIndustry
+        ? [...shuffle(tierBoth), ...shuffle(tierEither)]
+        : [...tierBoth, ...tierEither];
 
       const actualAudienceSize = Math.min(requestsToUse, eligibleVentures.length);
-      const priorityCount = Math.min(eligibleFollowerVentures.length, actualAudienceSize);
+      const priorityCount = Math.min(priorityList.length, actualAudienceSize);
       const remainingCount = actualAudienceSize - priorityCount;
-      const shuffledRandomPool = [...eligibleRandomPool].sort(() => 0.5 - Math.random());
+      const shuffledRandomPool = shuffle(eligibleRandomPool);
       const selectedTargets = [
-        ...eligibleFollowerVentures.slice(0, priorityCount),
+        ...priorityList.slice(0, priorityCount),
         ...shuffledRandomPool.slice(0, remainingCount),
       ];
 
@@ -631,6 +655,26 @@ if (campaignErr) throw campaignErr;
                   )}
                 </div>
               )}
+
+              {/* [NEW — Same industry] One tick box. Off by default. Disabled when the
+                  sender has no real industry (not chosen / Not sure yet). */}
+              {(() => {
+                const industryDisabled = NO_MATCH_SECTORS.includes(venture.sector || '');
+                return (
+                  <div className={`border border-indigo-100 bg-indigo-50/50 rounded-xl p-5 ${industryDisabled ? 'opacity-50' : ''}`}>
+                    <label className={`flex items-center gap-2.5 text-sm text-gray-800 bg-white rounded-lg px-3 py-2 select-none ${industryDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                      <input
+                        type="checkbox"
+                        checked={sameIndustryFirst && !industryDisabled}
+                        disabled={industryDisabled}
+                        onChange={() => setSameIndustryFirst((v) => !v)}
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="font-medium">Same industry first</span>
+                    </label>
+                  </div>
+                );
+              })()}
 
               {/* [CHANGED] Renamed from "Campaign Tagline" to "Campaign Name" — used as campaign identifier */}
               <div>
