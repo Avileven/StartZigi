@@ -153,6 +153,17 @@ export default function businessPlan() {
         }
 
 
+        // ZigPulse idea stage: what the founder already wrote on the ZigPulse page
+        // (growth_data.need / growth_data.solution) is loaded into the Problem and
+        // Solution fields when the plan has nothing there yet. Display only: nothing
+        // is written to growth_data, and the founder can edit both fields.
+        if (currentVenture.phase === 'growth' && currentVenture.growth_data?.stage === 'idea') {
+          const gd = currentVenture.growth_data;
+          const savedPlan = existingPlans[0] || {};
+          if (!savedPlan.problem && gd.need) setProblem(gd.need);
+          if (!savedPlan.solution && gd.solution) setSolution(gd.solution);
+        }
+
         const existingBudgets = await Budget.filter({ venture_id: currentVenture.id });
         if (existingBudgets.length > 0) {
           const budget = existingBudgets[0];
@@ -325,6 +336,8 @@ export default function businessPlan() {
       }
 
 
+      // ZigPulse idea stage: only the plan itself is saved (no Budget, no funding flag).
+      const isIdeaPulseVenture = venture.phase === 'growth' && venture.growth_data?.stage === 'idea';
       const budgetData = {
         venture_id: venture.id,
         salaries,
@@ -336,19 +349,23 @@ export default function businessPlan() {
       };
 
 
-      const existingBudgets = await Budget.filter({ venture_id: venture.id });
-      if (existingBudgets.length > 0) {
-        await Budget.update(existingBudgets[0].id, budgetData);
-      } else {
-        await Budget.create(budgetData);
+      if (!isIdeaPulseVenture) {
+        const existingBudgets = await Budget.filter({ venture_id: venture.id });
+        if (existingBudgets.length > 0) {
+          await Budget.update(existingBudgets[0].id, budgetData);
+        } else {
+          await Budget.create(budgetData);
+        }
       }
 
 
       const completion = calculateCompletion();
-      await Venture.update(venture.id, {
-        business_plan_completion: completion,
-        funding_plan_completed: true
-      });
+      if (!isIdeaPulseVenture) {
+        await Venture.update(venture.id, {
+          business_plan_completion: completion,
+          funding_plan_completed: true
+        });
+      }
 
 
       if (completion === 100 && venture.phase === 'business_plan') {
@@ -431,8 +448,12 @@ fetch('/api/send-phase-transition', {
 }
 
 
-      alert("Business plan and funding plan saved successfully!");
-      router.push(createPageUrl("Dashboard"));
+      if (isIdeaPulseVenture) {
+        router.push('/growth-development');
+      } else {
+        alert("Business plan and funding plan saved successfully!");
+        router.push(createPageUrl("Dashboard"));
+      }
     } catch (error) {
       debugSupabaseError("handleSave", error, { ventureId: venture?.id });
       console.error("Error saving business plan:", error);
@@ -542,7 +563,7 @@ fetch('/api/send-phase-transition', {
   // founder confirmed it shouldn't appear on mobile at all, not even
   // as an optional section. Desktop still has budget (now optional, see
   // below), just not mirrored here.
-  const MOBILE_SECTIONS = [
+  const MOBILE_SECTIONS_BASE = [
     { key: 'mission', label: 'Mission', type: 'text', value: mission, setter: setMission, placeholder: "What's your venture's mission?", mentorId: 'mission_statement', mentorTitle: 'Mission Statement', tipsId: 'mission_statement' },
     { key: 'problem', label: 'The Problem', type: 'text', value: problem, setter: setProblem, placeholder: 'What problem are you solving?', mentorId: 'problem_statement', mentorTitle: 'Problem Statement', tipsId: 'problem_statement' },
     { key: 'solution', label: 'Your Solution', type: 'text', value: solution, setter: setSolution, placeholder: 'How do you solve it?', mentorId: 'proposed_solution', mentorTitle: 'Solution Overview', tipsId: 'proposed_solution' },
@@ -577,7 +598,24 @@ fetch('/api/send-phase-transition', {
     mission,
     funding_requirements: fundingRequirements,
   };
-  const firstPass = !venture?.phase || venture.phase === 'business_plan';
+  // ZigPulse idea stage: a venture in phase 'growth' whose growth_data.stage is 'idea'.
+  // Everything below that depends on this is off for every other venture.
+  const isIdeaPulse = venture?.phase === 'growth' && venture?.growth_data?.stage === 'idea';
+  const firstPass = !venture?.phase || venture.phase === 'business_plan' || isIdeaPulse;
+
+  // Idea stage starts with what the founder already wrote (Problem, Solution), then continues.
+  const planNum = isIdeaPulse
+    ? { problem: 1, solution: 2, target: 3, competition: 4, market: 5, product: 6 }
+    : { problem: 1, target: 2, competition: 3, market: 4, solution: 5, product: 6 };
+  const ORDER_CLASS = { 1: 'order-1', 2: 'order-2', 3: 'order-3', 4: 'order-4', 5: 'order-5', 6: 'order-6' };
+  const cardOrder = (key) => (isIdeaPulse ? ORDER_CLASS[planNum[key]] : '');
+  const IDEA_FIRST_KEYS = ['problem', 'solution', 'targetCustomers', 'competition', 'marketSize', 'productDetails'];
+  const MOBILE_SECTIONS = isIdeaPulse
+    ? [
+        ...IDEA_FIRST_KEYS.map(k => MOBILE_SECTIONS_BASE.find(s => s.key === k)),
+        ...MOBILE_SECTIONS_BASE.filter(s => !IDEA_FIRST_KEYS.includes(s.key)),
+      ]
+    : MOBILE_SECTIONS_BASE;
 
   if (isMobile) {
     const nextSection = MOBILE_SECTIONS.find(s => !isMobileSectionDone(s));
@@ -650,6 +688,7 @@ fetch('/api/send-phase-transition', {
             fieldValue={getFieldValue(mentorModal.fieldKey)}
             allFieldValues={allFieldValuesForZig}
             firstPass={firstPass}
+            stageContext={isIdeaPulse ? 'idea_short_track' : undefined}
             onUpdateField={handleMentorUpdate}
             ventureId={venture?.id}
           />
@@ -665,7 +704,7 @@ fetch('/api/send-phase-transition', {
             that, causing a second bell icon with its own count on screen. */}
         <div className="mb-6">
           <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
-          <p className="text-xs text-gray-400">Current phase: Plan</p>
+          {!isIdeaPulse && <p className="text-xs text-gray-400">Current phase: Plan</p>}
         </div>
 
         {/* [FIX 020826] Replaced circles-with-numbers (which either
@@ -735,7 +774,7 @@ fetch('/api/send-phase-transition', {
                 Like any lean business plan, this isn't a document you fill out once and file away — it's a <strong>living document</strong>. In practice, new insights keep surfacing throughout the journey, and you're expected to come back and update the plan as you learn.
               </p>
             </div>
-            <Button variant="outline" onClick={() => router.push(createPageUrl("Dashboard"))}>
+            <Button variant="outline" onClick={() => router.push(isIdeaPulse ? '/growth-development' : createPageUrl("Dashboard"))}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -784,11 +823,11 @@ fetch('/api/send-phase-transition', {
 
           {/* Tab 1 - Foundation */}
           {activeTab === 0 && (
-            <div className="space-y-6">
-              <Card className="border-indigo-200">
+            <div className={isIdeaPulse ? 'flex flex-col gap-6' : 'space-y-6'}>
+              <Card className={`border-indigo-200 ${cardOrder('problem')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">1. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.problem}. Problem Statement</CardTitle><CardDescription>What specific problem does your venture solve?</CardDescription></div>
                     <div className="flex gap-2">
                       <div className="relative">
                         {showTipsHint && (
@@ -817,10 +856,10 @@ fetch('/api/send-phase-transition', {
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
+              <Card className={`border-indigo-200 ${cardOrder('target')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">2. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.target}. Target Customers</CardTitle><CardDescription>Who are your ideal customers?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'target_customers' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('target_customers', 'Target Customers', 'targetCustomers')} />
@@ -833,10 +872,10 @@ fetch('/api/send-phase-transition', {
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
+              <Card className={`border-indigo-200 ${cardOrder('competition')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">3. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.competition}. Competitive Landscape</CardTitle><CardDescription>Who are your main competitors and what's your advantage?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'competitive_landscape' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('competition', 'Competitive Landscape', 'competition')} />
@@ -849,10 +888,10 @@ fetch('/api/send-phase-transition', {
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
+              <Card className={`border-indigo-200 ${cardOrder('market')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">4. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.market}. Market Size & Opportunity</CardTitle><CardDescription>What is the size of your target market?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'market_size' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('market_size', 'Market Size & Opportunity', 'marketSize')} />
@@ -865,10 +904,10 @@ fetch('/api/send-phase-transition', {
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
+              <Card className={`border-indigo-200 ${cardOrder('solution')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">5. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.solution}. Solution Overview</CardTitle><CardDescription>How does your venture solve this problem?</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'proposed_solution' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('proposed_solution', 'Solution Overview', 'solution')} />
@@ -881,10 +920,10 @@ fetch('/api/send-phase-transition', {
                 </CardContent>
               </Card>
 
-              <Card className="border-indigo-200">
+              <Card className={`border-indigo-200 ${cardOrder('product')}`}>
                 <CardHeader className="bg-indigo-50 rounded-t-xl">
                   <div className="flex justify-between items-start">
-                    <div><CardTitle className="text-indigo-800">6. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
+                    <div><CardTitle className="text-indigo-800">{planNum.product}. Product/Service Details</CardTitle><CardDescription>Describe your product or service features</CardDescription></div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setStaticGuidanceModal({ isOpen: true, sectionId: 'product_details' })} className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">Tips</Button>
                       <MentorButton onClick={() => openMentorModal('product_details', 'Product/Service Details', 'productDetails')} />
@@ -1202,6 +1241,7 @@ fetch('/api/send-phase-transition', {
         fieldValue={getFieldValue(mentorModal.fieldKey)}
         allFieldValues={allFieldValuesForZig}
         firstPass={firstPass}
+        stageContext={isIdeaPulse ? 'idea_short_track' : undefined}
         onUpdateField={handleMentorUpdate}
         ventureId={venture?.id}
       />

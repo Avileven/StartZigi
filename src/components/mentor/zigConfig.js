@@ -415,7 +415,7 @@ Plain text only, no markdown formatting.`;
 // previousScore: { [categoryName]: number } | null — from THIS session only;
 //   persistent cross-session history needs a DB column that doesn't exist
 //   yet (see zig-core-prompt.md, Data Model Notes).
-export function buildFeedbackPrompt({ documentType, fieldKey, currentText, allFieldValues, firstPass, previousScore }) {
+export function buildFeedbackPrompt({ documentType, fieldKey, currentText, allFieldValues, firstPass, previousScore, stageContext }) {
   const field = getFieldConfig(documentType, fieldKey);
   if (!field) return null; // caller must fall back to legacy behavior
 
@@ -436,6 +436,10 @@ export function buildFeedbackPrompt({ documentType, fieldKey, currentText, allFi
     ? `PREVIOUS ATTEMPT (this session): ${JSON.stringify(previousScore)}. If this revision shows genuine improvement, acknowledge it explicitly and warmly before anything else.`
     : '';
 
+  const stageNote = stageContext === 'idea_short_track'
+    ? `STAGE CONTEXT: This founder is at the idea stage of the short track. The Problem and Solution fields came from a short form (one or two sentences, not a full plan section). Judge them for what an idea-stage founder can reasonably provide, don't penalize brevity, and point to what would be worth testing next.`
+    : '';
+
   return `${CORE_PROMPT}
 
 FIELD: ${field.label}
@@ -450,6 +454,7 @@ ${crossFieldContext ? `RELATED FIELDS ALREADY WRITTEN (use for consistency check
 
 ${thresholdRule}
 ${historyNote}
+${stageNote}
 
 FOUNDER'S DRAFT FOR "${field.label}":
 "${currentText}"`;
