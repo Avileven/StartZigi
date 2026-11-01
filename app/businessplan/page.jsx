@@ -1,4 +1,4 @@
-//business plan 230226 updated
+//business plan 011126 updated
 "use client"
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
