@@ -28,6 +28,53 @@ function formatValuation(val) {
   return val >= 1000000 ? `$${Math.floor(val / 1000000)}M` : `$${Math.floor(val / 1000)}K`;
 }
 
+// [NEW — ZigPulse mobile] Home for Growth (ZigPulse) ventures.
+function GrowthHome({ venture }) {
+  const stage = venture.growth_data?.stage || 'idea';
+  const stageLabel = { idea: 'Idea stage', prototype: 'Prototype stage', product: 'Product stage' }[stage] || 'Idea stage';
+  const joined = venture.created_date
+    ? new Date(venture.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : null;
+  const steps = [
+    { title: 'Venture Profile', text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
+    { title: 'Promotion Center', text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
+    { title: 'Product Feedback', text: 'All the insight collected and analyzed across your journey.' },
+    { title: 'Public page', text: 'Your public page, visible only to people invited to give feedback.' },
+    { title: 'My account', text: 'Manage your account details, your profile and your Zigback balance.' },
+    ...(stage === 'idea' ? [{ title: 'Idea Analysis', text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
+  ];
+  return (
+    <div className="px-4 pt-4 pb-6 bg-gray-50">
+      <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
+        <p className="text-xs uppercase tracking-widest opacity-80">Your venture</p>
+        <h1 className="text-3xl font-bold mt-1 mb-3 break-words">{venture.name}</h1>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full px-3 py-1.5 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>{stageLabel}</span>
+          {joined && <span className="rounded-full px-3 py-1.5 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>Joined {joined}</span>}
+        </div>
+      </div>
+
+      <h2 className="text-lg font-bold text-gray-900 mt-6 mb-3">About StartZig</h2>
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 text-sm leading-relaxed text-gray-700">
+        StartZig helps you increase your chances of success by giving you the tools, insights and community to make better decisions at every stage of your entrepreneurial journey, reach the right people and build an audience as your venture evolves. Don't just build and hope. Learn, improve and grow with people who can help move your venture forward.
+      </div>
+
+      <h2 className="text-lg font-bold text-gray-900 mt-6 mb-3">Your Journey</h2>
+      <div className="space-y-2.5">
+        {steps.map((st, i) => (
+          <div key={st.title} className="flex gap-3.5 bg-white border border-gray-200 rounded-2xl p-4">
+            <div className="flex-none w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center">{i + 1}</div>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900">{st.title}</p>
+              <p className="text-sm text-gray-600 mt-1 leading-snug">{st.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MobileHome({ venture, messages = [], liveBalance = 0, currentValuation = 0 }) {
   const router = useRouter();
   const [showCreationDetails, setShowCreationDetails] = useState(false);
@@ -41,12 +88,9 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
   const growthSetupComplete = venture?.growth_data?.selected_categories?.length > 0;
   const [showGrowthDescription, setShowGrowthDescription] = useState(false);
 
-  // [NEW — ZigPulse mobile] Growth ventures have no mobile home: they land
-  // straight on the Product Feedback page (navigation lives in the top bar).
-  useEffect(() => {
-    if (venture?.phase === 'growth') router.replace('/product-feedback');
-  }, [venture?.phase]);
-  if (venture?.phase === 'growth') return null;
+  // [NEW — ZigPulse mobile] Growth ventures get their own home (below);
+  // navigation lives in the scrollable bar in ClientLayout.
+  if (venture?.phase === 'growth') return <GrowthHome venture={venture} />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

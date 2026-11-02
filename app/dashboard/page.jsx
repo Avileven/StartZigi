@@ -1460,8 +1460,20 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     // above. Rather than patch every cumulative condition individually
     // (easy to miss one), Growth's toolbox is filtered down to exactly the
     // confirmed list as a final step.
+    // [NEW — ZigPulse idea stage] Idea Analysis = the plan page, only for
+    // Growth ventures whose short-track stage is 'idea'.
+    if (currentVenture.phase === 'growth' && currentVenture.growth_data?.stage === 'idea') {
+      assets.push({
+        id: 'idea_analysis',
+        title: 'Idea Analysis',
+        icon: FileText,
+        page: 'plan',
+        highlighted: true
+      });
+    }
+
     if (currentVenture.phase === 'growth') {
-      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development'];
+      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development', 'idea_analysis'];
       // [FIX] Was inconsistent — promotion_center/zigforge's highlighted
       // conditions never included growth, while product_feedback/
       // growth_development did, so only some cards appeared highlighted
