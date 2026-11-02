@@ -1,4 +1,4 @@
-//business plan 011126 updated
+//business plan 230226 updated
 "use client"
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { businessPlan as businessPlanEntity } from "@/api/entities";
@@ -621,10 +621,22 @@ fetch('/api/send-phase-transition', {
     const nextSection = MOBILE_SECTIONS.find(s => !isMobileSectionDone(s));
     const completedCount = MOBILE_SECTIONS.filter(isMobileSectionDone).length;
     const section = MOBILE_SECTIONS.find(s => s.key === expandedField);
+    // ZigPulse idea stage: Back goes to the previous section in order (from a section),
+    // or to the last section before "Continue with" (from the list).
+    const sectionIndex = MOBILE_SECTIONS.findIndex(s => s.key === expandedField);
+    const prevSection = sectionIndex > 0 ? MOBILE_SECTIONS[sectionIndex - 1] : null;
+    const nextIndex = nextSection ? MOBILE_SECTIONS.findIndex(s => s.key === nextSection.key) : MOBILE_SECTIONS.length;
+    const listBackSection = nextIndex > 0 ? MOBILE_SECTIONS[nextIndex - 1] : null;
 
     if (section) {
       return (
         <div className="fixed inset-0 bg-white z-50 flex flex-col p-4 overflow-y-auto">
+          {isIdeaPulse && (
+            <div className="mb-3">
+              <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
+              <p className="text-xs text-gray-400">Plan &amp; Foundation</p>
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-6">
             <button onClick={async () => { await autoSave(); setExpandedField(null); }} className="p-2 -ml-2">
               <ArrowLeft className="w-5 h-5" />
@@ -667,9 +679,25 @@ fetch('/api/send-phase-transition', {
             </>
           )}
 
-          <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
-            Save and continue
-          </Button>
+          {isIdeaPulse && prevSection ? (
+            <div className="flex gap-3 mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => { await autoSave(); setExpandedField(prevSection.key); }}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="flex-[2] bg-indigo-600 hover:bg-indigo-700">
+                Save and continue
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={async () => { await autoSave(); setExpandedField(null); }} className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4">
+              Save and continue
+            </Button>
+          )}
 
           {/* [ADDED 020826] These modals previously only rendered inside
               desktop's JSX tree — the Zig it/Tips buttons above would have
@@ -704,7 +732,9 @@ fetch('/api/send-phase-transition', {
             that, causing a second bell icon with its own count on screen. */}
         <div className="mb-6">
           <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
-          {!isIdeaPulse && <p className="text-xs text-gray-400">Current phase: Plan</p>}
+          {isIdeaPulse
+            ? <p className="text-xs text-gray-400">Plan &amp; Foundation</p>
+            : <p className="text-xs text-gray-400">Current phase: Plan</p>}
         </div>
 
         {/* [FIX 020826] Replaced circles-with-numbers (which either
@@ -742,6 +772,17 @@ fetch('/api/send-phase-transition', {
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 text-center">
             <p className="font-semibold text-green-700">All sections complete!</p>
           </div>
+        )}
+
+        {isIdeaPulse && listBackSection && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setExpandedField(listBackSection.key)}
+            className="w-full mb-4"
+          >
+            Back
+          </Button>
         )}
 
         <p className="text-xs text-gray-400 text-center mb-6">{completedCount} of {MOBILE_SECTIONS.length} sections complete</p>
