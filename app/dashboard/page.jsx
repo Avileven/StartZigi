@@ -744,11 +744,11 @@ if (userVentures.length === 0) {
             "-created_date"
           );
 
-          // [ADDED] Filter out expired feedback_request messages — valid for 7 days only.
+          // [ADDED] Filter out expired feedback_request messages — valid for 14 days only.
           const filteredMessages = ventureMessages.filter(msg => {
             if (msg.message_type === 'feedback_request') {
               const daysSince = (Date.now() - new Date(msg.created_date)) / 86400000;
-              return daysSince < 7;
+              return daysSince < 14;
             }
             return true;
           });

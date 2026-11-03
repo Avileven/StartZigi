@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { PromotionCampaign } from '@/api/entities';
 import { differenceInDays } from 'date-fns';
-import { MessageSquare, Users, Clock, Wallet, BarChart3, ChevronDown, Target, Lightbulb, FileText } from 'lucide-react';
+import { MessageSquare, Users, Clock, Wallet, BarChart3, ChevronDown, Target, Lightbulb, FileText, Activity, Megaphone, Globe, UserCircle, Bell } from 'lucide-react';
 import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
 
 const PHASE_LABELS = { idea: 'Idea', business_plan: 'Plan', mvp: 'MVP', mlp: 'MLP', beta: 'Beta', growth: 'Pulse' };
@@ -67,13 +67,13 @@ function GrowthHome({ venture, userName }) {
     : null;
 
   const steps = [
-    { title: 'Venture Profile', text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
-    { title: 'Promotion Center', text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
-    { title: 'Product Feedback', text: 'All the insight collected and analyzed across your journey.' },
-    { title: 'Public page', text: 'Your public page, visible only to people invited to give feedback.' },
-    { title: 'My account', text: 'Manage your account details, your profile and your Zigback balance.' },
-    { title: 'Notifications', text: 'System messages and updates about your venture.' },
-    ...(stage === 'idea' ? [{ title: 'Idea Analysis', text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
+    { title: 'Venture Profile', Icon: Activity, text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
+    { title: 'Promotion Center', Icon: Megaphone, text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
+    { title: 'Product Feedback', Icon: MessageSquare, text: 'All the insight collected and analyzed across your journey.' },
+    { title: 'Public page', Icon: Globe, text: 'Your public page, visible only to people invited to give feedback.' },
+    { title: 'My account', Icon: UserCircle, text: 'Manage your account details, your profile and your Zigback balance.' },
+    { title: 'Notifications', Icon: Bell, text: 'System messages and updates about your venture.' },
+    ...(stage === 'idea' ? [{ title: 'Idea Analysis', Icon: FileText, text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
   ];
   return (
     <div className="bg-gray-50 pb-8">
@@ -95,13 +95,21 @@ function GrowthHome({ venture, userName }) {
       </div>
 
       <div className="px-6 mt-8">
-        <h2 className="text-xl font-bold pb-1.5" style={{ color: '#3457D5' }}>Your Journey</h2>
-        {steps.map((st) => (
-          <div key={st.title} className="py-4 border-t border-gray-200">
-            <p className="text-base font-semibold text-gray-900">{st.title}</p>
-            <p className="text-sm text-gray-500 mt-1 leading-snug">{st.text}</p>
-          </div>
-        ))}
+        <h2 className="text-xl font-bold pb-2" style={{ color: '#3457D5' }}>Your Journey</h2>
+        {steps.map((st) => {
+          const StepIcon = st.Icon;
+          return (
+            <div key={st.title} className="flex items-center gap-4 py-3">
+              <div className="flex-none w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center">
+                <StepIcon className="w-9 h-9 text-indigo-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-bold text-gray-900">{st.title}</p>
+                <p className="text-sm text-gray-600 mt-0.5 leading-snug">{st.text}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="px-6 mt-6">

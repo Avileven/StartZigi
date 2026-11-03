@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import ExplainerRows, { ZigItBadge, ModePill } from "@/components/ventures/ExplainerRows";
 import { useRouter } from 'next/navigation';
 import { createPageUrl } from "@/lib/utils";
 import MentorButton from "@/components/mentor/MentorButton";
@@ -755,6 +756,15 @@ fetch('/api/send-phase-transition', {
             );
           })}
         </div>
+
+        {/* [NEW — ZigPulse idea stage] How to use Tips / Zig it */}
+        {isIdeaPulse && (
+          <ExplainerRows className="mb-4" rows={[
+            { icon: <Pencil className="w-6 h-6 text-indigo-600" />, text: 'To get more information about your idea, we recommend filling in all the fields.' },
+            { wide: true, icon: <><ZigItBadge /><ModePill>Help me</ModePill></>, text: <>Having trouble phrasing it, or finding the information? Select <b>Help me</b> and click <b>Z</b>.</> },
+            { wide: true, icon: <><ModePill>Feedback</ModePill><ZigItBadge /></>, text: <>Want feedback on what you wrote? Select <b>Feedback</b> and click <b>Z</b>.</> },
+          ]} />
+        )}
 
         {/* Dominant "Continue with" card */}
         {nextSection ? (

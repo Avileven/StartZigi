@@ -22,7 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.j
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Megaphone, AlertTriangle, ChevronRight, X, CheckCircle, Users } from "lucide-react";
+import { Loader2, Megaphone, AlertTriangle, ChevronRight, X, CheckCircle, Users, SlidersHorizontal, Tag } from "lucide-react";
+import ExplainerRows from "@/components/ventures/ExplainerRows";
 
 // [NEW — mobile fix] This file had no mobile treatment at all — tapping a
 // field didn't open it fullscreen, unlike growth-development/venture-landing
@@ -536,20 +537,12 @@ if (campaignErr) throw campaignErr;
               {/* [FIX 020826] Updated per Part E: no dollar cost, no reach
                   number promised to the founder — only how many requests
                   from their pool they're choosing to spend. */}
-              <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl">
-                <button type="button" onClick={() => setShowHow(v => !v)} className="w-full flex items-center justify-between font-semibold text-blue-900">
-                  <span>How It Works</span>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${showHow ? 'rotate-90' : ''}`} />
-                </button>
-                {showHow && (
-                <ol className="text-sm text-blue-800 space-y-2 list-decimal pl-5 mt-3">
-                  <li>Choose how many requests to spend from your Feedback Request Pool</li>
-                  <li>Give your brief a name (tagline)</li>
-                  <li>Launch the round and track results in the Validation Center</li>
-                  <li>The round is active for 7 days — after that, invitations expire automatically</li>
-                </ol>
-                )}
-              </div>
+              <ExplainerRows rows={[
+                { icon: <Users className="w-6 h-6 text-indigo-600" />, text: 'Choose how many requests to spend from your Feedback Request Pool' },
+                { icon: <SlidersHorizontal className="w-6 h-6 text-indigo-600" />, text: 'Select preferences, if needed' },
+                { icon: <Tag className="w-6 h-6 text-indigo-600" />, text: 'Give your brief a name (tagline)' },
+                { icon: <Megaphone className="w-6 h-6 text-indigo-600" />, text: 'Launch the Feedback Brief and track results in the Promotion Center. Each Brief is active for 14 days, after that, invitations expire automatically' },
+              ]} />
 
               <div className="text-center">
                 <h3 className="font-semibold text-lg mb-2">Feedback Requests Remaining</h3>

@@ -452,9 +452,9 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
             </h2>
             <div className="space-y-4">
               {campaigns.map((campaign) => {
-                // [ADDED] Determine if campaign is still active (less than 7 days old)
+                // [ADDED] Determine if campaign is still active (less than 14 days old)
                 const isActive = campaign.created_date
-                  ? (Date.now() - new Date(campaign.created_date)) / 86400000 < 7
+                  ? (Date.now() - new Date(campaign.created_date)) / 86400000 < 14
                   : true;
 
                 return (
@@ -473,7 +473,7 @@ const ventures = await Venture.filter({ created_by: user.email }, "-created_date
                             {campaign.campaign_type === "email" && "Email Brief"}
                           </CardDescription>
                         </div>
-                        {/* [ADDED] Active/Ended badge — green if less than 7 days old, gray otherwise */}
+                        {/* [ADDED] Active/Ended badge — green if less than 14 days old, gray otherwise */}
                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                           isActive
                             ? "bg-green-100 text-green-700"

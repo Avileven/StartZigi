@@ -47,6 +47,8 @@ import { useRouter } from 'next/navigation';
 import { createPageUrl } from '@/utils';
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
+import { Pencil as ExPencil, Lightbulb as ExBulb, ListPlus as ExList, Image as ExImage, Globe as ExGlobe } from 'lucide-react';
+import ExplainerRows, { ZigItBadge } from '@/components/ventures/ExplainerRows';
 
 // [FIX — real root cause, not styling] A native <input> can never wrap
 // text to a second line or scroll vertically, no matter what CSS is
@@ -781,6 +783,13 @@ export default function GrowthDevelopment() {
 
             {/* ===================== VENTURE PROFILE ===================== */}
             <TabsContent value="profile" className="space-y-6">
+              {isMobile && (
+                <ExplainerRows rows={[
+                  { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'Fill in the details in the fields.' },
+                  { icon: <ExBulb className="w-6 h-6 text-indigo-600" />, text: <>Click <b>TIP</b> to get general guidance.</> },
+                  { icon: <ZigItBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },
+                ]} />
+              )}
               {(
                 <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
                   <CardHeader>
@@ -948,6 +957,14 @@ export default function GrowthDevelopment() {
 
             {/* ===================== FEEDBACK ===================== */}
             <TabsContent value="feedback" className="space-y-6">
+              {isMobile && (
+                <ExplainerRows rows={[
+                  { icon: <ExList className="w-6 h-6 text-indigo-600" />, text: 'Beyond the basic questions, choose additional questions.' },
+                  { icon: <ExImage className="w-6 h-6 text-indigo-600" />, text: 'Check the box if you want feedback on the media you uploaded.' },
+                  { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'If needed, write a personal question.' },
+                  { icon: <ExGlobe className="w-6 h-6 text-indigo-600" />, text: <>Click <b>Save</b>, and your public page is ready for feedback.</> },
+                ]} />
+              )}
               {/* [RESTRUCTURE] Core questions first (always asked), then the
                   optional questions to choose from, with the founder's own
                   question as the last item of that choice card. */}
