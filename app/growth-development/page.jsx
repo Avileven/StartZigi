@@ -1,4 +1,5 @@
-ב// app/growth-development/page.jsx
+"use client";
+// app/growth-development/page.jsx
 //
 // [v6 — all changes explicitly confirmed this round]
 //   1. Business Model: Subscription and Freemium MERGED into one option.
@@ -24,7 +25,6 @@
 // business_plan config ("problem" for The Need, "solution" for Your Solution)
 // and the existing Tips entries (problem_statement, proposed_solution).
 // Imports: MentorModal and StaticGuidanceViewer live in src/components/mentor.
-"use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
