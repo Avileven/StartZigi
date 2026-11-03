@@ -176,8 +176,8 @@ function GrowthMobileBar({ pathname, router, unreadCount, landingUrl, isIdeaStag
         <>
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-l from-white to-transparent" />
           <button aria-label="Scroll right" onClick={() => scrollRef.current?.scrollBy({ left: 160, behavior: 'smooth' })}
-            className="absolute right-1.5 top-7 w-8 h-8 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-indigo-600">
-            <ChevronRight className="w-4 h-4" />
+            className="absolute right-1 top-5 w-11 h-11 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-indigo-600">
+            <ChevronRight className="w-6 h-6" />
           </button>
         </>
       )}
@@ -185,8 +185,8 @@ function GrowthMobileBar({ pathname, router, unreadCount, landingUrl, isIdeaStag
         <>
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-14 bg-gradient-to-r from-white to-transparent" />
           <button aria-label="Scroll left" onClick={() => scrollRef.current?.scrollBy({ left: -160, behavior: 'smooth' })}
-            className="absolute left-1.5 top-7 w-8 h-8 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-indigo-600">
-            <ChevronLeft className="w-4 h-4" />
+            className="absolute left-1 top-5 w-11 h-11 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center text-indigo-600">
+            <ChevronLeft className="w-6 h-6" />
           </button>
         </>
       )}

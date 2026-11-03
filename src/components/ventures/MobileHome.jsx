@@ -13,6 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { PromotionCampaign } from '@/api/entities';
 import { differenceInDays } from 'date-fns';
 import { MessageSquare, Users, Clock, Wallet, BarChart3, ChevronDown, Target, Lightbulb, FileText } from 'lucide-react';
 import JourneyClock, { PHASE_HEX_COLORS } from '@/components/ventures/JourneyClock';
@@ -29,53 +30,90 @@ function formatValuation(val) {
 }
 
 // [NEW — ZigPulse mobile] Home for Growth (ZigPulse) ventures.
-function GrowthHome({ venture }) {
+function GrowthHome({ venture, userName }) {
+  const router = useRouter();
   const stage = venture.growth_data?.stage || 'idea';
-  const stageLabel = { idea: 'Idea stage', prototype: 'Prototype stage', product: 'Product stage' }[stage] || 'Idea stage';
-  const joined = venture.created_date
-    ? new Date(venture.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const stageLabel = { idea: 'idea', prototype: 'prototype', product: 'product' }[stage] || 'idea';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const firstName = (userName || '').trim().split(/\s+/)[0];
+
+  // Call to action: has this venture sent a feedback request yet, and when did
+  // it last receive feedback. null = still loading (nothing shown meanwhile).
+  const [hasCampaign, setHasCampaign] = useState(null);
+  const [lastFeedback, setLastFeedback] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const campaigns = await PromotionCampaign.filter({ venture_id: venture.id }, '-created_date');
+        const { data: rows } = await supabase
+          .from('growth_feedback')
+          .select('created_date')
+          .eq('venture_id', venture.id)
+          .order('created_date', { ascending: false })
+          .limit(1);
+        if (cancelled) return;
+        setHasCampaign((campaigns || []).length > 0);
+        setLastFeedback(rows && rows[0] ? rows[0].created_date : '');
+      } catch (e) {
+        if (!cancelled) { setHasCampaign(true); setLastFeedback(''); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [venture.id]);
+  const lastFeedbackText = lastFeedback
+    ? new Date(lastFeedback).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
+
   const steps = [
     { title: 'Venture Profile', text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
     { title: 'Promotion Center', text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
     { title: 'Product Feedback', text: 'All the insight collected and analyzed across your journey.' },
     { title: 'Public page', text: 'Your public page, visible only to people invited to give feedback.' },
     { title: 'My account', text: 'Manage your account details, your profile and your Zigback balance.' },
+    { title: 'Notifications', text: 'System messages and updates about your venture.' },
     ...(stage === 'idea' ? [{ title: 'Idea Analysis', text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
   ];
   return (
-    <div className="px-4 pt-4 pb-6 bg-gray-50">
-      <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
-        <p className="text-xs uppercase tracking-widest opacity-80">Your venture</p>
-        <h1 className="text-3xl font-bold mt-1 mb-3 break-words">{venture.name}</h1>
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full px-3 py-1.5 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>{stageLabel}</span>
-          {joined && <span className="rounded-full px-3 py-1.5 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.18)' }}>Joined {joined}</span>}
-        </div>
+    <div className="bg-gray-50 pb-8">
+      <div className="px-6 pt-8 text-gray-900">
+        <h1 className="text-2xl font-bold">{greeting}{firstName ? `, ${firstName}` : ''}</h1>
+        <p className="text-xl leading-snug mt-1.5">Your venture, {venture.name}, is at the {stageLabel} stage.</p>
+        {hasCampaign === false && !lastFeedbackText && (
+          <>
+            <p className="text-[15px] text-gray-700 leading-snug mt-4">Your Venture Profile is ready. Send your first feedback request.</p>
+            <button onClick={() => router.push('/promotion-center')}
+              className="mt-3 rounded-full bg-indigo-600 text-white font-semibold text-[15px] px-5 py-2.5">
+              Promotion Center &rarr;
+            </button>
+          </>
+        )}
+        {lastFeedbackText && (
+          <p className="text-sm text-gray-500 mt-3.5">Last feedback received: {lastFeedbackText}</p>
+        )}
       </div>
 
-      <h2 className="text-lg font-bold text-gray-900 mt-6 mb-3">About StartZig</h2>
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 text-sm leading-relaxed text-gray-700">
-        StartZig helps you increase your chances of success by giving you the tools, insights and community to make better decisions at every stage of your entrepreneurial journey, reach the right people and build an audience as your venture evolves. Don't just build and hope. Learn, improve and grow with people who can help move your venture forward.
-      </div>
-
-      <h2 className="text-lg font-bold text-gray-900 mt-6 mb-3">Your Journey</h2>
-      <div className="space-y-2.5">
-        {steps.map((st, i) => (
-          <div key={st.title} className="flex gap-3.5 bg-white border border-gray-200 rounded-2xl p-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center">{i + 1}</div>
-            <div className="min-w-0">
-              <p className="font-semibold text-gray-900">{st.title}</p>
-              <p className="text-sm text-gray-600 mt-1 leading-snug">{st.text}</p>
-            </div>
+      <div className="px-6 mt-8">
+        <h2 className="text-xl font-bold pb-1.5" style={{ color: '#3457D5' }}>Your Journey</h2>
+        {steps.map((st) => (
+          <div key={st.title} className="py-4 border-t border-gray-200">
+            <p className="text-base font-semibold text-gray-900">{st.title}</p>
+            <p className="text-sm text-gray-500 mt-1 leading-snug">{st.text}</p>
           </div>
         ))}
+      </div>
+
+      <div className="px-6 mt-6">
+        <p className="text-sm text-gray-500 leading-relaxed border-t border-gray-200 pt-5 text-left">
+          StartZig helps you increase your chances of success by giving you the tools, insights and community to make better decisions at every stage of your entrepreneurial journey, reach the right people and build an audience as your venture evolves. Don't just build and hope. Learn, improve and grow with people who can help move your venture forward.
+        </p>
       </div>
     </div>
   );
 }
 
-export default function MobileHome({ venture, messages = [], liveBalance = 0, currentValuation = 0 }) {
+export default function MobileHome({ venture, messages = [], liveBalance = 0, currentValuation = 0, userName = '' }) {
   const router = useRouter();
   const [showCreationDetails, setShowCreationDetails] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -90,7 +128,7 @@ export default function MobileHome({ venture, messages = [], liveBalance = 0, cu
 
   // [NEW — ZigPulse mobile] Growth ventures get their own home (below);
   // navigation lives in the scrollable bar in ClientLayout.
-  if (venture?.phase === 'growth') return <GrowthHome venture={venture} />;
+  if (venture?.phase === 'growth') return <GrowthHome venture={venture} userName={userName} />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
