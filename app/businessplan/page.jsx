@@ -759,11 +759,14 @@ fetch('/api/send-phase-transition', {
 
         {/* [NEW — ZigPulse idea stage] How to use Tips / Zig it */}
         {isIdeaPulse && (
-          <ExplainerRows className="mb-4" rows={[
+          <div className="mb-4">
+          <h3 className="font-semibold text-lg text-gray-900">How It Works</h3>
+          <ExplainerRows rows={[
             { icon: <Pencil className="w-6 h-6 text-indigo-600" />, text: 'To get more information about your idea, we recommend filling in all the fields.' },
             { wide: true, icon: <><ZigItBadge /><ModePill>Help me</ModePill></>, text: <>Having trouble phrasing it, or finding the information? Select <b>Help me</b> and click <b>Z</b>.</> },
             { wide: true, icon: <><ModePill>Feedback</ModePill><ZigItBadge /></>, text: <>Want feedback on what you wrote? Select <b>Feedback</b> and click <b>Z</b>.</> },
           ]} />
+          </div>
         )}
 
         {/* Dominant "Continue with" card */}

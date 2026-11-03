@@ -1,4 +1,4 @@
-// app/growth-development/page.jsx
+ב// app/growth-development/page.jsx
 //
 // [v6 — all changes explicitly confirmed this round]
 //   1. Business Model: Subscription and Freemium MERGED into one option.
@@ -748,7 +748,7 @@ export default function GrowthDevelopment() {
             </div>
           </div>
 
-          {isProduct && (
+          {!isMobile && isProduct && (
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
             <CardContent className="p-5">
               <p className="text-base font-bold text-emerald-700 mb-2">Welcome to ZigPulse</p>
@@ -768,7 +768,7 @@ export default function GrowthDevelopment() {
           </Card>
           )}
 
-          {!isProduct && <StageGuide stage={growthData.stage} />}
+          {!isMobile && !isProduct && <StageGuide stage={growthData.stage} />}
 
           {/* [FIX] "You don't have a venture yet..." message removed
               entirely — the only way to reach this page without a venture
@@ -784,11 +784,14 @@ export default function GrowthDevelopment() {
             {/* ===================== VENTURE PROFILE ===================== */}
             <TabsContent value="profile" className="space-y-6">
               {isMobile && (
+                <div>
+                <h3 className="font-semibold text-lg text-gray-900">How It Works</h3>
                 <ExplainerRows rows={[
                   { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'Fill in the details in the fields.' },
                   { icon: <ExBulb className="w-6 h-6 text-indigo-600" />, text: <>Click <b>TIP</b> to get general guidance.</> },
                   { icon: <ZigItBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },
                 ]} />
+                </div>
               )}
               {(
                 <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
@@ -958,12 +961,15 @@ export default function GrowthDevelopment() {
             {/* ===================== FEEDBACK ===================== */}
             <TabsContent value="feedback" className="space-y-6">
               {isMobile && (
+                <div>
+                <h3 className="font-semibold text-lg text-gray-900">How It Works</h3>
                 <ExplainerRows rows={[
                   { icon: <ExList className="w-6 h-6 text-indigo-600" />, text: 'Beyond the basic questions, choose additional questions.' },
                   { icon: <ExImage className="w-6 h-6 text-indigo-600" />, text: 'Check the box if you want feedback on the media you uploaded.' },
                   { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'If needed, write a personal question.' },
                   { icon: <ExGlobe className="w-6 h-6 text-indigo-600" />, text: <>Click <b>Save</b>, and your public page is ready for feedback.</> },
                 ]} />
+                </div>
               )}
               {/* [RESTRUCTURE] Core questions first (always asked), then the
                   optional questions to choose from, with the founder's own
