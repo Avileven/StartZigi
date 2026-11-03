@@ -1503,7 +1503,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
   // MobileHome.jsx instead of the full desktop dashboard below. Desktop
   // rendering is completely untouched past this point.
   if (isMobile && !showToS) {
-    return <MobileHome venture={currentVenture} messages={messages} userEmail={user?.email} userName={user?.full_name || user?.name || ''} liveBalance={liveBalance} currentValuation={currentValuation} />;
+    return <MobileHome venture={currentVenture} messages={messages} userEmail={user?.email} userName={user?.username || user?.full_name || user?.name || ''} liveBalance={liveBalance} currentValuation={currentValuation} />;
   }
 
  
