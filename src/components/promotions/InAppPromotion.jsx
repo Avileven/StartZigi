@@ -537,6 +537,7 @@ if (campaignErr) throw campaignErr;
               {/* [FIX 020826] Updated per Part E: no dollar cost, no reach
                   number promised to the founder — only how many requests
                   from their pool they're choosing to spend. */}
+              <h3 className="font-semibold text-lg text-center">How It Works</h3>
               <ExplainerRows rows={[
                 { icon: <Users className="w-6 h-6 text-indigo-600" />, text: 'Choose how many requests to spend from your Feedback Request Pool' },
                 { icon: <SlidersHorizontal className="w-6 h-6 text-indigo-600" />, text: 'Select preferences, if needed' },

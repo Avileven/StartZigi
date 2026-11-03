@@ -785,7 +785,7 @@ export default function GrowthDevelopment() {
             <TabsContent value="profile" className="space-y-6">
               {isMobile && (
                 <div>
-                <h3 className="font-semibold text-lg text-gray-900">How It Works</h3>
+                <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
                 <ExplainerRows rows={[
                   { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'Fill in the details in the fields.' },
                   { icon: <ExBulb className="w-6 h-6 text-indigo-600" />, text: <>Click <b>TIP</b> to get general guidance.</> },
@@ -962,7 +962,7 @@ export default function GrowthDevelopment() {
             <TabsContent value="feedback" className="space-y-6">
               {isMobile && (
                 <div>
-                <h3 className="font-semibold text-lg text-gray-900">How It Works</h3>
+                <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
                 <ExplainerRows rows={[
                   { icon: <ExList className="w-6 h-6 text-indigo-600" />, text: 'Beyond the basic questions, choose additional questions.' },
                   { icon: <ExImage className="w-6 h-6 text-indigo-600" />, text: 'Check the box if you want feedback on the media you uploaded.' },

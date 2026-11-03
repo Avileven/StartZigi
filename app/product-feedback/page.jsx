@@ -25,6 +25,8 @@ import { User } from '@/api/entities.js';
 import { businessPlan } from '@/api/entities.js';
 import { InvokeLLM } from '@/api/integrations';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import { LayoutGrid, ZoomIn } from 'lucide-react';
+import ExplainerRows from '@/components/ventures/ExplainerRows';
 import { Loader2, BarChart3, MessageSquare, TrendingUp, Lightbulb, Users, Star, MessageCircle, UserCircle2, ChevronDown, Rocket, Clock, AlertTriangle, DollarSign, Layers, Megaphone, FileText, Compass, HelpCircle, ClipboardList, Home, Target, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1461,6 +1463,17 @@ export default function ProductFeedbackPage() {
             ) : 'Venture Feedback'}
           </h1>
           <p className="text-lg" style={{ color: '#15803D' }}>All insight collected and analyzed across your startup journey</p>
+          {/* [NEW — ZigPulse mobile] How to read this page */}
+          {venture.phase === 'growth' && (
+            <div className="md:hidden text-left mt-5">
+              <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
+              <ExplainerRows rows={[
+                { icon: <LayoutGrid className="w-6 h-6 text-indigo-600" />, text: "See all the feedback you've received at a glance in the matrix. It covers all your briefs by default, or choose a specific brief." },
+                { icon: <ZoomIn className="w-6 h-6 text-indigo-600" />, text: 'Zoom in on Feedback Details to read the answers some of the people gave.' },
+                { icon: <Sparkles className="w-6 h-6 text-indigo-600" />, text: 'Finally, get insights and conclusions with AI Insight.' },
+              ]} />
+            </div>
+          )}
         </div>
 
         {/* AI Analysis */}
