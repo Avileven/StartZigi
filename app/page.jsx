@@ -350,10 +350,10 @@ export default function Home() {
             <ProductGrowthAnimation className="w-[82vw] sm:w-full max-w-xl mx-auto mb-8" />
             <div className="space-y-4">
               <p className="text-lg text-gray-600">
-                StartZig gives you the tools to define and develop your idea or product, validate your thinking, showcase what you're building, and get structured feedback.
+                StartZig gives you the tools to define and develop your idea or product, validate your thinking, get structured feedback, showcase what you're building and attract potential customers.
               </p>
               <p className="text-lg text-gray-600">
-                But it's more than your own journey. Explore other entrepreneurs' ideas and products, share your feedback, and learn from people on the same journey. It's a community that challenges you, grows with you, and might spark your next idea.
+                But it's more than your own journey. Explore other entrepreneurs' ideas and products, share your feedback and learn from people on the same journey. It's a community that challenges you, grows with you and might spark your next idea.
               </p>
             </div>
           </div>
