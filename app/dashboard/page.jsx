@@ -1472,8 +1472,19 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
       });
     }
 
+    // [NEW — ZigPulse] Revenue Model calculator (standalone page, nothing saved), all stages.
     if (currentVenture.phase === 'growth') {
-      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development', 'idea_analysis'];
+      assets.push({
+        id: 'business_model',
+        title: 'Revenue Model',
+        icon: BarChart3,
+        page: 'business-model',
+        highlighted: true
+      });
+    }
+
+    if (currentVenture.phase === 'growth') {
+      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development', 'idea_analysis', 'business_model'];
       // [FIX] Was inconsistent — promotion_center/zigforge's highlighted
       // conditions never included growth, while product_feedback/
       // growth_development did, so only some cards appeared highlighted

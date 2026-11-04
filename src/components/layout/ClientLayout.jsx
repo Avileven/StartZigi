@@ -33,6 +33,7 @@ import {
   ChevronRight,
   ChevronLeft,
   FileText,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -146,6 +147,7 @@ function GrowthMobileBar({ pathname, router, unreadCount, landingUrl, isIdeaStag
     { key: 'account', label: 'My account', Icon: UserCircle, path: '/my-account', go: () => router.push('/my-account') },
     { key: 'notifications', label: 'Notifications', Icon: Bell, path: '/notifications', go: () => router.push('/notifications'), badge: unreadCount },
     ...(isIdeaStage ? [{ key: 'analysis', label: 'Idea Analysis', Icon: FileText, path: '/plan', alt: ['/businessplan'], go: () => router.push('/plan') }] : []),
+    { key: 'revenue', label: 'Revenue Model', Icon: BarChart3, path: '/business-model', go: () => router.push('/business-model') },
   ];
 
   const current = (pathname || '').replace(/\/+$/, '').replace(/^\/(promotioncenter|promotion)$/, '/promotion-center');
