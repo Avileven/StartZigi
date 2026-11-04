@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton"; // [NEW] Continue with Google
 
 export default function LoginPage() {
   const router = useRouter();
@@ -115,6 +116,14 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        {/* [NEW] Continue with Google — signs up new users and signs in existing ones */}
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+        <GoogleSignInButton next={{redirectPath}} />
 
         <p className="text-sm text-center mt-4">
           Don't have an account?{" "}
