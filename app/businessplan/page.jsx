@@ -635,7 +635,7 @@ fetch('/api/send-phase-transition', {
           {isIdeaPulse && (
             <div className="mb-3">
               <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
-              <p className="text-xs text-gray-400">Plan &amp; Foundation</p>
+              <p className="text-xs text-gray-400">Idea Analysis</p>
             </div>
           )}
           <div className="flex items-center gap-3 mb-6">
@@ -734,7 +734,7 @@ fetch('/api/send-phase-transition', {
         <div className="mb-6">
           <p className="font-bold text-lg text-gray-900">{venture?.name || 'Plan'}</p>
           {isIdeaPulse
-            ? <p className="text-xs text-gray-400">Plan &amp; Foundation</p>
+            ? <p className="text-xs text-gray-400">Idea Analysis</p>
             : <p className="text-xs text-gray-400">Current phase: Plan</p>}
         </div>
 
@@ -763,7 +763,7 @@ fetch('/api/send-phase-transition', {
           <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
           <ExplainerRows rows={[
             { wide: true, icon: <Pencil className="w-6 h-6 text-indigo-600" />, text: 'To get more information about your idea, we recommend filling in all the fields.' },
-            { wide: true, icon: <><ZigItBadge /><ModePill>Help me</ModePill></>, text: <>Having trouble phrasing it, or finding the information? Select <b>Help me</b> and click <b>Z</b>.</> },
+            { wide: true, icon: <><ModePill>Help me</ModePill><ZigItBadge /></>, text: <>Having trouble phrasing it, or finding the information? Select <b>Help me</b> and click <b>Z</b>.</> },
             { wide: true, icon: <><ModePill>Feedback</ModePill><ZigItBadge /></>, text: <>Want feedback on what you wrote? Select <b>Feedback</b> and click <b>Z</b>.</> },
           ]} />
           </div>

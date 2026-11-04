@@ -542,7 +542,7 @@ if (campaignErr) throw campaignErr;
                 { icon: <Users className="w-6 h-6 text-indigo-600" />, text: 'Choose how many requests to spend from your Feedback Request Pool' },
                 { icon: <SlidersHorizontal className="w-6 h-6 text-indigo-600" />, text: 'Select preferences, if needed' },
                 { icon: <Tag className="w-6 h-6 text-indigo-600" />, text: 'Give your brief a name (tagline)' },
-                { icon: <Megaphone className="w-6 h-6 text-indigo-600" />, text: 'Launch the Feedback Brief and track results in the Promotion Center. Each Brief is active for 14 days, after that, invitations expire automatically' },
+                { icon: <Megaphone className="w-6 h-6 text-indigo-600" />, text: 'Launch the Feedback Brief and track results in Product Feedback. Each Brief is active for 14 days, after that, invitations expire automatically' },
               ]} />
 
               <div className="text-center">
