@@ -74,6 +74,7 @@ function GrowthHome({ venture, userName }) {
     { title: 'My account', Icon: UserCircle, text: 'Manage your account details, your profile and your Zigback balance.' },
     { title: 'Notifications', Icon: Bell, text: 'System messages and updates about your venture.' },
     ...(stage === 'idea' ? [{ title: 'Idea Analysis', Icon: FileText, text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
+    { title: 'Revenue Model', Icon: BarChart3, text: 'Try different business models, prices and growth strategies, and see a 12-month revenue projection.' },
   ];
   return (
     <div className="bg-gray-50 pb-8">
@@ -95,7 +96,7 @@ function GrowthHome({ venture, userName }) {
       </div>
 
       <div className="px-6 mt-8">
-        <h2 className="text-xl font-bold pb-2" style={{ color: '#3457D5' }}>Your Journey</h2>
+        <h2 className="text-xl font-bold pb-2 text-center" style={{ color: '#3457D5' }}>Your Journey</h2>
         {steps.map((st) => {
           const StepIcon = st.Icon;
           return (
