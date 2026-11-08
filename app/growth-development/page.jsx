@@ -333,6 +333,8 @@ export default function GrowthDevelopment() {
       transaction_fee_description: '',
     },
     custom_question: '',
+    early_incentive: '',
+    early_offer_text: '',
   });
 
   const [newFeatureName, setNewFeatureName] = useState('');
@@ -372,6 +374,8 @@ export default function GrowthDevelopment() {
         if (loaded.stage === 'idea') { if (!loaded.selected_categories.includes('idea_alternatives')) loaded.selected_categories = [...loaded.selected_categories, 'idea_alternatives']; }
         else if (!loaded.selected_categories.includes('core_features')) loaded.selected_categories = [...loaded.selected_categories, 'core_features'];
         loaded.custom_question = loaded.custom_question || '';
+        loaded.early_incentive = loaded.early_incentive || '';
+        loaded.early_offer_text = loaded.early_offer_text || '';
         loaded.business_model_data = {
           model_type: loaded.business_model_data?.model_type || '',
           has_free_tier: loaded.business_model_data?.has_free_tier || false,
@@ -426,9 +430,9 @@ export default function GrowthDevelopment() {
     setGrowthData(prev => {
       const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
       let selected_categories;
-      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value', 'media'])];
-      else if (stage === 'prototype') selected_categories = ['proto_product', 'core_features', ...keep(['business_model', 'media'])];
-      else selected_categories = ['core_features', ...keep(['business_model', 'value_proposition', 'product_definition', 'media'])];
+      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value', 'media', 'early_users'])];
+      else if (stage === 'prototype') selected_categories = ['proto_product', 'core_features', ...keep(['business_model', 'media', 'early_users'])];
+      else selected_categories = ['core_features', ...keep(['business_model', 'value_proposition', 'product_definition', 'media', 'early_users'])];
       return { ...prev, stage, selected_categories };
     });
   };
@@ -596,7 +600,7 @@ export default function GrowthDevelopment() {
           const ka = Object.keys(a), kb = Object.keys(b);
           return ka.length === kb.length && ka.every((k) => same(a[k], b[k]));
         };
-        const checkFields = ['need', 'solution', 'custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description'];
+        const checkFields = ['need', 'solution', 'custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description', 'early_incentive', 'early_offer_text'];
         const mismatched = checkFields.filter((f) => !same((saved.growth_data || {})[f] ?? '', growthData[f] ?? ''));
         if (mismatched.length > 0) {
           console.error('[Save verification] NOT saved:', mismatched, { sent: growthData, stored: saved.growth_data });
@@ -1186,6 +1190,38 @@ export default function GrowthDevelopment() {
                     </label>
                   </div>
                   )}
+
+                  {/* [NEW — Early users] Reviewers are asked if they want to be early users or beta testers. */}
+                  <div className={`border rounded-lg p-4 ${growthData.selected_categories.includes('early_users') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <Checkbox checked={growthData.selected_categories.includes('early_users')} onCheckedChange={() => toggleCategory('early_users')} />
+                      <span className="text-sm font-medium text-gray-900 flex items-center">
+                        {growthData.selected_categories.includes('early_users') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
+                        I'm looking for Early Adopters
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1 pl-8">Early Adopters are the first people to try your product and help shape it. Reviewers are invited to join your Early Adopters Community. Those who say yes share their username and email with you, and you'll see them in Product Feedback.</p>
+                    {growthData.selected_categories.includes('early_users') && (
+                      <div className="mt-4 pl-8 border-t border-emerald-100 pt-4">
+                        <p className="text-sm font-semibold text-gray-900">Offer an Incentive <span className="text-xs font-normal text-gray-400">(Optional)</span></p>
+                        <p className="text-xs text-gray-500 mt-1">Give people a reason to join your Early Adopters Community.</p>
+                        <div className="mt-3 space-y-2">
+                          {[['free_access', 'Free access'], ['discount', 'Discount'], ['exclusive', 'Exclusive features or early access'], ['other', 'Other offer'], ['none', 'No special offer']].map(([val, label]) => (
+                            <label key={val} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                              <input type="radio" name="early-incentive" checked={growthData.early_incentive === val} onChange={() => handleChange('early_incentive', val)} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                              {label}
+                            </label>
+                          ))}
+                        </div>
+                        {growthData.early_incentive && growthData.early_incentive !== 'none' && (
+                          <div className="mt-3">
+                            <p className="text-sm font-medium text-gray-900 mb-1">Describe your offer</p>
+                            <Input value={growthData.early_offer_text} onChange={(e) => handleChange('early_offer_text', e.target.value)} placeholder="e.g., 3 months of free access" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="border border-gray-200 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>

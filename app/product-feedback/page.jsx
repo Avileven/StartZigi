@@ -439,6 +439,8 @@ export default function ProductFeedbackPage() {
   // from beta_testers (that's actual Beta sign-up, this is earlier-stage
   // interest).
   const [followers, setFollowers] = useState([]);
+  // [NEW — Early users] Reviewers who asked to be early users / beta testers.
+  const [earlySignups, setEarlySignups] = useState([]);
   const [userPlan, setUserPlan] = useState(null);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   // [GROWTH] New — mirrors productFeedbacks exactly. Was entirely missing
@@ -503,7 +505,7 @@ export default function ProductFeedbackPage() {
   // (FounderHoverCard) no longer needs click-based open/close state.
 
   // [ADDED 020826] expand/collapse state for the detail lists under each summary
-  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false });
+  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false, earlyUsers: false });
   const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   // [GROWTH — qualitative Q&A block] Separate expand state, one entry per
   // open-text question, keyed by the field name on growth_feedback. Lets
@@ -571,6 +573,14 @@ export default function ProductFeedbackPage() {
             .eq('venture_id', currentVenture.id)
             .order('created_date', { ascending: false });
           setFollowers(followerRows || []);
+
+          // [NEW — Early users] Queried directly (no entity wrapper).
+          const { data: earlyRows } = await supabase
+            .from('early_user_signups')
+            .select('id, user_id, username, email, created_date')
+            .eq('venture_id', currentVenture.id)
+            .order('created_date', { ascending: false });
+          setEarlySignups(earlyRows || []);
 
           const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
           console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
@@ -1597,6 +1607,45 @@ export default function ProductFeedbackPage() {
                         name={getDisplayName(founderProfiles[f.user_id], null)}
                         profile={founderProfiles[f.user_id]}
                       />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* [NEW — Early users] Reviewers who asked to try the product early.
+            Username and email are shown because they agreed to share them. */}
+        {earlySignups.length > 0 && (
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Early Adopters</p>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{earlySignups.length}</p>
+                    <p className="text-xs text-gray-400">Reviewers who joined your Early Adopters Community</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggle('earlyUsers')}
+                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Zoom in
+                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.earlyUsers ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+                {expanded.earlyUsers && (
+                  <div className="mt-4 border-t border-gray-100 pt-2">
+                    {earlySignups.map((e) => (
+                      <div key={e.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{e.username || 'Unnamed'}</p>
+                          <p className="text-xs text-gray-500 truncate">{e.email}</p>
+                        </div>
+                        <p className="text-xs text-gray-400 flex-shrink-0 ml-3">{new Date(e.created_date).toLocaleDateString()}</p>
+                      </div>
                     ))}
                   </div>
                 )}

@@ -498,6 +498,8 @@ export default function VentureLanding() {
   // reached this question further down.
   const [showDescriptionInline, setShowDescriptionInline] = useState(false);
   const [wantsToFollowGrowth, setWantsToFollowGrowth] = useState(false);
+  // [NEW — Early users] Reviewer opted in to be an early user / beta tester.
+  const [wantsEarlyAccess, setWantsEarlyAccess] = useState(false);
   const [isSubmittingGrowthFeedback, setIsSubmittingGrowthFeedback] = useState(false);
   const [growthFeedbackSubmitted, setGrowthFeedbackSubmitted] = useState(false);
   // [NEW — Quick track] Idea stage answers. Prototype reuses the Core Features
@@ -1128,6 +1130,29 @@ export default function VentureLanding() {
         }).then(({ error: msgError }) => {
           if (msgError) console.error('Could not create follower notification:', msgError);
         });
+      }
+
+      // [NEW — Early users] Reviewer ticked the early user / beta tester box.
+      // Username comes from the profile, email from the account; both are
+      // shared with the founder because the reviewer agreed to it.
+      if (wantsEarlyAccess && currentUser && (gd.selected_categories || []).includes('early_users')) {
+        (async () => {
+          try {
+            const { data: prof } = await supabase.from('user_profiles').select('username').eq('id', currentUser.id).single();
+            const { error: earlyError } = await supabase.from('early_user_signups').insert({
+              venture_id: venture.id,
+              user_id: currentUser.id,
+              campaign_id: campaignId || null,
+              username: (prof && prof.username) || null,
+              email: currentUser.email,
+            });
+            if (earlyError && earlyError.code !== '23505') {
+              console.error('Could not save early user sign-up:', earlyError);
+            }
+          } catch (e) {
+            console.error('Could not save early user sign-up:', e);
+          }
+        })();
       }
 
       // Insight Credits — identical pattern to the MLP handler above.
@@ -2057,6 +2082,32 @@ export default function VentureLanding() {
                           className={`min-h-[80px] mt-2 ${missingField === 'final' ? 'border-red-500 ring-1 ring-red-500' : ''}`} disabled={isSubmittingGrowthFeedback} />
                         </MobileQuestionSheet>
                       </div>
+                      )}
+
+                      {/* [NEW — Early users] Shown only when the founder chose this category and the reviewer is signed in. */}
+                      {currentUser && (venture.growth_data.selected_categories || []).includes('early_users') && (
+                        <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-4">
+                          <p className="text-sm font-semibold text-gray-900">Join the Early Adopters Community</p>
+                          <p className="text-xs text-gray-500 mt-1 mb-3">Become one of the first users of this product and help shape its future.</p>
+                          {venture.growth_data.early_incentive && venture.growth_data.early_incentive !== 'none' && (
+                            <div className="bg-white border border-indigo-100 rounded-lg p-3 mb-3">
+                              <span className="inline-block text-[11px] font-bold text-green-700 bg-green-50 rounded-full px-2 py-0.5 mb-1">Special offer</span>
+                              <p className="text-sm font-semibold text-gray-900">{venture.growth_data.early_offer_text || ({ free_access: 'Free access', discount: 'Discount', exclusive: 'Exclusive features or early access', other: 'Special offer' })[venture.growth_data.early_incentive]}</p>
+                              <p className="text-xs text-gray-500 mt-1">An exclusive offer from the founder for early adopters.</p>
+                            </div>
+                          )}
+                          <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={wantsEarlyAccess}
+                              onChange={(e) => setWantsEarlyAccess(e.target.checked)}
+                              disabled={isSubmittingGrowthFeedback}
+                              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>I'm interested in joining this product's Early Adopters Community</span>
+                          </label>
+                          <p className="text-xs text-gray-500 mt-2 pl-6">By expressing interest, you agree to share your username and email with the founder, who may contact you.</p>
+                        </div>
                       )}
 
                       {currentUser && (
