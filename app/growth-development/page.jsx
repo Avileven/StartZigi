@@ -430,7 +430,7 @@ export default function GrowthDevelopment() {
     setGrowthData(prev => {
       const keep = (keys) => prev.selected_categories.filter(k => keys.includes(k));
       let selected_categories;
-      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value', 'media', 'early_users'])];
+      if (stage === 'idea') selected_categories = ['idea_problem', 'idea_solution', 'idea_alternatives', ...keep(['idea_pay', 'idea_value', 'media'])];
       else if (stage === 'prototype') selected_categories = ['proto_product', 'core_features', ...keep(['business_model', 'media', 'early_users'])];
       else selected_categories = ['core_features', ...keep(['business_model', 'value_proposition', 'product_definition', 'media', 'early_users'])];
       return { ...prev, stage, selected_categories };
@@ -1191,7 +1191,8 @@ export default function GrowthDevelopment() {
                   </div>
                   )}
 
-                  {/* [NEW — Early users] Reviewers are asked if they want to be early users or beta testers. */}
+                  {/* [NEW — Early Adopters] Not offered at the idea stage. */}
+                  {!isIdea && (
                   <div className={`border rounded-lg p-4 ${growthData.selected_categories.includes('early_users') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <Checkbox checked={growthData.selected_categories.includes('early_users')} onCheckedChange={() => toggleCategory('early_users')} />
@@ -1222,6 +1223,7 @@ export default function GrowthDevelopment() {
                       </div>
                     )}
                   </div>
+                  )}
 
                   <div className="border border-gray-200 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>

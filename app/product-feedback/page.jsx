@@ -476,6 +476,7 @@ export default function ProductFeedbackPage() {
   // feedback data (collapsed behind one master toggle) and a separate AI
   // zone (whose Recommended Actions is its own collapsed tab).
   const [showGrowthFeedbackDetails, setShowGrowthFeedbackDetails] = useState(false);
+  const [showEarlyAdoptersDetails, setShowEarlyAdoptersDetails] = useState(false);
   const [showGrowthRecommendedActions, setShowGrowthRecommendedActions] = useState(false);
   // [NEW — per explicit feedback] The AI result is now three equal tabs
   // (Summary / Recommended Actions / View full report) instead of a big
@@ -505,7 +506,7 @@ export default function ProductFeedbackPage() {
   // (FounderHoverCard) no longer needs click-based open/close state.
 
   // [ADDED 020826] expand/collapse state for the detail lists under each summary
-  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false, earlyUsers: false });
+  const [expanded, setExpanded] = useState({ mvpDetail: false, sf: false, mlp: false, beta: false, growth: false });
   const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   // [GROWTH — qualitative Q&A block] Separate expand state, one entry per
   // open-text question, keyed by the field name on growth_feedback. Lets
@@ -1615,45 +1616,6 @@ export default function ProductFeedbackPage() {
           </div>
         )}
 
-        {/* [NEW — Early users] Reviewers who asked to try the product early.
-            Username and email are shown because they agreed to share them. */}
-        {earlySignups.length > 0 && (
-          <div className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Early Adopters</p>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{earlySignups.length}</p>
-                    <p className="text-xs text-gray-400">Reviewers who joined your Early Adopters Community</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => toggle('earlyUsers')}
-                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                  >
-                    Zoom in
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.earlyUsers ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-                {expanded.earlyUsers && (
-                  <div className="mt-4 border-t border-gray-100 pt-2">
-                    {earlySignups.map((e) => (
-                      <div key={e.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{e.username || 'Unnamed'}</p>
-                          <p className="text-xs text-gray-500 truncate">{e.email}</p>
-                        </div>
-                        <p className="text-xs text-gray-400 flex-shrink-0 ml-3">{new Date(e.created_date).toLocaleDateString()}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {/* ===================== MVP ===================== */}
         {reachedMVP && (
           <div className="mb-10">
@@ -2518,6 +2480,46 @@ export default function ProductFeedbackPage() {
                 </div>
               )}
               </div>
+              )}
+
+              {/* [NEW — Early Adopters] Same heading and toggle structure as
+                  "Feedback Details" above. Username and email are shown
+                  because the reviewers agreed to share them. */}
+              {earlySignups.length > 0 && (
+                <>
+                  <div className="text-center mb-5 mt-8">
+                    <span
+                      className="text-xl font-extrabold"
+                      style={{ background: 'linear-gradient(90deg, #0EA5E9, #6366F1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+                    >
+                      Early Adopters Details
+                    </span>
+                  </div>
+                  <div className="flex justify-center mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowEarlyAdoptersDetails(v => !v)}
+                      className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full border bg-white hover:bg-sky-50"
+                      style={{ color: '#0369A1', borderColor: '#BAE6FD' }}
+                    >
+                      {showEarlyAdoptersDetails ? 'Hide early adopters details' : 'Show early adopters details'}
+                      <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showEarlyAdoptersDetails ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                  </div>
+                  {showEarlyAdoptersDetails && (
+                    <div className="max-w-xl mx-auto mb-3 rounded-xl bg-white border border-gray-100 shadow-sm px-5 py-2">
+                      {earlySignups.map((e) => (
+                        <div key={e.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{e.username || 'Unnamed'}</p>
+                            <p className="text-xs text-gray-500 truncate">{e.email}</p>
+                          </div>
+                          <p className="text-xs text-gray-400 flex-shrink-0 ml-3">{new Date(e.created_date).toLocaleDateString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
 
               {/* [NEW — per explicit request] AI zone, fully separate from

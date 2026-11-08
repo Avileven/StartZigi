@@ -1135,7 +1135,7 @@ export default function VentureLanding() {
       // [NEW — Early users] Reviewer ticked the early user / beta tester box.
       // Username comes from the profile, email from the account; both are
       // shared with the founder because the reviewer agreed to it.
-      if (wantsEarlyAccess && currentUser && (gd.selected_categories || []).includes('early_users')) {
+      if (wantsEarlyAccess && currentUser && (gd.stage || 'product') !== 'idea' && (gd.selected_categories || []).includes('early_users')) {
         (async () => {
           try {
             const { data: prof } = await supabase.from('user_profiles').select('username').eq('id', currentUser.id).single();
@@ -1556,7 +1556,7 @@ export default function VentureLanding() {
                   )}
                 </div>
               )}
-              {venture.growth_data.product_url && (
+              {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
                 <div className="text-center mb-8">
                   <a href={venture.growth_data.product_url} target="_blank" rel="noopener noreferrer">
                     <Button className="bg-indigo-600 hover:bg-indigo-700">
@@ -2085,7 +2085,7 @@ export default function VentureLanding() {
                       )}
 
                       {/* [NEW — Early users] Shown only when the founder chose this category and the reviewer is signed in. */}
-                      {currentUser && (venture.growth_data.selected_categories || []).includes('early_users') && (
+                      {currentUser && (venture.growth_data.stage || 'product') !== 'idea' && (venture.growth_data.selected_categories || []).includes('early_users') && (
                         <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-4">
                           <p className="text-sm font-semibold text-gray-900">Join the Early Adopters Community</p>
                           <p className="text-xs text-gray-500 mt-1 mb-3">Become one of the first users of this product and help shape its future.</p>
