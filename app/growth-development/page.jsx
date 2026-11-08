@@ -182,15 +182,29 @@ const CATEGORY_EXPLANATIONS = {
 
 const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"), but only if you provided a product link. And at the very end, regardless of which categories above you selected, one open question. This doesn't change what's shown on your public page — it only affects what feedback is collected.";
 
-const ExplainToggle = ({ text }) => {
+// [CHANGED] Explanations are no longer a "?" icon squeezed next to a label.
+// Each one is a "Read more" button under its title that opens a separate
+// box in the page flow (same look as "Show feedback details").
+const ExplainBlock = ({ text, extra, flush }) => {
   const [open, setOpen] = useState(false);
   return (
-    <span className="inline-block align-middle ml-1.5">
-      <button type="button" onClick={() => setOpen(o => !o)} className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:text-emerald-600" aria-label="Why this question?">
-        <HelpCircle className="w-4 h-4" />
+    <div className={flush ? 'mt-2' : 'pl-8 mt-2'}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border bg-white hover:bg-sky-50"
+        style={{ color: '#0369A1', borderColor: '#BAE6FD' }}
+      >
+        Read more
+        <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
-      {open && <span className="block mt-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2 max-w-md">{text}</span>}
-    </span>
+      {open && (
+        <div className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+          {extra && <p>{extra}</p>}
+          <p>{text}</p>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -1010,11 +1024,11 @@ export default function GrowthDevelopment() {
                   <div className={`border rounded-lg p-4 ${featuresReady ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
                     <p className="text-sm font-medium text-gray-900 flex items-center">
                       {featuresReady && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                      Core Features (up to 3)<ExplainToggle text={CATEGORY_EXPLANATIONS.core_features} />
+                      Core Features (up to 3)
                     </p>
+                    <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
                     <MobileFieldWrapper label="Core Features" summary={growthData.core_features.length > 0 ? `${growthData.core_features.length} added` : null} isMobile={isMobile}>
                     <div className="mt-3 space-y-2">
-                      <p className="text-xs text-gray-500">Reviewers see all of these together and rate them once — not one score per feature.</p>
                       {growthData.core_features.map((f) => (
                         <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
                           <div><p className="text-sm font-medium">{f.name}</p><p className="text-xs text-gray-500">{f.description}</p></div>
@@ -1084,9 +1098,10 @@ export default function GrowthDevelopment() {
                       <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {businessModelReady && growthData.selected_categories.includes('business_model') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Business Model<ExplainToggle text={CATEGORY_EXPLANATIONS.business_model} />
+                        Business Model
                       </span>
                     </label>
+                    <ExplainBlock text={CATEGORY_EXPLANATIONS.business_model} />
                     {growthData.selected_categories.includes('business_model') && (
                       <MobileFieldWrapper label="Business Model" summary={bmd.model_type || null} isMobile={isMobile}>
                       <div className="mt-3 pl-8 space-y-3">
@@ -1158,10 +1173,10 @@ export default function GrowthDevelopment() {
                       <Checkbox checked={growthData.selected_categories.includes('value_proposition')} onCheckedChange={() => toggleCategory('value_proposition')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {valuePropReady && growthData.selected_categories.includes('value_proposition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Slogan<ExplainToggle text={CATEGORY_EXPLANATIONS.value_proposition} />
+                        Get feedback on my Slogan
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 pl-8">Your slogan is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product.</p>
+                    <ExplainBlock text={CATEGORY_EXPLANATIONS.value_proposition} extra="Your slogan is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product." />
                     {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your slogan in the Venture Profile tab first.</p>}
                   </div>
 
@@ -1170,10 +1185,10 @@ export default function GrowthDevelopment() {
                       <Checkbox checked={growthData.selected_categories.includes('product_definition')} onCheckedChange={() => toggleCategory('product_definition')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {definitionReady && growthData.selected_categories.includes('product_definition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Product Definition<ExplainToggle text={CATEGORY_EXPLANATIONS.product_definition} />
+                        Get feedback on my Product Definition
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 pl-8">Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is.</p>
+                    <ExplainBlock text={CATEGORY_EXPLANATIONS.product_definition} extra="Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is." />
                     {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Venture Profile tab first (min 50 characters).</p>}
                   </div>
                   </>)}
@@ -1185,9 +1200,10 @@ export default function GrowthDevelopment() {
                       <Checkbox checked={growthData.selected_categories.includes('media')} onCheckedChange={() => toggleCategory('media')} />
                       <span className="text-sm font-medium text-gray-900 flex items-center">
                         {growthData.selected_categories.includes('media') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Media<ExplainToggle text={CATEGORY_EXPLANATIONS.media} />
+                        Get feedback on my Media
                       </span>
                     </label>
+                    <ExplainBlock text={CATEGORY_EXPLANATIONS.media} />
                   </div>
                   )}
 
@@ -1201,7 +1217,7 @@ export default function GrowthDevelopment() {
                         I'm looking for Early Adopters
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 pl-8">Early Adopters are the first people to try your product and help shape it. Reviewers are invited to join your Early Adopters Community. Those who say yes share their username and email with you, and you'll see them in Product Feedback.</p>
+                    <ExplainBlock text="Early Adopters are the first people to try your product and help shape it. Reviewers are invited to join your Early Adopters Community. Those who say yes share their username and email with you, and you'll see them in Product Feedback." />
                     {growthData.selected_categories.includes('early_users') && (
                       <div className="mt-4 pl-8 border-t border-emerald-100 pt-4">
                         <p className="text-sm font-semibold text-gray-900">Offer an Incentive <span className="text-xs font-normal text-gray-400">(Optional)</span></p>
@@ -1227,7 +1243,8 @@ export default function GrowthDevelopment() {
 
                   <div className="border border-gray-200 rounded-lg p-4">
                     <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>
-                    <p className="text-xs text-gray-500 mt-1 mb-2">Ask reviewers anything you want, in your own words. It appears after the other questions.</p>
+                    <ExplainBlock flush text="Ask reviewers anything you want, in your own words. It appears after the other questions." />
+                    <div className="mb-2" />
                     <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'}>
                       <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'} />
                     </MobileFieldWrapper>
