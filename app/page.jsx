@@ -1,4 +1,4 @@
-// Home page - 070926
+// Home page - 091126
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,7 @@ import ProductGrowthAnimation from "./ProductGrowthAnimation/page"; // [ADDED] i
 import CommunityAiFounderLoop from "./CommunityAiFounderLoop/page"; // [ADDED] community/AI/founder loop animation
 import InsightMetricsAnimation from "./InsightMetricsAnimation/page"; // [NEW] Insight Metrics count-up demo (Business Model / Core Features)
 import FeedbackEvolutionAnimation from "./FeedbackEvolutionAnimation/page"; // [NEW] feedback-to-product-evolution story
+import FounderJourneyAnimation from "./FounderJourneyAnimation/page"; // [NEW] intro animation before "Have an Idea? Building a Product?" (plays on scroll, with Replay)
 
 // [ADDED] Auto-cycling phase clock, adapted from the PhaseCompletionDemo clock visual
 const CLOCK_PHASES = ['idea', 'business_plan', 'mvp', 'mlp', 'beta', 'growth'];
@@ -341,6 +342,9 @@ export default function Home() {
       {/* ── Why StartZig ── */}
       <div className="pt-2 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
+          {/* [NEW] Founder journey intro animation: plays once when it scrolls into view, Replay button at the end */}
+          <FounderJourneyAnimation className="mb-12" />
+
           {/* [FIX — new content, replaces old "SPARK. SHAPE. SHARE." intro] */}
           <div className="mb-10">
             <h3 className="text-2xl md:text-4xl font-bold mb-6">
