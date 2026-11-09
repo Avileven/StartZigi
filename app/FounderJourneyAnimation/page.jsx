@@ -1,6 +1,6 @@
 // Founder journey intro animation, plays once when it scrolls into view, with a Replay button.
 "use client";
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
 const STAGE_W = 1200;
@@ -134,12 +134,14 @@ export default function FounderJourneyAnimation({ className = "" }) {
   const stageRef = useRef(null);
   const playRef = useRef(null);
   const [done, setDone] = useState(false);
-  const html = useMemo(() => buildHtml(), []);
 
   useEffect(() => {
     const box = boxRef.current;
     const root = stageRef.current;
     if (!box || !root) return undefined;
+
+    // the stage markup is injected on the client only, so it can never mismatch the server HTML (React error #425)
+    root.innerHTML = buildHtml();
 
     root.querySelectorAll("[data-persist]").forEach((n) => n.remove());
 
@@ -528,14 +530,14 @@ export default function FounderJourneyAnimation({ className = "" }) {
 
   return (
     <div className={`fj-wrap ${className}`}>
-      <style>{CSS}</style>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div
         ref={boxRef}
         className="fj-box"
         role="img"
         aria-label="Animation: founders get insights, feedback and early users from a community while their product grows"
       >
-        <div ref={stageRef} className="fj-stage" dangerouslySetInnerHTML={{ __html: html }} />
+        <div ref={stageRef} className="fj-stage" suppressHydrationWarning />
       </div>
       <div className="flex justify-center mt-4" style={{ minHeight: 40 }}>
         <button
