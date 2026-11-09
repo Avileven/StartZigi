@@ -3,8 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
-const STAGE_W = 1200;
-const STAGE_H = 800;
 const OFF = 29800; // intro length (questions, community network, StartZig) before the phone scene
 
 const QUESTIONS = [
@@ -35,17 +33,27 @@ const SHIRT = ["#3b6cf0", "#10b981", "#f97316", "#a855f7", "#ec4899", "#0ea5e9"]
 const avatarSvg = (i) =>
   `<svg viewBox="0 0 64 64"><rect width="64" height="64" fill="${BG[i % 6]}"/><ellipse cx="32" cy="62" rx="22" ry="17" fill="${SHIRT[(i + 2) % 6]}"/><circle cx="32" cy="27" r="12" fill="${SKIN[i % 6]}"/><path d="M19 26c0-9 7-14 14-14s13 5 13 14c-3-5-8-7-13-7s-10 2-14 7z" fill="${HAIR[(i * 5 + 1) % 6]}"/></svg>`;
 
-// Positions of the community faces around the founder (stage coordinates, inside the 1200x580 grid area)
-const FP = [[130, 60], [300, 50], [470, 45], [740, 45], [900, 50], [1070, 60], [60, 170], [60, 300], [60, 420], [1140, 170], [1140, 300], [1140, 420], [130, 525], [300, 535], [470, 540], [730, 540], [900, 535], [1070, 525]];
-const CX = 600;
-const CY = 290;
+// Two stage layouts: "wide" (desktop, 1200x800) and "tall" (phones, 600x910, bigger type, people around the founder)
+const LAYOUTS = {
+  wide: {
+    tall: false, W: 1200, H: 800, gridTop: 130, gridH: 580,
+    FP: [[130, 60], [300, 50], [470, 45], [740, 45], [900, 50], [1070, 60], [60, 170], [60, 300], [60, 420], [1140, 170], [1140, 300], [1140, 420], [130, 525], [300, 535], [470, 540], [730, 540], [900, 535], [1070, 525]],
+    CX: 600, CY: 290, lone: [600, 480], loneSz: 86, gf: 44, fb: [48, 36],
+    XOFF: { far: 490, mid: 410, near: 330 }, ROW: [190, 280, 370, 460, 550, 640],
+    PS: 1, phoneTop: 150, cardTop: 330, cardFont: [17, 18], lblTop: 705, dotsTop: 752,
+  },
+  tall: {
+    tall: true, W: 600, H: 910, gridTop: 0, gridH: 910,
+    FP: [[80, 70], [220, 60], [380, 60], [520, 70], [150, 175], [300, 160], [450, 175], [34, 300], [34, 450], [34, 600], [566, 300], [566, 450], [566, 600], [150, 735], [300, 755], [450, 735], [220, 850], [380, 850]],
+    CX: 300, CY: 455, lone: [300, 670], loneSz: 110, gf: 56, fb: [56, 42],
+    XOFF: { far: 258, mid: 243, near: 232 }, ROW: [240, 340, 440, 540, 640, 740],
+    PS: 1.2, phoneTop: 210, cardTop: 390, cardFont: [22, 23], lblTop: 825, dotsTop: 872,
+  },
+};
 
 // Phone-scene helpers
-const XOFF = { far: 490, mid: 410, near: 330 };
 const SCL = { far: 0.62, mid: 0.8, near: 1 };
-const ROW = [190, 280, 370, 460, 550, 640];
 const PERM = [2, 0, 4, 1, 5, 3];
-const YR = Array.from({ length: 12 }, (_, i) => ROW[PERM[Math.floor(i / 2)]] + (i % 2 ? -20 : 20));
 
 const FEAT_HTML = {
   bulb: '<div style="display:flex;justify-content:center"><svg width="46" height="58" viewBox="0 0 46 58"><path d="M23 3C12 3 5 11 5 20c0 7 4 11 8 15 2 2 3 4 3 7h14c0-3 1-5 3-7 4-4 8-8 8-15C41 11 34 3 23 3z" fill="#fbbf24"/><rect x="16" y="45" width="14" height="5" rx="2.5" fill="#94a3b8"/><rect x="18" y="52" width="10" height="4" rx="2" fill="#94a3b8"/></svg></div>',
@@ -57,13 +65,13 @@ const FEAT_HTML = {
   heart: '<div style="display:flex;align-items:center;gap:8px"><svg width="26" height="24" viewBox="0 0 24 22"><path d="M12 21C5 15 1 11.5 1 7a5.5 5.5 0 0 1 11-1.5A5.5 5.5 0 0 1 23 7c0 4.5-4 8-11 14z" fill="#ef4444"/></svg><i style="display:block;height:8px;width:90px;border-radius:4px;background:#d6def5"></i></div>',
 };
 
-const CSS = `
+const makeCss = (L) => `
 .fj-wrap{width:100%}
 .fj-box{position:relative;width:100%;overflow:hidden;background:#ffffff}
-.fj-stage{position:absolute;left:0;top:0;width:${STAGE_W}px;height:${STAGE_H}px;transform-origin:0 0;background:#ffffff;overflow:hidden;font-family:inherit;color:#0f1f5c}
+.fj-stage{position:absolute;left:0;top:0;width:${L.W}px;height:${L.H}px;transform-origin:0 0;background:#ffffff;overflow:hidden;font-family:inherit;color:#0f1f5c}
 .fj-stage *{box-sizing:border-box}
 .fj-ttl{position:absolute;left:0;top:24px;width:100%;text-align:center;font-size:42px;font-weight:800;letter-spacing:-.02em;color:#F0A020;transition:opacity .4s}
-.fj-phone{position:absolute;left:450px;top:150px;width:300px;height:520px;border-radius:38px;background:#fff;border:7px solid #1e3a8a;box-shadow:0 18px 50px rgba(30,58,138,.22);transform:scale(.78);transform-origin:50% 50%;transition:transform 1.5s cubic-bezier(.4,0,.2,1),opacity .6s;overflow:hidden}
+.fj-phone{position:absolute;left:${L.W / 2 - 150}px;top:${L.phoneTop}px;width:300px;height:520px;border-radius:38px;background:#fff;border:7px solid #1e3a8a;box-shadow:0 18px 50px rgba(30,58,138,.22);transform:scale(${0.78 * L.PS});transform-origin:50% 50%;transition:transform 1.5s cubic-bezier(.4,0,.2,1),opacity .6s;overflow:hidden}
 .fj-bar0{height:44px;background:#f4f7ff;display:flex;align-items:center;padding:0 16px;gap:10px}
 .fj-bar0 i{width:22px;height:22px;border-radius:7px;background:#c7d4f5}
 .fj-bar0 b{height:9px;width:90px;border-radius:5px;background:#c7d4f5}
@@ -85,11 +93,11 @@ const CSS = `
 .fj-chip{position:absolute;width:38px;height:30px;border-radius:14px;background:#fff;border:2px solid #c7d4f5;color:#6f82b8;box-shadow:0 4px 14px rgba(40,70,160,.2);z-index:5;opacity:0;transform:scale(.6);text-align:center;line-height:26px;letter-spacing:2px;font-size:20px;font-weight:800}
 .fj-av2{position:absolute;width:64px;height:64px;border-radius:50%;overflow:hidden;opacity:0;transform:scale(.3);box-shadow:0 4px 12px rgba(40,70,160,.18);border:3px solid #fff}
 .fj-av2 svg,.fj-gf svg,.fj-lone svg{width:100%;height:100%;display:block}
-.fj-card{position:absolute;top:330px;background:#fff;border-radius:14px;font-weight:700;line-height:1.3;color:#0f1f5c;box-shadow:0 10px 30px rgba(30,58,138,.28);border-left:6px solid #f59e0b;opacity:0;transform:translateY(14px) scale(.9);transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .35s;z-index:8}
+.fj-card{position:absolute;top:${L.cardTop}px;background:#fff;border-radius:14px;font-weight:700;line-height:1.3;color:#0f1f5c;box-shadow:0 10px 30px rgba(30,58,138,.28);border-left:6px solid #f59e0b;opacity:0;transform:translateY(14px) scale(.9);transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .35s;z-index:8}
 .fj-card.b{border-left-color:#3b6cf0}.fj-card.show{opacity:1;transform:none}
 .fj-slide{position:absolute;left:0;top:0;width:100%;height:100%;z-index:20;background:#ffffff;transition:opacity .6s}
-.fj-grid{position:absolute;left:0;top:130px;width:${STAGE_W}px;height:580px;z-index:1;transition:opacity .7s}
-.fj-svg{position:absolute;left:0;top:0;width:${STAGE_W}px;height:580px}
+.fj-grid{position:absolute;left:0;top:${L.gridTop}px;width:${L.W}px;height:${L.gridH}px;z-index:1;transition:opacity .7s}
+.fj-svg{position:absolute;left:0;top:0;width:${L.W}px;height:${L.gridH}px}
 .fj-gf{position:absolute;width:44px;height:44px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 12px rgba(40,70,160,.12);filter:grayscale(1);opacity:.32;transition:filter 1.2s,opacity 1.2s,transform 2.6s ease-in-out}
 .fj-gf.on{filter:none;opacity:1}.fj-gf.tw{filter:none;opacity:.9}
 .fj-lone{position:absolute;width:86px;height:86px;border-radius:50%;overflow:hidden;border:4px solid #fff;box-shadow:0 4px 14px rgba(40,70,160,.2);filter:grayscale(1) brightness(.85);opacity:.5;animation:fj-fadeLone 3s ease-in-out infinite;z-index:2}
@@ -105,10 +113,23 @@ const CSS = `
 .fj-tc{opacity:0;transition:opacity .25s}.fj-tc.s{opacity:1}
 .fj-mark{font-size:96px;font-weight:800;line-height:1.2;white-space:nowrap}
 .fj-ml{display:inline-block;opacity:0;transition:color .35s ease,filter .35s ease,opacity .35s ease}
-.fj-lbl{position:absolute;left:0;top:705px;width:100%;text-align:center;font-size:28px;font-weight:800;letter-spacing:.14em;color:#f59e0b;transition:opacity .4s}
-.fj-dots{position:absolute;left:0;top:752px;width:100%;display:flex;justify-content:center;gap:10px;transition:opacity .6s}
+.fj-lbl{position:absolute;left:0;top:${L.lblTop}px;width:100%;text-align:center;font-size:28px;font-weight:800;letter-spacing:.14em;color:#f59e0b;transition:opacity .4s}
+.fj-dots{position:absolute;left:0;top:${L.dotsTop}px;width:100%;display:flex;justify-content:center;gap:10px;transition:opacity .6s}
 .fj-dots i{width:10px;height:10px;border-radius:50%;background:#d6def5;transition:all .4s}
 .fj-dots i.on{background:#f59e0b;transform:scale(1.25)}
+${L.tall ? TALL_CSS : ""}
+`;
+const TALL_CSS = `
+.fj-ttl{top:26px;font-size:34px;line-height:1.15;padding:0 24px}
+.fj-lbl{font-size:32px}
+.fj-gf{width:${LAYOUTS.tall.gf}px;height:${LAYOUTS.tall.gf}px}
+.fj-lone{width:${LAYOUTS.tall.loneSz}px;height:${LAYOUTS.tall.loneSz}px}
+.fj-fb{width:${LAYOUTS.tall.fb[0]}px;height:${LAYOUTS.tall.fb[1]}px;font-size:30px;line-height:30px}
+.fj-qq{left:68px;right:68px;top:200px;bottom:200px;font-size:42px}
+.fj-qq.last{font-size:60px}
+.fj-qq.ans{font-size:46px;gap:28px}
+.fj-mark{font-size:84px}
+.fj-card{line-height:1.25}
 `;
 
 function buildHtml() {
@@ -130,12 +151,27 @@ function buildHtml() {
 }
 
 export default function FounderJourneyAnimation({ className = "" }) {
+  const [layout, setLayout] = useState("wide");
   const boxRef = useRef(null);
   const stageRef = useRef(null);
   const playRef = useRef(null);
   const [done, setDone] = useState(false);
 
+  // pick the layout from the container width (phones get the tall stage with bigger type)
   useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return undefined;
+    const pick = () => setLayout(box.clientWidth < 640 ? "tall" : "wide");
+    pick();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(pick) : null;
+    if (ro) ro.observe(box);
+    return () => { if (ro) ro.disconnect(); };
+  }, []);
+
+  useEffect(() => {
+    const L = LAYOUTS[layout];
+    const { FP, CX, CY } = L;
+    const YR = Array.from({ length: 12 }, (_, i) => L.ROW[PERM[Math.floor(i / 2)]] + (i % 2 ? -20 : 20));
     const box = boxRef.current;
     const root = stageRef.current;
     if (!box || !root) return undefined;
@@ -161,7 +197,7 @@ export default function FounderJourneyAnimation({ className = "" }) {
     let scale = 1;
     let timers = [];
     let intervals = [];
-    let phoneScale = 0.78;
+    let phoneScale = 0.78 * L.PS;
     let started = false;
     let alive = true;
 
@@ -194,8 +230,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
 
     // scale the 1200x800 stage to the container width
     const fit = () => {
-      scale = box.clientWidth / STAGE_W;
-      box.style.height = `${STAGE_H * scale}px`;
+      scale = box.clientWidth / L.W;
+      box.style.height = `${L.H * scale}px`;
       root.style.transform = `scale(${scale})`;
     };
     fit();
@@ -206,7 +242,7 @@ export default function FounderJourneyAnimation({ className = "" }) {
     const avs = [];
     const place = (a, i, t) => {
       const side = i % 2 ? 1 : -1;
-      const x = 600 + side * XOFF[t];
+      const x = L.W / 2 + side * L.XOFF[t];
       const y = YR[i];
       a.style.left = `${x - 32}px`;
       a.style.top = `${y - 32}px`;
@@ -228,7 +264,7 @@ export default function FounderJourneyAnimation({ className = "" }) {
     const svgNS = "http://www.w3.org/2000/svg";
     const sv = document.createElementNS(svgNS, "svg");
     sv.setAttribute("class", "fj-svg");
-    sv.setAttribute("viewBox", `0 0 ${STAGE_W} 580`);
+    sv.setAttribute("viewBox", `0 0 ${L.W} ${L.gridH}`);
     sv.setAttribute("data-persist", "1");
     grid.appendChild(sv);
     FP.forEach((p, i) => {
@@ -248,8 +284,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
       sv.appendChild(ln);
       glines.push(ln);
       const f = mk("fj-gf", grid, true);
-      f.style.left = `${p[0] - 22}px`;
-      f.style.top = `${p[1] - 22}px`;
+      f.style.left = `${p[0] - L.gf / 2}px`;
+      f.style.top = `${p[1] - L.gf / 2}px`;
       f.innerHTML = avatarSvg(i + 3);
       gcells.push(f);
     });
@@ -257,10 +293,10 @@ export default function FounderJourneyAnimation({ className = "" }) {
     lone.innerHTML = avatarSvg(0);
     const setLone = (x, y, anim) => {
       lone.style.transition = anim ? "filter 1s,opacity .8s,left 1.1s ease,top 1.1s ease" : "filter 1s,opacity .8s";
-      lone.style.left = `${x - 43}px`;
-      lone.style.top = `${y - 43}px`;
+      lone.style.left = `${x - L.loneSz / 2}px`;
+      lone.style.top = `${y - L.loneSz / 2}px`;
     };
-    setLone(600, 480, false);
+    setLone(L.lone[0], L.lone[1], false);
 
     // phone-scene helpers
     const add = (html, insertTop) => {
@@ -286,8 +322,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
       lbl.style.opacity = 0;
       T(() => { lbl.textContent = name; lbl.style.opacity = 1; }, 300);
       [...dots.children].forEach((d, i) => d.classList.toggle("on", i === n));
-      phoneScale = s;
-      phone.style.transform = `scale(${s})`;
+      phoneScale = s * L.PS;
+      phone.style.transform = `scale(${phoneScale})`;
     };
     const setT = (t) => {
       ttl.style.opacity = 0;
@@ -329,8 +365,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
       const d = mk(`fj-card ${cls || ""}`, root);
       d.textContent = text;
       d.style.width = `${w}px`;
-      d.style.left = `${600 - w / 2}px`;
-      d.style.fontSize = `${phoneScale < 0.85 ? 17 : 18}px`;
+      d.style.left = `${L.W / 2 - w / 2}px`;
+      d.style.fontSize = `${phoneScale < 0.85 * L.PS ? L.cardFont[0] : L.cardFont[1]}px`;
       d.style.padding = "11px 13px";
       requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add("show")));
       T(() => { feat(f); flash(); }, 800);
@@ -370,8 +406,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
       lbl.textContent = "IDEA";
       lbl.style.opacity = 1;
       [...dots.children].forEach((d, i) => d.classList.toggle("on", i === 0));
-      phoneScale = 0.78;
-      phone.style.transform = "scale(.78)";
+      phoneScale = 0.78 * L.PS;
+      phone.style.transform = `scale(${phoneScale})`;
       phone.style.opacity = 0;
       lbl.style.opacity = 0;
       dots.style.opacity = 0;
@@ -404,7 +440,8 @@ export default function FounderJourneyAnimation({ className = "" }) {
         T(() => f.classList.remove("tw"), 1800);
       }, 210);
       const drift = () => gcells.forEach((f) => {
-        f.style.transform = `translate(${(Math.random() - 0.5) * 44}px,${(Math.random() - 0.5) * 44}px)`;
+        const dr = L.tall ? 22 : 44;
+        f.style.transform = `translate(${(Math.random() - 0.5) * dr}px,${(Math.random() - 0.5) * dr}px)`;
       });
       drift();
       const dI = I(drift, 2400);
@@ -424,7 +461,7 @@ export default function FounderJourneyAnimation({ className = "" }) {
       void grid.offsetWidth;
       glines.forEach((l) => { l.style.transition = "stroke-dashoffset 1.1s ease"; });
       lone.classList.remove("lit");
-      setLone(600, 480, false);
+      setLone(L.lone[0], L.lone[1], false);
       const L0 = 17800;
       T(() => setLone(CX, CY, true), L0);
       T(() => lone.classList.add("lit"), L0 + 500);
@@ -440,11 +477,11 @@ export default function FounderJourneyAnimation({ className = "" }) {
           b.textContent = "···";
           b.style.color = col;
           b.style.border = `2px solid ${col}`;
-          b.style.left = `${p[0] - 24}px`;
-          b.style.top = `${p[1] - 18}px`;
+          b.style.left = `${p[0] - L.fb[0] / 2}px`;
+          b.style.top = `${p[1] - L.fb[1] / 2}px`;
           requestAnimationFrame(() => requestAnimationFrame(() => {
-            b.style.left = `${CX - 24}px`;
-            b.style.top = `${CY - 18}px`;
+            b.style.left = `${CX - L.fb[0] / 2}px`;
+            b.style.top = `${CY - L.fb[1] / 2}px`;
             b.style.transform = "scale(.7)";
             b.style.opacity = 0;
           }));
@@ -526,11 +563,11 @@ export default function FounderJourneyAnimation({ className = "" }) {
       clearAll();
       playRef.current = null;
     };
-  }, []);
+  }, [layout]);
 
   return (
     <div className={`fj-wrap ${className}`}>
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: makeCss(LAYOUTS[layout]) }} />
       <div
         ref={boxRef}
         className="fj-box"
