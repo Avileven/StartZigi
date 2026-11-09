@@ -59,8 +59,8 @@ const FEAT_HTML = {
 
 const CSS = `
 .fj-wrap{width:100%}
-.fj-box{position:relative;width:100%;border-radius:20px;overflow:hidden;background:#f3f5fb}
-.fj-stage{position:absolute;left:0;top:0;width:${STAGE_W}px;height:${STAGE_H}px;transform-origin:0 0;background:#f3f5fb;overflow:hidden;font-family:inherit;color:#0f1f5c}
+.fj-box{position:relative;width:100%;overflow:hidden;background:#ffffff}
+.fj-stage{position:absolute;left:0;top:0;width:${STAGE_W}px;height:${STAGE_H}px;transform-origin:0 0;background:#ffffff;overflow:hidden;font-family:inherit;color:#0f1f5c}
 .fj-stage *{box-sizing:border-box}
 .fj-ttl{position:absolute;left:0;top:24px;width:100%;text-align:center;font-size:42px;font-weight:800;letter-spacing:-.02em;color:#F0A020;transition:opacity .4s}
 .fj-phone{position:absolute;left:450px;top:150px;width:300px;height:520px;border-radius:38px;background:#fff;border:7px solid #1e3a8a;box-shadow:0 18px 50px rgba(30,58,138,.22);transform:scale(.78);transform-origin:50% 50%;transition:transform 1.5s cubic-bezier(.4,0,.2,1),opacity .6s;overflow:hidden}
@@ -87,7 +87,7 @@ const CSS = `
 .fj-av2 svg,.fj-gf svg,.fj-lone svg{width:100%;height:100%;display:block}
 .fj-card{position:absolute;top:330px;background:#fff;border-radius:14px;font-weight:700;line-height:1.3;color:#0f1f5c;box-shadow:0 10px 30px rgba(30,58,138,.28);border-left:6px solid #f59e0b;opacity:0;transform:translateY(14px) scale(.9);transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .35s;z-index:8}
 .fj-card.b{border-left-color:#3b6cf0}.fj-card.show{opacity:1;transform:none}
-.fj-slide{position:absolute;left:0;top:0;width:100%;height:100%;z-index:20;background:#f3f5fb;transition:opacity .6s}
+.fj-slide{position:absolute;left:0;top:0;width:100%;height:100%;z-index:20;background:#ffffff;transition:opacity .6s}
 .fj-grid{position:absolute;left:0;top:130px;width:${STAGE_W}px;height:580px;z-index:1;transition:opacity .7s}
 .fj-svg{position:absolute;left:0;top:0;width:${STAGE_W}px;height:580px}
 .fj-gf{position:absolute;width:44px;height:44px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 12px rgba(40,70,160,.12);filter:grayscale(1);opacity:.32;transition:filter 1.2s,opacity 1.2s,transform 2.6s ease-in-out}
