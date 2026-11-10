@@ -3,7 +3,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Send, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -17,6 +17,15 @@ export default function ContactPage() {
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState(null);
+
+  // [NEW] Mailing opt-out link: /contact?topic=unsubscribe pre-fills the message,
+  // so the recipient only needs to enter name + email and press send.
+  useEffect(() => {
+    const topic = new URLSearchParams(window.location.search).get("topic");
+    if (topic === "unsubscribe") {
+      setForm(prev => ({ ...prev, message: "[UNSUBSCRIBE] Please remove me from your mailing list." }));
+    }
+  }, []);
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));

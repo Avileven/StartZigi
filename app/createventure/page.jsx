@@ -1,4 +1,4 @@
-//createVenture - Updated with Ideas Bank integration
+ל//createVenture - Updated with Ideas Bank integration
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
