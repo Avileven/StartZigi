@@ -12,6 +12,8 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const OWNER_COPY = ["avibmax@gmail.com", "avi@leventhal.co.il"];
+const NO_EMAIL = ["pocketvet@startzig-demo.com", "grandpasays@gmail.com", "shirleve@gmail.com"];
 
 function getBaseUrl(request) {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
@@ -48,6 +50,11 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid feedbackUrl" }, { status: 400 });
     }
 
+    // Demo ventures and people who asked not to get these emails.
+    if (NO_EMAIL.includes(String(email).toLowerCase())) {
+      return NextResponse.json({ skipped: "demo address" });
+    }
+
     const baseUrl = getBaseUrl(request);
     const link = `${baseUrl}${feedbackUrl}`;
     const venture = esc(fromVentureName);
@@ -55,6 +62,8 @@ export async function POST(request) {
     const { data, error } = await resend.emails.send({
       from: "StartZig <hello@startzig.com>",
       to: [email],
+      // Copy to the owner of every request, hidden from the recipient.
+      bcc: OWNER_COPY.filter((a) => a.toLowerCase() !== String(email).toLowerCase()),
       subject: `${fromVentureName} is asking for your feedback`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 32px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
@@ -74,7 +83,7 @@ export async function POST(request) {
           </p>
 
           <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-            This request is open for 7 days.
+            This request is open for 14 days.
           </p>
 
           <div style="text-align: center; margin-top: 28px;">

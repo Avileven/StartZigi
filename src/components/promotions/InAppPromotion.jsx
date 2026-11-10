@@ -107,6 +107,9 @@ const EXAMPLE_VENTURE_IDS = [
   '3ca810de-a754-412c-8905-94247b9d1e90', // GrandpaSays.zig (MLP example)
 ];
 
+// Ventures owned by these emails are never selected for feedback requests.
+const EXCLUDED_OWNER_EMAILS = ["shirleve@gmail.com"];
+
 // [NEW — Preferences] Sector values that never count as a match for "Interests"
 // (not chosen, "not sure yet", and the two old long-track values folded into it).
 const NO_MATCH_SECTORS = ['', 'not_sure', 'other', 'consumer_apps'];
@@ -266,7 +269,9 @@ export default function InAppPromotion({ goBack }) {
         // [GROWTH — anti-collision safeguard] Confirmed bug fix: without
         // this, a real founder's campaign could randomly land on an
         // example/demo venture like PocketVet.zig, as it actually did.
-        .filter((v) => !EXAMPLE_VENTURE_IDS.includes(v.id));
+        .filter((v) => !EXAMPLE_VENTURE_IDS.includes(v.id))
+        // Owners who should never receive feedback requests.
+        .filter((v) => !EXCLUDED_OWNER_EMAILS.includes(String(v.created_by || "").toLowerCase()));
 
       if (targetVentures.length === 0) {
         alert("No other ventures available to promote to at this time.");
