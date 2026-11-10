@@ -1,4 +1,5 @@
-//createVenture - Updated with Ideas Bank integration"use client";
+//createVenture - Updated with Ideas Bank integration
+"use client";
 
 import React, { useState, useEffect, Suspense } from "react";
 import { supabase, auth } from "@/lib/supabase";
