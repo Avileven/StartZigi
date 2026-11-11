@@ -666,7 +666,12 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      showToast("ZigPulse page saved!");
+      if (growthData.stage !== 'idea' && (growthData.uploaded_files || []).length === 0) {
+        showToast("Saved. You haven't uploaded any media yet. You'll need it before you can ask for feedback.");
+        await new Promise((r) => setTimeout(r, 2800));
+      } else {
+        showToast("ZigPulse page saved!");
+      }
       router.push(createPageUrl("Dashboard"));
     } catch (error) {
       console.error("Error saving growth data:", error);
@@ -705,7 +710,7 @@ export default function GrowthDevelopment() {
   const hasSector = !!growthData.sector;
 
   const canSave = isNameComplete && hasSector && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
-    && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete && hasDemoFile) : hasDemoFile);
+    && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete) : true);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
@@ -951,7 +956,7 @@ export default function GrowthDevelopment() {
                   <p className="text-xs text-gray-400">{isIdea
                     ? 'Image: JPG, PNG, GIF, WebP or SVG. Max 5MB. One file only.'
                     : 'Image (JPG, PNG, GIF, WebP, SVG, max 5MB), video (MP4, MOV, WebM, max 20MB) or HTML file (max 5MB). One file only.'}</p>
-                  {!hasDemoFile && !isIdea && <p className="text-xs text-red-500">Required — upload one file before you can save.</p>}
+                  {!hasDemoFile && !isIdea && <p className="text-xs text-gray-500">You can save without it, but you'll need to add media before you can ask for feedback.</p>}
                 </CardContent>
               </Card>
 

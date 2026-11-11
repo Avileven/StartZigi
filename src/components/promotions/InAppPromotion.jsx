@@ -512,6 +512,31 @@ if (campaignErr) throw campaignErr;
     );
   }
 
+  // ZigPulse ventures (other than Idea) need media before they can ask for feedback.
+  const needsMedia =
+    venture &&
+    venture.phase === "growth" &&
+    (venture.growth_data?.stage || "product") !== "idea" &&
+    !((venture.growth_data?.uploaded_files || []).length > 0);
+
+  if (needsMedia) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Add media first</h2>
+            <p className="text-gray-600 mb-6">
+              You haven't uploaded media yet. It's a big part of what people see when they give you feedback,
+              and it makes their feedback better. Add it to your profile first.
+            </p>
+            <Button onClick={() => { window.location.href = "/growth-development"; }}>Add media</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!venture) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
