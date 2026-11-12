@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
+import OnboardingGate from "@/components/ventures/OnboardingGate";
 import { Lightbulb, Rocket, ArrowRight, AlertCircle, Sparkles, Tag, FileText, Target, Building2 } from "lucide-react";
 
 // Same list as growth-development/page.jsx (the short track).
@@ -436,6 +437,21 @@ function CreateVentureForm() {
   const isMobileFieldDone = (field) => (ventureData[field.key] || '').trim().length >= field.minLength;
   const mobileAllComplete = MOBILE_FIELDS.every(isMobileFieldDone);
 
+  // [NEW — onboarding] First screen: "Where are you now?" (Idea / Prototype / Product).
+  //   Idea + ZigJourney -> the existing venture form below.
+  //   Everything else   -> /growth-development?stage=... (ZigPulse), which skips its own stage picker.
+  const handleGate = ({ stage, path }) => {
+    if (path === 'journey') { setEntryChoice('idea'); return; }
+    router.push('/growth-development?stage=' + stage);
+  };
+  if (entryChoice === null) {
+    return (
+      <div className="pt-16 bg-slate-50">
+        <OnboardingGate onChoose={handleGate} />
+      </div>
+    );
+  }
+
   if (isMobile) {
     if (expandedField) {
       const field = MOBILE_FIELDS.find(f => f.key === expandedField);
@@ -506,35 +522,7 @@ function CreateVentureForm() {
         {/* [NEW] Entry choice gate — replaces the old small "Skip to
             Growth" side card entirely. Everything else (form, Ideas Bank)
             is hidden until a choice is made. */}
-        {entryChoice === null ? (
-          <div className="space-y-3 mt-6">
-            <h1 className="text-xl font-bold text-gray-900 mb-4 text-center">How would you like to start?</h1>
-            <button
-              onClick={() => setEntryChoice('idea')}
-              className="w-full text-left border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-5 flex items-center gap-4"
-            >
-              <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900"><ZigName rest="Journey" /></p>
-                <p className="text-xs text-gray-500">{JOURNEY_TEXT}</p>
-              </div>
-            </button>
-            <button
-              onClick={() => router.push('/growth-development')}
-              className="w-full text-left border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 flex items-center gap-4"
-            >
-              <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Rocket className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900"><ZigName rest="Pulse" /></p>
-                <p className="text-xs text-gray-500">{PULSE_TEXT}</p>
-              </div>
-            </button>
-          </div>
-        ) : (
+        {(
         <>
         {/* [NEW] Back to the choice screen. */}
         <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-sm text-gray-500 mb-3">
@@ -609,33 +597,7 @@ function CreateVentureForm() {
         {/* [NEW] Entry choice gate — replaces the old small "Skip to
             Growth" side card entirely. Everything else (form, Ideas Bank)
             is hidden until a choice is made. */}
-        {entryChoice === null ? (
-          <div className="max-w-2xl mx-auto mt-12">
-            <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">How would you like to start?</h1>
-            <div className="grid md:grid-cols-2 gap-6">
-              <button
-                onClick={() => setEntryChoice('idea')}
-                className="text-left border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 hover:shadow-lg transition-shadow"
-              >
-                <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
-                  <Lightbulb className="w-7 h-7 text-white" />
-                </div>
-                <p className="text-lg font-semibold text-gray-900 mb-1"><ZigName rest="Journey" /></p>
-                <p className="text-sm text-gray-600">{JOURNEY_TEXT}</p>
-              </button>
-              <button
-                onClick={() => router.push('/growth-development')}
-                className="text-left border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 hover:shadow-lg transition-shadow"
-              >
-                <div className="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
-                  <Rocket className="w-7 h-7 text-white" />
-                </div>
-                <p className="text-lg font-semibold text-gray-900 mb-1"><ZigName rest="Pulse" /></p>
-                <p className="text-sm text-gray-600">{PULSE_TEXT}</p>
-              </button>
-            </div>
-          </div>
-        ) : (
+        {(
         <>
         {/* [NEW] Back to the choice screen. */}
         <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-sm text-gray-500 mb-4">

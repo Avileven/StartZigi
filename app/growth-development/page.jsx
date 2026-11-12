@@ -25,7 +25,7 @@
 // business_plan config ("problem" for The Need, "solution" for Your Solution)
 // and the existing Tips entries (problem_statement, proposed_solution).
 // Imports: MentorModal and StaticGuidanceViewer live in src/components/mentor.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
 import { User } from '@/api/entities.js';
@@ -315,6 +315,7 @@ export default function GrowthDevelopment() {
   const [isSaving, setIsSaving] = useState(false);
   const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
   const [nameError, setNameError] = useState('');
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -450,6 +451,23 @@ export default function GrowthDevelopment() {
       return { ...prev, stage, selected_categories };
     });
   };
+
+  // [NEW — onboarding] Arriving from the new "Where are you now?" screen with
+  // ?stage=idea|prototype|product: skip this page's own stage picker and open the
+  // builder for that stage. A venture that was already set up keeps its own stage
+  // (loadData has already moved it to 'build' by then).
+  const stageParamApplied = useRef(false);
+  useEffect(() => {
+    if (isLoading || stageParamApplied.current) return;
+    stageParamApplied.current = true;
+    if (step !== 'stage' || typeof window === 'undefined') return;
+    const wanted = new URLSearchParams(window.location.search).get('stage');
+    if (['idea', 'prototype', 'product'].includes(wanted)) {
+      setPickedStage(wanted);
+      setStage(wanted);
+      setStep('build');
+    }
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleCategory = (key) => {
     if (['idea_problem', 'idea_solution', 'idea_alternatives', 'proto_product', 'core_features'].includes(key)) return;
@@ -712,6 +730,22 @@ export default function GrowthDevelopment() {
   const canSave = isNameComplete && hasSector && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
     && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete) : true);
 
+  // What is still missing before Save works, in plain words. Mirrors canSave exactly.
+  const missingItems = [];
+  if (!isNameComplete) missingItems.push({ tab: 'profile', text: 'Add a venture name (at least 2 characters)' });
+  if (!hasSector) missingItems.push({ tab: 'profile', text: 'Choose an industry' });
+  if ((isIdea || isPrototype) && !isNeedComplete) missingItems.push({ tab: 'profile', text: `The Need needs at least 30 characters (${growthData.need.trim().length} now)` });
+  if ((isIdea || isPrototype) && !isSolutionComplete) missingItems.push({ tab: 'profile', text: `${isIdea ? 'Your Solution' : 'The Product'} needs at least 30 characters (${growthData.solution.trim().length} now)` });
+  if (growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete) missingItems.push({ tab: 'profile', text: `The Slogan needs at least 10 characters (${growthData.headline.trim().length} now)` });
+  if (growthData.selected_categories.includes('product_definition') && !isDescriptionComplete) missingItems.push({ tab: 'profile', text: `The Short Description needs at least 50 characters (${growthData.description.trim().length} now)` });
+  if (!hasAtLeastOneCategory) missingItems.push({ tab: 'feedback', text: 'Choose at least one question for reviewers' });
+  if (!featuresReady) missingItems.push({ tab: 'feedback', text: 'Add at least one core feature, with a name and a short description' });
+  if (!businessModelReady) missingItems.push({ tab: 'feedback', text: 'Finish your Business Model details' });
+  const goToMissing = (tab) => {
+    setActiveTab(tab);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+  };
+
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
   if (step === 'stage') {
@@ -798,7 +832,7 @@ export default function GrowthDevelopment() {
               is by explicitly choosing "I have a product" on the entry
               screen, so re-explaining that here was redundant. */}
 
-          <Tabs defaultValue="profile" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Venture Profile</TabsTrigger>
               <TabsTrigger value="feedback" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Feedback</TabsTrigger>
@@ -898,6 +932,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
                     <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
                   </MobileFieldWrapper>
+                  {(isIdea || isPrototype) && <p className={`text-xs mt-1 ${isNeedComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.need.trim().length}/30 characters minimum</p>}
                   {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />}
                 </CardContent>
               </Card>
@@ -910,6 +945,7 @@ export default function GrowthDevelopment() {
                   <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
                     <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
                   </MobileFieldWrapper>
+                  {(isIdea || isPrototype) && <p className={`text-xs mt-1 ${isSolutionComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.solution.trim().length}/30 characters minimum</p>}
                   {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />}
                 </CardContent>
               </Card>
@@ -1263,6 +1299,20 @@ export default function GrowthDevelopment() {
               unnecessary, and was also pushing the Save button off-screen
               on mobile (confirmed via screenshot) since both shared one
               row with no wrapping. Save now gets the full row. */}
+          {missingItems.length > 0 && (
+            <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+              <p className="font-semibold text-amber-900 mb-2">To save, you still need to:</p>
+              <ul className="space-y-1">
+                {missingItems.map((m, i) => (
+                  <li key={i}>
+                    <button type="button" onClick={() => goToMissing(m.tab)} className="text-left text-amber-900 hover:underline">
+                      • {m.text} <span className="text-amber-600">({m.tab === 'profile' ? 'Venture Profile' : 'Feedback'} tab)</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-center items-center pt-6">
             <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
               {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
