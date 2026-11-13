@@ -316,6 +316,8 @@ export default function GrowthDevelopment() {
   const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  // [NEW — split save] true after the profile step was saved in this session (drives the green banner on the Feedback tab).
+  const [profileSaved, setProfileSaved] = useState(false);
   const [nameError, setNameError] = useState('');
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -591,7 +593,9 @@ export default function GrowthDevelopment() {
     return { ...newVenture, landing_page_url: landingPageUrl };
   };
 
-  const handleSave = async () => {
+  // mode 'profile': save the venture (profile step) and move to the Feedback tab.
+  // mode 'final'  : save everything and go to the Dashboard (previous behavior).
+  const handleSave = async (mode = 'final') => {
     setNameError('');
     if (!venture && !growthData.name.trim()) {
       setNameError('Venture name is required.');
@@ -684,6 +688,14 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
+      if (mode === 'profile') {
+        setProfileSaved(true);
+        showToast('Your venture was uploaded successfully!');
+        setActiveTab('feedback');
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+        setIsSaving(false);
+        return;
+      }
       if (growthData.stage !== 'idea' && (growthData.uploaded_files || []).length === 0) {
         showToast("Saved. You haven't uploaded any media yet. You'll need it before you can ask for feedback.");
         await new Promise((r) => setTimeout(r, 2800));
@@ -729,6 +741,14 @@ export default function GrowthDevelopment() {
 
   const canSave = isNameComplete && hasSector && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
     && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete) : true);
+
+  // Step 1 (profile) only needs the basics. Questions, features and the business model belong to step 2.
+  const profileMissing = [];
+  if (!isNameComplete) profileMissing.push('Add a venture name (at least 2 characters)');
+  if (!hasSector) profileMissing.push('Choose an industry');
+  if ((isIdea || isPrototype) && !isNeedComplete) profileMissing.push(`The Need needs at least 30 characters (${growthData.need.trim().length} now)`);
+  if ((isIdea || isPrototype) && !isSolutionComplete) profileMissing.push(`${isIdea ? 'Your Solution' : 'The Product'} needs at least 30 characters (${growthData.solution.trim().length} now)`);
+  const canSaveProfile = profileMissing.length === 0;
 
   // What is still missing before Save works, in plain words. Mirrors canSave exactly.
   const missingItems = [];
@@ -835,7 +855,7 @@ export default function GrowthDevelopment() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Venture Profile</TabsTrigger>
-              <TabsTrigger value="feedback" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Feedback</TabsTrigger>
+              <TabsTrigger value="feedback" disabled={!venture} className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Feedback</TabsTrigger>
             </TabsList>
 
             {/* ===================== VENTURE PROFILE ===================== */}
@@ -1019,6 +1039,15 @@ export default function GrowthDevelopment() {
 
             {/* ===================== FEEDBACK ===================== */}
             <TabsContent value="feedback" className="space-y-6">
+              {profileSaved && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
+                  <div>
+                    <p className="font-semibold">Your venture was uploaded successfully.</p>
+                    <p>Now choose the questions you want feedback on. You can also do this later.</p>
+                  </div>
+                </div>
+              )}
               {isMobile && (
                 <div>
                 <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
@@ -1299,25 +1328,45 @@ export default function GrowthDevelopment() {
               unnecessary, and was also pushing the Save button off-screen
               on mobile (confirmed via screenshot) since both shared one
               row with no wrapping. Save now gets the full row. */}
-          {missingItems.length > 0 && (
-            <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
-              <p className="font-semibold text-amber-900 mb-2">To save, you still need to:</p>
-              <ul className="space-y-1">
-                {missingItems.map((m, i) => (
-                  <li key={i}>
-                    <button type="button" onClick={() => goToMissing(m.tab)} className="text-left text-amber-900 hover:underline">
-                      • {m.text} <span className="text-amber-600">({m.tab === 'profile' ? 'Venture Profile' : 'Feedback'} tab)</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {activeTab === 'profile' ? (
+            <>
+              {profileMissing.length > 0 && (
+                <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+                  <p className="font-semibold text-amber-900 mb-2">To continue, you still need to:</p>
+                  <ul className="space-y-1 text-amber-900">
+                    {profileMissing.map((t, i) => (<li key={i}>• {t}</li>))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex justify-center items-center pt-6">
+                <Button onClick={() => handleSave('profile')} disabled={!canSaveProfile || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
+                  {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save and continue<CheckCircle className="w-4 h-4 ml-2" /></>)}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {missingItems.length > 0 && (
+                <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+                  <p className="font-semibold text-amber-900 mb-2">To save, you still need to:</p>
+                  <ul className="space-y-1">
+                    {missingItems.map((m, i) => (
+                      <li key={i}>
+                        <button type="button" onClick={() => goToMissing(m.tab)} className="text-left text-amber-900 hover:underline">
+                          • {m.text} <span className="text-amber-600">({m.tab === 'profile' ? 'Venture Profile' : 'Feedback'} tab)</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex justify-center items-center pt-6">
+                <Button onClick={() => handleSave('final')} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
+                  {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
+                </Button>
+              </div>
+            </>
           )}
-          <div className="flex justify-center items-center pt-6">
-            <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
-              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
-            </Button>
-          </div>
         </div>
       </div>
 
