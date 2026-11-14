@@ -287,8 +287,12 @@ const cleanConceptHtml = (raw) => {
   if (start === -1) return '';
   t = t.slice(start);
   const end = t.toLowerCase().lastIndexOf('</html>');
-  if (end === -1) return '';
-  t = t.slice(0, end + 7);
+  if (end !== -1) t = t.slice(0, end + 7);
+  else {
+    // Output was cut off: keep what exists if it is long enough, and let the browser close the open tags.
+    if (t.length < 1500) return '';
+    t = t.slice(0, t.lastIndexOf('>') + 1) + '</body></html>';
+  }
   t = t
     .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
     .replace(/<(iframe|object|embed|form)\b[\s\S]*?<\/\1\s*>/gi, '')
@@ -303,6 +307,9 @@ const cleanConceptHtml = (raw) => {
 
 const ForgeConcept = ({ venture }) => {
   const router = useRouter();
+  // Back goes to the page the founder came from: the profile (?from=profile) or, by default, the feedback page.
+  const backTo = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'profile') ? '/growth-development?view=profile' : '/growth-development/feedback';
+  const backLabel = backTo.includes('view=profile') ? 'Back to my profile' : 'Back to ZigPulse';
   const [moment, setMoment] = useState('');
   const [busy, setBusy] = useState(false);
   const [html, setHtml] = useState('');
@@ -319,14 +326,20 @@ const ForgeConcept = ({ venture }) => {
         InvokeLLM({ prompt: buildConceptPrompt(venture, moment), creditType: 'studio_basic' }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 120000)),
       ]);
-      const clean = cleanConceptHtml(data?.response);
-      if (!clean) throw new Error('BAD_OUTPUT');
+      const raw = String(data?.response || '');
+      console.log('[ZigForge] AI response:', raw.length, 'characters. Start:', raw.slice(0, 300), ' End:', raw.slice(-300));
+      const clean = cleanConceptHtml(raw);
+      if (!clean) {
+        const err = new Error('BAD_OUTPUT');
+        err.detail = raw.length + ' characters. Starts: "' + raw.slice(0, 80).replace(/\s+/g, ' ') + '". Ends: "' + raw.slice(-80).replace(/\s+/g, ' ') + '"';
+        throw err;
+      }
       setHtml(clean);
     } catch (e) {
       console.error('ZigForge concept error:', e);
       if (e.message === 'NO_CREDITS') setError("You don't have enough AI credits for this.");
       else if (e.message === 'TIMEOUT') setError('The AI took too long. Please try again.');
-      else setError('The AI did not return a usable page. Please try again.');
+      else setError('The AI did not return a usable page. Please try again.' + (e.detail ? ' [' + e.detail + ']' : ''));
     }
     setBusy(false);
   };
@@ -401,7 +414,7 @@ const ForgeConcept = ({ venture }) => {
               ) : (
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
                   <p className="font-semibold text-emerald-800">Added to your public page.</p>
-                  <button type="button" onClick={() => router.push('/growth-development/feedback')} className="mt-3 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">Back to ZigPulse</button>
+                  <button type="button" onClick={() => router.push(backTo)} className="mt-3 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">{backLabel}</button>
                 </div>
               )}
             </div>
@@ -409,7 +422,7 @@ const ForgeConcept = ({ venture }) => {
         </>)}
 
         <div className="text-center pb-6">
-          <button type="button" onClick={() => router.push('/growth-development/feedback')} className="text-sm text-gray-500 underline">Back to ZigPulse</button>
+          <button type="button" onClick={() => router.push(backTo)} className="text-sm text-gray-500 underline">{backLabel}</button>
         </div>
       </div>
     </div>
