@@ -26,7 +26,7 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import {
   Lightbulb, Check, Upload, Trash2, Loader2, ArrowRight, ChevronDown, Link as LinkIcon,
   Tag, Compass, Megaphone, FileText, Target, Image as ImageIcon, Share2, Pencil,
-  Linkedin, Facebook, Twitter, Instagram, Globe,
+  Linkedin, Facebook, Twitter, Instagram, Globe, Sparkles,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MentorModal from '@/components/mentor/MentorModal';
@@ -393,6 +393,17 @@ export default function GrowthDevelopment() {
     setIsSaving(false);
   };
 
+  // [NEW] Idea stage: save what is written so far, then open ZigForge, which reads the Need and Solution from the saved venture.
+  const openForge = async () => {
+    try {
+      await Venture.update(venture.id, { growth_data: growthData });
+      router.push('/zigforge');
+    } catch (e) {
+      console.error('Could not save before opening ZigForge:', e);
+      showToast('Could not save. Please try again.', 'error');
+    }
+  };
+
   // After saving: show the animated 'profile complete' screen, then open the feedback page.
   useEffect(() => {
     if (!profileDone) return;
@@ -591,6 +602,14 @@ export default function GrowthDevelopment() {
               {!hasDemoFile && !isIdea && <p className="text-xs text-gray-500">You can save without it, but you'll need to add media before you can ask for feedback.</p>}
             </div>
           </FieldCard>
+
+          {isIdea && venture && isNeedComplete && isSolutionComplete && (
+            <FieldCard Icon={Sparkles} title="Show your idea in one page" description="No image? ZigForge reads your Need and Solution and builds a one-page visual for your public page.">
+              <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
+                <Sparkles className="w-4 h-4 mr-2" />Create it with ZigForge
+              </Button>
+            </FieldCard>
+          )}
 
           {isProduct && (
             <FieldCard Icon={Share2} title="Social Links" description="Shown on your public page.">

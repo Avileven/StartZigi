@@ -1,7 +1,9 @@
 // zigforge 260226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { InvokeLLM } from '@/api/integrations';
+import { InvokeLLM, UploadFile } from '@/api/integrations';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 
 // [FIX 020826] Replaces the old defaultFeatureTemplates (Community Feed,
@@ -241,7 +243,182 @@ const VENTURE_CONFIGS = {
 };
 
 
+// ============================================
+// [NEW — ZigPulse idea stage] "Concept" mode.
+// A growth venture at the idea stage does not need a clickable app mockup. Instead this builds ONE page that
+// explains the idea (from the need + solution already written in the profile) and attaches it to the public page
+// as the venture's media file. One AI call, one charge (studio_basic = 5 credits, Pro model).
+// ============================================
+const FORGE_COST = 5;
+
+const buildConceptPrompt = (v, moment) => [
+  'You are a product designer. Create ONE self-contained HTML page (mobile, 390px wide) that explains an early-stage startup IDEA to a first-time visitor in under 30 seconds.',
+  '',
+  'Idea name: ' + v.name,
+  (v.sector && v.sector !== 'not_sure') ? 'Industry: ' + String(v.sector).replace(/_/g, ' ') : null,
+  'The need: ' + v.need,
+  'The solution: ' + v.solution,
+  moment.trim() ? 'A typical moment when someone feels this need: ' + moment.trim() : null,
+  '',
+  'Structure, in this order:',
+  '1. Brand bar: the idea name, plus a small label "Concept".',
+  '2. Headline (max 10 words) that states the benefit, plus one sentence on who it is for.',
+  '3. Card "Today": 3-4 short steps showing how a person deals with the need today, ending with a small pill saying how painful it is (use only what the need text says, no numbers you invent).',
+  '4. Card "With ' + v.name + '": 3 short steps showing the same moment with the solution, ending with a small pill.',
+  '5. One simple flat illustration (inline SVG, max 2 colors plus neutrals) of the moment the solution is used. No logos, no real people.',
+  '6. Two small cards, "The need" and "Our solution", using the founder\'s own wording.',
+  '7. A footer line only: "An idea in early stage. Your feedback shapes it." No buttons, no links, no forms.',
+  '',
+  'Rules:',
+  '- Use ONLY facts from the input. Never invent statistics, prices, user counts, reviews or quotes.',
+  '- English only. Short sentences. No jargon.',
+  '- Inline CSS only. No external images, no JavaScript, no frameworks.',
+  '- Fonts: one serif for headings and Inter for text, from Google Fonts, with fallbacks.',
+  '- Palette: one calm main color that fits the industry, one accent, a warm off-white background that fills the full width.',
+  '- Rounded cards, generous spacing, readable at 390px with no horizontal scroll. The page is shown inside a scrolling frame, so make it one vertical page.',
+  '- Return ONLY the HTML document, starting with <!DOCTYPE html>. No markdown, no explanation.',
+].filter(l => l !== null).join('\n');
+
+// Keeps the model's HTML safe to host: no scripts, frames, forms, event handlers or outside resources
+// (except Google Fonts). Returns '' when the output is unusable (missing or cut off).
+const cleanConceptHtml = (raw) => {
+  let t = String(raw || '').trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/i, '');
+  const start = t.search(/<!doctype html|<html/i);
+  if (start === -1) return '';
+  t = t.slice(start);
+  const end = t.toLowerCase().lastIndexOf('</html>');
+  if (end === -1) return '';
+  t = t.slice(0, end + 7);
+  t = t
+    .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
+    .replace(/<(iframe|object|embed|form)\b[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<(iframe|object|embed|base|img)\b[^>]*>/gi, '')
+    .replace(/<meta\b[^>]*http-equiv[^>]*>/gi, '')
+    .replace(/<link\b(?![^>]*href=["']https:\/\/fonts\.googleapis\.com)[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/javascript:/gi, '');
+  if (!/name=["']viewport["']/i.test(t)) t = t.replace(/<head[^>]*>/i, (m) => m + '<meta name="viewport" content="width=device-width,initial-scale=1">');
+  return t.length > 800 ? t : '';
+};
+
+const ForgeConcept = ({ venture }) => {
+  const router = useRouter();
+  const [moment, setMoment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [html, setHtml] = useState('');
+  const [error, setError] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const ready = venture.need.trim().length >= 30 && venture.solution.trim().length >= 30;
+  const existing = (venture.files || [])[0];
+
+  const create = async () => {
+    setBusy(true); setError(''); setAdded(false);
+    try {
+      const data = await Promise.race([
+        InvokeLLM({ prompt: buildConceptPrompt(venture, moment), creditType: 'studio_basic' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 120000)),
+      ]);
+      const clean = cleanConceptHtml(data?.response);
+      if (!clean) throw new Error('BAD_OUTPUT');
+      setHtml(clean);
+    } catch (e) {
+      console.error('ZigForge concept error:', e);
+      if (e.message === 'NO_CREDITS') setError("You don't have enough AI credits for this.");
+      else if (e.message === 'TIMEOUT') setError('The AI took too long. Please try again.');
+      else setError('The AI did not return a usable page. Please try again.');
+    }
+    setBusy(false);
+  };
+
+  const addToPage = async () => {
+    setAdding(true); setError('');
+    try {
+      const slug = String(venture.name || 'idea').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'idea';
+      const file = new File([html], slug + '-concept.html', { type: 'text/html' });
+      const up = await UploadFile({ file });
+      const entry = { type: 'html', name: file.name, url: up.file_url };
+      // Re-read first so nothing else in growth_data is overwritten.
+      const { data: row, error: readErr } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+      if (readErr) throw readErr;
+      const next = { ...(row?.growth_data || {}), uploaded_files: [entry] };
+      const { error: upErr } = await supabase.from('ventures').update({ growth_data: next }).eq('id', venture.id);
+      if (upErr) throw upErr;
+      const { data: chk } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+      if (chk?.growth_data?.uploaded_files?.[0]?.url !== entry.url) throw new Error('NOT_SAVED');
+      setAdded(true);
+    } catch (e) {
+      console.error('ZigForge add-to-page error:', e);
+      setError('Could not add it to your public page. Please try again.');
+    }
+    setAdding(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-4 md:p-8 font-sans antialiased">
+      <div className="max-w-xl mx-auto space-y-5">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">ZigForge</h1>
+          <p className="mt-2 text-gray-600">Show your idea in one page. We build it from the need and the solution you wrote.</p>
+        </div>
+
+        {!ready ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+            <p className="text-gray-800 font-medium">Write the Need and the Solution in your profile first (at least 30 characters each).</p>
+            <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Go to my profile</button>
+          </div>
+        ) : (<>
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Idea</p><p className="text-gray-900 font-semibold">{venture.name}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">The Need</p><p className="text-sm text-gray-700 whitespace-pre-line">{venture.need}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your Solution</p><p className="text-sm text-gray-700 whitespace-pre-line">{venture.solution}</p></div>
+            <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="text-xs text-gray-500 underline">Edit in my profile</button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <label className="block text-sm font-semibold text-gray-900">A typical moment when someone feels this need <span className="font-normal text-gray-500">(optional)</span></label>
+            <p className="text-xs text-gray-500 mt-1">One or two sentences. Without it, the AI will imagine the moment itself.</p>
+            <textarea value={moment} onChange={(e) => setMoment(e.target.value)} disabled={busy} maxLength={400} rows={3}
+              placeholder="e.g., It's 9pm, my dog won't stop scratching his ear and the clinic is closed."
+              className="mt-3 w-full rounded-xl border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            <button type="button" onClick={create} disabled={busy}
+              className="mt-4 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold">
+              {busy ? 'Creating your page... this can take up to a minute' : (html ? `Create again (${FORGE_COST} credits)` : `Create my idea page (${FORGE_COST} credits)`)}
+            </button>
+          </div>
+
+          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+          {html && !busy && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Preview</p>
+              <iframe title="Idea page preview" srcDoc={html} sandbox="" className="w-full rounded-xl border border-gray-200 bg-white" style={{ height: 520 }} />
+              {!added ? (
+                <button type="button" onClick={addToPage} disabled={adding}
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold">
+                  {adding ? 'Adding...' : (existing ? `Replace my current file (${existing.name}) and add to my public page` : 'Add to my public page')}
+                </button>
+              ) : (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+                  <p className="font-semibold text-emerald-800">Added to your public page.</p>
+                  <button type="button" onClick={() => router.push('/growth-development/feedback')} className="mt-3 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">Back to ZigPulse</button>
+                </div>
+              )}
+            </div>
+          )}
+        </>)}
+
+        <div className="text-center pb-6">
+          <button type="button" onClick={() => router.push('/growth-development/feedback')} className="text-sm text-gray-500 underline">Back to ZigPulse</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
+  // [NEW] Growth venture at the idea stage: shows the one-page concept builder instead of the app builder.
+  const [concept, setConcept] = useState(null);
   const [activeTab, setActiveTab] = useState('guide'); // 'guide' or 'builder'
   const [appState, setAppState] = useState(getInitialState);
   // [FIX 020826] jsonParseError state removed — was only used by the Mock
@@ -281,12 +458,16 @@ const App = () => {
         const currentUser = await User.me();
         const { data: ventures } = await supabase
           .from('ventures')
-          .select('id, name, description, phase, mvp_data, mlp_data')
+          .select('id, name, description, phase, sector, mvp_data, mlp_data, growth_data')
           .eq('created_by', currentUser.email)
           .order('created_date', { ascending: false })
           .limit(1);
         const venture = ventures?.[0];
         if (!venture) { setIsLoadingVenture(false); return; }
+        const gd = venture.growth_data || {};
+        if (venture.phase === 'growth' && gd.stage === 'idea') {
+          setConcept({ id: venture.id, name: venture.name || '', sector: venture.sector || '', need: gd.need || '', solution: gd.solution || '', files: Array.isArray(gd.uploaded_files) ? gd.uploaded_files : [] });
+        }
 
         const isMlpStage = ['mlp', 'beta', 'growth'].includes(venture.phase);
         const sourceMatrix = isMlpStage
@@ -697,6 +878,9 @@ const App = () => {
     URL.revokeObjectURL(url);
   }, [previewHtml]);
 
+
+  if (isLoadingVenture) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>;
+  if (concept) return <ForgeConcept venture={concept} />;
 
   return (
     <div className="min-h-screen font-sans antialiased">
