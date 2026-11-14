@@ -1,30 +1,17 @@
 "use client";
-// app/growth-development/page.jsx
+// app/growth-development/page.jsx   (STEP 1 of 2: venture profile)
 //
-// [v6 — all changes explicitly confirmed this round]
-//   1. Business Model: Subscription and Freemium MERGED into one option.
-//      No more two near-identical model types. Now: a "Free tier
-//      available" checkbox (+ description if checked) plus an unlimited
-//      list of paid packages (name + description + price, "+" to add more
-//      — not capped at 2 like the old Tier 1/Tier 2). Transactional and
-//      Ad-Driven unchanged.
-//   2. Demo: exactly ONE file, replaces on new upload (not accumulating
-//      anymore — that was a v4/v5 change nobody asked for). Small note
-//      about supported formats and the one-file limit.
-//   3. Copy fixes: "Product Link" description now just "Link to your
-//      product" (the previous explanatory sentence was never asked for).
+// The Growth flow is now two separate pages:
+//   1. this page: the founder builds the venture profile. "Save and continue" saves it and
+//      opens /growth-development/feedback.
+//   2. app/growth-development/feedback/page.jsx: choose the feedback questions and finish.
+// Two pages make it simpler for the founder and let us see at which step someone stops.
+//
+// Everything else about saving is unchanged: same growth_data column, same checks, same
+// welcome message / email / plan on first creation. The shared pieces (constants, loader helper,
+// interactive UI) live in components/ventures/GrowthUI.jsx.
 //
 // DB DEPENDENCY (pending, unchanged): ALTER TABLE ventures ADD COLUMN growth_data jsonb DEFAULT '{}';
-// DB DEPENDENCY (pending, unchanged): ALTER TABLE growth_feedback ADD COLUMN custom_question_answer text;
-// STILL NOT FIXED (explicit): no venture.phase guard.
-//
-// [NEW — Idea stage: Zig it + Tips] Under "The Need" and "Your Solution"
-// (Idea stage only) two buttons were added: "Zig it" opens the existing
-// MentorModal, "Tips" opens the existing StaticGuidanceViewer. No new prompts
-// and no change to MentorModal / zigConfig / StaticGuidance: this reuses the
-// business_plan config ("problem" for The Need, "solution" for Your Solution)
-// and the existing Tips entries (problem_statement, proposed_solution).
-// Imports: MentorModal and StaticGuidanceViewer live in src/components/mentor.
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Venture } from '@/api/entities.js';
 import { VentureMessage } from '@/api/entities.js';
@@ -35,187 +22,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card.jsx';
 import {
-  Lightbulb, PenTool, Package, ArrowRight, Check, Upload, Trash2, Loader2, CheckCircle, ArrowLeft, Link as LinkIcon,
-  Plus, HelpCircle, ChevronRight, X, MessageCircleQuestion, ChevronDown,
+  Lightbulb, Check, Upload, Trash2, Loader2, ArrowRight, ChevronDown, Link as LinkIcon,
+  Tag, Compass, Megaphone, FileText, Target, Image as ImageIcon, Share2, Pencil,
   Linkedin, Facebook, Twitter, Instagram, Globe,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils';
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
-import { Pencil as ExPencil, Lightbulb as ExBulb, ListPlus as ExList, Image as ExImage, Globe as ExGlobe } from 'lucide-react';
-import ExplainerRows, { ZigItBadge } from '@/components/ventures/ExplainerRows';
+import {
+  useIsMobile, MobileFieldWrapper, STAGES, STAGE_STYLE, normalizeGrowthData,
+  GrowthStyles, StepHeader, HowItWorks, FieldCard, SectorTiles, ZBadge,
+} from '@/components/ventures/GrowthUI';
 
-// [FIX — real root cause, not styling] A native <input> can never wrap
-// text to a second line or scroll vertically, no matter what CSS is
-// applied — text just keeps extending sideways and scrolls out of view.
-// That's what "gets stuck in the middle, can't see what you're typing" was
-// — a fundamental HTML constraint, not a border/sizing bug. When value/
-// onChange are passed, this component now owns the editing surface itself
-// and always renders a real <textarea>, regardless of what element the
-// caller's `children` uses on desktop. `children` is only used for the
-// multi-field categories (Business Model, Core Features, Social Links)
-// where several short inputs sit together — those still render as-is,
-// with border removed but no forced full-screen height, since forcing
-// full height there breaks a multi-field layout (confirmed by screenshot
-// last round) more than it helps a genuinely short field like a price.
-function MobileFieldWrapper({ label, summary, isMobile, children, value, onChange, placeholder }) {
-  const [open, setOpen] = useState(false);
-  if (!isMobile) return <>{children}</>;
-  const useOwnTextarea = value !== undefined && onChange !== undefined;
-  return (
-    <>
-      {/* [FIX] mt-2 added — was sitting flush against the Label above it. */}
-      <button type="button" onClick={() => setOpen(true)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white text-left mt-2">
-        <div className="min-w-0">
-          {/* [FIX] Was showing {label} again here too, duplicating the
-              Label already rendered above this component by the caller.
-              Shows only the current value now (or the empty-state hint). */}
-          {summary ? <p className="text-sm text-gray-900 truncate">{summary}</p> : <p className="text-sm text-gray-400">Tap to fill in</p>}
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-            <h3 className="font-semibold text-gray-900">{label}</h3>
-            <button type="button" onClick={() => setOpen(false)} className="text-emerald-600 font-semibold flex items-center gap-1">
-              <CheckCircle className="w-4 h-4" /> Save
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            {useOwnTextarea ? (
-              <textarea
-                autoFocus
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                className="w-full h-full min-h-[60vh] text-xl leading-relaxed border-0 focus:ring-0 focus:outline-none resize-none bg-transparent"
-              />
-            ) : (
-              <div className="[&_textarea]:!min-h-[50vh] [&_textarea]:!border-0 [&_textarea]:!rounded-none [&_textarea]:!shadow-none [&_textarea]:!ring-0 [&_textarea]:!p-0 [&_textarea]:!text-xl
-                [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0">
-                {children}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return isMobile;
-}
-
-// [CHANGED] Down to 3 model types — Subscription now covers what used to
-// be two separate (and functionally identical) options.
-const BUSINESS_MODEL_TYPES = [
-  { value: 'subscription', name: 'Subscription', description: 'Recurring fees, with an optional free tier.' },
-  { value: 'transactional', name: 'Transactional', description: 'Per-transaction fees or commissions.' },
-  { value: 'ad-driven', name: 'Ad-Driven', description: 'Free product, revenue solely from ads.' },
-];
-
-// [NEW — Quick track] Stage chosen by the founder, stored in growth_data.stage.
-// Existing ventures have no value and are treated as 'product' (unchanged flow).
-const STAGES = [
-  { value: 'idea', name: 'Idea', description: 'You have an idea and want to find out if it is worth pursuing.' },
-  { value: 'prototype', name: 'Prototype', description: 'You have a demo, an interactive sketch or a first prototype and want to know what to improve. A working product is not required.' },
-  { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
-];
-
-// [NEW] Industry list (same list in createventure/page.jsx). Saved to
-// ventures.sector so promotion can match by industry. "Not sure yet" is
-// rendered separately, as its own full-width button.
-const SECTORS = [
-  { value: 'ai_dev_tools', label: 'AI & Developer Tools' },
-  { value: 'fintech_web3', label: 'FinTech & Web3' },
-  { value: 'health_wellness', label: 'Health & Wellness' },
-  { value: 'education', label: 'Education & Learning' },
-  { value: 'ecommerce_retail', label: 'E-commerce & Retail' },
-  { value: 'business_productivity', label: 'Business & Productivity' },
-  { value: 'media_social_gaming', label: 'Media, Social & Gaming' },
-  { value: 'lifestyle_travel_realestate', label: 'Lifestyle, Travel & Real Estate' },
-  { value: 'climate_energy_agri', label: 'Climate, Energy & Agriculture' },
-  { value: 'hardware_iot', label: 'Hardware & IoT' },
-];
-const NOT_SURE = { value: 'not_sure', label: 'Not sure yet' };
-
-// Old long-track values (before the list was shortened) -> current values.
-const LEGACY_SECTORS = {
-  ai_deep_tech: 'ai_dev_tools',
-  fintech: 'fintech_web3',
-  web3_blockchain: 'fintech_web3',
-  digital_health_biotech: 'health_wellness',
-  b2b_saas: 'business_productivity',
-  climatetech_energy: 'climate_energy_agri',
-  consumer_apps: 'not_sure',
-  other: 'not_sure',
-};
-
-// Visual identity per stage (full class names so Tailwind keeps them).
-const STAGE_STYLE = {
-  idea: { Icon: Lightbulb, card: 'bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400', soft: 'bg-amber-50 border-amber-200', iconBg: 'bg-amber-100 text-amber-600', title: 'text-amber-800', chip: 'bg-amber-100 text-amber-800' },
-  prototype: { Icon: PenTool, card: 'bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500', soft: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-100 text-violet-600', title: 'text-violet-800', chip: 'bg-violet-100 text-violet-800' },
-  product: { Icon: Package, card: 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500', soft: 'bg-emerald-50 border-emerald-200', iconBg: 'bg-emerald-100 text-emerald-600', title: 'text-emerald-800', chip: 'bg-emerald-100 text-emerald-800' },
-};
-
-const CATEGORY_EXPLANATIONS = {
-  business_model: "Tests whether your pricing feels like it fits the value you're offering — not whether this reviewer personally thinks it's cheap or expensive.",
-  core_features: "Tests whether the features you chose to highlight actually support what you say the product does — not whether reviewers find each feature exciting.",
-  value_proposition: "This only affects whether reviewers are asked to rate your slogan's accuracy — your slogan itself is always shown regardless. Useful if you're unsure your slogan is landing the way you intend it to.",
-  product_definition: "This only affects whether reviewers are asked to rate your description's clarity — your description itself is always shown regardless. Useful if you're unsure your description is landing the way you intend it to.",
-  media: "Asks reviewers how clear your media was and whether it helped them understand the idea or product. Available once you upload a file.",
-};
-
-const ALWAYS_INCLUDED_EXPLANATION = "Every reviewer is always asked: \"Did you visit the actual product?\" (Yes/No — if Yes, also \"How well did it match what you expected?\" plus an optional \"What was different?\"), but only if you provided a product link. And at the very end, regardless of which categories above you selected, one open question. This doesn't change what's shown on your public page — it only affects what feedback is collected.";
-
-// [CHANGED] Explanations are no longer a "?" icon squeezed next to a label.
-// Each one is a "Read more" button under its title that opens a separate
-// box in the page flow (same look as "Show feedback details").
-const ExplainBlock = ({ text, extra, flush }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className={flush ? 'mt-2' : 'pl-8 mt-2'}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border bg-white hover:bg-sky-50"
-        style={{ color: '#0369A1', borderColor: '#BAE6FD' }}
-      >
-        Read more
-        <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: open ? 'rotate(180deg)' : 'none' }} />
-      </button>
-      {open && (
-        <div className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
-          {extra && <p>{extra}</p>}
-          <p>{text}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// [FIX — full rewrite] Replaces the old "not a popularity contest" framing,
-// which read like a napkin note, not a real welcome message for someone
-// who just reached this stage. Short version always shown (~3 lines);
-// GROWTH_FRAMING_MORE is the same welcome content used in info-mobile,
-// revealed behind the expand toggle.
 const GROWTH_FRAMING_SHORT = "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This also exposes your live product to the community, helping you grow your first users.";
 const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your brief, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Zigback, which you can use toward your own feedback requests.";
-
 
 // [NEW — Quick track] Short guide per stage, shown under the stage picker.
 const STAGE_GUIDES = {
@@ -286,15 +108,14 @@ const getZigFields = (stage) => ({
     : { fieldKey: 'solution', title: 'Your Solution', tipsId: 'proposed_solution' },
 });
 
-// [NEW — Idea stage] Two equal-width buttons, each with a one-line caption
-// (same pattern as the mobile Plan flow).
-const ZigTipsButtons = ({ onZig, onTips }) => (
+// Two equal-width buttons: Z (AI analysis) and Tips. The Z button glows once the text is long enough to analyse.
+const ZigTipsButtons = ({ onZig, onTips, ready }) => (
   <div className="mt-3 grid grid-cols-2 gap-3">
     <div className="flex flex-col items-center text-center">
-      <button type="button" onClick={onZig} className="flex items-center justify-center hover:opacity-80" aria-label="Zig it">
+      <button type="button" onClick={onZig} className={`flex items-center justify-center hover:opacity-80 px-2 py-1 ${ready ? 'zg-zbtn' : ''}`} aria-label="Zig it">
         <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '44px', width: 'auto' }} />
       </button>
-      <p className="text-xs text-gray-500 mt-1">AI analysis</p>
+      <p className={`text-xs mt-1 ${ready ? 'text-violet-700 font-semibold' : 'text-gray-500'}`}>{ready ? 'Ready for AI analysis' : 'AI analysis'}</p>
     </div>
     <div className="flex flex-col items-center text-center">
       <button type="button" onClick={onTips} className="flex flex-col items-center justify-center text-indigo-700 hover:opacity-80" aria-label="Tips">
@@ -309,19 +130,16 @@ export default function GrowthDevelopment() {
   const [venture, setVenture] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  // 'stage' = card selection screen, 'build' = the builder for the chosen stage.
+  // 'stage' = card selection screen, 'build' = the profile builder for the chosen stage.
   const [step, setStep] = useState('stage');
   const [pickedStage, setPickedStage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
-  // [NEW — split save] true after the profile step was saved in this session (drives the green banner on the Feedback tab).
-  const [profileSaved, setProfileSaved] = useState(false);
   const [nameError, setNameError] = useState('');
   const router = useRouter();
   const isMobile = useIsMobile();
-  // [NEW — Idea stage] Which field's Zig it / Tips is open ('need' | 'solution' | null).
+  // Which field's Zig it / Tips is open ('need' | 'solution' | null).
   const [zigField, setZigField] = useState(null);
   const [tipsField, setTipsField] = useState(null);
 
@@ -354,12 +172,6 @@ export default function GrowthDevelopment() {
     early_offer_text: '',
   });
 
-  const [newFeatureName, setNewFeatureName] = useState('');
-  const [newFeatureDesc, setNewFeatureDesc] = useState('');
-  const [newPackageName, setNewPackageName] = useState('');
-  const [newPackageDesc, setNewPackageDesc] = useState('');
-  const [newPackagePrice, setNewPackagePrice] = useState('');
-
   const [toast, setToast] = useState(null);
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -375,38 +187,7 @@ export default function GrowthDevelopment() {
       if (ventures.length > 0) {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
-        const loaded = { ...(currentVenture.growth_data || {}) };
-        loaded.name = currentVenture.name || '';
-        loaded.stage = ['idea', 'prototype', 'product'].includes(loaded.stage) ? loaded.stage : 'product';
-        // Old values are translated; anything unknown shows as nothing selected.
-        loaded.sector = LEGACY_SECTORS[currentVenture.sector] || currentVenture.sector || '';
-        loaded.need = loaded.need || '';
-        loaded.solution = loaded.solution || '';
-        loaded.product_url = loaded.product_url || '';
-        loaded.uploaded_files = (loaded.uploaded_files || []).slice(0, 1); // enforce single-file cap even on old data
-        loaded.is_imported = loaded.is_imported === true;
-        loaded.selected_categories = loaded.selected_categories || [];
-        loaded.core_features = loaded.core_features || [];
-        // [NEW] Core questions are always part of the selection: Core Features outside Idea, Innovation in Idea.
-        if (loaded.stage === 'idea') { if (!loaded.selected_categories.includes('idea_alternatives')) loaded.selected_categories = [...loaded.selected_categories, 'idea_alternatives']; }
-        else if (!loaded.selected_categories.includes('core_features')) loaded.selected_categories = [...loaded.selected_categories, 'core_features'];
-        loaded.custom_question = loaded.custom_question || '';
-        loaded.early_incentive = loaded.early_incentive || '';
-        loaded.early_offer_text = loaded.early_offer_text || '';
-        loaded.business_model_data = {
-          model_type: loaded.business_model_data?.model_type || '',
-          has_free_tier: loaded.business_model_data?.has_free_tier || false,
-          free_tier_description: loaded.business_model_data?.free_tier_description || '',
-          packages: loaded.business_model_data?.packages || [],
-          transaction_fee_description: loaded.business_model_data?.transaction_fee_description || '',
-        };
-        loaded.social_links = {
-          linkedin: loaded.social_links?.linkedin || '',
-          facebook: loaded.social_links?.facebook || '',
-          twitter: loaded.social_links?.twitter || '',
-          instagram: loaded.social_links?.instagram || '',
-          website: loaded.social_links?.website || '',
-        };
+        const loaded = normalizeGrowthData(currentVenture);
         setGrowthData(prev => ({ ...prev, ...loaded }));
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
@@ -470,41 +251,6 @@ export default function GrowthDevelopment() {
       setStep('build');
     }
   }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggleCategory = (key) => {
-    if (['idea_problem', 'idea_solution', 'idea_alternatives', 'proto_product', 'core_features'].includes(key)) return;
-    setGrowthData(prev => {
-      const has = prev.selected_categories.includes(key);
-      const selected_categories = has ? prev.selected_categories.filter(k => k !== key) : [...prev.selected_categories, key];
-      return { ...prev, selected_categories };
-    });
-  };
-
-  const addFeature = () => {
-    if (!newFeatureName.trim() || growthData.core_features.length >= 3) return;
-    setGrowthData(prev => ({ ...prev, core_features: [...prev.core_features, { id: `feat_${Date.now()}`, name: newFeatureName.trim(), description: newFeatureDesc.trim() }] }));
-    setNewFeatureName(''); setNewFeatureDesc('');
-  };
-  const removeFeature = (id) => setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
-
-  // [NEW] Unlimited packages, replacing the old fixed Tier 1/Tier 2 fields.
-  const addPackage = () => {
-    if (!newPackageName.trim()) return;
-    setGrowthData(prev => ({
-      ...prev,
-      business_model_data: {
-        ...prev.business_model_data,
-        packages: [...prev.business_model_data.packages, {
-          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(),
-        }],
-      },
-    }));
-    setNewPackageName(''); setNewPackageDesc(''); setNewPackagePrice('');
-  };
-  const removePackage = (id) => setGrowthData(prev => ({
-    ...prev,
-    business_model_data: { ...prev.business_model_data, packages: prev.business_model_data.packages.filter(p => p.id !== id) },
-  }));
 
   // [FIX] Single file only — replaces the previous one instead of
   // accumulating. The old "files accumulate" behavior was never requested;
@@ -593,9 +339,8 @@ export default function GrowthDevelopment() {
     return { ...newVenture, landing_page_url: landingPageUrl };
   };
 
-  // mode 'profile': save the venture (profile step) and move to the Feedback tab.
-  // mode 'final'  : save everything and go to the Dashboard (previous behavior).
-  const handleSave = async (mode = 'final') => {
+  // Saves the venture (create on first save, update after) and moves on to step 2: the feedback page.
+  const handleSave = async () => {
     setNameError('');
     if (!venture && !growthData.name.trim()) {
       setNameError('Venture name is required.');
@@ -688,21 +433,8 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      if (mode === 'profile') {
-        setProfileSaved(true);
-        showToast('Your venture was uploaded successfully!');
-        setActiveTab('feedback');
-        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
-        setIsSaving(false);
-        return;
-      }
-      if (growthData.stage !== 'idea' && (growthData.uploaded_files || []).length === 0) {
-        showToast("Saved. You haven't uploaded any media yet. You'll need it before you can ask for feedback.");
-        await new Promise((r) => setTimeout(r, 2800));
-      } else {
-        showToast("ZigPulse page saved!");
-      }
-      router.push(createPageUrl("Dashboard"));
+      showToast('Your venture was uploaded successfully!');
+      router.push('/growth-development/feedback?saved=1');
     } catch (error) {
       console.error("Error saving growth data:", error);
       showToast("Error saving. Please try again.", "error");
@@ -718,31 +450,10 @@ export default function GrowthDevelopment() {
   const isSolutionComplete = growthData.solution.trim().length >= 30;
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
-  const hasAtLeastOneCategory = growthData.selected_categories.length > 0;
-  const featuresReady = isIdea || growthData.core_features.length > 0;
-  const bmd = growthData.business_model_data;
-  const businessModelReady = (() => {
-    if (!growthData.selected_categories.includes('business_model')) return true;
-    if (!bmd.model_type) return false;
-    if (bmd.model_type === 'subscription') {
-      const packagesOk = bmd.packages.length > 0 && bmd.packages.every(p => p.name.trim() && p.price.trim());
-      const freeTierOk = !bmd.has_free_tier || bmd.free_tier_description.trim().length > 0;
-      return packagesOk && freeTierOk;
-    }
-    if (bmd.model_type === 'transactional') return bmd.transaction_fee_description.trim().length > 0;
-    if (bmd.model_type === 'ad-driven') return true;
-    return false;
-  })();
-  const valuePropReady = !growthData.selected_categories.includes('value_proposition') || isHeadlineComplete;
-  const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
   const hasDemoFile = growthData.uploaded_files.length > 0;
-
   const hasSector = !!growthData.sector;
 
-  const canSave = isNameComplete && hasSector && hasAtLeastOneCategory && featuresReady && businessModelReady && valuePropReady && definitionReady
-    && (isIdea ? (isNeedComplete && isSolutionComplete) : isPrototype ? (isNeedComplete && isSolutionComplete) : true);
-
-  // Step 1 (profile) only needs the basics. Questions, features and the business model belong to step 2.
+  // Step 1 only needs the basics. Questions, features and the business model belong to step 2.
   const profileMissing = [];
   if (!isNameComplete) profileMissing.push('Add a venture name (at least 2 characters)');
   if (!hasSector) profileMissing.push('Choose an industry');
@@ -750,21 +461,12 @@ export default function GrowthDevelopment() {
   if ((isIdea || isPrototype) && !isSolutionComplete) profileMissing.push(`${isIdea ? 'Your Solution' : 'The Product'} needs at least 30 characters (${growthData.solution.trim().length} now)`);
   const canSaveProfile = profileMissing.length === 0;
 
-  // What is still missing before Save works, in plain words. Mirrors canSave exactly.
-  const missingItems = [];
-  if (!isNameComplete) missingItems.push({ tab: 'profile', text: 'Add a venture name (at least 2 characters)' });
-  if (!hasSector) missingItems.push({ tab: 'profile', text: 'Choose an industry' });
-  if ((isIdea || isPrototype) && !isNeedComplete) missingItems.push({ tab: 'profile', text: `The Need needs at least 30 characters (${growthData.need.trim().length} now)` });
-  if ((isIdea || isPrototype) && !isSolutionComplete) missingItems.push({ tab: 'profile', text: `${isIdea ? 'Your Solution' : 'The Product'} needs at least 30 characters (${growthData.solution.trim().length} now)` });
-  if (growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete) missingItems.push({ tab: 'profile', text: `The Slogan needs at least 10 characters (${growthData.headline.trim().length} now)` });
-  if (growthData.selected_categories.includes('product_definition') && !isDescriptionComplete) missingItems.push({ tab: 'profile', text: `The Short Description needs at least 50 characters (${growthData.description.trim().length} now)` });
-  if (!hasAtLeastOneCategory) missingItems.push({ tab: 'feedback', text: 'Choose at least one question for reviewers' });
-  if (!featuresReady) missingItems.push({ tab: 'feedback', text: 'Add at least one core feature, with a name and a short description' });
-  if (!businessModelReady) missingItems.push({ tab: 'feedback', text: 'Finish your Business Model details' });
-  const goToMissing = (tab) => {
-    setActiveTab(tab);
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
-  };
+  // The next field to fill gets the pulsing icon.
+  const pendingOrder = [
+    ['name', isNameComplete], ['sector', hasSector],
+    ...(isProduct ? [['headline', isHeadlineComplete], ['description', isDescriptionComplete]] : [['need', isNeedComplete], ['solution', isSolutionComplete]]),
+  ];
+  const activeKey = (pendingOrder.find(([, done]) => !done) || [])[0];
 
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
@@ -809,12 +511,13 @@ export default function GrowthDevelopment() {
 
   return (
     <>
+      <GrowthStyles />
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{toast.message}</div>
       )}
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
             <div className="mt-3 flex items-center justify-center gap-2">
@@ -824,6 +527,8 @@ export default function GrowthDevelopment() {
               <button type="button" onClick={() => { setPickedStage(growthData.stage); setStep('stage'); }} className="text-xs text-gray-500 underline">Change</button>
             </div>
           </div>
+
+          <StepHeader current={1} />
 
           {!isMobile && isProduct && (
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
@@ -847,526 +552,121 @@ export default function GrowthDevelopment() {
 
           {!isMobile && !isProduct && <StageGuide stage={growthData.stage} />}
 
-          {/* [FIX] "You don't have a venture yet..." message removed
-              entirely — the only way to reach this page without a venture
-              is by explicitly choosing "I have a product" on the entry
-              screen, so re-explaining that here was redundant. */}
+          <HowItWorks steps={[
+            { icon: <Pencil className="w-5 h-5" />, text: 'Fill in the details in the fields.' },
+            { icon: <Lightbulb className="w-5 h-5" />, text: <>Click <b>TIP</b> to get general guidance.</> },
+            { icon: <ZBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },
+          ]} />
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Venture Profile</TabsTrigger>
-              <TabsTrigger value="feedback" disabled={!venture} className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Feedback</TabsTrigger>
-            </TabsList>
+          <FieldCard Icon={Tag} title={`${isIdea ? 'Idea Name' : 'Venture Name'} *`} done={isNameComplete} active={activeKey === 'name'}>
+            <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile} value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet">
+              <Input value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet" />
+              {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
+            </MobileFieldWrapper>
+            {nameError && isMobile && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
+          </FieldCard>
 
-            {/* ===================== VENTURE PROFILE ===================== */}
-            <TabsContent value="profile" className="space-y-6">
-              {isMobile && (
-                <div>
-                <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
-                <ExplainerRows rows={[
-                  { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'Fill in the details in the fields.' },
-                  { icon: <ExBulb className="w-6 h-6 text-indigo-600" />, text: <>Click <b>TIP</b> to get general guidance.</> },
-                  { icon: <ZigItBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },
-                ]} />
-                </div>
-              )}
-              {(
-                <Card className={isNameComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">{isNameComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Idea Name' : 'Venture Name'} *</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MobileFieldWrapper label="Venture Name" summary={growthData.name} isMobile={isMobile} value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet">
-                      <Input value={growthData.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g., PocketVet" />
-                      {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
-                    </MobileFieldWrapper>
-                  </CardContent>
-                </Card>
-              )}
+          <FieldCard Icon={Compass} title="Industry *" done={hasSector} active={activeKey === 'sector'}>
+            <SectorTiles value={growthData.sector} onChange={(v) => handleChange('sector', v)} />
+          </FieldCard>
 
-              {/* [NEW] Industry — tappable chips, two per row (mobile-first). Optional. */}
-              <Card className={growthData.sector ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{growthData.sector && <CheckCircle className="w-5 h-5 text-green-500" />}Industry *</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2">
-                    {SECTORS.map((sec) => {
-                      const on = growthData.sector === sec.value;
-                      return (
-                        <button
-                          type="button"
-                          key={sec.value}
-                          onClick={() => handleChange('sector', on ? '' : sec.value)}
-                          className={`min-h-[48px] px-3 py-2 rounded-xl border text-sm text-left flex items-center gap-2 transition-colors ${on ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
-                        >
-                          <span className="leading-snug">{sec.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleChange('sector', growthData.sector === NOT_SURE.value ? '' : NOT_SURE.value)}
-                    className={`mt-2 w-full min-h-[48px] px-3 py-2 rounded-xl border text-sm flex items-center justify-center gap-2 transition-colors ${growthData.sector === NOT_SURE.value ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
-                  >
-                    {NOT_SURE.label}
-                  </button>
-                </CardContent>
-              </Card>
+          {isProduct && (
+            <FieldCard Icon={Megaphone} title="Slogan" description="Your hero line." done={isHeadlineComplete} active={activeKey === 'headline'}>
+              <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile} value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip">
+                <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
+              </MobileFieldWrapper>
+            </FieldCard>
+          )}
 
-              {isProduct && (
-              <Card className={isHeadlineComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isHeadlineComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Slogan</CardTitle>
-                  <CardDescription>Your hero line.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile} value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip">
-                    <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
-                  </MobileFieldWrapper>
-                </CardContent>
-              </Card>
-              )}
-
-              {isProduct ? (
-              <Card className={isDescriptionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isDescriptionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}Short Description</CardTitle>
-                  <CardDescription>What the product is and who it's for.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
-                    <Textarea value={growthData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Describe what the product does and who it's for..." className="h-28" />
-                  </MobileFieldWrapper>
-                </CardContent>
-              </Card>
-              ) : (
-              <>
-              <Card className={isNeedComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isNeedComplete && <CheckCircle className="w-5 h-5 text-green-500" />}The Need</CardTitle>
-                  <CardDescription>What need are you addressing, and what is missing in the market today?</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
-                    <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
-                  </MobileFieldWrapper>
-                  {(isIdea || isPrototype) && <p className={`text-xs mt-1 ${isNeedComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.need.trim().length}/30 characters minimum</p>}
-                  {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />}
-                </CardContent>
-              </Card>
-              <Card className={isSolutionComplete ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{isSolutionComplete && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Your Solution' : 'The Product'}</CardTitle>
-                  <CardDescription>{isIdea ? 'What is your solution, and who is it for?' : 'Describe your product: what it does and who it is for.'}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
-                    <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
-                  </MobileFieldWrapper>
-                  {(isIdea || isPrototype) && <p className={`text-xs mt-1 ${isSolutionComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.solution.trim().length}/30 characters minimum</p>}
-                  {(isIdea || isPrototype) && <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />}
-                </CardContent>
-              </Card>
-              </>
-              )}
-
-              {isProduct && (
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5 text-emerald-600" />Product Link</CardTitle>
-                  {/* [FIX] Was a longer explanatory sentence never asked for — now just this. */}
-                  <CardDescription>Link to your product</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile} value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com">
-                    <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
-                  </MobileFieldWrapper>
-                </CardContent>
-              </Card>
-              )}
-
-              {/* [FIX] Single file only now, replaces on new upload. */}
-              <Card className={hasDemoFile ? 'shadow-lg border-emerald-400 bg-emerald-50/40' : 'shadow-lg'}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">{hasDemoFile && <CheckCircle className="w-5 h-5 text-green-500" />}{isIdea ? 'Image (optional)' : 'Demo'}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600">Upload a unique media file, or one you already use on your site, to explain and visualize your idea or product.</p>
-                  {!hasDemoFile ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
-                        <span>Upload a file</span>
-                        <Input id="growth-file-upload" type="file" className="sr-only" onChange={handleFileUpload} accept={isIdea ? '.jpg,.jpeg,.png,.gif,.webp,.svg' : '.jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.webm,.html,.htm'} disabled={isUploading} />
-                      </Label>
-                      {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm">{growthData.uploaded_files[0].name}</p>
-                      <Button variant="ghost" size="icon" onClick={removeUploadedFile}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-400">{isIdea
-                    ? 'Image: JPG, PNG, GIF, WebP or SVG. Max 5MB. One file only.'
-                    : 'Image (JPG, PNG, GIF, WebP, SVG, max 5MB), video (MP4, MOV, WebM, max 20MB) or HTML file (max 5MB). One file only.'}</p>
-                  {!hasDemoFile && !isIdea && <p className="text-xs text-gray-500">You can save without it, but you'll need to add media before you can ask for feedback.</p>}
-                </CardContent>
-              </Card>
-
-              {isProduct && (
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Social Links</CardTitle>
-                  <CardDescription>Shown on your public page.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MobileFieldWrapper label="Social Links" summary={Object.values(growthData.social_links).some(v => v) ? 'Some links added' : null} isMobile={isMobile}>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2"><Linkedin className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} /></div>
-                    <div className="flex items-center gap-2"><Facebook className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Facebook URL" value={growthData.social_links.facebook} onChange={(e) => handleSocialLinkChange('facebook', e.target.value)} /></div>
-                    <div className="flex items-center gap-2"><Twitter className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} /></div>
-                    <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} /></div>
-                    <div className="flex items-center gap-2"><Globe className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Website URL (company site, not the product itself)" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} /></div>
-                  </div>
-                  </MobileFieldWrapper>
-                </CardContent>
-              </Card>
-              )}
-            </TabsContent>
-
-            {/* ===================== FEEDBACK ===================== */}
-            <TabsContent value="feedback" className="space-y-6">
-              {profileSaved && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
-                  <div>
-                    <p className="font-semibold">Your venture was uploaded successfully.</p>
-                    <p>Now choose the questions you want feedback on. You can also do this later.</p>
-                  </div>
-                </div>
-              )}
-              {isMobile && (
-                <div>
-                <h3 className="font-semibold text-lg text-gray-900 text-center">How It Works</h3>
-                <ExplainerRows rows={[
-                  { icon: <ExList className="w-6 h-6 text-indigo-600" />, text: 'Beyond the basic questions, choose additional questions.' },
-                  { icon: <ExImage className="w-6 h-6 text-indigo-600" />, text: 'Check the box if you want feedback on the media you uploaded.' },
-                  { icon: <ExPencil className="w-6 h-6 text-indigo-600" />, text: 'If needed, write a personal question.' },
-                  { icon: <ExGlobe className="w-6 h-6 text-indigo-600" />, text: <>Click <b>Save</b>, and your public page is ready for feedback.</> },
-                ]} />
-                </div>
-              )}
-              {/* [RESTRUCTURE] Core questions first (always asked), then the
-                  optional questions to choose from, with the founder's own
-                  question as the last item of that choice card. */}
-              <Card className="shadow-lg border-emerald-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" />Core questions (always asked)</CardTitle>
-                  <CardDescription>These are asked on every page at this stage.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {isIdea && (
-                    <>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900">The Need</p>
-                        <p className="text-xs text-gray-500 mt-1">"The problem feels relevant and worth solving."</p>
-                      </div>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900">Your Solution</p>
-                        <p className="text-xs text-gray-500 mt-1">"The solution offers something meaningful, and its value is clear to me."</p>
-                      </div>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900">Innovation</p>
-                        <p className="text-xs text-gray-500 mt-1">"Based on what you know, is this idea innovative?"</p>
-                      </div>
-                    </>
-                  )}
-                  {isPrototype && (
-                    <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                      <p className="text-sm font-medium text-gray-900">The Product</p>
-                      <p className="text-xs text-gray-500 mt-1">"How clearly and accurately is this product defined?"</p>
-                    </div>
-                  )}
-                  {!isIdea && (
-                  <div className={`border rounded-lg p-4 ${featuresReady ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <p className="text-sm font-medium text-gray-900 flex items-center">
-                      {featuresReady && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                      Core Features (up to 3)
-                    </p>
-                    <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
-                    <MobileFieldWrapper label="Core Features" summary={growthData.core_features.length > 0 ? `${growthData.core_features.length} added` : null} isMobile={isMobile}>
-                    <div className="mt-3 space-y-2">
-                      {growthData.core_features.map((f) => (
-                        <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                          <div><p className="text-sm font-medium">{f.name}</p><p className="text-xs text-gray-500">{f.description}</p></div>
-                          <Button variant="ghost" size="icon" onClick={() => removeFeature(f.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                        </div>
-                      ))}
-                      {growthData.core_features.length < 3 && (
-                        <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                          <div className="flex-1"><Label className="text-xs">Feature name</Label><Input value={newFeatureName} onChange={(e) => setNewFeatureName(e.target.value)} placeholder="e.g., Smart itinerary builder" /></div>
-                          <div className="flex-1"><Label className="text-xs">Short description</Label><Input value={newFeatureDesc} onChange={(e) => setNewFeatureDesc(e.target.value)} placeholder="What it does" /></div>
-                          <Button size="sm" onClick={addFeature} className="w-full sm:w-auto">Add feature</Button>
-                        </div>
-                      )}
-                      {growthData.core_features.length === 0 && <p className="text-xs text-red-500">Required — add at least one feature before you can save.</p>}
-                      <div className="pt-2 space-y-1 text-xs text-gray-500">
-                        <p>Reviewers are asked:</p>
-                        <p>"How well do these features support what this product is meant to do? (1-10)"</p>
-                        <p>"What feature do you think would add value to the product? (optional)"</p>
-                      </div>
-                    </div>
-                    </MobileFieldWrapper>
-                  </div>
-                  )}
-                  {isProduct && (
-                    <>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900">Product visit</p>
-                        <p className="text-xs text-gray-500 mt-1">"Did you visit the actual product?" Asked only if you added a product link. If yes: "How well did it match what you expected?", "What was different?" (optional) and a testimonial (optional).</p>
-                      </div>
-                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900">One Last Thing</p>
-                        <p className="text-xs text-gray-500 mt-1">"What's the one thing you'd improve about this product?" Asked at the end.</p>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Choose additional questions</CardTitle>
-                  <CardDescription>Optional. You can change this anytime, even after your page is live.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-
-                  {isIdea && (
-                    <>
-                      {[
-                        { key: 'idea_pay', label: 'Willingness to pay', hint: '"Would you pay for a product like this?" Answers appear in Feedback Details.' },
-                        { key: 'idea_value', label: 'What would make it more valuable', hint: 'An open question for suggestions.' },
-                      ].map((q) => (
-                        <div key={q.key} className="border border-gray-200 rounded-lg p-4">
-                          <label className="flex items-start gap-3 cursor-pointer">
-                            <Checkbox checked={growthData.selected_categories.includes(q.key)} onCheckedChange={() => toggleCategory(q.key)} />
-                            <span className="text-sm font-medium text-gray-900">{q.label}</span>
-                          </label>
-                          <p className="text-xs text-gray-500 mt-1 pl-8">{q.hint}</p>
-                        </div>
-                      ))}
-                    </>
-                  )}
-
-                  {/* --- Business Model (merged Subscription/Freemium) --- */}
-                  {!isIdea && (<>
-                  <div className={`border rounded-lg p-4 ${businessModelReady && growthData.selected_categories.includes('business_model') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('business_model')} onCheckedChange={() => toggleCategory('business_model')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {businessModelReady && growthData.selected_categories.includes('business_model') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Business Model
-                      </span>
-                    </label>
-                    <ExplainBlock text={CATEGORY_EXPLANATIONS.business_model} />
-                    {growthData.selected_categories.includes('business_model') && (
-                      <MobileFieldWrapper label="Business Model" summary={bmd.model_type || null} isMobile={isMobile}>
-                      <div className="mt-3 pl-8 space-y-3">
-                        <div>
-                          <Label className="text-xs">Business model</Label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
-                            {BUSINESS_MODEL_TYPES.map((m) => (
-                              <button type="button" key={m.value} onClick={() => handleBusinessModelChange('model_type', m.value)}
-                                className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                                <p className="font-medium text-gray-900">{m.name}</p>
-                                <p className="text-xs text-gray-500">{m.description}</p>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {bmd.model_type === 'subscription' && (
-                          <>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <Checkbox checked={bmd.has_free_tier} onCheckedChange={(checked) => handleBusinessModelChange('has_free_tier', checked === true)} />
-                              <span className="text-sm text-gray-800">Free tier available</span>
-                            </label>
-                            {bmd.has_free_tier && (
-                              <div>
-                                <Input value={bmd.free_tier_description} onChange={(e) => handleBusinessModelChange('free_tier_description', e.target.value)} placeholder="What's included in the free tier" />
-                                {!bmd.free_tier_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe the free tier, or uncheck it above.</p>}
-                              </div>
-                            )}
-
-                            <div className="space-y-2">
-                              <Label className="text-xs">Paid packages</Label>
-                              {bmd.packages.map((p) => (
-                                <div key={p.id}>
-                                  <div className="flex items-center justify-between bg-gray-50 rounded p-2">
-                                    <div><p className="text-sm font-medium">{p.name} — {p.price}</p><p className="text-xs text-gray-500">{p.description}</p></div>
-                                    <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                                  </div>
-                                  {!p.price.trim() && <p className="text-xs text-red-500 mt-1">This package is missing a price.</p>}
-                                </div>
-                              ))}
-                              {/* [FIX] Stacks vertically on small screens — was
-                                  3 inputs crammed side by side, unusable on a
-                                  phone even inside the fullscreen sheet. */}
-                              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                                <div className="flex-1"><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
-                                <div className="sm:w-24"><Label className="text-xs">Price</Label><Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="$9/mo" /></div>
-                                <div className="flex-1"><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
-                                <Button size="sm" onClick={addPackage} className="w-full sm:w-auto">Add package</Button>
-                              </div>
-                              {bmd.packages.length === 0 && <p className="text-xs text-red-500">Add at least one package.</p>}
-                            </div>
-                          </>
-                        )}
-                        {bmd.model_type === 'transactional' && (
-                          <div><Label className="text-xs">Fee / commission per transaction</Label><Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking" />
-                            {!bmd.transaction_fee_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe your fee before you can save.</p>}
-                          </div>
-                        )}
-                        {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
-                        {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
-                      </div>
-                      </MobileFieldWrapper>
-                    )}
-                  </div>
-
-                  {isProduct && (<>
-                  <div className={`border rounded-lg p-4 ${valuePropReady && growthData.selected_categories.includes('value_proposition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('value_proposition')} onCheckedChange={() => toggleCategory('value_proposition')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {valuePropReady && growthData.selected_categories.includes('value_proposition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Slogan
-                      </span>
-                    </label>
-                    <ExplainBlock text={CATEGORY_EXPLANATIONS.value_proposition} extra="Your slogan is always shown to reviewers as context. Check this if you also want a specific rating on how accurately it represents the product." />
-                    {growthData.selected_categories.includes('value_proposition') && !isHeadlineComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your slogan in the Venture Profile tab first.</p>}
-                  </div>
-
-                  <div className={`border rounded-lg p-4 ${definitionReady && growthData.selected_categories.includes('product_definition') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('product_definition')} onCheckedChange={() => toggleCategory('product_definition')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {definitionReady && growthData.selected_categories.includes('product_definition') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Product Definition
-                      </span>
-                    </label>
-                    <ExplainBlock text={CATEGORY_EXPLANATIONS.product_definition} extra="Your description is always shown to reviewers as context. Check this if you also want a specific rating on how clear and accurate it is." />
-                    {growthData.selected_categories.includes('product_definition') && !isDescriptionComplete && <p className="text-xs text-red-500 mt-1 pl-8">Fill in your description in the Venture Profile tab first (min 50 characters).</p>}
-                  </div>
-                  </>)}
-                  </>)}
-
-                  {hasDemoFile && (
-                  <div className={`border rounded-lg p-4 ${growthData.selected_categories.includes('media') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('media')} onCheckedChange={() => toggleCategory('media')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {growthData.selected_categories.includes('media') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        Get feedback on my Media
-                      </span>
-                    </label>
-                    <ExplainBlock text={CATEGORY_EXPLANATIONS.media} />
-                  </div>
-                  )}
-
-                  {/* [NEW — Early Adopters] Not offered at the idea stage. */}
-                  {!isIdea && (
-                  <div className={`border rounded-lg p-4 ${growthData.selected_categories.includes('early_users') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <Checkbox checked={growthData.selected_categories.includes('early_users')} onCheckedChange={() => toggleCategory('early_users')} />
-                      <span className="text-sm font-medium text-gray-900 flex items-center">
-                        {growthData.selected_categories.includes('early_users') && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                        I'm looking for Early Adopters
-                      </span>
-                    </label>
-                    <ExplainBlock text="Early Adopters are the first people to try your product and help shape it. Reviewers are invited to join your Early Adopters Community. Those who say yes share their username and email with you, and you'll see them in Product Feedback." />
-                    {growthData.selected_categories.includes('early_users') && (
-                      <div className="mt-4 pl-8 border-t border-emerald-100 pt-4">
-                        <p className="text-sm font-semibold text-gray-900">Offer an Incentive <span className="text-xs font-normal text-gray-400">(Optional)</span></p>
-                        <p className="text-xs text-gray-500 mt-1">Give people a reason to join your Early Adopters Community.</p>
-                        <div className="mt-3 space-y-2">
-                          {[['free_access', 'Free access'], ['discount', 'Discount'], ['exclusive', 'Exclusive features or early access'], ['other', 'Other offer'], ['none', 'No special offer']].map(([val, label]) => (
-                            <label key={val} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                              <input type="radio" name="early-incentive" checked={growthData.early_incentive === val} onChange={() => handleChange('early_incentive', val)} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
-                              {label}
-                            </label>
-                          ))}
-                        </div>
-                        {growthData.early_incentive && growthData.early_incentive !== 'none' && (
-                          <div className="mt-3">
-                            <p className="text-sm font-medium text-gray-900 mb-1">Describe your offer</p>
-                            <Input value={growthData.early_offer_text} onChange={(e) => handleChange('early_offer_text', e.target.value)} placeholder="e.g., 3 months of free access" />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  )}
-
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <p className="text-sm font-medium text-gray-900 flex items-center gap-2"><MessageCircleQuestion className="w-4 h-4 text-emerald-600" />Your own question (optional)</p>
-                    <ExplainBlock flush text="Ask reviewers anything you want, in your own words. It appears after the other questions." />
-                    <div className="mb-2" />
-                    <MobileFieldWrapper label="Your Own Question" summary={growthData.custom_question} isMobile={isMobile} value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'}>
-                      <Input value={growthData.custom_question} onChange={(e) => handleChange('custom_question', e.target.value)} placeholder={isIdea ? 'e.g., How do you deal with this problem today?' : 'e.g., What almost stopped you from signing up?'} />
-                    </MobileFieldWrapper>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* [FIX] "Back to Dashboard" removed per explicit request —
-              unnecessary, and was also pushing the Save button off-screen
-              on mobile (confirmed via screenshot) since both shared one
-              row with no wrapping. Save now gets the full row. */}
-          {activeTab === 'profile' ? (
-            <>
-              {profileMissing.length > 0 && (
-                <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
-                  <p className="font-semibold text-amber-900 mb-2">To continue, you still need to:</p>
-                  <ul className="space-y-1 text-amber-900">
-                    {profileMissing.map((t, i) => (<li key={i}>• {t}</li>))}
-                  </ul>
-                </div>
-              )}
-              <div className="flex justify-center items-center pt-6">
-                <Button onClick={() => handleSave('profile')} disabled={!canSaveProfile || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
-                  {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save and continue<CheckCircle className="w-4 h-4 ml-2" /></>)}
-                </Button>
-              </div>
-            </>
+          {isProduct ? (
+            <FieldCard Icon={FileText} title="Short Description" description="What the product is and who it's for." done={isDescriptionComplete} active={activeKey === 'description'}>
+              <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
+                <Textarea value={growthData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Describe what the product does and who it's for..." className="h-28" />
+              </MobileFieldWrapper>
+            </FieldCard>
           ) : (
             <>
-              {missingItems.length > 0 && (
-                <div className="max-w-md mx-auto mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
-                  <p className="font-semibold text-amber-900 mb-2">To save, you still need to:</p>
-                  <ul className="space-y-1">
-                    {missingItems.map((m, i) => (
-                      <li key={i}>
-                        <button type="button" onClick={() => goToMissing(m.tab)} className="text-left text-amber-900 hover:underline">
-                          • {m.text} <span className="text-amber-600">({m.tab === 'profile' ? 'Venture Profile' : 'Feedback'} tab)</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <div className="flex justify-center items-center pt-6">
-                <Button onClick={() => handleSave('final')} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700" size="lg">
-                  {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
-                </Button>
-              </div>
+              <FieldCard Icon={Target} title="The Need" description="What need are you addressing, and what is missing in the market today?" done={isNeedComplete} active={activeKey === 'need'}>
+                <MobileFieldWrapper label="The Need" summary={growthData.need} isMobile={isMobile} value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions.">
+                  <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
+                </MobileFieldWrapper>
+                <p className={`text-xs mt-1 ${isNeedComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.need.trim().length}/30 characters minimum</p>
+                <ZigTipsButtons ready={isNeedComplete} onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />
+              </FieldCard>
+              <FieldCard Icon={Lightbulb} title={isIdea ? 'Your Solution' : 'The Product'} description={isIdea ? 'What is your solution, and who is it for?' : 'Describe your product: what it does and who it is for.'} done={isSolutionComplete} active={activeKey === 'solution'}>
+                <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
+                  <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
+                </MobileFieldWrapper>
+                <p className={`text-xs mt-1 ${isSolutionComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.solution.trim().length}/30 characters minimum</p>
+                <ZigTipsButtons ready={isSolutionComplete} onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />
+              </FieldCard>
             </>
           )}
+
+          {isProduct && (
+            <FieldCard Icon={LinkIcon} title="Product Link" description="Link to your product">
+              <MobileFieldWrapper label="Product Link" summary={growthData.product_url} isMobile={isMobile} value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com">
+                <Input type="url" value={growthData.product_url} onChange={(e) => handleChange('product_url', e.target.value)} placeholder="https://yourproduct.com" />
+              </MobileFieldWrapper>
+            </FieldCard>
+          )}
+
+          {/* Single file only, replaces on new upload. */}
+          <FieldCard Icon={ImageIcon} title={isIdea ? 'Image (optional)' : 'Demo'} done={hasDemoFile}>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">Upload a unique media file, or one you already use on your site, to explain and visualize your idea or product.</p>
+              {!hasDemoFile ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <Label htmlFor="growth-file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
+                    <span>Upload a file</span>
+                    <Input id="growth-file-upload" type="file" className="sr-only" onChange={handleFileUpload} accept={isIdea ? '.jpg,.jpeg,.png,.gif,.webp,.svg' : '.jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.mov,.webm,.html,.htm'} disabled={isUploading} />
+                  </Label>
+                  {isUploading && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4" />}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <p className="font-medium text-sm">{growthData.uploaded_files[0].name}</p>
+                  <Button variant="ghost" size="icon" onClick={removeUploadedFile}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                </div>
+              )}
+              <p className="text-xs text-gray-400">{isIdea
+                ? 'Image: JPG, PNG, GIF, WebP or SVG. Max 5MB. One file only.'
+                : 'Image (JPG, PNG, GIF, WebP, SVG, max 5MB), video (MP4, MOV, WebM, max 20MB) or HTML file (max 5MB). One file only.'}</p>
+              {!hasDemoFile && !isIdea && <p className="text-xs text-gray-500">You can save without it, but you'll need to add media before you can ask for feedback.</p>}
+            </div>
+          </FieldCard>
+
+          {isProduct && (
+            <FieldCard Icon={Share2} title="Social Links" description="Shown on your public page.">
+                  <MobileFieldWrapper label="Social Links" summary={Object.values(growthData.social_links).some(v => v) ? 'Some links added' : null} isMobile={isMobile}>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2"><Linkedin className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="LinkedIn URL" value={growthData.social_links.linkedin} onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)} /></div>
+                <div className="flex items-center gap-2"><Facebook className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Facebook URL" value={growthData.social_links.facebook} onChange={(e) => handleSocialLinkChange('facebook', e.target.value)} /></div>
+                <div className="flex items-center gap-2"><Twitter className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="X / Twitter URL" value={growthData.social_links.twitter} onChange={(e) => handleSocialLinkChange('twitter', e.target.value)} /></div>
+                <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Instagram URL" value={growthData.social_links.instagram} onChange={(e) => handleSocialLinkChange('instagram', e.target.value)} /></div>
+                <div className="flex items-center gap-2"><Globe className="w-4 h-4 text-gray-400 flex-shrink-0" /><Input placeholder="Website URL (company site, not the product itself)" value={growthData.social_links.website} onChange={(e) => handleSocialLinkChange('website', e.target.value)} /></div>
+              </div>
+              </MobileFieldWrapper>
+            </FieldCard>
+          )}
+
+          {profileMissing.length > 0 && (
+            <div className="max-w-md mx-auto rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+              <p className="font-semibold text-amber-900 mb-2">To continue, you still need to:</p>
+              <ul className="space-y-1 text-amber-900">
+                {profileMissing.map((t, i) => (<li key={i}>• {t}</li>))}
+              </ul>
+            </div>
+          )}
+          <div className="flex flex-col items-center gap-3 pt-2 pb-6">
+            <Button onClick={handleSave} disabled={!canSaveProfile || isSaving} className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto md:px-10" size="lg">
+              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save and continue<ArrowRight className="w-4 h-4 ml-2" /></>)}
+            </Button>
+            {venture && (
+              <button type="button" onClick={() => router.push('/growth-development/feedback')} className="text-sm text-gray-500 underline">Go to the feedback questions</button>
+            )}
+          </div>
         </div>
       </div>
 
