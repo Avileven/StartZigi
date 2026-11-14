@@ -317,6 +317,7 @@ const buildImagePrompt = (v, moment) => [
   moment.trim() ? 'The moment to show: ' + moment.trim() : 'Show the moment a person uses the solution.',
   'Style: simple shapes, soft warm colors, clean background, one clear scene, easy to read at a glance.',
   'Strict rules: no text, no letters, no numbers, no logos, no watermarks, no real brands, no realistic faces.',
+  'Composition: nothing may overlap a person. Never draw circles, speech bubbles, icons or floating windows over or near anyone\'s head or body. Anything shown on a screen must stay inside the screen of a device.',
   'Square image.',
 ].join('\n');
 
