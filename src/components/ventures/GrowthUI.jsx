@@ -199,26 +199,26 @@ export function normalizeGrowthData(currentVenture) {
 const GROWTH_CSS = `
 @keyframes zg-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes zg-pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
-@keyframes zg-check{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
-@keyframes zg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes zg-ring{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.35)}}
 @keyframes zg-bounce{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-6deg)}70%{transform:scale(.95)}100%{transform:scale(1)}}
-@keyframes zg-zglow{0%,100%{box-shadow:0 0 0 0 rgba(112,69,220,.45)}50%{box-shadow:0 0 0 10px rgba(112,69,220,0)}}
+@keyframes zg-zfill{0%{clip-path:inset(0 100% 0 0);opacity:1}55%{clip-path:inset(0 0 0 0);opacity:1}85%{clip-path:inset(0 0 0 0);opacity:1}95%{clip-path:inset(0 0 0 0);opacity:0}100%{clip-path:inset(0 100% 0 0);opacity:0}}
+@keyframes zg-tip{0%,68%,100%{fill:rgba(251,191,36,0);filter:none}76%,90%{fill:#FDE68A;filter:drop-shadow(0 0 5px rgba(251,191,36,.9))}}
+@keyframes zg-dscale{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes zg-ddraw{to{stroke-dashoffset:0}}
+@keyframes zg-dtext{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .zg-step{opacity:0;animation:zg-rise .5s ease forwards}
-.zg-step-icon{animation:zg-pop .5s ease backwards,zg-bob 3.2s ease-in-out infinite}
-.zg-step-check{transform:scale(0);animation:zg-check .4s ease forwards}
-.zg-ficon{position:relative}
-.zg-ficon-active::after{content:"";position:absolute;inset:-4px;border-radius:16px;border:2px solid #A5B4FC;animation:zg-ring 2.2s ease-out infinite;pointer-events:none}
 .zg-ficon-done svg{animation:zg-pop .45s ease backwards}
 .zg-tile{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background-color .2s ease}
 .zg-tile-on{transform:scale(1.05)}
 .zg-tile-on .zg-tile-icon{animation:zg-bounce .5s ease}
-.zg-zbtn{border-radius:12px;animation:zg-zglow 1.8s ease-in-out infinite}
+.zg-zfill{animation:zg-zfill 5s ease-in-out infinite}
+.zg-tipbulb{animation:zg-tip 6s ease-in-out infinite}
+.zg-dcircle{animation:zg-dscale .6s ease forwards}
+.zg-dcheck{stroke-dasharray:60;stroke-dashoffset:60;animation:zg-ddraw .6s ease .5s forwards}
+.zg-dtext{opacity:0;animation:zg-dtext .6s ease 1s forwards}
 @media (prefers-reduced-motion:reduce){
-  .zg-step{opacity:1;animation:none}
-  .zg-step-icon,.zg-ficon-done svg,.zg-tile-on .zg-tile-icon,.zg-zbtn{animation:none}
-  .zg-step-check{transform:none;animation:none}
-  .zg-ficon-active::after{animation:none;opacity:.6}
+  .zg-step,.zg-dtext{opacity:1;animation:none}
+  .zg-ficon-done svg,.zg-tile-on .zg-tile-icon,.zg-zfill,.zg-tipbulb,.zg-dcircle{animation:none}
+  .zg-dcheck{animation:none;stroke-dashoffset:0}
 }
 `;
 
@@ -229,45 +229,54 @@ export const ZBadge = () => (
   <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-extrabold text-white" style={{ background: 'linear-gradient(135deg,#F49A58,#7045DC)' }}>Z</span>
 );
 
-// Step 1 / Step 2 indicator shown at the top of both pages.
-export function StepHeader({ current, onGoProfile }) {
-  const pill = (active, done) => `inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${active ? 'bg-emerald-600 text-white border-emerald-600' : done ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-gray-500 border-gray-200'}`;
-  const dot = (active, done, n) => (
-    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${active ? 'bg-white/25 text-white' : done ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-      {done ? <Check className="w-3 h-3" strokeWidth={3} /> : n}
-    </span>
-  );
-  const done1 = current > 1;
+// Opening window of each page, same idea as the Idealization window on the onboarding screen:
+// a small label, a title, and the steps. The steps appear one after another, once, and stay.
+export function HowItWorks({ kicker, title, steps }) {
   return (
-    <div className="flex items-center justify-center gap-2 md:gap-3">
-      {done1 && onGoProfile ? (
-        <button type="button" onClick={onGoProfile} className={pill(false, true)}>{dot(false, true, 1)}Profile</button>
-      ) : (
-        <span className={pill(current === 1, done1)}>{dot(current === 1, done1, 1)}Profile</span>
-      )}
-      <span className="h-px w-8 md:w-16 bg-gray-300" />
-      <span className={pill(current === 2, false)}>{dot(current === 2, false, 2)}Feedback</span>
+    <div className="rounded-3xl bg-white border border-gray-200 shadow-sm p-5 md:p-8">
+      <p className="text-xs md:text-sm font-bold tracking-widest uppercase text-emerald-700">{kicker}</p>
+      <h2 className="mt-1 text-2xl md:text-3xl font-extrabold text-gray-900">{title}</h2>
+      <ol className="mt-4 space-y-3">
+        {steps.map((s, i) => (
+          <li key={i} className="zg-step flex items-start gap-3" style={{ animationDelay: `${0.3 + i * 1.0}s` }}>
+            <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">{s.icon}</span>
+            <span className="text-base text-gray-700 pt-2 min-w-0">{s.text}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
 
-// How It Works: the steps appear one after another, each with an animated icon and a check. Plays once.
-export function HowItWorks({ steps, title = 'How It Works' }) {
+// The Z (AI analysis) logo: it slowly fills with colour from left to right, then starts again.
+export function ZLogo({ height = 44 }) {
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 md:p-6">
-      <h3 className="font-semibold text-lg text-gray-900 text-center">{title}</h3>
-      <ol className="mt-4 space-y-3 max-w-xl mx-auto">
-        {steps.map((s, i) => {
-          const d = 0.3 + i * 1.1;
-          return (
-            <li key={i} className="zg-step flex items-center gap-3" style={{ animationDelay: `${d}s` }}>
-              <span className="zg-step-icon flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center" style={{ animationDelay: `${d}s, ${d + 0.6}s` }}>{s.icon}</span>
-              <span className="text-sm md:text-base text-gray-700 flex-1 min-w-0">{s.text}</span>
-              <span className="zg-step-check flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center" style={{ animationDelay: `${d + 0.7}s` }}><Check className="w-3.5 h-3.5" strokeWidth={3} /></span>
-            </li>
-          );
-        })}
-      </ol>
+    <span className="relative inline-block" style={{ height }}>
+      <img src="/zig-it-logo.png" alt="Zig it" style={{ height, width: 'auto', opacity: 0.4, filter: 'grayscale(1)' }} />
+      <img className="zg-zfill" src="/zig-it-logo.png" alt="" aria-hidden="true" style={{ position: 'absolute', left: 0, top: 0, height, width: 'auto' }} />
+    </span>
+  );
+}
+
+// Tips bulb: lights up now and then.
+export function TipBulb({ size = 44 }) {
+  return <Lightbulb className="zg-tipbulb" style={{ height: size, width: size }} strokeWidth={1.5} />;
+}
+
+// Animated 'done' screen (used after the profile is saved and after the feedback setup is saved): an animated "done" screen, then the feedback page opens.
+export function ProfileDone({ title, text, note, onContinue }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-6 p-6 text-center">
+      <svg className="zg-dcircle" width="132" height="132" viewBox="0 0 132 132" fill="none">
+        <circle cx="66" cy="66" r="62" fill="#ECFDF5" stroke="#10B981" strokeWidth="6" />
+        <path className="zg-dcheck" d="M40 68l18 18 34-38" stroke="#10B981" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div className="zg-dtext space-y-2">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">{title}</h2>
+        {text && <p className="text-base md:text-lg text-gray-600 max-w-md mx-auto">{text}</p>}
+        {note && <p className="text-sm text-amber-700 max-w-md mx-auto">{note}</p>}
+      </div>
+      <button type="button" onClick={onContinue} className="zg-dtext px-8 py-3 rounded-full bg-emerald-600 text-white font-semibold text-base" style={{ animationDelay: '1.4s' }}>Continue</button>
     </div>
   );
 }
@@ -278,7 +287,7 @@ export function FieldCard({ Icon, title, description, done, active, children }) 
   return (
     <div className={`rounded-2xl border p-4 md:p-6 shadow-sm transition-colors ${done ? 'border-emerald-300 bg-emerald-50/50' : 'border-gray-200 bg-white'}`}>
       <div className="flex items-start gap-3 md:gap-4">
-        <div className={`zg-ficon ${done ? 'zg-ficon-done' : active ? 'zg-ficon-active' : ''} flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${done ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+        <div className={`zg-ficon ${done ? 'zg-ficon-done' : ''} flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${done ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
           {done ? <Check key="done" className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /> : <Icon className="w-5 h-5 md:w-6 md:h-6" />}
         </div>
         <div className="min-w-0 flex-1 pt-0.5">

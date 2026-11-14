@@ -33,68 +33,11 @@ import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 import {
   useIsMobile, MobileFieldWrapper, STAGES, STAGE_STYLE, normalizeGrowthData,
-  GrowthStyles, StepHeader, HowItWorks, FieldCard, SectorTiles, ZBadge,
+  GrowthStyles, HowItWorks, FieldCard, SectorTiles, ZBadge, ZLogo, TipBulb, ProfileDone,
 } from '@/components/ventures/GrowthUI';
 
 const GROWTH_FRAMING_SHORT = "On this page, you choose what to show potential viewers, and which categories of feedback you want to collect on your product. This also exposes your live product to the community, helping you grow your first users.";
 const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can update your content and feedback categories to focus on specific aspects, gather feedback after making changes, or invite users to try a new version.\n\nOnce you're done, you'll return to your Dashboard. To actually send out feedback requests, head to the Promotion Center, name your brief, and choose how many users to reach. After that, you can track how your page is reaching the community on the Product Feedback page.\n\nYou're also part of the StartZig community. Other founders will likely invite you to give feedback on their own ideas and products at various stages. When you do, you're not just helping them — you also earn Zigback, which you can use toward your own feedback requests.";
-
-// [NEW — Quick track] Short guide per stage, shown under the stage picker.
-const STAGE_GUIDES = {
-  idea: {
-    title: 'Idea: what matters at this stage',
-    lead: 'Nothing is built yet, so only two things are worth testing: whether the problem is real, and whether people understand what you are proposing.',
-    points: [
-      ['Is the problem real?', 'Check that people feel it, not only that they understand it.'],
-      ['Is it seen as innovative?', 'Find out whether people who know the space see your idea as new, and which similar solutions they already know.'],
-      ['What is missing?', 'Open suggestions often point at something you have not considered.'],
-    ],
-    skip: 'Skip features, design and pricing for now. Reviewers cannot judge them yet, and the answers would mislead you.',
-    note: 'You can update your brief at any time and focus on different questions.',
-  },
-  prototype: {
-    title: 'Prototype: what matters at this stage',
-    lead: 'A prototype does not need to be polished or fully working. What matters is whether a stranger sees the value and understands what it does.',
-    points: [
-      ['Do the core features make sense?', 'Rate the few things the product is built around, not every detail.'],
-      ['What is missing?', 'A feature suggestion shows what people expect to find.'],
-      ['Does the business model feel fair?', 'Optional. An early read on whether the value matches how you plan to charge.'],
-    ],
-    skip: 'Skip polish and small details for now. Early feedback should shape your direction.',
-  },
-};
-
-const StageGuide = ({ stage }) => {
-  const [open, setOpen] = useState(false);
-  const g = STAGE_GUIDES[stage];
-  const st = STAGE_STYLE[stage];
-  if (!g || !st) return null;
-  const Icon = st.Icon;
-  return (
-    <div className={`rounded-2xl border p-4 md:p-5 ${st.soft}`}>
-      <div className="flex items-start gap-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${st.iconBg}`}><Icon className="w-5 h-5" /></div>
-        <div className="min-w-0">
-          <p className={`font-semibold ${st.title}`}>{g.title}</p>
-          <p className="text-sm text-gray-700 mt-1">{g.lead}</p>
-          {g.note && <p className={`text-sm font-medium mt-2 ${st.title}`}>{g.note}</p>}
-          <button type="button" onClick={() => setOpen(o => !o)} className={`text-xs font-medium mt-2 flex items-center gap-1 ${st.title}`}>
-            {open ? 'Hide' : 'What to check'}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
-          </button>
-          {open && (
-            <div className="mt-2 text-sm text-gray-700">
-              <ol className="list-decimal pl-5 space-y-1">
-                {g.points.map(([h, t]) => <li key={h}><span className="font-medium">{h}</span> {t}</li>)}
-              </ol>
-              <p className="mt-2 text-xs italic text-gray-500">{g.skip}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // [NEW — Idea stage] Which existing Zig it config / Tips entry each ZigPulse
 // field maps to. 'problem' and 'solution' are the business_plan fields in
@@ -108,18 +51,18 @@ const getZigFields = (stage) => ({
     : { fieldKey: 'solution', title: 'Your Solution', tipsId: 'proposed_solution' },
 });
 
-// Two equal-width buttons: Z (AI analysis) and Tips. The Z button glows once the text is long enough to analyse.
-const ZigTipsButtons = ({ onZig, onTips, ready }) => (
+// Two equal-width buttons: Z (AI analysis, the logo slowly fills with colour) and Tips (the bulb lights up now and then).
+const ZigTipsButtons = ({ onZig, onTips }) => (
   <div className="mt-3 grid grid-cols-2 gap-3">
     <div className="flex flex-col items-center text-center">
-      <button type="button" onClick={onZig} className={`flex items-center justify-center hover:opacity-80 px-2 py-1 ${ready ? 'zg-zbtn' : ''}`} aria-label="Zig it">
-        <img src="/zig-it-logo.png" alt="Zig it" style={{ height: '44px', width: 'auto' }} />
+      <button type="button" onClick={onZig} className="flex items-center justify-center hover:opacity-80" aria-label="Zig it">
+        <ZLogo height={44} />
       </button>
-      <p className={`text-xs mt-1 ${ready ? 'text-violet-700 font-semibold' : 'text-gray-500'}`}>{ready ? 'Ready for AI analysis' : 'AI analysis'}</p>
+      <p className="text-xs text-gray-500 mt-1">AI analysis</p>
     </div>
     <div className="flex flex-col items-center text-center">
       <button type="button" onClick={onTips} className="flex flex-col items-center justify-center text-indigo-700 hover:opacity-80" aria-label="Tips">
-        <Lightbulb style={{ height: '44px', width: '44px' }} strokeWidth={1.5} />
+        <TipBulb size={44} />
       </button>
       <p className="text-xs text-gray-500 mt-1">Tips</p>
     </div>
@@ -137,6 +80,7 @@ export default function GrowthDevelopment() {
   const [showFramingMore, setShowFramingMore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [nameError, setNameError] = useState('');
+  const [profileDone, setProfileDone] = useState(false);
   const router = useRouter();
   const isMobile = useIsMobile();
   // Which field's Zig it / Tips is open ('need' | 'solution' | null).
@@ -433,14 +377,20 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      showToast('Your venture was uploaded successfully!');
-      router.push('/growth-development/feedback?saved=1');
+      setProfileDone(true);
     } catch (error) {
       console.error("Error saving growth data:", error);
       showToast("Error saving. Please try again.", "error");
     }
     setIsSaving(false);
   };
+
+  // After saving: show the animated 'profile complete' screen, then open the feedback page.
+  useEffect(() => {
+    if (!profileDone) return;
+    const t = setTimeout(() => router.push('/growth-development/feedback'), 3200);
+    return () => clearTimeout(t);
+  }, [profileDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isIdea = growthData.stage === 'idea';
   const isPrototype = growthData.stage === 'prototype';
@@ -512,6 +462,7 @@ export default function GrowthDevelopment() {
   return (
     <>
       <GrowthStyles />
+      {profileDone && <ProfileDone title="Your profile is complete" text="You are now part of the StartZig community." onContinue={() => router.push('/growth-development/feedback')} />}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{toast.message}</div>
       )}
@@ -527,8 +478,6 @@ export default function GrowthDevelopment() {
               <button type="button" onClick={() => { setPickedStage(growthData.stage); setStep('stage'); }} className="text-xs text-gray-500 underline">Change</button>
             </div>
           </div>
-
-          <StepHeader current={1} />
 
           {!isMobile && isProduct && (
           <Card className="shadow-sm border-emerald-200 bg-emerald-50">
@@ -550,9 +499,7 @@ export default function GrowthDevelopment() {
           </Card>
           )}
 
-          {!isMobile && !isProduct && <StageGuide stage={growthData.stage} />}
-
-          <HowItWorks steps={[
+          <HowItWorks kicker="Venture profile" title="Build your venture profile" steps={[
             { icon: <Pencil className="w-5 h-5" />, text: 'Fill in the details in the fields.' },
             { icon: <Lightbulb className="w-5 h-5" />, text: <>Click <b>TIP</b> to get general guidance.</> },
             { icon: <ZBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },
@@ -591,14 +538,14 @@ export default function GrowthDevelopment() {
                   <Textarea value={growthData.need} onChange={(e) => handleChange('need', e.target.value)} placeholder="e.g., Pet owners wait days for a vet appointment, even for simple questions." className="h-28" />
                 </MobileFieldWrapper>
                 <p className={`text-xs mt-1 ${isNeedComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.need.trim().length}/30 characters minimum</p>
-                <ZigTipsButtons ready={isNeedComplete} onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />
+                <ZigTipsButtons onZig={() => setZigField('need')} onTips={() => setTipsField('need')} />
               </FieldCard>
               <FieldCard Icon={Lightbulb} title={isIdea ? 'Your Solution' : 'The Product'} description={isIdea ? 'What is your solution, and who is it for?' : 'Describe your product: what it does and who it is for.'} done={isSolutionComplete} active={activeKey === 'solution'}>
                 <MobileFieldWrapper label={isIdea ? 'Your Solution' : 'The Product'} summary={growthData.solution} isMobile={isMobile} value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby.">
                   <Textarea value={growthData.solution} onChange={(e) => handleChange('solution', e.target.value)} placeholder="e.g., A 10-minute video call with a licensed vet, for urban pet owners without a vet nearby." className="h-28" />
                 </MobileFieldWrapper>
                 <p className={`text-xs mt-1 ${isSolutionComplete ? 'text-emerald-600' : 'text-gray-500'}`}>{growthData.solution.trim().length}/30 characters minimum</p>
-                <ZigTipsButtons ready={isSolutionComplete} onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />
+                <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />
               </FieldCard>
             </>
           )}

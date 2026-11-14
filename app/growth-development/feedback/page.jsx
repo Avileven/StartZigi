@@ -3,7 +3,7 @@
 //
 // Second page of the Growth flow. The venture profile was saved on step 1
 // (app/growth-development/page.jsx). Here the founder chooses which questions reviewers answer,
-// adds core features / business model / own question, and saves. Save goes to the Dashboard.
+// adds core features / business model / own question, and saves. After saving, a "your page is ready" screen opens /promotion?type=in-app.
 //
 // It reads the same venture.growth_data. On save it re-reads the stored value and only writes
 // the fields that belong to this page, so the profile fields saved on step 1 are never overwritten.
@@ -17,10 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Loader2, CheckCircle, ArrowLeft, MessageCircleQuestion, ListPlus, Image as ImageIcon, Pencil, Globe } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createPageUrl } from '@/utils';
 import {
   useIsMobile, MobileFieldWrapper, ExplainBlock, BUSINESS_MODEL_TYPES, CATEGORY_EXPLANATIONS,
-  STAGES, STAGE_STYLE, normalizeGrowthData, GrowthStyles, StepHeader, HowItWorks,
+  STAGES, STAGE_STYLE, normalizeGrowthData, GrowthStyles, HowItWorks, ProfileDone,
 } from '@/components/ventures/GrowthUI';
 
 // The fields that belong to this page (everything else in growth_data is left as stored).
@@ -37,7 +36,7 @@ export default function GrowthFeedbackSetup() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
+  const [saved, setSaved] = useState(false);
   const router = useRouter();
   const isMobile = useIsMobile();
 
@@ -87,10 +86,6 @@ export default function GrowthFeedbackSetup() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
-  useEffect(() => {
-    if (typeof window !== 'undefined') setJustSaved(new URLSearchParams(window.location.search).get('saved') === '1');
-  }, []);
-
   // Writes only this page's fields on top of what is stored now.
   const persist = async (g) => {
     const latest = await Venture.get(venture.id);
@@ -173,13 +168,8 @@ export default function GrowthFeedbackSetup() {
       } catch (verifyErr) {
         console.error('[Save verification] could not read back:', verifyErr);
       }
-      if (growthData.stage !== 'idea' && (growthData.uploaded_files || []).length === 0) {
-        showToast("Saved. You haven't uploaded any media yet. You'll need it before you can ask for feedback.");
-        await new Promise((r) => setTimeout(r, 2800));
-      } else {
-        showToast("ZigPulse page saved!");
-      }
-      router.push(createPageUrl("Dashboard"));
+      // The public page is ready: show the animated screen, its button opens /promotion?type=in-app.
+      setSaved(true);
     } catch (error) {
       console.error("Error saving growth data:", error);
       showToast("Error saving. Please try again.", "error");
@@ -239,6 +229,14 @@ export default function GrowthFeedbackSetup() {
   return (
     <>
       <GrowthStyles />
+      {saved && (
+        <ProfileDone
+          title="Your public page is ready"
+          text="Now you can ask the community for feedback."
+          note={growthData.stage !== 'idea' && (growthData.uploaded_files || []).length === 0 ? "You haven't uploaded any media yet. You'll need it before you can ask for feedback." : null}
+          onContinue={() => router.push('/promotion?type=in-app')}
+        />
+      )}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{toast.message}</div>
       )}
@@ -255,19 +253,7 @@ export default function GrowthFeedbackSetup() {
           </div>
 
 
-          <StepHeader current={2} onGoProfile={goProfile} />
-
-          {justSaved && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 flex items-start gap-2">
-              <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
-              <div>
-                <p className="font-semibold">Your venture was uploaded successfully.</p>
-                <p>Now choose the questions you want feedback on. You can also do this later.</p>
-              </div>
-            </div>
-          )}
-
-          <HowItWorks steps={[
+          <HowItWorks kicker="Feedback" title="Choose your feedback questions" steps={[
             { icon: <ListPlus className="w-5 h-5" />, text: 'Beyond the basic questions, choose additional questions.' },
             { icon: <ImageIcon className="w-5 h-5" />, text: 'Check the box if you want feedback on the media you uploaded.' },
             { icon: <Pencil className="w-5 h-5" />, text: 'If needed, write a personal question.' },
