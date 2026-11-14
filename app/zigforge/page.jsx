@@ -263,14 +263,15 @@ const buildConceptPrompt = (v, moment) => [
   'Structure, in this order:',
   '1. Brand bar: the idea name, plus a small label "Concept".',
   '2. Headline (max 10 words) that states the benefit, plus one sentence on who it is for.',
-  '3. Card "Today": 3-4 short steps showing how a person deals with the need today, ending with a small pill saying how painful it is (use only what the need text says, no numbers you invent).',
-  '4. Card "With ' + v.name + '": 3 short steps showing the same moment with the solution, ending with a small pill.',
-  '5. One simple flat illustration (inline SVG, max 2 colors plus neutrals) of the moment the solution is used. No logos, no real people.',
+  '3. Card "Today": 3-4 short steps showing how a person deals with the need today. If a typical moment was given, it is the FIRST step of this card only. The other steps are the frustrating way the need is handled today. End with a small pill saying how painful it is (use only what the need text says, no numbers you invent).',
+  '4. Card "With ' + v.name + '": 3 short steps showing what the person does with the solution, in the same situation. Do NOT repeat the sentences of the "Today" card, and do not repeat the typical moment. The steps must contrast with "Today" (fast and simple instead of slow). End with a small pill.',
+  '5. An empty placeholder for an illustration, exactly: <div id="zf-illustration"></div> (an image is inserted there later). Do NOT draw any illustration yourself and do not use SVG.',
   '6. Two small cards, "The need" and "Our solution", using the founder\'s own wording.',
   '7. A footer line only: "An idea in early stage. Your feedback shapes it." No buttons, no links, no forms.',
   '',
   'Rules:',
   '- Use ONLY facts from the input. Never invent statistics, prices, user counts, reviews or quotes.',
+  '- Do not add details that are not in the solution text: no places, devices, features, times or extra benefits. If the solution does not say it, do not say it.',
   '- English only. Short sentences. No jargon.',
   '- Inline CSS only. No external images, no JavaScript, no frameworks.',
   '- Fonts: one serif for headings and Inter for text, from Google Fonts, with fallbacks.',
@@ -305,6 +306,51 @@ const cleanConceptHtml = (raw) => {
   return t.length > 800 ? t : '';
 };
 
+// [TEST] Illustration: a second AI call, to an IMAGE model. Model ids are tried in order (not verified against Google's list yet).
+const IMAGE_MODELS = ['gemini-3.1-flash-lite-image', 'gemini-3.1-flash-image'];
+
+const buildImagePrompt = (v, moment) => [
+  'Create a friendly flat vector-style illustration for an early-stage startup idea page.',
+  'Idea: ' + v.name,
+  'The need: ' + v.need,
+  'The solution: ' + v.solution,
+  moment.trim() ? 'The moment to show: ' + moment.trim() : 'Show the moment a person uses the solution.',
+  'Style: simple shapes, soft warm colors, clean background, one clear scene, easy to read at a glance.',
+  'Strict rules: no text, no letters, no numbers, no logos, no watermarks, no real brands, no realistic faces.',
+  'Square image.',
+].join('\n');
+
+const generateIllustration = async (v, moment) => {
+  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  let lastErr = '';
+  for (const model of IMAGE_MODELS) {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: buildImagePrompt(v, moment) }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      lastErr = model + ': ' + ((data.error && data.error.message) || res.statusText);
+      if (res.status === 404 || res.status === 400) continue; // try the next model id
+      throw new Error(lastErr);
+    }
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+    const withImage = parts.find((x) => x.inlineData || x.inline_data);
+    const d = withImage && (withImage.inlineData || withImage.inline_data);
+    if (d && d.data) return 'data:' + (d.mimeType || d.mime_type || 'image/png') + ';base64,' + d.data;
+    lastErr = model + ': the model returned no image.';
+  }
+  throw new Error(lastErr || 'No image model available.');
+};
+
+const injectIllustration = (html, dataUrl) => {
+  const tag = '<img src="' + dataUrl + '" alt="" style="display:block;width:100%;max-width:360px;margin:16px auto;border-radius:18px">';
+  const slot = /<div[^>]*id=["']zf-illustration["'][^>]*>\s*<\/div>/i;
+  if (slot.test(html)) return html.replace(slot, () => tag);
+  return html.replace(/<\/body>/i, () => tag + '</body>');
+};
+
 const ForgeConcept = ({ venture }) => {
   const router = useRouter();
   // Back goes to the page the founder came from: the profile (?from=profile) or, by default, the feedback page.
@@ -316,11 +362,14 @@ const ForgeConcept = ({ venture }) => {
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [img, setImg] = useState('');
+  const [imgBusy, setImgBusy] = useState(false);
+  const finalHtml = useMemo(() => (img && html ? injectIllustration(html, img) : html), [html, img]);
   const ready = venture.need.trim().length >= 30 && venture.solution.trim().length >= 30;
   const existing = (venture.files || [])[0];
 
   const create = async () => {
-    setBusy(true); setError(''); setAdded(false);
+    setBusy(true); setError(''); setAdded(false); setImg('');
     try {
       const data = await Promise.race([
         InvokeLLM({ prompt: buildConceptPrompt(venture, moment), creditType: 'studio_basic' }),
@@ -344,11 +393,18 @@ const ForgeConcept = ({ venture }) => {
     setBusy(false);
   };
 
+  const addIllustration = async () => {
+    setImgBusy(true); setError('');
+    try { setImg(await generateIllustration(venture, moment)); }
+    catch (e) { console.error('ZigForge illustration error:', e); setError('Could not create the illustration. ' + (e.message || '')); }
+    setImgBusy(false);
+  };
+
   const addToPage = async () => {
     setAdding(true); setError('');
     try {
       const slug = String(venture.name || 'idea').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'idea';
-      const file = new File([html], slug + '-concept.html', { type: 'text/html' });
+      const file = new File([finalHtml], slug + '-concept.html', { type: 'text/html' });
       const up = await UploadFile({ file });
       const entry = { type: 'html', name: file.name, url: up.file_url };
       // Re-read first so nothing else in growth_data is overwritten.
@@ -405,7 +461,13 @@ const ForgeConcept = ({ venture }) => {
           {html && !busy && (
             <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Preview</p>
-              <iframe title="Idea page preview" srcDoc={html} sandbox="" className="w-full rounded-xl border border-gray-200 bg-white" style={{ height: 520 }} />
+              <iframe title="Idea page preview" srcDoc={finalHtml} sandbox="" className="w-full rounded-xl border border-gray-200 bg-white" style={{ height: 520 }} />
+              {!added && (
+                <button type="button" onClick={addIllustration} disabled={imgBusy || adding}
+                  className="w-full py-3 rounded-xl border border-indigo-300 text-indigo-700 font-semibold bg-indigo-50 hover:bg-indigo-100 disabled:opacity-60">
+                  {imgBusy ? 'Creating the illustration...' : (img ? 'Create another illustration' : 'Add an illustration')}
+                </button>
+              )}
               {!added ? (
                 <button type="button" onClick={addToPage} disabled={adding}
                   className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold">
