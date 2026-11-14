@@ -136,6 +136,13 @@ export default function GrowthDevelopment() {
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
+          // Profile already saved: entering the Growth page opens the feedback page (the profile is one link away there).
+          // Coming from the onboarding stage choice (?stage=...) still opens the profile.
+          const fromStageChoice = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('stage');
+          if (!fromStageChoice) {
+            router.replace('/growth-development/feedback');
+            return;
+          }
           setPickedStage(loaded.stage);
           setStep('build');
         }
@@ -144,7 +151,7 @@ export default function GrowthDevelopment() {
       console.error("Error loading venture:", error);
     }
     setIsLoading(false);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadData(); }, [loadData]);
 
