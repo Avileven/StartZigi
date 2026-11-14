@@ -137,8 +137,9 @@ export default function GrowthDevelopment() {
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
           // Profile already saved: entering the Growth page opens the feedback page (the profile is one link away there).
-          // Coming from the onboarding stage choice (?stage=...) still opens the profile.
-          const fromStageChoice = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('stage');
+          // Coming from the onboarding stage choice (?stage=...) or a profile link (?view=profile) opens the profile.
+          const qs = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const fromStageChoice = qs && (qs.get('stage') || qs.get('view') === 'profile');
           if (!fromStageChoice) {
             router.replace('/growth-development/feedback');
             return;

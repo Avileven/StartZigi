@@ -66,15 +66,22 @@ function GrowthHome({ venture, userName }) {
     ? new Date(lastFeedback).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
+  // Every card opens its page. Public page = the venture's landing page.
+  const landingUrl = venture.landing_page_url || `/venture-landing?id=${venture.id}`;
+  const openStep = (href) => {
+    if (/^https?:\/\//.test(href)) window.location.assign(href);
+    else router.push(href);
+  };
+
   const steps = [
-    { title: 'Venture Profile', Icon: Activity, text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
-    { title: 'Promotion Center', Icon: Megaphone, text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
-    { title: 'Product Feedback', Icon: MessageSquare, text: 'All the insight collected and analyzed across your journey.' },
-    { title: 'Public page', Icon: Globe, text: 'Your public page, visible only to people invited to give feedback.' },
-    { title: 'My account', Icon: UserCircle, text: 'Manage your account details, your profile and your Zigback balance.' },
-    { title: 'Notifications', Icon: Bell, text: 'System messages and updates about your venture.' },
-    ...(stage === 'idea' ? [{ title: 'Idea Analysis', Icon: FileText, text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
-    { title: 'Revenue Model', Icon: BarChart3, text: 'Try different business models, prices and growth strategies, and see a 12-month revenue projection.' },
+    { title: 'Venture Profile', Icon: Activity, href: '/growth-development?view=profile', text: 'Click into the Feedback tab to set up and update the insights you are seeking.' },
+    { title: 'Promotion Center', Icon: Megaphone, href: '/promotion-center', text: 'Plan your promotion strategy, how many people to send a feedback request to, and your preferences.' },
+    { title: 'Product Feedback', Icon: MessageSquare, href: '/product-feedback', text: 'All the insight collected and analyzed across your journey.' },
+    { title: 'Public page', Icon: Globe, href: landingUrl, text: 'Your public page, visible only to people invited to give feedback.' },
+    { title: 'My account', Icon: UserCircle, href: '/my-account', text: 'Manage your account details, your profile and your Zigback balance.' },
+    { title: 'Notifications', Icon: Bell, href: '/notifications', text: 'System messages and updates about your venture.' },
+    ...(stage === 'idea' ? [{ title: 'Idea Analysis', Icon: FileText, href: '/plan', text: 'Analyze your idea step by step, with tips and AI feedback on every part.' }] : []),
+    { title: 'Revenue Model', Icon: BarChart3, href: '/business-model', text: 'Try different business models, prices and growth strategies, and see a 12-month revenue projection.' },
   ];
   return (
     <div className="bg-gray-50 pb-8">
@@ -100,7 +107,7 @@ function GrowthHome({ venture, userName }) {
         {steps.map((st) => {
           const StepIcon = st.Icon;
           return (
-            <div key={st.title} className="flex items-center gap-4 py-3">
+            <button type="button" key={st.title} onClick={() => openStep(st.href)} className="flex items-center gap-4 py-3 w-full text-left active:opacity-70">
               <div className="flex-none w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center">
                 <StepIcon className="w-9 h-9 text-indigo-600" />
               </div>
@@ -108,7 +115,7 @@ function GrowthHome({ venture, userName }) {
                 <p className="text-base font-bold text-gray-900">{st.title}</p>
                 <p className="text-sm text-gray-600 mt-0.5 leading-snug">{st.text}</p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
