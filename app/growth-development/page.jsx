@@ -585,6 +585,7 @@ export default function GrowthDevelopment() {
 
           {isPrototype && (
             <FieldCard Icon={Sparkles} title="Key features" description="Pick the 3 that matter most. They appear as cards on your public page.">
+              <p className="text-xs text-gray-500 mb-3">Tap the icon next to a feature to choose one.</p>
               <div className="space-y-4">
                 {Array.from({ length: FEATURE_SLOTS }, (_, i) => {
                   const f = { icon: 'check', name: '', text: '', ...((growthData.features || [])[i] || {}) };
@@ -602,7 +603,9 @@ export default function GrowthDevelopment() {
                         </div>
                       </div>
                       {iconPickerRow === i && (
-                        <div className="mt-3 grid grid-cols-8 gap-2">
+                        <>
+                        <p className="mt-3 text-xs font-medium text-gray-700">Choose an icon</p>
+                        <div className="mt-2 grid grid-cols-8 gap-2">
                           {Object.entries(FEATURE_ICONS).map(([key, Ic]) => (
                             <button key={key} type="button" aria-label={key} onClick={() => { setFeature(i, 'icon', key); setIconPickerRow(null); }}
                               className={`h-10 rounded-lg border flex items-center justify-center ${f.icon === key ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-600 border-gray-200'}`}>
@@ -610,6 +613,7 @@ export default function GrowthDevelopment() {
                             </button>
                           ))}
                         </div>
+                        </>
                       )}
                     </div>
                   );

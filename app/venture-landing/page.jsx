@@ -283,6 +283,7 @@ const FQ_EXPERIENCE_FULL_COUNT = 10;
 const FQ_FIELD_LABELS = {
   business_model_note: 'Business Model note',
   core_features_note: 'Core Features note',
+  core_features_why: 'Core Features explanation',
   value_prop_note: 'Slogan note',
   product_definition_note: 'Product Definition note',
   media_note: 'Attached media note',
@@ -467,6 +468,7 @@ export default function VentureLanding() {
   const [businessModelNote, setBusinessModelNote] = useState('');
   const [coreFeaturesRating, setCoreFeaturesRating] = useState(5);
   const [coreFeaturesNote, setCoreFeaturesNote] = useState('');
+  const [coreFeaturesWhy, setCoreFeaturesWhy] = useState(''); // [NEW] explanation shown when the features score is low
   const [valuePropRating, setValuePropRating] = useState(5);
   const [valuePropNote, setValuePropNote] = useState('');
   const [productDefinitionRating, setProductDefinitionRating] = useState(5);
@@ -1028,6 +1030,7 @@ export default function VentureLanding() {
       const ideaSolutionLow = ideaAnswered && ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD;
       const growthItems = [
         ...(bmLow ? [{ key: 'business_model_note', text: businessModelNote, kind: 'explanation' }] : []),
+        ...(hasCF && coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD ? [{ key: 'core_features_why', text: coreFeaturesWhy, kind: 'explanation' }] : []),
         ...(hasCF ? [{ key: 'core_features_note', text: coreFeaturesNote, kind: 'feature' }] : []),
         ...(vpLow ? [{ key: 'value_prop_note', text: valuePropNote, kind: 'explanation' }] : []),
         ...(pdLow ? [{ key: 'product_definition_note', text: productDefinitionNote, kind: 'explanation' }] : []),
@@ -1068,7 +1071,13 @@ export default function VentureLanding() {
         business_model_rating: selected.includes('business_model') ? businessModelRating : null,
         business_model_note: selected.includes('business_model') && businessModelRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('business_model_note', businessModelNote.trim()) || null) : null,
         core_features_rating: hasCF ? coreFeaturesRating : null,
-        core_features_note: hasCF ? (gKeep('core_features_note', coreFeaturesNote.trim()) || null) : null,
+        // The explanation (low score only) and the suggested feature share the one stored note, labelled so the analysis can tell them apart.
+        core_features_note: hasCF
+          ? ([
+              (coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && gKeep('core_features_why', coreFeaturesWhy.trim())) ? 'Why this score: ' + coreFeaturesWhy.trim() : '',
+              gKeep('core_features_note', coreFeaturesNote.trim()) ? 'Suggested feature: ' + coreFeaturesNote.trim() : '',
+            ].filter(Boolean).join('\n') || null)
+          : null,
         value_prop_rating: selected.includes('value_proposition') ? valuePropRating : null,
         value_prop_note: selected.includes('value_proposition') && valuePropRating < GROWTH_LOW_SCORE_THRESHOLD ? (gKeep('value_prop_note', valuePropNote.trim()) || null) : null,
         product_definition_rating: hasPD ? productDefinitionRating : null,
@@ -1530,10 +1539,12 @@ export default function VentureLanding() {
                 <div className="mb-10 max-w-2xl mx-auto">
                   <h2 className="text-2xl font-bold text-[#d97706] text-center mb-4">Key features</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {venture.growth_data.features.filter((f) => f && f.name && f.name.trim()).slice(0, 3).map((f, i) => {
+                    {venture.growth_data.features.filter((f) => f && f.name && f.name.trim()).slice(0, 3).map((f, i, arr) => {
                       const FIcon = FEATURE_ICONS[f.icon] || FEATURE_ICONS.check;
+                      // Three cards: the third sits centred on its own row on wider screens.
+                      const centreLast = arr.length === 3 && i === 2;
                       return (
-                        <div key={i} className="bg-[#fffdf9] rounded-3xl p-5 shadow-[0_6px_24px_rgba(31,111,92,0.08)] flex gap-4 items-start">
+                        <div key={i} className={`bg-[#fffdf9] rounded-3xl p-5 shadow-[0_6px_24px_rgba(31,111,92,0.08)] flex gap-4 items-start ${centreLast ? 'sm:col-span-2 sm:w-[calc(50%-0.5rem)] sm:mx-auto' : ''}`}>
                           <span className="flex-none w-11 h-11 rounded-2xl bg-[#e3f1ec] text-[#1f6f5c] flex items-center justify-center"><FIcon className="w-5 h-5" /></span>
                           <div className="min-w-0">
                             <p className="font-semibold text-[#1c2b2a] leading-snug">{f.name}</p>
@@ -1822,7 +1833,7 @@ export default function VentureLanding() {
                         <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-2">
                             <Layers className="w-5 h-5 text-[#1f6f5c]" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Core Features</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Key features</p>
                           </div>
                           <div className="space-y-2 mb-3">
                             {venture.growth_data.core_features.map((f) => (
@@ -1848,8 +1859,13 @@ export default function VentureLanding() {
                                 [&_[role=slider]]:shadow-md"
                             />
                             <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(coreFeaturesRating) }}>{coreFeaturesRating}</div>
-                            {/* [FIX] Always shown now, not just below the
-                                score threshold — per explicit request. */}
+                            {coreFeaturesRating < GROWTH_LOW_SCORE_THRESHOLD && (
+                              <div className="mt-2">
+                                <Label className="text-xs text-[#6b7a77]">Please explain (optional)</Label>
+                                <Textarea value={coreFeaturesWhy} onChange={(e) => setCoreFeaturesWhy(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
+                              </div>
+                            )}
+                            {/* Always shown, not just below the score threshold. */}
                             <div className="mt-2">
                               <Label className="text-xs text-[#6b7a77]">What feature do you think would add value to the product? (optional)</Label>
                               <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
