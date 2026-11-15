@@ -71,8 +71,6 @@ function MobileQuestionSheet({ label, summary, isMobile, children }) {
 // on its own line. Now uses a real 3-line CSS clamp, and only shows
 // "Read More" when the text is actually overflowing those 3 lines
 // (measured via scrollHeight vs clientHeight) — no arbitrary length guess.
-const GROWTH_HEAD_FONT = "'Fraunces', Georgia, serif";
-
 const ReadMoreText = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -1198,7 +1196,6 @@ export default function VentureLanding() {
       {showWelcome && <WelcomeOverlay ventureName={venture.name} onClose={() => setShowWelcome(false)} />}
 
       <div className={`min-h-screen ${isGrowthMode ? "bg-[#f6f1e9]" : "bg-gradient-to-br from-gray-50 to-blue-50"}`}>
-        {isGrowthMode && <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&display=swap" />}
         <main className="max-w-5xl mx-auto p-4 md:p-8">
 
           {isMLPMode ? (
@@ -1468,17 +1465,10 @@ export default function VentureLanding() {
                   right next to the venture name instead, where identity
                   info belongs. */}
               <div className="text-center pb-6 mb-8">
-                {(() => { const st = venture.growth_data.stage || 'product';
-                  return <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3 bg-[#fffdf9] border border-[#e6ddcc] text-[#c2561f]">{st}</span>; })()}
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
-                  <h1 className="text-3xl md:text-5xl font-semibold text-[#1c2b2a]" style={{ fontFamily: GROWTH_HEAD_FONT }}>{venture.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-[#d97706]">{venture.name}</h1>
                 </div>
                 <div className="flex items-center justify-center flex-wrap gap-3">
-                  {venture.sector && venture.sector !== 'other' && getSectorLabel(venture.sector) && (
-                    <span className="text-xs text-[#6b7a77] border border-[#cdbfa8] px-3 py-1 rounded-full">
-                      {getSectorLabel(venture.sector)}
-                    </span>
-                  )}
                   {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
                     <div className="flex items-center gap-2.5">
                       {venture.growth_data.social_links.linkedin && (
@@ -1510,7 +1500,7 @@ export default function VentureLanding() {
                   )}
                 </div>
                 {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.headline && (
-                  <p className="mt-4 text-lg md:text-xl font-semibold text-[#c2561f] max-w-xl mx-auto" style={{ fontFamily: GROWTH_HEAD_FONT }}>{venture.growth_data.headline}</p>
+                  <p className="mt-4 text-lg md:text-xl font-semibold text-[#c2561f] max-w-xl mx-auto">{venture.growth_data.headline}</p>
                 )}
               </div>
 
@@ -1518,28 +1508,24 @@ export default function VentureLanding() {
               {(venture.growth_data.stage || 'product') === 'product' ? (
                 venture.growth_data.description && (
                   <div className="mb-8 max-w-2xl mx-auto">
-                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">About</p>
-                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.description}</p>
+                    <div className="bg-[#1f6f5c] rounded-3xl p-6 md:p-7 shadow-[0_6px_24px_rgba(31,111,92,0.18)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#bfe6d9] mb-2">About</p>
+                      <p className="text-base leading-relaxed text-white whitespace-pre-line">{venture.growth_data.description}</p>
                     </div>
                   </div>
                 )
               ) : (
                 <div className="mb-8 max-w-2xl mx-auto flex flex-col gap-4">
                   {venture.growth_data.need && (
-                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
-                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">
-                        <Lightbulb className="w-4 h-4" /> The Need
-                      </p>
-                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.need}</p>
+                    <div className="bg-[#fffdf9] rounded-3xl p-6 md:p-7 shadow-[0_6px_24px_rgba(31,111,92,0.08)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#e8743b] mb-2">The need</p>
+                      <p className="text-base leading-relaxed text-[#1c2b2a] whitespace-pre-line">{venture.growth_data.need}</p>
                     </div>
                   )}
                   {venture.growth_data.solution && (
-                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
-                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">
-                        <Target className="w-4 h-4" /> The Solution
-                      </p>
-                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.solution}</p>
+                    <div className="bg-[#1f6f5c] rounded-3xl p-6 md:p-7 shadow-[0_6px_24px_rgba(31,111,92,0.18)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#bfe6d9] mb-2">The solution</p>
+                      <p className="text-base leading-relaxed text-white whitespace-pre-line">{venture.growth_data.solution}</p>
                     </div>
                   )}
                 </div>
@@ -1566,7 +1552,7 @@ export default function VentureLanding() {
                   no empty-state placeholder needed here. */}
               {featuredTestimonials.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-2xl font-semibold text-[#1c2b2a] mb-4 text-center" style={{ fontFamily: GROWTH_HEAD_FONT }}>What people are saying</h3>
+                  <h3 className="text-2xl font-bold text-[#d97706] mb-4 text-center">What people are saying</h3>
                   <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
                     {featuredTestimonials.map((t, i) => (
                       <div key={i} className="bg-[#fffdf9] border border-[#e6ddcc] rounded-xl p-5">
@@ -1585,11 +1571,11 @@ export default function VentureLanding() {
                   form card, easy to miss. Matches the visual weight of the
                   slogan heading at the top of the page. */}
               <div className="max-w-3xl mx-auto border-t border-[#e6ddcc] pt-10 mb-6">
-                <h2 className="text-2xl md:text-3xl font-semibold text-[#1c2b2a] text-center" style={{ fontFamily: GROWTH_HEAD_FONT }}>Share Your Feedback</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-[#d97706] text-center">Share Your Feedback</h2>
               </div>
 
               {/* Growth Feedback Form */}
-              <Card className="max-w-2xl mx-auto shadow-sm mb-12 border border-[#e6ddcc] bg-[#fffdf9]">
+              <Card className="max-w-2xl mx-auto mb-12 border-0 rounded-3xl bg-[#f6f1e9] shadow-[0_6px_24px_rgba(31,111,92,0.08)]">
                 <CardContent>
                   {/* [TEMP — TESTING ONLY, MUST BE RESTORED] isOwnVenture
                       check disabled here because there's currently no way
@@ -1619,7 +1605,7 @@ export default function VentureLanding() {
                       {/* --- Idea stage questions (Quick track) --- */}
                       {(venture.growth_data.stage || 'product') === 'idea' && (
                         <>
-                          <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                          <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                             <div className="flex items-center gap-2 mb-3">
                               <Lightbulb className="w-5 h-5 text-[#1f6f5c]" />
                               <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Need</p>
@@ -1649,7 +1635,7 @@ export default function VentureLanding() {
                             </MobileQuestionSheet>
                           </div>
 
-                          <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                          <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                             <div className="flex items-center gap-2 mb-3">
                               <Target className="w-5 h-5 text-[#1f6f5c]" />
                               <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Solution</p>
@@ -1680,7 +1666,7 @@ export default function VentureLanding() {
                           </div>
 
                           {(
-                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                               <div className="flex items-center gap-2 mb-3">
                                 <Compass className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Innovation</p>
@@ -1704,7 +1690,7 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_pay') && (
-                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                               <div className="flex items-center gap-2 mb-3">
                                 <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Willingness to Pay</p>
@@ -1728,7 +1714,7 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_value') && (
-                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                               <div className="flex items-center gap-2 mb-3">
                                 <Layers className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Making It Better</p>
@@ -1744,7 +1730,7 @@ export default function VentureLanding() {
 
                       {/* --- Business Model (conditional on founder selection) --- */}
                       {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-3">
                             <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Business Model</p>
@@ -1815,7 +1801,7 @@ export default function VentureLanding() {
 
                       {/* --- Core Features (conditional) — shown together, rated once --- */}
                       {(venture.growth_data.stage || 'product') !== 'idea' && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-3">
                             <Layers className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Core Features</p>
@@ -1855,7 +1841,7 @@ export default function VentureLanding() {
 
                       {/* --- Slogan (was "Value Proposition") — slogan shown again here, not just referenced --- */}
                       {venture.growth_data.selected_categories.includes('value_proposition') && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-3">
                             <Megaphone className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Slogan</p>
@@ -1891,7 +1877,7 @@ export default function VentureLanding() {
                       {/* --- Product Definition (conditional) --- */}
 
                       {(venture.growth_data.selected_categories.includes('product_definition') || venture.growth_data.selected_categories.includes('proto_product')) && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-3">
                             <Target className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
@@ -1933,7 +1919,7 @@ export default function VentureLanding() {
 
                       {/* --- Media (conditional: founder ticked it and a file is uploaded) --- */}
                       {venture.growth_data.selected_categories.includes('media') && venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-3">
                             <ImageIcon className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Attached media</p>
@@ -1971,7 +1957,7 @@ export default function VentureLanding() {
                           product_url, so it's gated on that rather than
                           always shown. */}
                       {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
-                      <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                      <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                         <div className="flex items-center gap-2 mb-3">
                           <Home className="w-5 h-5 text-[#1f6f5c]" />
                           <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Real Thing</p>
@@ -2042,7 +2028,7 @@ export default function VentureLanding() {
                           label was explicitly rejected earlier as redundant.
                           Icon sits inline with the question text itself. */}
                       {venture.growth_data.custom_question && (
-                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
+                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={false}>
                             <p className="text-sm font-medium text-[#1c2b2a] mb-2 flex items-center gap-2">
                               <HelpCircle className="w-4 h-4 text-[#1f6f5c] flex-shrink-0" />
