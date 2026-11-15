@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Loader2, CheckCircle, ArrowLeft, MessageCircleQuestion, ListPlus, Image as ImageIcon, Pencil, Globe, Sparkles } from 'lucide-react';
+import { Trash2, Loader2, CheckCircle, ArrowLeft, MessageCircleQuestion, ListPlus, Image as ImageIcon, Pencil, Globe } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   useIsMobile, MobileFieldWrapper, ExplainBlock, BUSINESS_MODEL_TYPES, CATEGORY_EXPLANATIONS,
@@ -464,16 +464,6 @@ export default function GrowthFeedbackSetup() {
                   </div>
                   </>)}
                   </>)}
-
-                  {isIdea && !hasDemoFile && (
-                  <div className="border border-dashed border-indigo-300 bg-indigo-50/50 rounded-lg p-4">
-                    <p className="text-sm font-medium text-gray-900">Show your idea in one page</p>
-                    <p className="text-xs text-gray-600 mt-1">No image? ZigForge reads your Need and Solution and builds a one-page visual for your public page. You can then ask for feedback on it.</p>
-                    <Button type="button" variant="outline" size="sm" onClick={() => router.push('/zigforge')} className="mt-3">
-                      <Sparkles className="w-4 h-4 mr-2" />Create it with ZigForge
-                    </Button>
-                  </div>
-                  )}
 
                   {hasDemoFile && (
                   <div className={`border rounded-lg p-4 ${growthData.selected_categories.includes('media') ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>

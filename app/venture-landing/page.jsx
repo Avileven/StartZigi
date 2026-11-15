@@ -1,6 +1,7 @@
 // app/venture-landing/page.jsx
 "use client";
 
+import GrowthMobileBar from "@/components/layout/GrowthMobileBar";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -1426,37 +1427,19 @@ export default function VentureLanding() {
             </>
           ) : isGrowthMode ? (
             <>
-              {/* [NEW — ZigPulse mobile] Same tab bar as the app, shown only to
-                  the venture's own founder (mobile). This public page is
-                  outside ClientLayout, so the bar is repeated here; the
-                  Public page icon is the active one. */}
+              {/* [NEW — ZigPulse mobile] The same top bar as the app (GrowthMobileBar), shown only to
+                  the venture's own founder on mobile. The public page is outside ClientLayout, so it
+                  is rendered here directly; the Public page icon is the active one. */}
               {isOwnVenture && venture.phase === 'growth' && (
-                <div className="md:hidden -mx-4 mb-6 bg-[#f6f1e9] border-b border-[#e6ddcc]">
-                  <div className="flex items-center justify-between gap-1 px-3 pt-3 pb-2">
-                    {[
-                      { label: 'Product Feedback', href: '/product-feedback', Icon: MessageSquare },
-                      { label: 'ZigPulse', href: '/growth-development', Icon: Activity },
-                      { label: 'Promotion Center', href: '/promotion-center', Icon: Megaphone },
-                    ].map(({ label, href, Icon }) => (
-                      <a key={href} href={href} aria-label={label}
-                        className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
-                        <Icon className="w-5 h-5" />
-                      </a>
-                    ))}
-                    <span aria-label="Public page"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#1f6f5c] border-[#1f6f5c] text-white">
-                      <Globe className="w-5 h-5" />
-                    </span>
-                    <a href="/my-account" aria-label="My account"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
-                      <UserCircle className="w-5 h-5" />
-                    </a>
-                    <a href="/notifications" aria-label="Notifications"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
-                      <Bell className="w-5 h-5" />
-                    </a>
-                  </div>
-                  <p className="text-center text-xs font-semibold text-[#c2561f] pb-2">Public Page</p>
+                <div className="md:hidden -mx-4 -mt-4 mb-6">
+                  <GrowthMobileBar
+                    pathname=""
+                    router={{ push: (u) => { window.location.href = u; } }}
+                    unreadCount={0}
+                    landingUrl={typeof window !== 'undefined' ? window.location.href : '#'}
+                    isIdeaStage={venture.growth_data?.stage === 'idea'}
+                    activeKey="public"
+                  />
                 </div>
               )}
               {/* Header — venture name + social icons together, then
@@ -1612,26 +1595,26 @@ export default function VentureLanding() {
                       {/* --- Idea stage questions (Quick track) --- */}
                       {(venture.growth_data.stage || 'product') === 'idea' && (
                         <>
-                          <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                            <div className="flex items-center gap-2 mb-3">
+                          <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                            <div className="flex items-center gap-2 mb-2">
                               <Lightbulb className="w-5 h-5 text-[#1f6f5c]" />
                               <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Need</p>
                             </div>
                             <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={false}>
-                              <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
+                              <Label className="text-sm leading-snug [text-wrap:balance]">The problem feels relevant and worth solving. (1-10)</Label>
                               <Slider
                                 value={[ideaProblemRating]}
                                 onValueChange={(value) => setIdeaProblemRating(value[0])}
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
-                                className="mt-2 mb-1
+                                className="mt-1 mb-0
                                   [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                   [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
                                   [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                   [&_[role=slider]]:shadow-md"
                               />
-                              <div className="flex justify-between text-xs text-[#8a9794] mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
+                              <div className="flex justify-between text-xs text-[#8a9794] mb-0"><span>Disagree</span><span>Agree</span></div>
                               <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaProblemRating}</div>
                               {ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
@@ -1642,26 +1625,26 @@ export default function VentureLanding() {
                             </MobileQuestionSheet>
                           </div>
 
-                          <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                            <div className="flex items-center gap-2 mb-3">
+                          <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                            <div className="flex items-center gap-2 mb-2">
                               <Target className="w-5 h-5 text-[#1f6f5c]" />
                               <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Solution</p>
                             </div>
                             <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={false}>
-                              <Label className="text-sm">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
+                              <Label className="text-sm leading-snug [text-wrap:balance]">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
                               <Slider
                                 value={[ideaSolutionRating]}
                                 onValueChange={(value) => setIdeaSolutionRating(value[0])}
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
-                                className="mt-2 mb-1
+                                className="mt-1 mb-0
                                   [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                   [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
                                   [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                   [&_[role=slider]]:shadow-md"
                               />
-                              <div className="flex justify-between text-xs text-[#8a9794] mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
+                              <div className="flex justify-between text-xs text-[#8a9794] mb-0"><span>Disagree</span><span>Agree</span></div>
                               <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaSolutionRating}</div>
                               {ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
@@ -1673,13 +1656,13 @@ export default function VentureLanding() {
                           </div>
 
                           {(
-                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                              <div className="flex items-center gap-2 mb-3">
+                            <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                              <div className="flex items-center gap-2 mb-2">
                                 <Compass className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Innovation</p>
                               </div>
                               <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={false}>
-                                <Label className="text-sm">Based on what you know, is this idea innovative?</Label>
+                                <Label className="text-sm leading-snug [text-wrap:balance]">Based on what you know, is this idea innovative?</Label>
                                 <div className="flex flex-col gap-2 mt-2">
                                   {[{ k: 'none', l: "Yes, it's innovative – I haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
@@ -1697,13 +1680,13 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_pay') && (
-                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                              <div className="flex items-center gap-2 mb-3">
+                            <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                              <div className="flex items-center gap-2 mb-2">
                                 <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Willingness to Pay</p>
                               </div>
                               <MobileQuestionSheet label="Would you pay for it?" summary={ideaPay ? 'Answered' : null} isMobile={false}>
-                                <Label className="text-sm">Would you pay for a product like this?</Label>
+                                <Label className="text-sm leading-snug [text-wrap:balance]">Would you pay for a product like this?</Label>
                                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                   {[{ k: 'yes', l: 'Yes' }, { k: 'maybe', l: 'Maybe' }, { k: 'no', l: 'No' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaPay(o.k)} disabled={isSubmittingGrowthFeedback}
@@ -1721,13 +1704,13 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_value') && (
-                            <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                              <div className="flex items-center gap-2 mb-3">
+                            <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                              <div className="flex items-center gap-2 mb-2">
                                 <Layers className="w-5 h-5 text-[#1f6f5c]" />
                                 <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Making It Better</p>
                               </div>
                               <MobileQuestionSheet label="What would make this idea more valuable?" summary={ideaValueText ? 'Answered' : null} isMobile={false}>
-                                <Label className="text-sm">What would make this idea more valuable? (optional)</Label>
+                                <Label className="text-sm leading-snug [text-wrap:balance]">What would make this idea more valuable? (optional)</Label>
                                 <Textarea value={ideaValueText} onChange={(e) => setIdeaValueText(e.target.value)} className="min-h-[80px] mt-2 text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Share an idea, a missing piece, or a change you would make..." />
                               </MobileQuestionSheet>
                             </div>
@@ -1737,8 +1720,8 @@ export default function VentureLanding() {
 
                       {/* --- Business Model (conditional on founder selection) --- */}
                       {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                          <div className="flex items-center gap-2 mb-2">
                             <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Business Model</p>
                           </div>
@@ -1782,13 +1765,13 @@ export default function VentureLanding() {
                             );
                           })()}
                           <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={false}>
-                            <Label className="text-sm">How well does this business model fit the product and the value it provides? (1-10)</Label>
+                            <Label className="text-sm leading-snug [text-wrap:balance]">How well does this business model fit the product and the value it provides? (1-10)</Label>
                             <Slider
                               value={[businessModelRating]}
                               onValueChange={(value) => setBusinessModelRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
-                              className="mt-2 mb-1
+                              className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                 [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
@@ -1808,8 +1791,8 @@ export default function VentureLanding() {
 
                       {/* --- Core Features (conditional) — shown together, rated once --- */}
                       {(venture.growth_data.stage || 'product') !== 'idea' && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                          <div className="flex items-center gap-2 mb-2">
                             <Layers className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Core Features</p>
                           </div>
@@ -1822,13 +1805,13 @@ export default function VentureLanding() {
                             ))}
                           </div>
                           <MobileQuestionSheet label="Do these features fit?" summary={coreFeaturesRating} isMobile={false}>
-                            <Label className="text-sm">How well do these features support what this product is meant to do? (1-10)</Label>
+                            <Label className="text-sm leading-snug [text-wrap:balance]">How well do these features support what this product is meant to do? (1-10)</Label>
                             <Slider
                               value={[coreFeaturesRating]}
                               onValueChange={(value) => setCoreFeaturesRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
-                              className="mt-2 mb-1
+                              className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                 [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
@@ -1848,8 +1831,8 @@ export default function VentureLanding() {
 
                       {/* --- Slogan (was "Value Proposition") — slogan shown again here, not just referenced --- */}
                       {venture.growth_data.selected_categories.includes('value_proposition') && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                          <div className="flex items-center gap-2 mb-2">
                             <Megaphone className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Slogan</p>
                           </div>
@@ -1857,13 +1840,13 @@ export default function VentureLanding() {
                             "{venture.growth_data.headline}"
                           </blockquote>
                           <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={false}>
-                            <Label className="text-sm">How accurately does this statement describe the product? (1-10)</Label>
+                            <Label className="text-sm leading-snug [text-wrap:balance]">How accurately does this statement describe the product? (1-10)</Label>
                             <Slider
                               value={[valuePropRating]}
                               onValueChange={(value) => setValuePropRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
-                              className="mt-2 mb-1
+                              className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                 [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
@@ -1884,13 +1867,13 @@ export default function VentureLanding() {
                       {/* --- Product Definition (conditional) --- */}
 
                       {(venture.growth_data.selected_categories.includes('product_definition') || venture.growth_data.selected_categories.includes('proto_product')) && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                          <div className="flex items-center gap-2 mb-2">
                             <Target className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
                           </div>
                           <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={false}>
-                          <Label className="text-sm">{(venture.growth_data.stage || 'product') === 'prototype' ? 'How clearly and accurately is this product defined? (1-10)' : 'How clear is this description of the product? (1-10)'}</Label>
+                          <Label className="text-sm leading-snug [text-wrap:balance]">{(venture.growth_data.stage || 'product') === 'prototype' ? 'How clearly and accurately is this product defined? (1-10)' : 'How clear is this description of the product? (1-10)'}</Label>
                           <button
                             type="button"
                             onClick={() => setShowDescriptionInline(s => !s)}
@@ -1906,7 +1889,7 @@ export default function VentureLanding() {
                             onValueChange={(value) => setProductDefinitionRating(value[0])}
                             max={10} min={1} step={1}
                             disabled={isSubmittingGrowthFeedback}
-                            className="mt-2 mb-1
+                            className="mt-1 mb-0
                               [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                               [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                               [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
@@ -1926,19 +1909,19 @@ export default function VentureLanding() {
 
                       {/* --- Media (conditional: founder ticked it and a file is uploaded) --- */}
                       {venture.growth_data.selected_categories.includes('media') && venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                          <div className="flex items-center gap-2 mb-2">
                             <ImageIcon className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Attached media</p>
                           </div>
                           <MobileQuestionSheet label="Did the media help?" summary={mediaRating} isMobile={false}>
-                            <Label className="text-sm">How clear was the media, and did it help you understand the idea or product? (1-10)</Label>
+                            <Label className="text-sm leading-snug [text-wrap:balance]">How clear was the media, and did it help you understand the idea or product? (1-10)</Label>
                             <Slider
                               value={[mediaRating]}
                               onValueChange={(value) => setMediaRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
-                              className="mt-2 mb-1
+                              className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
                                 [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
@@ -1964,12 +1947,12 @@ export default function VentureLanding() {
                           product_url, so it's gated on that rather than
                           always shown. */}
                       {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
-                      <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
-                        <div className="flex items-center gap-2 mb-3">
+                      <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                        <div className="flex items-center gap-2 mb-2">
                           <Home className="w-5 h-5 text-[#1f6f5c]" />
                           <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Real Thing</p>
                         </div>
-                        <Label className="text-sm">Did you visit the actual product?</Label>
+                        <Label className="text-sm leading-snug [text-wrap:balance]">Did you visit the actual product?</Label>
                         <div className="flex gap-2 mt-2">
                           {['yes', 'no'].map((opt) => (
                             <button
@@ -1987,7 +1970,7 @@ export default function VentureLanding() {
                         {visitedProduct === 'yes' && (
                           <MobileQuestionSheet label="Which of these describes you best?" summary={productMatchChoice ? 'Answered' : null} isMobile={false}>
                           <div className="mt-4">
-                            <Label className="text-sm">Which of these describes you best?</Label>
+                            <Label className="text-sm leading-snug [text-wrap:balance]">Which of these describes you best?</Label>
                             <div className="mt-2 space-y-2">
                               {[
                                 { key: 'signed_up', label: 'I signed up / created an account' },
@@ -2035,7 +2018,7 @@ export default function VentureLanding() {
                           label was explicitly rejected earlier as redundant.
                           Icon sits inline with the question text itself. */}
                       {venture.growth_data.custom_question && (
-                        <div className="bg-[#fffdf9] rounded-2xl p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
+                        <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={false}>
                             <p className="text-sm font-medium text-[#1c2b2a] mb-2 flex items-center gap-2">
                               <HelpCircle className="w-4 h-4 text-[#1f6f5c] flex-shrink-0" />
