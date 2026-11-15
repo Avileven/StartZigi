@@ -72,6 +72,10 @@ function MobileQuestionSheet({ label, summary, isMobile, children }) {
 // on its own line. Now uses a real 3-line CSS clamp, and only shows
 // "Read More" when the text is actually overflowing those 3 lines
 // (measured via scrollHeight vs clientHeight) — no arbitrary length guess.
+// Slider colour follows the score: 5 = light green, below 5 = orange to red, above 5 = a calmer, deeper green.
+const GROWTH_SCORE_COLORS = ['#c0392b', '#d24a2f', '#df6a2f', '#e8943a', '#9fd08f', '#86bf7f', '#6fae70', '#5d9d66', '#4e8d5d', '#3f7a52'];
+const growthScoreColor = (n) => GROWTH_SCORE_COLORS[Math.min(10, Math.max(1, Math.round(Number(n) || 5))) - 1];
+
 const ReadMoreText = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -1603,19 +1607,20 @@ export default function VentureLanding() {
                             <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={false}>
                               <Label className="text-sm leading-snug [text-wrap:balance]">The problem feels relevant and worth solving. (1-10)</Label>
                               <Slider
+                                style={{ '--sc': growthScoreColor(ideaProblemRating) }}
                                 value={[ideaProblemRating]}
                                 onValueChange={(value) => setIdeaProblemRating(value[0])}
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
                                 className="mt-1 mb-0
                                   [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                  [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                  [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                   [&_[role=slider]]:shadow-md"
                               />
                               <div className="flex justify-between text-xs text-[#8a9794] mb-0"><span>Disagree</span><span>Agree</span></div>
-                              <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaProblemRating}</div>
+                              <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(ideaProblemRating) }}>{ideaProblemRating}</div>
                               {ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
                                   <Label className="text-xs text-[#6b7a77]">Please explain (optional)</Label>
@@ -1633,19 +1638,20 @@ export default function VentureLanding() {
                             <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={false}>
                               <Label className="text-sm leading-snug [text-wrap:balance]">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
                               <Slider
+                                style={{ '--sc': growthScoreColor(ideaSolutionRating) }}
                                 value={[ideaSolutionRating]}
                                 onValueChange={(value) => setIdeaSolutionRating(value[0])}
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
                                 className="mt-1 mb-0
                                   [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                  [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                  [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                   [&_[role=slider]]:shadow-md"
                               />
                               <div className="flex justify-between text-xs text-[#8a9794] mb-0"><span>Disagree</span><span>Agree</span></div>
-                              <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaSolutionRating}</div>
+                              <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(ideaSolutionRating) }}>{ideaSolutionRating}</div>
                               {ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
                                   <Label className="text-xs text-[#6b7a77]">Please explain (optional)</Label>
@@ -1664,7 +1670,7 @@ export default function VentureLanding() {
                               <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm leading-snug [text-wrap:balance]">Based on what you know, is this idea innovative?</Label>
                                 <div className="flex flex-col gap-2 mt-2">
-                                  {[{ k: 'none', l: "Yes, it's innovative – I haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
+                                  {[{ k: 'none', l: "Yes, it's innovative – I\u00A0haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
                                       className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaAwareness === o.k ? 'border-[#1f6f5c] bg-[#1f6f5c] text-white font-medium' : 'border-[#cdbfa8] bg-[#fffdf9] text-[#3a4a48] hover:bg-[#f6f1e9]'}`}>{o.l}</button>
                                   ))}
@@ -1767,18 +1773,19 @@ export default function VentureLanding() {
                           <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={false}>
                             <Label className="text-sm leading-snug [text-wrap:balance]">How well does this business model fit the product and the value it provides? (1-10)</Label>
                             <Slider
+                              style={{ '--sc': growthScoreColor(businessModelRating) }}
                               value={[businessModelRating]}
                               onValueChange={(value) => setBusinessModelRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-[#c2561f]">{businessModelRating}</div>
+                            <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(businessModelRating) }}>{businessModelRating}</div>
                             {businessModelRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
                                 <Label className="text-xs text-[#6b7a77]">What doesn't feel right about it? (optional)</Label>
@@ -1807,18 +1814,19 @@ export default function VentureLanding() {
                           <MobileQuestionSheet label="Do these features fit?" summary={coreFeaturesRating} isMobile={false}>
                             <Label className="text-sm leading-snug [text-wrap:balance]">How well do these features support what this product is meant to do? (1-10)</Label>
                             <Slider
+                              style={{ '--sc': growthScoreColor(coreFeaturesRating) }}
                               value={[coreFeaturesRating]}
                               onValueChange={(value) => setCoreFeaturesRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-[#c2561f]">{coreFeaturesRating}</div>
+                            <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(coreFeaturesRating) }}>{coreFeaturesRating}</div>
                             {/* [FIX] Always shown now, not just below the
                                 score threshold — per explicit request. */}
                             <div className="mt-2">
@@ -1842,18 +1850,19 @@ export default function VentureLanding() {
                           <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={false}>
                             <Label className="text-sm leading-snug [text-wrap:balance]">How accurately does this statement describe the product? (1-10)</Label>
                             <Slider
+                              style={{ '--sc': growthScoreColor(valuePropRating) }}
                               value={[valuePropRating]}
                               onValueChange={(value) => setValuePropRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-[#c2561f]">{valuePropRating}</div>
+                            <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(valuePropRating) }}>{valuePropRating}</div>
                             {valuePropRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
                                 <Label className="text-xs text-[#6b7a77]">What would you change? (optional)</Label>
@@ -1885,18 +1894,19 @@ export default function VentureLanding() {
                             <p className="text-sm text-[#3a4a48] bg-[#fffdf9] border border-[#e6ddcc] rounded-lg p-3 mb-2">{(venture.growth_data.stage || 'product') === 'prototype' ? venture.growth_data.solution : venture.growth_data.description}</p>
                           )}
                           <Slider
+                            style={{ '--sc': growthScoreColor(productDefinitionRating) }}
                             value={[productDefinitionRating]}
                             onValueChange={(value) => setProductDefinitionRating(value[0])}
                             max={10} min={1} step={1}
                             disabled={isSubmittingGrowthFeedback}
                             className="mt-1 mb-0
                               [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                              [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                              [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                               [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                              [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                               [&_[role=slider]]:shadow-md"
                           />
-                          <div className="text-center text-sm font-semibold text-[#c2561f]">{productDefinitionRating}</div>
+                          <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(productDefinitionRating) }}>{productDefinitionRating}</div>
                           {productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                             <div className="mt-2">
                               <Label className="text-xs text-[#6b7a77]">{(venture.growth_data.stage || 'product') === 'prototype' ? <>What feels unclear or inaccurate? <span className="text-red-500 font-semibold">Required</span></> : 'What feels unclear or inaccurate? (optional)'}</Label>
@@ -1917,18 +1927,19 @@ export default function VentureLanding() {
                           <MobileQuestionSheet label="Did the media help?" summary={mediaRating} isMobile={false}>
                             <Label className="text-sm leading-snug [text-wrap:balance]">How clear was the media, and did it help you understand the idea or product? (1-10)</Label>
                             <Slider
+                              style={{ '--sc': growthScoreColor(mediaRating) }}
                               value={[mediaRating]}
                               onValueChange={(value) => setMediaRating(value[0])}
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-1 mb-0
                                 [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
-                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
+                                [&>span>span]:bg-[var(--sc)] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[var(--sc)]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-[#c2561f]">{mediaRating}</div>
+                            <div className="text-center text-sm font-semibold" style={{ color: growthScoreColor(mediaRating) }}>{mediaRating}</div>
                             {mediaRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
                                 <Label className="text-xs text-[#6b7a77]">Please explain how to improve it. (optional)</Label>
