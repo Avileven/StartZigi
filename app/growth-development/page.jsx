@@ -28,7 +28,12 @@ import {
   Tag, Compass, Megaphone, FileText, Target, Image as ImageIcon, Share2, Pencil,
   Linkedin, Facebook, Twitter, Instagram, Globe, Sparkles,
 } from 'lucide-react';
+import { Check as FIcCheck, Video as FIcVideo, Clock as FIcClock, ShieldCheck as FIcShieldCheck, FileText as FIcFileText, MessageSquare as FIcMessageSquare, MapPin as FIcMapPin, DollarSign as FIcDollarSign, Zap as FIcZap, Users as FIcUsers, Bell as FIcBell, Heart as FIcHeart, Search as FIcSearch, Calendar as FIcCalendar, Lock as FIcLock, Smartphone as FIcSmartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+// [NEW] Prototype stage: the founder's 3 key features, each with an icon picked from this fixed set.
+const FEATURE_ICONS = { check: FIcCheck, video: FIcVideo, clock: FIcClock, shield: FIcShieldCheck, doc: FIcFileText, chat: FIcMessageSquare, pin: FIcMapPin, money: FIcDollarSign, zap: FIcZap, users: FIcUsers, bell: FIcBell, heart: FIcHeart, search: FIcSearch, calendar: FIcCalendar, lock: FIcLock, phone: FIcSmartphone };
+const FEATURE_SLOTS = 3;
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 import {
@@ -86,6 +91,7 @@ export default function GrowthDevelopment() {
   // Which field's Zig it / Tips is open ('need' | 'solution' | null).
   const [zigField, setZigField] = useState(null);
   const [tipsField, setTipsField] = useState(null);
+  const [iconPickerRow, setIconPickerRow] = useState(null);
 
   const [growthData, setGrowthData] = useState({
     stage: 'product',
@@ -101,6 +107,8 @@ export default function GrowthDevelopment() {
     is_imported: false,
     selected_categories: [],
     core_features: [],
+    features: [], // [NEW] prototype stage: [{ icon, name, text }] shown as cards on the public page
+    image_url: '', // [NEW] idea-stage image made in ZigForge (kept here so saving the profile never wipes it)
     // [CHANGED — merged model] Subscription now covers the old
     // Subscription+Freemium split. packages replaces tier1/tier2 with an
     // unlimited list.
@@ -132,7 +140,8 @@ export default function GrowthDevelopment() {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
         const loaded = normalizeGrowthData(currentVenture);
-        setGrowthData(prev => ({ ...prev, ...loaded }));
+        const gdForExtras = currentVenture.growth_data || {};
+        setGrowthData(prev => ({ ...prev, ...loaded, image_url: gdForExtras.image_url || '', features: Array.isArray(gdForExtras.features) ? gdForExtras.features.slice(0, FEATURE_SLOTS) : [] }));
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
@@ -167,6 +176,11 @@ export default function GrowthDevelopment() {
     return () => clearInterval(interval);
   }, [venture, growthData]);
 
+  const setFeature = (i, field, value) => setGrowthData(prev => {
+    const list = Array.from({ length: FEATURE_SLOTS }, (_, k) => ({ icon: 'check', name: '', text: '', ...((prev.features || [])[k] || {}) }));
+    list[i] = { ...list[i], [field]: value };
+    return { ...prev, features: list };
+  });
   const handleChange = (field, value) => setGrowthData(prev => ({ ...prev, [field]: value }));
   const handleSocialLinkChange = (platform, value) =>
     setGrowthData(prev => ({ ...prev, social_links: { ...prev.social_links, [platform]: value } }));
@@ -567,6 +581,42 @@ export default function GrowthDevelopment() {
                 <ZigTipsButtons onZig={() => setZigField('solution')} onTips={() => setTipsField('solution')} />
               </FieldCard>
             </>
+          )}
+
+          {isPrototype && (
+            <FieldCard Icon={Sparkles} title="Key features" description="Pick the 3 that matter most. They appear as cards on your public page.">
+              <div className="space-y-4">
+                {Array.from({ length: FEATURE_SLOTS }, (_, i) => {
+                  const f = { icon: 'check', name: '', text: '', ...((growthData.features || [])[i] || {}) };
+                  const IconC = FEATURE_ICONS[f.icon] || FEATURE_ICONS.check;
+                  return (
+                    <div key={i} className="rounded-xl border border-gray-200 p-3">
+                      <div className="flex items-start gap-3">
+                        <button type="button" aria-label="Choose an icon" onClick={() => setIconPickerRow(iconPickerRow === i ? null : i)}
+                          className="flex-none w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center">
+                          <IconC className="w-5 h-5" />
+                        </button>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <Input value={f.name} maxLength={40} onChange={(e) => setFeature(i, 'name', e.target.value)} placeholder={['e.g., Live video with a vet', 'e.g., Open day and night', 'e.g., Licensed vets only'][i]} />
+                          <Input value={f.text} maxLength={120} onChange={(e) => setFeature(i, 'text', e.target.value)} placeholder="One short line about it" />
+                        </div>
+                      </div>
+                      {iconPickerRow === i && (
+                        <div className="mt-3 grid grid-cols-8 gap-2">
+                          {Object.entries(FEATURE_ICONS).map(([key, Ic]) => (
+                            <button key={key} type="button" aria-label={key} onClick={() => { setFeature(i, 'icon', key); setIconPickerRow(null); }}
+                              className={`h-10 rounded-lg border flex items-center justify-center ${f.icon === key ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                              <Ic className="w-4 h-4" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Optional. Leave a row empty to skip it.</p>
+            </FieldCard>
           )}
 
           {isProduct && (

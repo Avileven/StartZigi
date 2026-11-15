@@ -2,6 +2,8 @@
 "use client";
 
 import GrowthMobileBar from "@/components/layout/GrowthMobileBar";
+import { Check as FIcCheck, Video as FIcVideo, Clock as FIcClock, ShieldCheck as FIcShieldCheck, FileText as FIcFileText, MessageSquare as FIcMessageSquare, MapPin as FIcMapPin, DollarSign as FIcDollarSign, Zap as FIcZap, Users as FIcUsers, Bell as FIcBell, Heart as FIcHeart, Search as FIcSearch, Calendar as FIcCalendar, Lock as FIcLock, Smartphone as FIcSmartphone } from "lucide-react";
+const FEATURE_ICONS = { check: FIcCheck, video: FIcVideo, clock: FIcClock, shield: FIcShieldCheck, doc: FIcFileText, chat: FIcMessageSquare, pin: FIcMapPin, money: FIcDollarSign, zap: FIcZap, users: FIcUsers, bell: FIcBell, heart: FIcHeart, search: FIcSearch, calendar: FIcCalendar, lock: FIcLock, phone: FIcSmartphone };
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -1518,10 +1520,29 @@ export default function VentureLanding() {
                   )}
                   {venture.growth_data.solution && (
                     <div className="bg-[#1f6f5c] rounded-3xl p-6 md:p-7 shadow-[0_6px_24px_rgba(31,111,92,0.18)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#bfe6d9] mb-2">The solution</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#bfe6d9] mb-2">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The product' : 'The solution'}</p>
                       <p className="text-base leading-relaxed text-white whitespace-pre-line">{venture.growth_data.solution}</p>
                     </div>
                   )}
+                </div>
+              )}
+              {(venture.growth_data.stage || 'product') === 'prototype' && Array.isArray(venture.growth_data.features) && venture.growth_data.features.some((f) => f && f.name && f.name.trim()) && (
+                <div className="mb-10 max-w-2xl mx-auto">
+                  <h2 className="text-2xl font-bold text-[#d97706] text-center mb-4">Key features</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {venture.growth_data.features.filter((f) => f && f.name && f.name.trim()).slice(0, 3).map((f, i) => {
+                      const FIcon = FEATURE_ICONS[f.icon] || FEATURE_ICONS.check;
+                      return (
+                        <div key={i} className="bg-[#fffdf9] rounded-3xl p-5 shadow-[0_6px_24px_rgba(31,111,92,0.08)] flex gap-4 items-start">
+                          <span className="flex-none w-11 h-11 rounded-2xl bg-[#e3f1ec] text-[#1f6f5c] flex items-center justify-center"><FIcon className="w-5 h-5" /></span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#1c2b2a] leading-snug">{f.name}</p>
+                            {f.text && f.text.trim() && <p className="text-sm text-[#5b6b68] mt-1 leading-relaxed">{f.text}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
