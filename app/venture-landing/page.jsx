@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { createClient } from "@supabase/supabase-js";
 import {
-  Lightbulb, Target, Heart, FileText, CheckCircle, ArrowRight, ArrowDown,
+  Lightbulb, Target, Heart, FileText, CheckCircle,
   Loader2, ExternalLink, Sparkles, MessageSquare, Send,
   DollarSign, Layers, Megaphone, ClipboardList, HelpCircle, Compass, X, Home, Focus,
   Linkedin, Facebook, Twitter, Instagram, Globe,
@@ -71,7 +71,9 @@ function MobileQuestionSheet({ label, summary, isMobile, children }) {
 // on its own line. Now uses a real 3-line CSS clamp, and only shows
 // "Read More" when the text is actually overflowing those 3 lines
 // (measured via scrollHeight vs clientHeight) — no arbitrary length guess.
-const ReadMoreText = ({ text, light }) => {
+const GROWTH_HEAD_FONT = "'Fraunces', Georgia, serif";
+
+const ReadMoreText = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const textRef = useRef(null);
@@ -86,9 +88,9 @@ const ReadMoreText = ({ text, light }) => {
 
   return (
     <div>
-      <p ref={textRef} className={`${light ? 'text-white' : 'text-gray-700'} leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>{text}</p>
+      <p ref={textRef} className={`text-gray-700 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>{text}</p>
       {isTruncated && (
-        <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className={`p-0 h-auto ${light ? 'text-white underline' : 'text-blue-600'}`}>
+        <Button variant="link" onClick={() => setIsExpanded(!isExpanded)} className="p-0 h-auto text-blue-600">
           {isExpanded ? "Read Less" : "Read More"}
         </Button>
       )}
@@ -1151,8 +1153,14 @@ export default function VentureLanding() {
       digital_health_biotech: "Digital Health / Biotech", b2b_saas: "B2B SaaS",
       consumer_apps: "Consumer Apps / Marketplaces", climatetech_energy: "ClimateTech / Energy / AgriTech",
       web3_blockchain: "Web3 / Blockchain",
+      ai_dev_tools: "AI & Developer Tools", fintech_web3: "FinTech & Web3",
+      health_wellness: "Health & Wellness", education: "Education & Learning",
+      ecommerce_retail: "E-commerce & Retail", business_productivity: "Business & Productivity",
+      media_social_gaming: "Media, Social & Gaming", lifestyle_travel_realestate: "Lifestyle, Travel & Real Estate",
+      climate_energy_agri: "Climate, Energy & Agriculture", hardware_iot: "Hardware & IoT",
     };
-    return labels[sector] || sector;
+    if (sector === 'not_sure') return null;
+    return labels[sector] || String(sector).replace(/_/g, ' ');
   };
 
   if (isLoading) {
@@ -1189,7 +1197,8 @@ export default function VentureLanding() {
     <>
       {showWelcome && <WelcomeOverlay ventureName={venture.name} onClose={() => setShowWelcome(false)} />}
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className={`min-h-screen ${isGrowthMode ? "bg-[#f6f1e9]" : "bg-gradient-to-br from-gray-50 to-blue-50"}`}>
+        {isGrowthMode && <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&display=swap" />}
         <main className="max-w-5xl mx-auto p-4 md:p-8">
 
           {isMLPMode ? (
@@ -1425,7 +1434,7 @@ export default function VentureLanding() {
                   outside ClientLayout, so the bar is repeated here; the
                   Public page icon is the active one. */}
               {isOwnVenture && venture.phase === 'growth' && (
-                <div className="md:hidden -mx-4 mb-6 bg-gray-50 border-b border-gray-200">
+                <div className="md:hidden -mx-4 mb-6 bg-[#f6f1e9] border-b border-[#e6ddcc]">
                   <div className="flex items-center justify-between gap-1 px-3 pt-3 pb-2">
                     {[
                       { label: 'Product Feedback', href: '/product-feedback', Icon: MessageSquare },
@@ -1433,24 +1442,24 @@ export default function VentureLanding() {
                       { label: 'Promotion Center', href: '/promotion-center', Icon: Megaphone },
                     ].map(({ label, href, Icon }) => (
                       <a key={href} href={href} aria-label={label}
-                        className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                        className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
                         <Icon className="w-5 h-5" />
                       </a>
                     ))}
                     <span aria-label="Public page"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-indigo-600 border-indigo-600 text-white">
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#1f6f5c] border-[#1f6f5c] text-white">
                       <Globe className="w-5 h-5" />
                     </span>
                     <a href="/my-account" aria-label="My account"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
                       <UserCircle className="w-5 h-5" />
                     </a>
                     <a href="/notifications" aria-label="Notifications"
-                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-white border-gray-200 text-gray-700">
+                      className="w-11 h-11 rounded-full flex items-center justify-center border bg-[#fffdf9] border-[#e6ddcc] text-[#3a4a48]">
                       <Bell className="w-5 h-5" />
                     </a>
                   </div>
-                  <p className="text-center text-xs font-semibold text-indigo-700 pb-2">Public Page</p>
+                  <p className="text-center text-xs font-semibold text-[#c2561f] pb-2">Public Page</p>
                 </div>
               )}
               {/* Header — venture name + social icons together, then
@@ -1460,93 +1469,85 @@ export default function VentureLanding() {
                   info belongs. */}
               <div className="text-center pb-6 mb-8">
                 {(() => { const st = venture.growth_data.stage || 'product';
-                  const cls = st === 'idea' ? 'bg-amber-100 text-amber-800' : st === 'prototype' ? 'bg-violet-100 text-violet-800' : 'bg-emerald-100 text-emerald-800';
-                  return <span className={`inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3 ${cls}`}>{st}</span>; })()}
+                  return <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3 bg-[#fffdf9] border border-[#e6ddcc] text-[#c2561f]">{st}</span>; })()}
                 <div className="flex items-center justify-center flex-wrap gap-3 mb-3">
-                  <h1 className="text-3xl md:text-4xl font-bold text-amber-600">{venture.name}</h1>
-                  {venture.sector && venture.sector !== 'not_sure' && venture.sector !== 'other' && (
-                    <span className="text-xs text-gray-500 border border-gray-300 px-3 py-1 rounded-full">
+                  <h1 className="text-3xl md:text-5xl font-semibold text-[#1c2b2a]" style={{ fontFamily: GROWTH_HEAD_FONT }}>{venture.name}</h1>
+                </div>
+                <div className="flex items-center justify-center flex-wrap gap-3">
+                  {venture.sector && venture.sector !== 'other' && getSectorLabel(venture.sector) && (
+                    <span className="text-xs text-[#6b7a77] border border-[#cdbfa8] px-3 py-1 rounded-full">
                       {getSectorLabel(venture.sector)}
                     </span>
                   )}
                   {venture.growth_data.social_links && Object.values(venture.growth_data.social_links).some(v => v) && (
                     <div className="flex items-center gap-2.5">
                       {venture.growth_data.social_links.linkedin && (
-                        <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="LinkedIn">
+                        <a href={venture.growth_data.social_links.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#5b6b68] hover:text-[#1f6f5c]" aria-label="LinkedIn">
                           <Linkedin className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.facebook && (
-                        <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Facebook">
+                        <a href={venture.growth_data.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-[#5b6b68] hover:text-[#1f6f5c]" aria-label="Facebook">
                           <Facebook className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.twitter && (
-                        <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Twitter / X">
+                        <a href={venture.growth_data.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-[#5b6b68] hover:text-[#1f6f5c]" aria-label="Twitter / X">
                           <Twitter className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.instagram && (
-                        <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Instagram">
+                        <a href={venture.growth_data.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-[#5b6b68] hover:text-[#1f6f5c]" aria-label="Instagram">
                           <Instagram className="w-4 h-4" />
                         </a>
                       )}
                       {venture.growth_data.social_links.website && (
-                        <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-indigo-700" aria-label="Website">
+                        <a href={venture.growth_data.social_links.website} target="_blank" rel="noopener noreferrer" className="text-[#5b6b68] hover:text-[#1f6f5c]" aria-label="Website">
                           <Globe className="w-4 h-4" />
                         </a>
                       )}
                     </div>
                   )}
                 </div>
-                {venture.growth_data.headline && (
-                  <p className="text-lg md:text-xl font-semibold text-indigo-700 max-w-xl mx-auto">{venture.growth_data.headline}</p>
+                {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.headline && (
+                  <p className="mt-4 text-lg md:text-xl font-semibold text-[#c2561f] max-w-xl mx-auto" style={{ fontFamily: GROWTH_HEAD_FONT }}>{venture.growth_data.headline}</p>
                 )}
               </div>
 
               {/* [ALWAYS SHOWN — not gated by selected_categories] */}
               {(venture.growth_data.stage || 'product') === 'product' ? (
                 venture.growth_data.description && (
-                  <div className="mb-8 max-w-2xl mx-auto text-center">
-                    <ReadMoreText text={venture.growth_data.description} />
+                  <div className="mb-8 max-w-2xl mx-auto">
+                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">About</p>
+                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.description}</p>
+                    </div>
                   </div>
                 )
               ) : (
-                (() => {
-                  const gdn = venture.growth_data;
-                  const both = !!(gdn.need && gdn.solution);
-                  const solLabel = (gdn.stage || 'product') === 'idea' ? 'Our solution' : 'Our product';
-                  return (
-                    <div className="mb-10 max-w-3xl mx-auto rounded-[28px] bg-[#f6f1e9] p-4 md:p-6">
-                      <div className={`grid gap-3 ${both ? 'md:grid-cols-[1fr_auto_1fr] items-stretch' : ''}`}>
-                        {gdn.need && (
-                          <div className="rounded-3xl bg-[#fffdf9] p-6 shadow-[0_6px_24px_rgba(31,111,92,0.08)]">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#e8743b] mb-2">The need</p>
-                            <div className="text-base leading-relaxed text-[#1c2b2a]"><ReadMoreText text={gdn.need} /></div>
-                          </div>
-                        )}
-                        {both && (
-                          <div className="flex items-center justify-center">
-                            <span className="w-10 h-10 rounded-full bg-[#fffdf9] shadow flex items-center justify-center text-[#1f6f5c]">
-                              <ArrowRight className="w-5 h-5 hidden md:block" /><ArrowDown className="w-5 h-5 md:hidden" />
-                            </span>
-                          </div>
-                        )}
-                        {gdn.solution && (
-                          <div className="rounded-3xl bg-[#1f6f5c] p-6 shadow-[0_6px_24px_rgba(31,111,92,0.18)]">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#bfe6d9] mb-2">{solLabel}</p>
-                            <div className="text-base leading-relaxed text-white"><ReadMoreText text={gdn.solution} light /></div>
-                          </div>
-                        )}
-                      </div>
+                <div className="mb-8 max-w-2xl mx-auto flex flex-col gap-4">
+                  {venture.growth_data.need && (
+                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">
+                        <Lightbulb className="w-4 h-4" /> The Need
+                      </p>
+                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.need}</p>
                     </div>
-                  );
-                })()
+                  )}
+                  {venture.growth_data.solution && (
+                    <div className="bg-[#fffdf9] border border-[#e6ddcc] rounded-2xl p-5 md:p-6 shadow-sm">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2561f] mb-3">
+                        <Target className="w-4 h-4" /> The Solution
+                      </p>
+                      <p className="text-base leading-relaxed text-[#3a4a48] whitespace-pre-line">{venture.growth_data.solution}</p>
+                    </div>
+                  )}
+                </div>
               )}
-              {venture.growth_data.product_url && (
+              {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
                 <div className="text-center mb-8">
                   <a href={venture.growth_data.product_url} target="_blank" rel="noopener noreferrer">
-                    <Button className="bg-indigo-600 hover:bg-indigo-700">
+                    <Button className="bg-[#1f6f5c] hover:bg-[#17594a]">
                       <ExternalLink className="w-4 h-4 mr-2" /> Visit the actual product
                     </Button>
                   </a>
@@ -1565,13 +1566,13 @@ export default function VentureLanding() {
                   no empty-state placeholder needed here. */}
               {featuredTestimonials.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">What people are saying</h3>
+                  <h3 className="text-2xl font-semibold text-[#1c2b2a] mb-4 text-center" style={{ fontFamily: GROWTH_HEAD_FONT }}>What people are saying</h3>
                   <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
                     {featuredTestimonials.map((t, i) => (
-                      <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
-                        <p className="text-gray-700 text-sm italic">"{t.testimonial_text}"</p>
+                      <div key={i} className="bg-[#fffdf9] border border-[#e6ddcc] rounded-xl p-5">
+                        <p className="text-[#3a4a48] text-sm italic">"{t.testimonial_text}"</p>
                         {t.testimonial_author_name && (
-                          <p className="text-xs font-semibold text-gray-500 mt-3">— {t.testimonial_author_name}</p>
+                          <p className="text-xs font-semibold text-[#6b7a77] mt-3">— {t.testimonial_author_name}</p>
                         )}
                       </div>
                     ))}
@@ -1583,12 +1584,12 @@ export default function VentureLanding() {
                   centered heading — was a small CardTitle buried inside the
                   form card, easy to miss. Matches the visual weight of the
                   slogan heading at the top of the page. */}
-              <div className="max-w-3xl mx-auto border-t border-gray-200 pt-10 mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center">Share Your Feedback</h2>
+              <div className="max-w-3xl mx-auto border-t border-[#e6ddcc] pt-10 mb-6">
+                <h2 className="text-2xl md:text-3xl font-semibold text-[#1c2b2a] text-center" style={{ fontFamily: GROWTH_HEAD_FONT }}>Share Your Feedback</h2>
               </div>
 
               {/* Growth Feedback Form */}
-              <Card className="max-w-2xl mx-auto shadow-xl mb-12 border-0">
+              <Card className="max-w-2xl mx-auto shadow-sm mb-12 border border-[#e6ddcc] bg-[#fffdf9]">
                 <CardContent>
                   {/* [TEMP — TESTING ONLY, MUST BE RESTORED] isOwnVenture
                       check disabled here because there's currently no way
@@ -1599,18 +1600,18 @@ export default function VentureLanding() {
                       `false && ` below to restore real behavior. */}
                   {false && isOwnVenture ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 font-medium">You can't give feedback on your own venture.</p>
+                      <p className="text-[#6b7a77] font-medium">You can't give feedback on your own venture.</p>
                     </div>
                   ) : alreadyGaveGrowthFeedback && !growthFeedbackSubmitted ? (
                     <div className="text-center py-6">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                      <p className="text-green-700 font-semibold text-lg">You've already given feedback on this Growth page. Thank you!</p>
+                      <CheckCircle className="w-12 h-12 text-[#1f6f5c] mx-auto mb-3" />
+                      <p className="text-[#c2561f] font-semibold text-lg">You've already given feedback on this Growth page. Thank you!</p>
                     </div>
                   ) : growthFeedbackSubmitted ? (
                     <div className="text-center py-6">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                      <p className="text-green-700 font-semibold text-lg">Thank you for your feedback!</p>
-                      <p className="text-gray-500 text-sm mt-1">Your response helps the founder communicate this product more accurately.</p>
+                      <CheckCircle className="w-12 h-12 text-[#1f6f5c] mx-auto mb-3" />
+                      <p className="text-[#c2561f] font-semibold text-lg">Thank you for your feedback!</p>
+                      <p className="text-[#6b7a77] text-sm mt-1">Your response helps the founder communicate this product more accurately.</p>
                     </div>
                   ) : (
                     <form onSubmit={handleGrowthFeedbackSubmit} className="space-y-5">
@@ -1618,10 +1619,10 @@ export default function VentureLanding() {
                       {/* --- Idea stage questions (Quick track) --- */}
                       {(venture.growth_data.stage || 'product') === 'idea' && (
                         <>
-                          <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                          <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-3">
-                              <Lightbulb className="w-5 h-5 text-amber-600" />
-                              <p className="text-xs font-bold uppercase tracking-wide text-amber-700">The Need</p>
+                              <Lightbulb className="w-5 h-5 text-[#1f6f5c]" />
+                              <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Need</p>
                             </div>
                             <MobileQuestionSheet label="The Need" summary={ideaProblemRating} isMobile={false}>
                               <Label className="text-sm">The problem feels relevant and worth solving. (1-10)</Label>
@@ -1631,27 +1632,27 @@ export default function VentureLanding() {
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
                                 className="mt-2 mb-1
-                                  [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                  [&>span>span]:bg-amber-500 [&>span>span]:rounded-full
+                                  [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                  [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                  [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-amber-500
+                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                   [&_[role=slider]]:shadow-md"
                               />
-                              <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
-                              <div className="text-center text-sm font-semibold text-amber-700">{ideaProblemRating}</div>
+                              <div className="flex justify-between text-xs text-[#8a9794] mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
+                              <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaProblemRating}</div>
                               {ideaProblemRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">Please explain (optional)</Label>
+                                  <Label className="text-xs text-[#6b7a77]">Please explain (optional)</Label>
                                   <Textarea value={ideaProblemNote} onChange={(e) => setIdeaProblemNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
                             </MobileQuestionSheet>
                           </div>
 
-                          <div className="border border-indigo-200 bg-indigo-50/40 rounded-xl p-4">
+                          <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-3">
-                              <Target className="w-5 h-5 text-indigo-600" />
-                              <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">The Solution</p>
+                              <Target className="w-5 h-5 text-[#1f6f5c]" />
+                              <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Solution</p>
                             </div>
                             <MobileQuestionSheet label="Your Solution" summary={ideaSolutionRating} isMobile={false}>
                               <Label className="text-sm">The solution offers something meaningful, and its value is clear to me. (1-10)</Label>
@@ -1661,17 +1662,17 @@ export default function VentureLanding() {
                                 max={10} min={1} step={1}
                                 disabled={isSubmittingGrowthFeedback}
                                 className="mt-2 mb-1
-                                  [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                  [&>span>span]:bg-indigo-500 [&>span>span]:rounded-full
+                                  [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                  [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                   [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                  [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-indigo-500
+                                  [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                   [&_[role=slider]]:shadow-md"
                               />
-                              <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
-                              <div className="text-center text-sm font-semibold text-indigo-700">{ideaSolutionRating}</div>
+                              <div className="flex justify-between text-xs text-[#8a9794] mb-1"><span>Strongly disagree</span><span>Strongly agree</span></div>
+                              <div className="text-center text-sm font-semibold text-[#c2561f]">{ideaSolutionRating}</div>
                               {ideaSolutionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">Please explain (optional)</Label>
+                                  <Label className="text-xs text-[#6b7a77]">Please explain (optional)</Label>
                                   <Textarea value={ideaSolutionNote} onChange={(e) => setIdeaSolutionNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
@@ -1679,22 +1680,22 @@ export default function VentureLanding() {
                           </div>
 
                           {(
-                            <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
+                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Compass className="w-5 h-5 text-sky-600" />
-                                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Innovation</p>
+                                <Compass className="w-5 h-5 text-[#1f6f5c]" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Innovation</p>
                               </div>
                               <MobileQuestionSheet label="Innovation" summary={ideaAwareness ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">Based on what you know, is this idea innovative?</Label>
                                 <div className="flex flex-col gap-2 mt-2">
                                   {[{ k: 'none', l: "Yes, it's innovative – I haven't come across anything like it" }, { k: 'few', l: "I've come across something similar" }, { k: 'many', l: 'There are many similar solutions' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaAwareness(o.k)} disabled={isSubmittingGrowthFeedback}
-                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaAwareness === o.k ? 'border-sky-600 bg-sky-600 text-white font-medium' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>{o.l}</button>
+                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaAwareness === o.k ? 'border-[#1f6f5c] bg-[#1f6f5c] text-white font-medium' : 'border-[#cdbfa8] bg-[#fffdf9] text-[#3a4a48] hover:bg-[#f6f1e9]'}`}>{o.l}</button>
                                   ))}
                                 </div>
                                 {ideaAwareness && ideaAwareness !== 'none' && (
                                   <div className="mt-2">
-                                    <Label className="text-xs text-gray-500">Which ones? Please give examples</Label>
+                                    <Label className="text-xs text-[#6b7a77]">Which ones? Please give examples</Label>
                                     <Input value={ideaAwareWhich} onChange={(e) => setIdeaAwareWhich(e.target.value)} className="mt-1 text-sm" placeholder="Product names or links" disabled={isSubmittingGrowthFeedback} />
                                   </div>
                                 )}
@@ -1703,22 +1704,22 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_pay') && (
-                            <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <DollarSign className="w-5 h-5 text-amber-600" />
-                                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Willingness to Pay</p>
+                                <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Willingness to Pay</p>
                               </div>
                               <MobileQuestionSheet label="Would you pay for it?" summary={ideaPay ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">Would you pay for a product like this?</Label>
                                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                   {[{ k: 'yes', l: 'Yes' }, { k: 'maybe', l: 'Maybe' }, { k: 'no', l: 'No' }].map((o) => (
                                     <button key={o.k} type="button" onClick={() => setIdeaPay(o.k)} disabled={isSubmittingGrowthFeedback}
-                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaPay === o.k ? 'border-amber-600 bg-amber-600 text-white font-medium' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>{o.l}</button>
+                                      className={`flex-1 px-3 py-2 rounded-lg border text-sm ${ideaPay === o.k ? 'border-[#1f6f5c] bg-[#1f6f5c] text-white font-medium' : 'border-[#cdbfa8] bg-[#fffdf9] text-[#3a4a48] hover:bg-[#f6f1e9]'}`}>{o.l}</button>
                                   ))}
                                 </div>
                                 {ideaPay && ideaPay !== 'no' && (
                                   <div className="mt-2">
-                                    <Label className="text-xs text-gray-500">How much, and how often? (optional)</Label>
+                                    <Label className="text-xs text-[#6b7a77]">How much, and how often? (optional)</Label>
                                     <Input value={ideaPayAmount} onChange={(e) => setIdeaPayAmount(e.target.value)} className="mt-1 text-sm" placeholder="e.g. $10 / month, $50 one-time" disabled={isSubmittingGrowthFeedback} />
                                   </div>
                                 )}
@@ -1727,10 +1728,10 @@ export default function VentureLanding() {
                           )}
 
                           {venture.growth_data.selected_categories.includes('idea_value') && (
-                            <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                            <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Layers className="w-5 h-5 text-emerald-600" />
-                                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Making It Better</p>
+                                <Layers className="w-5 h-5 text-[#1f6f5c]" />
+                                <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Making It Better</p>
                               </div>
                               <MobileQuestionSheet label="What would make this idea more valuable?" summary={ideaValueText ? 'Answered' : null} isMobile={false}>
                                 <Label className="text-sm">What would make this idea more valuable? (optional)</Label>
@@ -1743,17 +1744,17 @@ export default function VentureLanding() {
 
                       {/* --- Business Model (conditional on founder selection) --- */}
                       {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
-                        <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <DollarSign className="w-5 h-5 text-emerald-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Business Model</p>
+                            <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Business Model</p>
                           </div>
                           {(() => {
                             const bmd = venture.growth_data.business_model_data;
                             const modelLabels = { subscription: 'Subscription', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
                             return (
                               <div className="mb-3">
-                                <p className="text-xs font-semibold text-gray-500 mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
+                                <p className="text-xs font-semibold text-[#6b7a77] mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
                                 {bmd.model_type === 'subscription' && (
                                   <>
                                     {/* [FIX] "Free" now renders as a package-style
@@ -1763,15 +1764,15 @@ export default function VentureLanding() {
                                 {(bmd.has_free_tier || (bmd.packages && bmd.packages.length > 0)) && (
                                   <div className="flex flex-wrap gap-2">
                                     {bmd.has_free_tier && bmd.free_tier_description && (
-                                      <div className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
-                                        <span className="font-semibold text-gray-900">Free</span>
-                                        <span className="text-sm text-gray-500"> · {bmd.free_tier_description}</span>
+                                      <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg px-3 py-2">
+                                        <span className="font-semibold text-[#1c2b2a]">Free</span>
+                                        <span className="text-sm text-[#6b7a77]"> · {bmd.free_tier_description}</span>
                                       </div>
                                     )}
                                     {bmd.packages && bmd.packages.map((p) => (
-                                      <div key={p.id} className="border border-emerald-200 bg-white rounded-lg px-3 py-2">
-                                        <span className="font-semibold text-gray-900">{p.name} — {p.price}</span>
-                                        {p.description && <span className="text-sm text-gray-500"> · {p.description}</span>}
+                                      <div key={p.id} className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg px-3 py-2">
+                                        <span className="font-semibold text-[#1c2b2a]">{p.name} — {p.price}</span>
+                                        {p.description && <span className="text-sm text-[#6b7a77]"> · {p.description}</span>}
                                       </div>
                                     ))}
                                   </div>
@@ -1779,10 +1780,10 @@ export default function VentureLanding() {
                                   </>
                                 )}
                                 {bmd.model_type === 'transactional' && (
-                                  <p className="text-sm text-gray-600">{bmd.transaction_fee_description}</p>
+                                  <p className="text-sm text-[#5b6b68]">{bmd.transaction_fee_description}</p>
                                 )}
                                 {bmd.model_type === 'ad-driven' && (
-                                  <p className="text-sm text-gray-600">Free to use.</p>
+                                  <p className="text-sm text-[#5b6b68]">Free to use.</p>
                                 )}
                               </div>
                             );
@@ -1795,16 +1796,16 @@ export default function VentureLanding() {
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-2 mb-1
-                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-emerald-600 [&>span>span]:rounded-full
+                                [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-emerald-600
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-emerald-700">{businessModelRating}</div>
+                            <div className="text-center text-sm font-semibold text-[#c2561f]">{businessModelRating}</div>
                             {businessModelRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
-                                <Label className="text-xs text-gray-500">What doesn't feel right about it? (optional)</Label>
+                                <Label className="text-xs text-[#6b7a77]">What doesn't feel right about it? (optional)</Label>
                                 <Textarea value={businessModelNote} onChange={(e) => setBusinessModelNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                               </div>
                             )}
@@ -1814,16 +1815,16 @@ export default function VentureLanding() {
 
                       {/* --- Core Features (conditional) — shown together, rated once --- */}
                       {(venture.growth_data.stage || 'product') !== 'idea' && venture.growth_data.core_features && venture.growth_data.core_features.length > 0 && (
-                        <div className="border border-sky-200 bg-sky-50/40 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <Layers className="w-5 h-5 text-sky-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Core Features</p>
+                            <Layers className="w-5 h-5 text-[#1f6f5c]" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Core Features</p>
                           </div>
                           <div className="space-y-2 mb-3">
                             {venture.growth_data.core_features.map((f) => (
-                              <div key={f.id} className="border border-sky-200 bg-white rounded-lg p-3">
-                                <p className="font-semibold text-gray-900">{f.name}</p>
-                                <p className="text-sm text-gray-500">{f.description}</p>
+                              <div key={f.id} className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg p-3">
+                                <p className="font-semibold text-[#1c2b2a]">{f.name}</p>
+                                <p className="text-sm text-[#6b7a77]">{f.description}</p>
                               </div>
                             ))}
                           </div>
@@ -1835,17 +1836,17 @@ export default function VentureLanding() {
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-2 mb-1
-                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-sky-600 [&>span>span]:rounded-full
+                                [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-sky-600
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-sky-700">{coreFeaturesRating}</div>
+                            <div className="text-center text-sm font-semibold text-[#c2561f]">{coreFeaturesRating}</div>
                             {/* [FIX] Always shown now, not just below the
                                 score threshold — per explicit request. */}
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">What feature do you think would add value to the product? (optional)</Label>
+                              <Label className="text-xs text-[#6b7a77]">What feature do you think would add value to the product? (optional)</Label>
                               <Textarea value={coreFeaturesNote} onChange={(e) => setCoreFeaturesNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                           </MobileQuestionSheet>
@@ -1854,12 +1855,12 @@ export default function VentureLanding() {
 
                       {/* --- Slogan (was "Value Proposition") — slogan shown again here, not just referenced --- */}
                       {venture.growth_data.selected_categories.includes('value_proposition') && (
-                        <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <Megaphone className="w-5 h-5 text-amber-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Slogan</p>
+                            <Megaphone className="w-5 h-5 text-[#1f6f5c]" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Slogan</p>
                           </div>
-                          <blockquote className="border-l-4 border-amber-400 bg-white rounded-r-lg p-3 mb-3 italic text-gray-800">
+                          <blockquote className="border-l-4 border-[#cdbfa8] bg-[#fffdf9] rounded-r-lg p-3 mb-3 italic text-[#1c2b2a]">
                             "{venture.growth_data.headline}"
                           </blockquote>
                           <MobileQuestionSheet label="Does the slogan land?" summary={valuePropRating} isMobile={false}>
@@ -1870,16 +1871,16 @@ export default function VentureLanding() {
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-2 mb-1
-                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-amber-500 [&>span>span]:rounded-full
+                                [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-amber-500
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-amber-700">{valuePropRating}</div>
+                            <div className="text-center text-sm font-semibold text-[#c2561f]">{valuePropRating}</div>
                             {valuePropRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
-                                <Label className="text-xs text-gray-500">What would you change? (optional)</Label>
+                                <Label className="text-xs text-[#6b7a77]">What would you change? (optional)</Label>
                                 <Textarea value={valuePropNote} onChange={(e) => setValuePropNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                               </div>
                             )}
@@ -1890,22 +1891,22 @@ export default function VentureLanding() {
                       {/* --- Product Definition (conditional) --- */}
 
                       {(venture.growth_data.selected_categories.includes('product_definition') || venture.growth_data.selected_categories.includes('proto_product')) && (
-                        <div className="border border-rose-200 bg-rose-50/40 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <Target className="w-5 h-5 text-rose-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-rose-700">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
+                            <Target className="w-5 h-5 text-[#1f6f5c]" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">{(venture.growth_data.stage || 'product') === 'prototype' ? 'The Product' : 'Product Definition'}</p>
                           </div>
                           <MobileQuestionSheet label="Is the description clear?" summary={productDefinitionRating} isMobile={false}>
                           <Label className="text-sm">{(venture.growth_data.stage || 'product') === 'prototype' ? 'How clearly and accurately is this product defined? (1-10)' : 'How clear is this description of the product? (1-10)'}</Label>
                           <button
                             type="button"
                             onClick={() => setShowDescriptionInline(s => !s)}
-                            className="text-xs text-rose-600 hover:text-rose-700 underline block mb-1"
+                            className="text-xs text-[#1f6f5c] hover:text-[#1f6f5c] underline block mb-1"
                           >
                             {showDescriptionInline ? "Hide description" : "Show description"}
                           </button>
                           {showDescriptionInline && (
-                            <p className="text-sm text-gray-700 bg-white border border-rose-200 rounded-lg p-3 mb-2">{(venture.growth_data.stage || 'product') === 'prototype' ? venture.growth_data.solution : venture.growth_data.description}</p>
+                            <p className="text-sm text-[#3a4a48] bg-[#fffdf9] border border-[#e6ddcc] rounded-lg p-3 mb-2">{(venture.growth_data.stage || 'product') === 'prototype' ? venture.growth_data.solution : venture.growth_data.description}</p>
                           )}
                           <Slider
                             value={[productDefinitionRating]}
@@ -1913,16 +1914,16 @@ export default function VentureLanding() {
                             max={10} min={1} step={1}
                             disabled={isSubmittingGrowthFeedback}
                             className="mt-2 mb-1
-                              [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                              [&>span>span]:bg-rose-500 [&>span>span]:rounded-full
+                              [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                              [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                               [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                              [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-rose-500
+                              [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                               [&_[role=slider]]:shadow-md"
                           />
-                          <div className="text-center text-sm font-semibold text-rose-700">{productDefinitionRating}</div>
+                          <div className="text-center text-sm font-semibold text-[#c2561f]">{productDefinitionRating}</div>
                           {productDefinitionRating < GROWTH_LOW_SCORE_THRESHOLD && (
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">{(venture.growth_data.stage || 'product') === 'prototype' ? <>What feels unclear or inaccurate? <span className="text-red-500 font-semibold">Required</span></> : 'What feels unclear or inaccurate? (optional)'}</Label>
+                              <Label className="text-xs text-[#6b7a77]">{(venture.growth_data.stage || 'product') === 'prototype' ? <>What feels unclear or inaccurate? <span className="text-red-500 font-semibold">Required</span></> : 'What feels unclear or inaccurate? (optional)'}</Label>
                               <Textarea id="growth-pd-note" value={productDefinitionNote} onChange={(e) => { setProductDefinitionNote(e.target.value); if (missingField === 'proto_note') setMissingField(null); }} className={`min-h-[60px] mt-1 text-sm ${missingField === 'proto_note' ? 'border-red-500 ring-1 ring-red-500' : ''}`} disabled={isSubmittingGrowthFeedback} />
                             </div>
                           )}
@@ -1932,10 +1933,10 @@ export default function VentureLanding() {
 
                       {/* --- Media (conditional: founder ticked it and a file is uploaded) --- */}
                       {venture.growth_data.selected_categories.includes('media') && venture.growth_data.uploaded_files && venture.growth_data.uploaded_files.length > 0 && (
-                        <div className="border border-violet-200 bg-violet-50/40 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-3">
-                            <ImageIcon className="w-5 h-5 text-violet-600" />
-                            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Attached media</p>
+                            <ImageIcon className="w-5 h-5 text-[#1f6f5c]" />
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Attached media</p>
                           </div>
                           <MobileQuestionSheet label="Did the media help?" summary={mediaRating} isMobile={false}>
                             <Label className="text-sm">How clear was the media, and did it help you understand the idea or product? (1-10)</Label>
@@ -1945,16 +1946,16 @@ export default function VentureLanding() {
                               max={10} min={1} step={1}
                               disabled={isSubmittingGrowthFeedback}
                               className="mt-2 mb-1
-                                [&>span]:h-2 [&>span]:bg-gray-200 [&>span]:rounded-full
-                                [&>span>span]:bg-violet-500 [&>span>span]:rounded-full
+                                [&>span]:h-2 [&>span]:bg-[#e6ddcc] [&>span]:rounded-full
+                                [&>span>span]:bg-[#1f6f5c] [&>span>span]:rounded-full
                                 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5
-                                [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-violet-500
+                                [&_[role=slider]]:bg-[#fffdf9] [&_[role=slider]]:border-2 [&_[role=slider]]:border-[#1f6f5c]
                                 [&_[role=slider]]:shadow-md"
                             />
-                            <div className="text-center text-sm font-semibold text-violet-700">{mediaRating}</div>
+                            <div className="text-center text-sm font-semibold text-[#c2561f]">{mediaRating}</div>
                             {mediaRating < GROWTH_LOW_SCORE_THRESHOLD && (
                               <div className="mt-2">
-                                <Label className="text-xs text-gray-500">Please explain how to improve it. (optional)</Label>
+                                <Label className="text-xs text-[#6b7a77]">Please explain how to improve it. (optional)</Label>
                                 <Textarea value={mediaNote} onChange={(e) => setMediaNote(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                               </div>
                             )}
@@ -1970,10 +1971,10 @@ export default function VentureLanding() {
                           product_url, so it's gated on that rather than
                           always shown. */}
                       {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
-                      <div className="border border-teal-200 bg-teal-50/40 rounded-xl p-4">
+                      <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
-                          <Home className="w-5 h-5 text-teal-600" />
-                          <p className="text-xs font-bold uppercase tracking-wide text-teal-700">The Real Thing</p>
+                          <Home className="w-5 h-5 text-[#1f6f5c]" />
+                          <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">The Real Thing</p>
                         </div>
                         <Label className="text-sm">Did you visit the actual product?</Label>
                         <div className="flex gap-2 mt-2">
@@ -1983,7 +1984,7 @@ export default function VentureLanding() {
                               type="button"
                               onClick={() => setVisitedProduct(opt)}
                               disabled={isSubmittingGrowthFeedback}
-                              className={`px-4 py-2 rounded-lg border text-sm font-medium ${visitedProduct === opt ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium ${visitedProduct === opt ? 'border-[#1f6f5c] bg-[#1f6f5c] text-white' : 'border-[#cdbfa8] bg-[#fffdf9] text-[#3a4a48] hover:bg-[#f6f1e9]'}`}
                             >
                               {opt === 'yes' ? 'Yes' : 'No'}
                             </button>
@@ -2005,26 +2006,26 @@ export default function VentureLanding() {
                                   type="button"
                                   onClick={() => setProductMatchChoice(opt.key)}
                                   disabled={isSubmittingGrowthFeedback}
-                                  className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm ${productMatchChoice === opt.key ? 'border-teal-600 bg-teal-50 text-teal-800 font-medium' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
+                                  className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm ${productMatchChoice === opt.key ? 'border-[#1f6f5c] bg-[#fffdf9] text-[#c2561f] font-medium' : 'border-[#e6ddcc] bg-[#fffdf9] text-[#3a4a48] hover:bg-[#f6f1e9]'}`}
                                 >
                                   {opt.label}
                                 </button>
                               ))}
                             </div>
                             <div className="mt-2">
-                              <Label className="text-xs text-gray-500">Anything else you want to add? (optional)</Label>
+                              <Label className="text-xs text-[#6b7a77]">Anything else you want to add? (optional)</Label>
                               <Textarea value={productMatchDiffText} onChange={(e) => setProductMatchDiffText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                             </div>
                             {/* [NEW — testimonials] Same field the visitor
                                 already writes — the founder decides later,
                                 on their own dashboard, whether to feature it
                                 publicly. No separate "give a quote" ask. */}
-                            <div className="mt-3 pt-3 border-t border-teal-100">
-                              <Label className="text-xs text-gray-500">Want to say something about your experience? (optional, may be shown publicly with your name)</Label>
+                            <div className="mt-3 pt-3 border-t border-[#e6ddcc]">
+                              <Label className="text-xs text-[#6b7a77]">Want to say something about your experience? (optional, may be shown publicly with your name)</Label>
                               <Textarea value={testimonialText} onChange={(e) => setTestimonialText(e.target.value)} className="min-h-[60px] mt-1 text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your experience with the product..." />
                               {testimonialText.trim() && (
                                 <div className="mt-2">
-                                  <Label className="text-xs text-gray-500">Name to show (editable)</Label>
+                                  <Label className="text-xs text-[#6b7a77]">Name to show (editable)</Label>
                                   <Input value={testimonialAuthorName} onChange={(e) => setTestimonialAuthorName(e.target.value)} className="mt-1 text-sm" disabled={isSubmittingGrowthFeedback} />
                                 </div>
                               )}
@@ -2041,10 +2042,10 @@ export default function VentureLanding() {
                           label was explicitly rejected earlier as redundant.
                           Icon sits inline with the question text itself. */}
                       {venture.growth_data.custom_question && (
-                        <div className="border border-violet-200 bg-violet-50/50 rounded-xl p-4">
+                        <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-xl p-4">
                           <MobileQuestionSheet label={venture.growth_data.custom_question} summary={customQuestionAnswer ? "Answered" : null} isMobile={false}>
-                            <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
-                              <HelpCircle className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                            <p className="text-sm font-medium text-[#1c2b2a] mb-2 flex items-center gap-2">
+                              <HelpCircle className="w-4 h-4 text-[#1f6f5c] flex-shrink-0" />
                               {venture.growth_data.custom_question}
                             </p>
                             <Textarea value={customQuestionAnswer} onChange={(e) => setCustomQuestionAnswer(e.target.value)} className="min-h-[80px] text-sm" disabled={isSubmittingGrowthFeedback} placeholder="Your answer..." />
@@ -2075,23 +2076,23 @@ export default function VentureLanding() {
                         isAlreadyFollowing ? (
                           // [NEW — Followers fix] Already following: say so
                           // instead of asking the same opt-in question again.
-                          <div className="flex items-start gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg p-3 bg-gray-50">
-                            <CheckCircle className="w-4 h-4 mt-0.5 text-indigo-600" />
-                            <span className="font-medium text-gray-800">You already follow this venture</span>
+                          <div className="flex items-start gap-2 text-sm text-[#5b6b68] border border-[#e6ddcc] rounded-lg p-3 bg-[#f6f1e9]">
+                            <CheckCircle className="w-4 h-4 mt-0.5 text-[#1f6f5c]" />
+                            <span className="font-medium text-[#1c2b2a]">You already follow this venture</span>
                           </div>
                         ) : (
-                          <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none border border-gray-200 rounded-lg p-3">
+                          <label className="flex items-start gap-2 text-sm text-[#5b6b68] cursor-pointer select-none border border-[#e6ddcc] rounded-lg p-3">
                             <input
                               type="checkbox"
                               checked={wantsToFollowGrowth}
                               onChange={(e) => setWantsToFollowGrowth(e.target.checked)}
                               disabled={isSubmittingGrowthFeedback}
-                              className="w-4 h-4 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              className="w-4 h-4 mt-0.5 rounded border-[#cdbfa8] text-[#1f6f5c] focus:ring-[#1f6f5c]"
                             />
                             <span>
-                              <span className="font-medium text-gray-800">Become a Follower</span>
+                              <span className="font-medium text-[#1c2b2a]">Become a Follower</span>
                               <br />
-                              <span className="text-xs text-gray-400">Get invited to future feedback rounds.</span>
+                              <span className="text-xs text-[#8a9794]">Get invited to future feedback rounds.</span>
                             </span>
                           </label>
                         )
@@ -2101,7 +2102,7 @@ export default function VentureLanding() {
                           product_url — matches the same gate applied to the
                           question itself and to handleGrowthFeedbackSubmit. */}
                       <Button type="submit" disabled={isSubmittingGrowthFeedback || ((venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && !visitedProduct)}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700">
+                        className="w-full bg-[#1f6f5c] hover:bg-[#17594a]">
                         {isSubmittingGrowthFeedback
                           ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
                           : <><Send className="w-4 h-4 mr-2" /> Send Feedback</>
