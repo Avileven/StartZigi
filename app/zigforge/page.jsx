@@ -245,90 +245,31 @@ const VENTURE_CONFIGS = {
 
 // ============================================
 // [NEW — ZigPulse idea stage] "Concept" mode.
-// A growth venture at the idea stage does not need a clickable app mockup. Instead this builds ONE page that
-// explains the idea (from the need + solution already written in the profile) and attaches it to the public page
-// as the venture's media file. One AI call, one charge (studio_basic = 5 credits, Pro model).
+// A growth venture at the idea stage gets ONE concept page, built by code (no AI text, so nothing is invented)
+// from the Need and Solution already written in the profile. The founder can add an AI-made image and then attach
+// the page to the public page as the venture's media file.
 // ============================================
-const FORGE_COST = 5;
 
-const buildConceptPrompt = (v, moment) => [
-  'You are a product designer. Create ONE self-contained HTML page (mobile, 390px wide) that explains an early-stage startup IDEA to a first-time visitor in under 30 seconds.',
-  '',
-  'Idea name: ' + v.name,
-  (v.sector && v.sector !== 'not_sure') ? 'Industry: ' + String(v.sector).replace(/_/g, ' ') : null,
-  'The need: ' + v.need,
-  'The solution: ' + v.solution,
-  moment.trim() ? 'A typical moment when someone feels this need: ' + moment.trim() : null,
-  '',
-  'Structure, in this order:',
-  '1. Brand bar: the idea name, plus a small label "Concept".',
-  '2. Headline (max 10 words) that states the benefit, plus one sentence on who it is for.',
-  '3. Card "Today": 3-4 short steps showing how a person deals with the need today. If a typical moment was given, it is the FIRST step of this card only. The other steps are the frustrating way the need is handled today. End with a small pill saying how painful it is (use only what the need text says, no numbers you invent).',
-  '4. Card "With ' + v.name + '": 3 short steps showing what the person does with the solution, in the same situation. Do NOT repeat the sentences of the "Today" card, and do not repeat the typical moment. The steps must contrast with "Today" (fast and simple instead of slow). End with a small pill.',
-  '5. An empty placeholder for an illustration, exactly: <div id="zf-illustration"></div> (an image is inserted there later). Do NOT draw any illustration yourself and do not use SVG.',
-  '6. Two small cards, "The need" and "Our solution", using the founder\'s own wording.',
-  '7. A footer line only: "An idea in early stage. Your feedback shapes it." No buttons, no links, no forms.',
-  '',
-  'Rules:',
-  '- Use ONLY facts from the input. Never invent statistics, prices, user counts, reviews or quotes.',
-  '- Do not add details that are not in the solution text: no places, devices, features, times or extra benefits. If the solution does not say it, do not say it.',
-  '- English only. Short sentences. No jargon.',
-  '- Inline CSS only. No external images, no JavaScript, no frameworks.',
-  '- Fonts: one serif for headings and Inter for text, from Google Fonts, with fallbacks.',
-  '- Palette: one calm main color that fits the industry, one accent, a warm off-white background that fills the full width.',
-  '- Rounded cards, generous spacing, readable at 390px with no horizontal scroll. The page is shown inside a scrolling frame, so make it one vertical page.',
-  '- Return ONLY the HTML document, starting with <!DOCTYPE html>. No markdown, no explanation.',
-].filter(l => l !== null).join('\n');
-
-// Keeps the model's HTML safe to host: no scripts, frames, forms, event handlers or outside resources
-// (except Google Fonts). Returns '' when the output is unusable (missing or cut off).
-const cleanConceptHtml = (raw) => {
-  let t = String(raw || '').trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/i, '');
-  const start = t.search(/<!doctype html|<html/i);
-  if (start === -1) return '';
-  t = t.slice(start);
-  const end = t.toLowerCase().lastIndexOf('</html>');
-  if (end !== -1) t = t.slice(0, end + 7);
-  else {
-    // Output was cut off: keep what exists if it is long enough, and let the browser close the open tags.
-    if (t.length < 1500) return '';
-    t = t.slice(0, t.lastIndexOf('>') + 1) + '</body></html>';
-  }
-  t = t
-    .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
-    .replace(/<(iframe|object|embed|form)\b[\s\S]*?<\/\1\s*>/gi, '')
-    .replace(/<(iframe|object|embed|base|img)\b[^>]*>/gi, '')
-    .replace(/<meta\b[^>]*http-equiv[^>]*>/gi, '')
-    .replace(/<link\b(?![^>]*href=["']https:\/\/fonts\.googleapis\.com)[^>]*>/gi, '')
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript:/gi, '');
-  if (!/name=["']viewport["']/i.test(t)) t = t.replace(/<head[^>]*>/i, (m) => m + '<meta name="viewport" content="width=device-width,initial-scale=1">');
-  return t.length > 800 ? t : '';
-};
-
-// [TEST] Illustration: a second AI call, to an IMAGE model. Model ids are tried in order (not verified against Google's list yet).
 const IMAGE_MODELS = ['gemini-3.1-flash-lite-image', 'gemini-3.1-flash-image'];
 
-const buildImagePrompt = (v, moment) => [
+// Fixed style rules, so every venture's image looks like part of the same family.
+const buildImagePrompt = (scene) => [
   'Create a friendly flat vector-style illustration for an early-stage startup idea page.',
-  'Idea: ' + v.name,
-  'The need: ' + v.need,
-  'The solution: ' + v.solution,
-  moment.trim() ? 'The moment to show: ' + moment.trim() : 'Show the moment a person uses the solution.',
-  'Style: simple shapes, soft warm colors, clean background, one clear scene, easy to read at a glance.',
+  'Scene: ' + scene,
+  'Style: simple shapes, soft warm colors (cream, green, orange accents), clean background, one clear scene, easy to read at a glance.',
   'Strict rules: no text, no letters, no numbers, no logos, no watermarks, no real brands, no realistic faces.',
   'Composition: nothing may overlap a person. Never draw circles, speech bubbles, icons or floating windows over or near anyone\'s head or body. Anything shown on a screen must stay inside the screen of a device.',
   'Square image.',
 ].join('\n');
 
-const generateIllustration = async (v, moment) => {
+const generateIllustration = async (scene) => {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   let lastErr = '';
   for (const model of IMAGE_MODELS) {
     const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: buildImagePrompt(v, moment) }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: buildImagePrompt(scene) }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -345,11 +286,24 @@ const generateIllustration = async (v, moment) => {
   throw new Error(lastErr || 'No image model available.');
 };
 
-const injectIllustration = (html, dataUrl) => {
-  const tag = '<img src="' + dataUrl + '" alt="" style="display:block;width:100%;max-width:360px;margin:16px auto;border-radius:18px">';
-  const slot = /<div[^>]*id=["']zf-illustration["'][^>]*>\s*<\/div>/i;
-  if (slot.test(html)) return html.replace(slot, () => tag);
-  return html.replace(/<\/body>/i, () => tag + '</body>');
+// Text call (free, creditType 'sys'): suggests image scenes from the founder's own Need and Solution.
+const suggestScenes = async (v, count) => {
+  const prompt = [
+    'A founder is describing an early-stage startup idea. Suggest ' + count + ' different ideas for ONE illustration for the idea\'s public page.',
+    'Idea name: ' + v.name,
+    'The need: ' + v.need,
+    'The solution: ' + v.solution,
+    'Rules: each idea is ONE short sentence describing a single visual scene (who, where, what is happening). Use only what the founder wrote; do not invent facts, features or places that are not implied by the text. No text, logos or brand names in the scene. Prefer scenes that show the need or the moment of using the solution. Do not put objects over or near anyone\'s head.',
+    'Answer with ONLY a JSON array of ' + count + ' strings, nothing else.',
+  ].join('\n');
+  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const text = (r && r.response) || '';
+  const m = text.match(/\[[\s\S]*\]/);
+  let arr = [];
+  try { arr = JSON.parse(m ? m[0] : text); } catch (e) { arr = []; }
+  arr = (Array.isArray(arr) ? arr : []).map((s) => String(s).trim()).filter(Boolean).slice(0, count);
+  if (!arr.length) throw new Error('No ideas returned.');
+  return arr;
 };
 
 const ForgeConcept = ({ venture }) => {
@@ -357,132 +311,167 @@ const ForgeConcept = ({ venture }) => {
   // Back goes to the page the founder came from: the profile (?from=profile) or, by default, the feedback page.
   const backTo = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'profile') ? '/growth-development?view=profile' : '/growth-development/feedback';
   const backLabel = backTo.includes('view=profile') ? 'Back to my profile' : 'Back to ZigPulse';
-  const [moment, setMoment] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [html, setHtml] = useState('');
+  const [step, setStep] = useState('start'); // start | ideas | preview | done
+  const [busy, setBusy] = useState(''); // '', 'ideas', 'image', 'saving'
   const [error, setError] = useState('');
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [ideas, setIdeas] = useState([]);
+  const [chosen, setChosen] = useState(-1);
+  const [custom, setCustom] = useState('');
+  const [scene, setScene] = useState('');
   const [img, setImg] = useState('');
-  const [imgBusy, setImgBusy] = useState(false);
-  const finalHtml = useMemo(() => (img && html ? injectIllustration(html, img) : html), [html, img]);
+  const [current, setCurrent] = useState(venture.image_url || '');
   const ready = venture.need.trim().length >= 30 && venture.solution.trim().length >= 30;
-  const existing = (venture.files || [])[0];
 
-  const create = async () => {
-    setBusy(true); setError(''); setAdded(false); setImg('');
+  const makeImage = async (sceneText) => {
+    setBusy('image'); setError('');
     try {
-      const data = await Promise.race([
-        InvokeLLM({ prompt: buildConceptPrompt(venture, moment), creditType: 'studio_basic' }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 120000)),
-      ]);
-      const raw = String(data?.response || '');
-      console.log('[ZigForge] AI response:', raw.length, 'characters. Start:', raw.slice(0, 300), ' End:', raw.slice(-300));
-      const clean = cleanConceptHtml(raw);
-      if (!clean) {
-        const err = new Error('BAD_OUTPUT');
-        err.detail = raw.length + ' characters. Starts: "' + raw.slice(0, 80).replace(/\s+/g, ' ') + '". Ends: "' + raw.slice(-80).replace(/\s+/g, ' ') + '"';
-        throw err;
-      }
-      setHtml(clean);
+      const url = await generateIllustration(sceneText);
+      setScene(sceneText); setImg(url); setStep('preview');
     } catch (e) {
-      console.error('ZigForge concept error:', e);
-      if (e.message === 'NO_CREDITS') setError("You don't have enough AI credits for this.");
-      else if (e.message === 'TIMEOUT') setError('The AI took too long. Please try again.');
-      else setError('The AI did not return a usable page. Please try again.' + (e.detail ? ' [' + e.detail + ']' : ''));
+      console.error('ZigForge image error:', e);
+      setError('Could not create the image. ' + (e.message || ''));
     }
-    setBusy(false);
+    setBusy('');
   };
 
-  const addIllustration = async () => {
-    setImgBusy(true); setError('');
-    try { setImg(await generateIllustration(venture, moment)); }
-    catch (e) { console.error('ZigForge illustration error:', e); setError('Could not create the illustration. ' + (e.message || '')); }
-    setImgBusy(false);
-  };
-
-  const addToPage = async () => {
-    setAdding(true); setError('');
+  // Option 1: "Create one for me" — the AI picks the best scene itself.
+  const lazy = async () => {
+    setBusy('ideas'); setError('');
     try {
+      const [s] = await suggestScenes(venture, 1);
+      await makeImage(s);
+    } catch (e) {
+      console.error('ZigForge scene error:', e);
+      setError('Could not create the image. ' + (e.message || ''));
+      setBusy('');
+    }
+  };
+
+  // Option 2: "Let me choose" — 3 suggestions plus free text.
+  const showIdeas = async () => {
+    setBusy('ideas'); setError('');
+    try { setIdeas(await suggestScenes(venture, 3)); setChosen(-1); setCustom(''); setStep('ideas'); }
+    catch (e) { console.error('ZigForge ideas error:', e); setError('Could not get ideas. ' + (e.message || '')); }
+    setBusy('');
+  };
+
+  const createFromChoice = () => {
+    const text = custom.trim() || (chosen >= 0 ? ideas[chosen] : '');
+    if (text) makeImage(text);
+  };
+
+  const saveToProfile = async (nextImageUrl) => {
+    const { data: row, error: readErr } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+    if (readErr) throw readErr;
+    const next = { ...(row?.growth_data || {}) };
+    if (nextImageUrl) next.image_url = nextImageUrl; else delete next.image_url;
+    const { error: upErr } = await supabase.from('ventures').update({ growth_data: next }).eq('id', venture.id);
+    if (upErr) throw upErr;
+    const { data: chk } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+    if ((chk?.growth_data?.image_url || '') !== (nextImageUrl || '')) throw new Error('NOT_SAVED');
+  };
+
+  const approve = async () => {
+    setBusy('saving'); setError('');
+    try {
+      const blob = await (await fetch(img)).blob();
       const slug = String(venture.name || 'idea').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'idea';
-      const file = new File([finalHtml], slug + '-concept.html', { type: 'text/html' });
+      const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+      const file = new File([blob], slug + '-image-' + Date.now() + '.' + ext, { type: blob.type || 'image/png' });
       const up = await UploadFile({ file });
-      const entry = { type: 'html', name: file.name, url: up.file_url };
-      // Re-read first so nothing else in growth_data is overwritten.
-      const { data: row, error: readErr } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
-      if (readErr) throw readErr;
-      const next = { ...(row?.growth_data || {}), uploaded_files: [entry] };
-      const { error: upErr } = await supabase.from('ventures').update({ growth_data: next }).eq('id', venture.id);
-      if (upErr) throw upErr;
-      const { data: chk } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
-      if (chk?.growth_data?.uploaded_files?.[0]?.url !== entry.url) throw new Error('NOT_SAVED');
-      setAdded(true);
+      await saveToProfile(up.file_url);
+      setCurrent(up.file_url); setStep('done');
     } catch (e) {
-      console.error('ZigForge add-to-page error:', e);
-      setError('Could not add it to your public page. Please try again.');
+      console.error('ZigForge save error:', e);
+      setError('Could not add the image to your public page. Please try again.');
     }
-    setAdding(false);
+    setBusy('');
   };
+
+  const removeCurrent = async () => {
+    setBusy('saving'); setError('');
+    try { await saveToProfile(''); setCurrent(''); }
+    catch (e) { console.error('ZigForge remove error:', e); setError('Could not remove the image. Please try again.'); }
+    setBusy('');
+  };
+
+  const card = 'bg-white rounded-2xl border border-gray-200 p-5';
+  const primary = 'w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold';
+  const secondary = 'w-full py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-60 text-gray-800 font-semibold';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-4 md:p-8 font-sans antialiased">
       <div className="max-w-xl mx-auto space-y-5">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">ZigForge</h1>
-          <p className="mt-2 text-gray-600">Show your idea in one page. We build it from the need and the solution you wrote.</p>
+          <p className="mt-2 text-gray-600">Add an image that illustrates your idea.</p>
         </div>
 
         {!ready ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+          <div className={card + ' text-center'}>
             <p className="text-gray-800 font-medium">Write the Need and the Solution in your profile first (at least 30 characters each).</p>
             <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Go to my profile</button>
           </div>
-        ) : (<>
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
-            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Idea</p><p className="text-gray-900 font-semibold">{venture.name}</p></div>
-            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">The Need</p><p className="text-sm text-gray-700 whitespace-pre-line">{venture.need}</p></div>
-            <div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your Solution</p><p className="text-sm text-gray-700 whitespace-pre-line">{venture.solution}</p></div>
-            <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="text-xs text-gray-500 underline">Edit in my profile</button>
-          </div>
+        ) : (
+          <div className={card + ' space-y-4'}>
+            {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <label className="block text-sm font-semibold text-gray-900">A typical moment when someone feels this need <span className="font-normal text-gray-500">(optional)</span></label>
-            <p className="text-xs text-gray-500 mt-1">One or two sentences. Without it, the AI will imagine the moment itself.</p>
-            <textarea value={moment} onChange={(e) => setMoment(e.target.value)} disabled={busy} maxLength={400} rows={3}
-              placeholder="e.g., It's 9pm, my dog won't stop scratching his ear and the clinic is closed."
-              className="mt-3 w-full rounded-xl border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-            <button type="button" onClick={create} disabled={busy}
-              className="mt-4 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold">
-              {busy ? 'Creating your page... this can take up to a minute' : (html ? `Create again (${FORGE_COST} credits)` : `Create my idea page (${FORGE_COST} credits)`)}
-            </button>
-          </div>
-
-          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-
-          {html && !busy && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Preview</p>
-              <iframe title="Idea page preview" srcDoc={finalHtml} sandbox="" className="w-full rounded-xl border border-gray-200 bg-white" style={{ height: 520 }} />
-              {!added && (
-                <button type="button" onClick={addIllustration} disabled={imgBusy || adding}
-                  className="w-full py-3 rounded-xl border border-indigo-300 text-indigo-700 font-semibold bg-indigo-50 hover:bg-indigo-100 disabled:opacity-60">
-                  {imgBusy ? 'Creating the illustration...' : (img ? 'Create another illustration' : 'Add an illustration')}
-                </button>
-              )}
-              {!added ? (
-                <button type="button" onClick={addToPage} disabled={adding}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold">
-                  {adding ? 'Adding...' : (existing ? `Replace my current file (${existing.name}) and add to my public page` : 'Add to my public page')}
-                </button>
-              ) : (
-                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
-                  <p className="font-semibold text-emerald-800">Added to your public page.</p>
-                  <button type="button" onClick={() => router.push(backTo)} className="mt-3 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">{backLabel}</button>
+            {step === 'start' && (<>
+              {current && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your current image</p>
+                  <img src={current} alt="" className="w-full rounded-2xl" />
+                  <button type="button" onClick={removeCurrent} disabled={!!busy} className="text-sm text-gray-500 underline">{busy === 'saving' ? 'Removing...' : 'Remove this image'}</button>
                 </div>
               )}
-            </div>
-          )}
-        </>)}
+              <p className="text-gray-800 font-medium">{current ? 'Want a different image?' : 'Want to add an image that illustrates your idea?'}</p>
+              <button type="button" onClick={lazy} disabled={!!busy} className={primary}>
+                {busy === 'ideas' || busy === 'image' ? 'Creating your image...' : 'Create one for me'}
+              </button>
+              <button type="button" onClick={showIdeas} disabled={!!busy} className={secondary}>
+                {busy === 'ideas' ? 'Thinking...' : 'Let me choose'}
+              </button>
+              <p className="text-xs text-gray-500 text-center">The image is made from the Need and the Solution you wrote. You approve it before it appears on your public page.</p>
+            </>)}
+
+            {step === 'ideas' && (<>
+              <p className="text-gray-800 font-medium">Pick an idea for the image, or write your own.</p>
+              <div className="space-y-2">
+                {ideas.map((s, i) => (
+                  <button key={i} type="button" onClick={() => { setChosen(i); setCustom(''); }} disabled={!!busy}
+                    className={'w-full text-left p-3 rounded-xl border text-sm ' + (chosen === i && !custom.trim() ? 'border-emerald-600 bg-emerald-50 text-gray-900' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')}>{s}</button>
+                ))}
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Or describe the image you want</label>
+                <textarea value={custom} onChange={(e) => setCustom(e.target.value)} disabled={!!busy} rows={3} maxLength={400}
+                  placeholder="e.g. A woman on a sofa at night, her dog beside her, looking relieved at her phone"
+                  className="w-full border border-gray-300 rounded-xl p-3 text-sm" />
+              </div>
+              <button type="button" onClick={createFromChoice} disabled={!!busy || (!custom.trim() && chosen < 0)} className={primary}>
+                {busy === 'image' ? 'Creating your image...' : 'Create the image'}
+              </button>
+              <button type="button" onClick={showIdeas} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'ideas' ? 'Thinking...' : 'Show me other ideas'}</button>
+              <button type="button" onClick={() => setStep('start')} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Back</button>
+            </>)}
+
+            {step === 'preview' && (<>
+              <img src={img} alt="" className="w-full rounded-2xl" />
+              <p className="text-xs text-gray-500">Scene: {scene}</p>
+              <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this image on my public page'}</button>
+              <button type="button" onClick={() => makeImage(scene)} disabled={!!busy} className={secondary}>{busy === 'image' ? 'Creating...' : 'Try again with the same idea'}</button>
+              <button type="button" onClick={() => { setImg(''); setStep('start'); }} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Choose a different idea</button>
+            </>)}
+
+            {step === 'done' && (
+              <div className="space-y-3 text-center">
+                <img src={current} alt="" className="w-full rounded-2xl" />
+                <p className="font-semibold text-emerald-800">Added to your public page.</p>
+                <button type="button" onClick={() => router.push(backTo)} className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">{backLabel}</button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="text-center pb-6">
           <button type="button" onClick={() => router.push(backTo)} className="text-sm text-gray-500 underline">{backLabel}</button>
@@ -542,7 +531,7 @@ const App = () => {
         if (!venture) { setIsLoadingVenture(false); return; }
         const gd = venture.growth_data || {};
         if (venture.phase === 'growth' && gd.stage === 'idea') {
-          setConcept({ id: venture.id, name: venture.name || '', sector: venture.sector || '', need: gd.need || '', solution: gd.solution || '', files: Array.isArray(gd.uploaded_files) ? gd.uploaded_files : [] });
+          setConcept({ id: venture.id, name: venture.name || '', sector: venture.sector || '', need: gd.need || '', solution: gd.solution || '', image_url: gd.image_url || '' });
         }
 
         const isMlpStage = ['mlp', 'beta', 'growth'].includes(venture.phase);

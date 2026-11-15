@@ -1504,6 +1504,13 @@ export default function VentureLanding() {
                 )}
               </div>
 
+              {/* [NEW] Idea-stage image made in ZigForge and approved by the founder. */}
+              {venture.growth_data.image_url && (
+                <div className="mb-8 max-w-2xl mx-auto">
+                  <img src={venture.growth_data.image_url} alt="" className="w-full rounded-3xl shadow-[0_6px_24px_rgba(31,111,92,0.12)]" />
+                </div>
+              )}
+
               {/* [ALWAYS SHOWN — not gated by selected_categories] */}
               {(venture.growth_data.stage || 'product') === 'product' ? (
                 venture.growth_data.description && (

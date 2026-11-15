@@ -397,7 +397,7 @@ export default function GrowthDevelopment() {
   const openForge = async () => {
     try {
       await Venture.update(venture.id, { growth_data: growthData });
-      router.push('/zigforge');
+      router.push('/zigforge?from=profile');
     } catch (e) {
       console.error('Could not save before opening ZigForge:', e);
       showToast('Could not save. Please try again.', 'error');
@@ -604,9 +604,9 @@ export default function GrowthDevelopment() {
           </FieldCard>
 
           {isIdea && venture && isNeedComplete && isSolutionComplete && (
-            <FieldCard Icon={Sparkles} title="Show your idea in one page" description="No image? ZigForge reads your Need and Solution and builds a one-page visual for your public page.">
+            <FieldCard Icon={Sparkles} title="Add an image to your idea" description="ZigForge reads your Need and Solution and creates an image for your public page. You approve it first.">
               <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
-                <Sparkles className="w-4 h-4 mr-2" />Create it with ZigForge
+                <Sparkles className="w-4 h-4 mr-2" />Add an image with ZigForge
               </Button>
             </FieldCard>
           )}
