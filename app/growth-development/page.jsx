@@ -169,13 +169,17 @@ export default function GrowthDevelopment() {
     if (!venture) return;
     const interval = setInterval(async () => {
       try {
-        await Venture.update(venture.id, { growth_data: growthData });
+        await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
         showToast('Auto-saved', 'success');
       } catch (e) {}
     }, 30000);
     return () => clearInterval(interval);
   }, [venture, growthData]);
 
+  // [NEW] Prototype: the profile's Key features also drive the feedback question (core_features), so the two never differ.
+  const withSyncedFeatures = (g) => g.stage === 'prototype'
+    ? { ...g, core_features: (g.features || []).filter((f) => f && f.name && f.name.trim()).map((f, i) => ({ id: 'pf_' + i, name: f.name.trim(), description: (f.text || '').trim() })) }
+    : g;
   const setFeature = (i, field, value) => setGrowthData(prev => {
     const list = Array.from({ length: FEATURE_SLOTS }, (_, k) => ({ icon: 'check', name: '', text: '', ...((prev.features || [])[k] || {}) }));
     list[i] = { ...list[i], [field]: value };
@@ -335,7 +339,8 @@ export default function GrowthDevelopment() {
       if (!isNewVenture && growthData.sector && growthData.sector !== targetVenture.sector) {
         await Venture.update(targetVenture.id, { sector: growthData.sector });
       }
-      await Venture.update(targetVenture.id, { growth_data: growthData });
+      const toSave = withSyncedFeatures(growthData);
+      await Venture.update(targetVenture.id, { growth_data: toSave });
       // [DIAGNOSTIC — save verification] Read the venture back and compare the
       // fields that were reported as not saving. Shows a red toast naming any
       // field whose stored value differs from what was just sent.
@@ -348,7 +353,7 @@ export default function GrowthDevelopment() {
           return ka.length === kb.length && ka.every((k) => same(a[k], b[k]));
         };
         const checkFields = ['need', 'solution', 'custom_question', 'business_model_data', 'core_features', 'selected_categories', 'product_url', 'headline', 'description', 'early_incentive', 'early_offer_text'];
-        const mismatched = checkFields.filter((f) => !same((saved.growth_data || {})[f] ?? '', growthData[f] ?? ''));
+        const mismatched = checkFields.filter((f) => !same((saved.growth_data || {})[f] ?? '', toSave[f] ?? ''));
         if (mismatched.length > 0) {
           console.error('[Save verification] NOT saved:', mismatched, { sent: growthData, stored: saved.growth_data });
           showToast('Not saved: ' + mismatched.join(', '), 'error');
@@ -584,7 +589,7 @@ export default function GrowthDevelopment() {
           )}
 
           {isPrototype && (
-            <FieldCard Icon={Sparkles} title="Key features" description="Pick the 3 that matter most. They appear as cards on your public page.">
+            <FieldCard Icon={Sparkles} title="Key features" description="Define up to 3 of the most important features of your product. They appear on your public page and are included in your feedback questions.">
               <p className="text-xs text-gray-500 mb-3">Tap the icon next to a feature to choose one.</p>
               <div className="space-y-4">
                 {Array.from({ length: FEATURE_SLOTS }, (_, i) => {

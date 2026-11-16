@@ -78,11 +78,10 @@ export default function GrowthFeedbackSetup() {
         const currentVenture = ventures[0];
         setVenture(currentVenture);
         const normalized = normalizeGrowthData(currentVenture);
-        // Prototype: keep the asked-about features in step with the profile (no separate entry here any more).
+        // Prototype: the asked-about features always mirror the profile's Key features.
         if (normalized.stage === 'prototype') {
           const pf = ((currentVenture.growth_data || {}).features || []).filter((x) => x && x.name && x.name.trim());
-          const asked = pf.length > 0 && (normalized.core_features || []).length > 0;
-          normalized.core_features = asked ? pf.map((x, i) => ({ id: 'pf_' + i, name: x.name.trim(), description: (x.text || '').trim() })) : [];
+          normalized.core_features = pf.map((x, i) => ({ id: 'pf_' + i, name: x.name.trim(), description: (x.text || '').trim() }));
         }
         setGrowthData(prev => ({ ...prev, ...normalized }));
       }
@@ -192,13 +191,8 @@ export default function GrowthFeedbackSetup() {
   const isHeadlineComplete = growthData.headline.trim().length >= 10;
   const isDescriptionComplete = growthData.description.trim().length >= 50;
   const hasAtLeastOneCategory = growthData.selected_categories.length > 0;
-  // [NEW] Prototype: the features come from the profile (growth_data.features); here the founder only chooses whether to ask about them.
-  const profileFeatures = ((venture && venture.growth_data && venture.growth_data.features) || []).filter((f) => f && f.name && f.name.trim());
-  const wantsKeyFeatures = growthData.core_features.length > 0;
-  const toggleKeyFeatures = () => setGrowthData(prev => ({
-    ...prev,
-    core_features: prev.core_features.length > 0 ? [] : profileFeatures.map((f, i) => ({ id: 'pf_' + i, name: f.name.trim(), description: (f.text || '').trim() })),
-  }));
+  // [NEW] Prototype: the key features come from the profile and are always asked about (a basic question), so nothing is entered or toggled here.
+  const profileFeatures = ((venture && venture.growth_data && venture.growth_data.features) || []).filter((x) => x && x.name && x.name.trim());
   const featuresReady = isIdea || isPrototype || growthData.core_features.length > 0;
   const bmd = growthData.business_model_data;
   const businessModelReady = (() => {
@@ -306,33 +300,26 @@ export default function GrowthFeedbackSetup() {
                     </div>
                   )}
                   {isPrototype && (
-                  <div className={`border rounded-lg p-4 ${wantsKeyFeatures ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
-                    {profileFeatures.length > 0 ? (
-                      <>
-                        <label className="flex items-start gap-3 cursor-pointer">
-                          <Checkbox checked={wantsKeyFeatures} onCheckedChange={toggleKeyFeatures} />
-                          <span className="text-sm font-medium text-gray-900 flex items-center">
-                            {wantsKeyFeatures && <CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />}
-                            Get feedback on my Key features
-                          </span>
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1 pl-8">Reviewers see the key features from your profile together and rate them once.</p>
-                        {wantsKeyFeatures && (
-                          <div className="pt-2 pl-8 space-y-1 text-xs text-gray-500">
-                            <p>Reviewers are asked:</p>
-                            <p>"How well do these features support what this product is meant to do? (1-10)"</p>
-                            <p>"What feature do you think would add value to the product? (optional)"</p>
-                          </div>
-                        )}
-                      </>
+                    profileFeatures.length > 0 ? (
+                      <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
+                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Key features</p>
+                        <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
+                        <div className="mt-2 space-y-1">
+                          {profileFeatures.map((x, i) => (<p key={i} className="text-sm text-gray-800">• {x.name}</p>))}
+                        </div>
+                        <div className="pt-2 space-y-1 text-xs text-gray-500">
+                          <p>Reviewers are asked:</p>
+                          <p>"How well do these features support what this product is meant to do? (1-10)"</p>
+                          <p>"What feature do you think would add value to the product? (optional)"</p>
+                        </div>
+                      </div>
                     ) : (
-                      <>
+                      <div className="border border-gray-200 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">Key features</p>
-                        <p className="text-xs text-gray-500 mt-1">You haven't added key features yet. Add them in your profile to ask about them.</p>
+                        <p className="text-xs text-gray-500 mt-1">Want feedback on your features? Add them in your profile.</p>
                         <Button type="button" variant="outline" size="sm" onClick={goProfile} className="mt-2">Go to my profile</Button>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    )
                   )}
                   {isProduct && (
                   <div className={`border rounded-lg p-4 ${featuresReady ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200'}`}>
