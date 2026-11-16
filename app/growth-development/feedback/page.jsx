@@ -262,6 +262,11 @@ export default function GrowthFeedbackSetup() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <button type="button" onClick={goProfile} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold bg-white text-gray-700 border-gray-300 hover:bg-gray-50"><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">1</span>Profile</button>
+            <span className="text-gray-400">→</span>
+            <button type="button" disabled className="inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold bg-emerald-600 text-white border-emerald-600"><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-white/25 text-white">2</span>Feedback questions</button>
+          </div>
           <div className="text-center">
             <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
             <div className="mt-3 flex items-center justify-center gap-2">
@@ -318,7 +323,8 @@ export default function GrowthFeedbackSetup() {
                           <div className="space-y-1">
                             {profileFeatures.map((x, i) => (<p key={i} className="text-sm text-gray-800">• {x.name}</p>))}
                           </div>
-                          <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
+                          <p>Reviewers see all of these together and rate them once, not one score per feature.</p>
+                          <p>{CATEGORY_EXPLANATIONS.core_features}</p>
                           <p>Reviewers are asked:</p>
                           <p>"How well do these features support what this product is meant to do? (1-10)"</p>
                           <p>"What feature do you think would add value to the product? (optional)"</p>
@@ -584,7 +590,6 @@ export default function GrowthFeedbackSetup() {
             <Button onClick={handleSave} disabled={!canSave || isSaving} className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto md:px-10" size="lg">
               {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save<CheckCircle className="w-4 h-4 ml-2" /></>)}
             </Button>
-            <button type="button" onClick={goProfile} className="text-sm text-gray-500 underline inline-flex items-center gap-1"><ArrowLeft className="w-3.5 h-3.5" />Back to the profile</button>
           </div>
         </div>
       </div>

@@ -502,7 +502,8 @@ const readUnclear = (text, kind) => {
 
 const describeProduct = (v) => [
   'Product name: ' + v.name,
-  'The need: ' + v.need,
+  v.slogan ? 'Slogan: ' + v.slogan : '',
+  v.need ? 'The need: ' + v.need : '',
   'The product: ' + v.product,
   v.features.length ? 'Key features: ' + v.features.map((f) => f.name + (f.text ? ' (' + f.text + ')' : '')).join('; ') : '',
 ].filter(Boolean).join('\n');
@@ -549,7 +550,7 @@ const buildMockup = async (v, moment, forcedType) => {
     typeRules,
     'Rules: title is a short heading for the section on the founder\'s public page (max 30 characters), specific to this product, not generic. header.name is who or what the user is talking to or using on this screen (max 22 characters), header.role is a short descriptor (max 28 characters).',
     'chat: 3 or 4 messages, alternating, starting with side "user"; each text max 90 characters, natural and short. steps: exactly 3 rows; row title max 28 characters, row text max 60. before_after: before.text and after.text max 90 characters each.',
-    'result: the outcome the user gets. label max 16 characters, title max 40, text max 80.',
+    'result: the outcome the user gets. label max 16 characters, title max 40, text max 80. The text must add something new and must not repeat or rephrase the title.',
     'Use only what the founder wrote. Do not invent statistics, prices, brand names or features that are not implied by the text. Write in the language of the founder\'s text. No markdown.',
     'Never use names of people, animals or brands, and never use numbers, prices or professional details (medical, legal, financial advice) unless the founder wrote them. Use generic roles such as "Your vet" or "Your pet". The result describes only the value the user gets (for example "A clear care plan for your pet"), never actual instructions or advice.',
     'If the moment or the key features are gibberish or you cannot tell what they mean, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} instead of the JSON above.',
@@ -594,7 +595,7 @@ const MockupStudio = ({ venture }) => {
   const [unclear, setUnclear] = useState(null);
   const [advanced, setAdvanced] = useState(false);
   const [current, setCurrent] = useState(venture.mockup || null);
-  const ready = venture.need.trim().length >= 30 && venture.product.trim().length >= 30;
+  const ready = venture.product.trim().length >= 30 && (venture.isProductStage || venture.need.trim().length >= 30);
 
   const showMoments = async () => {
     setBusy('moments'); setError(''); setUnclear(null);
@@ -662,7 +663,7 @@ const MockupStudio = ({ venture }) => {
 
         {!ready ? (
           <div className={card + ' text-center'}>
-            <p className="text-gray-800 font-medium">Write the Need and the Product in your profile first (at least 30 characters each).</p>
+            <p className="text-gray-800 font-medium">{venture.isProductStage ? 'Write the Short Description in your profile first (at least 30 characters).' : 'Write the Need and the Product in your profile first (at least 30 characters each).'}</p>
             <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Go to my profile</button>
           </div>
         ) : (
@@ -835,6 +836,14 @@ const App = () => {
           setMockupVenture({
             id: venture.id, name: venture.name || '', need: gd.need || '', product: gd.solution || '',
             features: (Array.isArray(gd.features) ? gd.features : []).filter((f) => f && f.name && f.name.trim()).map((f) => ({ name: f.name.trim(), text: (f.text || '').trim() })),
+            mockup: gd.mockup || null,
+          });
+        }
+        // Product stage: no Need/Product fields. The slogan, short description and typed core features are the input.
+        if (venture.phase === 'growth' && gd.stage === 'product') {
+          setMockupVenture({
+            id: venture.id, name: venture.name || '', need: '', product: gd.description || '', slogan: gd.headline || '', isProductStage: true,
+            features: (Array.isArray(gd.core_features) ? gd.core_features : []).filter((f) => f && f.name && f.name.trim()).map((f) => ({ name: f.name.trim(), text: (f.description || '').trim() })),
             mockup: gd.mockup || null,
           });
         }

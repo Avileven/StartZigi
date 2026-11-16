@@ -413,6 +413,17 @@ export default function GrowthDevelopment() {
     setIsSaving(false);
   };
 
+  // Save what is written so far (including a just-changed stage), then open the feedback questions.
+  const goFeedback = async () => {
+    try {
+      await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
+      router.push('/growth-development/feedback');
+    } catch (e) {
+      console.error('Could not save before opening the feedback questions:', e);
+      showToast('Could not save. Please try again.', 'error');
+    }
+  };
+
   // [NEW] Idea stage: save what is written so far, then open ZigForge, which reads the Need and Solution from the saved venture.
   const openForge = async () => {
     try {
@@ -508,6 +519,11 @@ export default function GrowthDevelopment() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <button type="button" disabled className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-emerald-600 text-white border-emerald-600"}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-white/25 text-white">1</span>Profile</button>
+            <span className="text-gray-400">→</span>
+            <button type="button" onClick={goFeedback} disabled={!venture} className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-white text-gray-700 border-gray-300 hover:bg-gray-50" + (!venture ? " opacity-50" : "")}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">2</span>Feedback questions</button>
+          </div>
           <div className="text-center">
             <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
             <div className="mt-3 flex items-center justify-center gap-2">
@@ -679,6 +695,14 @@ export default function GrowthDevelopment() {
             </FieldCard>
           )}
 
+          {isProduct && venture && isDescriptionComplete && (
+            <FieldCard Icon={Sparkles} title="Show your product in action" description="No demo to upload yet? ZigForge reads your description and shows one moment of your product on a phone screen. It appears on your public page only while you have no media uploaded.">
+              <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
+                <Sparkles className="w-4 h-4 mr-2" />Create a mockup with ZigForge
+              </Button>
+            </FieldCard>
+          )}
+
           {isProduct && (
             <FieldCard Icon={Share2} title="Social Links" description="Shown on your public page.">
                   <MobileFieldWrapper label="Social Links" summary={Object.values(growthData.social_links).some(v => v) ? 'Some links added' : null} isMobile={isMobile}>
@@ -705,9 +729,6 @@ export default function GrowthDevelopment() {
             <Button onClick={handleSave} disabled={!canSaveProfile || isSaving} className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto md:px-10" size="lg">
               {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save and continue<ArrowRight className="w-4 h-4 ml-2" /></>)}
             </Button>
-            {venture && (
-              <button type="button" onClick={() => router.push('/growth-development/feedback')} className="text-sm text-gray-500 underline">Go to the feedback questions</button>
-            )}
           </div>
         </div>
       </div>
