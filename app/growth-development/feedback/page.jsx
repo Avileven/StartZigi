@@ -313,11 +313,11 @@ export default function GrowthFeedbackSetup() {
                   {isPrototype && (
                     profileFeatures.length > 0 ? (
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
-                        <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Key features</p>
-                        <div className="mt-2 space-y-1">
-                          {profileFeatures.map((x, i) => (<p key={i} className="text-sm text-gray-800">• {x.name}</p>))}
-                        </div>
+                        <p className="text-sm font-medium text-gray-900">Key features</p>
                         <AskedInfo>
+                          <div className="space-y-1">
+                            {profileFeatures.map((x, i) => (<p key={i} className="text-sm text-gray-800">• {x.name}</p>))}
+                          </div>
                           <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
                           <p>Reviewers are asked:</p>
                           <p>"How well do these features support what this product is meant to do? (1-10)"</p>

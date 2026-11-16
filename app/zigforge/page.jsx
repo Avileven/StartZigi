@@ -512,6 +512,7 @@ const suggestMoments = async (v) => {
     'A founder has an early product. Suggest 3 different moments to show on ONE phone screen, each the moment the user gets the product\'s value.',
     describeProduct(v),
     'First check that the founder\'s text makes sense, especially the key features. If any of it is gibberish, random characters, or you cannot tell what it means, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} and nothing else.',
+    'Never use names of people, animals or brands, and never use numbers, prices or professional details (medical, legal, financial advice) unless the founder wrote them. Use generic roles such as "Your vet" or "Your pet". The result describes only the value the user gets (for example "A clear care plan for your pet"), never actual instructions or advice.',
     'Otherwise: each moment is ONE short sentence (what the user does and what the product gives back). Use only what the founder wrote; do not invent features, numbers or brands that are not implied. Answer with ONLY a JSON array of 3 strings.',
   ].join('\n');
   const r = await InvokeLLM({ prompt, creditType: 'sys' });
@@ -541,13 +542,16 @@ const buildMockup = async (v, moment, forcedType) => {
       shapes.chat, shapes.steps, shapes.before_after,
     ].join('\n');
   const prompt = [
-    'Write the text for ONE phone screen mockup of an early product, showing this moment: ' + moment,
+    moment
+      ? 'Write the text for ONE phone screen mockup of an early product, showing this moment: ' + moment
+      : 'Write the text for ONE phone screen mockup of an early product. Choose the single moment where the user gets the product\'s value most clearly, and show it.',
     describeProduct(v),
     typeRules,
     'Rules: title is a short heading for the section on the founder\'s public page (max 30 characters), specific to this product, not generic. header.name is who or what the user is talking to or using on this screen (max 22 characters), header.role is a short descriptor (max 28 characters).',
     'chat: 3 or 4 messages, alternating, starting with side "user"; each text max 90 characters, natural and short. steps: exactly 3 rows; row title max 28 characters, row text max 60. before_after: before.text and after.text max 90 characters each.',
     'result: the outcome the user gets. label max 16 characters, title max 40, text max 80.',
     'Use only what the founder wrote. Do not invent statistics, prices, brand names or features that are not implied by the text. Write in the language of the founder\'s text. No markdown.',
+    'Never use names of people, animals or brands, and never use numbers, prices or professional details (medical, legal, financial advice) unless the founder wrote them. Use generic roles such as "Your vet" or "Your pet". The result describes only the value the user gets (for example "A clear care plan for your pet"), never actual instructions or advice.',
     'If the moment or the key features are gibberish or you cannot tell what they mean, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} instead of the JSON above.',
   ].join('\n');
   const r = await InvokeLLM({ prompt, creditType: 'sys' });
@@ -561,7 +565,7 @@ const buildMockup = async (v, moment, forcedType) => {
     header: { name: clean(o.header && o.header.name, 22) || v.name, role: clean(o.header && o.header.role, 28) },
     messages: [], rows: [], before: { text: '' }, after: { text: '' },
     result: { label: clean(o.result && o.result.label, 16), title: clean(o.result && o.result.title, 40), text: clean(o.result && o.result.text, 80) },
-    concept: moment,
+    concept: moment || '',
   };
   if (type === 'chat') {
     out.messages = (Array.isArray(o.messages) ? o.messages : []).slice(0, 4).map((m, i) => ({ side: m && m.side === 'product' ? 'product' : (i % 2 === 0 ? 'user' : 'product'), text: clean(m && m.text, 90) })).filter((m) => m.text);
@@ -588,6 +592,7 @@ const MockupStudio = ({ venture }) => {
   const [custom, setCustom] = useState('');
   const [draft, setDraft] = useState(null);
   const [unclear, setUnclear] = useState(null);
+  const [advanced, setAdvanced] = useState(false);
   const [current, setCurrent] = useState(venture.mockup || null);
   const ready = venture.need.trim().length >= 30 && venture.product.trim().length >= 30;
 
@@ -602,8 +607,9 @@ const MockupStudio = ({ venture }) => {
     setBusy('');
   };
   const createScreen = async (forcedType) => {
-    const text = (draft && draft.concept && step === 'edit') ? draft.concept : (custom.trim() || (chosen >= 0 ? moments[chosen] : ''));
-    if (!text) return;
+    const auto = step === 'start' || step === 'edit';
+    const text = step === 'start' ? '' : (step === 'edit' && draft) ? (draft.concept || '') : (custom.trim() || (chosen >= 0 ? moments[chosen] : ''));
+    if (!text && !auto) return;
     setBusy('screen'); setError(''); setUnclear(null);
     try { setDraft(await buildMockup(venture, text, typeof forcedType === 'string' ? forcedType : undefined)); setStep('edit'); }
     catch (e) {
@@ -683,9 +689,9 @@ const MockupStudio = ({ venture }) => {
                   <button type="button" onClick={removeCurrent} disabled={!!busy} className="text-sm text-gray-500 underline block mx-auto">{busy === 'saving' ? 'Removing...' : 'Remove this mockup'}</button>
                 </div>
               )}
-              <p className="text-gray-800 font-medium">{current ? 'Want a different moment?' : 'Pick the moment your user gets the value, and we will show it on a phone screen.'}</p>
-              <button type="button" onClick={showMoments} disabled={!!busy} className={primary}>{busy === 'moments' ? 'Thinking...' : 'Suggest moments to show'}</button>
-              <p className="text-xs text-gray-500 text-center">The text comes from what you wrote. You can edit it before it appears on your public page.</p>
+              <p className="text-gray-800 font-medium">{current ? 'Want a different screen?' : 'We will show your product in action on one phone screen, based on what you wrote in your profile.'}</p>
+              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={primary}>{busy === 'screen' ? 'Creating your screen...' : 'Create my mockup'}</button>
+              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Advanced: choose the moment yourself'}</button>
             </>)}
 
             {step === 'moments' && (<>
@@ -707,6 +713,11 @@ const MockupStudio = ({ venture }) => {
 
             {step === 'edit' && draft && (<>
               <MockupPhone mockup={draft} />
+              <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this on my public page'}</button>
+              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try another version'}</button>
+              <button type="button" onClick={() => setAdvanced((v) => !v)} className="text-sm text-gray-600 underline w-full text-center">{advanced ? 'Hide advanced' : 'Advanced: change the screen type, title or text'}</button>
+              {advanced && (
+                <div className="space-y-3 border-t border-gray-200 pt-4">
               <div className="pt-2">
                 <p className="text-sm font-medium text-gray-800">Screen type</p>
                 <div className="mt-1.5 grid grid-cols-3 gap-2">
@@ -744,9 +755,9 @@ const MockupStudio = ({ venture }) => {
                 <input className={field + ' col-span-3'} value={draft.result.title} maxLength={40} onChange={(e) => setResult('title', e.target.value)} placeholder="Result" />
               </div>
               <input className={field} value={draft.result.text} maxLength={80} onChange={(e) => setResult('text', e.target.value)} placeholder="One line about the result" />
-              <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this on my public page'}</button>
-              <button type="button" onClick={() => createScreen(draft.type)} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try again with the same moment'}</button>
-              <button type="button" onClick={() => { setDraft(null); setStep('moments'); }} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Choose a different moment</button>
+              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Choose the moment myself'}</button>
+                </div>
+              )}
             </>)}
 
             {step === 'done' && (
