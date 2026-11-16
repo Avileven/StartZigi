@@ -416,6 +416,18 @@ const ForgeConcept = ({ venture }) => {
         ) : (
           <div className={card + ' space-y-4'}>
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+            {unclear && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-2">
+                <p className="font-semibold">
+                  {unclear.kind === 'moment' ? 'I could not understand the moment you wrote.' : 'I could not understand what you wrote in your profile.'}
+                </p>
+                {unclear.reason && <p>{unclear.reason}</p>}
+                <p>{unclear.kind === 'moment' ? 'Please rewrite it in a clear sentence, or pick one of the ideas.' : 'Please check your Key features and make them clear, then come back.'}</p>
+                {unclear.kind !== 'moment' && (
+                  <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Go to my profile</button>
+                )}
+              </div>
+            )}
 
             {step === 'start' && (<>
               {current && (
@@ -492,6 +504,14 @@ const parseJson = (text, open, close) => {
   return JSON.parse(text.slice(a, b + 1));
 };
 
+// When the AI cannot make sense of what the founder wrote, it answers {"unclear":"..."} and we stop instead of guessing.
+const UNCLEAR = 'UNCLEAR';
+const unclearError = (text, kind) => { const e = new Error(UNCLEAR); e.kind = kind; e.reason = text; return e; };
+const readUnclear = (text, kind) => {
+  const m = /\{\s*"unclear"\s*:\s*"([^"]*)"\s*\}/.exec(text || '');
+  if (m) throw unclearError(m[1], kind);
+};
+
 const describeProduct = (v) => [
   'Product name: ' + v.name,
   'The need: ' + v.need,
@@ -503,9 +523,11 @@ const suggestMoments = async (v) => {
   const prompt = [
     'A founder has an early product. Suggest 3 different moments to show on ONE phone screen, each the moment the user gets the product\'s value.',
     describeProduct(v),
-    'Rules: each moment is ONE short sentence (what the user does and what the product gives back). Use only what the founder wrote; do not invent features, numbers or brands that are not implied. Answer with ONLY a JSON array of 3 strings.',
+    'First check that the founder\'s text makes sense, especially the key features. If any of it is gibberish, random characters, or you cannot tell what it means, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} and nothing else.',
+    'Otherwise: each moment is ONE short sentence (what the user does and what the product gives back). Use only what the founder wrote; do not invent features, numbers or brands that are not implied. Answer with ONLY a JSON array of 3 strings.',
   ].join('\n');
   const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  readUnclear((r && r.response) || '', 'profile');
   const arr = parseJson((r && r.response) || '', '[', ']');
   const out = (Array.isArray(arr) ? arr : []).map((s) => String(s).trim()).filter(Boolean).slice(0, 3);
   if (!out.length) throw new Error('No ideas returned.');
@@ -522,8 +544,10 @@ const buildMockup = async (v, moment) => {
     'messages: 3 or 4 items, alternating, starting with side "user"; each text max 90 characters, natural and short.',
     'result: the outcome the user gets. label max 16 characters, title max 40, text max 80.',
     'Use only what the founder wrote. Do not invent statistics, prices, brand names or features that are not implied by the text. Write in the language of the founder\'s text. No markdown.',
+    'If the moment or the key features are gibberish or you cannot tell what they mean, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} instead of the JSON above.',
   ].join('\n');
   const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  readUnclear((r && r.response) || '', 'moment');
   const o = parseJson((r && r.response) || '', '{', '}');
   const clean = (s, n) => String(s || '').trim().slice(0, n);
   return {
@@ -545,21 +569,30 @@ const MockupStudio = ({ venture }) => {
   const [chosen, setChosen] = useState(-1);
   const [custom, setCustom] = useState('');
   const [draft, setDraft] = useState(null);
+  const [unclear, setUnclear] = useState(null); // {kind:'profile'|'moment', reason}
   const [current, setCurrent] = useState(venture.mockup || null);
   const ready = venture.need.trim().length >= 30 && venture.product.trim().length >= 30;
 
   const showMoments = async () => {
-    setBusy('moments'); setError('');
+    setBusy('moments'); setError(''); setUnclear(null);
     try { setMoments(await suggestMoments(venture)); setChosen(-1); setCustom(''); setStep('moments'); }
-    catch (e) { console.error('ZigForge moments error:', e); setError('Could not get ideas. ' + (e.message || '')); }
+    catch (e) {
+      console.error('ZigForge moments error:', e);
+      if (e.message === UNCLEAR) setUnclear({ kind: 'profile', reason: e.reason });
+      else setError('Could not get ideas. ' + (e.message || ''));
+    }
     setBusy('');
   };
   const createScreen = async () => {
     const text = custom.trim() || (chosen >= 0 ? moments[chosen] : '');
     if (!text) return;
-    setBusy('screen'); setError('');
+    setBusy('screen'); setError(''); setUnclear(null);
     try { setDraft(await buildMockup(venture, text)); setStep('edit'); }
-    catch (e) { console.error('ZigForge mockup error:', e); setError('Could not create the screen. ' + (e.message || '')); }
+    catch (e) {
+      console.error('ZigForge mockup error:', e);
+      if (e.message === UNCLEAR) setUnclear({ kind: e.kind, reason: e.reason });
+      else setError('Could not create the screen. ' + (e.message || ''));
+    }
     setBusy('');
   };
   const setMsg = (i, text) => setDraft((d) => ({ ...d, messages: d.messages.map((m, k) => (k === i ? { ...m, text } : m)) }));
