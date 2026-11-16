@@ -416,18 +416,6 @@ const ForgeConcept = ({ venture }) => {
         ) : (
           <div className={card + ' space-y-4'}>
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-            {unclear && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-2">
-                <p className="font-semibold">
-                  {unclear.kind === 'moment' ? 'I could not understand the moment you wrote.' : 'I could not understand what you wrote in your profile.'}
-                </p>
-                {unclear.reason && <p>{unclear.reason}</p>}
-                <p>{unclear.kind === 'moment' ? 'Please rewrite it in a clear sentence, or pick one of the ideas.' : 'Please check your Key features and make them clear, then come back.'}</p>
-                {unclear.kind !== 'moment' && (
-                  <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Go to my profile</button>
-                )}
-              </div>
-            )}
 
             {step === 'start' && (<>
               {current && (
@@ -569,7 +557,7 @@ const MockupStudio = ({ venture }) => {
   const [chosen, setChosen] = useState(-1);
   const [custom, setCustom] = useState('');
   const [draft, setDraft] = useState(null);
-  const [unclear, setUnclear] = useState(null); // {kind:'profile'|'moment', reason}
+  const [unclear, setUnclear] = useState(null);
   const [current, setCurrent] = useState(venture.mockup || null);
   const ready = venture.need.trim().length >= 30 && venture.product.trim().length >= 30;
 
@@ -643,6 +631,18 @@ const MockupStudio = ({ venture }) => {
         ) : (
           <div className={card + ' space-y-4'}>
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+            {unclear && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-2">
+                <p className="font-semibold">
+                  {unclear.kind === 'moment' ? 'I could not understand the moment you wrote.' : 'I could not understand what you wrote in your profile.'}
+                </p>
+                {unclear.reason && <p>{unclear.reason}</p>}
+                <p>{unclear.kind === 'moment' ? 'Please rewrite it in a clear sentence, or pick one of the ideas.' : 'Please check your Key features and make them clear, then come back.'}</p>
+                {unclear.kind !== 'moment' && (
+                  <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">Go to my profile</button>
+                )}
+              </div>
+            )}
 
             {step === 'start' && (<>
               {current && (
