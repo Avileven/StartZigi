@@ -4,6 +4,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { InvokeLLM, UploadFile } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import MockupPhone from '@/components/growth/MockupPhone';
 
 
 // [FIX 020826] Replaces the old defaultFeatureTemplates (Community Feed,
@@ -481,9 +482,207 @@ const ForgeConcept = ({ venture }) => {
   );
 };
 
+// ---------------------------------------------------------------------------
+// Prototype stage: one phone screen that shows the moment the user gets the value.
+// The AI only writes the TEXT (as JSON); the screen itself is a fixed template (MockupPhone).
+// ---------------------------------------------------------------------------
+const parseJson = (text, open, close) => {
+  const a = text.indexOf(open); const b = text.lastIndexOf(close);
+  if (a < 0 || b <= a) throw new Error('The AI did not return a usable answer.');
+  return JSON.parse(text.slice(a, b + 1));
+};
+
+const describeProduct = (v) => [
+  'Product name: ' + v.name,
+  'The need: ' + v.need,
+  'The product: ' + v.product,
+  v.features.length ? 'Key features: ' + v.features.map((f) => f.name + (f.text ? ' (' + f.text + ')' : '')).join('; ') : '',
+].filter(Boolean).join('\n');
+
+const suggestMoments = async (v) => {
+  const prompt = [
+    'A founder has an early product. Suggest 3 different moments to show on ONE phone screen, each the moment the user gets the product\'s value.',
+    describeProduct(v),
+    'Rules: each moment is ONE short sentence (what the user does and what the product gives back). Use only what the founder wrote; do not invent features, numbers or brands that are not implied. Answer with ONLY a JSON array of 3 strings.',
+  ].join('\n');
+  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const arr = parseJson((r && r.response) || '', '[', ']');
+  const out = (Array.isArray(arr) ? arr : []).map((s) => String(s).trim()).filter(Boolean).slice(0, 3);
+  if (!out.length) throw new Error('No ideas returned.');
+  return out;
+};
+
+const buildMockup = async (v, moment) => {
+  const prompt = [
+    'Write the text for ONE phone screen mockup of an early product, showing this moment: ' + moment,
+    describeProduct(v),
+    'Return ONLY a JSON object of exactly this shape:',
+    '{"header":{"name":"","role":""},"messages":[{"side":"user","text":""},{"side":"product","text":""}],"result":{"label":"","title":"","text":""}}',
+    'Rules: header.name is who or what the user is talking to or using on this screen (max 22 characters), header.role is a short descriptor (max 28 characters).',
+    'messages: 3 or 4 items, alternating, starting with side "user"; each text max 90 characters, natural and short.',
+    'result: the outcome the user gets. label max 16 characters, title max 40, text max 80.',
+    'Use only what the founder wrote. Do not invent statistics, prices, brand names or features that are not implied by the text. Write in the language of the founder\'s text. No markdown.',
+  ].join('\n');
+  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const o = parseJson((r && r.response) || '', '{', '}');
+  const clean = (s, n) => String(s || '').trim().slice(0, n);
+  return {
+    header: { name: clean(o.header && o.header.name, 22) || v.name, role: clean(o.header && o.header.role, 28) },
+    messages: (Array.isArray(o.messages) ? o.messages : []).slice(0, 4).map((m, i) => ({ side: m && m.side === 'product' ? 'product' : (i % 2 === 0 ? 'user' : 'product'), text: clean(m && m.text, 90) })).filter((m) => m.text),
+    result: { label: clean(o.result && o.result.label, 16), title: clean(o.result && o.result.title, 40), text: clean(o.result && o.result.text, 80) },
+    concept: moment,
+  };
+};
+
+const MockupStudio = ({ venture }) => {
+  const router = useRouter();
+  const backTo = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'profile') ? '/growth-development?view=profile' : '/growth-development/feedback';
+  const backLabel = backTo.includes('view=profile') ? 'Back to my profile' : 'Back to ZigPulse';
+  const [step, setStep] = useState('start'); // start | moments | edit | done
+  const [busy, setBusy] = useState('');
+  const [error, setError] = useState('');
+  const [moments, setMoments] = useState([]);
+  const [chosen, setChosen] = useState(-1);
+  const [custom, setCustom] = useState('');
+  const [draft, setDraft] = useState(null);
+  const [current, setCurrent] = useState(venture.mockup || null);
+  const ready = venture.need.trim().length >= 30 && venture.product.trim().length >= 30;
+
+  const showMoments = async () => {
+    setBusy('moments'); setError('');
+    try { setMoments(await suggestMoments(venture)); setChosen(-1); setCustom(''); setStep('moments'); }
+    catch (e) { console.error('ZigForge moments error:', e); setError('Could not get ideas. ' + (e.message || '')); }
+    setBusy('');
+  };
+  const createScreen = async () => {
+    const text = custom.trim() || (chosen >= 0 ? moments[chosen] : '');
+    if (!text) return;
+    setBusy('screen'); setError('');
+    try { setDraft(await buildMockup(venture, text)); setStep('edit'); }
+    catch (e) { console.error('ZigForge mockup error:', e); setError('Could not create the screen. ' + (e.message || '')); }
+    setBusy('');
+  };
+  const setMsg = (i, text) => setDraft((d) => ({ ...d, messages: d.messages.map((m, k) => (k === i ? { ...m, text } : m)) }));
+  const setHeader = (f, v) => setDraft((d) => ({ ...d, header: { ...d.header, [f]: v } }));
+  const setResult = (f, v) => setDraft((d) => ({ ...d, result: { ...d.result, [f]: v } }));
+
+  const saveMockup = async (value) => {
+    const { data: row, error: readErr } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+    if (readErr) throw readErr;
+    const next = { ...(row?.growth_data || {}) };
+    if (value) next.mockup = value; else delete next.mockup;
+    const { error: upErr } = await supabase.from('ventures').update({ growth_data: next }).eq('id', venture.id);
+    if (upErr) throw upErr;
+    const { data: chk } = await supabase.from('ventures').select('growth_data').eq('id', venture.id).single();
+    if (!!(chk?.growth_data?.mockup) !== !!value) throw new Error('NOT_SAVED');
+  };
+  const approve = async () => {
+    setBusy('saving'); setError('');
+    try { await saveMockup(draft); setCurrent(draft); setStep('done'); }
+    catch (e) { console.error('ZigForge mockup save error:', e); setError('Could not add the mockup to your public page. Please try again.'); }
+    setBusy('');
+  };
+  const removeCurrent = async () => {
+    setBusy('saving'); setError('');
+    try { await saveMockup(null); setCurrent(null); }
+    catch (e) { console.error('ZigForge mockup remove error:', e); setError('Could not remove the mockup. Please try again.'); }
+    setBusy('');
+  };
+
+  const card = 'bg-white rounded-2xl border border-gray-200 p-5';
+  const primary = 'w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold';
+  const secondary = 'w-full py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-60 text-gray-800 font-semibold';
+  const field = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm';
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-4 md:p-8 font-sans antialiased">
+      <div className="max-w-xl mx-auto space-y-5">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">ZigForge</h1>
+          <p className="mt-2 text-gray-600">Show your product in action, on one screen.</p>
+        </div>
+
+        {!ready ? (
+          <div className={card + ' text-center'}>
+            <p className="text-gray-800 font-medium">Write the Need and the Product in your profile first (at least 30 characters each).</p>
+            <button type="button" onClick={() => router.push('/growth-development?view=profile')} className="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">Go to my profile</button>
+          </div>
+        ) : (
+          <div className={card + ' space-y-4'}>
+            {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+            {step === 'start' && (<>
+              {current && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your current mockup</p>
+                  <MockupPhone mockup={current} />
+                  <button type="button" onClick={removeCurrent} disabled={!!busy} className="text-sm text-gray-500 underline block mx-auto">{busy === 'saving' ? 'Removing...' : 'Remove this mockup'}</button>
+                </div>
+              )}
+              <p className="text-gray-800 font-medium">{current ? 'Want a different moment?' : 'Pick the moment your user gets the value, and we will show it on a phone screen.'}</p>
+              <button type="button" onClick={showMoments} disabled={!!busy} className={primary}>{busy === 'moments' ? 'Thinking...' : 'Suggest moments to show'}</button>
+              <p className="text-xs text-gray-500 text-center">The text comes from what you wrote. You can edit it before it appears on your public page.</p>
+            </>)}
+
+            {step === 'moments' && (<>
+              <p className="text-gray-800 font-medium">Pick a moment to show, or write your own.</p>
+              <div className="space-y-2">
+                {moments.map((s, i) => (
+                  <button key={i} type="button" onClick={() => { setChosen(i); setCustom(''); }} disabled={!!busy}
+                    className={'w-full text-left p-3 rounded-xl border text-sm ' + (chosen === i && !custom.trim() ? 'border-emerald-600 bg-emerald-50 text-gray-900' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')}>{s}</button>
+                ))}
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Or describe the moment you want to show</label>
+                <textarea value={custom} onChange={(e) => setCustom(e.target.value)} disabled={!!busy} rows={3} maxLength={300} className={field} placeholder="What does the user do, and what does the product give back?" />
+              </div>
+              <button type="button" onClick={createScreen} disabled={!!busy || (!custom.trim() && chosen < 0)} className={primary}>{busy === 'screen' ? 'Creating the screen...' : 'Create the screen'}</button>
+              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Show me other moments'}</button>
+              <button type="button" onClick={() => setStep('start')} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Back</button>
+            </>)}
+
+            {step === 'edit' && draft && (<>
+              <MockupPhone mockup={draft} />
+              <p className="text-sm font-medium text-gray-800 pt-2">Edit the text if you want</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input className={field} value={draft.header.name} maxLength={22} onChange={(e) => setHeader('name', e.target.value)} placeholder="Name" />
+                <input className={field} value={draft.header.role} maxLength={28} onChange={(e) => setHeader('role', e.target.value)} placeholder="Short descriptor" />
+              </div>
+              {draft.messages.map((m, i) => (
+                <input key={i} className={field} value={m.text} maxLength={90} onChange={(e) => setMsg(i, e.target.value)} placeholder={m.side === 'user' ? 'What the user says' : 'What the product says'} />
+              ))}
+              <div className="grid grid-cols-5 gap-2">
+                <input className={field + ' col-span-2'} value={draft.result.label} maxLength={16} onChange={(e) => setResult('label', e.target.value)} placeholder="Label" />
+                <input className={field + ' col-span-3'} value={draft.result.title} maxLength={40} onChange={(e) => setResult('title', e.target.value)} placeholder="Result" />
+              </div>
+              <input className={field} value={draft.result.text} maxLength={80} onChange={(e) => setResult('text', e.target.value)} placeholder="One line about the result" />
+              <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this on my public page'}</button>
+              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try again with the same moment'}</button>
+              <button type="button" onClick={() => { setDraft(null); setStep('moments'); }} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Choose a different moment</button>
+            </>)}
+
+            {step === 'done' && (
+              <div className="space-y-3 text-center">
+                <MockupPhone mockup={current} />
+                <p className="font-semibold text-emerald-800">Added to your public page.</p>
+                <button type="button" onClick={() => router.push(backTo)} className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">{backLabel}</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="text-center pb-6">
+          <button type="button" onClick={() => router.push(backTo)} className="text-sm text-gray-500 underline">{backLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   // [NEW] Growth venture at the idea stage: shows the one-page concept builder instead of the app builder.
   const [concept, setConcept] = useState(null);
+  const [mockupVenture, setMockupVenture] = useState(null); // prototype stage: one phone screen showing the value
   const [activeTab, setActiveTab] = useState('guide'); // 'guide' or 'builder'
   const [appState, setAppState] = useState(getInitialState);
   // [FIX 020826] jsonParseError state removed — was only used by the Mock
@@ -532,6 +731,13 @@ const App = () => {
         const gd = venture.growth_data || {};
         if (venture.phase === 'growth' && gd.stage === 'idea') {
           setConcept({ id: venture.id, name: venture.name || '', sector: venture.sector || '', need: gd.need || '', solution: gd.solution || '', image_url: gd.image_url || '' });
+        }
+        if (venture.phase === 'growth' && gd.stage === 'prototype') {
+          setMockupVenture({
+            id: venture.id, name: venture.name || '', need: gd.need || '', product: gd.solution || '',
+            features: (Array.isArray(gd.features) ? gd.features : []).filter((f) => f && f.name && f.name.trim()).map((f) => ({ name: f.name.trim(), text: (f.text || '').trim() })),
+            mockup: gd.mockup || null,
+          });
         }
 
         const isMlpStage = ['mlp', 'beta', 'growth'].includes(venture.phase);
@@ -946,6 +1152,7 @@ const App = () => {
 
   if (isLoadingVenture) return <div className="flex items-center justify-center min-h-screen text-gray-500">Loading...</div>;
   if (concept) return <ForgeConcept venture={concept} />;
+  if (mockupVenture) return <MockupStudio venture={mockupVenture} />;
 
   return (
     <div className="min-h-screen font-sans antialiased">

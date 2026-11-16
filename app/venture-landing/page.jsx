@@ -2,6 +2,7 @@
 "use client";
 
 import GrowthMobileBar from "@/components/layout/GrowthMobileBar";
+import MockupPhone from "@/components/growth/MockupPhone";
 import { Check as FIcCheck, Video as FIcVideo, Clock as FIcClock, ShieldCheck as FIcShieldCheck, FileText as FIcFileText, MessageSquare as FIcMessageSquare, MapPin as FIcMapPin, DollarSign as FIcDollarSign, Zap as FIcZap, Users as FIcUsers, Bell as FIcBell, Heart as FIcHeart, Search as FIcSearch, Calendar as FIcCalendar, Lock as FIcLock, Smartphone as FIcSmartphone } from "lucide-react";
 const FEATURE_ICONS = { check: FIcCheck, video: FIcVideo, clock: FIcClock, shield: FIcShieldCheck, doc: FIcFileText, chat: FIcMessageSquare, pin: FIcMapPin, money: FIcDollarSign, zap: FIcZap, users: FIcUsers, bell: FIcBell, heart: FIcHeart, search: FIcSearch, calendar: FIcCalendar, lock: FIcLock, phone: FIcSmartphone };
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -1533,6 +1534,13 @@ export default function VentureLanding() {
                       <p className="text-base leading-relaxed text-white whitespace-pre-line">{venture.growth_data.solution}</p>
                     </div>
                   )}
+                </div>
+              )}
+              {(venture.growth_data.stage || 'product') === 'prototype' && venture.growth_data.mockup && (
+                <div className="mb-10 max-w-2xl mx-auto text-center">
+                  <h2 className="text-2xl font-bold text-[#d97706] mb-5">See it in action</h2>
+                  <MockupPhone mockup={venture.growth_data.mockup} />
+                  <p className="mt-4 text-xs text-[#6b7a77]">Concept mockup, not the working product</p>
                 </div>
               )}
               {(venture.growth_data.stage || 'product') === 'prototype' && Array.isArray(venture.growth_data.features) && venture.growth_data.features.some((f) => f && f.name && f.name.trim()) && (

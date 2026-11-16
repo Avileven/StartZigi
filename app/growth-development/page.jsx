@@ -108,6 +108,7 @@ export default function GrowthDevelopment() {
     selected_categories: [],
     core_features: [],
     features: [], // [NEW] prototype stage: [{ icon, name, text }] shown as cards on the public page
+    mockup: null, // [NEW] prototype stage: one phone screen made in ZigForge
     image_url: '', // [NEW] idea-stage image made in ZigForge (kept here so saving the profile never wipes it)
     // [CHANGED — merged model] Subscription now covers the old
     // Subscription+Freemium split. packages replaces tier1/tier2 with an
@@ -141,7 +142,7 @@ export default function GrowthDevelopment() {
         setVenture(currentVenture);
         const loaded = normalizeGrowthData(currentVenture);
         const gdForExtras = currentVenture.growth_data || {};
-        setGrowthData(prev => ({ ...prev, ...loaded, image_url: gdForExtras.image_url || '', features: Array.isArray(gdForExtras.features) ? gdForExtras.features.slice(0, FEATURE_SLOTS) : [] }));
+        setGrowthData(prev => ({ ...prev, ...loaded, image_url: gdForExtras.image_url || '', mockup: gdForExtras.mockup || null, features: Array.isArray(gdForExtras.features) ? gdForExtras.features.slice(0, FEATURE_SLOTS) : [] }));
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
@@ -415,7 +416,7 @@ export default function GrowthDevelopment() {
   // [NEW] Idea stage: save what is written so far, then open ZigForge, which reads the Need and Solution from the saved venture.
   const openForge = async () => {
     try {
-      await Venture.update(venture.id, { growth_data: growthData });
+      await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
       router.push('/zigforge?from=profile');
     } catch (e) {
       console.error('Could not save before opening ZigForge:', e);
@@ -666,6 +667,14 @@ export default function GrowthDevelopment() {
             <FieldCard Icon={Sparkles} title="Add an image to your idea" description="ZigForge reads your Need and Solution and creates an image for your public page. You approve it first.">
               <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
                 <Sparkles className="w-4 h-4 mr-2" />Add an image with ZigForge
+              </Button>
+            </FieldCard>
+          )}
+
+          {isPrototype && venture && isNeedComplete && isSolutionComplete && (
+            <FieldCard Icon={Sparkles} title="Show your product in action" description="ZigForge reads what you wrote and shows one moment of your product on a phone screen, for your public page. You edit and approve it first.">
+              <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
+                <Sparkles className="w-4 h-4 mr-2" />Create a mockup with ZigForge
               </Button>
             </FieldCard>
           )}

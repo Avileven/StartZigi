@@ -32,6 +32,17 @@ const feedbackFields = (g) => ({
   early_offer_text: g.early_offer_text,
 });
 
+// A short "Read more" toggle: keeps the cards compact; the reviewer questions live inside it.
+function AskedInfo({ children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1">
+      <button type="button" onClick={() => setOpen(!open)} className="text-xs text-emerald-700 underline">{open ? 'Hide' : 'Read more'}</button>
+      {open && <div className="mt-1 text-xs text-gray-500 space-y-1">{children}</div>}
+    </div>
+  );
+}
+
 export default function GrowthFeedbackSetup() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -281,37 +292,37 @@ export default function GrowthFeedbackSetup() {
                     <>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">The Need</p>
-                        <p className="text-xs text-gray-500 mt-1">"The problem feels relevant and worth solving."</p>
+                        <AskedInfo><p>Reviewers are asked:</p><p>"The problem feels relevant and worth solving."</p></AskedInfo>
                       </div>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">Your Solution</p>
-                        <p className="text-xs text-gray-500 mt-1">"The solution offers something meaningful, and its value is clear to me."</p>
+                        <AskedInfo><p>Reviewers are asked:</p><p>"The solution offers something meaningful, and its value is clear to me."</p></AskedInfo>
                       </div>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">Innovation</p>
-                        <p className="text-xs text-gray-500 mt-1">"Based on what you know, is this idea innovative?"</p>
+                        <AskedInfo><p>Reviewers are asked:</p><p>"Based on what you know, is this idea innovative?"</p></AskedInfo>
                       </div>
                     </>
                   )}
                   {isPrototype && (
                     <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                       <p className="text-sm font-medium text-gray-900">The Product</p>
-                      <p className="text-xs text-gray-500 mt-1">"How clearly and accurately is this product defined?"</p>
+                      <AskedInfo><p>Reviewers are asked:</p><p>"How clearly and accurately is this product defined?"</p></AskedInfo>
                     </div>
                   )}
                   {isPrototype && (
                     profileFeatures.length > 0 ? (
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900 flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-1.5" />Key features</p>
-                        <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
                         <div className="mt-2 space-y-1">
                           {profileFeatures.map((x, i) => (<p key={i} className="text-sm text-gray-800">• {x.name}</p>))}
                         </div>
-                        <div className="pt-2 space-y-1 text-xs text-gray-500">
+                        <AskedInfo>
+                          <ExplainBlock flush text={CATEGORY_EXPLANATIONS.core_features} extra="Reviewers see all of these together and rate them once — not one score per feature." />
                           <p>Reviewers are asked:</p>
                           <p>"How well do these features support what this product is meant to do? (1-10)"</p>
                           <p>"What feature do you think would add value to the product? (optional)"</p>
-                        </div>
+                        </AskedInfo>
                       </div>
                     ) : (
                       <div className="border border-gray-200 rounded-lg p-4">
@@ -357,11 +368,11 @@ export default function GrowthFeedbackSetup() {
                     <>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">Product visit</p>
-                        <p className="text-xs text-gray-500 mt-1">"Did you visit the actual product?" Asked only if you added a product link. If yes: "How well did it match what you expected?", "What was different?" (optional) and a testimonial (optional).</p>
+                        <AskedInfo><p>Reviewers are asked:</p><p>"Did you visit the actual product?" Asked only if you added a product link. If yes: "How well did it match what you expected?", "What was different?" (optional) and a testimonial (optional).</p></AskedInfo>
                       </div>
                       <div className="border border-emerald-400 bg-emerald-50/40 rounded-lg p-4">
                         <p className="text-sm font-medium text-gray-900">One Last Thing</p>
-                        <p className="text-xs text-gray-500 mt-1">"What's the one thing you'd improve about this product?" Asked at the end.</p>
+                        <AskedInfo><p>Reviewers are asked:</p><p>"What's the one thing you'd improve about this product?" Asked at the end.</p></AskedInfo>
                       </div>
                     </>
                   )}
