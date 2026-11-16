@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { InvokeLLM, UploadFile } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import MockupPhone from '@/components/growth/MockupPhone';
+import MockupPhone, { MOCKUP_TYPES } from '@/components/growth/MockupPhone';
 
 
 // [FIX 020826] Replaces the old defaultFeatureTemplates (Community Feed,
@@ -522,14 +522,30 @@ const suggestMoments = async (v) => {
   return out;
 };
 
-const buildMockup = async (v, moment) => {
+const buildMockup = async (v, moment, forcedType) => {
+  const header = '"header":{"name":"","role":""}';
+  const result = '"result":{"label":"","title":"","text":""}';
+  const shapes = {
+    chat: '{"type":"chat","title":"",' + header + ',"messages":[{"side":"user","text":""},{"side":"product","text":""}],' + result + '}',
+    steps: '{"type":"steps","title":"",' + header + ',"rows":[{"title":"","text":""},{"title":"","text":""},{"title":"","text":""}],' + result + '}',
+    before_after: '{"type":"before_after","title":"",' + header + ',"before":{"text":""},"after":{"text":""},' + result + '}',
+  };
+  const typeRules = forcedType
+    ? 'Use the type "' + forcedType + '". Return ONLY a JSON object of exactly this shape:\n' + shapes[forcedType]
+    : [
+      'First choose the screen type that fits this product best:',
+      '- "chat": the value happens in a conversation, call or consultation.',
+      '- "steps": the product produces a result through a few steps or outputs (a report, plan, booking, order).',
+      '- "before_after": the product fixes a clear problem, so show the situation before and after.',
+      'Then return ONLY a JSON object in the shape of the chosen type. The three shapes:',
+      shapes.chat, shapes.steps, shapes.before_after,
+    ].join('\n');
   const prompt = [
     'Write the text for ONE phone screen mockup of an early product, showing this moment: ' + moment,
     describeProduct(v),
-    'Return ONLY a JSON object of exactly this shape:',
-    '{"header":{"name":"","role":""},"messages":[{"side":"user","text":""},{"side":"product","text":""}],"result":{"label":"","title":"","text":""}}',
-    'Rules: header.name is who or what the user is talking to or using on this screen (max 22 characters), header.role is a short descriptor (max 28 characters).',
-    'messages: 3 or 4 items, alternating, starting with side "user"; each text max 90 characters, natural and short.',
+    typeRules,
+    'Rules: title is a short heading for the section on the founder\'s public page (max 30 characters), specific to this product, not generic. header.name is who or what the user is talking to or using on this screen (max 22 characters), header.role is a short descriptor (max 28 characters).',
+    'chat: 3 or 4 messages, alternating, starting with side "user"; each text max 90 characters, natural and short. steps: exactly 3 rows; row title max 28 characters, row text max 60. before_after: before.text and after.text max 90 characters each.',
     'result: the outcome the user gets. label max 16 characters, title max 40, text max 80.',
     'Use only what the founder wrote. Do not invent statistics, prices, brand names or features that are not implied by the text. Write in the language of the founder\'s text. No markdown.',
     'If the moment or the key features are gibberish or you cannot tell what they mean, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} instead of the JSON above.',
@@ -537,13 +553,27 @@ const buildMockup = async (v, moment) => {
   const r = await InvokeLLM({ prompt, creditType: 'sys' });
   readUnclear((r && r.response) || '', 'moment');
   const o = parseJson((r && r.response) || '', '{', '}');
-  const clean = (s, n) => String(s || '').trim().slice(0, n);
-  return {
+  const clean = (x, n) => String(x || '').trim().slice(0, n);
+  const type = forcedType || (['chat', 'steps', 'before_after'].includes(o.type) ? o.type : 'chat');
+  const out = {
+    type,
+    title: clean(o.title, 30),
     header: { name: clean(o.header && o.header.name, 22) || v.name, role: clean(o.header && o.header.role, 28) },
-    messages: (Array.isArray(o.messages) ? o.messages : []).slice(0, 4).map((m, i) => ({ side: m && m.side === 'product' ? 'product' : (i % 2 === 0 ? 'user' : 'product'), text: clean(m && m.text, 90) })).filter((m) => m.text),
+    messages: [], rows: [], before: { text: '' }, after: { text: '' },
     result: { label: clean(o.result && o.result.label, 16), title: clean(o.result && o.result.title, 40), text: clean(o.result && o.result.text, 80) },
     concept: moment,
   };
+  if (type === 'chat') {
+    out.messages = (Array.isArray(o.messages) ? o.messages : []).slice(0, 4).map((m, i) => ({ side: m && m.side === 'product' ? 'product' : (i % 2 === 0 ? 'user' : 'product'), text: clean(m && m.text, 90) })).filter((m) => m.text);
+  } else if (type === 'steps') {
+    out.rows = (Array.isArray(o.rows) ? o.rows : []).slice(0, 3).map((x) => ({ title: clean(x && x.title, 28), text: clean(x && x.text, 60) })).filter((x) => x.title || x.text);
+  } else {
+    out.before = { text: clean(o.before && o.before.text, 90) };
+    out.after = { text: clean(o.after && o.after.text, 90) };
+  }
+  const filled = type === 'chat' ? out.messages.length : type === 'steps' ? out.rows.length : (out.before.text && out.after.text ? 2 : 0);
+  if (!filled) throw new Error('The AI did not return a usable screen.');
+  return out;
 };
 
 const MockupStudio = ({ venture }) => {
@@ -571,11 +601,11 @@ const MockupStudio = ({ venture }) => {
     }
     setBusy('');
   };
-  const createScreen = async () => {
-    const text = custom.trim() || (chosen >= 0 ? moments[chosen] : '');
+  const createScreen = async (forcedType) => {
+    const text = (draft && draft.concept && step === 'edit') ? draft.concept : (custom.trim() || (chosen >= 0 ? moments[chosen] : ''));
     if (!text) return;
     setBusy('screen'); setError(''); setUnclear(null);
-    try { setDraft(await buildMockup(venture, text)); setStep('edit'); }
+    try { setDraft(await buildMockup(venture, text, typeof forcedType === 'string' ? forcedType : undefined)); setStep('edit'); }
     catch (e) {
       console.error('ZigForge mockup error:', e);
       if (e.message === UNCLEAR) setUnclear({ kind: e.kind, reason: e.reason });
@@ -584,6 +614,7 @@ const MockupStudio = ({ venture }) => {
     setBusy('');
   };
   const setMsg = (i, text) => setDraft((d) => ({ ...d, messages: d.messages.map((m, k) => (k === i ? { ...m, text } : m)) }));
+  const setRow = (i, f, v) => setDraft((d) => ({ ...d, rows: d.rows.map((r, k) => (k === i ? { ...r, [f]: v } : r)) }));
   const setHeader = (f, v) => setDraft((d) => ({ ...d, header: { ...d.header, [f]: v } }));
   const setResult = (f, v) => setDraft((d) => ({ ...d, result: { ...d.result, [f]: v } }));
 
@@ -676,21 +707,45 @@ const MockupStudio = ({ venture }) => {
 
             {step === 'edit' && draft && (<>
               <MockupPhone mockup={draft} />
+              <div className="pt-2">
+                <p className="text-sm font-medium text-gray-800">Screen type</p>
+                <div className="mt-1.5 grid grid-cols-3 gap-2">
+                  {MOCKUP_TYPES.map((t) => (
+                    <button key={t.key} type="button" disabled={!!busy} onClick={() => { if (t.key !== draft.type) createScreen(t.key); }}
+                      className={'py-2 rounded-lg border text-xs font-semibold ' + (draft.type === t.key ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')}>{t.label}</button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">{busy === 'screen' ? 'Rebuilding the screen...' : 'Chosen by the AI for your product. Pick another to rebuild the text for it.'}</p>
+              </div>
               <p className="text-sm font-medium text-gray-800 pt-2">Edit the text if you want</p>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Section title on your public page</label>
+                <input className={field} value={draft.title || ''} maxLength={30} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="See it in action" />
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <input className={field} value={draft.header.name} maxLength={22} onChange={(e) => setHeader('name', e.target.value)} placeholder="Name" />
                 <input className={field} value={draft.header.role} maxLength={28} onChange={(e) => setHeader('role', e.target.value)} placeholder="Short descriptor" />
               </div>
-              {draft.messages.map((m, i) => (
+              {draft.type === 'chat' && draft.messages.map((m, i) => (
                 <input key={i} className={field} value={m.text} maxLength={90} onChange={(e) => setMsg(i, e.target.value)} placeholder={m.side === 'user' ? 'What the user says' : 'What the product says'} />
               ))}
+              {draft.type === 'steps' && draft.rows.map((r, i) => (
+                <div key={i} className="grid grid-cols-5 gap-2">
+                  <input className={field + ' col-span-2'} value={r.title} maxLength={28} onChange={(e) => setRow(i, 'title', e.target.value)} placeholder={'Step ' + (i + 1)} />
+                  <input className={field + ' col-span-3'} value={r.text} maxLength={60} onChange={(e) => setRow(i, 'text', e.target.value)} placeholder="One short line" />
+                </div>
+              ))}
+              {draft.type === 'before_after' && (<>
+                <input className={field} value={draft.before.text} maxLength={90} onChange={(e) => setDraft((d) => ({ ...d, before: { text: e.target.value } }))} placeholder="Before" />
+                <input className={field} value={draft.after.text} maxLength={90} onChange={(e) => setDraft((d) => ({ ...d, after: { text: e.target.value } }))} placeholder="After" />
+              </>)}
               <div className="grid grid-cols-5 gap-2">
                 <input className={field + ' col-span-2'} value={draft.result.label} maxLength={16} onChange={(e) => setResult('label', e.target.value)} placeholder="Label" />
                 <input className={field + ' col-span-3'} value={draft.result.title} maxLength={40} onChange={(e) => setResult('title', e.target.value)} placeholder="Result" />
               </div>
               <input className={field} value={draft.result.text} maxLength={80} onChange={(e) => setResult('text', e.target.value)} placeholder="One line about the result" />
               <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this on my public page'}</button>
-              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try again with the same moment'}</button>
+              <button type="button" onClick={() => createScreen(draft.type)} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try again with the same moment'}</button>
               <button type="button" onClick={() => { setDraft(null); setStep('moments'); }} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Choose a different moment</button>
             </>)}
 

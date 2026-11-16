@@ -1538,8 +1538,8 @@ export default function VentureLanding() {
               )}
               {(venture.growth_data.stage || 'product') === 'prototype' && venture.growth_data.mockup && (
                 <div className="mb-10 max-w-2xl mx-auto text-center">
-                  <h2 className="text-2xl font-bold text-[#d97706] mb-5">See it in action</h2>
-                  <MockupPhone mockup={venture.growth_data.mockup} />
+                  <h2 className="text-2xl font-bold text-[#d97706] mb-5">{(venture.growth_data.mockup.title || '').trim() || 'See it in action'}</h2>
+                  <MockupPhone mockup={venture.growth_data.mockup} animate />
                   <p className="mt-4 text-xs text-[#6b7a77]">Concept mockup, not the working product</p>
                 </div>
               )}
