@@ -49,7 +49,10 @@ const GROWTH_FRAMING_MORE = "This is a dynamic process. At any stage, you can up
 // zigConfig.js; 'problem_statement' and 'proposed_solution' are the Tips
 // entries in StaticGuidance.jsx.
 // Idea: Need + Your Solution. Prototype: Need + The Product (same two page fields).
+// Product: Slogan (headline) + Short Description. (need / solution stay defined so the modal lookup never fails.)
 const getZigFields = (stage) => ({
+  headline: { fieldKey: 'slogan', title: 'Slogan', tipsId: 'slogan' },
+  description: { fieldKey: 'product_details', title: 'The Product', tipsId: 'product_details' },
   need: { fieldKey: 'problem', title: 'The Need', tipsId: 'problem_statement' },
   solution: stage === 'prototype'
     ? { fieldKey: 'product_details', title: 'The Product', tipsId: 'product_details' }
@@ -311,14 +314,10 @@ export default function GrowthDevelopment() {
   };
 
   // Saves the venture (create on first save, update after) and moves on to step 2: the feedback page.
-  // nextPath (optional): after saving, go there instead of showing the 'profile complete' screen.
-  // That lets the ZigForge / feedback buttons work on a brand-new venture too (it is created first).
-  const handleSave = async (nextPath) => {
-    const goTo = typeof nextPath === 'string' ? nextPath : null;
+  const handleSave = async () => {
     setNameError('');
     if (!venture && !growthData.name.trim()) {
       setNameError('Venture name is required.');
-      if (goTo) showToast('Add your venture name first.', 'error');
       return;
     }
     setIsSaving(true);
@@ -409,7 +408,7 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      if (goTo) router.push(goTo); else setProfileDone(true);
+      setProfileDone(true);
     } catch (error) {
       console.error("Error saving growth data:", error);
       showToast("Error saving. Please try again.", "error");
@@ -418,11 +417,26 @@ export default function GrowthDevelopment() {
   };
 
   // Save what is written so far (including a just-changed stage), then open the feedback questions.
-  const goFeedback = () => handleSave('/growth-development/feedback');
+  const goFeedback = async () => {
+    try {
+      await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
+      router.push('/growth-development/feedback');
+    } catch (e) {
+      console.error('Could not save before opening the feedback questions:', e);
+      showToast('Could not save. Please try again.', 'error');
+    }
+  };
 
-  // [NEW] Save what is written so far (creating the venture if this is the first save), then open ZigForge,
-  // which reads the Need and Solution from the saved venture.
-  const openForge = () => handleSave('/zigforge?from=profile');
+  // [NEW] Idea stage: save what is written so far, then open ZigForge, which reads the Need and Solution from the saved venture.
+  const openForge = async () => {
+    try {
+      await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
+      router.push('/zigforge?from=profile');
+    } catch (e) {
+      console.error('Could not save before opening ZigForge:', e);
+      showToast('Could not save. Please try again.', 'error');
+    }
+  };
 
   // After saving: show the animated 'profile complete' screen, then open the feedback page.
   useEffect(() => {
@@ -511,7 +525,7 @@ export default function GrowthDevelopment() {
           <div className="flex items-center justify-center gap-2 text-sm">
             <button type="button" disabled className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-emerald-600 text-white border-emerald-600"}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-white/25 text-white">1</span>Profile</button>
             <span className="text-gray-400">→</span>
-            <button type="button" onClick={goFeedback} disabled={isSaving} className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-white text-gray-700 border-gray-300 hover:bg-gray-50" + (isSaving ? " opacity-50" : "")}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">2</span>Feedback questions</button>
+            <button type="button" onClick={goFeedback} disabled={!venture} className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-white text-gray-700 border-gray-300 hover:bg-gray-50" + (!venture ? " opacity-50" : "")}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">2</span>Feedback questions</button>
           </div>
           <div className="text-center">
             <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
@@ -566,6 +580,7 @@ export default function GrowthDevelopment() {
               <MobileFieldWrapper label="Slogan" summary={growthData.headline} isMobile={isMobile} value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip">
                 <Input value={growthData.headline} onChange={(e) => handleChange('headline', e.target.value)} placeholder="e.g., The fastest way to plan a solo trip" />
               </MobileFieldWrapper>
+              <ZigTipsButtons onZig={() => setZigField('headline')} onTips={() => setTipsField('headline')} />
             </FieldCard>
           )}
 
@@ -574,6 +589,7 @@ export default function GrowthDevelopment() {
               <MobileFieldWrapper label="Short Description" summary={growthData.description} isMobile={isMobile}>
                 <Textarea value={growthData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Describe what the product does and who it's for..." className="h-28" />
               </MobileFieldWrapper>
+              <ZigTipsButtons onZig={() => setZigField('description')} onTips={() => setTipsField('description')} />
             </FieldCard>
           ) : (
             <>
@@ -668,7 +684,7 @@ export default function GrowthDevelopment() {
             </div>
           </FieldCard>
 
-          {isIdea && isNeedComplete && isSolutionComplete && (
+          {isIdea && venture && isNeedComplete && isSolutionComplete && (
             <FieldCard Icon={Sparkles} title="Add an image to your idea" description="ZigForge reads your Need and Solution and creates an image for your public page. You approve it first.">
               <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
                 <Sparkles className="w-4 h-4 mr-2" />Add an image with ZigForge
@@ -676,7 +692,7 @@ export default function GrowthDevelopment() {
             </FieldCard>
           )}
 
-          {isPrototype && isNeedComplete && isSolutionComplete && (
+          {isPrototype && venture && isNeedComplete && isSolutionComplete && (
             <FieldCard Icon={Sparkles} title="Show your product in action" description="ZigForge reads what you wrote and shows one moment of your product on a phone screen, for your public page. You edit and approve it first.">
               <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
                 <Sparkles className="w-4 h-4 mr-2" />Create a mockup with ZigForge
@@ -684,7 +700,7 @@ export default function GrowthDevelopment() {
             </FieldCard>
           )}
 
-          {isProduct && isDescriptionComplete && (
+          {isProduct && venture && isDescriptionComplete && (
             <FieldCard Icon={Sparkles} title="Show your product in action" description="No demo to upload yet? ZigForge reads your description and shows one moment of your product on a phone screen. It appears on your public page only while you have no media uploaded.">
               <Button type="button" variant="outline" onClick={openForge} className="w-full md:w-auto">
                 <Sparkles className="w-4 h-4 mr-2" />Create a mockup with ZigForge
@@ -734,7 +750,7 @@ export default function GrowthDevelopment() {
         fieldKey={getZigFields(growthData.stage)[zigField || 'need'].fieldKey}
         sectionTitle={getZigFields(growthData.stage)[zigField || 'need'].title}
         fieldValue={zigField ? growthData[zigField] : ''}
-        allFieldValues={isPrototype ? { problem: growthData.need, product_details: growthData.solution } : { problem: growthData.need, solution: growthData.solution }}
+        allFieldValues={isProduct ? { product_details: growthData.description } : isPrototype ? { problem: growthData.need, product_details: growthData.solution } : { problem: growthData.need, solution: growthData.solution }}
         firstPass={true}
         onUpdateField={(text) => { if (zigField) handleChange(zigField, text); }}
         ventureId={venture?.id}

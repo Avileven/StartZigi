@@ -101,6 +101,24 @@ export const GUIDANCE_DATA = {
       "Our mobile app connects local farmers directly with consumers (feature) so that users get access to fresher produce at a lower price while supporting their local economy (benefit). We use a geolocation-based matching algorithm and secure in-app payments (technology)."
     ]
   },
+  slogan: {
+    title: "Writing Your Slogan",
+    content: `Your slogan is the first line a visitor reads on your public page. In a few words it should tell them what you do for them.
+
+**What Makes a Strong Slogan:**
+• **Clear**: A stranger understands it on a first read, without knowing your product.
+• **Specific**: It says what you do or for whom, not just "the best" or "simple".
+• **Short**: Aim for one line that fits on a phone screen.
+
+**What to Avoid:**
+• Generic words that fit any product ("innovative", "all-in-one", "next generation").
+• Clever wordplay that hides what the product actually does.
+• Listing features instead of one benefit.`,
+    examples: [
+      "The fastest way to plan a solo trip",
+      "Book a vet visit from your sofa in 10 minutes"
+    ]
+  },
   market_size: {
     title: "Sizing Your Market Opportunity",
     content: `Investors need to see that you're targeting a large and growing market. This section demonstrates the revenue potential and market dynamics.

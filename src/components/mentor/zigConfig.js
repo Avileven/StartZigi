@@ -182,6 +182,16 @@ export const FIELD_CONFIG = {
     relatedFields: ['solution', 'competitive_landscape'],
     gibberishHint: 'a vague feature list with no concrete functionality',
   },
+  slogan: {
+    label: 'Slogan',
+    categories: [
+      { name: 'Clarity', helpType: 'thinking' },
+      { name: 'Specificity', helpType: 'thinking' },
+      { name: 'Uniqueness', helpType: 'middle' },
+    ],
+    relatedFields: ['product_details'],
+    gibberishHint: 'a generic phrase that could describe any product ("the best solution", "simple and easy")',
+  },
   founding_team: {
     label: 'Founding Team',
     categories: [
