@@ -3,6 +3,65 @@ import { supabase } from '@/lib/supabase'
 
 
 // ============================================
+// [FORGE LIMITS] Lifetime cap per user for ZigForge AI creations (counted in user_profiles).
+//   images: ai_images_used  (max 3)      texts: ai_texts_used  (max 10)
+// Needs two columns on user_profiles (see forge_limits.sql). Technical errors never block (fail-safe, like credits).
+// To give one user more: update user_profiles set ai_images_used = 0, ai_texts_used = 0 where id = '...';
+// ============================================
+const FORGE_LIMITS = { images: 3, texts: 10 };
+const FORGE_COLUMN = { images: 'ai_images_used', texts: 'ai_texts_used' };
+// These accounts have no limit at all (the owner's own emails).
+const FORGE_EXEMPT = ['avi668411@gmail.com', 'avi@leventhal.co.il'];
+const isForgeExempt = (user) => FORGE_EXEMPT.includes(String((user && user.email) || '').toLowerCase());
+
+// How many AI creations are left for this user. Used to show "X left" on the ZigForge screens.
+// Returns { images, texts, unlimited } or null if it could not be read (the screen then shows nothing and blocks nothing).
+export async function getForgeRemaining() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    if (isForgeExempt(user)) return { images: FORGE_LIMITS.images, texts: FORGE_LIMITS.texts, unlimited: true };
+    const { data: profile, error } = await supabase.from('user_profiles').select('ai_images_used, ai_texts_used').eq('id', user.id).single();
+    if (error || !profile) return null;
+    return {
+      images: Math.max(0, FORGE_LIMITS.images - (profile.ai_images_used || 0)),
+      texts: Math.max(0, FORGE_LIMITS.texts - (profile.ai_texts_used || 0)),
+      unlimited: false,
+    };
+  } catch (e) {
+    console.warn('Forge remaining read failed:', e);
+    return null;
+  }
+}
+
+export async function checkForgeAllowance(kind) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || isForgeExempt(user)) return;
+    const col = FORGE_COLUMN[kind];
+    const { data: profile, error } = await supabase.from('user_profiles').select(col).eq('id', user.id).single();
+    if (error || !profile) throw error || new Error('no profile');
+    if ((profile[col] || 0) >= FORGE_LIMITS[kind]) throw new Error('FORGE_LIMIT');
+  } catch (e) {
+    if (e.message === 'FORGE_LIMIT') throw e;
+    console.warn('Forge limit check failed, continuing anyway:', e);
+  }
+}
+
+export async function countForgeUse(kind) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || isForgeExempt(user)) return;
+    const col = FORGE_COLUMN[kind];
+    const { data: profile } = await supabase.from('user_profiles').select(col).eq('id', user.id).single();
+    if (!profile) return;
+    await supabase.from('user_profiles').update({ [col]: (profile[col] || 0) + 1 }).eq('id', user.id);
+  } catch (e) {
+    console.warn('Forge usage count failed:', e);
+  }
+}
+
+// ============================================
 // InvokeLLM - AI Chat (שימוש ב-Google Gemini)
 // ============================================
 // [CREDITS] creditType קובע כמה קרדיטים יורדו:
@@ -24,6 +83,12 @@ import { supabase } from '@/lib/supabase'
 // down on calls that don't need it (thinking/middle-type guidance).
 export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = false }) {
   try {
+
+    // [FORGE LIMITS] ZigForge text calls ('forge') cost no credits but count against a lifetime cap per user.
+    if (creditType === 'forge') {
+      await checkForgeAllowance('texts');
+      await countForgeUse('texts');
+    }
 
 
     // ============================================
@@ -58,7 +123,7 @@ export async function InvokeLLM({ prompt, creditType = 'sys', enableSearch = fal
 
 
           // [CREDITS] עלות לפי סוג פעולה
-          const costs = { mentor: 1, studio_basic: 5, studio_boost: 10,prompt_generator: 20, sys: 0 };
+          const costs = { mentor: 1, studio_basic: 5, studio_boost: 10,prompt_generator: 20, sys: 0, forge: 0 };
           const cost = costs[creditType] ?? 1;
 
 

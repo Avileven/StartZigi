@@ -1,7 +1,7 @@
 // zigforge 260226 with credits
 "use client";
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { InvokeLLM, UploadFile } from '@/api/integrations';
+import { InvokeLLM, UploadFile, checkForgeAllowance, countForgeUse, getForgeRemaining } from '@/api/integrations';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import MockupPhone, { MOCKUP_TYPES } from '@/components/growth/MockupPhone';
@@ -251,7 +251,24 @@ const VENTURE_CONFIGS = {
 // the page to the public page as the venture's media file.
 // ============================================
 
-const IMAGE_MODELS = ['gemini-3.1-flash-lite-image', 'gemini-3.1-flash-image'];
+// Only the cheapest image model: no silent switch to a more expensive one.
+const IMAGE_MODELS = ['gemini-3.1-flash-lite-image'];
+const LIMIT_MSG = "You've used all your free AI creations in ZigForge.";
+
+// Shows how many free AI creations are left, and tells the buttons when one runs out.
+const useForgeLeft = () => {
+  const [left, setLeft] = useState(null);
+  const refresh = useCallback(async () => { setLeft(await getForgeRemaining()); }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+  return [left, refresh];
+};
+const ForgeLeft = ({ left, show }) => {
+  if (!left || left.unlimited) return null;
+  const parts = [];
+  if (show.includes('images')) parts.push(left.images + ' of ' + 3 + ' images');
+  if (show.includes('texts')) parts.push(left.texts + ' of ' + 10 + ' AI suggestions');
+  return <p className="text-xs text-gray-500 text-center">Free left in ZigForge: {parts.join(' · ')}</p>;
+};
 
 // Fixed style rules, so every venture's image looks like part of the same family.
 const buildImagePrompt = (scene) => [
@@ -284,10 +301,11 @@ const generateIllustration = async (scene) => {
     if (d && d.data) return 'data:' + (d.mimeType || d.mime_type || 'image/png') + ';base64,' + d.data;
     lastErr = model + ': the model returned no image.';
   }
-  throw new Error(lastErr || 'No image model available.');
+  console.error('ZigForge image model error:', lastErr);
+  throw new Error('The image could not be created this time. Please try again.');
 };
 
-// Text call (free, creditType 'sys'): suggests image scenes from the founder's own Need and Solution.
+// Text call (no credits, creditType 'forge' = counted against the lifetime cap): suggests image scenes from the founder's own Need and Solution.
 const suggestScenes = async (v, count) => {
   const prompt = [
     'A founder is describing an early-stage startup idea. Suggest ' + count + ' different ideas for ONE illustration for the idea\'s public page.',
@@ -297,7 +315,7 @@ const suggestScenes = async (v, count) => {
     'Rules: each idea is ONE short sentence describing a single visual scene (who, where, what is happening). Use only what the founder wrote; do not invent facts, features or places that are not implied by the text. No text, logos or brand names in the scene. Prefer scenes that show the need or the moment of using the solution. Do not put objects over or near anyone\'s head.',
     'Answer with ONLY a JSON array of ' + count + ' strings, nothing else.',
   ].join('\n');
-  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const r = await InvokeLLM({ prompt, creditType: 'forge' });
   const text = (r && r.response) || '';
   const m = text.match(/\[[\s\S]*\]/);
   let arr = [];
@@ -322,15 +340,21 @@ const ForgeConcept = ({ venture }) => {
   const [img, setImg] = useState('');
   const [current, setCurrent] = useState(venture.image_url || '');
   const ready = venture.need.trim().length >= 30 && venture.solution.trim().length >= 30;
+  const [left, refreshLeft] = useForgeLeft();
+  const noImg = !!left && !left.unlimited && left.images <= 0;
+  const noTxt = !!left && !left.unlimited && left.texts <= 0;
+  useEffect(() => { if (!busy) refreshLeft(); }, [busy, refreshLeft]);
 
   const makeImage = async (sceneText) => {
     setBusy('image'); setError('');
     try {
+      await checkForgeAllowance('images');
       const url = await generateIllustration(sceneText);
+      await countForgeUse('images');
       setScene(sceneText); setImg(url); setStep('preview');
     } catch (e) {
       console.error('ZigForge image error:', e);
-      setError('Could not create the image. ' + (e.message || ''));
+      setError(e.message === 'FORGE_LIMIT' ? LIMIT_MSG : (e.message || 'Could not create the image.'));
     }
     setBusy('');
   };
@@ -343,7 +367,7 @@ const ForgeConcept = ({ venture }) => {
       await makeImage(s);
     } catch (e) {
       console.error('ZigForge scene error:', e);
-      setError('Could not create the image. ' + (e.message || ''));
+      setError(e.message === 'FORGE_LIMIT' ? LIMIT_MSG : 'Could not create the image. ' + (e.message || ''));
       setBusy('');
     }
   };
@@ -352,7 +376,7 @@ const ForgeConcept = ({ venture }) => {
   const showIdeas = async () => {
     setBusy('ideas'); setError('');
     try { setIdeas(await suggestScenes(venture, 3)); setChosen(-1); setCustom(''); setStep('ideas'); }
-    catch (e) { console.error('ZigForge ideas error:', e); setError('Could not get ideas. ' + (e.message || '')); }
+    catch (e) { console.error('ZigForge ideas error:', e); setError(e.message === 'FORGE_LIMIT' ? LIMIT_MSG : 'Could not get ideas. ' + (e.message || '')); }
     setBusy('');
   };
 
@@ -416,6 +440,7 @@ const ForgeConcept = ({ venture }) => {
         ) : (
           <div className={card + ' space-y-4'}>
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+            {!error && (noImg || noTxt) && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{LIMIT_MSG}</div>}
 
             {step === 'start' && (<>
               {current && (
@@ -426,12 +451,13 @@ const ForgeConcept = ({ venture }) => {
                 </div>
               )}
               <p className="text-gray-800 font-medium">{current ? 'Want a different image?' : 'Want to add an image that illustrates your idea?'}</p>
-              <button type="button" onClick={lazy} disabled={!!busy} className={primary}>
+              <button type="button" onClick={lazy} disabled={!!busy || noImg || noTxt} className={primary}>
                 {busy === 'ideas' || busy === 'image' ? 'Creating your image...' : 'Create one for me'}
               </button>
-              <button type="button" onClick={showIdeas} disabled={!!busy} className={secondary}>
+              <button type="button" onClick={showIdeas} disabled={!!busy || noImg || noTxt} className={secondary}>
                 {busy === 'ideas' ? 'Thinking...' : 'Let me choose'}
               </button>
+              <ForgeLeft left={left} show={['images']} />
               <p className="text-xs text-gray-500 text-center">The image is made from the Need and the Solution you wrote. You approve it before it appears on your public page.</p>
             </>)}
 
@@ -449,10 +475,11 @@ const ForgeConcept = ({ venture }) => {
                   placeholder="e.g. A woman on a sofa at night, her dog beside her, looking relieved at her phone"
                   className="w-full border border-gray-300 rounded-xl p-3 text-sm" />
               </div>
-              <button type="button" onClick={createFromChoice} disabled={!!busy || (!custom.trim() && chosen < 0)} className={primary}>
+              <button type="button" onClick={createFromChoice} disabled={!!busy || noImg || (!custom.trim() && chosen < 0)} className={primary}>
                 {busy === 'image' ? 'Creating your image...' : 'Create the image'}
               </button>
-              <button type="button" onClick={showIdeas} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'ideas' ? 'Thinking...' : 'Show me other ideas'}</button>
+              <ForgeLeft left={left} show={['images']} />
+              <button type="button" onClick={showIdeas} disabled={!!busy || noTxt} className="text-sm text-gray-500 underline w-full text-center">{busy === 'ideas' ? 'Thinking...' : 'Show me other ideas'}</button>
               <button type="button" onClick={() => setStep('start')} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Back</button>
             </>)}
 
@@ -460,7 +487,8 @@ const ForgeConcept = ({ venture }) => {
               <img src={img} alt="" className="w-full rounded-2xl" />
               <p className="text-xs text-gray-500">Scene: {scene}</p>
               <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this image on my public page'}</button>
-              <button type="button" onClick={() => makeImage(scene)} disabled={!!busy} className={secondary}>{busy === 'image' ? 'Creating...' : 'Try again with the same idea'}</button>
+              <button type="button" onClick={() => makeImage(scene)} disabled={!!busy || noImg} className={secondary}>{busy === 'image' ? 'Creating...' : 'Try again with the same idea'}</button>
+              <ForgeLeft left={left} show={['images']} />
               <button type="button" onClick={() => { setImg(''); setStep('start'); }} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Choose a different idea</button>
             </>)}
 
@@ -516,7 +544,7 @@ const suggestMoments = async (v) => {
     'Never use names of people, animals or brands, and never use numbers, prices or professional details (medical, legal, financial advice) unless the founder wrote them. Use generic roles such as "Your vet" or "Your pet". The result describes only the value the user gets (for example "A clear care plan for your pet"), never actual instructions or advice.',
     'Otherwise: each moment is ONE short sentence (what the user does and what the product gives back). Use only what the founder wrote; do not invent features, numbers or brands that are not implied. Answer with ONLY a JSON array of 3 strings.',
   ].join('\n');
-  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const r = await InvokeLLM({ prompt, creditType: 'forge' });
   readUnclear((r && r.response) || '', 'profile');
   const arr = parseJson((r && r.response) || '', '[', ']');
   const out = (Array.isArray(arr) ? arr : []).map((s) => String(s).trim()).filter(Boolean).slice(0, 3);
@@ -555,7 +583,7 @@ const buildMockup = async (v, moment, forcedType) => {
     'Never use names of people, animals or brands, and never use numbers, prices or professional details (medical, legal, financial advice) unless the founder wrote them. Use generic roles such as "Your vet" or "Your pet". The result describes only the value the user gets (for example "A clear care plan for your pet"), never actual instructions or advice.',
     'If the moment or the key features are gibberish or you cannot tell what they mean, answer ONLY with {"unclear":"<one short sentence naming what you could not understand>"} instead of the JSON above.',
   ].join('\n');
-  const r = await InvokeLLM({ prompt, creditType: 'sys' });
+  const r = await InvokeLLM({ prompt, creditType: 'forge' });
   readUnclear((r && r.response) || '', 'moment');
   const o = parseJson((r && r.response) || '', '{', '}');
   const clean = (x, n) => String(x || '').trim().slice(0, n);
@@ -596,6 +624,9 @@ const MockupStudio = ({ venture }) => {
   const [advanced, setAdvanced] = useState(false);
   const [current, setCurrent] = useState(venture.mockup || null);
   const ready = venture.product.trim().length >= 30 && (venture.isProductStage || venture.need.trim().length >= 30);
+  const [left, refreshLeft] = useForgeLeft();
+  const noTxt = !!left && !left.unlimited && left.texts <= 0;
+  useEffect(() => { if (!busy) refreshLeft(); }, [busy, refreshLeft]);
 
   const showMoments = async () => {
     setBusy('moments'); setError(''); setUnclear(null);
@@ -603,6 +634,7 @@ const MockupStudio = ({ venture }) => {
     catch (e) {
       console.error('ZigForge moments error:', e);
       if (e.message === UNCLEAR) setUnclear({ kind: 'profile', reason: e.reason });
+      else if (e.message === 'FORGE_LIMIT') setError(LIMIT_MSG);
       else setError('Could not get ideas. ' + (e.message || ''));
     }
     setBusy('');
@@ -616,6 +648,7 @@ const MockupStudio = ({ venture }) => {
     catch (e) {
       console.error('ZigForge mockup error:', e);
       if (e.message === UNCLEAR) setUnclear({ kind: e.kind, reason: e.reason });
+      else if (e.message === 'FORGE_LIMIT') setError(LIMIT_MSG);
       else setError('Could not create the screen. ' + (e.message || ''));
     }
     setBusy('');
@@ -669,6 +702,7 @@ const MockupStudio = ({ venture }) => {
         ) : (
           <div className={card + ' space-y-4'}>
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+            {!error && noTxt && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{LIMIT_MSG}</div>}
             {unclear && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-2">
                 <p className="font-semibold">
@@ -691,8 +725,9 @@ const MockupStudio = ({ venture }) => {
                 </div>
               )}
               <p className="text-gray-800 font-medium">{current ? 'Want a different screen?' : 'We will show your product in action on one phone screen, based on what you wrote in your profile.'}</p>
-              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={primary}>{busy === 'screen' ? 'Creating your screen...' : 'Create my mockup'}</button>
-              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Advanced: choose the moment yourself'}</button>
+              <button type="button" onClick={() => createScreen()} disabled={!!busy || noTxt} className={primary}>{busy === 'screen' ? 'Creating your screen...' : 'Create my mockup'}</button>
+              <ForgeLeft left={left} show={['texts']} />
+              <button type="button" onClick={showMoments} disabled={!!busy || noTxt} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Advanced: choose the moment yourself'}</button>
             </>)}
 
             {step === 'moments' && (<>
@@ -707,15 +742,15 @@ const MockupStudio = ({ venture }) => {
                 <label className="block text-sm text-gray-700 mb-1">Or describe the moment you want to show</label>
                 <textarea value={custom} onChange={(e) => setCustom(e.target.value)} disabled={!!busy} rows={3} maxLength={300} className={field} placeholder="What does the user do, and what does the product give back?" />
               </div>
-              <button type="button" onClick={createScreen} disabled={!!busy || (!custom.trim() && chosen < 0)} className={primary}>{busy === 'screen' ? 'Creating the screen...' : 'Create the screen'}</button>
-              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Show me other moments'}</button>
+              <button type="button" onClick={createScreen} disabled={!!busy || noTxt || (!custom.trim() && chosen < 0)} className={primary}>{busy === 'screen' ? 'Creating the screen...' : 'Create the screen'}</button>
+              <button type="button" onClick={showMoments} disabled={!!busy || noTxt} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Show me other moments'}</button>
               <button type="button" onClick={() => setStep('start')} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">Back</button>
             </>)}
 
             {step === 'edit' && draft && (<>
               <MockupPhone mockup={draft} />
               <button type="button" onClick={approve} disabled={!!busy} className={primary}>{busy === 'saving' ? 'Adding...' : 'Use this on my public page'}</button>
-              <button type="button" onClick={() => createScreen()} disabled={!!busy} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try another version'}</button>
+              <button type="button" onClick={() => createScreen()} disabled={!!busy || noTxt} className={secondary}>{busy === 'screen' ? 'Creating...' : 'Try another version'}</button>
               <button type="button" onClick={() => setAdvanced((v) => !v)} className="text-sm text-gray-600 underline w-full text-center">{advanced ? 'Hide advanced' : 'Advanced: change the screen type, title or text'}</button>
               {advanced && (
                 <div className="space-y-3 border-t border-gray-200 pt-4">
@@ -723,7 +758,7 @@ const MockupStudio = ({ venture }) => {
                 <p className="text-sm font-medium text-gray-800">Screen type</p>
                 <div className="mt-1.5 grid grid-cols-3 gap-2">
                   {MOCKUP_TYPES.map((t) => (
-                    <button key={t.key} type="button" disabled={!!busy} onClick={() => { if (t.key !== draft.type) createScreen(t.key); }}
+                    <button key={t.key} type="button" disabled={!!busy || noTxt} onClick={() => { if (t.key !== draft.type) createScreen(t.key); }}
                       className={'py-2 rounded-lg border text-xs font-semibold ' + (draft.type === t.key ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50')}>{t.label}</button>
                   ))}
                 </div>
@@ -756,7 +791,7 @@ const MockupStudio = ({ venture }) => {
                 <input className={field + ' col-span-3'} value={draft.result.title} maxLength={40} onChange={(e) => setResult('title', e.target.value)} placeholder="Result" />
               </div>
               <input className={field} value={draft.result.text} maxLength={80} onChange={(e) => setResult('text', e.target.value)} placeholder="One line about the result" />
-              <button type="button" onClick={showMoments} disabled={!!busy} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Choose the moment myself'}</button>
+              <button type="button" onClick={showMoments} disabled={!!busy || noTxt} className="text-sm text-gray-500 underline w-full text-center">{busy === 'moments' ? 'Thinking...' : 'Choose the moment myself'}</button>
                 </div>
               )}
             </>)}
