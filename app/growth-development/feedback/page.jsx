@@ -264,7 +264,7 @@ export default function GrowthFeedbackSetup() {
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
           
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Insights</h1>
+            <h1 className="text-2xl font-extrabold text-purple-700">Insights</h1>
             <div className="mt-3 flex items-center justify-center gap-2">
               {(() => { const st = STAGE_STYLE[growthData.stage]; return (
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}>{STAGES.find(x => x.value === growthData.stage)?.name}</span>

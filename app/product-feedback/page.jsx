@@ -1562,7 +1562,7 @@ export default function ProductFeedbackPage() {
             now opt in from MVP too (extended this session), so this must
             not be hidden behind reachedMLP. Shown at the top, independent of
             venture phase, whenever there's at least one follower. */}
-        {followers.length > 0 && (
+        {followers.length > 0 && venture.phase !== 'growth' && (
           <div className="mb-10">
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Followers</p>
             <Card className="border-0 shadow-sm">
@@ -2197,6 +2197,43 @@ export default function ProductFeedbackPage() {
                   DASHBOARD"/"AI Insights Analysis" (one size below "Venture
                   Feedback"), and more breathing room above/below — was
                   sitting right on top of the pills/button around it. */}
+              {/* Followers: in Growth they sit right above Feedback Details. */}
+        {followers.length > 0 && (
+          <div className="mt-8 mb-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Followers</p>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{followers.length}</p>
+                    <p className="text-xs text-gray-400">Founders who want to keep contributing to this venture</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggle('followers')}
+                    className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    Zoom in
+                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded.followers ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+                {expanded.followers && (
+                  <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                    {followers.map((f) => (
+                      <FounderHoverCard
+                        key={f.id}
+                        founderId={f.user_id}
+                        name={getDisplayName(founderProfiles[f.user_id], null)}
+                        profile={founderProfiles[f.user_id]}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
               <div className="text-center mb-5 mt-8">
                 <span
                   className="text-xl font-extrabold"

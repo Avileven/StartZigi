@@ -70,7 +70,9 @@ import {
   Sparkles,
   Megaphone,
   CalendarClock,
-  Wrench
+  Wrench,
+  Activity,
+  ClipboardList
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -1437,17 +1439,17 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     // pointed here before).
     if (currentVenture.phase === 'growth') {
       assets.push({
-        id: 'growth_development',
-        title: 'ZigPulse',
-        icon: Rocket,
-        // [FLAG — not fully verified] A stale comment elsewhere in this
-        // same function claims createPageUrl strips hyphens (e.g.
-        // 'beta-development' → '/betadevelopment'), but the real folder
-        // this session directly confirmed is hyphenated
-        // (C:\STARTZIG\app\beta-development). Using the hyphenated slug
-        // here to match the real route — verify this resolves correctly,
-        // since createPageUrl's actual implementation wasn't available.
+        id: 'growth_profile',
+        title: 'My Profile',
+        icon: Activity,
         page: 'growth-development',
+        highlighted: true
+      });
+      assets.push({
+        id: 'growth_insights',
+        title: 'Insights',
+        icon: ClipboardList,
+        page: 'growth-development/feedback',
         highlighted: true
       });
     }
@@ -1484,7 +1486,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     }
 
     if (currentVenture.phase === 'growth') {
-      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development', 'idea_analysis', 'business_model'];
+      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_profile', 'growth_insights', 'idea_analysis', 'business_model'];
       // [FIX] Was inconsistent — promotion_center/zigforge's highlighted
       // conditions never included growth, while product_feedback/
       // growth_development did, so only some cards appeared highlighted

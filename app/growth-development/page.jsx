@@ -505,7 +505,7 @@ export default function GrowthDevelopment() {
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
           
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+            <h1 className="text-2xl font-extrabold text-purple-700">My Profile</h1>
             <div className="mt-3 flex flex-col items-center gap-1.5">
               {(() => { const st = STAGE_STYLE[growthData.stage]; return (
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}>{STAGES.find(x => x.value === growthData.stage)?.name}</span>
