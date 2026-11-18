@@ -89,8 +89,8 @@ export const BUSINESS_MODEL_TYPES = [
 
 export const STAGES = [
   { value: 'idea', name: 'Idea', description: 'You have an idea and want to find out if it is worth pursuing.' },
-  { value: 'prototype', name: 'Prototype', description: 'You have a demo, an interactive sketch or a first prototype and want to know what to improve. A working product is not required.' },
-  { value: 'product', name: 'Product', description: 'You have a live product and want feedback from real people.' },
+  { value: 'prototype', name: 'Product Development', description: 'You have a demo, an interactive sketch or a first prototype and want to know what to improve. A working product is not required.' },
+  { value: 'product', name: 'Product Growth', description: 'You have a live product and want feedback from real people.' },
 ];
 
 export const SECTORS = [
