@@ -35,6 +35,7 @@ import {
   ChevronLeft,
   FileText,
   BarChart3,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -345,6 +346,42 @@ pathname === "/"
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+
+                      {/* [NEW — Growth] Separate entries for the venture profile and the Insights page. */}
+                      {venture?.phase === 'growth' && (
+                        <>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            className={`mb-1 rounded-lg transition-colors duration-200 ${
+                              pathname === "/growth-development"
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "hover:bg-indigo-50 hover:text-indigo-700"
+                            }`}
+                          >
+                            <Link href="/growth-development" className="flex items-center gap-3 px-3 py-2">
+                              <Activity className="w-4 h-4 flex-shrink-0" />
+                              <span className="font-medium">Venture Profile</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            className={`mb-1 rounded-lg transition-colors duration-200 ${
+                              pathname === "/growth-development/feedback"
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "hover:bg-indigo-50 hover:text-indigo-700"
+                            }`}
+                          >
+                            <Link href="/growth-development/feedback" className="flex items-center gap-3 px-3 py-2">
+                              <ClipboardList className="w-4 h-4 flex-shrink-0" />
+                              <span className="font-medium">Insights</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        </>
+                      )}
 
                       {/* [FIX] Exit Path removed entirely from the whole
                           system, per explicit request — not just hidden

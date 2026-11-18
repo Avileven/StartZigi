@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Home, UserCircle, Bell, MessageSquare, Activity, Megaphone, Globe, ChevronRight, ChevronLeft, FileText, BarChart3 } from "lucide-react";
+import { Home, UserCircle, Bell, MessageSquare, Activity, Megaphone, Globe, ChevronRight, ChevronLeft, FileText, BarChart3, ClipboardList } from "lucide-react";
 
 // [NEW — ZigPulse mobile] Scrollable icon bar for Growth (ZigPulse) ventures.
 // Lives in its own component so its scroll state/refs stay out of ClientLayout.
@@ -33,6 +33,7 @@ export default function GrowthMobileBar({ pathname, router, unreadCount, landing
   const items = [
     { key: 'home', label: 'Home', Icon: Home, path: '/dashboard', go: () => router.push('/dashboard') },
     { key: 'profile', label: 'Venture Profile', Icon: Activity, path: '/growth-development', go: () => router.push('/growth-development') },
+    { key: 'insights', label: 'Insights', Icon: ClipboardList, path: '/growth-development/feedback', go: () => router.push('/growth-development/feedback') },
     { key: 'promo', label: 'Promotion Center', Icon: Megaphone, path: '/promotion-center', go: () => router.push('/promotion-center') },
     { key: 'feedback', label: 'Product Feedback', Icon: MessageSquare, path: '/product-feedback', go: () => router.push('/product-feedback') },
     { key: 'public', label: 'Public page', Icon: Globe, disabled: !landingUrl || landingUrl === '#', go: () => window.open(landingUrl, '_blank', 'noopener') },

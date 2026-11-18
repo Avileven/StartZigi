@@ -408,23 +408,12 @@ export default function GrowthDevelopment() {
           console.error("Growth plan assignment failed (non-critical):", planErr);
         }
       }
-      setProfileDone(true);
+      if (isNewVenture) setProfileDone(true); else showToast('Saved');
     } catch (error) {
       console.error("Error saving growth data:", error);
       showToast("Error saving. Please try again.", "error");
     }
     setIsSaving(false);
-  };
-
-  // Save what is written so far (including a just-changed stage), then open the feedback questions.
-  const goFeedback = async () => {
-    try {
-      await Venture.update(venture.id, { growth_data: withSyncedFeatures(growthData) });
-      router.push('/growth-development/feedback');
-    } catch (e) {
-      console.error('Could not save before opening the feedback questions:', e);
-      showToast('Could not save. Please try again.', 'error');
-    }
   };
 
   // [NEW] Idea stage: save what is written so far, then open ZigForge, which reads the Need and Solution from the saved venture.
@@ -515,20 +504,16 @@ export default function GrowthDevelopment() {
   return (
     <>
       <GrowthStyles />
-      {profileDone && <ProfileDone title="Your profile is complete" text="You are now part of the StartZig community." onContinue={() => router.push('/growth-development/feedback')} />}
+      {profileDone && <ProfileDone title="Your profile is complete" text="You are now part of the StartZig community. Next, we'll take you to Insights." onContinue={() => router.push('/growth-development/feedback')} />}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{toast.message}</div>
       )}
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <button type="button" disabled className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-emerald-600 text-white border-emerald-600"}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-white/25 text-white">1</span>Profile</button>
-            <span className="text-gray-400">→</span>
-            <button type="button" onClick={goFeedback} disabled={!venture} className={"inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold " + "bg-white text-gray-700 border-gray-300 hover:bg-gray-50" + (!venture ? " opacity-50" : "")}><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">2</span>Feedback questions</button>
-          </div>
+          
           <div className="text-center">
-            <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
+            <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
             <div className="mt-3 flex items-center justify-center gap-2">
               {(() => { const st = STAGE_STYLE[growthData.stage]; const StageIcon = st.Icon; return (
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}><StageIcon className="w-4 h-4" />{STAGES.find(x => x.value === growthData.stage)?.name}</span>
@@ -732,7 +717,7 @@ export default function GrowthDevelopment() {
           )}
           <div className="flex flex-col items-center gap-3 pt-2 pb-6">
             <Button onClick={handleSave} disabled={!canSaveProfile || isSaving} className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto md:px-10" size="lg">
-              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<>Save and continue<ArrowRight className="w-4 h-4 ml-2" /></>)}
+              {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (venture ? <>Save</> : <>Save and continue<ArrowRight className="w-4 h-4 ml-2" /></>)}
             </Button>
           </div>
         </div>

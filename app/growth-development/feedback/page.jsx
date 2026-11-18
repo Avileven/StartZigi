@@ -262,13 +262,9 @@ export default function GrowthFeedbackSetup() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-5 md:space-y-6">
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <button type="button" onClick={goProfile} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold bg-white text-gray-700 border-gray-300 hover:bg-gray-50"><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-gray-200 text-gray-700">1</span>Profile</button>
-            <span className="text-gray-400">→</span>
-            <button type="button" disabled className="inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold bg-emerald-600 text-white border-emerald-600"><span className="w-5 h-5 rounded-full text-xs flex items-center justify-center bg-white/25 text-white">2</span>Feedback questions</button>
-          </div>
+          
           <div className="text-center">
-            <h1 className="text-3xl font-bold"><span style={{ color: '#F49A58' }}>Zig</span><span style={{ color: '#7045DC' }}>Pulse</span></h1>
+            <h1 className="text-3xl font-bold text-gray-900">Insights</h1>
             <div className="mt-3 flex items-center justify-center gap-2">
               {(() => { const st = STAGE_STYLE[growthData.stage]; const StageIcon = st.Icon; return (
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}><StageIcon className="w-4 h-4" />{STAGES.find(x => x.value === growthData.stage)?.name}</span>
