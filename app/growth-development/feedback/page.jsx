@@ -273,7 +273,7 @@ export default function GrowthFeedbackSetup() {
           </div>
 
 
-          <HowItWorks kicker="Feedback" title="Choose your feedback questions" steps={[
+          <HowItWorks kicker="How it works" steps={[
             { icon: <ListPlus className="w-5 h-5" />, text: 'Beyond the basic questions, choose additional questions.' },
             { icon: <ImageIcon className="w-5 h-5" />, text: 'Check the box if you want feedback on the media you uploaded.' },
             { icon: <Pencil className="w-5 h-5" />, text: 'If needed, write a personal question.' },

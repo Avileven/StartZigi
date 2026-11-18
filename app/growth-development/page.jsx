@@ -149,14 +149,6 @@ export default function GrowthDevelopment() {
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
-          // Profile already saved: entering the Growth page opens the feedback page (the profile is one link away there).
-          // Coming from the onboarding stage choice (?stage=...) or a profile link (?view=profile) opens the profile.
-          const qs = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-          const fromStageChoice = qs && (qs.get('stage') || qs.get('view') === 'profile');
-          if (!fromStageChoice) {
-            router.replace('/growth-development/feedback');
-            return;
-          }
           setPickedStage(loaded.stage);
           setStep('build');
         }
@@ -542,7 +534,7 @@ export default function GrowthDevelopment() {
           </Card>
           )}
 
-          <HowItWorks kicker="Venture profile" title="Build your venture profile" steps={[
+          <HowItWorks kicker="How it works" steps={[
             { icon: <Pencil className="w-5 h-5" />, text: 'Fill in the details in the fields.' },
             { icon: <Lightbulb className="w-5 h-5" />, text: <>Click <b>TIP</b> to get general guidance.</> },
             { icon: <ZBadge />, text: <>Click <b>Z</b> to get AI analysis and insights on what you wrote.</> },

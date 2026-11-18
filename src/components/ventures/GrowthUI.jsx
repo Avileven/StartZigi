@@ -235,8 +235,8 @@ export function HowItWorks({ kicker, title, steps }) {
   return (
     <div className="rounded-3xl bg-white border border-gray-200 shadow-sm p-5 md:p-8">
       <p className="text-xs md:text-sm font-bold tracking-widest uppercase text-emerald-700">{kicker}</p>
-      <h2 className="mt-1 text-2xl md:text-3xl font-extrabold text-gray-900">{title}</h2>
-      <ol className="mt-4 space-y-3">
+      {title && <h2 className="mt-1 text-2xl md:text-3xl font-extrabold text-gray-900">{title}</h2>}
+      <ol className={(title ? 'mt-4' : 'mt-3') + ' space-y-3'}>
         {steps.map((s, i) => (
           <li key={i} className="zg-step flex items-start gap-3" style={{ animationDelay: `${0.3 + i * 1.0}s` }}>
             <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">{s.icon}</span>
