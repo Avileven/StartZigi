@@ -32,7 +32,7 @@ export default function GrowthMobileBar({ pathname, router, unreadCount, landing
 
   const items = [
     { key: 'home', label: 'Home', Icon: Home, path: '/dashboard', go: () => router.push('/dashboard') },
-    { key: 'profile', label: 'Venture Profile', Icon: Activity, path: '/growth-development', go: () => router.push('/growth-development') },
+    { key: 'profile', label: 'My Profile', Icon: Activity, path: '/growth-development', go: () => router.push('/growth-development') },
     { key: 'insights', label: 'Insights', Icon: ClipboardList, path: '/growth-development/feedback', go: () => router.push('/growth-development/feedback') },
     { key: 'promo', label: 'Promotion Center', Icon: Megaphone, path: '/promotion-center', go: () => router.push('/promotion-center') },
     { key: 'feedback', label: 'Product Feedback', Icon: MessageSquare, path: '/product-feedback', go: () => router.push('/product-feedback') },

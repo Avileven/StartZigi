@@ -439,8 +439,6 @@ export default function ProductFeedbackPage() {
   // from beta_testers (that's actual Beta sign-up, this is earlier-stage
   // interest).
   const [followers, setFollowers] = useState([]);
-  // [NEW — Early users] Reviewers who asked to be early users / beta testers.
-  const [earlySignups, setEarlySignups] = useState([]);
   const [userPlan, setUserPlan] = useState(null);
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   // [GROWTH] New — mirrors productFeedbacks exactly. Was entirely missing
@@ -476,7 +474,6 @@ export default function ProductFeedbackPage() {
   // feedback data (collapsed behind one master toggle) and a separate AI
   // zone (whose Recommended Actions is its own collapsed tab).
   const [showGrowthFeedbackDetails, setShowGrowthFeedbackDetails] = useState(false);
-  const [showEarlyAdoptersDetails, setShowEarlyAdoptersDetails] = useState(false);
   const [showGrowthRecommendedActions, setShowGrowthRecommendedActions] = useState(false);
   // [NEW — per explicit feedback] The AI result is now three equal tabs
   // (Summary / Recommended Actions / View full report) instead of a big
@@ -574,14 +571,6 @@ export default function ProductFeedbackPage() {
             .eq('venture_id', currentVenture.id)
             .order('created_date', { ascending: false });
           setFollowers(followerRows || []);
-
-          // [NEW — Early users] Queried directly (no entity wrapper).
-          const { data: earlyRows } = await supabase
-            .from('early_user_signups')
-            .select('id, user_id, username, email, created_date')
-            .eq('venture_id', currentVenture.id)
-            .order('created_date', { ascending: false });
-          setEarlySignups(earlyRows || []);
 
           const pfeedback = await ProductFeedbackEntity.filter({ venture_id: currentVenture.id }, '-created_date');
           console.log('[FeedbackHub] MLP product feedbacks:', pfeedback.length);
@@ -1465,14 +1454,7 @@ export default function ProductFeedbackPage() {
           {/* [FIX — per explicit feedback] Icon removed per explicit request. */}
           {/* [ZigPulse mobile] Growth ventures see the venture name here on
               mobile; desktop and other phases keep "Venture Feedback". */}
-          <h1 className="text-2xl font-extrabold text-purple-700 mb-2">
-            {venture.phase === 'growth' && venture.name ? (
-              <>
-                <span className="md:hidden">{venture.name}</span>
-                <span className="hidden md:inline">Venture Feedback</span>
-              </>
-            ) : 'Venture Feedback'}
-          </h1>
+          <h1 className="text-2xl font-extrabold text-purple-700 mb-2">{venture.phase === 'growth' ? 'Product Feedback' : 'Venture Feedback'}</h1>
           <p className="text-lg" style={{ color: '#15803D' }}>All insight collected and analyzed across your startup journey</p>
           {/* [NEW — ZigPulse mobile] How to read this page */}
           {venture.phase === 'growth' && (
@@ -2480,46 +2462,6 @@ export default function ProductFeedbackPage() {
                 </div>
               )}
               </div>
-              )}
-
-              {/* [NEW — Early Adopters] Same heading and toggle structure as
-                  "Feedback Details" above. Username and email are shown
-                  because the reviewers agreed to share them. */}
-              {earlySignups.length > 0 && (
-                <>
-                  <div className="text-center mb-5 mt-8">
-                    <span
-                      className="text-xl font-extrabold"
-                      style={{ background: 'linear-gradient(90deg, #0EA5E9, #6366F1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-                    >
-                      Early Adopters Details
-                    </span>
-                  </div>
-                  <div className="flex justify-center mb-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowEarlyAdoptersDetails(v => !v)}
-                      className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full border bg-white hover:bg-sky-50"
-                      style={{ color: '#0369A1', borderColor: '#BAE6FD' }}
-                    >
-                      {showEarlyAdoptersDetails ? 'Hide early adopters details' : 'Show early adopters details'}
-                      <ChevronDown className="w-4 h-4 transition-transform" style={{ transform: showEarlyAdoptersDetails ? 'rotate(180deg)' : 'none' }} />
-                    </button>
-                  </div>
-                  {showEarlyAdoptersDetails && (
-                    <div className="max-w-xl mx-auto mb-3 rounded-xl bg-white border border-gray-100 shadow-sm px-5 py-2">
-                      {earlySignups.map((e) => (
-                        <div key={e.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{e.username || 'Unnamed'}</p>
-                            <p className="text-xs text-gray-500 truncate">{e.email}</p>
-                          </div>
-                          <p className="text-xs text-gray-400 flex-shrink-0 ml-3">{new Date(e.created_date).toLocaleDateString()}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
               )}
 
               {/* [NEW — per explicit request] AI zone, fully separate from

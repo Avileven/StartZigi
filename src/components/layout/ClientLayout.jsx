@@ -361,7 +361,7 @@ pathname === "/"
                           >
                             <Link href="/growth-development" className="flex items-center gap-3 px-3 py-2">
                               <Activity className="w-4 h-4 flex-shrink-0" />
-                              <span className="font-medium">Venture Profile</span>
+                              <span className="font-medium">My Profile</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

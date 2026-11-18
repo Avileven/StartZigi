@@ -506,9 +506,9 @@ export default function GrowthDevelopment() {
           
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-            <div className="mt-3 flex items-center justify-center gap-2">
-              {(() => { const st = STAGE_STYLE[growthData.stage]; const StageIcon = st.Icon; return (
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}><StageIcon className="w-4 h-4" />{STAGES.find(x => x.value === growthData.stage)?.name}</span>
+            <div className="mt-3 flex flex-col items-center gap-1.5">
+              {(() => { const st = STAGE_STYLE[growthData.stage]; return (
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${st.chip}`}>{STAGES.find(x => x.value === growthData.stage)?.name}</span>
               ); })()}
               <button type="button" onClick={() => { setPickedStage(growthData.stage); setStep('stage'); }} className="text-xs text-gray-500 underline">Change</button>
             </div>
