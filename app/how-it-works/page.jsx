@@ -9,7 +9,7 @@ export default function HowItWorks() {
   return (
     <div className="bg-white text-gray-900 py-8 md:py-16 px-4 md:px-6">
       <div className="max-w-4xl mx-auto mb-5 md:mb-8 text-center">
-        <h1 className="text-3xl md:text-5xl font-bold leading-tight">
+        <h1 className="text-2xl md:text-5xl font-bold leading-tight">
           <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             From Feedback to Insight
           </span>
@@ -17,9 +17,9 @@ export default function HowItWorks() {
       </div>
       <div className="max-w-4xl mx-auto md:hidden">
         <video
-          className="w-full rounded-2xl shadow-lg border border-gray-200 bg-black aspect-[19/18]"
-          src="/feedback-example-square.mp4"
-          poster="/feedback-example-square-poster.jpg"
+          className="w-full rounded-2xl shadow-lg border border-gray-200 bg-black aspect-[39/76]"
+          src="/feedback-example-mobile.mp4"
+          poster="/feedback-example-mobile-poster.jpg"
           controls
           playsInline
           preload="metadata"
