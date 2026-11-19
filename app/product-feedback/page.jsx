@@ -1464,11 +1464,8 @@ export default function ProductFeedbackPage() {
                 { icon: <LayoutGrid className="w-6 h-6 text-indigo-600" />, text: "See all the feedback you've received at a glance in the matrix. It covers all your briefs by default, or choose a specific brief." },
                 { icon: <ZoomIn className="w-6 h-6 text-indigo-600" />, text: 'Zoom in on Feedback Details to read the answers some of the people gave.' },
                 { icon: <Sparkles className="w-6 h-6 text-indigo-600" />, text: 'Finally, get insights and conclusions with AI Insight.' },
+                { icon: <PlayCircle className="w-6 h-6 text-indigo-600" />, text: <a href="/how-it-works" className="hover:underline">Watch a video example of the feedback process.</a> },
               ]} />
-              <a href="/how-it-works" className="flex items-start gap-3 mt-3">
-                <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center"><PlayCircle className="w-6 h-6 text-indigo-600" /></span>
-                <span className="text-base text-indigo-700 underline pt-2 min-w-0">Watch a video example of the feedback process.</span>
-              </a>
             </div>
           )}
         </div>
