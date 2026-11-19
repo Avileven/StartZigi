@@ -26,7 +26,7 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import {
   Lightbulb, Check, Upload, Trash2, Loader2, ArrowRight, ChevronDown, Link as LinkIcon,
   Tag, Compass, Megaphone, FileText, Target, Image as ImageIcon, Share2, Pencil,
-  Linkedin, Facebook, Twitter, Instagram, Globe, Sparkles,
+  Linkedin, Facebook, Twitter, Instagram, Globe, Sparkles, DollarSign,
 } from 'lucide-react';
 import { Check as FIcCheck, Video as FIcVideo, Clock as FIcClock, ShieldCheck as FIcShieldCheck, FileText as FIcFileText, MessageSquare as FIcMessageSquare, MapPin as FIcMapPin, DollarSign as FIcDollarSign, Zap as FIcZap, Users as FIcUsers, Bell as FIcBell, Heart as FIcHeart, Search as FIcSearch, Calendar as FIcCalendar, Lock as FIcLock, Smartphone as FIcSmartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,36 @@ import { useRouter } from 'next/navigation';
 // [NEW] Prototype stage: the founder's 3 key features, each with an icon picked from this fixed set.
 const FEATURE_ICONS = { check: FIcCheck, video: FIcVideo, clock: FIcClock, shield: FIcShieldCheck, doc: FIcFileText, chat: FIcMessageSquare, pin: FIcMapPin, money: FIcDollarSign, zap: FIcZap, users: FIcUsers, bell: FIcBell, heart: FIcHeart, search: FIcSearch, calendar: FIcCalendar, lock: FIcLock, phone: FIcSmartphone };
 const FEATURE_SLOTS = 3;
+// [NEW] Business model, defined in the profile (optional) like Key features.
+const PRICING_SLOTS = 3;
+const PRICING_CURRENCIES = ['$', '₪', '€', '£'];
+// Models saved in the old Insights format are converted so nothing is lost.
+const legacyPricing = (bmd) => {
+  if (!bmd || !bmd.model_type) return [];
+  if (bmd.model_type === 'subscription') {
+    const out = [];
+    if (bmd.has_free_tier) out.push({ name: 'Free', price: '0', currency: '$', text: bmd.free_tier_description || '' });
+    (bmd.packages || []).forEach((p) => out.push({ name: p.name || '', price: p.price || '', currency: p.currency || '$', text: p.description || '' }));
+    return out.slice(0, PRICING_SLOTS);
+  }
+  if (bmd.model_type === 'transactional') return [{ name: 'Transactional', price: '', currency: '$', text: bmd.transaction_fee_description || '' }];
+  if (bmd.model_type === 'ad-driven') return [{ name: 'Ad-Driven', price: '', currency: '$', text: 'Free product, revenue solely from ads.' }];
+  return [];
+};
+const getPricing = (gd) => {
+  if (!gd) return [];
+  const list = Array.isArray(gd.pricing) ? gd.pricing : legacyPricing(gd.business_model_data);
+  return list.filter((x) => x && x.name && x.name.trim());
+};
+// "0" or "Free" shows as Free; "9 / month" splits into the price and its period.
+const splitPrice = (p) => {
+  const raw = ((p && p.price) || '').trim();
+  if (!raw) return { main: '', per: '' };
+  if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
+  const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
+  const body = m ? m[1] : raw;
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+};
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 import {
@@ -110,6 +140,7 @@ export default function GrowthDevelopment() {
     is_imported: false,
     selected_categories: [],
     core_features: [],
+    pricing: [],
     features: [], // [NEW] prototype stage: [{ icon, name, text }] shown as cards on the public page
     mockup: null, // [NEW] prototype stage: one phone screen made in ZigForge
     image_url: '', // [NEW] idea-stage image made in ZigForge (kept here so saving the profile never wipes it)
@@ -145,7 +176,7 @@ export default function GrowthDevelopment() {
         setVenture(currentVenture);
         const loaded = normalizeGrowthData(currentVenture);
         const gdForExtras = currentVenture.growth_data || {};
-        setGrowthData(prev => ({ ...prev, ...loaded, image_url: gdForExtras.image_url || '', mockup: gdForExtras.mockup || null, features: Array.isArray(gdForExtras.features) ? gdForExtras.features.slice(0, FEATURE_SLOTS) : [] }));
+        setGrowthData(prev => ({ ...prev, ...loaded, image_url: gdForExtras.image_url || '', mockup: gdForExtras.mockup || null, features: Array.isArray(gdForExtras.features) ? gdForExtras.features.slice(0, FEATURE_SLOTS) : [], pricing: Array.isArray(gdForExtras.pricing) ? gdForExtras.pricing.slice(0, PRICING_SLOTS) : legacyPricing(gdForExtras.business_model_data) }));
         // Already set up before: go straight to the builder for its stage.
         const gdRaw = currentVenture.growth_data || {};
         if (['idea', 'prototype', 'product'].includes(gdRaw.stage) || (gdRaw.selected_categories || []).length > 0) {
@@ -180,6 +211,11 @@ export default function GrowthDevelopment() {
     const list = Array.from({ length: FEATURE_SLOTS }, (_, k) => ({ icon: 'check', name: '', text: '', ...((prev.features || [])[k] || {}) }));
     list[i] = { ...list[i], [field]: value };
     return { ...prev, features: list };
+  });
+  const setPlan = (i, field, value) => setGrowthData(prev => {
+    const list = Array.from({ length: PRICING_SLOTS }, (_, k) => ({ name: '', price: '', currency: '$', text: '', ...((prev.pricing || [])[k] || {}) }));
+    list[i] = { ...list[i], [field]: value };
+    return { ...prev, pricing: list };
   });
   const handleChange = (field, value) => setGrowthData(prev => ({ ...prev, [field]: value }));
   const handleSocialLinkChange = (platform, value) =>
@@ -619,6 +655,29 @@ export default function GrowthDevelopment() {
                         </div>
                         </>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Optional. Leave a row empty to skip it.</p>
+            </FieldCard>
+          )}
+
+          {(isPrototype || isProduct) && (
+            <FieldCard Icon={DollarSign} title="Business model">
+              <div className="space-y-4">
+                {Array.from({ length: PRICING_SLOTS }, (_, i) => {
+                  const f = { name: '', price: '', currency: '$', text: '', ...((growthData.pricing || [])[i] || {}) };
+                  return (
+                    <div key={i} className="rounded-xl border border-gray-200 p-3 space-y-2">
+                      <Input value={f.name} maxLength={40} onChange={(e) => setPlan(i, 'name', e.target.value)} placeholder={['e.g., Free', 'e.g., Pro', 'e.g., Team'][i]} />
+                      <div className="flex gap-2">
+                        <select value={f.currency} onChange={(e) => setPlan(i, 'currency', e.target.value)} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm">
+                          {PRICING_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <Input value={f.price} maxLength={20} onChange={(e) => setPlan(i, 'price', e.target.value)} placeholder="9 / month" />
+                      </div>
+                      <Input value={f.text} maxLength={120} onChange={(e) => setPlan(i, 'text', e.target.value)} placeholder="One short line about it" />
                     </div>
                   );
                 })}

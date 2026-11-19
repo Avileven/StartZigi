@@ -43,9 +43,36 @@ function AskedInfo({ children }) {
   );
 }
 
-// Packages saved before currency existed keep the symbol inside the price text.
-const CURRENCIES = ['$', '₪', '€', '£'];
-const formatPrice = (p) => (p.currency && !/^[^0-9\s]/.test(p.price.trim()) ? p.currency + p.price.trim() : p.price.trim());
+// [NEW] Business model, defined in the profile (optional) like Key features.
+const PRICING_SLOTS = 3;
+const PRICING_CURRENCIES = ['$', '₪', '€', '£'];
+// Models saved in the old Insights format are converted so nothing is lost.
+const legacyPricing = (bmd) => {
+  if (!bmd || !bmd.model_type) return [];
+  if (bmd.model_type === 'subscription') {
+    const out = [];
+    if (bmd.has_free_tier) out.push({ name: 'Free', price: '0', currency: '$', text: bmd.free_tier_description || '' });
+    (bmd.packages || []).forEach((p) => out.push({ name: p.name || '', price: p.price || '', currency: p.currency || '$', text: p.description || '' }));
+    return out.slice(0, PRICING_SLOTS);
+  }
+  if (bmd.model_type === 'transactional') return [{ name: 'Transactional', price: '', currency: '$', text: bmd.transaction_fee_description || '' }];
+  if (bmd.model_type === 'ad-driven') return [{ name: 'Ad-Driven', price: '', currency: '$', text: 'Free product, revenue solely from ads.' }];
+  return [];
+};
+const getPricing = (gd) => {
+  if (!gd) return [];
+  const list = Array.isArray(gd.pricing) ? gd.pricing : legacyPricing(gd.business_model_data);
+  return list.filter((x) => x && x.name && x.name.trim());
+};
+// "0" or "Free" shows as Free; "9 / month" splits into the price and its period.
+const splitPrice = (p) => {
+  const raw = ((p && p.price) || '').trim();
+  if (!raw) return { main: '', per: '' };
+  if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
+  const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
+  const body = m ? m[1] : raw;
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+};
 
 export default function GrowthFeedbackSetup() {
   const [venture, setVenture] = useState(null);
@@ -147,16 +174,14 @@ export default function GrowthFeedbackSetup() {
   const removeFeature = (id) => setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
 
   // [NEW] Unlimited packages, replacing the old fixed Tier 1/Tier 2 fields.
-  // Currency is chosen from a list (default $) so a price always has one.
-  const [newPackageCurrency, setNewPackageCurrency] = useState('$');
   const addPackage = () => {
-    if (!newPackageName.trim() || !newPackagePrice.trim()) return;
+    if (!newPackageName.trim()) return;
     setGrowthData(prev => ({
       ...prev,
       business_model_data: {
         ...prev.business_model_data,
         packages: [...prev.business_model_data.packages, {
-          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(), currency: newPackageCurrency,
+          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(),
         }],
       },
     }));
@@ -212,18 +237,8 @@ export default function GrowthFeedbackSetup() {
   const profileFeatures = ((venture && venture.growth_data && venture.growth_data.features) || []).filter((x) => x && x.name && x.name.trim());
   const featuresReady = isIdea || isPrototype || growthData.core_features.length > 0;
   const bmd = growthData.business_model_data;
-  const businessModelReady = (() => {
-    if (!growthData.selected_categories.includes('business_model')) return true;
-    if (!bmd.model_type) return false;
-    if (bmd.model_type === 'subscription') {
-      const packagesOk = (bmd.packages.length > 0 || bmd.has_free_tier) && bmd.packages.every(p => p.name.trim() && p.price.trim());
-      const freeTierOk = !bmd.has_free_tier || bmd.free_tier_description.trim().length > 0;
-      return packagesOk && freeTierOk;
-    }
-    if (bmd.model_type === 'transactional') return bmd.transaction_fee_description.trim().length > 0;
-    if (bmd.model_type === 'ad-driven') return true;
-    return false;
-  })();
+  const pricingList = getPricing(venture && venture.growth_data);
+  const businessModelReady = !growthData.selected_categories.includes('business_model') || pricingList.length > 0;
   const valuePropReady = !growthData.selected_categories.includes('value_proposition') || isHeadlineComplete;
   const definitionReady = !growthData.selected_categories.includes('product_definition') || isDescriptionComplete;
   const hasDemoFile = growthData.uploaded_files.length > 0;
@@ -423,75 +438,12 @@ export default function GrowthFeedbackSetup() {
                     </label>
                     <ExplainBlock text={CATEGORY_EXPLANATIONS.business_model} />
                     {growthData.selected_categories.includes('business_model') && (
-                      <MobileFieldWrapper label="Business Model" summary={bmd.model_type || null} isMobile={isMobile}>
-                      <div className="mt-3 pl-8 space-y-3">
-                        <div>
-                          <Label className="text-xs">Business model</Label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
-                            {BUSINESS_MODEL_TYPES.map((m) => (
-                              <button type="button" key={m.value} onClick={() => handleBusinessModelChange('model_type', m.value)}
-                                className={`text-left p-2 rounded-lg border text-sm ${bmd.model_type === m.value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                                <p className="font-medium text-gray-900">{m.name}</p>
-                                <p className="text-xs text-gray-500">{m.description}</p>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {bmd.model_type === 'subscription' && (
-                          <>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <Checkbox checked={bmd.has_free_tier} onCheckedChange={(checked) => handleBusinessModelChange('has_free_tier', checked === true)} />
-                              <span className="text-sm text-gray-800">Free tier available</span>
-                            </label>
-                            {bmd.has_free_tier && (
-                              <div>
-                                <Input value={bmd.free_tier_description} onChange={(e) => handleBusinessModelChange('free_tier_description', e.target.value)} placeholder="What's included in the free tier" />
-                                {!bmd.free_tier_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe the free tier, or uncheck it above.</p>}
-                              </div>
-                            )}
-
-                            <div className="space-y-2">
-                              <Label className="text-xs">Paid packages</Label>
-                              {bmd.packages.map((p) => (
-                                <div key={p.id}>
-                                  <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-2.5">
-                                    <div className="flex items-start gap-2 min-w-0">
-                                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                                      <div className="min-w-0"><p className="text-sm font-medium">{p.name} — {formatPrice(p)}</p>{p.description && <p className="text-xs text-gray-600">{p.description}</p>}</div>
-                                    </div>
-                                    <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
-                                  </div>
-                                  {!p.price.trim() && <p className="text-xs text-red-500 mt-1">This package is missing a price.</p>}
-                                </div>
-                              ))}
-                              <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
-                                <div><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
-                                <div>
-                                  <Label className="text-xs">Price</Label>
-                                  <div className="flex gap-2">
-                                    <select value={newPackageCurrency} onChange={(e) => setNewPackageCurrency(e.target.value)} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm">
-                                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                    <Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="9/mo" />
-                                  </div>
-                                </div>
-                                <div><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
-                                <Button size="sm" onClick={addPackage} disabled={!newPackageName.trim() || !newPackagePrice.trim()} className="w-full">Add package</Button>
-                              </div>
-                              {bmd.packages.length === 0 && !bmd.has_free_tier && <p className="text-xs text-red-500">Add at least one package.</p>}
-                            </div>
-                          </>
-                        )}
-                        {bmd.model_type === 'transactional' && (
-                          <div><Label className="text-xs">Fee / commission per transaction</Label><Input value={bmd.transaction_fee_description} onChange={(e) => handleBusinessModelChange('transaction_fee_description', e.target.value)} placeholder="e.g., 5% per booking" />
-                            {!bmd.transaction_fee_description.trim() && <p className="text-xs text-red-500 mt-1">Required — describe your fee before you can save.</p>}
-                          </div>
-                        )}
-                        {bmd.model_type === 'ad-driven' && <p className="text-xs text-gray-500">Free to use — no pricing input needed.</p>}
-                        {!bmd.model_type && <p className="text-xs text-red-500">Choose a business model.</p>}
+                      <div className="mt-3 pl-8 space-y-1">
+                        {pricingList.length > 0 ? pricingList.map((x, i) => {
+                          const pr = splitPrice(x);
+                          return <p key={i} className="text-sm text-gray-800">• {x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' / ' + pr.per : '') : ''}</p>;
+                        }) : <p className="text-xs text-red-500">Fill in your business model on the profile page first.</p>}
                       </div>
-                      </MobileFieldWrapper>
                     )}
                   </div>
 

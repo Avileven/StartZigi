@@ -429,6 +429,37 @@ async function computeFeedbackCredits({ userId, items, verdicts, offeredItems })
   return { score, credits, parts: { contribution, tenure, experience, profile } };
 }
 
+// [NEW] Business model, defined in the profile (optional) like Key features.
+const PRICING_SLOTS = 3;
+const PRICING_CURRENCIES = ['$', '₪', '€', '£'];
+// Models saved in the old Insights format are converted so nothing is lost.
+const legacyPricing = (bmd) => {
+  if (!bmd || !bmd.model_type) return [];
+  if (bmd.model_type === 'subscription') {
+    const out = [];
+    if (bmd.has_free_tier) out.push({ name: 'Free', price: '0', currency: '$', text: bmd.free_tier_description || '' });
+    (bmd.packages || []).forEach((p) => out.push({ name: p.name || '', price: p.price || '', currency: p.currency || '$', text: p.description || '' }));
+    return out.slice(0, PRICING_SLOTS);
+  }
+  if (bmd.model_type === 'transactional') return [{ name: 'Transactional', price: '', currency: '$', text: bmd.transaction_fee_description || '' }];
+  if (bmd.model_type === 'ad-driven') return [{ name: 'Ad-Driven', price: '', currency: '$', text: 'Free product, revenue solely from ads.' }];
+  return [];
+};
+const getPricing = (gd) => {
+  if (!gd) return [];
+  const list = Array.isArray(gd.pricing) ? gd.pricing : legacyPricing(gd.business_model_data);
+  return list.filter((x) => x && x.name && x.name.trim());
+};
+// "0" or "Free" shows as Free; "9 / month" splits into the price and its period.
+const splitPrice = (p) => {
+  const raw = ((p && p.price) || '').trim();
+  if (!raw) return { main: '', per: '' };
+  if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
+  const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
+  const body = m ? m[1] : raw;
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+};
+
 export default function VentureLanding() {
   const isMobileViewport = useIsMobileViewport();
   const [venture, setVenture] = useState(null);
@@ -1567,6 +1598,25 @@ export default function VentureLanding() {
                   </div>
                 </div>
               )}
+              {(venture.growth_data.stage || 'product') !== 'idea' && getPricing(venture.growth_data).length > 0 && (
+                <div className="mb-10 max-w-2xl mx-auto">
+                  <h2 className="text-2xl font-bold text-[#d97706] text-center mb-4">Business model</h2>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    {getPricing(venture.growth_data).slice(0, 3).map((x, i) => {
+                      const pr = splitPrice(x);
+                      return (
+                        <div key={i} className="w-full sm:w-[calc(50%-0.5rem)] bg-[#fffdf9] rounded-3xl p-6 shadow-[0_6px_24px_rgba(31,111,92,0.08)] flex flex-col">
+                          <p className="text-lg font-bold text-[#1f6f5c] leading-snug">{x.name}</p>
+                          {x.text && x.text.trim() && <p className="text-sm text-[#5b6b68] mt-2 leading-relaxed">{x.text}</p>}
+                          {pr.main && (
+                            <p className="mt-auto pt-5 text-4xl font-extrabold text-[#1c2b2a] leading-none">{pr.main}{pr.per && <span className="ml-1.5 text-sm font-normal text-[#6b7a77]">/ {pr.per}</span>}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {(venture.growth_data.stage || 'product') === 'product' && venture.growth_data.product_url && (
                 <div className="text-center mb-8">
                   <a href={venture.growth_data.product_url} target="_blank" rel="noopener noreferrer">
@@ -1768,60 +1818,23 @@ export default function VentureLanding() {
                       )}
 
                       {/* --- Business Model (conditional on founder selection) --- */}
-                      {venture.growth_data.selected_categories.includes('business_model') && venture.growth_data.business_model_data && (
+                      {venture.growth_data.selected_categories.includes('business_model') && getPricing(venture.growth_data).length > 0 && (
                         <div className="bg-[#fffdf9] rounded-2xl p-3 md:p-4 shadow-[0_4px_16px_rgba(31,111,92,0.06)]">
                           <div className="flex items-center gap-2 mb-2">
                             <DollarSign className="w-5 h-5 text-[#1f6f5c]" />
                             <p className="text-xs font-bold uppercase tracking-wide text-[#c2561f]">Business Model</p>
                           </div>
-                          {(() => {
-                            const bmd = venture.growth_data.business_model_data;
-                            const modelLabels = { subscription: 'Subscription', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
-                            return (
-                              <div className="mb-3">
-                                <p className="text-sm font-semibold text-[#1c2b2a] mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
-                                {bmd.model_type === 'subscription' && (
-                                  <>
-                                    {/* [FIX] "Free" now renders as a package-style
-                                    box, same row as paid packages — was
-                                    plain text ("Free tier: ...") that looked
-                                    inconsistent next to the boxed packages. */}
-                                {(bmd.has_free_tier || (bmd.packages && bmd.packages.length > 0)) && (
-                                  <div className="divide-y divide-[#efe6d6] rounded-xl border border-[#efe6d6] bg-white/60">
-                                    {bmd.has_free_tier && bmd.free_tier_description && (
-                                      <div className="flex items-baseline justify-between gap-3 px-3 py-2.5">
-                                        <div className="min-w-0">
-                                          <p className="text-sm font-semibold text-[#1c2b2a]">Free</p>
-                                          <p className="text-sm text-[#5b6b68]">{bmd.free_tier_description}</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {bmd.packages && bmd.packages.map((p) => {
-                                      const price = (p.price || '').trim();
-                                      const shown = p.currency && !/^[^0-9\s]/.test(price) ? p.currency + price : price;
-                                      return (
-                                        <div key={p.id} className="flex items-baseline justify-between gap-3 px-3 py-2.5">
-                                          <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-[#1c2b2a]">{p.name}</p>
-                                            {p.description && <p className="text-sm text-[#5b6b68]">{p.description}</p>}
-                                          </div>
-                                          <p className="shrink-0 text-sm font-bold text-[#1f6f5c]">{shown}</p>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                                  </>
-                                )}
-                                {bmd.model_type === 'transactional' && (
-                                  <p className="text-sm text-[#5b6b68]">{bmd.transaction_fee_description}</p>
-                                )}
-                                {bmd.model_type === 'ad-driven' && (
-                                  <p className="text-sm text-[#5b6b68]">Free to use.</p>
-                                )}
-                              </div>
-                            );
-                          })()}
+                          <div className="space-y-2 mb-3">
+                            {getPricing(venture.growth_data).map((x, i) => {
+                              const pr = splitPrice(x);
+                              return (
+                                <div key={i} className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg p-3">
+                                  <p className="font-semibold text-[#1c2b2a]">{x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' / ' + pr.per : '') : ''}</p>
+                                  {x.text && x.text.trim() && <p className="text-sm text-[#6b7a77]">{x.text}</p>}
+                                </div>
+                              );
+                            })}
+                          </div>
                           <MobileQuestionSheet label="Business Model fit" summary={businessModelRating} isMobile={false}>
                             <Label className="text-sm leading-snug [text-wrap:balance]">How well does this business model fit the product and the value it provides? (1-10)</Label>
                             <Slider
