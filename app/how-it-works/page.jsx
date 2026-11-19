@@ -19,6 +19,17 @@ export default function HowItWorks() {
           From your first idea to a funded, growing venture — watch how StartZig guides you through every phase of the startup journey, with real milestones, tools, and challenges along the way.
         </p>
       </div>
+      <div className="max-w-4xl mx-auto mb-12">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">How feedback works</h2>
+        <video
+          className="w-full rounded-2xl shadow-lg border border-gray-200 bg-black aspect-video"
+          src="/feedback-example.mp4"
+          poster="/feedback-example-poster.jpg"
+          controls
+          playsInline
+          preload="metadata"
+        />
+      </div>
       <JourneyPreview />
     </div>
   );
