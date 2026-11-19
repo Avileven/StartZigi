@@ -1779,7 +1779,7 @@ export default function VentureLanding() {
                             const modelLabels = { subscription: 'Subscription', transactional: 'Transactional', 'ad-driven': 'Ad-Driven' };
                             return (
                               <div className="mb-3">
-                                <p className="text-xs font-semibold text-[#6b7a77] mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
+                                <p className="text-sm font-semibold text-[#1c2b2a] mb-2">{modelLabels[bmd.model_type] || bmd.model_type}</p>
                                 {bmd.model_type === 'subscription' && (
                                   <>
                                     {/* [FIX] "Free" now renders as a package-style
@@ -1787,19 +1787,28 @@ export default function VentureLanding() {
                                     plain text ("Free tier: ...") that looked
                                     inconsistent next to the boxed packages. */}
                                 {(bmd.has_free_tier || (bmd.packages && bmd.packages.length > 0)) && (
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="divide-y divide-[#efe6d6] rounded-xl border border-[#efe6d6] bg-white/60">
                                     {bmd.has_free_tier && bmd.free_tier_description && (
-                                      <div className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg px-3 py-2">
-                                        <span className="font-semibold text-[#1c2b2a]">Free</span>
-                                        <span className="text-sm text-[#6b7a77]"> · {bmd.free_tier_description}</span>
+                                      <div className="flex items-baseline justify-between gap-3 px-3 py-2.5">
+                                        <div className="min-w-0">
+                                          <p className="text-sm font-semibold text-[#1c2b2a]">Free</p>
+                                          <p className="text-sm text-[#5b6b68]">{bmd.free_tier_description}</p>
+                                        </div>
                                       </div>
                                     )}
-                                    {bmd.packages && bmd.packages.map((p) => (
-                                      <div key={p.id} className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg px-3 py-2">
-                                        <span className="font-semibold text-[#1c2b2a]">{p.name} — {p.price}</span>
-                                        {p.description && <span className="text-sm text-[#6b7a77]"> · {p.description}</span>}
-                                      </div>
-                                    ))}
+                                    {bmd.packages && bmd.packages.map((p) => {
+                                      const price = (p.price || '').trim();
+                                      const shown = p.currency && !/^[^0-9\s]/.test(price) ? p.currency + price : price;
+                                      return (
+                                        <div key={p.id} className="flex items-baseline justify-between gap-3 px-3 py-2.5">
+                                          <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-[#1c2b2a]">{p.name}</p>
+                                            {p.description && <p className="text-sm text-[#5b6b68]">{p.description}</p>}
+                                          </div>
+                                          <p className="shrink-0 text-sm font-bold text-[#1f6f5c]">{shown}</p>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 )}
                                   </>

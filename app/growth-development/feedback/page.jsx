@@ -43,6 +43,10 @@ function AskedInfo({ children }) {
   );
 }
 
+// Packages saved before currency existed keep the symbol inside the price text.
+const CURRENCIES = ['$', '₪', '€', '£'];
+const formatPrice = (p) => (p.currency && !/^[^0-9\s]/.test(p.price.trim()) ? p.currency + p.price.trim() : p.price.trim());
+
 export default function GrowthFeedbackSetup() {
   const [venture, setVenture] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,14 +147,16 @@ export default function GrowthFeedbackSetup() {
   const removeFeature = (id) => setGrowthData(prev => ({ ...prev, core_features: prev.core_features.filter(f => f.id !== id) }));
 
   // [NEW] Unlimited packages, replacing the old fixed Tier 1/Tier 2 fields.
+  // Currency is chosen from a list (default $) so a price always has one.
+  const [newPackageCurrency, setNewPackageCurrency] = useState('$');
   const addPackage = () => {
-    if (!newPackageName.trim()) return;
+    if (!newPackageName.trim() || !newPackagePrice.trim()) return;
     setGrowthData(prev => ({
       ...prev,
       business_model_data: {
         ...prev.business_model_data,
         packages: [...prev.business_model_data.packages, {
-          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(),
+          id: `pkg_${Date.now()}`, name: newPackageName.trim(), description: newPackageDesc.trim(), price: newPackagePrice.trim(), currency: newPackageCurrency,
         }],
       },
     }));
@@ -210,7 +216,7 @@ export default function GrowthFeedbackSetup() {
     if (!growthData.selected_categories.includes('business_model')) return true;
     if (!bmd.model_type) return false;
     if (bmd.model_type === 'subscription') {
-      const packagesOk = bmd.packages.length > 0 && bmd.packages.every(p => p.name.trim() && p.price.trim());
+      const packagesOk = (bmd.packages.length > 0 || bmd.has_free_tier) && bmd.packages.every(p => p.name.trim() && p.price.trim());
       const freeTierOk = !bmd.has_free_tier || bmd.free_tier_description.trim().length > 0;
       return packagesOk && freeTierOk;
     }
@@ -449,23 +455,31 @@ export default function GrowthFeedbackSetup() {
                               <Label className="text-xs">Paid packages</Label>
                               {bmd.packages.map((p) => (
                                 <div key={p.id}>
-                                  <div className="flex items-center justify-between bg-gray-50 rounded p-2">
-                                    <div><p className="text-sm font-medium">{p.name} — {p.price}</p><p className="text-xs text-gray-500">{p.description}</p></div>
+                                  <div className="flex items-center justify-between gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-2.5">
+                                    <div className="flex items-start gap-2 min-w-0">
+                                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                                      <div className="min-w-0"><p className="text-sm font-medium">{p.name} — {formatPrice(p)}</p>{p.description && <p className="text-xs text-gray-600">{p.description}</p>}</div>
+                                    </div>
                                     <Button variant="ghost" size="icon" onClick={() => removePackage(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                                   </div>
                                   {!p.price.trim() && <p className="text-xs text-red-500 mt-1">This package is missing a price.</p>}
                                 </div>
                               ))}
-                              {/* [FIX] Stacks vertically on small screens — was
-                                  3 inputs crammed side by side, unusable on a
-                                  phone even inside the fullscreen sheet. */}
-                              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                                <div className="flex-1"><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
-                                <div className="sm:w-24"><Label className="text-xs">Price</Label><Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="$9/mo" /></div>
-                                <div className="flex-1"><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
-                                <Button size="sm" onClick={addPackage} className="w-full sm:w-auto">Add package</Button>
+                              <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+                                <div><Label className="text-xs">Package name</Label><Input value={newPackageName} onChange={(e) => setNewPackageName(e.target.value)} placeholder="e.g., Pro" /></div>
+                                <div>
+                                  <Label className="text-xs">Price</Label>
+                                  <div className="flex gap-2">
+                                    <select value={newPackageCurrency} onChange={(e) => setNewPackageCurrency(e.target.value)} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm">
+                                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <Input value={newPackagePrice} onChange={(e) => setNewPackagePrice(e.target.value)} placeholder="9/mo" />
+                                  </div>
+                                </div>
+                                <div><Label className="text-xs">Description</Label><Input value={newPackageDesc} onChange={(e) => setNewPackageDesc(e.target.value)} placeholder="What's included" /></div>
+                                <Button size="sm" onClick={addPackage} disabled={!newPackageName.trim() || !newPackagePrice.trim()} className="w-full">Add package</Button>
                               </div>
-                              {bmd.packages.length === 0 && <p className="text-xs text-red-500">Add at least one package.</p>}
+                              {bmd.packages.length === 0 && !bmd.has_free_tier && <p className="text-xs text-red-500">Add at least one package.</p>}
                             </div>
                           </>
                         )}
