@@ -513,11 +513,14 @@ if (campaignErr) throw campaignErr;
   }
 
   // ZigPulse ventures (other than Idea) need media before they can ask for feedback.
+  // Media = a file uploaded in My Profile, an image made in the Studio, or (Product Development) a Studio mockup.
   const needsMedia =
     venture &&
     venture.phase === "growth" &&
     (venture.growth_data?.stage || "product") !== "idea" &&
-    !((venture.growth_data?.uploaded_files || []).length > 0);
+    !((venture.growth_data?.uploaded_files || []).length > 0) &&
+    !venture.growth_data?.image_url &&
+    !((venture.growth_data?.stage || "product") === "prototype" && venture.growth_data?.mockup);
 
   if (needsMedia) {
     return (
