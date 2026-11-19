@@ -457,8 +457,9 @@ const splitPrice = (p) => {
   if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
   const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
   const body = m ? m[1] : raw;
-  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: p.period || (m ? m[2] : '') };
 };
+const perText = (per) => (per === 'one-time' ? 'one-time' : '/ ' + per);
 
 export default function VentureLanding() {
   const isMobileViewport = useIsMobileViewport();
@@ -1600,16 +1601,19 @@ export default function VentureLanding() {
               )}
               {(venture.growth_data.stage || 'product') !== 'idea' && getPricing(venture.growth_data).length > 0 && (
                 <div className="mb-10 max-w-2xl mx-auto">
-                  <h2 className="text-2xl font-bold text-[#d97706] text-center mb-4">Business model</h2>
-                  <div className="flex flex-wrap justify-center gap-4">
+                  <h2 className="text-2xl font-bold text-[#d97706] text-center mb-4">Pricing</h2>
+                  <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
                     {getPricing(venture.growth_data).slice(0, 3).map((x, i) => {
                       const pr = splitPrice(x);
                       return (
-                        <div key={i} className="w-full sm:w-[calc(50%-0.5rem)] bg-[#fffdf9] rounded-3xl p-6 shadow-[0_6px_24px_rgba(31,111,92,0.08)] flex flex-col">
-                          <p className="text-lg font-bold text-[#1f6f5c] leading-snug">{x.name}</p>
-                          {x.text && x.text.trim() && <p className="text-sm text-[#5b6b68] mt-2 leading-relaxed">{x.text}</p>}
+                        <div key={i} className="w-[calc(50%-0.375rem)] sm:w-[calc(50%-0.5rem)] bg-[#effaf5] border border-[#bfe6d9] rounded-3xl p-4 sm:p-6 flex flex-col">
+                          <p className="text-lg sm:text-xl font-bold text-[#17594a] leading-snug">{x.name}</p>
+                          {x.text && x.text.trim() && <p className="text-sm text-[#4f625f] mt-2 leading-relaxed">{x.text}</p>}
                           {pr.main && (
-                            <p className="mt-auto pt-5 text-4xl font-extrabold text-[#1c2b2a] leading-none">{pr.main}{pr.per && <span className="ml-1.5 text-sm font-normal text-[#6b7a77]">/ {pr.per}</span>}</p>
+                            <div className="mt-auto pt-5">
+                              <p className="text-3xl sm:text-4xl font-extrabold text-[#1c2b2a] leading-none">{pr.main}</p>
+                              <p className="mt-1.5 text-sm text-[#6b7a77] min-h-[1.25rem]">{pr.per ? perText(pr.per) : ''}</p>
+                            </div>
                           )}
                         </div>
                       );
@@ -1829,7 +1833,7 @@ export default function VentureLanding() {
                               const pr = splitPrice(x);
                               return (
                                 <div key={i} className="border border-[#e6ddcc] bg-[#fffdf9] rounded-lg p-3">
-                                  <p className="font-semibold text-[#1c2b2a]">{x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' / ' + pr.per : '') : ''}</p>
+                                  <p className="font-semibold text-[#1c2b2a]">{x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' ' + perText(pr.per) : '') : ''}</p>
                                   {x.text && x.text.trim() && <p className="text-sm text-[#6b7a77]">{x.text}</p>}
                                 </div>
                               );

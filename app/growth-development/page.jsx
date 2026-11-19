@@ -37,6 +37,7 @@ const FEATURE_SLOTS = 3;
 // [NEW] Business model, defined in the profile (optional) like Key features.
 const PRICING_SLOTS = 3;
 const PRICING_CURRENCIES = ['$', '₪', '€', '£'];
+const PRICING_PERIODS = ['month', 'year', 'one-time'];
 // Models saved in the old Insights format are converted so nothing is lost.
 const legacyPricing = (bmd) => {
   if (!bmd || !bmd.model_type) return [];
@@ -62,8 +63,9 @@ const splitPrice = (p) => {
   if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
   const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
   const body = m ? m[1] : raw;
-  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: p.period || (m ? m[2] : '') };
 };
+const perText = (per) => (per === 'one-time' ? 'one-time' : '/ ' + per);
 import MentorModal from '@/components/mentor/MentorModal';
 import StaticGuidanceViewer from '@/components/mentor/StaticGuidanceViewer';
 import {
@@ -213,7 +215,7 @@ export default function GrowthDevelopment() {
     return { ...prev, features: list };
   });
   const setPlan = (i, field, value) => setGrowthData(prev => {
-    const list = Array.from({ length: PRICING_SLOTS }, (_, k) => ({ name: '', price: '', currency: '$', text: '', ...((prev.pricing || [])[k] || {}) }));
+    const list = Array.from({ length: PRICING_SLOTS }, (_, k) => ({ name: '', price: '', currency: '$', period: 'month', text: '', ...((prev.pricing || [])[k] || {}) }));
     list[i] = { ...list[i], [field]: value };
     return { ...prev, pricing: list };
   });
@@ -667,7 +669,7 @@ export default function GrowthDevelopment() {
             <FieldCard Icon={DollarSign} title="Business model">
               <div className="space-y-4">
                 {Array.from({ length: PRICING_SLOTS }, (_, i) => {
-                  const f = { name: '', price: '', currency: '$', text: '', ...((growthData.pricing || [])[i] || {}) };
+                  const f = { name: '', price: '', currency: '$', period: 'month', text: '', ...((growthData.pricing || [])[i] || {}) };
                   return (
                     <div key={i} className="rounded-xl border border-gray-200 p-3 space-y-2">
                       <Input value={f.name} maxLength={40} onChange={(e) => setPlan(i, 'name', e.target.value)} placeholder={['e.g., Free', 'e.g., Pro', 'e.g., Team'][i]} />
@@ -675,7 +677,10 @@ export default function GrowthDevelopment() {
                         <select value={f.currency} onChange={(e) => setPlan(i, 'currency', e.target.value)} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm">
                           {PRICING_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
-                        <Input value={f.price} maxLength={20} onChange={(e) => setPlan(i, 'price', e.target.value)} placeholder="9 / month" />
+                        <Input className="min-w-0 flex-1" value={f.price} maxLength={20} onChange={(e) => setPlan(i, 'price', e.target.value)} placeholder="9" />
+                        <select value={f.period} onChange={(e) => setPlan(i, 'period', e.target.value)} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm">
+                          {PRICING_PERIODS.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
                       </div>
                       <Input value={f.text} maxLength={120} onChange={(e) => setPlan(i, 'text', e.target.value)} placeholder="One short line about it" />
                     </div>

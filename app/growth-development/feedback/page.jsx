@@ -71,8 +71,9 @@ const splitPrice = (p) => {
   if (/^0+([.,]0+)?(\s*\/.*)?$/.test(raw)) return { main: 'Free', per: '' };
   const m = raw.match(/^(.*?)\s*\/\s*(.+)$/);
   const body = m ? m[1] : raw;
-  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: m ? m[2] : '' };
+  return { main: /^[0-9]/.test(body) ? ((p.currency || '$') + body) : body, per: p.period || (m ? m[2] : '') };
 };
+const perText = (per) => (per === 'one-time' ? 'one-time' : '/ ' + per);
 
 export default function GrowthFeedbackSetup() {
   const [venture, setVenture] = useState(null);
@@ -441,7 +442,7 @@ export default function GrowthFeedbackSetup() {
                       <div className="mt-3 pl-8 space-y-1">
                         {pricingList.length > 0 ? pricingList.map((x, i) => {
                           const pr = splitPrice(x);
-                          return <p key={i} className="text-sm text-gray-800">• {x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' / ' + pr.per : '') : ''}</p>;
+                          return <p key={i} className="text-sm text-gray-800">• {x.name}{pr.main ? ' — ' + pr.main + (pr.per ? ' ' + perText(pr.per) : '') : ''}</p>;
                         }) : <p className="text-xs text-red-500">Fill in your business model on the profile page first.</p>}
                       </div>
                     )}
