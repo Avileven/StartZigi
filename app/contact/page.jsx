@@ -1,5 +1,6 @@
 // app/contact/page.jsx
 // UPDATE 200426: Contact form — saves submission to crm table and sends email notification to admin.
+// UPDATE 241126: Name and email can be prefilled from the link query string.
 
 "use client";
 
@@ -18,12 +19,14 @@ export default function ContactPage() {
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState(null);
 
-  // [NEW] Mailing opt-out link: /contact?topic=unsubscribe pre-fills the message,
-  // so the recipient only needs to enter name + email and press send.
+  // Prefill name and email from the link (e.g. /contact?name=Jane&email=jane@example.com).
+  // Read in useEffect so the page needs no Suspense boundary. The fields stay editable.
   useEffect(() => {
-    const topic = new URLSearchParams(window.location.search).get("topic");
-    if (topic === "unsubscribe") {
-      setForm(prev => ({ ...prev, message: "[UNSUBSCRIBE] Please remove me from your mailing list." }));
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name");
+    const email = params.get("email");
+    if (name || email) {
+      setForm(prev => ({ ...prev, name: name || prev.name, email: email || prev.email }));
     }
   }, []);
 
