@@ -48,8 +48,8 @@ export const KINDS = {
     subject: "Your StartZig venture",
     paragraphs: [
       "Hi,",
-      "You started your venture on StartZig with ZigJourney, the full path from first idea to growth. Several founders told us the full path didn’t fit everyone, so we added ZigPulse: a shorter track where you focus only on your own stage, whether it’s an idea, a prototype or demo, or a live product. At any stage, a few clicks are enough to introduce your venture to the community.",
-      "Already started with ZigJourney? You can switch whenever you like. In {{account}}, choose “Start a New Idea.” Your current idea is deleted. Then choose ZigPulse. If you prefer a fresh start, you can also sign up with a different email address.",
+      "You started your venture on StartZig with ZigJourney, the full path from first idea to growth. We recently added ZigPulse, a shorter track where you focus only on your own stage: an idea, a prototype or demo, or a live product.",
+      "To switch, go to My Account and choose \u201cStart a New Idea.\u201d Your current idea will be deleted. Then choose ZigPulse. If you prefer a fresh start, you can also sign up with a different email address.",
       "Your feedback helps us improve.",
     ],
   },
