@@ -71,8 +71,7 @@ import {
   Megaphone,
   CalendarClock,
   Wrench,
-  Activity,
-  ClipboardList
+  Loader2
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -746,11 +745,11 @@ if (userVentures.length === 0) {
             "-created_date"
           );
 
-          // [ADDED] Filter out expired feedback_request messages — valid for 14 days only.
+          // [ADDED] Filter out expired feedback_request messages — valid for 7 days only.
           const filteredMessages = ventureMessages.filter(msg => {
             if (msg.message_type === 'feedback_request') {
               const daysSince = (Date.now() - new Date(msg.created_date)) / 86400000;
-              return daysSince < 14;
+              return daysSince < 7;
             }
             return true;
           });
@@ -1439,17 +1438,17 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     // pointed here before).
     if (currentVenture.phase === 'growth') {
       assets.push({
-        id: 'growth_profile',
-        title: 'My Profile',
-        icon: Activity,
+        id: 'growth_development',
+        title: 'ZigPulse',
+        icon: Rocket,
+        // [FLAG — not fully verified] A stale comment elsewhere in this
+        // same function claims createPageUrl strips hyphens (e.g.
+        // 'beta-development' → '/betadevelopment'), but the real folder
+        // this session directly confirmed is hyphenated
+        // (C:\STARTZIG\app\beta-development). Using the hyphenated slug
+        // here to match the real route — verify this resolves correctly,
+        // since createPageUrl's actual implementation wasn't available.
         page: 'growth-development',
-        highlighted: true
-      });
-      assets.push({
-        id: 'growth_insights',
-        title: 'Insights',
-        icon: ClipboardList,
-        page: 'growth-development/feedback',
         highlighted: true
       });
     }
@@ -1462,31 +1461,8 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
     // above. Rather than patch every cumulative condition individually
     // (easy to miss one), Growth's toolbox is filtered down to exactly the
     // confirmed list as a final step.
-    // [NEW — ZigPulse idea stage] Idea Analysis = the plan page, only for
-    // Growth ventures whose short-track stage is 'idea'.
-    if (currentVenture.phase === 'growth' && currentVenture.growth_data?.stage === 'idea') {
-      assets.push({
-        id: 'idea_analysis',
-        title: 'Idea Analysis',
-        icon: FileText,
-        page: 'plan',
-        highlighted: true
-      });
-    }
-
-    // [NEW — ZigPulse] Revenue Model calculator (standalone page, nothing saved), all stages.
     if (currentVenture.phase === 'growth') {
-      assets.push({
-        id: 'business_model',
-        title: 'Revenue Model',
-        icon: BarChart3,
-        page: 'business-model',
-        highlighted: true
-      });
-    }
-
-    if (currentVenture.phase === 'growth') {
-      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_profile', 'growth_insights', 'idea_analysis', 'business_model'];
+      const growthAllowedIds = ['promotion_center', 'zigforge', 'product_feedback', 'growth_development'];
       // [FIX] Was inconsistent — promotion_center/zigforge's highlighted
       // conditions never included growth, while product_feedback/
       // growth_development did, so only some cards appeared highlighted
@@ -1516,7 +1492,7 @@ if (currentPhaseIndex >= PHASES_ORDER.indexOf('business_plan')) {
   // MobileHome.jsx instead of the full desktop dashboard below. Desktop
   // rendering is completely untouched past this point.
   if (isMobile && !showToS) {
-    return <MobileHome venture={currentVenture} messages={messages} userEmail={user?.email} userName={user?.username || user?.full_name || user?.name || ''} liveBalance={liveBalance} currentValuation={currentValuation} />;
+    return <MobileHome venture={currentVenture} messages={messages} userEmail={user?.email} liveBalance={liveBalance} currentValuation={currentValuation} />;
   }
 
  
