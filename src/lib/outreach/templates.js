@@ -45,7 +45,7 @@ export const KINDS = {
   },
   long_track: {
     label: "Long track, offer the short track",
-    subject: "Another way to develop your product",
+    subject: "Your StartZig venture",
     paragraphs: [
       "Hi,",
       "You started your venture on StartZig with ZigJourney, the full path from first idea to growth. Several founders told us the full path didn’t fit everyone, so we added ZigPulse: a shorter track where you focus only on your own stage, whether it’s an idea, a prototype or demo, or a live product. At any stage, a few clicks are enough to introduce your venture to the community.",
