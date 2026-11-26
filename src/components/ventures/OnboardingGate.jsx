@@ -49,7 +49,8 @@ const EXTRA_CSS = `
 
 
 .zgo-path-h1{font-size:30px !important}
-.zgo-root:has(.zgo-path-wrap){padding-top:2px !important}
+.zgo-path-head{margin-bottom:16px}
+.zgo-root:has(.zgo-path-wrap){margin-top:-40px}
 .zgo-path-card .zgo-rec{background:transparent !important;color:#C2410C !important;font-size:11px !important;padding:0 !important;letter-spacing:.08em !important}
 .zgo-path-card .zgo-path-art > span > span{order:1}
 .zgo-path-card .zgo-path-title{order:2}
@@ -233,12 +234,9 @@ export default function OnboardingGate({ onChoose }) {
 
       {step === "path" && (
         <>
-        <button type="button" onClick={() => { setStep("stage"); setPathSel(null); }} style={{ alignSelf: "flex-start", cursor: "pointer", border: 0, background: "none", color: "#4F46E5", fontSize: 13, fontWeight: 600, padding: "2px 0", margin: "-8px 0 -8px -6px" }}>
-          &#8592; {TEXT.back}
-        </button>
         <div className="zgo-path-wrap" style={{ width: "100%", maxWidth: 1040, display: "flex", flexDirection: "column", gap: 28 }}>
           <div className="zgo-path-head" style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
-            <h1 className="zgo-h1 zgo-path-h1" style={{ margin: 0, fontSize: 40, lineHeight: 1.15, fontWeight: 800, color: "#F49A58", textWrap: "balance" }}>{TEXT.pathTitle}</h1>
+            <h1 className="zgo-h1 zgo-path-h1" style={{ margin: 0, fontSize: 40, lineHeight: 1.15, fontWeight: 800, color: "#7045DC", textWrap: "balance" }}>{TEXT.pathTitle}</h1>
           </div>
           <div className="zgo-grid" data-sel={pathSel ? "1" : "0"} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: 20 }}>
             <Card id="short" selected={pathSel === "short"} onClick={() => setPathSel("short")} />
