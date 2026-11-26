@@ -48,7 +48,8 @@ const EXTRA_CSS = `
 }
 
 
-.zgo-path-h1{font-size:32px !important}
+.zgo-path-h1{font-size:30px !important}
+.zgo-root:has(.zgo-path-wrap){padding-top:2px !important}
 .zgo-path-card .zgo-rec{background:transparent !important;color:#C2410C !important;font-size:11px !important;padding:0 !important;letter-spacing:.08em !important}
 .zgo-path-card .zgo-path-art > span > span{order:1}
 .zgo-path-card .zgo-path-title{order:2}
@@ -85,7 +86,7 @@ const TEXT = {
   stageTitle2: "journey?",
   forYou: "This stage is for you if",
   stageHint: "Click to explore the stages, then choose the one that fits you.",
-  pathTitle: "Choose your path",
+  pathTitle: "Choose between the idea stage and\u00a0the\u00a0full\u00a0path.",
   pathSub: "Choose between the idea stage and\u00a0the\u00a0full\u00a0path.",
   back: "Back",
   continueIdea: "Continue with Idea",
@@ -237,8 +238,7 @@ export default function OnboardingGate({ onChoose }) {
         </button>
         <div className="zgo-path-wrap" style={{ width: "100%", maxWidth: 1040, display: "flex", flexDirection: "column", gap: 28 }}>
           <div className="zgo-path-head" style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
-            <h1 className="zgo-h1 zgo-path-h1" style={{ margin: 0, fontSize: 40, lineHeight: 1.15, fontWeight: 800 }}>{TEXT.pathTitle}</h1>
-            <p className="zgo-path-sub" style={{ margin: 0, fontSize: 18, color: "#4B5563" }}>{TEXT.pathSub}</p>
+            <h1 className="zgo-h1 zgo-path-h1" style={{ margin: 0, fontSize: 40, lineHeight: 1.15, fontWeight: 800, color: "#F49A58", textWrap: "balance" }}>{TEXT.pathTitle}</h1>
           </div>
           <div className="zgo-grid" data-sel={pathSel ? "1" : "0"} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: 20 }}>
             <Card id="short" selected={pathSel === "short"} onClick={() => setPathSel("short")} />
